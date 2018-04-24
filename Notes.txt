@@ -1,0 +1,12 @@
+Dokdex is meant to supersede LandSpeedDB - however LandSpeedDB is quite a bit further along in development.
+
+Instead of calculating the size of objects for deferred IO, we should track the memory consumption of the entire service and start flushing
+	items from cache to keep memory levels in check.
+
+We should also add a LastHitTime to the defered IO so that we can get rid of older records first.
+
+
+get oldest objects:
+	Get top 10% lest hit objects:
+		Remove those objects:
+			Repeat until we have hit our memory goals:
