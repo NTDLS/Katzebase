@@ -1,4 +1,4 @@
-Dokdex is meant to supersede LandSpeedDB - however LandSpeedDB is quite a bit further along in development.
+Katzebase is meant to supersede LandSpeedDB - however LandSpeedDB is quite a bit further along in development.
 
 Instead of calculating the size of objects for deferred IO, we should track the memory consumption of the entire service and start flushing
 	items from cache to keep memory levels in check.

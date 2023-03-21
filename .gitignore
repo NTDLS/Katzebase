@@ -2,24 +2,24 @@
 
 .vs/
 
-Dokdex.CodeGeneration/bin/
+Katzebase.CodeGeneration/bin/
 
-Dokdex.CodeGeneration/obj/
+Katzebase.CodeGeneration/obj/
 
-Dokdex.Engine/bin/
+Katzebase.Engine/bin/
 
-Dokdex.Engine/obj/
+Katzebase.Engine/obj/
 
-Dokdex.Library/bin/
+Katzebase.Library/bin/
 
-Dokdex.Library/obj/
+Katzebase.Library/obj/
 
-Dokdex.Service/bin/
+Katzebase.Service/bin/
 
-Dokdex.Service/obj/
+Katzebase.Service/obj/
 
-Dokdex.TestHarness/bin/
+Katzebase.TestHarness/bin/
 
-Dokdex.TestHarness/obj/
+Katzebase.TestHarness/obj/
 
 packages/

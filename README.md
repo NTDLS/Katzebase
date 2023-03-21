@@ -1,2 +1,2 @@
-# Dokdex
+# Katzebase
 Document based database.
