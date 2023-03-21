@@ -3,17 +3,17 @@ using System;
 
 namespace Katzebase.Library.Payloads
 {
-    public class Document
+    public class KbDocument
     {
         public Guid Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime Modfied { get; set; }
         public string Content { get; set; }
 
-        public Document()
+        public KbDocument()
         {
         }
-        public Document(object contentObject)
+        public KbDocument(object contentObject)
         {
             Content = JsonConvert.SerializeObject(contentObject);
         }

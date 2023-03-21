@@ -1,6 +1,4 @@
 ﻿using ProtoBuf;
-using System;
-using System.Collections.Generic;
 
 namespace Katzebase.Engine.Indexes
 {
@@ -8,11 +6,13 @@ namespace Katzebase.Engine.Indexes
     public class PersistIndexLeaf
     {
         [ProtoMember(1)]
-        public string Key { get; set; }
+        public string? Key { get; set; } = null;
+
         [ProtoMember(2)]
-        public HashSet<Guid> DocumentIDs = null;
+        public HashSet<Guid>? DocumentIDs = null;
+
         [ProtoMember(3)]
-        public PersistIndexLeaves Leaves = new PersistIndexLeaves();
+        public PersistIndexLeaves Leaves = new();
 
         public PersistIndexLeaf()
         {

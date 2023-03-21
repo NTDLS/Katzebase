@@ -56,7 +56,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Production:ScrapReason", new Document(new Models.Production_ScrapReason
+                                    client.Document.Store("AdventureWorks2012:Production:ScrapReason", new KbDocument(new Models.Production_ScrapReason
                                     {
                                         ScrapReasonID = dataReader.GetInt16(indexOfScrapReasonID),
                                         Name = dataReader.GetString(indexOfName),

@@ -57,7 +57,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Sales:SalesReason", new Document(new Models.Sales_SalesReason
+                                    client.Document.Store("AdventureWorks2012:Sales:SalesReason", new KbDocument(new Models.Sales_SalesReason
                                     {
                                         SalesReasonID = dataReader.GetInt32(indexOfSalesReasonID),
                                         Name = dataReader.GetString(indexOfName),

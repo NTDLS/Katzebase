@@ -24,7 +24,7 @@ namespace Katzebase.Library.Client.Management
             using (var response = client.Client.PostAsync(url, postContent))
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<ActionResponse>(resultText);
+                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
                 if (result.Success == false)
                 {
                     throw new Exception(result.Message);

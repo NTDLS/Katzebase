@@ -1,6 +1,6 @@
 ﻿namespace Katzebase.Library.Payloads
 {
-    public class ActionResponse
+    public class KbActionResponse
     {
         public bool Success { get; set; }
         public string Message { get; set; }

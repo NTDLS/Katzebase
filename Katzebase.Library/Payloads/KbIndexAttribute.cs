@@ -1,6 +1,6 @@
 ﻿namespace Katzebase.Library.Payloads
 {
-    public class IndexAttribute
+    public class KbIndexAttribute
     {
         public string Name { get; set; }
     }

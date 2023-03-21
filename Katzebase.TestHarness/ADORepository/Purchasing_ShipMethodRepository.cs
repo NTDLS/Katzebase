@@ -59,7 +59,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Purchasing:ShipMethod", new Document(new Models.Purchasing_ShipMethod
+                                    client.Document.Store("AdventureWorks2012:Purchasing:ShipMethod", new KbDocument(new Models.Purchasing_ShipMethod
                                     {
                                         ShipMethodID = dataReader.GetInt32(indexOfShipMethodID),
                                         Name = dataReader.GetString(indexOfName),

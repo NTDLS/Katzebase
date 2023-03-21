@@ -56,7 +56,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Person:CountryRegion", new Document(new Models.Person_CountryRegion
+                                    client.Document.Store("AdventureWorks2012:Person:CountryRegion", new KbDocument(new Models.Person_CountryRegion
                                     {
                                         CountryRegionCode = dataReader.GetString(indexOfCountryRegionCode),
                                         Name = dataReader.GetString(indexOfName),

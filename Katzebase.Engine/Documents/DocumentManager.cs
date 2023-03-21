@@ -449,7 +449,7 @@ namespace Katzebase.Engine.Documents
 
         }
 
-        public void Store(ulong processId, string schema, Document document, out Guid newId)
+        public void Store(ulong processId, string schema, KbDocument document, out Guid newId)
         {
             try
             {

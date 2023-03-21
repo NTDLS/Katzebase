@@ -57,7 +57,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:dbo:AWBuildVersion", new Document(new Models.dbo_AWBuildVersion
+                                    client.Document.Store("AdventureWorks2012:dbo:AWBuildVersion", new KbDocument(new Models.dbo_AWBuildVersion
                                     {
                                         SystemInformationID = dataReader.GetByte(indexOfSystemInformationID),
                                         Database_Version = dataReader.GetString(indexOfDatabase_Version),

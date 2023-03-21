@@ -117,7 +117,7 @@ namespace Katzebase.Engine.Indexes
             return result;
         }
 
-        public void Create(ulong processId, string schema, Index index, out Guid newId)
+        public void Create(ulong processId, string schema, Library.Payloads.KbIndex index, out Guid newId)
         {
             try
             {

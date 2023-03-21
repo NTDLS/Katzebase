@@ -36,6 +36,7 @@ namespace Katzebase.Engine
             return $"{{{(checksum % 1000)}}}\\{idString}{Constants.DocumentExtension}";
         }
 
+        /*
         public static long EstimateObjectSize(object o)
         {
             using (Stream s = new MemoryStream())
@@ -45,6 +46,7 @@ namespace Katzebase.Engine
                 return s.Length;
             }
         }
+        */
 
         public static string MakeSafeFileName(string filename)
         {

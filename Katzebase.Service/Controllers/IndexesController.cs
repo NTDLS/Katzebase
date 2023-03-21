@@ -2,24 +2,29 @@
 using Katzebase.Library.Payloads;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Threading;
-using System.Web.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Katzebase.Service.Controllers
 {
-    public class IndexesController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class IndexesController
     {
-        public ActionResponseID Create(Guid sessionId, string schema, [FromBody] string value)
+        [HttpGet]
+        [Route("{sessionId}/{schema}/Create")]
+        public KbActionResponseID Create(Guid sessionId, string schema, [FromBody] string value)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            ActionResponseID result = new ActionResponseID();
+            KbActionResponseID result = new KbActionResponseID();
 
             try
             {
-                var content = JsonConvert.DeserializeObject<Index>(value);
+                var content = JsonConvert.DeserializeObject<Library.Payloads.KbIndex>(value);
 
                 Guid newId = Guid.Empty;
 
@@ -41,17 +46,18 @@ namespace Katzebase.Service.Controllers
         /// </summary>
         /// <param name="schema"></param>
         [HttpGet]
-        public ActionResponse Rebuild(Guid sessionId, string schema, string byName)
+        [Route("{sessionId}/{schema}/{name}/Rebuild")]
+        public KbActionResponse Rebuild(Guid sessionId, string schema, string name)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            ActionResponse result = new ActionResponseBoolean();
+            KbActionResponse result = new KbActionResponseBoolean();
 
             try
             {
-                Program.Core.Indexes.Exists(processId, schema, byName);
+                Program.Core.Indexes.Exists(processId, schema, name);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -67,17 +73,18 @@ namespace Katzebase.Service.Controllers
         /// </summary>
         /// <param name="schema"></param>
         [HttpGet]
-        public ActionResponseBoolean Exists(Guid sessionId, string schema, string byName)
+        [Route("{sessionId}/{schema}/{name}/Exists")]
+        public KbActionResponseBoolean Exists(Guid sessionId, string schema, string name)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            ActionResponseBoolean result = new ActionResponseBoolean();
+            KbActionResponseBoolean result = new KbActionResponseBoolean();
 
             try
             {
-                result.Value = Program.Core.Indexes.Exists(processId, schema, byName);
+                result.Value = Program.Core.Indexes.Exists(processId, schema, name);
                 result.Success = true;
             }
             catch (Exception ex)

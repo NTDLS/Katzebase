@@ -58,7 +58,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:HumanResources:EmployeePayHistory", new Document(new Models.HumanResources_EmployeePayHistory
+                                    client.Document.Store("AdventureWorks2012:HumanResources:EmployeePayHistory", new KbDocument(new Models.HumanResources_EmployeePayHistory
                                     {
                                         BusinessEntityID = dataReader.GetInt32(indexOfBusinessEntityID),
                                         RateChangeDate = dataReader.GetDateTime(indexOfRateChangeDate),

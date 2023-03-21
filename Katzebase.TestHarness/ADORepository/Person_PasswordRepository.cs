@@ -58,7 +58,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Person:Password", new Document(new Models.Person_Password
+                                    client.Document.Store("AdventureWorks2012:Person:Password", new KbDocument(new Models.Person_Password
                                     {
                                         BusinessEntityID = dataReader.GetInt32(indexOfBusinessEntityID),
                                         PasswordHash = dataReader.GetString(indexOfPasswordHash),

@@ -61,7 +61,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:dbo:DatabaseLog", new Document(new Models.dbo_DatabaseLog
+                                    client.Document.Store("AdventureWorks2012:dbo:DatabaseLog", new KbDocument(new Models.dbo_DatabaseLog
                                     {
                                         DatabaseLogID = dataReader.GetInt32(indexOfDatabaseLogID),
                                         PostTime = dataReader.GetDateTime(indexOfPostTime),

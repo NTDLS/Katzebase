@@ -21,7 +21,7 @@ namespace Katzebase.Library.Client.Management
         /// </summary>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        public void Store(string schema, Payloads.Document document)
+        public void Store(string schema, Payloads.KbDocument document)
         {
             string url = $"api/Document/{client.SessionId}/{schema}/Store";
 
@@ -30,7 +30,7 @@ namespace Katzebase.Library.Client.Management
             using (var response = client.Client.PostAsync(url, postContent))
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<ActionResponse>(resultText);
+                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
                 if (result.Success == false)
                 {
                     throw new Exception(result.Message);
@@ -50,7 +50,7 @@ namespace Katzebase.Library.Client.Management
             using (var response = client.Client.GetAsync(url))
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<ActionResponse>(resultText);
+                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
                 if (result.Success == false)
                 {
                     throw new Exception(result.Message);
@@ -62,14 +62,14 @@ namespace Katzebase.Library.Client.Management
         /// Lists the doucments within a given schema.
         /// </summary>
         /// <param name="schema"></param>
-        public List<DocumentCatalogItem> Catalog(string schema)
+        public List<KbDocumentCatalogItem> Catalog(string schema)
         {
             string url = $"api/Document/{client.SessionId}/{schema}/Catalog";
 
             using (var response = client.Client.GetAsync(url))
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                return JsonConvert.DeserializeObject<List<DocumentCatalogItem>>(resultText);
+                return JsonConvert.DeserializeObject<List<KbDocumentCatalogItem>>(resultText);
             }
         }
     }

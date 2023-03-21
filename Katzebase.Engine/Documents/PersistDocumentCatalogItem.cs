@@ -8,9 +8,9 @@ namespace Katzebase.Engine.Documents
     {
         public Guid Id { get; set; }
 
-        public DocumentCatalogItem ToPayload()
+        public KbDocumentCatalogItem ToPayload()
         {
-            return new DocumentCatalogItem()
+            return new KbDocumentCatalogItem()
             {
                 Id = this.Id
             };

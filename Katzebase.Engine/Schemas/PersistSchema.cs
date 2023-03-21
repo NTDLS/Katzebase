@@ -16,9 +16,9 @@ namespace Katzebase.Engine.Schemas
         [JsonIgnore]
         public bool Exists { get; set; }
 
-        public Schema ToPayload()
+        public KbSchema ToPayload()
         {
-            return new Schema()
+            return new KbSchema()
             {
                 Id = Id,
                 Name = Name

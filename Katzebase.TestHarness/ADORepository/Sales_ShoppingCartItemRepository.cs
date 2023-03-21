@@ -59,7 +59,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Sales:ShoppingCartItem", new Document(new Models.Sales_ShoppingCartItem
+                                    client.Document.Store("AdventureWorks2012:Sales:ShoppingCartItem", new KbDocument(new Models.Sales_ShoppingCartItem
                                     {
                                         ShoppingCartItemID = dataReader.GetInt32(indexOfShoppingCartItemID),
                                         ShoppingCartID = dataReader.GetString(indexOfShoppingCartID),

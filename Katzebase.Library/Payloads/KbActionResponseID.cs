@@ -2,7 +2,7 @@
 
 namespace Katzebase.Library.Payloads
 {
-    public class ActionResponseID : ActionResponse
+    public class KbActionResponseID : KbActionResponse
     {
         public Guid Id { get; set; }
     }

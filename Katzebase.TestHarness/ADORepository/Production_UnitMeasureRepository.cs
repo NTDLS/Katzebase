@@ -56,7 +56,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Production:UnitMeasure", new Document(new Models.Production_UnitMeasure
+                                    client.Document.Store("AdventureWorks2012:Production:UnitMeasure", new KbDocument(new Models.Production_UnitMeasure
                                     {
                                         UnitMeasureCode = dataReader.GetString(indexOfUnitMeasureCode),
                                         Name = dataReader.GetString(indexOfName),

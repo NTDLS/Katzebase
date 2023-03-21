@@ -61,7 +61,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Person:StateProvince", new Document(new Models.Person_StateProvince
+                                    client.Document.Store("AdventureWorks2012:Person:StateProvince", new KbDocument(new Models.Person_StateProvince
                                     {
                                         StateProvinceID = dataReader.GetInt32(indexOfStateProvinceID),
                                         StateProvinceCode = dataReader.GetString(indexOfStateProvinceCode),

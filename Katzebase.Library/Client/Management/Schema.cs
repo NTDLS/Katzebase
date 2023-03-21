@@ -27,7 +27,7 @@ namespace Katzebase.Library.Client.Management
             using (var response = client.Client.GetAsync(url))
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<ActionResponse>(resultText);
+                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
                 if (result.Success == false)
                 {
                     throw new Exception(result.Message);
@@ -46,7 +46,7 @@ namespace Katzebase.Library.Client.Management
             using (var response = client.Client.GetAsync(url))
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<ActionResponseBoolean>(resultText);
+                var result = JsonConvert.DeserializeObject<KbActionResponseBoolean>(resultText);
                 if (result.Success == false)
                 {
                     throw new Exception(result.Message);
@@ -67,7 +67,7 @@ namespace Katzebase.Library.Client.Management
             using (var response = client.Client.GetAsync(url))
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<ActionResponse>(resultText);
+                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
                 if (result.Success == false)
                 {
                     throw new Exception(result.Message);
@@ -79,14 +79,14 @@ namespace Katzebase.Library.Client.Management
         /// Lists the existing schemas within a given schema.
         /// </summary>
         /// <param name="schema"></param>
-        public ActionResponseSchemas List(string schema)
+        public KbActionResponseSchemas List(string schema)
         {
             string url = $"api/Schema/{client.SessionId}/{schema}/List";
 
             using (var response = client.Client.GetAsync(url))
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                return JsonConvert.DeserializeObject<ActionResponseSchemas>(resultText);
+                return JsonConvert.DeserializeObject<KbActionResponseSchemas>(resultText);
             }
         }
     }

@@ -58,7 +58,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Production:ProductListPriceHistory", new Document(new Models.Production_ProductListPriceHistory
+                                    client.Document.Store("AdventureWorks2012:Production:ProductListPriceHistory", new KbDocument(new Models.Production_ProductListPriceHistory
                                     {
                                         ProductID = dataReader.GetInt32(indexOfProductID),
                                         StartDate = dataReader.GetDateTime(indexOfStartDate),

@@ -1,43 +1,77 @@
-﻿using Katzebase.Service.Properties;
+
+using System.Diagnostics;
 using System;
 
 namespace Katzebase.Service
 {
-    public static class Program
+    public class Program
     {
         public static Engine.Core Core;
 
-        static void Main(string[] args)
+        public static void Main(string[] args)
         {
-            //System.Diagnostics.Process.Start("CMD.exe", "/C rd C:\\Katzebase /S /Q");
+            IConfiguration config = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .AddEnvironmentVariables()
+                .Build();
 
-            Library.Settings settings = new Library.Settings()
+            // Get values from the config given their key and their target type.
+            var settings = config.GetRequiredSection("Settings").Get<Library.Settings>();
+            if (settings == null)
             {
-                BaseAddress = Settings.Default.BaseAddress,
-                DataRootPath = Settings.Default.DataRootPath.TrimEnd(new char[] { '/', '\\' }),
-                TransactionDataPath = Settings.Default.TransactionDataPath.TrimEnd(new char[] { '/', '\\' }),
-                LogDirectory = Settings.Default.LogDirectory.TrimEnd(new char[] { '/', '\\' }),
-                FlushLog = Settings.Default.FlushLog,
-                AllowIOCaching = Settings.Default.AllowIOCaching,
-                AllowDeferredIO = Settings.Default.AllowDeferredIO,
-                WriteTraceData = Settings.Default.WriteTraceData,
-                CacheScavengeBuffer = Settings.Default.CacheScavengeBuffer,
-                CacheScavengeRate = Settings.Default.CacheScavengeRate,
-                MaxCacheMemory = Settings.Default.MaxCacheMemory,
-                RecordInstanceHealth = Settings.Default.RecordInstanceHealth
+                throw new Exception("Failed to load settings");
+            }
+
+            var runConfiguration = new Library.Settings()
+            {
+                BaseAddress = settings.BaseAddress,
+                DataRootPath = settings.DataRootPath.TrimEnd(new char[] { '/', '\\' }),
+                TransactionDataPath = settings.TransactionDataPath.TrimEnd(new char[] { '/', '\\' }),
+                LogDirectory = settings.LogDirectory.TrimEnd(new char[] { '/', '\\' }),
+                FlushLog = settings.FlushLog,
+                AllowIOCaching = settings.AllowIOCaching,
+                AllowDeferredIO = settings.AllowDeferredIO,
+                WriteTraceData = settings.WriteTraceData,
+                CacheScavengeBuffer = settings.CacheScavengeBuffer,
+                CacheScavengeRate = settings.CacheScavengeRate,
+                MaxCacheMemory = settings.MaxCacheMemory,
+                RecordInstanceHealth = settings.RecordInstanceHealth
             };
 
-            Core = new Engine.Core(settings);
-
+            Core = new Engine.Core(runConfiguration);
             Core.Start();
 
-            var owinServices = new OWIN.Services();
-            owinServices.Start(settings.BaseAddress);
+            // Add services to the container.
+            var builder = WebApplication.CreateBuilder(args);
+            builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen();
+
+            var app = builder.Build();
+
+            // Configure the HTTP request pipeline.
+            if (app.Environment.IsDevelopment())
+            {
+                app.UseSwagger();
+                app.UseSwaggerUI();
+            }
+
+            app.UseAuthorization();
+            app.MapControllers();
+            app.RunAsync(settings.BaseAddress);
+            //app.RunAsync();
+
+            if (app.Environment.IsDevelopment())
+            {
+                Process.Start("explorer", $"{settings.BaseAddress}swagger/index.html");
+            }
 
             Core.Log.Write($"Listening on {settings.BaseAddress}.");
+            Core.Log.Write($"Press [enter] to stop.");
+            Console.ReadLine();
+            Core.Log.Write($"Stopping...");
 
-            Console.ReadLine(); //Continue running.
-
+            app.StopAsync();
             Core.Shutdown();
         }
     }

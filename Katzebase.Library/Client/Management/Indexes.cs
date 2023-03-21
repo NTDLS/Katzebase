@@ -20,7 +20,7 @@ namespace Katzebase.Library.Client.Management
         /// </summary>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        public void Create(string schema, Payloads.Index document)
+        public void Create(string schema, Payloads.KbIndex document)
         {
             string url = $"api/Indexes/{client.SessionId}/{schema}/Create";
 
@@ -29,7 +29,7 @@ namespace Katzebase.Library.Client.Management
             using (var response = client.Client.PostAsync(url, postContent))
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<ActionResponse>(resultText);
+                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
                 if (result.Success == false)
                 {
                     throw new Exception(result.Message);
@@ -49,7 +49,7 @@ namespace Katzebase.Library.Client.Management
             using (var response = client.Client.GetAsync(url))
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<ActionResponseBoolean>(resultText);
+                var result = JsonConvert.DeserializeObject<KbActionResponseBoolean>(resultText);
                 if (result.Success == false)
                 {
                     throw new Exception(result.Message);

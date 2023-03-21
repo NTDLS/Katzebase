@@ -57,7 +57,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Production:ProductModelProductDescriptionCulture", new Document(new Models.Production_ProductModelProductDescriptionCulture
+                                    client.Document.Store("AdventureWorks2012:Production:ProductModelProductDescriptionCulture", new KbDocument(new Models.Production_ProductModelProductDescriptionCulture
                                     {
                                         ProductModelID = dataReader.GetInt32(indexOfProductModelID),
                                         ProductDescriptionID = dataReader.GetInt32(indexOfProductDescriptionID),

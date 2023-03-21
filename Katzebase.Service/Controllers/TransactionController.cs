@@ -1,21 +1,26 @@
 ﻿using Katzebase.Library;
 using Katzebase.Library.Payloads;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Threading;
-using System.Web.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Katzebase.Service.Controllers
 {
-    public class TransactionController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class TransactionController
     {
         [HttpGet]
-        public ActionResponse Begin(Guid sessionId)
+        [Route("{sessionId}/Begin")]
+        public KbActionResponse Begin(Guid sessionId)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            ActionResponse result = new ActionResponse();
+            KbActionResponse result = new KbActionResponse();
 
             try
             {
@@ -31,13 +36,14 @@ namespace Katzebase.Service.Controllers
         }
 
         [HttpGet]
-        public ActionResponse Commit(Guid sessionId)
+        [Route("{sessionId}/Commit")]
+        public KbActionResponse Commit(Guid sessionId)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            ActionResponse result = new ActionResponse();
+            KbActionResponse result = new KbActionResponse();
 
             try
             {
@@ -53,13 +59,14 @@ namespace Katzebase.Service.Controllers
         }
 
         [HttpGet]
-        public ActionResponse Rollback(Guid sessionId)
+        [Route("{sessionId}/Rollback")]
+        public KbActionResponse Rollback(Guid sessionId)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            ActionResponse result = new ActionResponse();
+            KbActionResponse result = new KbActionResponse();
 
             try
             {

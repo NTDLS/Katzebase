@@ -58,7 +58,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:HumanResources:Shift", new Document(new Models.HumanResources_Shift
+                                    client.Document.Store("AdventureWorks2012:HumanResources:Shift", new KbDocument(new Models.HumanResources_Shift
                                     {
                                         ShiftID = dataReader.GetByte(indexOfShiftID),
                                         Name = dataReader.GetString(indexOfName),

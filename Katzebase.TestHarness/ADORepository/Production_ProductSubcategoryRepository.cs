@@ -58,7 +58,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Production:ProductSubcategory", new Document(new Models.Production_ProductSubcategory
+                                    client.Document.Store("AdventureWorks2012:Production:ProductSubcategory", new KbDocument(new Models.Production_ProductSubcategory
                                     {
                                         ProductSubcategoryID = dataReader.GetInt32(indexOfProductSubcategoryID),
                                         ProductCategoryID = dataReader.GetInt32(indexOfProductCategoryID),

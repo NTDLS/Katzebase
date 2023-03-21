@@ -60,7 +60,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Sales:SalesTaxRate", new Document(new Models.Sales_SalesTaxRate
+                                    client.Document.Store("AdventureWorks2012:Sales:SalesTaxRate", new KbDocument(new Models.Sales_SalesTaxRate
                                     {
                                         SalesTaxRateID = dataReader.GetInt32(indexOfSalesTaxRateID),
                                         StateProvinceID = dataReader.GetInt32(indexOfStateProvinceID),

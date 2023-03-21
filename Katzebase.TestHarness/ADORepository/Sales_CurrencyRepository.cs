@@ -56,7 +56,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Sales:Currency", new Document(new Models.Sales_Currency
+                                    client.Document.Store("AdventureWorks2012:Sales:Currency", new KbDocument(new Models.Sales_Currency
                                     {
                                         CurrencyCode = dataReader.GetString(indexOfCurrencyCode),
                                         Name = dataReader.GetString(indexOfName),

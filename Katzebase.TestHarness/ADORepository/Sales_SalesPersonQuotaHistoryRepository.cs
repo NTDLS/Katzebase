@@ -58,7 +58,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Sales:SalesPersonQuotaHistory", new Document(new Models.Sales_SalesPersonQuotaHistory
+                                    client.Document.Store("AdventureWorks2012:Sales:SalesPersonQuotaHistory", new KbDocument(new Models.Sales_SalesPersonQuotaHistory
                                     {
                                         BusinessEntityID = dataReader.GetInt32(indexOfBusinessEntityID),
                                         QuotaDate = dataReader.GetDateTime(indexOfQuotaDate),

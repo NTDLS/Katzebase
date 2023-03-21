@@ -28,6 +28,7 @@ namespace Katzebase.TestHarness
             //string query = "SELECT TOP 100 ProductID, Name, ModifiedDate FROM :AdventureWorks2012:Production:Product WHERE SafetyStockLevel = 1000 Color = 'Silver'";
             //client.Query.Execute(query);
 
+            Console.WriteLine("Press any key to continue.");
             Console.ReadLine();
         }
 
@@ -46,7 +47,7 @@ namespace Katzebase.TestHarness
 
             client.Schema.Create(schemaPath);
 
-            Index studentNameIndex = new Index()
+            var studentNameIndex = new KbIndex()
             {
                 Name = "StudentName",
                 IsUnique = false
@@ -55,7 +56,7 @@ namespace Katzebase.TestHarness
             studentNameIndex.AddAttribute("LastName");
             client.Schema.Indexes.Create(schemaPath, studentNameIndex);
 
-            Index studentIdIndex = new Index()
+            var studentIdIndex = new KbIndex()
             {
                 Name = "UniqueStudentId",
                 IsUnique = true
@@ -63,7 +64,7 @@ namespace Katzebase.TestHarness
             studentIdIndex.AddAttribute("StudentId");
             client.Schema.Indexes.Create(schemaPath, studentIdIndex);
 
-            Index homeRoomIndex = new Index()
+            var homeRoomIndex = new KbIndex()
             {
                 Name = "HomeRoom",
                 IsUnique = false
@@ -96,7 +97,7 @@ namespace Katzebase.TestHarness
                     StudentId = Guid.NewGuid().ToString()
                 };
 
-                client.Document.Store(schemaPath, new Document(student));
+                client.Document.Store(schemaPath, new KbDocument(student));
             }
 
             Console.WriteLine("Comitting transaction.");
@@ -161,7 +162,7 @@ namespace Katzebase.TestHarness
                     StudentId = Guid.NewGuid().ToString()
                 };
 
-                client.Document.Store(schemaPath, new Document(student));
+                client.Document.Store(schemaPath, new KbDocument(student));
             }
 
             client.Transaction.Commit();
@@ -169,7 +170,7 @@ namespace Katzebase.TestHarness
             client.Transaction.Begin();
 
             Console.WriteLine("Creating index: StudentName");
-            Index studentNameIndex = new Index()
+            var studentNameIndex = new KbIndex()
             {
                 Name = "StudentName",
                 IsUnique = false
@@ -179,7 +180,7 @@ namespace Katzebase.TestHarness
             client.Schema.Indexes.Create(schemaPath, studentNameIndex);
 
             Console.WriteLine("Creating index: UniqueStudentId");
-            Index studentIdIndex = new Index()
+            var studentIdIndex = new KbIndex()
             {
                 Name = "UniqueStudentId",
                 IsUnique = true
@@ -188,7 +189,7 @@ namespace Katzebase.TestHarness
             client.Schema.Indexes.Create(schemaPath, studentIdIndex);
 
             Console.WriteLine("Creating index: HomeRoom");
-            Index homeRoomIndex = new Index()
+            var homeRoomIndex = new KbIndex()
             {
                 Name = "HomeRoom",
                 IsUnique = false
@@ -217,7 +218,7 @@ namespace Katzebase.TestHarness
 
             client.Schema.Create(schemaPath);
 
-            Index studentNameIndex = new Index()
+            var studentNameIndex = new KbIndex()
             {
                 Name = "StudentName",
                 IsUnique = true
@@ -226,7 +227,7 @@ namespace Katzebase.TestHarness
             studentNameIndex.AddAttribute("LastName");
             client.Schema.Indexes.Create(schemaPath, studentNameIndex);
 
-            Index studentIdIndex = new Index()
+            var studentIdIndex = new KbIndex()
             {
                 Name = "UniqueStudentId",
                 IsUnique = true
@@ -234,7 +235,7 @@ namespace Katzebase.TestHarness
             studentIdIndex.AddAttribute("StudentId");
             client.Schema.Indexes.Create(schemaPath, studentIdIndex);
 
-            Index homeRoomIndex = new Index()
+            var homeRoomIndex = new KbIndex()
             {
                 Name = "HomeRoom",
                 IsUnique = false
@@ -267,7 +268,7 @@ namespace Katzebase.TestHarness
                     StudentId = Guid.NewGuid().ToString()
                 };
 
-                client.Document.Store(schemaPath, new Document(student));
+                client.Document.Store(schemaPath, new KbDocument(student));
             }
 
             Console.WriteLine("Comitting transaction.");
@@ -336,7 +337,7 @@ namespace Katzebase.TestHarness
 
                     for (int i = 0; i < 100; i++)
                     {
-                        client.Document.Store("Students:CurrentYear", new Document(student));
+                        client.Document.Store("Students:CurrentYear", new KbDocument(student));
                     }
 
                     #endregion
@@ -381,7 +382,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:dbo:AWBuildVersion", "PK_AWBuildVersion_SystemInformationID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:dbo:AWBuildVersion PK_AWBuildVersion_SystemInformationID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_AWBuildVersion_SystemInformationID",
                     IsUnique = true
@@ -394,7 +395,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:dbo:DatabaseLog", "PK_DatabaseLog_DatabaseLogID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:dbo:DatabaseLog PK_DatabaseLog_DatabaseLogID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_DatabaseLog_DatabaseLogID",
                     IsUnique = true
@@ -407,7 +408,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:dbo:ErrorLog", "PK_ErrorLog_ErrorLogID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:dbo:ErrorLog PK_ErrorLog_ErrorLogID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ErrorLog_ErrorLogID",
                     IsUnique = true
@@ -420,7 +421,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:Department", "PK_Department_DepartmentID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:Department PK_Department_DepartmentID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Department_DepartmentID",
                     IsUnique = true
@@ -433,7 +434,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:Department", "AK_Department_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:Department AK_Department_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Department_Name",
                     IsUnique = true
@@ -446,7 +447,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:Employee", "PK_Employee_BusinessEntityID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:Employee PK_Employee_BusinessEntityID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Employee_BusinessEntityID",
                     IsUnique = true
@@ -459,7 +460,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:Employee", "AK_Employee_LoginID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:Employee AK_Employee_LoginID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Employee_LoginID",
                     IsUnique = true
@@ -472,7 +473,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:Employee", "AK_Employee_NationalIDNumber") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:Employee AK_Employee_NationalIDNumber");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Employee_NationalIDNumber",
                     IsUnique = true
@@ -485,7 +486,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:Employee", "AK_Employee_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:Employee AK_Employee_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Employee_rowguid",
                     IsUnique = true
@@ -498,7 +499,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:EmployeeDepartmentHistory", "PK_EmployeeDepartmentHistory_BusinessEntityID_StartDate_DepartmentID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:EmployeeDepartmentHistory PK_EmployeeDepartmentHistory_BusinessEntityID_StartDate_DepartmentID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_EmployeeDepartmentHistory_BusinessEntityID_StartDate_DepartmentID",
                     IsUnique = true
@@ -514,7 +515,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:EmployeeDepartmentHistory", "IX_EmployeeDepartmentHistory_DepartmentID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:EmployeeDepartmentHistory IX_EmployeeDepartmentHistory_DepartmentID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_EmployeeDepartmentHistory_DepartmentID",
                     IsUnique = false
@@ -527,7 +528,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:EmployeeDepartmentHistory", "IX_EmployeeDepartmentHistory_ShiftID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:EmployeeDepartmentHistory IX_EmployeeDepartmentHistory_ShiftID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_EmployeeDepartmentHistory_ShiftID",
                     IsUnique = false
@@ -540,7 +541,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:EmployeePayHistory", "PK_EmployeePayHistory_BusinessEntityID_RateChangeDate") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:EmployeePayHistory PK_EmployeePayHistory_BusinessEntityID_RateChangeDate");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_EmployeePayHistory_BusinessEntityID_RateChangeDate",
                     IsUnique = true
@@ -554,7 +555,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:JobCandidate", "PK_JobCandidate_JobCandidateID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:JobCandidate PK_JobCandidate_JobCandidateID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_JobCandidate_JobCandidateID",
                     IsUnique = true
@@ -567,7 +568,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:JobCandidate", "IX_JobCandidate_BusinessEntityID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:JobCandidate IX_JobCandidate_BusinessEntityID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_JobCandidate_BusinessEntityID",
                     IsUnique = false
@@ -580,7 +581,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:Shift", "PK_Shift_ShiftID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:Shift PK_Shift_ShiftID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Shift_ShiftID",
                     IsUnique = true
@@ -593,7 +594,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:Shift", "AK_Shift_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:Shift AK_Shift_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Shift_Name",
                     IsUnique = true
@@ -606,7 +607,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:HumanResources:Shift", "AK_Shift_StartTime_EndTime") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:HumanResources:Shift AK_Shift_StartTime_EndTime");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Shift_StartTime_EndTime",
                     IsUnique = true
@@ -620,7 +621,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Address", "PK_Address_AddressID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Address PK_Address_AddressID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Address_AddressID",
                     IsUnique = true
@@ -633,7 +634,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Address", "AK_Address_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Address AK_Address_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Address_rowguid",
                     IsUnique = true
@@ -646,7 +647,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Address", "IX_Address_AddressLine1_AddressLine2_City_StateProvinceID_PostalCode") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Address IX_Address_AddressLine1_AddressLine2_City_StateProvinceID_PostalCode");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_Address_AddressLine1_AddressLine2_City_StateProvinceID_PostalCode",
                     IsUnique = true
@@ -663,7 +664,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Address", "IX_Address_StateProvinceID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Address IX_Address_StateProvinceID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_Address_StateProvinceID",
                     IsUnique = false
@@ -676,7 +677,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:AddressType", "PK_AddressType_AddressTypeID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:AddressType PK_AddressType_AddressTypeID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_AddressType_AddressTypeID",
                     IsUnique = true
@@ -689,7 +690,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:AddressType", "AK_AddressType_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:AddressType AK_AddressType_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_AddressType_rowguid",
                     IsUnique = true
@@ -702,7 +703,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:AddressType", "AK_AddressType_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:AddressType AK_AddressType_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_AddressType_Name",
                     IsUnique = true
@@ -715,7 +716,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:BusinessEntity", "PK_BusinessEntity_BusinessEntityID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:BusinessEntity PK_BusinessEntity_BusinessEntityID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_BusinessEntity_BusinessEntityID",
                     IsUnique = true
@@ -728,7 +729,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:BusinessEntity", "AK_BusinessEntity_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:BusinessEntity AK_BusinessEntity_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_BusinessEntity_rowguid",
                     IsUnique = true
@@ -741,7 +742,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:BusinessEntityAddress", "PK_BusinessEntityAddress_BusinessEntityID_AddressID_AddressTypeID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:BusinessEntityAddress PK_BusinessEntityAddress_BusinessEntityID_AddressID_AddressTypeID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_BusinessEntityAddress_BusinessEntityID_AddressID_AddressTypeID",
                     IsUnique = true
@@ -756,7 +757,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:BusinessEntityAddress", "AK_BusinessEntityAddress_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:BusinessEntityAddress AK_BusinessEntityAddress_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_BusinessEntityAddress_rowguid",
                     IsUnique = true
@@ -769,7 +770,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:BusinessEntityAddress", "IX_BusinessEntityAddress_AddressID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:BusinessEntityAddress IX_BusinessEntityAddress_AddressID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_BusinessEntityAddress_AddressID",
                     IsUnique = false
@@ -782,7 +783,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:BusinessEntityAddress", "IX_BusinessEntityAddress_AddressTypeID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:BusinessEntityAddress IX_BusinessEntityAddress_AddressTypeID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_BusinessEntityAddress_AddressTypeID",
                     IsUnique = false
@@ -795,7 +796,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:BusinessEntityContact", "PK_BusinessEntityContact_BusinessEntityID_PersonID_ContactTypeID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:BusinessEntityContact PK_BusinessEntityContact_BusinessEntityID_PersonID_ContactTypeID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_BusinessEntityContact_BusinessEntityID_PersonID_ContactTypeID",
                     IsUnique = true
@@ -810,7 +811,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:BusinessEntityContact", "AK_BusinessEntityContact_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:BusinessEntityContact AK_BusinessEntityContact_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_BusinessEntityContact_rowguid",
                     IsUnique = true
@@ -823,7 +824,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:BusinessEntityContact", "IX_BusinessEntityContact_PersonID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:BusinessEntityContact IX_BusinessEntityContact_PersonID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_BusinessEntityContact_PersonID",
                     IsUnique = false
@@ -836,7 +837,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:BusinessEntityContact", "IX_BusinessEntityContact_ContactTypeID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:BusinessEntityContact IX_BusinessEntityContact_ContactTypeID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_BusinessEntityContact_ContactTypeID",
                     IsUnique = false
@@ -849,7 +850,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:ContactType", "PK_ContactType_ContactTypeID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:ContactType PK_ContactType_ContactTypeID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ContactType_ContactTypeID",
                     IsUnique = true
@@ -862,7 +863,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:ContactType", "AK_ContactType_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:ContactType AK_ContactType_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_ContactType_Name",
                     IsUnique = true
@@ -875,7 +876,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:CountryRegion", "PK_CountryRegion_CountryRegionCode") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:CountryRegion PK_CountryRegion_CountryRegionCode");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_CountryRegion_CountryRegionCode",
                     IsUnique = true
@@ -888,7 +889,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:CountryRegion", "AK_CountryRegion_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:CountryRegion AK_CountryRegion_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_CountryRegion_Name",
                     IsUnique = true
@@ -901,7 +902,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:EmailAddress", "PK_EmailAddress_BusinessEntityID_EmailAddressID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:EmailAddress PK_EmailAddress_BusinessEntityID_EmailAddressID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_EmailAddress_BusinessEntityID_EmailAddressID",
                     IsUnique = true
@@ -915,7 +916,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:EmailAddress", "IX_EmailAddress_EmailAddress") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:EmailAddress IX_EmailAddress_EmailAddress");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_EmailAddress_EmailAddress",
                     IsUnique = false
@@ -928,7 +929,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Password", "PK_Password_BusinessEntityID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Password PK_Password_BusinessEntityID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Password_BusinessEntityID",
                     IsUnique = true
@@ -941,7 +942,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Person", "PK_Person_BusinessEntityID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Person PK_Person_BusinessEntityID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Person_BusinessEntityID",
                     IsUnique = true
@@ -954,7 +955,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Person", "IX_Person_LastName_FirstName_MiddleName") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Person IX_Person_LastName_FirstName_MiddleName");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_Person_LastName_FirstName_MiddleName",
                     IsUnique = false
@@ -969,7 +970,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Person", "AK_Person_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Person AK_Person_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Person_rowguid",
                     IsUnique = true
@@ -982,7 +983,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Person", "PXML_Person_AddContact") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Person PXML_Person_AddContact");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PXML_Person_AddContact",
                     IsUnique = false
@@ -995,7 +996,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Person", "PXML_Person_Demographics") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Person PXML_Person_Demographics");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PXML_Person_Demographics",
                     IsUnique = false
@@ -1008,7 +1009,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Person", "XMLPATH_Person_Demographics") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Person XMLPATH_Person_Demographics");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "XMLPATH_Person_Demographics",
                     IsUnique = false
@@ -1021,7 +1022,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Person", "XMLPROPERTY_Person_Demographics") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Person XMLPROPERTY_Person_Demographics");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "XMLPROPERTY_Person_Demographics",
                     IsUnique = false
@@ -1034,7 +1035,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:Person", "XMLVALUE_Person_Demographics") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:Person XMLVALUE_Person_Demographics");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "XMLVALUE_Person_Demographics",
                     IsUnique = false
@@ -1047,7 +1048,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:PersonPhone", "PK_PersonPhone_BusinessEntityID_PhoneNumber_PhoneNumberTypeID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:PersonPhone PK_PersonPhone_BusinessEntityID_PhoneNumber_PhoneNumberTypeID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_PersonPhone_BusinessEntityID_PhoneNumber_PhoneNumberTypeID",
                     IsUnique = true
@@ -1062,7 +1063,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:PersonPhone", "IX_PersonPhone_PhoneNumber") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:PersonPhone IX_PersonPhone_PhoneNumber");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_PersonPhone_PhoneNumber",
                     IsUnique = false
@@ -1075,7 +1076,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:PhoneNumberType", "PK_PhoneNumberType_PhoneNumberTypeID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:PhoneNumberType PK_PhoneNumberType_PhoneNumberTypeID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_PhoneNumberType_PhoneNumberTypeID",
                     IsUnique = true
@@ -1088,7 +1089,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:StateProvince", "PK_StateProvince_StateProvinceID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:StateProvince PK_StateProvince_StateProvinceID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_StateProvince_StateProvinceID",
                     IsUnique = true
@@ -1101,7 +1102,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:StateProvince", "AK_StateProvince_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:StateProvince AK_StateProvince_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_StateProvince_Name",
                     IsUnique = true
@@ -1114,7 +1115,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:StateProvince", "AK_StateProvince_StateProvinceCode_CountryRegionCode") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:StateProvince AK_StateProvince_StateProvinceCode_CountryRegionCode");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_StateProvince_StateProvinceCode_CountryRegionCode",
                     IsUnique = true
@@ -1128,7 +1129,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Person:StateProvince", "AK_StateProvince_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Person:StateProvince AK_StateProvince_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_StateProvince_rowguid",
                     IsUnique = true
@@ -1141,7 +1142,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:BillOfMaterials", "AK_BillOfMaterials_ProductAssemblyID_ComponentID_StartDate") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:BillOfMaterials AK_BillOfMaterials_ProductAssemblyID_ComponentID_StartDate");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_BillOfMaterials_ProductAssemblyID_ComponentID_StartDate",
                     IsUnique = true
@@ -1156,7 +1157,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:BillOfMaterials", "PK_BillOfMaterials_BillOfMaterialsID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:BillOfMaterials PK_BillOfMaterials_BillOfMaterialsID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_BillOfMaterials_BillOfMaterialsID",
                     IsUnique = true
@@ -1169,7 +1170,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:BillOfMaterials", "IX_BillOfMaterials_UnitMeasureCode") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:BillOfMaterials IX_BillOfMaterials_UnitMeasureCode");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_BillOfMaterials_UnitMeasureCode",
                     IsUnique = false
@@ -1182,7 +1183,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Culture", "PK_Culture_CultureID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Culture PK_Culture_CultureID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Culture_CultureID",
                     IsUnique = true
@@ -1195,7 +1196,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Culture", "AK_Culture_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Culture AK_Culture_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Culture_Name",
                     IsUnique = true
@@ -1208,7 +1209,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Document", "PK_Document") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Document PK_Document");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Document",
                     IsUnique = true
@@ -1221,7 +1222,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Document", "UQ__Document__F73921F7BAEE5BF6") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Document UQ__Document__F73921F7BAEE5BF6");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "UQ__Document__F73921F7BAEE5BF6",
                     IsUnique = true
@@ -1234,7 +1235,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Document", "AK_Document_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Document AK_Document_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Document_rowguid",
                     IsUnique = true
@@ -1247,7 +1248,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Document", "IX_Document_FileName_Revision") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Document IX_Document_FileName_Revision");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_Document_FileName_Revision",
                     IsUnique = false
@@ -1261,7 +1262,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Illustration", "PK_Illustration_IllustrationID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Illustration PK_Illustration_IllustrationID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Illustration_IllustrationID",
                     IsUnique = true
@@ -1274,7 +1275,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Location", "PK_Location_LocationID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Location PK_Location_LocationID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Location_LocationID",
                     IsUnique = true
@@ -1287,7 +1288,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Location", "AK_Location_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Location AK_Location_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Location_Name",
                     IsUnique = true
@@ -1300,7 +1301,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Product", "PK_Product_ProductID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Product PK_Product_ProductID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Product_ProductID",
                     IsUnique = true
@@ -1313,7 +1314,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Product", "AK_Product_ProductNumber") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Product AK_Product_ProductNumber");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Product_ProductNumber",
                     IsUnique = true
@@ -1326,7 +1327,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Product", "AK_Product_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Product AK_Product_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Product_Name",
                     IsUnique = true
@@ -1339,7 +1340,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:Product", "AK_Product_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:Product AK_Product_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Product_rowguid",
                     IsUnique = true
@@ -1352,7 +1353,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductCategory", "PK_ProductCategory_ProductCategoryID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductCategory PK_ProductCategory_ProductCategoryID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductCategory_ProductCategoryID",
                     IsUnique = true
@@ -1365,7 +1366,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductCategory", "AK_ProductCategory_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductCategory AK_ProductCategory_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_ProductCategory_Name",
                     IsUnique = true
@@ -1378,7 +1379,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductCategory", "AK_ProductCategory_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductCategory AK_ProductCategory_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_ProductCategory_rowguid",
                     IsUnique = true
@@ -1391,7 +1392,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductCostHistory", "PK_ProductCostHistory_ProductID_StartDate") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductCostHistory PK_ProductCostHistory_ProductID_StartDate");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductCostHistory_ProductID_StartDate",
                     IsUnique = true
@@ -1405,7 +1406,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductDescription", "PK_ProductDescription_ProductDescriptionID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductDescription PK_ProductDescription_ProductDescriptionID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductDescription_ProductDescriptionID",
                     IsUnique = true
@@ -1418,7 +1419,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductDescription", "AK_ProductDescription_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductDescription AK_ProductDescription_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_ProductDescription_rowguid",
                     IsUnique = true
@@ -1431,7 +1432,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductDocument", "PK_ProductDocument") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductDocument PK_ProductDocument");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductDocument",
                     IsUnique = true
@@ -1444,7 +1445,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductInventory", "PK_ProductInventory_ProductID_LocationID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductInventory PK_ProductInventory_ProductID_LocationID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductInventory_ProductID_LocationID",
                     IsUnique = true
@@ -1458,7 +1459,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductListPriceHistory", "PK_ProductListPriceHistory_ProductID_StartDate") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductListPriceHistory PK_ProductListPriceHistory_ProductID_StartDate");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductListPriceHistory_ProductID_StartDate",
                     IsUnique = true
@@ -1472,7 +1473,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductModel", "PK_ProductModel_ProductModelID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductModel PK_ProductModel_ProductModelID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductModel_ProductModelID",
                     IsUnique = true
@@ -1485,7 +1486,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductModel", "AK_ProductModel_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductModel AK_ProductModel_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_ProductModel_Name",
                     IsUnique = true
@@ -1498,7 +1499,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductModel", "AK_ProductModel_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductModel AK_ProductModel_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_ProductModel_rowguid",
                     IsUnique = true
@@ -1511,7 +1512,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductModel", "PXML_ProductModel_CatalogDescription") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductModel PXML_ProductModel_CatalogDescription");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PXML_ProductModel_CatalogDescription",
                     IsUnique = false
@@ -1524,7 +1525,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductModel", "PXML_ProductModel_Instructions") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductModel PXML_ProductModel_Instructions");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PXML_ProductModel_Instructions",
                     IsUnique = false
@@ -1537,7 +1538,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductModelIllustration", "PK_ProductModelIllustration_ProductModelID_IllustrationID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductModelIllustration PK_ProductModelIllustration_ProductModelID_IllustrationID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductModelIllustration_ProductModelID_IllustrationID",
                     IsUnique = true
@@ -1551,7 +1552,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductModelProductDescriptionCulture", "PK_ProductModelProductDescriptionCulture_ProductModelID_ProductDescriptionID_CultureID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductModelProductDescriptionCulture PK_ProductModelProductDescriptionCulture_ProductModelID_ProductDescriptionID_CultureID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductModelProductDescriptionCulture_ProductModelID_ProductDescriptionID_CultureID",
                     IsUnique = true
@@ -1566,7 +1567,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductPhoto", "PK_ProductPhoto_ProductPhotoID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductPhoto PK_ProductPhoto_ProductPhotoID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductPhoto_ProductPhotoID",
                     IsUnique = true
@@ -1579,7 +1580,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductProductPhoto", "PK_ProductProductPhoto_ProductID_ProductPhotoID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductProductPhoto PK_ProductProductPhoto_ProductID_ProductPhotoID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductProductPhoto_ProductID_ProductPhotoID",
                     IsUnique = true
@@ -1593,7 +1594,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductReview", "PK_ProductReview_ProductReviewID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductReview PK_ProductReview_ProductReviewID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductReview_ProductReviewID",
                     IsUnique = true
@@ -1606,7 +1607,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductReview", "IX_ProductReview_ProductID_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductReview IX_ProductReview_ProductID_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_ProductReview_ProductID_Name",
                     IsUnique = false
@@ -1620,7 +1621,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductSubcategory", "PK_ProductSubcategory_ProductSubcategoryID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductSubcategory PK_ProductSubcategory_ProductSubcategoryID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductSubcategory_ProductSubcategoryID",
                     IsUnique = true
@@ -1633,7 +1634,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductSubcategory", "AK_ProductSubcategory_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductSubcategory AK_ProductSubcategory_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_ProductSubcategory_Name",
                     IsUnique = true
@@ -1646,7 +1647,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ProductSubcategory", "AK_ProductSubcategory_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ProductSubcategory AK_ProductSubcategory_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_ProductSubcategory_rowguid",
                     IsUnique = true
@@ -1659,7 +1660,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ScrapReason", "PK_ScrapReason_ScrapReasonID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ScrapReason PK_ScrapReason_ScrapReasonID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ScrapReason_ScrapReasonID",
                     IsUnique = true
@@ -1672,7 +1673,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:ScrapReason", "AK_ScrapReason_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:ScrapReason AK_ScrapReason_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_ScrapReason_Name",
                     IsUnique = true
@@ -1685,7 +1686,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:TransactionHistory", "PK_TransactionHistory_TransactionID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:TransactionHistory PK_TransactionHistory_TransactionID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_TransactionHistory_TransactionID",
                     IsUnique = true
@@ -1698,7 +1699,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:TransactionHistory", "IX_TransactionHistory_ProductID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:TransactionHistory IX_TransactionHistory_ProductID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_TransactionHistory_ProductID",
                     IsUnique = false
@@ -1711,7 +1712,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:TransactionHistory", "IX_TransactionHistory_ReferenceOrderID_ReferenceOrderLineID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:TransactionHistory IX_TransactionHistory_ReferenceOrderID_ReferenceOrderLineID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_TransactionHistory_ReferenceOrderID_ReferenceOrderLineID",
                     IsUnique = false
@@ -1725,7 +1726,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:TransactionHistoryArchive", "PK_TransactionHistoryArchive_TransactionID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:TransactionHistoryArchive PK_TransactionHistoryArchive_TransactionID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_TransactionHistoryArchive_TransactionID",
                     IsUnique = true
@@ -1738,7 +1739,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:TransactionHistoryArchive", "IX_TransactionHistoryArchive_ProductID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:TransactionHistoryArchive IX_TransactionHistoryArchive_ProductID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_TransactionHistoryArchive_ProductID",
                     IsUnique = false
@@ -1751,7 +1752,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:TransactionHistoryArchive", "IX_TransactionHistoryArchive_ReferenceOrderID_ReferenceOrderLineID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:TransactionHistoryArchive IX_TransactionHistoryArchive_ReferenceOrderID_ReferenceOrderLineID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_TransactionHistoryArchive_ReferenceOrderID_ReferenceOrderLineID",
                     IsUnique = false
@@ -1765,7 +1766,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:UnitMeasure", "PK_UnitMeasure_UnitMeasureCode") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:UnitMeasure PK_UnitMeasure_UnitMeasureCode");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_UnitMeasure_UnitMeasureCode",
                     IsUnique = true
@@ -1778,7 +1779,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:UnitMeasure", "AK_UnitMeasure_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:UnitMeasure AK_UnitMeasure_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_UnitMeasure_Name",
                     IsUnique = true
@@ -1791,7 +1792,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:WorkOrder", "PK_WorkOrder_WorkOrderID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:WorkOrder PK_WorkOrder_WorkOrderID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_WorkOrder_WorkOrderID",
                     IsUnique = true
@@ -1804,7 +1805,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:WorkOrder", "IX_WorkOrder_ScrapReasonID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:WorkOrder IX_WorkOrder_ScrapReasonID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_WorkOrder_ScrapReasonID",
                     IsUnique = false
@@ -1817,7 +1818,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:WorkOrder", "IX_WorkOrder_ProductID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:WorkOrder IX_WorkOrder_ProductID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_WorkOrder_ProductID",
                     IsUnique = false
@@ -1830,7 +1831,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:WorkOrderRouting", "PK_WorkOrderRouting_WorkOrderID_ProductID_OperationSequence") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:WorkOrderRouting PK_WorkOrderRouting_WorkOrderID_ProductID_OperationSequence");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_WorkOrderRouting_WorkOrderID_ProductID_OperationSequence",
                     IsUnique = true
@@ -1845,7 +1846,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Production:WorkOrderRouting", "IX_WorkOrderRouting_ProductID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Production:WorkOrderRouting IX_WorkOrderRouting_ProductID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_WorkOrderRouting_ProductID",
                     IsUnique = false
@@ -1858,7 +1859,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:ProductVendor", "PK_ProductVendor_ProductID_BusinessEntityID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:ProductVendor PK_ProductVendor_ProductID_BusinessEntityID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ProductVendor_ProductID_BusinessEntityID",
                     IsUnique = true
@@ -1872,7 +1873,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:ProductVendor", "IX_ProductVendor_UnitMeasureCode") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:ProductVendor IX_ProductVendor_UnitMeasureCode");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_ProductVendor_UnitMeasureCode",
                     IsUnique = false
@@ -1885,7 +1886,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:ProductVendor", "IX_ProductVendor_BusinessEntityID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:ProductVendor IX_ProductVendor_BusinessEntityID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_ProductVendor_BusinessEntityID",
                     IsUnique = false
@@ -1898,7 +1899,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:PurchaseOrderDetail", "PK_PurchaseOrderDetail_PurchaseOrderID_PurchaseOrderDetailID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:PurchaseOrderDetail PK_PurchaseOrderDetail_PurchaseOrderID_PurchaseOrderDetailID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_PurchaseOrderDetail_PurchaseOrderID_PurchaseOrderDetailID",
                     IsUnique = true
@@ -1912,7 +1913,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:PurchaseOrderDetail", "IX_PurchaseOrderDetail_ProductID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:PurchaseOrderDetail IX_PurchaseOrderDetail_ProductID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_PurchaseOrderDetail_ProductID",
                     IsUnique = false
@@ -1925,7 +1926,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:PurchaseOrderHeader", "PK_PurchaseOrderHeader_PurchaseOrderID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:PurchaseOrderHeader PK_PurchaseOrderHeader_PurchaseOrderID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_PurchaseOrderHeader_PurchaseOrderID",
                     IsUnique = true
@@ -1938,7 +1939,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:PurchaseOrderHeader", "IX_PurchaseOrderHeader_VendorID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:PurchaseOrderHeader IX_PurchaseOrderHeader_VendorID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_PurchaseOrderHeader_VendorID",
                     IsUnique = false
@@ -1951,7 +1952,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:PurchaseOrderHeader", "IX_PurchaseOrderHeader_EmployeeID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:PurchaseOrderHeader IX_PurchaseOrderHeader_EmployeeID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_PurchaseOrderHeader_EmployeeID",
                     IsUnique = false
@@ -1964,7 +1965,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:ShipMethod", "PK_ShipMethod_ShipMethodID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:ShipMethod PK_ShipMethod_ShipMethodID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ShipMethod_ShipMethodID",
                     IsUnique = true
@@ -1977,7 +1978,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:ShipMethod", "AK_ShipMethod_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:ShipMethod AK_ShipMethod_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_ShipMethod_Name",
                     IsUnique = true
@@ -1990,7 +1991,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:ShipMethod", "AK_ShipMethod_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:ShipMethod AK_ShipMethod_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_ShipMethod_rowguid",
                     IsUnique = true
@@ -2003,7 +2004,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:Vendor", "PK_Vendor_BusinessEntityID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:Vendor PK_Vendor_BusinessEntityID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Vendor_BusinessEntityID",
                     IsUnique = true
@@ -2016,7 +2017,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Purchasing:Vendor", "AK_Vendor_AccountNumber") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Purchasing:Vendor AK_Vendor_AccountNumber");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Vendor_AccountNumber",
                     IsUnique = true
@@ -2029,7 +2030,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:CountryRegionCurrency", "PK_CountryRegionCurrency_CountryRegionCode_CurrencyCode") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:CountryRegionCurrency PK_CountryRegionCurrency_CountryRegionCode_CurrencyCode");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_CountryRegionCurrency_CountryRegionCode_CurrencyCode",
                     IsUnique = true
@@ -2043,7 +2044,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:CountryRegionCurrency", "IX_CountryRegionCurrency_CurrencyCode") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:CountryRegionCurrency IX_CountryRegionCurrency_CurrencyCode");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_CountryRegionCurrency_CurrencyCode",
                     IsUnique = false
@@ -2056,7 +2057,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:CreditCard", "PK_CreditCard_CreditCardID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:CreditCard PK_CreditCard_CreditCardID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_CreditCard_CreditCardID",
                     IsUnique = true
@@ -2069,7 +2070,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:CreditCard", "AK_CreditCard_CardNumber") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:CreditCard AK_CreditCard_CardNumber");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_CreditCard_CardNumber",
                     IsUnique = true
@@ -2082,7 +2083,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:Currency", "PK_Currency_CurrencyCode") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:Currency PK_Currency_CurrencyCode");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Currency_CurrencyCode",
                     IsUnique = true
@@ -2095,7 +2096,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:Currency", "AK_Currency_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:Currency AK_Currency_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Currency_Name",
                     IsUnique = true
@@ -2108,7 +2109,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:CurrencyRate", "PK_CurrencyRate_CurrencyRateID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:CurrencyRate PK_CurrencyRate_CurrencyRateID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_CurrencyRate_CurrencyRateID",
                     IsUnique = true
@@ -2121,7 +2122,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:CurrencyRate", "AK_CurrencyRate_CurrencyRateDate_FromCurrencyCode_ToCurrencyCode") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:CurrencyRate AK_CurrencyRate_CurrencyRateDate_FromCurrencyCode_ToCurrencyCode");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_CurrencyRate_CurrencyRateDate_FromCurrencyCode_ToCurrencyCode",
                     IsUnique = true
@@ -2136,7 +2137,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:Customer", "PK_Customer_CustomerID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:Customer PK_Customer_CustomerID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Customer_CustomerID",
                     IsUnique = true
@@ -2149,7 +2150,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:Customer", "AK_Customer_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:Customer AK_Customer_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Customer_rowguid",
                     IsUnique = true
@@ -2162,7 +2163,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:Customer", "AK_Customer_AccountNumber") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:Customer AK_Customer_AccountNumber");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Customer_AccountNumber",
                     IsUnique = true
@@ -2175,7 +2176,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:Customer", "IX_Customer_TerritoryID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:Customer IX_Customer_TerritoryID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_Customer_TerritoryID",
                     IsUnique = false
@@ -2188,7 +2189,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:PersonCreditCard", "PK_PersonCreditCard_BusinessEntityID_CreditCardID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:PersonCreditCard PK_PersonCreditCard_BusinessEntityID_CreditCardID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_PersonCreditCard_BusinessEntityID_CreditCardID",
                     IsUnique = true
@@ -2202,7 +2203,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesOrderDetail", "PK_SalesOrderDetail_SalesOrderID_SalesOrderDetailID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesOrderDetail PK_SalesOrderDetail_SalesOrderID_SalesOrderDetailID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_SalesOrderDetail_SalesOrderID_SalesOrderDetailID",
                     IsUnique = true
@@ -2216,7 +2217,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesOrderDetail", "AK_SalesOrderDetail_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesOrderDetail AK_SalesOrderDetail_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SalesOrderDetail_rowguid",
                     IsUnique = true
@@ -2229,7 +2230,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesOrderDetail", "IX_SalesOrderDetail_ProductID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesOrderDetail IX_SalesOrderDetail_ProductID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_SalesOrderDetail_ProductID",
                     IsUnique = false
@@ -2242,7 +2243,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesOrderHeader", "PK_SalesOrderHeader_SalesOrderID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesOrderHeader PK_SalesOrderHeader_SalesOrderID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_SalesOrderHeader_SalesOrderID",
                     IsUnique = true
@@ -2255,7 +2256,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesOrderHeader", "AK_SalesOrderHeader_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesOrderHeader AK_SalesOrderHeader_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SalesOrderHeader_rowguid",
                     IsUnique = true
@@ -2268,7 +2269,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesOrderHeader", "AK_SalesOrderHeader_SalesOrderNumber") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesOrderHeader AK_SalesOrderHeader_SalesOrderNumber");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SalesOrderHeader_SalesOrderNumber",
                     IsUnique = true
@@ -2281,7 +2282,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesOrderHeader", "IX_SalesOrderHeader_CustomerID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesOrderHeader IX_SalesOrderHeader_CustomerID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_SalesOrderHeader_CustomerID",
                     IsUnique = false
@@ -2294,7 +2295,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesOrderHeader", "IX_SalesOrderHeader_SalesPersonID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesOrderHeader IX_SalesOrderHeader_SalesPersonID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_SalesOrderHeader_SalesPersonID",
                     IsUnique = false
@@ -2307,7 +2308,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesOrderHeaderSalesReason", "PK_SalesOrderHeaderSalesReason_SalesOrderID_SalesReasonID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesOrderHeaderSalesReason PK_SalesOrderHeaderSalesReason_SalesOrderID_SalesReasonID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_SalesOrderHeaderSalesReason_SalesOrderID_SalesReasonID",
                     IsUnique = true
@@ -2321,7 +2322,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesPerson", "PK_SalesPerson_BusinessEntityID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesPerson PK_SalesPerson_BusinessEntityID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_SalesPerson_BusinessEntityID",
                     IsUnique = true
@@ -2334,7 +2335,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesPerson", "AK_SalesPerson_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesPerson AK_SalesPerson_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SalesPerson_rowguid",
                     IsUnique = true
@@ -2347,7 +2348,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesPersonQuotaHistory", "PK_SalesPersonQuotaHistory_BusinessEntityID_QuotaDate") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesPersonQuotaHistory PK_SalesPersonQuotaHistory_BusinessEntityID_QuotaDate");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_SalesPersonQuotaHistory_BusinessEntityID_QuotaDate",
                     IsUnique = true
@@ -2361,7 +2362,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesPersonQuotaHistory", "AK_SalesPersonQuotaHistory_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesPersonQuotaHistory AK_SalesPersonQuotaHistory_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SalesPersonQuotaHistory_rowguid",
                     IsUnique = true
@@ -2374,7 +2375,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesReason", "PK_SalesReason_SalesReasonID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesReason PK_SalesReason_SalesReasonID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_SalesReason_SalesReasonID",
                     IsUnique = true
@@ -2387,7 +2388,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesTaxRate", "PK_SalesTaxRate_SalesTaxRateID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesTaxRate PK_SalesTaxRate_SalesTaxRateID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_SalesTaxRate_SalesTaxRateID",
                     IsUnique = true
@@ -2400,7 +2401,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesTaxRate", "AK_SalesTaxRate_StateProvinceID_TaxType") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesTaxRate AK_SalesTaxRate_StateProvinceID_TaxType");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SalesTaxRate_StateProvinceID_TaxType",
                     IsUnique = true
@@ -2414,7 +2415,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesTaxRate", "AK_SalesTaxRate_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesTaxRate AK_SalesTaxRate_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SalesTaxRate_rowguid",
                     IsUnique = true
@@ -2427,7 +2428,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesTerritory", "PK_SalesTerritory_TerritoryID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesTerritory PK_SalesTerritory_TerritoryID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_SalesTerritory_TerritoryID",
                     IsUnique = true
@@ -2440,7 +2441,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesTerritory", "AK_SalesTerritory_Name") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesTerritory AK_SalesTerritory_Name");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SalesTerritory_Name",
                     IsUnique = true
@@ -2453,7 +2454,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesTerritory", "AK_SalesTerritory_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesTerritory AK_SalesTerritory_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SalesTerritory_rowguid",
                     IsUnique = true
@@ -2466,7 +2467,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesTerritoryHistory", "PK_SalesTerritoryHistory_BusinessEntityID_StartDate_TerritoryID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesTerritoryHistory PK_SalesTerritoryHistory_BusinessEntityID_StartDate_TerritoryID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_SalesTerritoryHistory_BusinessEntityID_StartDate_TerritoryID",
                     IsUnique = true
@@ -2481,7 +2482,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SalesTerritoryHistory", "AK_SalesTerritoryHistory_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SalesTerritoryHistory AK_SalesTerritoryHistory_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SalesTerritoryHistory_rowguid",
                     IsUnique = true
@@ -2494,7 +2495,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:ShoppingCartItem", "PK_ShoppingCartItem_ShoppingCartItemID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:ShoppingCartItem PK_ShoppingCartItem_ShoppingCartItemID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_ShoppingCartItem_ShoppingCartItemID",
                     IsUnique = true
@@ -2507,7 +2508,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:ShoppingCartItem", "IX_ShoppingCartItem_ShoppingCartID_ProductID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:ShoppingCartItem IX_ShoppingCartItem_ShoppingCartID_ProductID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_ShoppingCartItem_ShoppingCartID_ProductID",
                     IsUnique = false
@@ -2521,7 +2522,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SpecialOffer", "PK_SpecialOffer_SpecialOfferID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SpecialOffer PK_SpecialOffer_SpecialOfferID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_SpecialOffer_SpecialOfferID",
                     IsUnique = true
@@ -2534,7 +2535,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SpecialOffer", "AK_SpecialOffer_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SpecialOffer AK_SpecialOffer_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SpecialOffer_rowguid",
                     IsUnique = true
@@ -2547,7 +2548,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SpecialOfferProduct", "PK_SpecialOfferProduct_SpecialOfferID_ProductID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SpecialOfferProduct PK_SpecialOfferProduct_SpecialOfferID_ProductID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_SpecialOfferProduct_SpecialOfferID_ProductID",
                     IsUnique = true
@@ -2561,7 +2562,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SpecialOfferProduct", "AK_SpecialOfferProduct_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SpecialOfferProduct AK_SpecialOfferProduct_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_SpecialOfferProduct_rowguid",
                     IsUnique = true
@@ -2574,7 +2575,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:SpecialOfferProduct", "IX_SpecialOfferProduct_ProductID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:SpecialOfferProduct IX_SpecialOfferProduct_ProductID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_SpecialOfferProduct_ProductID",
                     IsUnique = false
@@ -2587,7 +2588,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:Store", "PK_Store_BusinessEntityID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:Store PK_Store_BusinessEntityID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PK_Store_BusinessEntityID",
                     IsUnique = true
@@ -2600,7 +2601,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:Store", "AK_Store_rowguid") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:Store AK_Store_rowguid");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "AK_Store_rowguid",
                     IsUnique = true
@@ -2613,7 +2614,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:Store", "IX_Store_SalesPersonID") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:Store IX_Store_SalesPersonID");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "IX_Store_SalesPersonID",
                     IsUnique = false
@@ -2626,7 +2627,7 @@ namespace Katzebase.TestHarness
             if (client.Schema.Indexes.Exists("AdventureWorks2012:Sales:Store", "PXML_Store_Demographics") == false)
             {
                 Console.WriteLine("Creating index: AdventureWorks2012:Sales:Store PXML_Store_Demographics");
-                Index index = new Index()
+                var index = new KbIndex()
                 {
                     Name = "PXML_Store_Demographics",
                     IsUnique = false
@@ -2641,7 +2642,7 @@ namespace Katzebase.TestHarness
 
         #endregion
 
-        private static Random random = new Random();
+        private static readonly Random random = new Random();
         public static string RandomString(int length)
         {
             const string chars = "ABCDEFG";

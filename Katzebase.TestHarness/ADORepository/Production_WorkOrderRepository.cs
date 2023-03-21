@@ -63,7 +63,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Production:WorkOrder", new Document(new Models.Production_WorkOrder
+                                    client.Document.Store("AdventureWorks2012:Production:WorkOrder", new KbDocument(new Models.Production_WorkOrder
                                     {
                                         WorkOrderID = dataReader.GetInt32(indexOfWorkOrderID),
                                         ProductID = dataReader.GetInt32(indexOfProductID),

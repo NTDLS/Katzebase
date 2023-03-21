@@ -65,7 +65,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Production:WorkOrderRouting", new Document(new Models.Production_WorkOrderRouting
+                                    client.Document.Store("AdventureWorks2012:Production:WorkOrderRouting", new KbDocument(new Models.Production_WorkOrderRouting
                                     {
                                         WorkOrderID = dataReader.GetInt32(indexOfWorkOrderID),
                                         ProductID = dataReader.GetInt32(indexOfProductID),

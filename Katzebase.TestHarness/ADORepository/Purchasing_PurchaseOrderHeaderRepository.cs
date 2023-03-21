@@ -66,7 +66,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Purchasing:PurchaseOrderHeader", new Document(new Models.Purchasing_PurchaseOrderHeader
+                                    client.Document.Store("AdventureWorks2012:Purchasing:PurchaseOrderHeader", new KbDocument(new Models.Purchasing_PurchaseOrderHeader
                                     {
                                         PurchaseOrderID = dataReader.GetInt32(indexOfPurchaseOrderID),
                                         RevisionNumber = dataReader.GetByte(indexOfRevisionNumber),

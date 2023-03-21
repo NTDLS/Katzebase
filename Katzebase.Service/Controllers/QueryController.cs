@@ -2,20 +2,25 @@
 using Katzebase.Library.Payloads;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Threading;
-using System.Web.Http;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Katzebase.Service.Controllers
 {
-    public class QueryController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class QueryController
     {
-        public ActionResponse Execute(Guid sessionId, [FromBody] string value)
+        [HttpGet]
+        [Route("{sessionId}/Execute")]
+        public KbActionResponse Execute(Guid sessionId, [FromBody] string value)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            ActionResponseID result = new ActionResponseID();
+            KbActionResponseID result = new KbActionResponseID();
 
             try
             {

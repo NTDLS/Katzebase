@@ -56,7 +56,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Production:Illustration", new Document(new Models.Production_Illustration
+                                    client.Document.Store("AdventureWorks2012:Production:Illustration", new KbDocument(new Models.Production_Illustration
                                     {
                                         IllustrationID = dataReader.GetInt32(indexOfIllustrationID),
                                         Diagram = dataReader.GetNullableString(indexOfDiagram),

@@ -1,22 +1,21 @@
 ﻿using Katzebase.Library;
 using Katzebase.Library.Payloads;
+using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Web.Http;
 
 namespace Katzebase.Service.Controllers
 {
-    public class DocumentController : ApiController
+    [ApiController]
+    [Route("api/[controller]")]
+    public class DocumentController
     {
         /// <summary>
         /// Lists the documents within a given namespace.
         /// </summary>
         /// <param name="schema"></param>
         [HttpGet]
-        //api/Namespace/List
-        public List<DocumentCatalogItem> Catalog(Guid sessionId, string schema)
+        [Route("{sessionId}/{schema}/Catalog")]
+        public List<KbDocumentCatalogItem> Catalog(Guid sessionId, string schema)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
@@ -24,7 +23,7 @@ namespace Katzebase.Service.Controllers
 
             var persistCatalog = Program.Core.Documents.EnumerateCatalog(processId, schema);
 
-            List<DocumentCatalogItem> documents = new List<DocumentCatalogItem>();
+            List<KbDocumentCatalogItem> documents = new List<KbDocumentCatalogItem>();
 
             foreach (var catalogItem in persistCatalog)
             {
@@ -34,17 +33,19 @@ namespace Katzebase.Service.Controllers
             return documents;
         }
 
-        public ActionResponseID Store(Guid sessionId, string schema, [FromBody] string value)
+        [HttpGet]
+        [Route("{sessionId}/{schema}/Store")]
+        public KbActionResponseID Store(Guid sessionId, string schema, [FromBody] string value)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            ActionResponseID result = new ActionResponseID();
+            KbActionResponseID result = new KbActionResponseID();
 
             try
             {
-                var content = JsonConvert.DeserializeObject<Document>(value);
+                var content = JsonConvert.DeserializeObject<KbDocument>(value);
 
                 Guid newId = Guid.Empty;
 
@@ -66,19 +67,19 @@ namespace Katzebase.Service.Controllers
         /// </summary>
         /// <param name="schema"></param>
         [HttpGet]
-        //api/Document/{Namespace}/DeleteById/{Id}
-        public ActionResponse DeleteById(Guid sessionId, string schema, Guid doc)
+        [Route("{sessionId}/{schema}/{id}/DeleteById")]
+        public KbActionResponse DeleteById(Guid sessionId, string schema, Guid id)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
 
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            ActionResponse result = new ActionResponse();
+            KbActionResponse result = new KbActionResponse();
 
             try
             {
-                Program.Core.Documents.DeleteById(processId, schema, doc);
+                Program.Core.Documents.DeleteById(processId, schema, id);
                 result.Success = true;
             }
             catch (Exception ex)

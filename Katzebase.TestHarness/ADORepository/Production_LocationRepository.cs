@@ -58,7 +58,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Production:Location", new Document(new Models.Production_Location
+                                    client.Document.Store("AdventureWorks2012:Production:Location", new KbDocument(new Models.Production_Location
                                     {
                                         LocationID = dataReader.GetInt16(indexOfLocationID),
                                         Name = dataReader.GetString(indexOfName),

@@ -21,7 +21,7 @@ namespace Katzebase.Engine.Documents
             };
         }
 
-        static public PersistDocument FromPayload(Document document)
+        static public PersistDocument FromPayload(KbDocument document)
         {
             return new PersistDocument()
             {

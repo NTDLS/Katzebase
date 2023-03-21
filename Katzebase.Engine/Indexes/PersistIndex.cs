@@ -49,7 +49,7 @@ namespace Katzebase.Engine.Indexes
             Attributes.Add(attribute);
         }
 
-        static public PersistIndex FromPayload(Index index)
+        static public PersistIndex FromPayload(Library.Payloads.KbIndex index)
         {
             var persistIndex = new PersistIndex()
             {

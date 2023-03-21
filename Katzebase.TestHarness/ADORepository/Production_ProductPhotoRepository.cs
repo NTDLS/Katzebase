@@ -59,7 +59,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Production:ProductPhoto", new Document(new Models.Production_ProductPhoto
+                                    client.Document.Store("AdventureWorks2012:Production:ProductPhoto", new KbDocument(new Models.Production_ProductPhoto
                                     {
                                         ProductPhotoID = dataReader.GetInt32(indexOfProductPhotoID),
                                         ThumbNailPhoto = dataReader.GetNullableByteArray(indexOfThumbNailPhoto),

@@ -79,7 +79,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Sales:SalesOrderHeader", new Document(new Models.Sales_SalesOrderHeader
+                                    client.Document.Store("AdventureWorks2012:Sales:SalesOrderHeader", new KbDocument(new Models.Sales_SalesOrderHeader
                                     {
                                         SalesOrderID = dataReader.GetInt32(indexOfSalesOrderID),
                                         RevisionNumber = dataReader.GetByte(indexOfRevisionNumber),

@@ -62,7 +62,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Production:TransactionHistoryArchive", new Document(new Models.Production_TransactionHistoryArchive
+                                    client.Document.Store("AdventureWorks2012:Production:TransactionHistoryArchive", new KbDocument(new Models.Production_TransactionHistoryArchive
                                     {
                                         TransactionID = dataReader.GetInt32(indexOfTransactionID),
                                         ProductID = dataReader.GetInt32(indexOfProductID),

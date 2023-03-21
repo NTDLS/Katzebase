@@ -2,7 +2,7 @@
 
 namespace Katzebase.Library.Payloads
 {
-    public class ActionResponseStrings : ActionResponse
+    public class KbActionResponseStrings : KbActionResponse
     {
         public List<string> Values { get; set; }
 

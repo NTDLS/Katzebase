@@ -66,7 +66,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Person:Person", new Document(new Models.Person_Person
+                                    client.Document.Store("AdventureWorks2012:Person:Person", new KbDocument(new Models.Person_Person
                                     {
                                         BusinessEntityID = dataReader.GetInt32(indexOfBusinessEntityID),
                                         PersonType = dataReader.GetString(indexOfPersonType),

@@ -60,7 +60,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Sales:CurrencyRate", new Document(new Models.Sales_CurrencyRate
+                                    client.Document.Store("AdventureWorks2012:Sales:CurrencyRate", new KbDocument(new Models.Sales_CurrencyRate
                                     {
                                         CurrencyRateID = dataReader.GetInt32(indexOfCurrencyRateID),
                                         CurrencyRateDate = dataReader.GetDateTime(indexOfCurrencyRateDate),

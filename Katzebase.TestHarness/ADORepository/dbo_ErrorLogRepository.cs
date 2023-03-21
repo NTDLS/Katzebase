@@ -62,7 +62,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:dbo:ErrorLog", new Document(new Models.dbo_ErrorLog
+                                    client.Document.Store("AdventureWorks2012:dbo:ErrorLog", new KbDocument(new Models.dbo_ErrorLog
                                     {
                                         ErrorLogID = dataReader.GetInt32(indexOfErrorLogID),
                                         ErrorTime = dataReader.GetDateTime(indexOfErrorTime),

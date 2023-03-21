@@ -59,7 +59,7 @@ namespace Katzebase.TestHarness.ADORepository
 
                                 try
                                 {
-                                    client.Document.Store("AdventureWorks2012:Sales:CreditCard", new Document(new Models.Sales_CreditCard
+                                    client.Document.Store("AdventureWorks2012:Sales:CreditCard", new KbDocument(new Models.Sales_CreditCard
                                     {
                                         CreditCardID = dataReader.GetInt32(indexOfCreditCardID),
                                         CardType = dataReader.GetString(indexOfCardType),
