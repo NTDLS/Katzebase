@@ -190,9 +190,9 @@ namespace Katzebase.Engine.Logging
                     Close();
 
                     recycledTime = DateTime.Now;
-                    string fileName = core.settings.LogDirectory + "\\" + String.Format("{0}_{1}_{2}.txt", recycledTime.Year, recycledTime.Month, recycledTime.Day);
+                    string fileName = core.settings.LogDirectory + "\\" + $"{recycledTime.Year}_{recycledTime.Month}_{recycledTime.Day}.txt";
                     Directory.CreateDirectory(core.settings.LogDirectory);
-                    fileHandle = new System.IO.StreamWriter(fileName, true);
+                    fileHandle = new StreamWriter(fileName, true);
                 }
             }
         }

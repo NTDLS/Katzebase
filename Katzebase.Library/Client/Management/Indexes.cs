@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Katzebase.Library.Payloads;
+using Newtonsoft.Json;
+using System;
 using System.Net.Http;
 using System.Text;
-using System.Threading.Tasks;
-using Katzebase.Library.Payloads;
-using Newtonsoft.Json;
 
 namespace Katzebase.Library.Client.Management
 {
@@ -25,7 +22,7 @@ namespace Katzebase.Library.Client.Management
         /// <param name="document"></param>
         public void Create(string schema, Payloads.Index document)
         {
-            string url = string.Format("api/Indexes/{0}/{1}/Create", client.SessionId, schema);
+            string url = $"api/Indexes/{client.SessionId}/{schema}/Create";
 
             var postContent = new StringContent(JsonConvert.SerializeObject(document), Encoding.UTF8);
 
@@ -47,7 +44,7 @@ namespace Katzebase.Library.Client.Management
         /// <param name="document"></param>
         public bool Exists(string schema, string indexName)
         {
-            string url = string.Format("api/Indexes/{0}/{1}/{2}/Exists", client.SessionId, schema, indexName);
+            string url = $"api/Indexes/{client.SessionId}/{schema}/{indexName}/Exists";
 
             using (var response = client.Client.GetAsync(url))
             {

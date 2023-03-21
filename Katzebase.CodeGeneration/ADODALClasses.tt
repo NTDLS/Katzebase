@@ -174,7 +174,7 @@ int <#=variableName#> = dataReader.GetOrdinal("<#=oneColumn.Name#>");
 		{
 			inputType = "xml";
 		}
-		else if(inputType == String.Empty)
+		else if(inputType == string.Empty)
 		{
 			inputType = dataType.SqlDataType.ToString();
 		}

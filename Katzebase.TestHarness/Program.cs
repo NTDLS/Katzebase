@@ -1,10 +1,10 @@
 ﻿using Katzebase.Library.Client;
+using Katzebase.Library.Payloads;
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Threading;
-using Katzebase.Library.Payloads;
-using System.Linq;
 
 namespace Katzebase.TestHarness
 {
@@ -135,7 +135,7 @@ namespace Katzebase.TestHarness
             }
 
             client.Schema.Create(schemaPath);
-            
+
             client.Transaction.Begin();
 
             for (int i = 0; i < 10000; i++)
@@ -322,7 +322,7 @@ namespace Katzebase.TestHarness
                     client.Schema.Drop("Sales:Products:Default");
                     client.Schema.Drop("Sales:Orders");
                     #endregion
-                    
+
                     #region Store Documents.
 
                     StudentRecord student = new StudentRecord()
@@ -357,7 +357,7 @@ namespace Katzebase.TestHarness
                     #endregion
 
                     client.Transaction.Commit();
-                    
+
                 }
                 catch (Exception ex)
                 {

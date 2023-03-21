@@ -11,8 +11,8 @@ namespace Katzebase.Service.Controllers
         [HttpGet]
         public ActionResponse Begin(Guid sessionId)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponse result = new ActionResponse();
@@ -33,8 +33,8 @@ namespace Katzebase.Service.Controllers
         [HttpGet]
         public ActionResponse Commit(Guid sessionId)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponse result = new ActionResponse();
@@ -55,8 +55,8 @@ namespace Katzebase.Service.Controllers
         [HttpGet]
         public ActionResponse Rollback(Guid sessionId)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponse result = new ActionResponse();

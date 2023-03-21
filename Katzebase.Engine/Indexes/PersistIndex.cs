@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using Katzebase.Library.Payloads;
+﻿using Katzebase.Library.Payloads;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 
 namespace Katzebase.Engine.Indexes
 {

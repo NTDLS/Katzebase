@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -35,7 +33,7 @@ namespace Katzebase.Engine
         {
             string idString = id.ToString();
             int checksum = Checksum(idString);
-            return String.Format("{{{0}}}\\{1}{2}", (checksum % 1000), idString, Constants.DocumentExtension);
+            return $"{{{(checksum % 1000)}}}\\{idString}{Constants.DocumentExtension}";
         }
 
         public static long EstimateObjectSize(object o)
@@ -51,7 +49,7 @@ namespace Katzebase.Engine
         public static string MakeSafeFileName(string filename)
         {
             Array.ForEach(Path.GetInvalidFileNameChars(),
-                  c => filename = filename.Replace(c.ToString(), String.Empty));
+                  c => filename = filename.Replace(c.ToString(), string.Empty));
 
             return filename;
         }

@@ -1,5 +1,4 @@
-﻿using System;
-using static Katzebase.Engine.Constants;
+﻿using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Locking
 {
@@ -18,7 +17,7 @@ namespace Katzebase.Engine.Locking
         {
             get
             {
-                return string.Format("{0}:{1}", Type, DiskPath);
+                return $"{Type}:{DiskPath}";
             }
         }
 

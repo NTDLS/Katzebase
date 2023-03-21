@@ -1,17 +1,17 @@
-﻿using Katzebase.Engine.Documents;
+﻿using Katzebase.Engine.Caching;
+using Katzebase.Engine.Documents;
 using Katzebase.Engine.Health;
+using Katzebase.Engine.Indexes;
 using Katzebase.Engine.IO;
 using Katzebase.Engine.Locking;
 using Katzebase.Engine.Logging;
+using Katzebase.Engine.Query;
 using Katzebase.Engine.Schemas;
+using Katzebase.Engine.Sessions;
 using Katzebase.Engine.Transactions;
 using Katzebase.Library;
 using System.Diagnostics;
 using System.Reflection;
-using Katzebase.Engine.Sessions;
-using Katzebase.Engine.Caching;
-using Katzebase.Engine.Indexes;
-using Katzebase.Engine.Query;
 
 namespace Katzebase.Engine
 {
@@ -38,10 +38,7 @@ namespace Katzebase.Engine
 
             Assembly assembly = Assembly.GetExecutingAssembly();
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
-            Log.Write(string.Format("{0} v{1} PID:{2}",
-                fileVersionInfo.ProductName,
-                fileVersionInfo.ProductVersion,
-                Process.GetCurrentProcess().Id));
+            Log.Write($"{fileVersionInfo.ProductName} v{fileVersionInfo.ProductVersion} PID:{Process.GetCurrentProcess().Id}");
 
             Log.Write("Initializing cache manager.");
             Cache = new CacheManager(this);

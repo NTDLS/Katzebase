@@ -18,8 +18,8 @@ namespace Katzebase.Service.Controllers
         //api/Namespace/List
         public List<DocumentCatalogItem> Catalog(Guid sessionId, string schema)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             var persistCatalog = Program.Core.Documents.EnumerateCatalog(processId, schema);
@@ -34,10 +34,10 @@ namespace Katzebase.Service.Controllers
             return documents;
         }
 
-        public ActionResponseID Store(Guid sessionId, string schema, [FromBody]string value)
+        public ActionResponseID Store(Guid sessionId, string schema, [FromBody] string value)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponseID result = new ActionResponseID();
@@ -69,9 +69,9 @@ namespace Katzebase.Service.Controllers
         //api/Document/{Namespace}/DeleteById/{Id}
         public ActionResponse DeleteById(Guid sessionId, string schema, Guid doc)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
 
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponse result = new ActionResponse();

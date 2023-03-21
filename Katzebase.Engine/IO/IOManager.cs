@@ -1,12 +1,8 @@
-﻿using Katzebase.Library;
+﻿using Katzebase.Engine.Transactions;
 using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
-using System.Runtime.Caching;
-using Katzebase.Engine.Transactions;
-using System.Collections.Generic;
-using System.Runtime.Serialization.Formatters.Binary;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.IO
@@ -59,7 +55,7 @@ namespace Katzebase.Engine.IO
                     {
                         core.Health.Increment(Constants.HealthCounterType.IOCacheReadHits);
 
-                        core.Log.Trace(String.Format("IO:CacheHit:{0}->{1}", transaction.ProcessId, filePath));
+                        core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
                         return (T)cachedObject.Value;
                     }
@@ -67,7 +63,7 @@ namespace Katzebase.Engine.IO
 
                 core.Health.Increment(Constants.HealthCounterType.IOCacheReadMisses);
 
-                core.Log.Trace(String.Format("IO:Read:{0}->{1}", transaction.ProcessId, filePath));
+                core.Log.Trace($"IO:Read:{transaction.ProcessId}->{filePath}");
 
                 T deserializedObject;
 
@@ -161,7 +157,7 @@ namespace Katzebase.Engine.IO
 
                 if (deferDiskWrite == false)
                 {
-                    core.Log.Trace(String.Format("IO:Write:{0}->{1}", transaction.ProcessId, filePath));
+                    core.Log.Trace($"IO:Write:{transaction.ProcessId}->{filePath}");
 
                     if (format == IOFormat.JSON)
                     {
@@ -183,7 +179,7 @@ namespace Katzebase.Engine.IO
                 }
                 else
                 {
-                    core.Log.Trace(String.Format("IO:Write-Deferred:{0}->{1}", transaction.ProcessId, filePath));
+                    core.Log.Trace($"IO:Write-Deferred:{transaction.ProcessId}->{filePath}");
                 }
 
                 if (core.settings.AllowIOCaching)
@@ -194,7 +190,7 @@ namespace Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to put JSON file for session {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Failed to put JSON file for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -208,13 +204,13 @@ namespace Katzebase.Engine.IO
                 string cacheKey = Helpers.RemoveModFileName(diskPath.ToLower());
                 transaction.LockDirectory(intendedOperation, cacheKey);
 
-                core.Log.Trace(String.Format("IO:Exists-Directory:{0}->{1}", transaction.ProcessId, diskPath));
+                core.Log.Trace($"IO:Exists-Directory:{transaction.ProcessId}->{diskPath}");
 
                 return Directory.Exists(diskPath);
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to verify directory for session {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Failed to verify directory for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -228,7 +224,7 @@ namespace Katzebase.Engine.IO
 
                 bool doesFileExist = Directory.Exists(diskPath);
 
-                core.Log.Trace(String.Format("IO:Create-Directory:{0}->{1}", transaction.ProcessId, diskPath));
+                core.Log.Trace($"IO:Create-Directory:{transaction.ProcessId}->{diskPath}");
 
                 if (doesFileExist == false)
                 {
@@ -238,7 +234,7 @@ namespace Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to create directory for session {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Failed to create directory for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -259,13 +255,13 @@ namespace Katzebase.Engine.IO
                 string cacheKey = Helpers.RemoveModFileName(lowerFilePath);
                 transaction.LockFile(intendedOperation, cacheKey);
 
-                core.Log.Trace(String.Format("IO:Exits-File:{0}->{1}", transaction.ProcessId, filePath));
+                core.Log.Trace($"IO:Exits-File:{transaction.ProcessId}->{filePath}");
 
                 return File.Exists(filePath);
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to verify file for session {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Failed to verify file for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -284,14 +280,14 @@ namespace Katzebase.Engine.IO
 
                 transaction.RecordFileDelete(filePath);
 
-                core.Log.Trace(String.Format("IO:Delete-File:{0}->{1}", transaction.ProcessId, filePath));
+                core.Log.Trace($"IO:Delete-File:{transaction.ProcessId}->{filePath}");
 
                 File.Delete(filePath);
                 Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(filePath));
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to delete file for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Failed to delete file for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -310,13 +306,13 @@ namespace Katzebase.Engine.IO
 
                 transaction.RecordPathDelete(diskPath);
 
-                core.Log.Trace(String.Format("IO:Delete-Directory:{0}->{1}", transaction.ProcessId, diskPath));
+                core.Log.Trace($"IO:Delete-Directory:{transaction.ProcessId}->{diskPath}");
 
                 Directory.Delete(diskPath, true);
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to delete path for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Failed to delete path for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace Katzebase.Service.OWIN
 {
-    public class Services: IDisposable
+    public class Services : IDisposable
     {
         private List<IDisposable> runningServices;
 

@@ -1,6 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Katzebase.Library.Payloads;
+using Newtonsoft.Json;
 using System;
-using Katzebase.Library.Payloads;
 
 namespace Katzebase.Library.Client.Management
 {
@@ -15,7 +15,7 @@ namespace Katzebase.Library.Client.Management
 
         public void Begin()
         {
-            string url = string.Format("api/Transaction/{0}/Begin", client.SessionId);
+            string url = $"api/Transaction/{client.SessionId}/Begin";
 
             using (var response = client.Client.GetAsync(url))
             {
@@ -30,7 +30,7 @@ namespace Katzebase.Library.Client.Management
 
         public void Commit()
         {
-            string url = string.Format("api/Transaction/{0}/Commit", client.SessionId);
+            string url = $"api/Transaction/{client.SessionId}/Commit";
 
             using (var response = client.Client.GetAsync(url))
             {
@@ -45,7 +45,7 @@ namespace Katzebase.Library.Client.Management
 
         public void Rollback()
         {
-            string url = string.Format("api/Transaction/{0}/Rollback", client.SessionId);
+            string url = $"api/Transaction/{client.SessionId}/Rollback";
 
             using (var response = client.Client.GetAsync(url))
             {

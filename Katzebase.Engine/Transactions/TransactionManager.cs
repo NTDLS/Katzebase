@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
 
 namespace Katzebase.Engine.Transactions
 {
@@ -16,7 +16,7 @@ namespace Katzebase.Engine.Transactions
             this.core = core;
         }
 
-        public Transaction GetByProcessId(UInt64 processId)
+        public Transaction GetByProcessId(ulong processId)
         {
             lock (Collection)
             {
@@ -25,7 +25,7 @@ namespace Katzebase.Engine.Transactions
             }
         }
 
-        public void RemoveByProcessId(UInt64 processId)
+        public void RemoveByProcessId(ulong processId)
         {
             lock (Collection)
             {
@@ -46,12 +46,12 @@ namespace Katzebase.Engine.Transactions
 
                 if (transactionFiles.Count() > 0)
                 {
-                    core.Log.Write(string.Format("Found {0} open transactions.", transactionFiles.Count()), Constants.LogSeverity.Warning);
+                    core.Log.Write($"Found {transactionFiles.Count()} open transactions.", Constants.LogSeverity.Warning);
                 }
 
                 foreach (string transactionFile in transactionFiles)
                 {
-                    UInt64 processId = UInt64.Parse(Path.GetFileNameWithoutExtension(Path.GetDirectoryName(transactionFile)));
+                    ulong processId = ulong.Parse(Path.GetFileNameWithoutExtension(Path.GetDirectoryName(transactionFile)));
 
                     Transaction transaction = new Transaction(core, this, processId, true);
 
@@ -61,8 +61,7 @@ namespace Katzebase.Engine.Transactions
                         transaction.ReversibleActions.Add(JsonConvert.DeserializeObject<ReversibleAction>(reversibleAction));
                     }
 
-                    core.Log.Write(string.Format("Rolling back session {0} with {1} actions.",
-                        transaction.ProcessId, transaction.ReversibleActions.Count), Constants.LogSeverity.Warning);
+                    core.Log.Write($"Rolling back session {transaction.ProcessId} with {transaction.ReversibleActions.Count} actions.", Constants.LogSeverity.Warning);
 
                     try
                     {
@@ -70,7 +69,7 @@ namespace Katzebase.Engine.Transactions
                     }
                     catch (Exception ex)
                     {
-                        core.Log.Write(string.Format("Failed to rollback transaction for process ID {0}.", transaction.ProcessId), ex);
+                        core.Log.Write($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
                     }
 
                 }
@@ -89,7 +88,7 @@ namespace Katzebase.Engine.Transactions
         /// </summary>
         /// <param name="processId"></param>
         /// <returns></returns>
-        public TransactionReference Begin(UInt64 processId, bool isLongLived)
+        public TransactionReference Begin(ulong processId, bool isLongLived)
         {
             try
             {
@@ -113,17 +112,17 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to begin transaction for process {0}.", processId), ex);
+                core.Log.Write($"Failed to begin transaction for process {processId}.", ex);
                 throw;
             }
         }
 
-        public TransactionReference Begin(UInt64 processId)
+        public TransactionReference Begin(ulong processId)
         {
             return Begin(processId, false);
         }
 
-        public void Commit(UInt64 processId)
+        public void Commit(ulong processId)
         {
             try
             {
@@ -135,12 +134,12 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to commit transaction for process {0}.", processId), ex);
+                core.Log.Write($"Failed to commit transaction for process {processId}.", ex);
                 throw;
             }
         }
 
-        public void Rollback(UInt64 processId)
+        public void Rollback(ulong processId)
         {
             try
             {
@@ -152,7 +151,7 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to rollback transaction for process {0}.", processId), ex);
+                core.Log.Write($"Failed to rollback transaction for process {processId}.", ex);
                 throw;
             }
 

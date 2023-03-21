@@ -2,7 +2,7 @@
 
 namespace Katzebase.Engine.Transactions
 {
-    public class TransactionReference: IDisposable
+    public class TransactionReference : IDisposable
     {
         public Transaction Transaction { get; set; }
 

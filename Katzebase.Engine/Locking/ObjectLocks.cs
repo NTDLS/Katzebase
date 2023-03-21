@@ -55,7 +55,7 @@ namespace Katzebase.Engine.Locking
                         if (transaction.IsDeadlocked)
                         {
                             core.Health.Increment(HealthCounterType.DeadlockCount);
-                            throw new KatzebaseDeadlockException(String.Format("Deadlock occurred, transaction for process {0} is being terminated.", transaction.ProcessId));
+                            throw new KatzebaseDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.");
                         }
 
                         //Find any existing locks:
@@ -165,7 +165,7 @@ namespace Katzebase.Engine.Locking
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to acquire lock for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Failed to acquire lock for process {transaction.ProcessId}.", ex);
                 throw;
             }
             finally

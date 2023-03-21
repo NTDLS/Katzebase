@@ -1,7 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Katzebase.Library.Payloads;
+using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
-using Katzebase.Library.Payloads;
 
 namespace Katzebase.Library.Client.Management
 {
@@ -23,7 +22,7 @@ namespace Katzebase.Library.Client.Management
         /// <param name="schema"></param>
         public void Create(string schema)
         {
-            string url = string.Format("api/Schema/{0}/{1}/Create", client.SessionId, schema);
+            string url = $"api/Schema/{client.SessionId}/{schema}/Create";
 
             using (var response = client.Client.GetAsync(url))
             {
@@ -42,7 +41,7 @@ namespace Katzebase.Library.Client.Management
         /// <param name="schema"></param>
         public bool Exists(string schema)
         {
-            string url = string.Format("api/Schema/{0}/{1}/Exists", client.SessionId, schema);
+            string url = $"api/Schema/{client.SessionId}/{schema}/Exists";
 
             using (var response = client.Client.GetAsync(url))
             {
@@ -63,7 +62,7 @@ namespace Katzebase.Library.Client.Management
         /// <param name="schema"></param>
         public void Drop(string schema)
         {
-            string url = string.Format("api/Schema/{0}/{1}/Drop", client.SessionId, schema);
+            string url = $"api/Schema/{client.SessionId}/{schema}/Drop";
 
             using (var response = client.Client.GetAsync(url))
             {
@@ -82,7 +81,7 @@ namespace Katzebase.Library.Client.Management
         /// <param name="schema"></param>
         public ActionResponseSchemas List(string schema)
         {
-            string url = string.Format("api/Schema/{0}/{1}/List", client.SessionId, schema);
+            string url = $"api/Schema/{client.SessionId}/{schema}/List";
 
             using (var response = client.Client.GetAsync(url))
             {

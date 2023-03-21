@@ -2,7 +2,7 @@
 
 namespace Katzebase.Engine.Indexes
 {
-    public class IndexSelections: List<IndexSelection>
+    public class IndexSelections : List<IndexSelection>
     {
         public List<string> UnhandledKeys { get; set; }
 

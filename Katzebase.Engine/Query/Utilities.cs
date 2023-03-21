@@ -179,7 +179,7 @@ namespace Katzebase.Engine.Query
 
         public static void TrimAllLines(ref string query)
         {
-            query = String.Join("\r\n", query.Split('\n').Select(o => o.Trim()));
+            query = string.Join("\r\n", query.Split('\n').Select(o => o.Trim()));
         }
     }
 }

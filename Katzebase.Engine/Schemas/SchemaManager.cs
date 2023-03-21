@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.Exceptions;
+using Katzebase.Engine.Indexes;
+using Katzebase.Engine.Transactions;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using static Katzebase.Engine.Constants;
-using Katzebase.Engine.Transactions;
-using Katzebase.Engine.Exceptions;
-using Katzebase.Engine.Indexes;
-using Katzebase.Engine.Documents;
 
 namespace Katzebase.Engine.Schemas
 {
@@ -114,14 +114,14 @@ namespace Katzebase.Engine.Schemas
                     var segments = schemaPath.Split(':');
                     string schemaName = segments[segments.Count() - 1];
 
-                    string namespaceDiskPath = Path.Combine(core.settings.DataRootPath, String.Join("\\", segments));
+                    string namespaceDiskPath = Path.Combine(core.settings.DataRootPath, string.Join("\\", segments));
                     string parentSchemaDiskPath = Directory.GetParent(namespaceDiskPath).FullName;
 
                     string parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, Constants.SchemaCatalogFile);
 
                     if (core.IO.FileExists(transaction, parentCatalogDiskPath, intendedOperation) == false)
                     {
-                        throw new KatzebaseInvalidSchemaException(string.Format("The schema [{0}] does not exist.", schemaPath));
+                        throw new KatzebaseInvalidSchemaException($"The schema [{schemaPath}] does not exist.");
                     }
 
                     var parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(transaction,
@@ -158,7 +158,7 @@ namespace Katzebase.Engine.Schemas
             }
         }
 
-        public List<PersistSchema> GetList(UInt64 processId, string schema)
+        public List<PersistSchema> GetList(ulong processId, string schema)
         {
             try
             {
@@ -187,12 +187,12 @@ namespace Katzebase.Engine.Schemas
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to get namespace list for session {0}.", processId), ex);
+                core.Log.Write($"Failed to get namespace list for process {processId}.", ex);
                 throw;
             }
         }
 
-        private void CreateSingle(UInt64 processId, string schema)
+        private void CreateSingle(ulong processId, string schema)
         {
             try
             {
@@ -260,7 +260,7 @@ namespace Katzebase.Engine.Schemas
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to create single namespace for session {0}.", processId), ex);
+                core.Log.Write($"Failed to create single namespace for process {processId}.", ex);
                 throw;
             }
         }
@@ -269,7 +269,7 @@ namespace Katzebase.Engine.Schemas
         /// Creates a structure of namespaces, denotaed by colons.
         /// </summary>
         /// <param name="namespacePath"></param>
-        public void Create(UInt64 processId, string schemaPath)
+        public void Create(ulong processId, string schemaPath)
         {
             try
             {
@@ -286,7 +286,7 @@ namespace Katzebase.Engine.Schemas
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to create namespace lineage for session {0}.", processId), ex);
+                core.Log.Write($"Failed to create namespace lineage for process {processId}.", ex);
                 throw;
             }
         }
@@ -295,7 +295,7 @@ namespace Katzebase.Engine.Schemas
         /// Returns true if the schema exists.
         /// </summary>
         /// <param name="namespacePath"></param>
-        public bool Exists(UInt64 processId, string schemaPath)
+        public bool Exists(ulong processId, string schemaPath)
         {
             try
             {
@@ -328,7 +328,7 @@ namespace Katzebase.Engine.Schemas
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to confirm namespace for session {0}.", processId), ex);
+                core.Log.Write($"Failed to confirm namespace for process {processId}.", ex);
                 throw;
             }
         }
@@ -337,7 +337,7 @@ namespace Katzebase.Engine.Schemas
         /// Drops a single namespace or an entire namespace path.
         /// </summary>
         /// <param name="schema"></param>
-        public void Drop(UInt64 processId, string schema)
+        public void Drop(ulong processId, string schema)
         {
             try
             {
@@ -372,7 +372,7 @@ namespace Katzebase.Engine.Schemas
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to drop namespace for session {0}.", processId), ex);
+                core.Log.Write($"Failed to drop namespace for process {processId}.", ex);
                 throw;
             }
         }

@@ -1,21 +1,19 @@
 ﻿using Katzebase.Engine.Locking;
-using Katzebase.Library;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using static Katzebase.Engine.Constants;
-using System.Text.RegularExpressions;
 
 namespace Katzebase.Engine.Transactions
 {
     public class Transaction
     {
         public List<ReversibleAction> ReversibleActions = new List<ReversibleAction>();
-        public UInt64 ProcessId { get; set; }
+        public ulong ProcessId { get; set; }
         public DateTime StartTime { get; set; }
-        public List<UInt64> BlockedBy { get; set; }
+        public List<ulong> BlockedBy { get; set; }
         public bool IsDeadlocked { get; set; }
         public List<ObjectLockKey> HeldLockKeys { get; set; }
         public bool IsLongLived { get; set; } //True if the transaction was created by the user, otherwise false;
@@ -130,7 +128,7 @@ namespace Katzebase.Engine.Transactions
             }
         }
 
-        public Transaction(Core core, TransactionManager transactionManager, UInt64 processId, bool isRecovery)
+        public Transaction(Core core, TransactionManager transactionManager, ulong processId, bool isRecovery)
         {
             this.core = core;
             this.StartTime = DateTime.UtcNow;
@@ -185,7 +183,7 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to record file creation for processId {0}.", this.ProcessId), ex);
+                core.Log.Write($"Failed to record file creation for process {this.ProcessId}.", ex);
                 throw;
             }
         }
@@ -214,7 +212,7 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to record file creation for processId {0}.", this.ProcessId), ex);
+                core.Log.Write($"Failed to record file creation for process {this.ProcessId}.", ex);
                 throw;
             }
         }
@@ -248,7 +246,7 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to record file deletion for process {0}.", this.ProcessId), ex);
+                core.Log.Write($"Failed to record file deletion for for process {this.ProcessId}.", ex);
                 throw;
             }
         }
@@ -281,7 +279,7 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to record file deletion for process {0}.", this.ProcessId), ex);
+                core.Log.Write($"Failed to record file deletion for for process {this.ProcessId}.", ex);
                 throw;
             }
         }
@@ -314,7 +312,7 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to record file alteration for process {0}.", this.ProcessId), ex);
+                core.Log.Write($"Failed to record file alteration for for process {this.ProcessId}.", ex);
                 throw;
             }
         }
@@ -394,7 +392,7 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to rollback transaction for process {0}.", this.ProcessId), ex);
+                core.Log.Write($"Failed to rollback transaction for for process {this.ProcessId}.", ex);
                 throw;
             }
         }
@@ -432,7 +430,7 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to commit transaction for process {0}.", this.ProcessId), ex);
+                core.Log.Write($"Failed to commit transaction for for process {this.ProcessId}.", ex);
                 throw;
             }
         }
@@ -466,7 +464,7 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to cleanup transaction for process {0}.", this.ProcessId), ex);
+                core.Log.Write($"Failed to cleanup transaction for for process {this.ProcessId}.", ex);
                 throw;
             }
         }

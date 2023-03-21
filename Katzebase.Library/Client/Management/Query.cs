@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Katzebase.Library.Payloads;
+using Newtonsoft.Json;
+using System;
 using System.Net.Http;
 using System.Text;
-using System.Threading.Tasks;
-using Katzebase.Library.Payloads;
-using Newtonsoft.Json;
 
 namespace Katzebase.Library.Client.Management
 {
@@ -20,7 +17,7 @@ namespace Katzebase.Library.Client.Management
 
         public void Execute(string statement)
         {
-            string url = string.Format("api/Query/{0}/Execute", client.SessionId);
+            string url = $"api/Query/{client.SessionId}/Execute";
 
             var postContent = new StringContent(JsonConvert.SerializeObject(statement), Encoding.UTF8);
 

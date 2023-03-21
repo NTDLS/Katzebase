@@ -97,7 +97,7 @@ private <#= TemplateHelper.GetDotNetType(oneDatabase, oneColumn.DataType, oneCol
 		{
 			inputType = "xml";
 		}
-		else if(inputType == String.Empty)
+		else if(inputType == string.Empty)
 		{
 			inputType = dataType.SqlDataType.ToString();
 		}

@@ -34,7 +34,7 @@ namespace Katzebase.Service
             var owinServices = new OWIN.Services();
             owinServices.Start(settings.BaseAddress);
 
-            Core.Log.Write(String.Format("Listening on {0}", settings.BaseAddress));
+            Core.Log.Write($"Listening on {settings.BaseAddress}.");
 
             Console.ReadLine(); //Continue running.
 

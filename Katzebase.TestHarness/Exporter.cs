@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Data.SqlClient;
-
-namespace Katzebase.TestHarness
+﻿namespace Katzebase.TestHarness
 {
     public static partial class Exporter
     {
@@ -44,7 +38,6 @@ namespace Katzebase.TestHarness
             (new ADORepository.Production_ProductCategoryRepository()).Export_Production_ProductCategory();
             (new ADORepository.Production_ProductCostHistoryRepository()).Export_Production_ProductCostHistory();
             (new ADORepository.Production_ProductDescriptionRepository()).Export_Production_ProductDescription();
-            (new ADORepository.Production_ProductDocumentRepository()).Export_Production_ProductDocument();
             (new ADORepository.Production_ProductInventoryRepository()).Export_Production_ProductInventory();
             (new ADORepository.Production_ProductListPriceHistoryRepository()).Export_Production_ProductListPriceHistory();
             (new ADORepository.Production_ProductModelRepository()).Export_Production_ProductModel();

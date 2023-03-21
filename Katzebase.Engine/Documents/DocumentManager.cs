@@ -1,15 +1,13 @@
-﻿using Katzebase.Library;
+﻿using Katzebase.Engine.Exceptions;
+using Katzebase.Engine.Query;
+using Katzebase.Engine.Schemas;
+using Katzebase.Engine.Transactions;
+using Katzebase.Library.Payloads;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using static Katzebase.Engine.Constants;
-using Katzebase.Library.Payloads;
-using Katzebase.Engine.Schemas;
-using Katzebase.Engine.Exceptions;
-using Katzebase.Engine.Query;
 using System.Linq;
-using Newtonsoft.Json.Linq;
-using Katzebase.Engine.Transactions;
+using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Documents
 {
@@ -22,7 +20,7 @@ namespace Katzebase.Engine.Documents
             this.core = core;
         }
 
-        public void ExecuteSelect(UInt64 processId, PreparedQuery preparedQuery)
+        public void ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -62,7 +60,7 @@ namespace Katzebase.Engine.Documents
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to delete document by ID for process {0}.", processId), ex);
+                core.Log.Write($"Failed to delete document by ID for process {processId}.", ex);
                 throw;
             }
         }
@@ -451,7 +449,7 @@ namespace Katzebase.Engine.Documents
 
         }
 
-        public void Store(UInt64 processId, string schema, Document document, out Guid newId)
+        public void Store(ulong processId, string schema, Document document, out Guid newId)
         {
             try
             {
@@ -497,12 +495,12 @@ namespace Katzebase.Engine.Documents
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to store document for process {0}.", processId), ex);
+                core.Log.Write($"Failed to store document for process {processId}.", ex);
                 throw;
             }
         }
 
-        public void DeleteById(UInt64 processId, string schema, Guid newId)
+        public void DeleteById(ulong processId, string schema, Guid newId)
         {
             try
             {
@@ -537,12 +535,12 @@ namespace Katzebase.Engine.Documents
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to delete document by ID for process {0}.", processId), ex);
+                core.Log.Write($"Failed to delete document by ID for process {processId}.", ex);
                 throw;
             }
         }
 
-        public List<PersistDocumentCatalogItem> EnumerateCatalog(UInt64 processId, string schema)
+        public List<PersistDocumentCatalogItem> EnumerateCatalog(ulong processId, string schema)
         {
             try
             {
@@ -571,7 +569,7 @@ namespace Katzebase.Engine.Documents
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to get catalog for process {0}.", processId), ex);
+                core.Log.Write($"Failed to get catalog for process {processId}.", ex);
                 throw;
             }
         }

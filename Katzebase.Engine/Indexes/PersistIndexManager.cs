@@ -1,20 +1,16 @@
-﻿using System;
+﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.Exceptions;
+using Katzebase.Engine.Query;
+using Katzebase.Engine.Schemas;
+using Katzebase.Engine.Transactions;
+using Katzebase.Library.Payloads;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Katzebase.Library.Payloads;
-using static Katzebase.Engine.Constants;
-using Katzebase.Engine.Transactions;
-using Katzebase.Engine.Schemas;
-using Katzebase.Library;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
-using Katzebase.Engine.Documents;
-using Katzebase.Engine.Exceptions;
 using System.Threading;
-using Katzebase.Engine.Query;
+using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Indexes
 {
@@ -34,7 +30,7 @@ namespace Katzebase.Engine.Indexes
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to select indexes for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Failed to select indexes for process {transaction.ProcessId}.", ex);
                 throw;
             }
 
@@ -92,7 +88,7 @@ namespace Katzebase.Engine.Indexes
         }
 
 
-        public bool Exists(UInt64 processId, string schema, string indexName)
+        public bool Exists(ulong processId, string schema, string indexName)
         {
             bool result = false;
             try
@@ -114,14 +110,14 @@ namespace Katzebase.Engine.Indexes
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to create index for process {0}.", processId), ex);
+                core.Log.Write($"Failed to create index for process {processId}.", ex);
                 throw;
             }
 
             return result;
         }
 
-        public void Create(UInt64 processId, string schema, Index index, out Guid newId)
+        public void Create(ulong processId, string schema, Index index, out Guid newId)
         {
             try
             {
@@ -164,15 +160,15 @@ namespace Katzebase.Engine.Indexes
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to create index for process {0}.", processId), ex);
+                core.Log.Write($"Failed to create index for process {processId}.", ex);
                 throw;
             }
         }
 
-        public void Rebuild(UInt64 processId, string schema, string indexName)
+        public void Rebuild(ulong processId, string schema, string indexName)
         {
             try
-            {           
+            {
                 using (var txRef = core.Transactions.Begin(processId))
                 {
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
@@ -192,13 +188,13 @@ namespace Katzebase.Engine.Indexes
                     indexMeta.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(indexMeta.Name));
 
                     RebuildIndex(txRef.Transaction, schemaMeta, indexMeta);
-   
+
                     txRef.Commit();
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to rebuild index for process {0}.", processId), ex);
+                core.Log.Write($"Failed to rebuild index for process {processId}.", ex);
                 throw;
             }
         }
@@ -211,7 +207,7 @@ namespace Katzebase.Engine.Indexes
 
         public string MakeIndexFileName(string indexName)
         {
-            return string.Format("@Idx_{0}_Pages.PBuf", Helpers.MakeSafeFileName(indexName));
+            return $"@Idx_{0}_Pages.PBuf{Helpers.MakeSafeFileName(indexName)}";
         }
 
         private PersistIndexCatalog GetIndexCatalog(Transaction transaction, PersistSchema schemaMeta, LockOperation intendedOperation)
@@ -248,7 +244,7 @@ namespace Katzebase.Engine.Indexes
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to build index search tokens for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Failed to build index search tokens for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -335,7 +331,7 @@ namespace Katzebase.Engine.Indexes
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to locate key page for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Failed to locate key page for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -361,7 +357,7 @@ namespace Katzebase.Engine.Indexes
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Multi-index insert failed for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Multi-index insert failed for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -386,7 +382,7 @@ namespace Katzebase.Engine.Indexes
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Multi-index insert failed for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Multi-index insert failed for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -427,9 +423,7 @@ namespace Katzebase.Engine.Indexes
 
                     if (indexMeta.IsUnique && findResult.Leaf.DocumentIDs.Count > 1)
                     {
-                        string exceptionText = string.Format("Duplicate key violation occurred for index [{0}]/[{1}]. Values: {{{2}}}",
-                            schemaMeta.VirtualPath, indexMeta.Name, string.Join(",", searchTokens));
-
+                        string exceptionText = $"Duplicate key violation occurred for index [{schemaMeta.VirtualPath}]/[{indexMeta.Name}]. Values: {{{string.Join(",", searchTokens)}}}";
                         throw new KatzebaseDuplicateKeyViolation(exceptionText);
                     }
 
@@ -468,7 +462,7 @@ namespace Katzebase.Engine.Indexes
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Index document insert failed for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Index document insert failed for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -543,7 +537,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="transaction"></param>
         /// <param name="schemaMeta"></param>
         /// <param name="indexMeta"></param>
-        private void RebuildIndex(Transaction transaction,  PersistSchema schemaMeta, PersistIndex indexMeta)
+        private void RebuildIndex(Transaction transaction, PersistSchema schemaMeta, PersistIndex indexMeta)
         {
             try
             {
@@ -585,7 +579,7 @@ namespace Katzebase.Engine.Indexes
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Failed to rebuild single index for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Failed to rebuild single index for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -604,7 +598,7 @@ namespace Katzebase.Engine.Indexes
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Multi-index upsert failed for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Multi-index upsert failed for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -649,11 +643,11 @@ namespace Katzebase.Engine.Indexes
                 if (RemoveDocumentFromLeaves(ref persistIndexPageCatalog.Leaves, documentId))
                 {
                     core.IO.PutPBuf(transaction, indexMeta.DiskPath, persistIndexPageCatalog);
-                }                
+                }
             }
             catch (Exception ex)
             {
-                core.Log.Write(String.Format("Index document upsert failed for process {0}.", transaction.ProcessId), ex);
+                core.Log.Write($"Index document upsert failed for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }

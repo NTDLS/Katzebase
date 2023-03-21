@@ -1,9 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using Katzebase.Library.Payloads;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
-using Katzebase.Library.Payloads;
 
 namespace Katzebase.Library.Client.Management
 {
@@ -23,7 +23,7 @@ namespace Katzebase.Library.Client.Management
         /// <param name="document"></param>
         public void Store(string schema, Payloads.Document document)
         {
-            string url = string.Format("api/Document/{0}/{1}/Store", client.SessionId, schema);
+            string url = $"api/Document/{client.SessionId}/{schema}/Store";
 
             var postContent = new StringContent(JsonConvert.SerializeObject(document), Encoding.UTF8);
 
@@ -45,7 +45,7 @@ namespace Katzebase.Library.Client.Management
         /// <param name="document"></param>
         public void DeleteById(string schema, Guid id)
         {
-            string url = string.Format("api/Document/{0}/{1}/{2}/DeleteById", client.SessionId, schema, id);
+            string url = $"api/Document/{client.SessionId}/{schema}/{id}/DeleteById";
 
             using (var response = client.Client.GetAsync(url))
             {
@@ -64,7 +64,7 @@ namespace Katzebase.Library.Client.Management
         /// <param name="schema"></param>
         public List<DocumentCatalogItem> Catalog(string schema)
         {
-            string url = string.Format("api/Document/{0}/{1}/Catalog", client.SessionId, schema);
+            string url = $"api/Document/{client.SessionId}/{schema}/Catalog";
 
             using (var response = client.Client.GetAsync(url))
             {

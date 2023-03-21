@@ -16,8 +16,8 @@ namespace Katzebase.Service.Controllers
         //api/Namespace/List
         public ActionResponseSchemas List(Guid sessionId, string schema)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponseSchemas result = new ActionResponseSchemas();
@@ -49,8 +49,8 @@ namespace Katzebase.Service.Controllers
         //api/Namespace/{Namespace}/Create
         public ActionResponse Create(Guid sessionId, string schema)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponse result = new ActionResponse();
@@ -76,8 +76,8 @@ namespace Katzebase.Service.Controllers
         //api/Namespace/{Namespace}/Exists
         public ActionResponseBoolean Exists(Guid sessionId, string schema)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponseBoolean result = new ActionResponseBoolean();
@@ -103,8 +103,8 @@ namespace Katzebase.Service.Controllers
         //api/Namespace/{Namespace}/Drop
         public ActionResponse Drop(Guid sessionId, string schema)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponse result = new ActionResponse();

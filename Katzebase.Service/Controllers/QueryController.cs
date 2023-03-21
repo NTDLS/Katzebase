@@ -9,10 +9,10 @@ namespace Katzebase.Service.Controllers
 {
     public class QueryController : ApiController
     {
-        public ActionResponse Execute(Guid sessionId, [FromBody]string value)
+        public ActionResponse Execute(Guid sessionId, [FromBody] string value)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponseID result = new ActionResponseID();

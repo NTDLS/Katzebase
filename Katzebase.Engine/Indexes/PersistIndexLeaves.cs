@@ -1,10 +1,6 @@
 ﻿using Newtonsoft.Json;
 using ProtoBuf;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Katzebase.Engine.Indexes
 {
@@ -39,7 +35,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        public PersistIndexLeaf this[int index]    
+        public PersistIndexLeaf this[int index]
         {
             get
             {

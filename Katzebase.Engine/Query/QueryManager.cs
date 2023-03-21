@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Katzebase.Engine.Query
+﻿namespace Katzebase.Engine.Query
 {
     public class QueryManager
     {
@@ -11,13 +9,13 @@ namespace Katzebase.Engine.Query
             this.core = core;
         }
 
-        public void Execute(UInt64 processId, string statement)
+        public void Execute(ulong processId, string statement)
         {
             var preparedQuery = ParserEngine.ParseQuery(statement);
             Execute(processId, preparedQuery);
         }
 
-        public void Execute(UInt64 processId, PreparedQuery preparedQuery)
+        public void Execute(ulong processId, PreparedQuery preparedQuery)
         {
             if (preparedQuery.QueryType == Constants.QueryType.Select)
             {

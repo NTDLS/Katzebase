@@ -9,10 +9,10 @@ namespace Katzebase.Service.Controllers
 {
     public class IndexesController : ApiController
     {
-        public ActionResponseID Create(Guid sessionId, string schema, [FromBody]string value)
+        public ActionResponseID Create(Guid sessionId, string schema, [FromBody] string value)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponseID result = new ActionResponseID();
@@ -43,8 +43,8 @@ namespace Katzebase.Service.Controllers
         [HttpGet]
         public ActionResponse Rebuild(Guid sessionId, string schema, string byName)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponse result = new ActionResponseBoolean();
@@ -69,8 +69,8 @@ namespace Katzebase.Service.Controllers
         [HttpGet]
         public ActionResponseBoolean Exists(Guid sessionId, string schema, string byName)
         {
-            UInt64 processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = string.Format("API:{0}:{1}", processId, Utility.GetCurrentMethod());
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
             ActionResponseBoolean result = new ActionResponseBoolean();
