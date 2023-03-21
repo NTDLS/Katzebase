@@ -16,7 +16,7 @@ namespace Dokdex.TestHarness
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
             Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
 
-            //Exporter.ExportAll();
+            Exporter.ExportAll();
             //TestCreateAllAdventureWorks2012Indexes();
             //TestServerStress();
 
@@ -24,9 +24,9 @@ namespace Dokdex.TestHarness
             //TestAddDocumentsCreateIndex();
             //TestIndexDocumentDeletion();
 
-            DokdexClient client = new DokdexClient("http://localhost:6858/");
-            string query = "SELECT TOP 100 ProductID, Name, ModifiedDate FROM :AdventureWorks2012:Production:Product WHERE SafetyStockLevel = 1000 Color = 'Silver'";
-            client.Query.Execute(query);
+            //DokdexClient client = new DokdexClient("http://localhost:6858/");
+            //string query = "SELECT TOP 100 ProductID, Name, ModifiedDate FROM :AdventureWorks2012:Production:Product WHERE SafetyStockLevel = 1000 Color = 'Silver'";
+            //client.Query.Execute(query);
 
             Console.ReadLine();
         }

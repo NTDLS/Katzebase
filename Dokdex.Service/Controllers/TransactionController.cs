@@ -1,8 +1,8 @@
-﻿using System;
+﻿using Dokdex.Library;
+using Dokdex.Library.Payloads;
+using System;
 using System.Threading;
 using System.Web.Http;
-using Dokdex.Library;
-using Dokdex.Library.Payloads;
 
 namespace Dokdex.Service.Controllers
 {

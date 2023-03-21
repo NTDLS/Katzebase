@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Dokdex.Library;
+using Dokdex.Library.Payloads;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Web.Http;
-using Dokdex.Library.Payloads;
-using Newtonsoft.Json;
-using Dokdex.Library;
 
 namespace Dokdex.Service.Controllers
 {
