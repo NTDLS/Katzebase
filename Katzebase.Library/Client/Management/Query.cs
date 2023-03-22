@@ -6,7 +6,7 @@ namespace Katzebase.Library.Client.Management
 {
     public class Query
     {
-        private KatzebaseClient client;
+        private readonly KatzebaseClient client;
 
         public Query(KatzebaseClient client)
         {
@@ -19,14 +19,12 @@ namespace Katzebase.Library.Client.Management
 
             var postContent = new StringContent(JsonConvert.SerializeObject(statement), Encoding.UTF8);
 
-            using (var response = client.Client.PostAsync(url, postContent))
+            using var response = client.Client.PostAsync(url, postContent);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
+            if (result == null || result.Success == false)
             {
-                string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
-                if (result == null || result.Success == false)
-                {
-                    throw new Exception(result == null ? "Invalid response" : result.Message);
-                }
+                throw new Exception(result == null ? "Invalid response" : result.Message);
             }
         }
 

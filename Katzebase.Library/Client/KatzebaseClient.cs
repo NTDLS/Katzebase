@@ -7,7 +7,6 @@
         public Management.Document Document { get; set; }
         public Management.Schema Schema { get; set; }
         public Management.Transaction Transaction { get; set; }
-
         public Management.Query Query { get; set; }
 
         public KatzebaseClient(string baseAddress)

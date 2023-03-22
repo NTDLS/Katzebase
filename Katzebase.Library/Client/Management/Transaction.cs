@@ -5,7 +5,7 @@ namespace Katzebase.Library.Client.Management
 {
     public class Transaction
     {
-        private KatzebaseClient client;
+        private readonly KatzebaseClient client;
 
         public Transaction(KatzebaseClient client)
         {
@@ -16,14 +16,12 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Transaction/{client.SessionId}/Begin";
 
-            using (var response = client.Client.GetAsync(url))
+            using var response = client.Client.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
+            if (result == null || result.Success == false)
             {
-                string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
-                if (result == null || result.Success == false)
-                {
-                    throw new Exception(result == null ? "Invalid response" : result.Message);
-                }
+                throw new Exception(result == null ? "Invalid response" : result.Message);
             }
         }
 
@@ -31,14 +29,12 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Transaction/{client.SessionId}/Commit";
 
-            using (var response = client.Client.GetAsync(url))
+            using var response = client.Client.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
+            if (result == null || result.Success == false)
             {
-                string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
-                if (result == null || result.Success == false)
-                {
-                    throw new Exception(result == null ? "Invalid response" : result.Message);
-                }
+                throw new Exception(result == null ? "Invalid response" : result.Message);
             }
         }
 
@@ -46,14 +42,12 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Transaction/{client.SessionId}/Rollback";
 
-            using (var response = client.Client.GetAsync(url))
+            using var response = client.Client.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
+            if (result == null || result.Success == false)
             {
-                string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
-                if (result == null || result.Success == false)
-                {
-                    throw new Exception(result == null ? "Invalid response" : result.Message);
-                }
+                throw new Exception(result == null ? "Invalid response" : result.Message);
             }
         }
 

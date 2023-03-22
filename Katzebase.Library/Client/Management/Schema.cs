@@ -5,7 +5,7 @@ namespace Katzebase.Library.Client.Management
 {
     public class Schema
     {
-        private KatzebaseClient client;
+        private readonly KatzebaseClient client;
 
         public Indexes Indexes { get; set; }
 
@@ -23,14 +23,12 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Schema/{client.SessionId}/{schema}/Create";
 
-            using (var response = client.Client.GetAsync(url))
+            using var response = client.Client.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
+            if (result == null || result.Success == false)
             {
-                string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
-                if (result == null || result.Success == false)
-                {
-                    throw new Exception(result == null ? "Invalid response" : result.Message);
-                }
+                throw new Exception(result == null ? "Invalid response" : result.Message);
             }
         }
 
@@ -42,17 +40,15 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Schema/{client.SessionId}/{schema}/Exists";
 
-            using (var response = client.Client.GetAsync(url))
+            using var response = client.Client.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponseBoolean>(resultText);
+            if (result == null || result.Success == false)
             {
-                string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<KbActionResponseBoolean>(resultText);
-                if (result == null || result.Success == false)
-                {
-                    throw new Exception(result == null ? "Invalid response" : result.Message);
-                }
-
-                return result.Value;
+                throw new Exception(result == null ? "Invalid response" : result.Message);
             }
+
+            return result.Value;
         }
 
         /// <summary>
@@ -63,14 +59,12 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Schema/{client.SessionId}/{schema}/Drop";
 
-            using (var response = client.Client.GetAsync(url))
+            using var response = client.Client.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
+            if (result == null || result.Success == false)
             {
-                string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
-                if (result == null || result.Success == false)
-                {
-                    throw new Exception(result == null ? "Invalid response" : result.Message);
-                }
+                throw new Exception(result == null ? "Invalid response" : result.Message);
             }
         }
 
@@ -82,11 +76,9 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Schema/{client.SessionId}/{schema}/List";
 
-            using (var response = client.Client.GetAsync(url))
-            {
-                string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                return JsonConvert.DeserializeObject<KbActionResponseSchemas>(resultText) ?? new KbActionResponseSchemas();
-            }
+            using var response = client.Client.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            return JsonConvert.DeserializeObject<KbActionResponseSchemas>(resultText) ?? new KbActionResponseSchemas();
         }
     }
 }
