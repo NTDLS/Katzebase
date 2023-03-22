@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Katzebase.Engine.Indexes
+﻿namespace Katzebase.Engine.Indexes
 {
     public class PotentialIndex
     {

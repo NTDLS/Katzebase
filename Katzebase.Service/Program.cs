@@ -1,49 +1,67 @@
 
+using Katzebase.Engine;
+using Katzebase.Library;
 using System.Diagnostics;
-using System;
 
 namespace Katzebase.Service
 {
     public class Program
     {
-        public static Engine.Core Core;
-
-        public Program()
+        private static Core? _core = null;
+        public static Core Core
         {
+            get
+            {
+                if (_core == null)
+                {
+                    _core = new Core(Configuration);
+                }
+                return _core;
+            }
+        }
 
+        private static Settings? _configuration = null;
+        public static Settings Configuration
+        {
+            get
+            {
+                if (_configuration == null)
+                {
+                    IConfiguration config = new ConfigurationBuilder()
+                                 .AddJsonFile("appsettings.json")
+                                 .AddEnvironmentVariables()
+                                 .Build();
+
+                    // Get values from the config given their key and their target type.
+                    var settings = config.GetRequiredSection("Settings").Get<Library.Settings>();
+                    if (settings == null)
+                    {
+                        throw new Exception("Failed to load settings");
+                    }
+
+                    _configuration = new Library.Settings()
+                    {
+                        BaseAddress = settings.BaseAddress,
+                        DataRootPath = settings.DataRootPath.TrimEnd(new char[] { '/', '\\' }),
+                        TransactionDataPath = settings.TransactionDataPath.TrimEnd(new char[] { '/', '\\' }),
+                        LogDirectory = settings.LogDirectory.TrimEnd(new char[] { '/', '\\' }),
+                        FlushLog = settings.FlushLog,
+                        AllowIOCaching = settings.AllowIOCaching,
+                        AllowDeferredIO = settings.AllowDeferredIO,
+                        WriteTraceData = settings.WriteTraceData,
+                        CacheScavengeBuffer = settings.CacheScavengeBuffer,
+                        CacheScavengeRate = settings.CacheScavengeRate,
+                        MaxCacheMemory = settings.MaxCacheMemory,
+                        RecordInstanceHealth = settings.RecordInstanceHealth
+                    };
+                }
+
+                return _configuration;
+            }
         }
 
         public static void Main(string[] args)
         {
-            IConfiguration config = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json")
-                .AddEnvironmentVariables()
-                .Build();
-
-            // Get values from the config given their key and their target type.
-            var settings = config.GetRequiredSection("Settings").Get<Library.Settings>();
-            if (settings == null)
-            {
-                throw new Exception("Failed to load settings");
-            }
-
-            var runConfiguration = new Library.Settings()
-            {
-                BaseAddress = settings.BaseAddress,
-                DataRootPath = settings.DataRootPath.TrimEnd(new char[] { '/', '\\' }),
-                TransactionDataPath = settings.TransactionDataPath.TrimEnd(new char[] { '/', '\\' }),
-                LogDirectory = settings.LogDirectory.TrimEnd(new char[] { '/', '\\' }),
-                FlushLog = settings.FlushLog,
-                AllowIOCaching = settings.AllowIOCaching,
-                AllowDeferredIO = settings.AllowDeferredIO,
-                WriteTraceData = settings.WriteTraceData,
-                CacheScavengeBuffer = settings.CacheScavengeBuffer,
-                CacheScavengeRate = settings.CacheScavengeRate,
-                MaxCacheMemory = settings.MaxCacheMemory,
-                RecordInstanceHealth = settings.RecordInstanceHealth
-            };
-
-            Core = new Engine.Core(runConfiguration);
             Core.Start();
 
             // Add services to the container.
@@ -63,15 +81,15 @@ namespace Katzebase.Service
 
             app.UseAuthorization();
             app.MapControllers();
-            app.RunAsync(settings.BaseAddress);
+            app.RunAsync(Configuration.BaseAddress);
             //app.RunAsync();
 
             if (app.Environment.IsDevelopment())
             {
-                Process.Start("explorer", $"{settings.BaseAddress}swagger/index.html");
+                Process.Start("explorer", $"{Configuration.BaseAddress}swagger/index.html");
             }
 
-            Core.Log.Write($"Listening on {settings.BaseAddress}.");
+            Core.Log.Write($"Listening on {Configuration.BaseAddress}.");
             Core.Log.Write($"Press [enter] to stop.");
             Console.ReadLine();
             Core.Log.Write($"Stopping...");

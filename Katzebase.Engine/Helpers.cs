@@ -1,8 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
+﻿using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Katzebase.Engine
@@ -79,7 +75,7 @@ namespace Katzebase.Engine
             }
             return false;
         }
-        public static void RemoveDirectoryIfEmpty(string ? diskPath)
+        public static void RemoveDirectoryIfEmpty(string? diskPath)
         {
             if (diskPath == null)
             {

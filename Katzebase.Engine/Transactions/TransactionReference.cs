@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Katzebase.Engine.Transactions
+﻿namespace Katzebase.Engine.Transactions
 {
     public class TransactionReference : IDisposable
     {

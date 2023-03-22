@@ -1,5 +1,4 @@
-﻿using System;
-using static Katzebase.Engine.Constants;
+﻿using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Logging
 {

@@ -1,6 +1,4 @@
 ﻿using Katzebase.Engine.Exceptions;
-using System;
-using System.IO;
 using System.Text;
 
 namespace Katzebase.Engine.Logging

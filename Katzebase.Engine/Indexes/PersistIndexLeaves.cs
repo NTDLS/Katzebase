@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using ProtoBuf;
-using System.Collections.Generic;
 
 namespace Katzebase.Engine.Indexes
 {

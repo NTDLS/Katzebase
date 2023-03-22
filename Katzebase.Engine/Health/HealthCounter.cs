@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using System;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Health

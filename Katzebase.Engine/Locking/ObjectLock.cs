@@ -1,6 +1,4 @@
 ﻿using Katzebase.Engine.Transactions;
-using System;
-using System.Collections.Generic;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Locking

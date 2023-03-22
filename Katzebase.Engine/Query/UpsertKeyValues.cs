@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Katzebase.Engine.Query
+﻿namespace Katzebase.Engine.Query
 {
     public class UpsertKeyValues
     {

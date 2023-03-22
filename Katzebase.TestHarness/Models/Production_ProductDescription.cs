@@ -1,5 +1,3 @@
-using System;
-
 namespace Katzebase.TestHarness.Models
 {
     public partial class Production_ProductDescription

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Katzebase.Library.Payloads
+﻿namespace Katzebase.Library.Payloads
 {
     public class KbIndex
     {

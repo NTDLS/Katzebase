@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Katzebase.Engine.Sessions
+﻿namespace Katzebase.Engine.Sessions
 {
     public class SessionManager
     {

@@ -3,10 +3,6 @@ using Katzebase.Engine.Query;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.Library.Payloads;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Documents

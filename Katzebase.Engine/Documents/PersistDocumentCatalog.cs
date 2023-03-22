@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-
-namespace Katzebase.Engine.Documents
+﻿namespace Katzebase.Engine.Documents
 {
     [Serializable]
     public class PersistDocumentCatalog

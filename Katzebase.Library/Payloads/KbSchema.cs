@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Katzebase.Library.Payloads
+﻿namespace Katzebase.Library.Payloads
 {
     public class KbSchema
     {

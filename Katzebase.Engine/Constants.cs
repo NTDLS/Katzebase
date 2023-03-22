@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Katzebase.Engine
+﻿namespace Katzebase.Engine
 {
     public static class Constants
     {

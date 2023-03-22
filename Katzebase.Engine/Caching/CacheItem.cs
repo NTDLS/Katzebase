@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Katzebase.Engine.Caching
+﻿namespace Katzebase.Engine.Caching
 {
     public class CacheItem
     {

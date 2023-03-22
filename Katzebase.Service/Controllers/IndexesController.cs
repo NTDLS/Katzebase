@@ -1,11 +1,7 @@
 ﻿using Katzebase.Library;
 using Katzebase.Library.Payloads;
-using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using Microsoft.AspNetCore.Mvc;
-using Katzebase.Engine.Query;
+using Newtonsoft.Json;
 
 namespace Katzebase.Service.Controllers
 {

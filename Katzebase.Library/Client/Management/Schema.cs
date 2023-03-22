@@ -1,6 +1,5 @@
 ﻿using Katzebase.Library.Payloads;
 using Newtonsoft.Json;
-using System;
 
 namespace Katzebase.Library.Client.Management
 {

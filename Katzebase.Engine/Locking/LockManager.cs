@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Katzebase.Engine.Locking
+﻿namespace Katzebase.Engine.Locking
 {
     public class LockManager
     {
