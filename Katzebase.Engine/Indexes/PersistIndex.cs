@@ -8,21 +8,18 @@ namespace Katzebase.Engine.Indexes
     [Serializable]
     public class PersistIndex
     {
-        public List<PersistIndexAttribute> Attributes { get; set; }
-        public string Name { get; set; }
-        public Guid Id { get; set; }
-        public DateTime Created { get; set; }
-        public DateTime Modfied { get; set; }
-        public bool IsUnique { get; set; }
-
+        public List<PersistIndexAttribute> Attributes { get; set; } = new List<PersistIndexAttribute>();
+        public string Name { get; set; } = string.Empty;
+        public Guid? Id { get; set; }
+        public DateTime? Created { get; set; }
+        public DateTime? Modfied { get; set; }
+        public bool IsUnique { get; set; } = false;
 
         [JsonIgnore]
-        public string DiskPath { get; set; }
-
+        public string? DiskPath { get; set; }
 
         public PersistIndex()
         {
-            Attributes = new List<PersistIndexAttribute>();
         }
 
         public PersistIndex Clone()

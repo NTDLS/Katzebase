@@ -8,7 +8,7 @@ namespace Katzebase.Library
         [MethodImpl(MethodImplOptions.NoInlining)]
         public static string GetCurrentMethod()
         {
-            return (new StackTrace()).GetFrame(1).GetMethod().Name;
+            return (new StackTrace())?.GetFrame(1)?.GetMethod()?.Name ?? "{unknown frame}";
         }
     }
 }

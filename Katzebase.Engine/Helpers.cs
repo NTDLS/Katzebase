@@ -79,11 +79,16 @@ namespace Katzebase.Engine
             }
             return false;
         }
-        public static void RemoveDirectoryIfEmpty(string path)
+        public static void RemoveDirectoryIfEmpty(string ? diskPath)
         {
-            if (IsDirectoryEmpty(path))
+            if (diskPath == null)
             {
-                Directory.Delete(path);
+                throw new ArgumentNullException(nameof(diskPath));
+            }
+
+            if (IsDirectoryEmpty(diskPath))
+            {
+                Directory.Delete(diskPath);
             }
         }
     }

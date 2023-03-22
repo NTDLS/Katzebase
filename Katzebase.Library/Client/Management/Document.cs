@@ -1,8 +1,5 @@
 ﻿using Katzebase.Library.Payloads;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Net.Http;
 using System.Text;
 
 namespace Katzebase.Library.Client.Management
@@ -31,9 +28,9 @@ namespace Katzebase.Library.Client.Management
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
-                if (result.Success == false)
+                if (result == null || result.Success == false)
                 {
-                    throw new Exception(result.Message);
+                    throw new Exception(result == null ? "Invalid response" : result.Message);
                 }
             }
         }
@@ -51,15 +48,15 @@ namespace Katzebase.Library.Client.Management
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
-                if (result.Success == false)
+                if (result == null || result.Success == false)
                 {
-                    throw new Exception(result.Message);
+                    throw new Exception(result == null ? "Invalid response" : result.Message);
                 }
             }
         }
 
         /// <summary>
-        /// Lists the doucments within a given schema.
+        /// Lists the documents within a given schema.
         /// </summary>
         /// <param name="schema"></param>
         public List<KbDocumentCatalogItem> Catalog(string schema)
@@ -69,7 +66,7 @@ namespace Katzebase.Library.Client.Management
             using (var response = client.Client.GetAsync(url))
             {
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                return JsonConvert.DeserializeObject<List<KbDocumentCatalogItem>>(resultText);
+                return JsonConvert.DeserializeObject<List<KbDocumentCatalogItem>>(resultText) ?? new List<KbDocumentCatalogItem>();
             }
         }
     }

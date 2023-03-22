@@ -215,12 +215,17 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        public void CreateDirectory(Transaction transaction, string diskPath)
+        public void CreateDirectory(Transaction transaction, string? diskPath)
         {
+            if (diskPath == null)
+            {
+                throw new ArgumentNullException(nameof(diskPath));
+            }
+
             try
             {
                 string cacheKey = Helpers.RemoveModFileName(diskPath.ToLower());
-                transaction.LockDirectory(Constants.LockOperation.Write, cacheKey);
+                transaction.LockDirectory(LockOperation.Write, cacheKey);
 
                 bool doesFileExist = Directory.Exists(diskPath);
 

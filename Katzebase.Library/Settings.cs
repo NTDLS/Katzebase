@@ -21,19 +21,19 @@
         /// <summary>
         /// The base listening URL for the web-services.
         /// </summary>
-        public string BaseAddress { get; set; }
+        public string BaseAddress { get; set; } = string.Empty;
         /// <summary>
         /// The top level directory for all schemas.
         /// </summary>
-        public string DataRootPath { get; set; }
+        public string DataRootPath { get; set; } = string.Empty;
         /// <summary>
         /// The directory where transaction logs are stored.
         /// </summary>
-        public string TransactionDataPath { get; set; }
+        public string TransactionDataPath { get; set; } = string.Empty;
         /// <summary>
         /// The directory where text and performance logs are stores.
         /// </summary>
-        public string LogDirectory { get; set; }
+        public string LogDirectory { get; set; } = string.Empty;
         /// <summary>
         /// If true, text logs will be flused at every write. This ensures that the log file is always up-to-date on disk.
         /// </summary>

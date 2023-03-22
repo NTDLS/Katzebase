@@ -6,10 +6,10 @@ namespace Katzebase.Engine.Documents
     [Serializable]
     public class PersistDocument
     {
-        public string Content { get; set; }
-        public Guid Id { get; set; }
-        public DateTime Created { get; set; }
-        public DateTime Modfied { get; set; }
+        public string? Content { get; set; }
+        public Guid? Id { get; set; }
+        public DateTime? Created { get; set; }
+        public DateTime? Modfied { get; set; }
         public PersistDocument Clone()
         {
             return new PersistDocument

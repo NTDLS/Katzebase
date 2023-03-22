@@ -449,21 +449,21 @@ namespace Katzebase.Engine.Documents
 
         }
 
-        public void Store(ulong processId, string schema, KbDocument document, out Guid newId)
+        public void Store(ulong processId, string schema, KbDocument document, out Guid? newId)
         {
             try
             {
                 var persistDocument = PersistDocument.FromPayload(document);
 
-                if (persistDocument.Id == Guid.Empty)
+                if (persistDocument.Id == null || persistDocument.Id == Guid.Empty)
                 {
                     persistDocument.Id = Guid.NewGuid();
                 }
-                if (persistDocument.Created == DateTime.MinValue)
+                if (persistDocument.Created == null || persistDocument.Created == DateTime.MinValue)
                 {
                     persistDocument.Created = DateTime.UtcNow;
                 }
-                if (persistDocument.Modfied == DateTime.MinValue)
+                if (persistDocument.Modfied == null || persistDocument.Modfied == DateTime.MinValue)
                 {
                     persistDocument.Modfied = DateTime.UtcNow;
                 }
@@ -482,7 +482,7 @@ namespace Katzebase.Engine.Documents
                     documentCatalog.Add(persistDocument);
                     core.IO.PutJson(txRef.Transaction, documentCatalogDiskPath, documentCatalog);
 
-                    string documentDiskPath = Path.Combine(schemaMeta.DiskPath, Helpers.GetDocumentModFilePath(persistDocument.Id));
+                    string documentDiskPath = Path.Combine(schemaMeta.DiskPath, Helpers.GetDocumentModFilePath((Guid)persistDocument.Id));
                     core.IO.CreateDirectory(txRef.Transaction, Path.GetDirectoryName(documentDiskPath));
                     core.IO.PutJson(txRef.Transaction, documentDiskPath, persistDocument);
 
