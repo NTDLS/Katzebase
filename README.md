@@ -13,6 +13,8 @@ Katzebase is a fully featured document-based data storage engine which is under 
 - Health monitoring.
 - Multi-schema.
 
+## Sample Data
+You can download the [sample Katzebase database](https://networkdls.com/DirectDownload/Katzebase/AdventureWorks.7z), which is a dump of the AdventureWorks2012 SQL Server database. Yea, I know its old - but thats the database I had on hand.
 
 ## Contributing
 
