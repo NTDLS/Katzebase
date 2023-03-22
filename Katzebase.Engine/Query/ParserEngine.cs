@@ -212,6 +212,9 @@ namespace Katzebase.Engine.Query
                 {
                     foreach (var kvp in result.UpsertKeyValuePairs.Collection)
                     {
+                        if (kvp.Key == null || kvp.Value == null)
+                            throw new Exception("Key cannot be null.");
+
                         kvp.Key = kvp.Key.Replace(literalString.Key, literalString.Value);
                         kvp.Value = kvp.Value.Replace(literalString.Key, literalString.Value);
                     }
@@ -253,6 +256,9 @@ namespace Katzebase.Engine.Query
             {
                 foreach (var kvp in result.UpsertKeyValuePairs.Collection)
                 {
+                    if (kvp.Key == null || kvp.Value == null)
+                        throw new Exception("KEy cannot be null.");
+
                     if (kvp.Key.StartsWith("\'") && kvp.Key.EndsWith("\'"))
                     {
                         kvp.Key = kvp.Key.Substring(1, kvp.Key.Length - 2);
@@ -345,10 +351,8 @@ namespace Katzebase.Engine.Query
             Conditions conditions = new Conditions();
 
             string token = string.Empty;
-
             ConditionType conditionType = ConditionType.None;
-
-            Condition condition = null;
+            Condition? condition = null;
 
             while (true)
             {
@@ -396,15 +400,13 @@ namespace Katzebase.Engine.Query
                 }
                 else
                 {
-                    condition = new Condition();
-
                     if (token == string.Empty || Utilities.IsValidIdentifier(token) == false)
                     {
                         throw new Exception("Invalid query. Found [" + token + "], expected identifier name.");
                     }
 
-                    condition.Key = token;
-                    condition.ConditionType = conditionType;
+                    condition = new Condition(conditionType, token);
+
 
                     if ((token = Utilities.GetNextToken(conditionsText, ref position)) == string.Empty)
                     {

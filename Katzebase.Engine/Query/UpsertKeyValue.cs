@@ -2,9 +2,9 @@
 {
     public class UpsertKeyValue
     {
-        public string Key { get; set; }
+        public string? Key { get; set; }
         public bool IsKeyConstant { get; set; }
-        public string Value { get; set; }
+        public string? Value { get; set; }
         public bool IsValueConstant { get; set; }
     }
 }

@@ -8,7 +8,7 @@ namespace Katzebase.Engine.Logging
     public class LogManager
     {
         private Core core;
-        private System.IO.StreamWriter fileHandle = null;
+        private StreamWriter? fileHandle = null;
         private DateTime recycledTime = DateTime.MinValue;
 
         public LogManager(Core core)
@@ -129,6 +129,9 @@ namespace Katzebase.Engine.Logging
                 Console.WriteLine(message.ToString());
 
                 Console.ForegroundColor = ConsoleColor.Gray;
+
+                if (fileHandle == null)
+                    throw new Exception("fileHandle cannot be null.");
 
                 fileHandle.WriteLine(message.ToString());
 

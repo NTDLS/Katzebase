@@ -8,6 +8,11 @@ namespace Katzebase.Service
     {
         public static Engine.Core Core;
 
+        public Program()
+        {
+
+        }
+
         public static void Main(string[] args)
         {
             IConfiguration config = new ConfigurationBuilder()

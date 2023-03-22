@@ -20,7 +20,12 @@ namespace Katzebase.Engine.Health
             string healthCounterDiskPath = Path.Combine(core.settings.LogDirectory, Constants.HealthStatsFile);
             if (File.Exists(healthCounterDiskPath))
             {
-                Counters = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath);
+                var result = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath);
+
+                if (result == null)
+                    throw new Exception("GetJsonNonTracked cannot be null.");
+
+                Counters = result;
             }
             else
             {

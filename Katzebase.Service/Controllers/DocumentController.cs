@@ -47,11 +47,17 @@ namespace Katzebase.Service.Controllers
             {
                 var content = JsonConvert.DeserializeObject<KbDocument>(value);
 
-                Guid newId = Guid.Empty;
+                if (content == null)
+                    throw new Exception("Content cannot be null.");
+
+                Guid? newId = Guid.Empty;
 
                 Program.Core.Documents.Store(processId, schema, content, out newId);
 
-                result.Id = newId;
+                if (newId == null)
+                    throw new Exception("New document Id cannot be null.");
+
+                result.Id = (Guid)newId;
                 result.Success = true;
             }
             catch (Exception ex)

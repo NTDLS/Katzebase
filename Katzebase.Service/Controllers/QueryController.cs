@@ -26,6 +26,9 @@ namespace Katzebase.Service.Controllers
             {
                 var statement = JsonConvert.DeserializeObject<string>(value);
 
+                if (statement == null)
+                    throw new Exception("Statement cannot be null.");
+
                 Program.Core.Query.Execute(processId, statement);
 
                 result.Success = true;

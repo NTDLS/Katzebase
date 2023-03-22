@@ -5,11 +5,6 @@ using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.Library.Payloads;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Indexes
@@ -49,9 +44,20 @@ namespace Katzebase.Engine.Indexes
 
                 for (int i = 0; i < indexMeta.Attributes.Count; i++)
                 {
-                    if (indexKeyMatches.Find(o => o.Key == indexMeta.Attributes[i].Name.ToLower() && o.Handled == false) != null)
+                    if (indexMeta.Attributes == null || indexMeta.Attributes[i] == null)
                     {
-                        handledKeyNames.Add(indexMeta.Attributes[i].Name.ToLower());
+                        throw new Exception("Reversible action can ot be null");
+                    }
+
+                    var keyName = indexMeta.Attributes[i].Name?.ToLower();
+                    if (keyName == null)
+                    {
+                        throw new Exception("keyName action can ot be null");
+                    }
+
+                    if (indexKeyMatches.Find(o => o.Key == keyName && o.Handled == false) != null)
+                    {
+                        handledKeyNames.Add(keyName);
                     }
                     else
                     {
@@ -117,13 +123,17 @@ namespace Katzebase.Engine.Indexes
             return result;
         }
 
-        public void Create(ulong processId, string schema, Library.Payloads.KbIndex index, out Guid newId)
+        public void Create(ulong processId, string schema, KbIndex index, out Guid newId)
         {
             try
             {
                 var persistIndex = PersistIndex.FromPayload(index);
+                if (persistIndex == null)
+                {
+                    throw new Exception("Index cannot be null");
+                }
 
-                if (persistIndex.Id == Guid.Empty)
+                if (persistIndex.Id == null || persistIndex.Id == Guid.Empty)
                 {
                     persistIndex.Id = Guid.NewGuid();
                 }
@@ -146,14 +156,19 @@ namespace Katzebase.Engine.Indexes
 
                     var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
                     indexCatalog.Add(persistIndex);
-                    core.IO.PutJson(txRef.Transaction, indexCatalog.DiskPath, indexCatalog);
 
+                    if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
+                    {
+                        throw new Exception("DiskPath action can ot be null");
+                    }
+
+                    core.IO.PutJson(txRef.Transaction, indexCatalog.DiskPath, indexCatalog);
                     persistIndex.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(index.Name));
                     core.IO.PutPBuf(txRef.Transaction, persistIndex.DiskPath, new PersistIndexPageCatalog());
 
                     RebuildIndex(txRef.Transaction, schemaMeta, persistIndex);
 
-                    newId = persistIndex.Id;
+                    newId = (Guid)persistIndex.Id;
 
                     txRef.Commit();
                 }
@@ -178,6 +193,11 @@ namespace Katzebase.Engine.Indexes
                     }
 
                     var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
+
+                    if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
+                    {
+                        throw new Exception("DiskPath action can ot be null");
+                    }
 
                     var indexMeta = indexCatalog.GetByName(indexName);
                     if (indexMeta == null)
@@ -212,8 +232,17 @@ namespace Katzebase.Engine.Indexes
 
         private PersistIndexCatalog GetIndexCatalog(Transaction transaction, PersistSchema schemaMeta, LockOperation intendedOperation)
         {
+            if (schemaMeta.DiskPath == null)
+            {
+                throw new Exception("DiskPath action can ot be null");
+            }
+
             string indexCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.IndexCatalogFile);
             var indexCatalog = core.IO.GetJson<PersistIndexCatalog>(transaction, indexCatalogDiskPath, intendedOperation);
+
+            if (indexCatalog == null)
+                throw new Exception("indexCatalog cannot be null.");
+
             indexCatalog.DiskPath = indexCatalogDiskPath;
 
             foreach (var index in indexCatalog.Collection)
@@ -232,9 +261,17 @@ namespace Katzebase.Engine.Indexes
 
                 foreach (var indexAttribute in indexMeta.Attributes)
                 {
+                    if (document.Content == null)
+                    {
+                        throw new Exception("Document content cannot be null.");
+                    }
+                    if (indexAttribute.Name == null)
+                    {
+                        throw new Exception("indexAttribute.Name action can ot be null");
+                    }
+
                     var jsonContent = JObject.Parse(document.Content);
-                    JToken jToken = null;
-                    if (jsonContent.TryGetValue(indexAttribute.Name, StringComparison.CurrentCultureIgnoreCase, out jToken))
+                    if (jsonContent.TryGetValue(indexAttribute.Name, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
                     {
                         result.Add(jToken.ToString());
                     }
@@ -269,15 +306,22 @@ namespace Katzebase.Engine.Indexes
         /// <param name="searchTokens"></param>
         /// <param name="indexPageCatalog"></param>
         /// <returns></returns>
-        private FindKeyPageResult FindKeyPage(Transaction transaction, PersistIndex indexMeta, List<string> searchTokens, PersistIndexPageCatalog suppliedIndexPageCatalog)
+        private FindKeyPageResult FindKeyPage(Transaction transaction, PersistIndex indexMeta, List<string> searchTokens, PersistIndexPageCatalog? suppliedIndexPageCatalog)
         {
             try
             {
                 var indexPageCatalog = suppliedIndexPageCatalog;
                 if (indexPageCatalog == null)
                 {
+                    if (indexMeta.DiskPath == null)
+                        throw new Exception("DiskPath cannot be null.");
+
+
                     indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, indexMeta.DiskPath, LockOperation.Write);
                 }
+
+                if (indexPageCatalog == null)
+                    throw new Exception("indexPageCatalog cannot be null.");
 
                 lock (indexPageCatalog)
                 {
@@ -346,12 +390,17 @@ namespace Katzebase.Engine.Indexes
         {
             try
             {
+                if (document.Id == null)
+                {
+                    throw new Exception("Document ID cannot be null.");
+                }
+
                 var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
 
                 //Loop though each index in the schema.
                 foreach (var indexMeta in indexCatalog.Collection)
                 {
-                    DeleteDocumentFromIndex(transaction, schemaMeta, indexMeta, document.Id);
+                    DeleteDocumentFromIndex(transaction, schemaMeta, indexMeta, (Guid)document.Id);
                     InsertDocumentIntoIndex(transaction, schemaMeta, indexMeta, document);
                 }
             }
@@ -406,16 +455,36 @@ namespace Katzebase.Engine.Indexes
         /// <param name="schemaMeta"></param>
         /// <param name="indexMeta"></param>
         /// <param name="document"></param>
-        private void InsertDocumentIntoIndex(Transaction transaction, PersistSchema schemaMeta, PersistIndex indexMeta, PersistDocument document, PersistIndexPageCatalog indexPageCatalog, bool flushPageCatalog)
+        private void InsertDocumentIntoIndex(Transaction transaction, PersistSchema schemaMeta, PersistIndex indexMeta, PersistDocument document, PersistIndexPageCatalog? indexPageCatalog, bool flushPageCatalog)
         {
             try
             {
+                if (document.Id == null || document.Id == Guid.Empty)
+                {
+                    throw new Exception("Leaf cannot be null.");
+                }
+
+                if (indexMeta.DiskPath == null)
+                {
+                    throw new Exception("DiskPath cannot be null.");
+                }
+
                 var searchTokens = GetIndexSearchTokens(transaction, indexMeta, document);
                 var findResult = FindKeyPage(transaction, indexMeta, searchTokens, indexPageCatalog);
+
+                if (findResult.Catalog == null)
+                {
+                    throw new Exception("FindKeyPage cannot be null.");
+                }
 
                 //If we found a full match for all supplied key values - add the document to the leaf collection.
                 if (findResult.IsFullMatch)
                 {
+                    if (findResult.Leaf == null)
+                    {
+                        throw new Exception("Leaf cannot be null.");
+                    }
+
                     if (findResult.Leaf.DocumentIDs == null)
                     {
                         findResult.Leaf.DocumentIDs = new HashSet<Guid>();
@@ -427,7 +496,7 @@ namespace Katzebase.Engine.Indexes
                         throw new KatzebaseDuplicateKeyViolation(exceptionText);
                     }
 
-                    findResult.Leaf.DocumentIDs.Add(document.Id);
+                    findResult.Leaf.DocumentIDs.Add((Guid)document.Id);
                     if (flushPageCatalog)
                     {
                         core.IO.PutPBuf(transaction, indexMeta.DiskPath, findResult.Catalog);
@@ -435,12 +504,24 @@ namespace Katzebase.Engine.Indexes
                 }
                 else
                 {
+                    if (indexPageCatalog == null)
+                        throw new Exception("indexPageCatalog cannot be null.");
+
                     //If we didn't find a full match for all supplied key values,
                     //  then create the tree and add the document to the lowest leaf.
                     //Note that we are going to start creating the leaf level at the findResult.ExtentLevel.
                     //  This is because we may have a partial match and don't need to create the full tree.
                     lock (indexPageCatalog)
                     {
+                        if (findResult.Leaves == null)
+                        {
+                            throw new Exception("Leaves cannot be null.");
+                        }
+                        if (findResult.Leaf == null)
+                        {
+                            throw new Exception("Leaf cannot be null.");
+                        }
+
                         for (int i = findResult.ExtentLevel; i < searchTokens.Count; i++)
                         {
                             findResult.Leaf = findResult.Leaves.AddNewleaf(searchTokens[i]);
@@ -452,7 +533,7 @@ namespace Katzebase.Engine.Indexes
                             findResult.Leaf.DocumentIDs = new HashSet<Guid>();
                         }
 
-                        findResult.Leaf.DocumentIDs.Add(document.Id);
+                        findResult.Leaf.DocumentIDs.Add((Guid)document.Id);
                     }
                     if (flushPageCatalog)
                     {
@@ -487,12 +568,12 @@ namespace Katzebase.Engine.Indexes
 
         class RebuildIndexItemThreadProc_Params
         {
-            public RebuildIndexItemThreadProc_ParallelState State { get; set; }
-            public Transaction Transaction { get; set; }
-            public PersistSchema SchemaMeta { get; set; }
-            public PersistIndex IndexMeta { get; set; }
-            public PersistDocumentCatalog DocumentCatalog { get; set; }
-            public PersistIndexPageCatalog IndexPageCatalog { get; set; }
+            public RebuildIndexItemThreadProc_ParallelState? State { get; set; }
+            public Transaction? Transaction { get; set; }
+            public PersistSchema? SchemaMeta { get; set; }
+            public PersistIndex? IndexMeta { get; set; }
+            public PersistDocumentCatalog? DocumentCatalog { get; set; }
+            public PersistIndexPageCatalog? IndexPageCatalog { get; set; }
             public AutoResetEvent Initialized { get; set; }
             public RebuildIndexItemThreadProc_Params()
             {
@@ -500,11 +581,27 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        void RebuildIndexItemThreadProc(object oParam)
+        void RebuildIndexItemThreadProc(object? oParam)
         {
+            int threadMod = 0;
+
+            if (oParam == null)
+                throw new Exception("Param cannot be null.");
+
             RebuildIndexItemThreadProc_Params param = (RebuildIndexItemThreadProc_Params)oParam;
 
-            int threadMod = 0;
+            if (param.State == null)
+                throw new Exception("State cannot be null.");
+            if (param.DocumentCatalog == null)
+                throw new Exception("DocumentCatalog cannot be null.");
+            if (param.SchemaMeta == null)
+                throw new Exception("SchemaMeta cannot be null.");
+            if (param.Transaction == null)
+                throw new Exception("Transaction cannot be null.");
+            if (param.IndexMeta == null)
+                throw new Exception("IndexMeta cannot be null.");
+            if (param.IndexPageCatalog == null)
+                throw new Exception("IndexPageCatalog cannot be null.");
 
             lock (param.State)
             {
@@ -519,8 +616,20 @@ namespace Katzebase.Engine.Indexes
                 if ((i % param.State.TargetThreadCount) == threadMod)
                 {
                     var documentCatalogItem = param.DocumentCatalog.Collection[i];
+
+                    if (param.SchemaMeta.DiskPath == null)
+                    {
+                        throw new Exception("DiskPath action can ot be null");
+                    }
+
                     string documentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
                     var persistDocument = core.IO.GetJson<PersistDocument>(param.Transaction, documentDiskPath, LockOperation.Read);
+
+                    if (persistDocument == null)
+                    {
+                        throw new Exception("persistDocument, cannot be null.");
+                    }
+
                     InsertDocumentIntoIndex(param.Transaction, param.SchemaMeta, param.IndexMeta, persistDocument, param.IndexPageCatalog, false);
                 }
             }
@@ -541,6 +650,14 @@ namespace Katzebase.Engine.Indexes
         {
             try
             {
+                if (indexMeta.DiskPath == null)
+                    throw new Exception("DiskPath cannot be null.");
+
+                if (schemaMeta.DiskPath == null)
+                {
+                    throw new Exception("DiskPath action can ot be null");
+                }
+
                 var filePath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
                 var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, filePath, LockOperation.Read);
 
@@ -574,6 +691,9 @@ namespace Katzebase.Engine.Indexes
                 {
                     Thread.Sleep(1);
                 }
+
+                if (indexPageCatalog == null)
+                    throw new Exception("indexPageCatalog cannot be null.");
 
                 core.IO.PutPBuf(transaction, indexMeta.DiskPath, indexPageCatalog);
             }
@@ -638,7 +758,13 @@ namespace Katzebase.Engine.Indexes
         {
             try
             {
+                if (indexMeta.DiskPath == null)
+                    throw new Exception("DiskPath cannot be null.");
+
                 var persistIndexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, indexMeta.DiskPath, LockOperation.Write);
+
+                if (persistIndexPageCatalog == null)
+                    throw new Exception("persistIndexPageCatalog cannot be null.");
 
                 if (RemoveDocumentFromLeaves(ref persistIndexPageCatalog.Leaves, documentId))
                 {

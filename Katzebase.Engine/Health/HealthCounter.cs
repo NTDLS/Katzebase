@@ -9,7 +9,7 @@ namespace Katzebase.Engine.Health
     {
         [JsonConverter(typeof(StringEnumConverter))]
         public HealthCounterType Type { get; set; }
-        public String Instance { get; set; }
+        public string Instance { get; set; } = string.Empty;
         public double Value { get; set; }
     }
 }

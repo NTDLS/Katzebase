@@ -12,7 +12,7 @@ namespace Katzebase.Engine.Transactions
             this.core = core;
         }
 
-        public Transaction GetByProcessId(ulong processId)
+        public Transaction? GetByProcessId(ulong processId)
         {
             lock (Collection)
             {
@@ -26,7 +26,10 @@ namespace Katzebase.Engine.Transactions
             lock (Collection)
             {
                 var transaction = GetByProcessId(processId);
-                this.Collection.Remove(transaction);
+                if (transaction != null)
+                {
+                    this.Collection.Remove(transaction);
+                }
             }
         }
 
@@ -47,14 +50,25 @@ namespace Katzebase.Engine.Transactions
 
                 foreach (string transactionFile in transactionFiles)
                 {
-                    ulong processId = ulong.Parse(Path.GetFileNameWithoutExtension(Path.GetDirectoryName(transactionFile)));
+                    var processIdString = Path.GetFileNameWithoutExtension(Path.GetDirectoryName(transactionFile));
+                    if (processIdString == null)
+                    {
+                        throw new ArgumentNullException(nameof(processIdString));
+                    }
+
+                    ulong processId = ulong.Parse(processIdString);
 
                     Transaction transaction = new Transaction(core, this, processId, true);
 
                     var reversibleActions = File.ReadLines(transactionFile).ToList();
                     foreach (var reversibleAction in reversibleActions)
                     {
-                        transaction.ReversibleActions.Add(JsonConvert.DeserializeObject<ReversibleAction>(reversibleAction));
+                        var ra = JsonConvert.DeserializeObject<ReversibleAction>(reversibleAction);
+                        if (ra == null)
+                        {
+                            throw new Exception("Reversible action can ot be null");
+                        }
+                        transaction.ReversibleActions.Add(ra);
                     }
 
                     core.Log.Write($"Rolling back session {transaction.ProcessId} with {transaction.ReversibleActions.Count} actions.", Constants.LogSeverity.Warning);
@@ -90,7 +104,7 @@ namespace Katzebase.Engine.Transactions
             {
                 lock (Collection)
                 {
-                    Transaction transaction = GetByProcessId(processId);
+                    var transaction = GetByProcessId(processId);
                     if (transaction == null)
                     {
                         transaction = new Transaction(core, this, processId, false)

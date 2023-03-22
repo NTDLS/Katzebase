@@ -11,9 +11,14 @@ namespace Katzebase.Engine.Documents
 
         public PersistDocumentCatalogItem Add(PersistDocument document)
         {
+            if (document.Id == null || document.Id == Guid.Empty)
+            {
+                throw new ArgumentException(nameof(document.Id));
+            }
+
             var catalogItem = new PersistDocumentCatalogItem()
             {
-                Id = document.Id
+                Id = (Guid)document.Id
             };
 
             this.Collection.Add(catalogItem);
@@ -31,7 +36,7 @@ namespace Katzebase.Engine.Documents
             this.Collection.Add(item);
         }
 
-        public PersistDocumentCatalogItem GetById(Guid id)
+        public PersistDocumentCatalogItem? GetById(Guid id)
         {
             return (from o in Collection where o.Id == id select o).FirstOrDefault();
         }

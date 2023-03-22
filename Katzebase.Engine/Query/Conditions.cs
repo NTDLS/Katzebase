@@ -7,7 +7,7 @@ namespace Katzebase.Engine.Query
     {
         public List<Condition> Collection = new List<Condition>();
 
-        private List<Conditions> _Nest = null;
+        private List<Conditions> _Nest = new List<Conditions>();
 
         public List<Conditions> Nest
         {

@@ -1,6 +1,5 @@
 using Katzebase.Library.Client;
 using Katzebase.Library.Payloads;
-using System;
 using System.Data.SqlClient;
 
 namespace Katzebase.TestHarness.ADORepository

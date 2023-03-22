@@ -11,7 +11,7 @@ namespace Katzebase.Engine.Indexes
         public List<PersistIndex> Collection = new List<PersistIndex>();
 
         [JsonIgnore]
-        public string DiskPath { get; set; }
+        public string? DiskPath { get; set; }
 
         public void Remove(PersistIndex item)
         {
@@ -20,15 +20,15 @@ namespace Katzebase.Engine.Indexes
 
         public void Add(PersistIndex item)
         {
-            this.Collection.Add(item);
+            Collection.Add(item);
         }
 
-        public PersistIndex GetById(Guid id)
+        public PersistIndex? GetById(Guid id)
         {
             return (from o in Collection where o.Id == id select o).FirstOrDefault();
         }
 
-        public PersistIndex GetByName(string name)
+        public PersistIndex? GetByName(string name)
         {
             foreach (var item in Collection)
             {

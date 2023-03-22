@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Microsoft.AspNetCore.Mvc;
+using Katzebase.Engine.Query;
 
 namespace Katzebase.Service.Controllers
 {
@@ -24,7 +25,10 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                var content = JsonConvert.DeserializeObject<Library.Payloads.KbIndex>(value);
+                var content = JsonConvert.DeserializeObject<KbIndex>(value);
+
+                if (content == null)
+                    throw new Exception("Content cannot be null.");
 
                 Guid newId = Guid.Empty;
 

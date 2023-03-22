@@ -4,7 +4,7 @@ namespace Katzebase.Engine.Indexes
 {
     public class PersistIndexAttribute
     {
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         public static PersistIndexAttribute FromPayload(KbIndexAttribute indexAttribute)
         {

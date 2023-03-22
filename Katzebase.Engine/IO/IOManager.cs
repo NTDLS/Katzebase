@@ -1,8 +1,5 @@
 ﻿using Katzebase.Engine.Transactions;
 using Newtonsoft.Json;
-using System;
-using System.IO;
-using System.Linq;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.IO
@@ -17,12 +14,12 @@ namespace Katzebase.Engine.IO
 
         #region Getters.
 
-        public T GetJsonNonTracked<T>(string filePath)
+        public T? GetJsonNonTracked<T>(string filePath)
         {
             return JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath));
         }
 
-        public T GetPBufNonTracked<T>(string filePath)
+        public T? GetPBufNonTracked<T>(string filePath)
         {
             using (var file = File.OpenRead(filePath))
             {
@@ -30,17 +27,17 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        public T GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
+        public T? GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
             return InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON);
         }
 
-        public T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
+        public T? GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
             return InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf);
         }
 
-        public T InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
+        public T? InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
         {
             try
             {
@@ -53,24 +50,24 @@ namespace Katzebase.Engine.IO
 
                     if (cachedObject != null)
                     {
-                        core.Health.Increment(Constants.HealthCounterType.IOCacheReadHits);
+                        core.Health.Increment(HealthCounterType.IOCacheReadHits);
 
                         core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
-                        return (T)cachedObject.Value;
+                        return (T?)cachedObject.Value;
                     }
                 }
 
-                core.Health.Increment(Constants.HealthCounterType.IOCacheReadMisses);
+                core.Health.Increment(HealthCounterType.IOCacheReadMisses);
 
                 core.Log.Trace($"IO:Read:{transaction.ProcessId}->{filePath}");
 
-                T deserializedObject;
+                T? deserializedObject;
 
                 if (format == IOFormat.JSON)
                 {
                     string text = File.ReadAllText(filePath);
-                    deserializedObject = JsonConvert.DeserializeObject<T>(text);
+                    deserializedObject = JsonConvert.DeserializeObject<T?>(text);
                 }
                 else if (format == IOFormat.PBuf)
                 {
@@ -85,10 +82,10 @@ namespace Katzebase.Engine.IO
                     throw new NotImplementedException();
                 }
 
-                if (core.settings.AllowIOCaching)
+                if (core.settings.AllowIOCaching && deserializedObject != null)
                 {
                     core.Cache.Upsert(cacheKey, deserializedObject);
-                    core.Health.Increment(Constants.HealthCounterType.IOCacheReadAdditions);
+                    core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
                 }
 
                 return deserializedObject;
@@ -132,7 +129,7 @@ namespace Katzebase.Engine.IO
             try
             {
                 string cacheKey = Helpers.RemoveModFileName(filePath.ToLower());
-                transaction.LockFile(Constants.LockOperation.Write, cacheKey);
+                transaction.LockFile(LockOperation.Write, cacheKey);
 
                 bool deferDiskWrite = false;
 
@@ -151,13 +148,16 @@ namespace Katzebase.Engine.IO
 
                     if (core.settings.AllowDeferredIO && transaction.IsLongLived)
                     {
+                        if (transaction.DeferredIOs == null)
+                            throw new Exception("DeferredIOs cannot be null.");
+
                         deferDiskWrite = transaction.DeferredIOs.RecordDeferredDiskIO(cacheKey, filePath, deserializedObject, format);
                     }
                 }
 
                 if (deferDiskWrite == false)
                 {
-                    core.Log.Trace($"IO:Write:{transaction.ProcessId}->{filePath}");
+                    core.Log.Trace($"IO:Write:{filePath}");
 
                     if (format == IOFormat.JSON)
                     {
@@ -179,13 +179,13 @@ namespace Katzebase.Engine.IO
                 }
                 else
                 {
-                    core.Log.Trace($"IO:Write-Deferred:{transaction.ProcessId}->{filePath}");
+                    core.Log.Trace($"IO:Write-Deferred:{filePath}");
                 }
 
                 if (core.settings.AllowIOCaching)
                 {
                     core.Cache.Upsert(cacheKey, deserializedObject);
-                    core.Health.Increment(Constants.HealthCounterType.IOCacheWriteAdditions);
+                    core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
                 }
             }
             catch (Exception ex)
@@ -250,6 +250,9 @@ namespace Katzebase.Engine.IO
             {
                 string lowerFilePath = filePath.ToLower();
 
+                if (transaction.DeferredIOs == null)
+                    throw new Exception("DeferredIOs cannot be null.");
+
                 var deferredExists = transaction.DeferredIOs.Collection.Values.FirstOrDefault(o => o.LowerDiskPath == lowerFilePath);
                 if (deferredExists != null)
                 {
@@ -276,7 +279,7 @@ namespace Katzebase.Engine.IO
             try
             {
                 string cacheKey = Helpers.RemoveModFileName(filePath.ToLower());
-                transaction.LockFile(Constants.LockOperation.Write, cacheKey);
+                transaction.LockFile(LockOperation.Write, cacheKey);
 
                 if (core.settings.AllowIOCaching)
                 {
@@ -302,7 +305,7 @@ namespace Katzebase.Engine.IO
             try
             {
                 string cacheKey = Helpers.RemoveModFileName(diskPath.ToLower());
-                transaction.LockDirectory(Constants.LockOperation.Write, cacheKey);
+                transaction.LockDirectory(LockOperation.Write, cacheKey);
 
                 if (core.settings.AllowIOCaching)
                 {

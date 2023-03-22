@@ -90,6 +90,9 @@ namespace Katzebase.Engine.Caching
 
                                 foreach (var tx in core.Transactions.Collection)
                                 {
+                                    if (tx.DeferredIOs == null)
+                                        throw new Exception("DeferredIOs cannot be null.");
+
                                     foreach (var deferredIo in tx.DeferredIOs.Collection)
                                     {
                                         if (deferredIo.Key == itemToRemove.Key)
@@ -167,7 +170,7 @@ namespace Katzebase.Engine.Caching
             }
         }
 
-        public CacheItem Get(string key)
+        public CacheItem? Get(string key)
         {
             lock (collection)
             {

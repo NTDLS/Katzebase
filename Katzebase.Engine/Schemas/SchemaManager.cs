@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Schemas
@@ -15,7 +16,7 @@ namespace Katzebase.Engine.Schemas
     {
         private Core core;
         private string rootCatalogFile;
-        private PersistSchema rootSchemaMeta = null;
+        private PersistSchema? rootSchemaMeta = null;
 
         public PersistSchema RootSchemaMeta
         {
@@ -57,11 +58,19 @@ namespace Katzebase.Engine.Schemas
         {
             List<PersistSchema> metaList = new List<PersistSchema>();
 
+            if (node.DiskPath == null)
+            {
+                throw new Exception("DiskPath action can ot be null");
+            }
+
             string namespaceCatalogDiskPath = Path.Combine(node.DiskPath, Constants.SchemaCatalogFile);
 
             if (core.IO.FileExists(transaction, namespaceCatalogDiskPath, intendedOperation))
             {
                 var namespaceCatalog = core.IO.GetJson<PersistSchemaCatalog>(transaction, namespaceCatalogDiskPath, intendedOperation);
+
+                if (namespaceCatalog == null || namespaceCatalog.Collection == null)
+                    throw new Exception("namespaceCatalog cannot be null.");
 
                 foreach (var catalogItem in namespaceCatalog.Collection)
                 {
@@ -79,7 +88,7 @@ namespace Katzebase.Engine.Schemas
             return metaList;
         }
 
-        public PersistSchema GetParentMeta(Transaction transaction, PersistSchema child, LockOperation intendedOperation)
+        public PersistSchema? GetParentMeta(Transaction transaction, PersistSchema child, LockOperation intendedOperation)
         {
             try
             {
@@ -87,6 +96,12 @@ namespace Katzebase.Engine.Schemas
                 {
                     return null;
                 }
+
+                if (child.VirtualPath == null)
+                {
+                    throw new Exception("VirtualPath action can ot be null");
+                }
+
                 var segments = child.VirtualPath.Split(':').ToList();
                 segments.RemoveAt(segments.Count - 1);
                 string parentNs = string.Join(":", segments);
@@ -115,7 +130,10 @@ namespace Katzebase.Engine.Schemas
                     string schemaName = segments[segments.Count() - 1];
 
                     string namespaceDiskPath = Path.Combine(core.settings.DataRootPath, string.Join("\\", segments));
-                    string parentSchemaDiskPath = Directory.GetParent(namespaceDiskPath).FullName;
+                    string? parentSchemaDiskPath = Directory.GetParent(namespaceDiskPath)?.FullName;
+
+                    if (parentSchemaDiskPath == null)
+                        throw new Exception("parentSchemaDiskPath cannot be null.");
 
                     string parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, Constants.SchemaCatalogFile);
 
@@ -126,6 +144,9 @@ namespace Katzebase.Engine.Schemas
 
                     var parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(transaction,
                         Path.Combine(parentSchemaDiskPath, Constants.SchemaCatalogFile), intendedOperation);
+
+                    if (parentCatalog == null)
+                        throw new Exception("parentCatalog cannot be null.");
 
                     var namespaceMeta = parentCatalog.GetByName(schemaName);
                     if (namespaceMeta != null)
@@ -172,8 +193,16 @@ namespace Katzebase.Engine.Schemas
 
                     var list = new List<PersistSchema>();
 
+                    if (schemaMeta.DiskPath == null)
+                    {
+                        throw new Exception("DiskPath action can ot be null");
+                    }
+
                     var filePath = Path.Combine(schemaMeta.DiskPath, Constants.SchemaCatalogFile);
                     var namespaceCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, filePath, LockOperation.Read);
+
+                    if (namespaceCatalog == null || namespaceCatalog.Collection == null)
+                        throw new Exception("namespaceCatalog cannot be null.");
 
                     foreach (var item in namespaceCatalog.Collection)
                     {
@@ -209,15 +238,25 @@ namespace Katzebase.Engine.Schemas
                     }
 
                     var parentSchemaMeta = GetParentMeta(txRef.Transaction, schemaMeta, LockOperation.Write);
+
+                    if (parentSchemaMeta == null)
+                        throw new Exception("parentSchemaMeta cannot be null.");
+
                     if (parentSchemaMeta.Exists == false)
                     {
                         throw new Exception("The parent namespace does not exists. use CreateLineage() instead of CreateSingle().");
                     }
 
-                    string parentSchemaCatalogFile = Path.Combine(parentSchemaMeta.DiskPath, Constants.SchemaCatalogFile);
-                    PersistSchemaCatalog parentCatalog = null;
+                    if (parentSchemaMeta.DiskPath == null || schemaMeta.DiskPath == null)
+                    {
+                        throw new Exception("DiskPath action can ot be null");
+                    }
 
-                    parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
+                    string parentSchemaCatalogFile = Path.Combine(parentSchemaMeta.DiskPath, Constants.SchemaCatalogFile);
+                    PersistSchemaCatalog? parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
+
+                    if (parentCatalog == null)
+                        throw new Exception("parentCatalog cannot be null.");
 
                     string filePath = string.Empty;
 
@@ -354,8 +393,17 @@ namespace Katzebase.Engine.Schemas
 
                     var parentSchemaMeta = GetParentMeta(txRef.Transaction, schemaMeta, LockOperation.Write);
 
+                    if (parentSchemaMeta == null)
+                        throw new Exception("parentSchemaMeta cannot be null.");
+
+                    if (parentSchemaMeta.DiskPath == null || schemaMeta.DiskPath == null)
+                        throw new Exception("DiskPath action can ot be null");
+
                     string parentSchemaCatalogFile = Path.Combine(parentSchemaMeta.DiskPath, Constants.SchemaCatalogFile);
                     var parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
+
+                    if (parentCatalog == null)
+                        throw new Exception("parentCatalog cannot be null.");
 
                     var nsItem = parentCatalog.Collection.FirstOrDefault(o => o.Name == schemaName);
                     if (nsItem != null)

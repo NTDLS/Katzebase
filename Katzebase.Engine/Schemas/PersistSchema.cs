@@ -6,13 +6,13 @@ namespace Katzebase.Engine.Schemas
 {
     public class PersistSchema
     {
-        public string Name { get; set; }
+        public string? Name { get; set; }
         public Guid Id { get; set; }
 
         [JsonIgnore]
-        public string DiskPath { get; set; }
+        public string? DiskPath { get; set; }
         [JsonIgnore]
-        public string VirtualPath { get; set; }
+        public string? VirtualPath { get; set; }
         [JsonIgnore]
         public bool Exists { get; set; }
 

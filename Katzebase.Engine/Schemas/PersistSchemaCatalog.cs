@@ -25,7 +25,7 @@ namespace Katzebase.Engine.Schemas
             return false;
         }
 
-        public PersistSchema GetByName(string name)
+        public PersistSchema? GetByName(string name)
         {
             foreach (var item in Collection)
             {
@@ -37,7 +37,7 @@ namespace Katzebase.Engine.Schemas
             return null;
         }
 
-        public PersistSchema GetById(Guid id)
+        public PersistSchema? GetById(Guid id)
         {
             return (from o in Collection where o.Id == id select o).FirstOrDefault();
         }

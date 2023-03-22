@@ -92,6 +92,10 @@ namespace Katzebase.Engine.Locking
                                 foreach (var lockedObject in lockedObjects)
                                 {
                                     var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+
+                                    if (transaction.HeldLockKeys == null)
+                                        throw new Exception("HeldLockKeys cannot be null.");
+
                                     transaction.HeldLockKeys.Add(lockKey);
                                 }
 
@@ -119,6 +123,10 @@ namespace Katzebase.Engine.Locking
                                 foreach (var lockedObject in lockedObjects)
                                 {
                                     var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+
+                                    if (transaction.HeldLockKeys == null)
+                                        throw new Exception("HeldLockKeys cannot be null.");
+
                                     transaction.HeldLockKeys.Add(lockKey);
                                 }
 

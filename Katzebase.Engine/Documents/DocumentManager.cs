@@ -32,6 +32,9 @@ namespace Katzebase.Engine.Documents
                         throw new KatzebaseSchemaDoesNotExistException(preparedQuery.Schema);
                     }
 
+                    if (schemaMeta.DiskPath == null)
+                        throw new Exception("DiskPath cannot be null.");
+
                     string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
 
 
@@ -65,13 +68,13 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-        private void /*QueryResult*/ FindDocuments(Transaction transaction, PersistSchema schemaMeta, Conditions conditions, int rowLimit, List<string> fieldList)
+        private void /*QueryResult*/ FindDocuments(Transaction transaction, PersistSchema schemaMeta, Conditions conditions, int rowLimit, List<string>? fieldList)
         {
             try
             {
                 conditions.MakeLowerCase();
 
-                if (fieldList.Count == 1)
+                if (fieldList != null && fieldList.Count == 1)
                 {
                     if (fieldList[0] == "*")
                     {
@@ -476,9 +479,16 @@ namespace Katzebase.Engine.Documents
                         throw new KatzebaseSchemaDoesNotExistException(schema);
                     }
 
+                    if (schemaMeta.DiskPath == null)
+                        throw new Exception("DiskPath cannot be null.");
+
                     string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
 
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
+
+                    if (documentCatalog == null)
+                        throw new Exception("documentCatalog cannot be null.");
+
                     documentCatalog.Add(persistDocument);
                     core.IO.PutJson(txRef.Transaction, documentCatalogDiskPath, documentCatalog);
 
@@ -512,9 +522,15 @@ namespace Katzebase.Engine.Documents
                         throw new KatzebaseSchemaDoesNotExistException(schema);
                     }
 
+                    if (schemaMeta.DiskPath == null)
+                        throw new Exception("DiskPath cannot be null.");
+
                     string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
 
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
+
+                    if (documentCatalog == null)
+                        throw new Exception("documentCatalog cannot be null.");
 
                     var persistDocument = documentCatalog.GetById(newId);
                     if (persistDocument != null)
@@ -554,8 +570,14 @@ namespace Katzebase.Engine.Documents
 
                     var list = new List<PersistDocumentCatalogItem>();
 
+                    if (schemaMeta.DiskPath == null)
+                        throw new Exception("DiskPath cannot be null.");
+
                     var filePath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
+
+                    if (documentCatalog == null)
+                        throw new Exception("documentCatalog cannot be null.");
 
                     foreach (var item in documentCatalog.Collection)
                     {

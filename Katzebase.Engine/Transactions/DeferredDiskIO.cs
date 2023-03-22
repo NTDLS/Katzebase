@@ -66,13 +66,10 @@ namespace Katzebase.Engine.Transactions
                 }
                 else
                 {
-                    var wrapper = new DeferredDiskIOObject()
+                    var wrapper = new DeferredDiskIOObject(diskPath, reference)
                     {
                         Hits = 1,
-                        DeferredFormat = deferredFormat,
-                        DiskPath = diskPath,
-                        LowerDiskPath = diskPath.ToLower(),
-                        Reference = reference
+                        DeferredFormat = deferredFormat
                     };
 
                     Collection.Add(key, wrapper);

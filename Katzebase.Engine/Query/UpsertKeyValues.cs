@@ -20,7 +20,7 @@ namespace Katzebase.Engine.Query
                 LowerCased = true;
                 foreach (UpsertKeyValue kvp in Collection)
                 {
-                    kvp.Key = kvp.Key.ToLower();
+                    kvp.Key = kvp.Key?.ToLower();
                 }
             }
         }

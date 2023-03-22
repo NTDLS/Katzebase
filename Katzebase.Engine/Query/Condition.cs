@@ -6,15 +6,16 @@ namespace Katzebase.Engine.Query
     public class Condition
     {
         public string Key { get; set; }
-        public bool IsKeyConstant { get; set; }
-        public string Value { get; set; }
-        public bool IsValueConstant { get; set; }
-        public ConditionQualifier ConditionQualifier { get; set; }
-        public ConditionType ConditionType { get; set; }
+        public bool IsKeyConstant { get; set; } = false;
+        public string Value { get; set; } = string.Empty;
+        public bool IsValueConstant { get; set; } = false;
+        public ConditionQualifier ConditionQualifier { get; set; } = ConditionQualifier.None;
+        public ConditionType ConditionType { get; set; } = ConditionType.None;
 
-        public Condition()
+        public Condition(ConditionType conditionType, string key)
         {
-
+            ConditionType = conditionType;
+            Key = key;
         }
 
         public Condition(ConditionType conditionType, string key, ConditionQualifier conditionQualifier, string value)
