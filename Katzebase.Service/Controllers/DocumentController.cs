@@ -33,7 +33,7 @@ namespace Katzebase.Service.Controllers
             return documents;
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("{sessionId}/{schema}/Store")]
         public KbActionResponseID Store(Guid sessionId, string schema, [FromBody] string value)
         {

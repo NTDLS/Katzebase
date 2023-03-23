@@ -1,5 +1,6 @@
 ﻿using Katzebase.Library.Payloads;
 using Newtonsoft.Json;
+using System.Net.Http;
 using System.Text;
 
 namespace Katzebase.Library.Client.Management
@@ -22,7 +23,7 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Document/{client.SessionId}/{schema}/Store";
 
-            var postContent = new StringContent(JsonConvert.SerializeObject(document), Encoding.UTF8);
+            var postContent = new StringContent(JsonConvert.SerializeObject(document), Encoding.UTF8, "text/plain");
 
             using var response = client.Client.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;

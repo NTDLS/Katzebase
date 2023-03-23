@@ -473,16 +473,19 @@ namespace Katzebase.Engine.Transactions
 
                 foreach (var record in ReversibleActions)
                 {
-                    if (record.BackupPath == null)
-                        throw new Exception("BackupPath cannot be null.");
-
                     //Delete all the backup files.
                     if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
                     {
+                        if (record.BackupPath == null)
+                            throw new Exception("BackupPath cannot be null.");
+
                         File.Delete(record.BackupPath);
                     }
                     else if (record.Action == ActionType.DirectoryDelete)
                     {
+                        if (record.BackupPath == null)
+                            throw new Exception("BackupPath cannot be null.");
+
                         Directory.Delete(record.BackupPath, true);
                     }
                 }

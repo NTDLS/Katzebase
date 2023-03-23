@@ -1,6 +1,7 @@
 
 using Katzebase.Engine;
 using Katzebase.Library;
+using ProtoBuf.Meta;
 using System.Diagnostics;
 
 namespace Katzebase.Service
@@ -70,6 +71,11 @@ namespace Katzebase.Service
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
+            builder.Services.AddControllers(options =>
+            {
+                options.InputFormatters.Add(new TextPlainInputFormatter());
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
@@ -86,7 +92,7 @@ namespace Katzebase.Service
 
             if (app.Environment.IsDevelopment())
             {
-                Process.Start("explorer", $"{Configuration.BaseAddress}swagger/index.html");
+                //Process.Start("explorer", $"{Configuration.BaseAddress}swagger/index.html");
             }
 
             Core.Log.Write($"Listening on {Configuration.BaseAddress}.");

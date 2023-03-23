@@ -494,7 +494,7 @@ namespace Katzebase.Engine.Documents
 
                     core.Indexes.InsertDocumentIntoIndexes(txRef.Transaction, schemaMeta, persistDocument);
 
-                    newId = document.Id;
+                    newId = persistDocument.Id;
 
                     txRef.Commit();
                 }
