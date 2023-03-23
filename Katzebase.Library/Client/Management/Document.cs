@@ -24,7 +24,7 @@ namespace Katzebase.Library.Client.Management
 
             var postContent = new StringContent(JsonConvert.SerializeObject(document), Encoding.UTF8, "text/plain");
 
-            using var response = client.Client.PostAsync(url, postContent);
+            using var response = client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -42,7 +42,7 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Document/{client.SessionId}/{schema}/{id}/DeleteById";
 
-            using var response = client.Client.GetAsync(url);
+            using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -59,7 +59,7 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Document/{client.SessionId}/{schema}/Catalog";
 
-            using var response = client.Client.GetAsync(url);
+            using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             return JsonConvert.DeserializeObject<List<KbDocumentCatalogItem>>(resultText) ?? new List<KbDocumentCatalogItem>();
         }

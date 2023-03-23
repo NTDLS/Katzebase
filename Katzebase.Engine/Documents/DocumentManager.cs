@@ -4,7 +4,6 @@ using Katzebase.Engine.Transactions;
 using Katzebase.Library;
 using Katzebase.Library.Exceptions;
 using Katzebase.Library.Payloads;
-using System.Diagnostics;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Documents

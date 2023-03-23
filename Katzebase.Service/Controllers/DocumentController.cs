@@ -49,7 +49,6 @@ namespace Katzebase.Service.Controllers
 
                 Utility.EnsureNotNull(content);
 
-
                 if (content == null)
                     throw new Exception("Content cannot be null.");
 

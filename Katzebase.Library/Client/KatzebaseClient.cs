@@ -2,7 +2,7 @@
 {
     public class KatzebaseClient
     {
-        public HttpClient Client;
+        public HttpClient Connection;
         public Guid SessionId { get; set; }
         public Management.Document Document { get; set; }
         public Management.Schema Schema { get; set; }
@@ -12,7 +12,7 @@
         public KatzebaseClient(string baseAddress)
         {
             SessionId = Guid.NewGuid();
-            Client = new HttpClient
+            Connection = new HttpClient
             {
                 BaseAddress = new Uri(baseAddress),
                 Timeout = new TimeSpan(0, 8, 0, 0, 0)
@@ -27,7 +27,7 @@
         public KatzebaseClient(string baseAddress, TimeSpan timeout)
         {
             SessionId = Guid.NewGuid();
-            Client = new HttpClient
+            Connection = new HttpClient
             {
                 BaseAddress = new Uri(baseAddress),
                 Timeout = timeout

@@ -23,7 +23,7 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Schema/{client.SessionId}/{schema}/Create";
 
-            using var response = client.Client.GetAsync(url);
+            using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -40,7 +40,7 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Schema/{client.SessionId}/{schema}/Exists";
 
-            using var response = client.Client.GetAsync(url);
+            using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponseBoolean>(resultText);
             if (result == null || result.Success == false)
@@ -59,7 +59,7 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Schema/{client.SessionId}/{schema}/Drop";
 
-            using var response = client.Client.GetAsync(url);
+            using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -76,7 +76,7 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Schema/{client.SessionId}/{schema}/List";
 
-            using var response = client.Client.GetAsync(url);
+            using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             return JsonConvert.DeserializeObject<KbActionResponseSchemas>(resultText) ?? new KbActionResponseSchemas();
         }

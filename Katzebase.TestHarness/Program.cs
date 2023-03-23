@@ -1,5 +1,6 @@
 ﻿using Katzebase.Library.Client;
 using Katzebase.Library.Payloads;
+using System;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -13,7 +14,10 @@ namespace Katzebase.TestHarness
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
             Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
 
-            Exporter.ExportAll();
+            //Exporter.ExportAll(); // This method just exports the entire AdventureWorks2012 database into the no SQL database.
+
+            TestIndexCreationPerson();
+
             //TestCreateAllAdventureWorks2012Indexes();
             //TestServerStress();
 
@@ -28,6 +32,35 @@ namespace Katzebase.TestHarness
             Console.WriteLine("Press any key to continue.");
             Console.ReadLine();
         }
+
+        #region Test Index Creation (Person)
+
+        private static void TestIndexCreationPerson()
+        {
+            var client = new KatzebaseClient("http://localhost:6858/");
+            Console.WriteLine("Session Started: {0}", client.SessionId);
+
+            string? schemaPath = "AdventureWorks2012:Person:Person";
+
+            client.Transaction.Begin();
+
+            Console.WriteLine("Creating index: IX_Person_LastName_FirstName");
+            var personIndex = new KbIndex()
+            {
+                Name = "IX_Person_LastName_FirstName",
+                IsUnique = false
+            };
+            personIndex.AddAttribute("LastName");
+            personIndex.AddAttribute("FirstName");
+            client.Schema.Indexes.Create(schemaPath, personIndex);
+
+            Console.WriteLine("Comitting transaction.");
+            client.Transaction.Commit();
+
+            Console.WriteLine("Session Completed: {0}", client.SessionId);
+        }
+
+        #endregion
 
         #region TestIndexDocumentDeletion.
         private static void TestIndexDocumentDeletion()

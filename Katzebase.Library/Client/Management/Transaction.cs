@@ -16,7 +16,7 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Transaction/{client.SessionId}/Begin";
 
-            using var response = client.Client.GetAsync(url);
+            using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -29,7 +29,7 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Transaction/{client.SessionId}/Commit";
 
-            using var response = client.Client.GetAsync(url);
+            using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -42,7 +42,7 @@ namespace Katzebase.Library.Client.Management
         {
             string url = $"api/Transaction/{client.SessionId}/Rollback";
 
-            using var response = client.Client.GetAsync(url);
+            using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)

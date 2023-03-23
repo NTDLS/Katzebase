@@ -468,7 +468,7 @@ namespace Katzebase.Engine.Indexes
                     if (indexMeta.IsUnique && findResult.Leaf.DocumentIDs.Count > 1)
                     {
                         string exceptionText = $"Duplicate key violation occurred for index [{schemaMeta.VirtualPath}]/[{indexMeta.Name}]. Values: {{{string.Join(",", searchTokens)}}}";
-                        throw new KatzebaseDuplicateKeyViolation(exceptionText);
+                        throw new KatzebaseDuplicateKeyViolationException(exceptionText);
                     }
 
                     findResult.Leaf.DocumentIDs.Add((Guid)document.Id);

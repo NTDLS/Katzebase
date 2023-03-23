@@ -9,7 +9,7 @@ namespace Katzebase.Service.Controllers
     [Route("api/[controller]")]
     public class IndexesController
     {
-        [HttpGet]
+        [HttpPost]
         [Route("{sessionId}/{schema}/Create")]
         public KbActionResponseID Create(Guid sessionId, string schema, [FromBody] string value)
         {

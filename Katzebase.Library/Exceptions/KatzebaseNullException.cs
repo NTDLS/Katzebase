@@ -2,14 +2,14 @@
 
 namespace Katzebase.Library.Exceptions
 {
-    public class KatzebaseCriticalNull : KatzebaseExceptionBase
+    public class KatzebaseNullException : KatzebaseExceptionBase
     {
-        public KatzebaseCriticalNull()
+        public KatzebaseNullException()
         {
             Severity = LogSeverity.Warning;
         }
 
-        public KatzebaseCriticalNull(string message)
+        public KatzebaseNullException(string message)
             : base(message)
 
         {
