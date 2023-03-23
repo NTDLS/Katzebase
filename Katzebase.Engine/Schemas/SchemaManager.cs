@@ -134,7 +134,7 @@ namespace Katzebase.Engine.Schemas
 
                     if (core.IO.FileExists(transaction, parentCatalogDiskPath, intendedOperation) == false)
                     {
-                        throw new KatzebaseInvalidSchemaException($"The schema [{schemaPath}] does not exist.");
+                        throw new KbInvalidSchemaException($"The schema [{schemaPath}] does not exist.");
                     }
 
                     var parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(transaction,
@@ -182,7 +182,7 @@ namespace Katzebase.Engine.Schemas
                     PersistSchema schemaMeta = VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KatzebaseSchemaDoesNotExistException(schema);
+                        throw new KbSchemaDoesNotExistException(schema);
                     }
 
                     var list = new List<PersistSchema>();
@@ -378,7 +378,7 @@ namespace Katzebase.Engine.Schemas
                     var schemaMeta = VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KatzebaseSchemaDoesNotExistException(schema);
+                        throw new KbSchemaDoesNotExistException(schema);
                     }
 
                     var parentSchemaMeta = GetParentMeta(txRef.Transaction, schemaMeta, LockOperation.Write);

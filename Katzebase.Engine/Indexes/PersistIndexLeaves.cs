@@ -28,9 +28,9 @@ namespace Katzebase.Engine.Indexes
         public IEnumerator<PersistIndexLeaf> GetEnumerator()
         {
             int position = 0;
-            while (position < Entries.Count - 1)
+            while (position < Entries.Count)
             {
-                yield return this[++position];
+                yield return this[position++];
             }
         }
 

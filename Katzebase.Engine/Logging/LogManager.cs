@@ -54,9 +54,9 @@ namespace Katzebase.Engine.Logging
 
             if (entry.Exception != null)
             {
-                if (typeof(KatzebaseExceptionBase).IsAssignableFrom(entry.Exception.GetType()))
+                if (typeof(KbExceptionBase).IsAssignableFrom(entry.Exception.GetType()))
                 {
-                    entry.Severity = ((KatzebaseExceptionBase)entry.Exception).Severity;
+                    entry.Severity = ((KbExceptionBase)entry.Exception).Severity;
                 }
             }
 
@@ -85,7 +85,7 @@ namespace Katzebase.Engine.Logging
 
                 if (entry.Exception != null)
                 {
-                    if (typeof(KatzebaseExceptionBase).IsAssignableFrom(entry.Exception.GetType()))
+                    if (typeof(KbExceptionBase).IsAssignableFrom(entry.Exception.GetType()))
                     {
                         if (entry.Exception.Message != null && entry.Exception.Message != string.Empty)
                         {

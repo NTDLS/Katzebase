@@ -27,7 +27,7 @@ namespace Katzebase.Engine.Documents
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schema, LockOperation.Write);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KatzebaseSchemaDoesNotExistException(preparedQuery.Schema);
+                        throw new KbSchemaDoesNotExistException(preparedQuery.Schema);
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
@@ -463,7 +463,7 @@ namespace Katzebase.Engine.Documents
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KatzebaseSchemaDoesNotExistException(schema);
+                        throw new KbSchemaDoesNotExistException(schema);
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
@@ -502,7 +502,7 @@ namespace Katzebase.Engine.Documents
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KatzebaseSchemaDoesNotExistException(schema);
+                        throw new KbSchemaDoesNotExistException(schema);
                     }
 
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
@@ -546,7 +546,7 @@ namespace Katzebase.Engine.Documents
                     PersistSchema schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KatzebaseSchemaDoesNotExistException(schema);
+                        throw new KbSchemaDoesNotExistException(schema);
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 

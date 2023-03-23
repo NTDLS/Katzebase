@@ -16,7 +16,7 @@ namespace Katzebase.TestHarness
 
             //Exporter.ExportAll(); // This method just exports the entire AdventureWorks2012 database into the no SQL database.
 
-            TestIndexCreationPerson();
+            TestIndexCreationProductInventory();
 
             //TestCreateAllAdventureWorks2012Indexes();
             //TestServerStress();
@@ -32,6 +32,66 @@ namespace Katzebase.TestHarness
             Console.WriteLine("Press any key to continue.");
             Console.ReadLine();
         }
+
+        #region Test Index Creation (Person)
+
+        private static void TestIndexCreationProductInventory()
+        {
+            var client = new KatzebaseClient("http://localhost:6858/");
+            Console.WriteLine("Session Started: {0}", client.SessionId);
+
+            string? schemaPath = "AdventureWorks2012:Production:ProductInventory";
+
+            client.Transaction.Begin();
+
+            Console.WriteLine("Creating index: IX_ProductInventory_Location");
+            var index = new KbIndex()
+            {
+                Name = "IX_ProductInventory_LastName_FirstName",
+                IsUnique = false
+            };
+            //TODO: Also try these in the other order...
+            index.AddAttribute("LocationID");
+            index.AddAttribute("Shelf");
+            index.AddAttribute("Bin");
+            client.Schema.Indexes.Create(schemaPath, index);
+
+            Console.WriteLine("Comitting transaction.");
+            client.Transaction.Commit();
+
+            Console.WriteLine("Session Completed: {0}", client.SessionId);
+        }
+
+        #endregion
+
+        #region Test Index Creation (StateProvince)
+
+        private static void TestIndexCreationStateProvince()
+        {
+            var client = new KatzebaseClient("http://localhost:6858/");
+            Console.WriteLine("Session Started: {0}", client.SessionId);
+
+            string? schemaPath = "AdventureWorks2012:Person:StateProvince";
+
+            client.Transaction.Begin();
+
+            Console.WriteLine("Creating index: IX_Person_LastName_FirstName");
+            var personIndex = new KbIndex()
+            {
+                Name = "IX_StateProvince_CountryRegionCode_Name",
+                IsUnique = false
+            };
+            personIndex.AddAttribute("CountryRegionCode");
+            personIndex.AddAttribute("Name");
+            client.Schema.Indexes.Create(schemaPath, personIndex);
+
+            Console.WriteLine("Comitting transaction.");
+            client.Transaction.Commit();
+
+            Console.WriteLine("Session Completed: {0}", client.SessionId);
+        }
+
+        #endregion
 
         #region Test Index Creation (Person)
 

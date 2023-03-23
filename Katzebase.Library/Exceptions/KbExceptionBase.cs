@@ -2,16 +2,16 @@
 
 namespace Katzebase.Library.Exceptions
 {
-    public class KatzebaseExceptionBase : Exception
+    public class KbExceptionBase : Exception
     {
         public LogSeverity Severity { get; set; }
 
-        public KatzebaseExceptionBase()
+        public KbExceptionBase()
         {
             Severity = LogSeverity.Exception;
         }
 
-        public KatzebaseExceptionBase(string message)
+        public KbExceptionBase(string message)
             : base(message)
 
         {

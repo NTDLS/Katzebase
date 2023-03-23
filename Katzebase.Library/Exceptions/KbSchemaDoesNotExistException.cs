@@ -2,14 +2,14 @@
 
 namespace Katzebase.Library.Exceptions
 {
-    public class KatzebaseSchemaDoesNotExistException : KatzebaseExceptionBase
+    public class KbSchemaDoesNotExistException : KbExceptionBase
     {
-        public KatzebaseSchemaDoesNotExistException()
+        public KbSchemaDoesNotExistException()
         {
             Severity = LogSeverity.Warning;
         }
 
-        public KatzebaseSchemaDoesNotExistException(string message)
+        public KbSchemaDoesNotExistException(string message)
             : base(message)
 
         {

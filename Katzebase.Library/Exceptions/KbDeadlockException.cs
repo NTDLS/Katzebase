@@ -2,14 +2,14 @@
 
 namespace Katzebase.Library.Exceptions
 {
-    public class KatzebaseDuplicateKeyViolationException : KatzebaseExceptionBase
+    public class KbDeadlockException : KbExceptionBase
     {
-        public KatzebaseDuplicateKeyViolationException()
+        public KbDeadlockException()
         {
             Severity = LogSeverity.Warning;
         }
 
-        public KatzebaseDuplicateKeyViolationException(string message)
+        public KbDeadlockException(string message)
             : base(message)
 
         {

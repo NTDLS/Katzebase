@@ -6,6 +6,7 @@ using Katzebase.Library;
 using Katzebase.Library.Exceptions;
 using Katzebase.Library.Payloads;
 using Newtonsoft.Json.Linq;
+using System;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Indexes
@@ -149,7 +150,7 @@ namespace Katzebase.Engine.Indexes
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KatzebaseSchemaDoesNotExistException(schema);
+                        throw new KbSchemaDoesNotExistException(schema);
                     }
 
                     var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
@@ -187,7 +188,7 @@ namespace Katzebase.Engine.Indexes
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KatzebaseSchemaDoesNotExistException(schema);
+                        throw new KbSchemaDoesNotExistException(schema);
                     }
 
                     var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
@@ -200,7 +201,7 @@ namespace Katzebase.Engine.Indexes
                     var indexMeta = indexCatalog.GetByName(indexName);
                     if (indexMeta == null)
                     {
-                        throw new KatzebaseIndexDoesNotExistException(schema);
+                        throw new KbIndexDoesNotExistException(schema);
                     }
 
                     indexMeta.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(indexMeta.Name));
@@ -225,7 +226,7 @@ namespace Katzebase.Engine.Indexes
 
         public string MakeIndexFileName(string indexName)
         {
-            return $"@Idx_{0}_Pages.PBuf{Helpers.MakeSafeFileName(indexName)}";
+            return $"@Index_{0}_Pages_{Helpers.MakeSafeFileName(indexName)}.PBuf";
         }
 
         private PersistIndexCatalog GetIndexCatalog(Transaction transaction, PersistSchema schemaMeta, LockOperation intendedOperation)
@@ -446,17 +447,14 @@ namespace Katzebase.Engine.Indexes
             try
             {
                 Utility.EnsureNotNullOrEmpty(document.Id);
-
                 Utility.EnsureNotNull(indexMeta.DiskPath);
-
 
                 var searchTokens = GetIndexSearchTokens(transaction, indexMeta, document);
 
                 var findResult = FindKeyPage(transaction, indexMeta, searchTokens, indexPageCatalog);
                 Utility.EnsureNotNull(findResult.Catalog);
 
-                //If we found a full match for all supplied key values - add the document to the leaf collection.
-                if (findResult.IsFullMatch)
+                if (findResult.IsFullMatch) //If we found a full match for all supplied key values - add the document to the leaf collection.
                 {
                     Utility.EnsureNotNull(findResult.Leaf);
 
@@ -468,7 +466,7 @@ namespace Katzebase.Engine.Indexes
                     if (indexMeta.IsUnique && findResult.Leaf.DocumentIDs.Count > 1)
                     {
                         string exceptionText = $"Duplicate key violation occurred for index [{schemaMeta.VirtualPath}]/[{indexMeta.Name}]. Values: {{{string.Join(",", searchTokens)}}}";
-                        throw new KatzebaseDuplicateKeyViolationException(exceptionText);
+                        throw new KbDuplicateKeyViolationException(exceptionText);
                     }
 
                     findResult.Leaf.DocumentIDs.Add((Guid)document.Id);
@@ -479,14 +477,14 @@ namespace Katzebase.Engine.Indexes
                 }
                 else
                 {
-                    Utility.EnsureNotNull(indexPageCatalog);
-                    Utility.EnsureNotNull(findResult.Leaves);
-                    Utility.EnsureNotNull(findResult.Leaf);
-
                     //If we didn't find a full match for all supplied key values,
                     //  then create the tree and add the document to the lowest leaf.
                     //Note that we are going to start creating the leaf level at the findResult.ExtentLevel.
                     //  This is because we may have a partial match and don't need to create the full tree.
+
+                    Utility.EnsureNotNull(indexPageCatalog);
+                    Utility.EnsureNotNull(findResult.Leaves);
+
                     lock (indexPageCatalog)
                     {
                         for (int i = findResult.ExtentLevel; i < searchTokens.Count; i++)
@@ -495,6 +493,8 @@ namespace Katzebase.Engine.Indexes
                             findResult.Leaves = findResult.Leaf.Leaves;
                         }
 
+                        Utility.EnsureNotNull(findResult.Leaf);
+
                         if (findResult.Leaf.DocumentIDs == null)
                         {
                             findResult.Leaf.DocumentIDs = new HashSet<Guid>();
@@ -502,6 +502,9 @@ namespace Katzebase.Engine.Indexes
 
                         findResult.Leaf.DocumentIDs.Add((Guid)document.Id);
                     }
+
+                    //Utility.AssertIfDebug(findResult.Catalog.Leaves.Entries.GroupBy(o => o.Key).Where(o => o.Count() > 1).Any(), "Duplicate root index entry.");
+
                     if (flushPageCatalog)
                     {
                         core.IO.PutPBuf(transaction, indexMeta.DiskPath, findResult.Catalog);
@@ -542,6 +545,8 @@ namespace Katzebase.Engine.Indexes
             public PersistDocumentCatalog? DocumentCatalog { get; set; }
             public PersistIndexPageCatalog? IndexPageCatalog { get; set; }
             public AutoResetEvent Initialized { get; set; }
+            public object SyncObject { get; set; } = new object();
+
             public RebuildIndexItemThreadProc_Params()
             {
                 Initialized = new AutoResetEvent(false);
@@ -554,7 +559,7 @@ namespace Katzebase.Engine.Indexes
 
             Utility.EnsureNotNull(oParam);
 
-            RebuildIndexItemThreadProc_Params param = (RebuildIndexItemThreadProc_Params)oParam;
+            var param = (RebuildIndexItemThreadProc_Params)oParam;
 
             Utility.EnsureNotNull(param.State);
             Utility.EnsureNotNull(param.DocumentCatalog);
@@ -586,7 +591,10 @@ namespace Katzebase.Engine.Indexes
                     var persistDocument = core.IO.GetJson<PersistDocument>(param.Transaction, documentDiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(persistDocument);
 
-                    InsertDocumentIntoIndex(param.Transaction, param.SchemaMeta, param.IndexMeta, persistDocument, param.IndexPageCatalog, false);
+                    lock (param.SyncObject)
+                    {
+                        InsertDocumentIntoIndex(param.Transaction, param.SchemaMeta, param.IndexMeta, persistDocument, param.IndexPageCatalog, false);
+                    }
                 }
             }
 

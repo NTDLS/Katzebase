@@ -53,7 +53,7 @@ namespace Katzebase.Engine.Locking
                         if (transaction.IsDeadlocked)
                         {
                             core.Health.Increment(HealthCounterType.DeadlockCount);
-                            throw new KatzebaseDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.");
+                            throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.");
                         }
 
                         //Find any existing locks:
