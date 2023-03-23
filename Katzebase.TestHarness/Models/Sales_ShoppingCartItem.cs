@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _shoppingCartID;
-        public string ShoppingCartID
+        private string? _shoppingCartID;
+        public string? ShoppingCartID
         {
             get
             {

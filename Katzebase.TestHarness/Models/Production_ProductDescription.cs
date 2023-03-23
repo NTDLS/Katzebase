@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _description;
-        public string Description
+        private string? _description;
+        public string? Description
         {
             get
             {

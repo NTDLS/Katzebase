@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _carrierTrackingNumber;
-        public string CarrierTrackingNumber
+        private string? _carrierTrackingNumber;
+        public string? CarrierTrackingNumber
         {
             get
             {

@@ -138,8 +138,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _unitMeasureCode;
-        public string UnitMeasureCode
+        private string? _unitMeasureCode;
+        public string? UnitMeasureCode
         {
             get
             {

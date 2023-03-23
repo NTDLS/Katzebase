@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _databaseUser;
-        public string DatabaseUser
+        private string? _databaseUser;
+        public string? DatabaseUser
         {
             get
             {
@@ -48,8 +48,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _event;
-        public string Event
+        private string? _event;
+        public string? Event
         {
             get
             {
@@ -63,8 +63,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _schema;
-        public string Schema
+        private string? _schema;
+        public string? Schema
         {
             get
             {
@@ -78,8 +78,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _object;
-        public string Object
+        private string? _object;
+        public string? Object
         {
             get
             {
@@ -93,8 +93,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _tSQL;
-        public string TSQL
+        private string? _tSQL;
+        public string? TSQL
         {
             get
             {
@@ -108,8 +108,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _xmlEvent;
-        public string XmlEvent
+        private string? _xmlEvent;
+        public string? XmlEvent
         {
             get
             {

@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private byte[] _thumbNailPhoto;
-        public byte[] ThumbNailPhoto
+        private byte[]? _thumbNailPhoto;
+        public byte[]? ThumbNailPhoto
         {
             get
             {
@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _thumbnailPhotoFileName;
-        public string ThumbnailPhotoFileName
+        private string? _thumbnailPhotoFileName;
+        public string? ThumbnailPhotoFileName
         {
             get
             {
@@ -48,8 +48,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private byte[] _largePhoto;
-        public byte[] LargePhoto
+        private byte[]? _largePhoto;
+        public byte[]? LargePhoto
         {
             get
             {
@@ -63,8 +63,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _largePhotoFileName;
-        public string LargePhotoFileName
+        private string? _largePhotoFileName;
+        public string? LargePhotoFileName
         {
             get
             {

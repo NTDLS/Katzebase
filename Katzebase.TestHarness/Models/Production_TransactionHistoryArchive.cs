@@ -78,8 +78,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _transactionType;
-        public string TransactionType
+        private string? _transactionType;
+        public string? TransactionType
         {
             get
             {

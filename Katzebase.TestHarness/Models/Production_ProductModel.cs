@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _name;
-        public string Name
+        private string? _name;
+        public string? Name
         {
             get
             {
@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _catalogDescription;
-        public string CatalogDescription
+        private string? _catalogDescription;
+        public string? CatalogDescription
         {
             get
             {
@@ -48,8 +48,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _instructions;
-        public string Instructions
+        private string? _instructions;
+        public string? Instructions
         {
             get
             {

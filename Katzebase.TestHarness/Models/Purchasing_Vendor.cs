@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _accountNumber;
-        public string AccountNumber
+        private string? _accountNumber;
+        public string? AccountNumber
         {
             get
             {
@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _name;
-        public string Name
+        private string? _name;
+        public string? Name
         {
             get
             {
@@ -93,8 +93,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _purchasingWebServiceURL;
-        public string PurchasingWebServiceURL
+        private string? _purchasingWebServiceURL;
+        public string? PurchasingWebServiceURL
         {
             get
             {

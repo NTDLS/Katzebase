@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _addressLine1;
-        public string AddressLine1
+        private string? _addressLine1;
+        public string? AddressLine1
         {
             get
             {
@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _addressLine2;
-        public string AddressLine2
+        private string? _addressLine2;
+        public string? AddressLine2
         {
             get
             {
@@ -48,8 +48,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _city;
-        public string City
+        private string? _city;
+        public string? City
         {
             get
             {
@@ -78,8 +78,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _postalCode;
-        public string PostalCode
+        private string? _postalCode;
+        public string? PostalCode
         {
             get
             {

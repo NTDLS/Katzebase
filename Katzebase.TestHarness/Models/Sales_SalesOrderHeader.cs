@@ -108,8 +108,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _salesOrderNumber;
-        public string SalesOrderNumber
+        private string? _salesOrderNumber;
+        public string? SalesOrderNumber
         {
             get
             {
@@ -123,8 +123,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _purchaseOrderNumber;
-        public string PurchaseOrderNumber
+        private string? _purchaseOrderNumber;
+        public string? PurchaseOrderNumber
         {
             get
             {
@@ -138,8 +138,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _accountNumber;
-        public string AccountNumber
+        private string? _accountNumber;
+        public string? AccountNumber
         {
             get
             {
@@ -258,8 +258,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _creditCardApprovalCode;
-        public string CreditCardApprovalCode
+        private string? _creditCardApprovalCode;
+        public string? CreditCardApprovalCode
         {
             get
             {
@@ -348,8 +348,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _comment;
-        public string Comment
+        private string? _comment;
+        public string? Comment
         {
             get
             {

@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _phoneNumber;
-        public string PhoneNumber
+        private string? _phoneNumber;
+        public string? PhoneNumber
         {
             get
             {

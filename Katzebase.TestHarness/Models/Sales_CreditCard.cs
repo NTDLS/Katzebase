@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _cardType;
-        public string CardType
+        private string? _cardType;
+        public string? CardType
         {
             get
             {
@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _cardNumber;
-        public string CardNumber
+        private string? _cardNumber;
+        public string? CardNumber
         {
             get
             {

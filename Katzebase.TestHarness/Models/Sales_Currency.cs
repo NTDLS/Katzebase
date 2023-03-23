@@ -3,8 +3,8 @@ namespace Katzebase.TestHarness.Models
     public partial class Sales_Currency
     {
         #region Properties
-        private string _currencyCode;
-        public string CurrencyCode
+        private string? _currencyCode;
+        public string? CurrencyCode
         {
             get
             {
@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _name;
-        public string Name
+        private string? _name;
+        public string? Name
         {
             get
             {

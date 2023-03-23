@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _nationalIDNumber;
-        public string NationalIDNumber
+        private string? _nationalIDNumber;
+        public string? NationalIDNumber
         {
             get
             {
@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _loginID;
-        public string LoginID
+        private string? _loginID;
+        public string? LoginID
         {
             get
             {
@@ -48,8 +48,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _jobTitle;
-        public string JobTitle
+        private string? _jobTitle;
+        public string? JobTitle
         {
             get
             {
@@ -78,8 +78,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _maritalStatus;
-        public string MaritalStatus
+        private string? _maritalStatus;
+        public string? MaritalStatus
         {
             get
             {
@@ -93,8 +93,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _gender;
-        public string Gender
+        private string? _gender;
+        public string? Gender
         {
             get
             {

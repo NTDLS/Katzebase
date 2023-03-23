@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _emailAddress;
-        public string EmailAddress
+        private string? _emailAddress;
+        public string? EmailAddress
         {
             get
             {

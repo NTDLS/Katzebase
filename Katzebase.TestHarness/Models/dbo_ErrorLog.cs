@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _userName;
-        public string UserName
+        private string? _userName;
+        public string? UserName
         {
             get
             {
@@ -93,8 +93,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _errorProcedure;
-        public string ErrorProcedure
+        private string? _errorProcedure;
+        public string? ErrorProcedure
         {
             get
             {
@@ -123,8 +123,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _errorMessage;
-        public string ErrorMessage
+        private string? _errorMessage;
+        public string? ErrorMessage
         {
             get
             {

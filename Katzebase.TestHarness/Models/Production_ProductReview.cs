@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _reviewerName;
-        public string ReviewerName
+        private string? _reviewerName;
+        public string? ReviewerName
         {
             get
             {
@@ -63,8 +63,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _emailAddress;
-        public string EmailAddress
+        private string? _emailAddress;
+        public string? EmailAddress
         {
             get
             {
@@ -93,8 +93,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _comments;
-        public string Comments
+        private string? _comments;
+        public string? Comments
         {
             get
             {

@@ -40,19 +40,19 @@ namespace Katzebase.TestHarness
             return dataRecord[index] != DBNull.Value ? dataRecord.GetBoolean(index) : (bool?)null;
         }
 
-        public static string GetNullableString(this IDataRecord dataRecord, int index)
+        public static string? GetNullableString(this IDataRecord dataRecord, int index)
         {
-            return dataRecord[index] != DBNull.Value ? dataRecord.GetString(index) : (string)null;
+            return (dataRecord[index] != null && dataRecord[index] != DBNull.Value) ? dataRecord.GetString(index) : null;
         }
 
-        public static byte[] GetNullableByteArray(this IDataRecord dataRecord, int index)
+        public static byte[]? GetNullableByteArray(this IDataRecord dataRecord, int index)
         {
-            return dataRecord[index] != DBNull.Value ? (byte[])dataRecord.GetValue(index) : (byte[])null;
+            return dataRecord[index] != DBNull.Value ? (byte[])dataRecord.GetValue(index) : (byte[]?)null;
         }
 
-        public static byte[] GetByteArray(this IDataRecord dataRecord, int index)
+        public static byte[]? GetByteArray(this IDataRecord dataRecord, int index)
         {
-            return dataRecord[index] != DBNull.Value ? (byte[])dataRecord.GetValue(index) : (byte[])null;
+            return dataRecord[index] != DBNull.Value ? (byte[])dataRecord.GetValue(index) : (byte[]?)null;
         }
 
         public static Guid? GetNullableGuid(this IDataRecord dataRecord, int index)
@@ -112,14 +112,14 @@ namespace Katzebase.TestHarness
             return (bool)dataRecord[columnName];
         }
 
-        public static string GetNullableString(this IDataRecord dataRecord, string columnName)
+        public static string? GetNullableString(this IDataRecord dataRecord, string columnName)
         {
-            return dataRecord[columnName] != DBNull.Value ? (string)dataRecord[columnName] : (string)null;
+            return dataRecord[columnName] != DBNull.Value ? (string)dataRecord[columnName] : (string?)null;
         }
 
-        public static string GetNullableString(this IDataRecord dataRecord, string columnName, string defaultValue)
+        public static string? GetNullableString(this IDataRecord dataRecord, string columnName, string? defaultValue)
         {
-            return dataRecord[columnName] != DBNull.Value ? (string)dataRecord[columnName] : (string)defaultValue;
+            return dataRecord[columnName] != DBNull.Value ? (string)dataRecord[columnName] : defaultValue;
         }
 
         public static Guid? GetNullableGuid(this IDataRecord dataRecord, string columnName)
@@ -127,14 +127,14 @@ namespace Katzebase.TestHarness
             return dataRecord[columnName] != DBNull.Value ? (Guid?)dataRecord[columnName] : (Guid?)null;
         }
 
-        public static byte[] GetNullableByteArray(this IDataRecord dataRecord, string columnName)
+        public static byte[]? GetNullableByteArray(this IDataRecord dataRecord, string columnName)
         {
-            return dataRecord[columnName] != DBNull.Value ? (byte[])dataRecord[columnName] : (byte[])null;
+            return dataRecord[columnName] != DBNull.Value ? (byte[])dataRecord[columnName] : (byte[]?)null;
         }
 
-        public static byte[] GetByteArray(this IDataRecord dataRecord, string columnName)
+        public static byte[]? GetByteArray(this IDataRecord dataRecord, string columnName)
         {
-            return dataRecord[columnName] != DBNull.Value ? (byte[])dataRecord[columnName] : (byte[])null;
+            return dataRecord[columnName] != DBNull.Value ? (byte[])dataRecord[columnName] : (byte[]?)null;
         }
         #endregion
     }

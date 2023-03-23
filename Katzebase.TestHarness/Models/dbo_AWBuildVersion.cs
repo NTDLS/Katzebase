@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _database_Version;
-        public string Database_Version
+        private string? _database_Version;
+        public string? Database_Version
         {
             get
             {

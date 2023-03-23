@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _resume;
-        public string Resume
+        private string? _resume;
+        public string? Resume
         {
             get
             {

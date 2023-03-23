@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _shelf;
-        public string Shelf
+        private string? _shelf;
+        public string? Shelf
         {
             get
             {

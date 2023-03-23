@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _personType;
-        public string PersonType
+        private string? _personType;
+        public string? PersonType
         {
             get
             {
@@ -48,8 +48,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _title;
-        public string Title
+        private string? _title;
+        public string? Title
         {
             get
             {
@@ -63,8 +63,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _firstName;
-        public string FirstName
+        private string? _firstName;
+        public string? FirstName
         {
             get
             {
@@ -78,8 +78,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _middleName;
-        public string MiddleName
+        private string? _middleName;
+        public string? MiddleName
         {
             get
             {
@@ -93,8 +93,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _lastName;
-        public string LastName
+        private string? _lastName;
+        public string? LastName
         {
             get
             {
@@ -108,8 +108,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _suffix;
-        public string Suffix
+        private string? _suffix;
+        public string? Suffix
         {
             get
             {
@@ -138,8 +138,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _additionalContactInfo;
-        public string AdditionalContactInfo
+        private string? _additionalContactInfo;
+        public string? AdditionalContactInfo
         {
             get
             {
@@ -153,8 +153,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _demographics;
-        public string Demographics
+        private string? _demographics;
+        public string? Demographics
         {
             get
             {

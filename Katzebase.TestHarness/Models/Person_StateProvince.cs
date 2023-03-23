@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _stateProvinceCode;
-        public string StateProvinceCode
+        private string? _stateProvinceCode;
+        public string? StateProvinceCode
         {
             get
             {
@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _countryRegionCode;
-        public string CountryRegionCode
+        private string? _countryRegionCode;
+        public string? CountryRegionCode
         {
             get
             {
@@ -63,8 +63,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _name;
-        public string Name
+        private string? _name;
+        public string? Name
         {
             get
             {

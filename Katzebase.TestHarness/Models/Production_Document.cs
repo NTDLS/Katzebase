@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _title;
-        public string Title
+        private string? _title;
+        public string? Title
         {
             get
             {
@@ -63,8 +63,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _fileName;
-        public string FileName
+        private string? _fileName;
+        public string? FileName
         {
             get
             {
@@ -78,8 +78,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _fileExtension;
-        public string FileExtension
+        private string? _fileExtension;
+        public string? FileExtension
         {
             get
             {
@@ -93,8 +93,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _revision;
-        public string Revision
+        private string? _revision;
+        public string? Revision
         {
             get
             {
@@ -138,8 +138,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _documentSummary;
-        public string DocumentSummary
+        private string? _documentSummary;
+        public string? DocumentSummary
         {
             get
             {
@@ -153,8 +153,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private byte[] _document;
-        public byte[] Document
+        private byte[]? _document;
+        public byte[]? Document
         {
             get
             {

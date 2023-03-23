@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _name;
-        public string Name
+        private string? _name;
+        public string? Name
         {
             get
             {
@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _productNumber;
-        public string ProductNumber
+        private string? _productNumber;
+        public string? ProductNumber
         {
             get
             {
@@ -78,8 +78,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _color;
-        public string Color
+        private string? _color;
+        public string? Color
         {
             get
             {
@@ -153,8 +153,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _size;
-        public string Size
+        private string? _size;
+        public string? Size
         {
             get
             {
@@ -168,8 +168,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _sizeUnitMeasureCode;
-        public string SizeUnitMeasureCode
+        private string? _sizeUnitMeasureCode;
+        public string? SizeUnitMeasureCode
         {
             get
             {
@@ -183,8 +183,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _weightUnitMeasureCode;
-        public string WeightUnitMeasureCode
+        private string? _weightUnitMeasureCode;
+        public string? WeightUnitMeasureCode
         {
             get
             {
@@ -228,8 +228,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _productLine;
-        public string ProductLine
+        private string? _productLine;
+        public string? ProductLine
         {
             get
             {
@@ -243,8 +243,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _class;
-        public string Class
+        private string? _class;
+        public string? Class
         {
             get
             {
@@ -258,8 +258,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _style;
-        public string Style
+        private string? _style;
+        public string? Style
         {
             get
             {

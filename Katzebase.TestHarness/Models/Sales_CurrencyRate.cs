@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _fromCurrencyCode;
-        public string FromCurrencyCode
+        private string? _fromCurrencyCode;
+        public string? FromCurrencyCode
         {
             get
             {
@@ -48,8 +48,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _toCurrencyCode;
-        public string ToCurrencyCode
+        private string? _toCurrencyCode;
+        public string? ToCurrencyCode
         {
             get
             {

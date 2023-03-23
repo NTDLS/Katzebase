@@ -63,8 +63,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _accountNumber;
-        public string AccountNumber
+        private string? _accountNumber;
+        public string? AccountNumber
         {
             get
             {

@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _diagram;
-        public string Diagram
+        private string? _diagram;
+        public string? Diagram
         {
             get
             {

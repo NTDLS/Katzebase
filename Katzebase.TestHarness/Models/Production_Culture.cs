@@ -3,8 +3,8 @@ namespace Katzebase.TestHarness.Models
     public partial class Production_Culture
     {
         #region Properties
-        private string _cultureID;
-        public string CultureID
+        private string? _cultureID;
+        public string? CultureID
         {
             get
             {
@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _name;
-        public string Name
+        private string? _name;
+        public string? Name
         {
             get
             {

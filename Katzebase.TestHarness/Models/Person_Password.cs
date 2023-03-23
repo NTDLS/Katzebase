@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _passwordHash;
-        public string PasswordHash
+        private string? _passwordHash;
+        public string? PasswordHash
         {
             get
             {
@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _passwordSalt;
-        public string PasswordSalt
+        private string? _passwordSalt;
+        public string? PasswordSalt
         {
             get
             {

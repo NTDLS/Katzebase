@@ -3,8 +3,8 @@ namespace Katzebase.TestHarness.Models
     public partial class Person_CountryRegion
     {
         #region Properties
-        private string _countryRegionCode;
-        public string CountryRegionCode
+        private string? _countryRegionCode;
+        public string? CountryRegionCode
         {
             get
             {
@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _name;
-        public string Name
+        private string? _name;
+        public string? Name
         {
             get
             {

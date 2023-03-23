@@ -33,8 +33,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _cultureID;
-        public string CultureID
+        private string? _cultureID;
+        public string? CultureID
         {
             get
             {

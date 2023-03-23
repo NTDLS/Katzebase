@@ -35,7 +35,7 @@ namespace Katzebase.TestHarness
             KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
-            string schemaPath = "Students:Indexing";
+            string? schemaPath = "Students:Indexing";
 
             if (client.Schema.Exists(schemaPath))
             {
@@ -125,7 +125,7 @@ namespace Katzebase.TestHarness
             KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
 
             Console.WriteLine("Session Started: {0}", client.SessionId);
-            string schemaPath = "Students:Indexing";
+            string? schemaPath = "Students:Indexing";
 
             if (client.Schema.Exists(schemaPath))
             {
@@ -206,7 +206,7 @@ namespace Katzebase.TestHarness
             KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
-            string schemaPath = "Students:Indexing";
+            string? schemaPath = "Students:Indexing";
 
             if (client.Schema.Exists(schemaPath))
             {
@@ -2640,9 +2640,9 @@ namespace Katzebase.TestHarness
         #endregion
 
         private static readonly Random random = new Random();
-        public static string RandomString(int length)
+        public static string? RandomString(int length)
         {
-            const string chars = "ABCDEFG";
+            const string? chars = "ABCDEFG";
             return new string(Enumerable.Repeat(chars, length)
               .Select(s => s[random.Next(s.Length)]).ToArray());
         }

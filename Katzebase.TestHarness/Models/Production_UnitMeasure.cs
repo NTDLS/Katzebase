@@ -3,8 +3,8 @@ namespace Katzebase.TestHarness.Models
     public partial class Production_UnitMeasure
     {
         #region Properties
-        private string _unitMeasureCode;
-        public string UnitMeasureCode
+        private string? _unitMeasureCode;
+        public string? UnitMeasureCode
         {
             get
             {
@@ -18,8 +18,8 @@ namespace Katzebase.TestHarness.Models
                 }
             }
         }
-        private string _name;
-        public string Name
+        private string? _name;
+        public string? Name
         {
             get
             {
