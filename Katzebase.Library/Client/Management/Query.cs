@@ -13,19 +13,20 @@ namespace Katzebase.Library.Client.Management
             this.client = client;
         }
 
-        public void Execute(string statement)
+        public KbQueryResult ExecuteQuery(string statement)
         {
-            string url = $"api/Query/{client.SessionId}/Execute";
+            string url = $"api/Query/{client.SessionId}/ExecuteQuery";
 
             var postContent = new StringContent(JsonConvert.SerializeObject(statement), Encoding.UTF8);
 
             using var response = client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
-            var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
+            var result = JsonConvert.DeserializeObject<KbQueryResult>(resultText);
             if (result == null || result.Success == false)
             {
                 throw new Exception(result == null ? "Invalid response" : result.Message);
             }
+            return result;
         }
 
     }

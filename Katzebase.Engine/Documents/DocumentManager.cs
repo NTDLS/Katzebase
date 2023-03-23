@@ -4,6 +4,9 @@ using Katzebase.Engine.Transactions;
 using Katzebase.Library;
 using Katzebase.Library.Exceptions;
 using Katzebase.Library.Payloads;
+using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using System.Diagnostics;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Documents
@@ -17,23 +20,15 @@ namespace Katzebase.Engine.Documents
             this.core = core;
         }
 
-
-        public void ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
+        public KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
-                using (var txRef = core.Transactions.Begin(processId))
+                KbQueryResult result = new KbQueryResult(); ;
+
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schema, LockOperation.Write);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
-                    {
-                        throw new KbSchemaDoesNotExistException(preparedQuery.Schema);
-                    }
-                    Utility.EnsureNotNull(schemaMeta.DiskPath);
-
-                    string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
-
-                    FindDocuments(processId, txRef.Transaction, schemaMeta, preparedQuery.Conditions, preparedQuery.RowLimit, preparedQuery.SelectFields);
+                    result = FindDocuments(transaction.Transaction, preparedQuery);
 
                     /*
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
@@ -53,8 +48,10 @@ namespace Katzebase.Engine.Documents
                     }
                     */
 
-                    txRef.Commit();
+                    transaction.Commit();
                 }
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -63,28 +60,163 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-        private void /*QueryResult*/ FindDocuments(ulong processId, Transaction transaction, PersistSchema schemaMeta, Conditions conditions, int rowLimit, List<string>? fieldList)
+        private KbQueryResult FindDocuments(Transaction transaction, PreparedQuery query)
         {
-            conditions.MakeLowerCase();
+            var result = new KbQueryResult();
 
-            if (fieldList != null && fieldList.Count == 1)
+            //Lock the schema:
+            var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, query.Schema, LockOperation.Read);
+            if (schemaMeta == null || schemaMeta.Exists == false)
             {
-                if (fieldList[0] == "*")
+                throw new KbSchemaDoesNotExistException(query.Schema);
+            }
+            Utility.EnsureNotNull(schemaMeta.DiskPath);
+
+            //Lock the document catalog:
+            var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
+            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, documentCatalogDiskPath, LockOperation.Read);
+            Utility.EnsureNotNull(documentCatalog);
+
+            query.Conditions.MakeLowerCase();
+
+            foreach (var field in query.SelectFields)
+            {
+                result.Fields.Add(new KbQueryField(field));
+            }
+
+            //Figure out which indexes could assist us in retrieving the desired documents.
+            var indexSelections = core.Indexes.SelectIndexes(transaction, schemaMeta, query.Conditions);
+
+            Console.WriteLine(indexSelections.UnhandledKeys.Count);
+
+            //Loop through each document in the catalog:
+            foreach (var item in documentCatalog.Collection)
+            {
+                var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, item.FileName);
+
+                var persistDocument = core.IO.GetJson<PersistDocument>(transaction, persistDocumentDiskPath, LockOperation.Read);
+                Utility.EnsureNotNull(persistDocument);
+                Utility.EnsureNotNull(persistDocument.Content);
+
+                var jContent = JObject.Parse(persistDocument.Content);
+
+                if (query.Conditions.IsMatch(jContent))
                 {
-                    fieldList = null;
+                    var rowValues = new List<string>();
+
+                    foreach (string field in query.SelectFields)
+                    {
+                        if (field == "#RID")
+                        {
+                            rowValues.Add((persistDocument.Id ?? Guid.Empty).ToString());
+                        }
+                        else
+                        {
+                            if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                            {
+                                rowValues.Add(jToken.ToString());
+                            }
+                            else
+                            {
+                                rowValues.Add(string.Empty);
+                            }
+                        }
+                    }
+
+                    result.Rows.Add(new KbQueryRow(rowValues));
+                }
+
+                /*
+
+                if (fullAttributeMatch)
+                {
+                    rowCount++;
+                    if (rowLimit > 0 && rowCount > rowLimit)
+                    {
+                        break;
+                    }
+
+                    if (hasFieldList)
+                    {
+                        if (jsonContent == null)
+                        {
+                            jsonContent = JObject.Parse(persistDocument.Text);
+                        }
+
+                        List<string> fieldValues = new List<string>();
+
+                        foreach (string fieldName in fieldList)
+                        {
+                            if (fieldName == "#RID")
+                            {
+                                fieldValues.Add(persistDocument.Id.ToString());
+                            }
+                            else
+                            {
+                                JToken fieldToken = null;
+                                if (jsonContent.TryGetValue(fieldName, StringComparison.CurrentCultureIgnoreCase, out fieldToken))
+                                {
+                                    fieldValues.Add(fieldToken.ToString());
+                                }
+                                else
+                                {
+                                    fieldValues.Add(string.Empty);
+                                }
+                            }
+                        }
+
+                        rowValues.Add(fieldValues);
+                    }
+                    else
+                    {
+                        resultDocuments.Add(new Document
+                        {
+                            Id = persistDocument.Id,
+                            OriginalType = persistDocument.OriginalType,
+                            Bytes = persistDocument.Bytes
+                        });
+                    }
+
+                }
+                */
+            }
+
+            return result;
+
+            /*
+            try
+            {
+                using (var txRef = core.Transactions.Begin(transaction.ProcessId))
+                {
+                    PersistSchema schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
+                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    {
+                        throw new KbSchemaDoesNotExistException(schema);
+                    }
+                    Utility.EnsureNotNull(schemaMeta.DiskPath);
+
+                    var list = new List<PersistDocumentCatalogItem>();
+
+                    var filePath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
+                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
+                    Utility.EnsureNotNull(documentCatalog);
+
+                    foreach (var item in documentCatalog.Collection)
+                    {
+                        list.Add(item);
+                    }
+
+                    txRef.Commit();
+
+                    return list;
                 }
             }
-
-            if (fieldList != null && fieldList.Count() > 0)
+            catch (Exception ex)
             {
-                fieldList.Insert(0, "#RID");
+                core.Log.Write($"Failed to get catalog for process {processId}.", ex);
+                throw;
             }
-
-            var indexSelections = core.Indexes.SelectIndexes(transaction, schemaMeta, conditions);
-
-            Console.WriteLine(indexSelections.UnhandledKeys.Count());
-
-            return;
+            */
 
             /*
 
@@ -436,7 +568,7 @@ namespace Katzebase.Engine.Documents
                     };
                 }
             } //End lock.
-                        */
+            */
         }
 
         public void Store(ulong processId, string schema, KbDocument document, out Guid? newId)
@@ -541,27 +673,25 @@ namespace Katzebase.Engine.Documents
         {
             try
             {
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    PersistSchema schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
+                    PersistSchema schemaMeta = core.Schemas.VirtualPathToMeta(transaction.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
                         throw new KbSchemaDoesNotExistException(schema);
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-                    var list = new List<PersistDocumentCatalogItem>();
-
                     var filePath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
+                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction.Transaction, filePath, LockOperation.Read);
                     Utility.EnsureNotNull(documentCatalog);
 
+                    var list = new List<PersistDocumentCatalogItem>();
                     foreach (var item in documentCatalog.Collection)
                     {
                         list.Add(item);
                     }
-
-                    txRef.Commit();
+                    transaction.Commit();
 
                     return list;
                 }

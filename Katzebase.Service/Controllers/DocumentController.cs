@@ -49,15 +49,11 @@ namespace Katzebase.Service.Controllers
 
                 Utility.EnsureNotNull(content);
 
-                if (content == null)
-                    throw new Exception("Content cannot be null.");
-
                 Guid? newId = Guid.Empty;
 
                 Program.Core.Documents.Store(processId, schema, content, out newId);
 
-                if (newId == null)
-                    throw new Exception("New document Id cannot be null.");
+                Utility.EnsureNotNullOrEmpty(newId);
 
                 result.Id = (Guid)newId;
                 result.Success = true;

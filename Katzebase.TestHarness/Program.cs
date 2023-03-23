@@ -15,23 +15,33 @@ namespace Katzebase.TestHarness
             Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
 
             //Exporter.ExportAll(); // This method just exports the entire AdventureWorks2012 database into the no SQL database.
+            //TestIndexCreationProductInventory();
 
-            TestIndexCreationProductInventory();
-
-            //TestCreateAllAdventureWorks2012Indexes();
-            //TestServerStress();
-
-            //TestCreateIndexAddDocuments();
-            //TestAddDocumentsCreateIndex();
-            //TestIndexDocumentDeletion();
+            var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf = 'A' AND Bin = 12");
 
             //KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
             //string query = "SELECT TOP 100 ProductID, Name, ModifiedDate FROM :AdventureWorks2012:Production:Product WHERE SafetyStockLevel = 1000 Color = 'Silver'";
             //client.Query.Execute(query);
+            //TestCreateAllAdventureWorks2012Indexes();
+            //TestServerStress();
+            //TestCreateIndexAddDocuments();
+            //TestAddDocumentsCreateIndex();
+            //TestIndexDocumentDeletion();
 
             Console.WriteLine("Press any key to continue.");
             Console.ReadLine();
         }
+
+        #region TestQuery(text)
+
+        private static KbQueryResult TestExecuteQuery(string queryText)
+        {
+            var client = new KatzebaseClient("http://localhost:6858/");
+            return client.Query.ExecuteQuery(queryText);
+        }
+
+        #endregion
+
 
         #region Test Index Creation (Person)
 

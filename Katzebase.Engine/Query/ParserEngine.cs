@@ -11,7 +11,7 @@ namespace Katzebase.Engine.Query
 
             Utilities.CleanQueryText(ref query);
 
-            Dictionary<string, string> literalStrings = Utilities.SwapOutLiteralStrings(ref query);
+            var literalStrings = Utilities.SwapOutLiteralStrings(ref query);
 
             int position = 0;
             string token = string.Empty;
@@ -283,6 +283,8 @@ namespace Katzebase.Engine.Query
                     }
                 }
             }
+
+            result.Conditions?.MakeLowerCase(true);
 
             return result;
         }

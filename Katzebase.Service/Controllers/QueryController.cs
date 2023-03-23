@@ -9,24 +9,21 @@ namespace Katzebase.Service.Controllers
     [Route("api/[controller]")]
     public class QueryController
     {
-        [HttpGet]
-        [Route("{sessionId}/Execute")]
-        public KbActionResponse Execute(Guid sessionId, [FromBody] string value)
+        [HttpPost]
+        [Route("{sessionId}/ExecuteQuery")]
+        public KbQueryResult ExecuteQuery(Guid sessionId, [FromBody] string value)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            KbActionResponseID result = new KbActionResponseID();
+            var result = new KbQueryResult();
 
             try
             {
                 var statement = JsonConvert.DeserializeObject<string>(value);
-
-                if (statement == null)
-                    throw new Exception("Statement cannot be null.");
-
-                Program.Core.Query.Execute(processId, statement);
+                Utility.EnsureNotNull(statement);
+                result = Program.Core.Query.ExecuteQuery(processId, statement);
 
                 result.Success = true;
             }

@@ -1,4 +1,6 @@
-﻿namespace Katzebase.Engine.Query
+﻿using Katzebase.Library.Payloads;
+
+namespace Katzebase.Engine.Query
 {
     public class QueryManager
     {
@@ -9,17 +11,21 @@
             this.core = core;
         }
 
-        public void Execute(ulong processId, string statement)
+        public KbQueryResult ExecuteQuery(ulong processId, string statement)
         {
             var preparedQuery = ParserEngine.ParseQuery(statement);
-            Execute(processId, preparedQuery);
+            return ExecuteQuery(processId, preparedQuery);
         }
 
-        public void Execute(ulong processId, PreparedQuery preparedQuery)
+        public KbQueryResult ExecuteQuery(ulong processId, PreparedQuery preparedQuery)
         {
             if (preparedQuery.QueryType == Constants.QueryType.Select)
             {
-                core.Documents.ExecuteSelect(processId, preparedQuery);
+                return core.Documents.ExecuteSelect(processId, preparedQuery);
+            }
+            else
+            {
+                throw new NotImplementedException();
             }
         }
     }

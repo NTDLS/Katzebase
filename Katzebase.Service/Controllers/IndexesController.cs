@@ -22,9 +22,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var content = JsonConvert.DeserializeObject<KbIndex>(value);
-
-                if (content == null)
-                    throw new Exception("Content cannot be null.");
+                Utility.EnsureNotNull(content);
 
                 Guid newId = Guid.Empty;
 
