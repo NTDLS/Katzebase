@@ -1,8 +1,6 @@
 
 using Katzebase.Engine;
 using Katzebase.Library;
-using ProtoBuf.Meta;
-using System.Diagnostics;
 
 namespace Katzebase.Service
 {

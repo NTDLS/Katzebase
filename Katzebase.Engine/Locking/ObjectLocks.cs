@@ -1,7 +1,7 @@
-﻿using Katzebase.Library.Exceptions;
-using Katzebase.Engine.Transactions;
-using static Katzebase.Engine.Constants;
+﻿using Katzebase.Engine.Transactions;
 using Katzebase.Library;
+using Katzebase.Library.Exceptions;
+using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Locking
 {

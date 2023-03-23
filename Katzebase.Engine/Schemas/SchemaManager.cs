@@ -1,10 +1,10 @@
 ﻿using Katzebase.Engine.Documents;
-using Katzebase.Library.Exceptions;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Transactions;
+using Katzebase.Library;
+using Katzebase.Library.Exceptions;
 using System.Text;
 using static Katzebase.Engine.Constants;
-using Katzebase.Library;
 
 namespace Katzebase.Engine.Schemas
 {

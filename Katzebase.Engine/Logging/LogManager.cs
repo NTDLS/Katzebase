@@ -1,8 +1,7 @@
-﻿using Katzebase.Library.Exceptions;
-using Katzebase.Engine.Logging;
+﻿using Katzebase.Library;
+using Katzebase.Library.Exceptions;
 using System.Text;
 using static Katzebase.Library.Constants;
-using Katzebase.Library;
 
 namespace Katzebase.Engine.Logging
 {

@@ -25,7 +25,7 @@ namespace Katzebase.Library
         {
             if (value == null || value == Guid.Empty)
             {
-                throw new KatzebaseCriticalNull($"{strName} cannot be null.");
+                throw new KatzebaseCriticalNull($"{strName} cannot be null or empty.");
             }
         }
 
@@ -33,7 +33,7 @@ namespace Katzebase.Library
         {
             if (string.IsNullOrEmpty(value))
             {
-                throw new KatzebaseCriticalNull($"{strName} cannot be null.");
+                throw new KatzebaseCriticalNull($"{strName} cannot be null or empty.");
             }
         }
 
@@ -41,7 +41,7 @@ namespace Katzebase.Library
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new KatzebaseCriticalNull($"{strName} cannot be null.");
+                throw new KatzebaseCriticalNull($"{strName} cannot be null or empty.");
             }
         }
     }
