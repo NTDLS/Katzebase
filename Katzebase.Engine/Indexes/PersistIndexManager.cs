@@ -280,36 +280,33 @@ namespace Katzebase.Engine.Indexes
         }
 
         /// <summary>
-        // Finds the appropriate index page for a set of key values.
+        /// Finds the appropriate index page for a set of key values in the given index file.
         /// </summary>
         /// <param name="transaction"></param>
         /// <param name="indexMeta"></param>
         /// <param name="searchTokens"></param>
         /// <returns></returns>
-        private FindKeyPageResult FindKeyPage(Transaction transaction, PersistIndex indexMeta, List<string> searchTokens)
+        private FindKeyPageResult LocateExtentInGivenIndexFile(Transaction transaction, List<string> searchTokens, PersistIndex indexMeta)
         {
-            return FindKeyPage(transaction, indexMeta, searchTokens, null);
+            Utility.EnsureNotNull(indexMeta.DiskPath);
+            var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, indexMeta.DiskPath, LockOperation.Write);
+            Utility.EnsureNotNull(indexPageCatalog);
+            return LocateExtentInGivenIndexPageCatalog(transaction, searchTokens, indexPageCatalog);
         }
 
         /// <summary>
-        /// Finds the appropriate index page for a set of key values using a long lived index page catalog.
+        /// Finds the appropriate index page for a set of key values in the given index page catalog.
         /// </summary>
         /// <param name="transaction"></param>
         /// <param name="indexMeta"></param>
         /// <param name="searchTokens"></param>
         /// <param name="indexPageCatalog"></param>
-        /// <returns></returns>
-        private FindKeyPageResult FindKeyPage(Transaction transaction, PersistIndex indexMeta, List<string> searchTokens, PersistIndexPageCatalog? suppliedIndexPageCatalog)
+        /// <returns>A reference to a node in the suppliedIndexPageCatalog</returns>
+        private FindKeyPageResult LocateExtentInGivenIndexPageCatalog(Transaction transaction, List<string> searchTokens, PersistIndexPageCatalog suppliedIndexPageCatalog)
         {
             try
             {
                 var indexPageCatalog = suppliedIndexPageCatalog;
-                if (indexPageCatalog == null)
-                {
-                    Utility.EnsureNotNull(indexMeta.DiskPath);
-
-                    indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, indexMeta.DiskPath, LockOperation.Write);
-                }
 
                 Utility.EnsureNotNull(indexPageCatalog);
 
@@ -321,7 +318,9 @@ namespace Katzebase.Engine.Indexes
                     };
 
                     result.Leaves = result.Catalog.Leaves;
-                    if (result.Leaves == null || result.Leaves.Count == 0)
+                    Utility.EnsureNotNull(result.Leaves);
+
+                    if (result.Leaves.Count == 0)
                     {
                         //The index is empty.
                         return result;
@@ -451,7 +450,17 @@ namespace Katzebase.Engine.Indexes
 
                 var searchTokens = GetIndexSearchTokens(transaction, indexMeta, document);
 
-                var findResult = FindKeyPage(transaction, indexMeta, searchTokens, indexPageCatalog);
+                FindKeyPageResult findResult;
+
+                if (indexPageCatalog == null)
+                {
+                    findResult = LocateExtentInGivenIndexFile(transaction, searchTokens, indexMeta);
+                }
+                else
+                {
+                    findResult = LocateExtentInGivenIndexPageCatalog(transaction, searchTokens, indexPageCatalog);
+                }
+
                 Utility.EnsureNotNull(findResult.Catalog);
 
                 if (findResult.IsFullMatch) //If we found a full match for all supplied key values - add the document to the leaf collection.
