@@ -1,7 +1,8 @@
-﻿using Katzebase.Engine.Exceptions;
-using Katzebase.Engine.Query;
+﻿using Katzebase.Engine.Query;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
+using Katzebase.Library;
+using Katzebase.Library.Exceptions;
 using Katzebase.Library.Payloads;
 using static Katzebase.Engine.Constants;
 
@@ -16,6 +17,7 @@ namespace Katzebase.Engine.Documents
             this.core = core;
         }
 
+
         public void ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
         {
             try
@@ -27,12 +29,9 @@ namespace Katzebase.Engine.Documents
                     {
                         throw new KatzebaseSchemaDoesNotExistException(preparedQuery.Schema);
                     }
-
-                    if (schemaMeta.DiskPath == null)
-                        throw new Exception("DiskPath cannot be null.");
+                    Utility.EnsureNotNull(schemaMeta.DiskPath);
 
                     string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
-
 
                     FindDocuments(txRef.Transaction, schemaMeta, preparedQuery.Conditions, preparedQuery.RowLimit, preparedQuery.SelectFields);
 
@@ -475,15 +474,12 @@ namespace Katzebase.Engine.Documents
                         throw new KatzebaseSchemaDoesNotExistException(schema);
                     }
 
-                    if (schemaMeta.DiskPath == null)
-                        throw new Exception("DiskPath cannot be null.");
+                    Utility.EnsureNotNull(schemaMeta.DiskPath);
 
                     string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
 
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
-
-                    if (documentCatalog == null)
-                        throw new Exception("documentCatalog cannot be null.");
+                    Utility.EnsureNotNull(documentCatalog);
 
                     documentCatalog.Add(persistDocument);
                     core.IO.PutJson(txRef.Transaction, documentCatalogDiskPath, documentCatalog);
@@ -518,15 +514,13 @@ namespace Katzebase.Engine.Documents
                         throw new KatzebaseSchemaDoesNotExistException(schema);
                     }
 
-                    if (schemaMeta.DiskPath == null)
-                        throw new Exception("DiskPath cannot be null.");
+                    Utility.EnsureNotNull(schemaMeta.DiskPath);
 
                     string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
 
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
 
-                    if (documentCatalog == null)
-                        throw new Exception("documentCatalog cannot be null.");
+                    Utility.EnsureNotNull(documentCatalog);
 
                     var persistDocument = documentCatalog.GetById(newId);
                     if (persistDocument != null)
@@ -563,17 +557,13 @@ namespace Katzebase.Engine.Documents
                     {
                         throw new KatzebaseSchemaDoesNotExistException(schema);
                     }
+                    Utility.EnsureNotNull(schemaMeta.DiskPath);
 
                     var list = new List<PersistDocumentCatalogItem>();
 
-                    if (schemaMeta.DiskPath == null)
-                        throw new Exception("DiskPath cannot be null.");
-
                     var filePath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
-
-                    if (documentCatalog == null)
-                        throw new Exception("documentCatalog cannot be null.");
+                    Utility.EnsureNotNull(documentCatalog);
 
                     foreach (var item in documentCatalog.Collection)
                     {

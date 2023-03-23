@@ -1,6 +1,7 @@
-﻿using Katzebase.Engine.Exceptions;
+﻿using Katzebase.Library.Exceptions;
 using Katzebase.Engine.Transactions;
 using static Katzebase.Engine.Constants;
+using Katzebase.Library;
 
 namespace Katzebase.Engine.Locking
 {
@@ -90,8 +91,7 @@ namespace Katzebase.Engine.Locking
                                 {
                                     var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
 
-                                    if (transaction.HeldLockKeys == null)
-                                        throw new Exception("HeldLockKeys cannot be null.");
+                                    Utility.EnsureNotNull(transaction.HeldLockKeys);
 
                                     transaction.HeldLockKeys.Add(lockKey);
                                 }
@@ -120,10 +120,7 @@ namespace Katzebase.Engine.Locking
                                 foreach (var lockedObject in lockedObjects)
                                 {
                                     var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-
-                                    if (transaction.HeldLockKeys == null)
-                                        throw new Exception("HeldLockKeys cannot be null.");
-
+                                    Utility.EnsureNotNull(transaction.HeldLockKeys);
                                     transaction.HeldLockKeys.Add(lockKey);
                                 }
 

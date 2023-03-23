@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using Katzebase.Library;
+using System.Diagnostics;
 
 namespace Katzebase.Engine.Caching
 {
@@ -87,8 +88,7 @@ namespace Katzebase.Engine.Caching
 
                                 foreach (var tx in core.Transactions.Collection)
                                 {
-                                    if (tx.DeferredIOs == null)
-                                        throw new Exception("DeferredIOs cannot be null.");
+                                    Utility.EnsureNotNull(tx.DeferredIOs);
 
                                     foreach (var deferredIo in tx.DeferredIOs.Collection)
                                     {

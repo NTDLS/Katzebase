@@ -47,6 +47,9 @@ namespace Katzebase.Service.Controllers
             {
                 var content = JsonConvert.DeserializeObject<KbDocument>(value);
 
+                Utility.EnsureNotNull(content);
+
+
                 if (content == null)
                     throw new Exception("Content cannot be null.");
 

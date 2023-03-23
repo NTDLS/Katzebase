@@ -1,4 +1,5 @@
-﻿using static Katzebase.Engine.Constants;
+﻿using Katzebase.Library;
+using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Health
 {
@@ -17,9 +18,7 @@ namespace Katzebase.Engine.Health
             if (File.Exists(healthCounterDiskPath))
             {
                 var result = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath);
-
-                if (result == null)
-                    throw new Exception("GetJsonNonTracked cannot be null.");
+                Utility.EnsureNotNull(result);
 
                 Counters = result;
             }

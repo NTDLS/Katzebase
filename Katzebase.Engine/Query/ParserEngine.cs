@@ -1,4 +1,5 @@
-﻿using static Katzebase.Engine.Constants;
+﻿using Katzebase.Library;
+using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Query
 {
@@ -209,8 +210,8 @@ namespace Katzebase.Engine.Query
                 {
                     foreach (var kvp in result.UpsertKeyValuePairs.Collection)
                     {
-                        if (kvp.Key == null || kvp.Value == null)
-                            throw new Exception("Key cannot be null.");
+                        Utility.EnsureNotNull(kvp.Key);
+                        Utility.EnsureNotNull(kvp.Value);
 
                         kvp.Key = kvp.Key.Replace(literalString.Key, literalString.Value);
                         kvp.Value = kvp.Value.Replace(literalString.Key, literalString.Value);
@@ -253,8 +254,8 @@ namespace Katzebase.Engine.Query
             {
                 foreach (var kvp in result.UpsertKeyValuePairs.Collection)
                 {
-                    if (kvp.Key == null || kvp.Value == null)
-                        throw new Exception("KEy cannot be null.");
+                    Utility.EnsureNotNull(kvp.Key);
+                    Utility.EnsureNotNull(kvp.Value);
 
                     if (kvp.Key.StartsWith("\'") && kvp.Key.EndsWith("\'"))
                     {

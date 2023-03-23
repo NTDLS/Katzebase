@@ -1,5 +1,8 @@
-﻿using Katzebase.Engine.Exceptions;
+﻿using Katzebase.Library.Exceptions;
+using Katzebase.Engine.Logging;
 using System.Text;
+using static Katzebase.Library.Constants;
+using Katzebase.Library;
 
 namespace Katzebase.Engine.Logging
 {
@@ -45,7 +48,7 @@ namespace Katzebase.Engine.Logging
 
         public void Write(LogEntry entry)
         {
-            if (entry.Severity == Constants.LogSeverity.Trace && core.settings.WriteTraceData == false)
+            if (entry.Severity == LogSeverity.Trace && core.settings.WriteTraceData == false)
             {
                 return;
             }
@@ -60,11 +63,11 @@ namespace Katzebase.Engine.Logging
 
             lock (this)
             {
-                if (entry.Severity == Constants.LogSeverity.Warning)
+                if (entry.Severity == LogSeverity.Warning)
                 {
                     core.Health.Increment(Constants.HealthCounterType.Warnings);
                 }
-                else if (entry.Severity == Constants.LogSeverity.Exception)
+                else if (entry.Severity == LogSeverity.Exception)
                 {
                     core.Health.Increment(Constants.HealthCounterType.Exceptions);
                 }
@@ -107,15 +110,15 @@ namespace Katzebase.Engine.Logging
                     }
                 }
 
-                if (entry.Severity == Constants.LogSeverity.Warning)
+                if (entry.Severity == LogSeverity.Warning)
                 {
                     Console.ForegroundColor = ConsoleColor.DarkYellow;
                 }
-                else if (entry.Severity == Constants.LogSeverity.Exception)
+                else if (entry.Severity == LogSeverity.Exception)
                 {
                     Console.ForegroundColor = ConsoleColor.Red;
                 }
-                else if (entry.Severity == Constants.LogSeverity.Verbose)
+                else if (entry.Severity == LogSeverity.Verbose)
                 {
                     Console.ForegroundColor = ConsoleColor.White;
                 }
@@ -128,8 +131,7 @@ namespace Katzebase.Engine.Logging
 
                 Console.ForegroundColor = ConsoleColor.Gray;
 
-                if (fileHandle == null)
-                    throw new Exception("fileHandle cannot be null.");
+                Utility.EnsureNotNull(fileHandle);
 
                 fileHandle.WriteLine(message.ToString());
 
@@ -164,20 +166,20 @@ namespace Katzebase.Engine.Logging
 
         public void Write(string message)
         {
-            Write(new LogEntry(message) { Severity = Constants.LogSeverity.Verbose });
+            Write(new LogEntry(message) { Severity = LogSeverity.Verbose });
         }
 
         public void Trace(string message)
         {
-            Write(new LogEntry(message) { Severity = Constants.LogSeverity.Trace });
+            Write(new LogEntry(message) { Severity = LogSeverity.Trace });
         }
 
         public void Write(string message, Exception ex)
         {
-            Write(new LogEntry(message) { Exception = ex, Severity = Constants.LogSeverity.Exception });
+            Write(new LogEntry(message) { Exception = ex, Severity = LogSeverity.Exception });
         }
 
-        public void Write(string message, Constants.LogSeverity severity)
+        public void Write(string message, LogSeverity severity)
         {
             Write(new LogEntry(message) { Severity = severity });
         }

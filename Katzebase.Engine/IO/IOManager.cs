@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Transactions;
+using Katzebase.Library;
 using Newtonsoft.Json;
 using static Katzebase.Engine.Constants;
 
@@ -148,8 +149,7 @@ namespace Katzebase.Engine.IO
 
                     if (core.settings.AllowDeferredIO && transaction.IsLongLived)
                     {
-                        if (transaction.DeferredIOs == null)
-                            throw new Exception("DeferredIOs cannot be null.");
+                        Utility.EnsureNotNull(transaction.DeferredIOs);
 
                         deferDiskWrite = transaction.DeferredIOs.RecordDeferredDiskIO(cacheKey, filePath, deserializedObject, format);
                     }
@@ -250,8 +250,7 @@ namespace Katzebase.Engine.IO
             {
                 string lowerFilePath = filePath.ToLower();
 
-                if (transaction.DeferredIOs == null)
-                    throw new Exception("DeferredIOs cannot be null.");
+                Utility.EnsureNotNull(transaction.DeferredIOs);
 
                 var deferredExists = transaction.DeferredIOs.Collection.Values.FirstOrDefault(o => o.LowerDiskPath == lowerFilePath);
                 if (deferredExists != null)

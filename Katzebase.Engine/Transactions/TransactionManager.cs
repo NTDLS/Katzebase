@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Katzebase.Library;
+using Newtonsoft.Json;
+using static Katzebase.Library.Constants;
 
 namespace Katzebase.Engine.Transactions
 {
@@ -45,7 +47,7 @@ namespace Katzebase.Engine.Transactions
 
                 if (transactionFiles.Count() > 0)
                 {
-                    core.Log.Write($"Found {transactionFiles.Count()} open transactions.", Constants.LogSeverity.Warning);
+                    core.Log.Write($"Found {transactionFiles.Count()} open transactions.", LogSeverity.Warning);
                 }
 
                 foreach (string transactionFile in transactionFiles)
@@ -64,14 +66,11 @@ namespace Katzebase.Engine.Transactions
                     foreach (var reversibleAction in reversibleActions)
                     {
                         var ra = JsonConvert.DeserializeObject<ReversibleAction>(reversibleAction);
-                        if (ra == null)
-                        {
-                            throw new Exception("Reversible action can ot be null");
-                        }
+                        Utility.EnsureNotNull(ra);
                         transaction.ReversibleActions.Add(ra);
                     }
 
-                    core.Log.Write($"Rolling back session {transaction.ProcessId} with {transaction.ReversibleActions.Count} actions.", Constants.LogSeverity.Warning);
+                    core.Log.Write($"Rolling back session {transaction.ProcessId} with {transaction.ReversibleActions.Count} actions.", LogSeverity.Warning);
 
                     try
                     {

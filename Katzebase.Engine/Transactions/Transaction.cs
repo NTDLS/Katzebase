@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Locking;
+using Katzebase.Library;
 using Newtonsoft.Json;
 using static Katzebase.Engine.Constants;
 
@@ -57,8 +58,7 @@ namespace Katzebase.Engine.Transactions
             {
                 diskpath = diskpath.ToLower();
 
-                if (HeldLockKeys == null)
-                    throw new Exception("HeldLockKeys cannot be null.");
+                Utility.EnsureNotNull(HeldLockKeys);
 
                 lock (HeldLockKeys)
                 {
@@ -85,8 +85,7 @@ namespace Katzebase.Engine.Transactions
             {
                 diskpath = diskpath.ToLower();
 
-                if (HeldLockKeys == null)
-                    throw new Exception("HeldLockKeys cannot be null.");
+                Utility.EnsureNotNull(HeldLockKeys);
 
                 lock (HeldLockKeys)
                 {
@@ -179,8 +178,7 @@ namespace Katzebase.Engine.Transactions
 
                     ReversibleActions.Add(reversibleAction);
 
-                    if (transactionLogHandle == null)
-                        throw new Exception("transactionLogHandle cannot be null.");
+                    Utility.EnsureNotNull(transactionLogHandle);
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
@@ -210,8 +208,7 @@ namespace Katzebase.Engine.Transactions
 
                     ReversibleActions.Add(reversibleAction);
 
-                    if (transactionLogHandle == null)
-                        throw new Exception("transactionLogHandle cannot be null.");
+                    Utility.EnsureNotNull(transactionLogHandle);
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
@@ -246,8 +243,7 @@ namespace Katzebase.Engine.Transactions
 
                     ReversibleActions.Add(reversibleAction);
 
-                    if (transactionLogHandle == null)
-                        throw new Exception("transactionLogHandle cannot be null.");
+                    Utility.EnsureNotNull(transactionLogHandle);
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
@@ -281,8 +277,7 @@ namespace Katzebase.Engine.Transactions
 
                     ReversibleActions.Add(reversibleAction);
 
-                    if (transactionLogHandle == null)
-                        throw new Exception("transactionLogHandle cannot be null.");
+                    Utility.EnsureNotNull(transactionLogHandle);
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
@@ -316,8 +311,7 @@ namespace Katzebase.Engine.Transactions
 
                     ReversibleActions.Add(reversibleAction);
 
-                    if (transactionLogHandle == null)
-                        throw new Exception("transactionLogHandle cannot be null.");
+                    Utility.EnsureNotNull(transactionLogHandle);
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
@@ -368,10 +362,8 @@ namespace Katzebase.Engine.Transactions
                         {
                             var diskPath = Path.GetDirectoryName(record.OriginalPath);
 
-                            if (diskPath == null)
-                                throw new Exception("diskPath cannot be null.");
-                            if (record.BackupPath == null)
-                                throw new Exception("BackupPath cannot be null.");
+                            Utility.EnsureNotNull(diskPath);
+                            Utility.EnsureNotNull(record.BackupPath);
 
                             Directory.CreateDirectory(diskPath);
                             File.Copy(record.BackupPath, record.OriginalPath, true);
@@ -385,9 +377,7 @@ namespace Katzebase.Engine.Transactions
                         }
                         else if (record.Action == ActionType.DirectoryDelete)
                         {
-                            if (record.BackupPath == null)
-                                throw new Exception("BackupPath cannot be null.");
-
+                            Utility.EnsureNotNull(record.BackupPath);
                             Helpers.CopyDirectory(record.BackupPath, record.OriginalPath);
                         }
                     }
@@ -431,9 +421,7 @@ namespace Katzebase.Engine.Transactions
                     {
                         try
                         {
-                            if (DeferredIOs == null)
-                                throw new Exception("DeferredIOs cannot be null.");
-
+                            Utility.EnsureNotNull(DeferredIOs);
                             DeferredIOs.CommitDeferredDiskIO();
                             CleanupTransaction();
                             transactionManager.RemoveByProcessId(ProcessId);
@@ -476,16 +464,12 @@ namespace Katzebase.Engine.Transactions
                     //Delete all the backup files.
                     if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
                     {
-                        if (record.BackupPath == null)
-                            throw new Exception("BackupPath cannot be null.");
-
+                        Utility.EnsureNotNull(record.BackupPath);
                         File.Delete(record.BackupPath);
                     }
                     else if (record.Action == ActionType.DirectoryDelete)
                     {
-                        if (record.BackupPath == null)
-                            throw new Exception("BackupPath cannot be null.");
-
+                        Utility.EnsureNotNull(record.BackupPath);
                         Directory.Delete(record.BackupPath, true);
                     }
                 }

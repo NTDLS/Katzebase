@@ -1,6 +1,6 @@
-﻿using static Katzebase.Engine.Constants;
+﻿using static Katzebase.Library.Constants;
 
-namespace Katzebase.Engine.Exceptions
+namespace Katzebase.Library.Exceptions
 {
     public class KatzebaseIndexDoesNotExistException : KatzebaseExceptionBase
     {
