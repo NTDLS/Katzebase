@@ -4,13 +4,13 @@ namespace Katzebase.Engine.Indexes
 {
     public class PersistIndexAttribute
     {
-        public string? Name { get; set; }
+        public string? Field { get; set; }
 
         public static PersistIndexAttribute FromPayload(KbIndexAttribute indexAttribute)
         {
             return new PersistIndexAttribute()
             {
-                Name = indexAttribute.Name
+                Field = indexAttribute.Field
             };
         }
 
@@ -18,7 +18,7 @@ namespace Katzebase.Engine.Indexes
         {
             return new PersistIndexAttribute()
             {
-                Name = Name
+                Field = Field
             };
         }
     }

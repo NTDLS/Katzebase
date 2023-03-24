@@ -18,7 +18,7 @@
         {
             AddAttribute(new KbIndexAttribute()
             {
-                Name = name
+                Field = name
             });
         }
         public void AddAttribute(KbIndexAttribute attribute)

@@ -10,21 +10,21 @@ namespace Katzebase.Engine.Query
     {
         public List<Condition> Collection = new List<Condition>();
 
-        private List<Conditions> _Nest = new List<Conditions>();
+        private List<Conditions> _children = new List<Conditions>();
 
-        public List<Conditions> Nest
+        public List<Conditions> Children
         {
             get
             {
-                if (_Nest == null)
+                if (_children == null)
                 {
-                    _Nest = new List<Conditions>();
+                    _children = new List<Conditions>();
                 }
-                return _Nest;
+                return _children;
             }
             set
             {
-                _Nest = value;
+                _children = value;
             }
         }
 
@@ -39,13 +39,13 @@ namespace Katzebase.Engine.Query
                 LowerCased = true;
                 foreach (Condition condition in Collection)
                 {
-                    condition.Key = condition.Key.ToLower();
+                    condition.Field = condition.Field.ToLower();
                     condition.Value = condition.Value.ToLower();
                 }
 
-                if (_Nest != null)
+                if (_children != null)
                 {
-                    foreach (Conditions nestedCOnditions in _Nest)
+                    foreach (Conditions nestedCOnditions in _children)
                     {
                         nestedCOnditions.MakeLowerCase();
                     }
@@ -59,7 +59,7 @@ namespace Katzebase.Engine.Query
 
         public void Add(Conditions conditions)
         {
-            this.Nest = conditions.Nest;
+            this.Children = conditions.Children;
             foreach (Condition condition in conditions.Collection)
             {
                 this.Add(condition);
@@ -73,7 +73,7 @@ namespace Katzebase.Engine.Query
 
         public void Add(Condition condition)
         {
-            this.Add(condition.ConditionType, condition.Key, condition.ConditionQualifier, condition.Value);
+            this.Add(condition.ConditionType, condition.Field, condition.ConditionQualifier, condition.Value);
         }
 
         public bool IsMatch(PersistDocument persistDocument)
@@ -94,7 +94,7 @@ namespace Katzebase.Engine.Query
             foreach (var condition in Collection)
             {
                 //Get the value of the condition:
-                if (jsonContent.TryGetValue(condition.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                if (jsonContent.TryGetValue(condition.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
                 {
                     //If the condition does not match the value in the document then we break from checking the remainder of the conditions for this document and continue with the next document.
                     //Otherwise we continue to the next condition until all conditions are matched.

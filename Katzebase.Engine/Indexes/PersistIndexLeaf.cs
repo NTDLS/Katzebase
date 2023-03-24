@@ -6,7 +6,7 @@ namespace Katzebase.Engine.Indexes
     public class PersistIndexLeaf
     {
         [ProtoMember(1)]
-        public string? Key { get; set; } = null;
+        public string? Value { get; set; } = null;
 
         [ProtoMember(2)]
         public HashSet<Guid>? DocumentIDs = null;
@@ -19,9 +19,9 @@ namespace Katzebase.Engine.Indexes
 
         }
 
-        public PersistIndexLeaf(string key)
+        public PersistIndexLeaf(string value)
         {
-            Key = key;
+            Value = value;
         }
     }
 }

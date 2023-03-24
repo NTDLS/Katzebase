@@ -11,15 +11,15 @@ namespace Katzebase.Engine.Indexes
             : base(ConditionType.None, key)
 
         {
-            this.Key = key.ToLower();
+            this.Field = key.ToLower();
             this.Value = value.ToLower();
             this.ConditionQualifier = conditionQualifier;
         }
 
         public IndexKeyMatch(Condition condition)
-            : base(ConditionType.None, condition.Key)
+            : base(ConditionType.None, condition.Field)
         {
-            this.Key = condition.Key.ToLower();
+            this.Field = condition.Field.ToLower();
             this.Value = condition.Value.ToLower();
             this.ConditionQualifier = condition.ConditionQualifier;
         }

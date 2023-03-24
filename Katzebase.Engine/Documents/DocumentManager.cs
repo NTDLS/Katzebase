@@ -1,4 +1,5 @@
-﻿using Katzebase.Engine.Query;
+﻿using Katzebase.Engine.Indexes;
+using Katzebase.Engine.Query;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.Library;
@@ -89,96 +90,59 @@ namespace Katzebase.Engine.Documents
 
             Console.WriteLine(indexSelections.UnhandledKeys.Count);
 
-            //Loop through each document in the catalog:
-            foreach (var item in documentCatalog.Collection)
+            if (indexSelections.Count == 0) //Full schema scan. Ouch!
             {
-                var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, item.FileName);
 
-                var persistDocument = core.IO.GetJson<PersistDocument>(transaction, persistDocumentDiskPath, LockOperation.Read);
-                Utility.EnsureNotNull(persistDocument);
-                Utility.EnsureNotNull(persistDocument.Content);
-
-                var jContent = JObject.Parse(persistDocument.Content);
-
-                if (query.Conditions.IsMatch(jContent))
+                //Loop through each document in the catalog:
+                foreach (var item in documentCatalog.Collection)
                 {
-                    var rowValues = new List<string>();
+                    var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, item.FileName);
 
-                    foreach (string field in query.SelectFields)
+                    var persistDocument = core.IO.GetJson<PersistDocument>(transaction, persistDocumentDiskPath, LockOperation.Read);
+                    Utility.EnsureNotNull(persistDocument);
+                    Utility.EnsureNotNull(persistDocument.Content);
+
+                    var jContent = JObject.Parse(persistDocument.Content);
+
+                    if (query.Conditions.IsMatch(jContent))
                     {
-                        if (field == "#RID")
+                        var rowValues = new List<string>();
+
+                        foreach (string field in query.SelectFields)
                         {
-                            rowValues.Add((persistDocument.Id ?? Guid.Empty).ToString());
-                        }
-                        else
-                        {
-                            if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                            if (field == "#RID")
                             {
-                                rowValues.Add(jToken.ToString());
+                                rowValues.Add((persistDocument.Id ?? Guid.Empty).ToString());
                             }
                             else
                             {
-                                rowValues.Add(string.Empty);
-                            }
-                        }
-                    }
-
-                    result.Rows.Add(new KbQueryRow(rowValues));
-                }
-
-                /*
-
-                if (fullAttributeMatch)
-                {
-                    rowCount++;
-                    if (rowLimit > 0 && rowCount > rowLimit)
-                    {
-                        break;
-                    }
-
-                    if (hasFieldList)
-                    {
-                        if (jsonContent == null)
-                        {
-                            jsonContent = JObject.Parse(persistDocument.Text);
-                        }
-
-                        List<string> fieldValues = new List<string>();
-
-                        foreach (string fieldName in fieldList)
-                        {
-                            if (fieldName == "#RID")
-                            {
-                                fieldValues.Add(persistDocument.Id.ToString());
-                            }
-                            else
-                            {
-                                JToken fieldToken = null;
-                                if (jsonContent.TryGetValue(fieldName, StringComparison.CurrentCultureIgnoreCase, out fieldToken))
+                                if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
                                 {
-                                    fieldValues.Add(fieldToken.ToString());
+                                    rowValues.Add(jToken.ToString());
                                 }
                                 else
                                 {
-                                    fieldValues.Add(string.Empty);
+                                    rowValues.Add(string.Empty);
                                 }
                             }
                         }
 
-                        rowValues.Add(fieldValues);
+                        result.Rows.Add(new KbQueryRow(rowValues));
                     }
-                    else
-                    {
-                        resultDocuments.Add(new Document
-                        {
-                            Id = persistDocument.Id,
-                            OriginalType = persistDocument.OriginalType,
-                            Bytes = persistDocument.Bytes
-                        });
-                    }
-
                 }
-                */
+            }
+            else //Indexed search!
+            {
+                foreach (var indexSelection in indexSelections)
+                {
+                    Utility.EnsureNotNull(indexSelection.Index.DiskPath);
+
+                    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, indexSelection.Index.DiskPath, LockOperation.Read);
+                    Utility.EnsureNotNull(indexPageCatalog);
+
+                    var foundDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, indexSelection, query);
+                }
+
             }
 
             return result;

@@ -4,7 +4,7 @@ namespace Katzebase.Engine.Query
 {
     public class Condition
     {
-        public string Key { get; set; }
+        public string Field { get; set; }
         public bool IsKeyConstant { get; set; } = false;
         public string Value { get; set; } = string.Empty;
         public bool IsValueConstant { get; set; } = false;
@@ -14,12 +14,12 @@ namespace Katzebase.Engine.Query
         public Condition(ConditionType conditionType, string key)
         {
             ConditionType = conditionType;
-            Key = key;
+            Field = key;
         }
 
         public Condition(ConditionType conditionType, string key, ConditionQualifier conditionQualifier, string value)
         {
-            this.Key = key;
+            this.Field = key;
             this.Value = value;
             this.ConditionQualifier = conditionQualifier;
             this.ConditionType = conditionType;

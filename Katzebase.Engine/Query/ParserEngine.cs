@@ -201,7 +201,7 @@ namespace Katzebase.Engine.Query
                 {
                     foreach (var kvp in result.Conditions.Collection)
                     {
-                        kvp.Key = kvp.Key.Replace(literalString.Key, literalString.Value);
+                        kvp.Field = kvp.Field.Replace(literalString.Key, literalString.Value);
                         kvp.Value = kvp.Value.Replace(literalString.Key, literalString.Value);
                     }
                 }
@@ -223,9 +223,9 @@ namespace Katzebase.Engine.Query
             {
                 foreach (var kvp in result.Conditions.Collection)
                 {
-                    if (kvp.Key.StartsWith("\'") && kvp.Key.EndsWith("\'"))
+                    if (kvp.Field.StartsWith("\'") && kvp.Field.EndsWith("\'"))
                     {
-                        kvp.Key = kvp.Key.Substring(1, kvp.Key.Length - 2);
+                        kvp.Field = kvp.Field.Substring(1, kvp.Field.Length - 2);
                         kvp.IsKeyConstant = true;
                     }
 
@@ -236,10 +236,10 @@ namespace Katzebase.Engine.Query
                     }
 
                     //Process escape sequences:
-                    kvp.Key = kvp.Key.Replace("\\'", "\'");
+                    kvp.Field = kvp.Field.Replace("\\'", "\'");
                     kvp.Value = kvp.Value.Replace("\\'", "\'");
 
-                    if (kvp.Key.All(Char.IsDigit))
+                    if (kvp.Field.All(Char.IsDigit))
                     {
                         kvp.IsKeyConstant = true;
                     }
@@ -386,7 +386,7 @@ namespace Katzebase.Engine.Query
                     else
                     {
                         nestedConditions.ConditionType = conditionType;
-                        conditions.Nest.Add(nestedConditions);
+                        conditions.Children.Add(nestedConditions);
                     }
                     continue;
                 }

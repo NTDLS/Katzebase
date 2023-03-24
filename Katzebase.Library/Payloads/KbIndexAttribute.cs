@@ -2,6 +2,6 @@
 {
     public class KbIndexAttribute
     {
-        public string? Name { get; set; }
+        public string? Field { get; set; }
     }
 }

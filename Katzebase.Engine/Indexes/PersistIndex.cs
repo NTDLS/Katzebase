@@ -35,7 +35,7 @@ namespace Katzebase.Engine.Indexes
         {
             AddAttribute(new PersistIndexAttribute()
             {
-                Name = name
+                Field = name
             });
         }
         public void AddAttribute(PersistIndexAttribute attribute)

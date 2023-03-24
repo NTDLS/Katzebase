@@ -19,6 +19,136 @@ namespace Katzebase.Engine.Indexes
             this.core = core;
         }
 
+        /// <summary>
+        /// Finds document IDs given a set of conditions.
+        /// </summary>
+        /// <param name="indexPageCatalog"></param>
+        /// <param name="conditions"></param>
+        /// <returns></returns>
+        public HashSet<Guid> MatchDocuments(PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, PreparedQuery query)
+        {
+            var foundDocumentIds = new HashSet<Guid>();
+            MatchDocuments(0, indexPageCatalog.Leaves, indexSelection, query, foundDocumentIds);
+            return foundDocumentIds;
+        }
+
+        /// <summary>
+        /// Finds document IDs given a set of conditions.
+        /// </summary>
+        /// <param name="persistIndexLeaves"></param>
+        /// <param name="conditions"></param>
+        /// <param name="foundDocumentIds"></param>
+        private void MatchDocuments(int nestedLevel, PersistIndexLeaves PersistIndexLeaves, IndexSelection indexSelection, PreparedQuery query, HashSet<Guid> foundDocumentIds)
+        {
+            List<PersistIndexLeaf> indexLeaves = PersistIndexLeaves.Entries; //Start at the top of the index tree.
+
+            //TODO: implement the observance of query.Conditions.Children
+            foreach (var attribute in indexSelection.Index.Attributes)
+            {
+                Utility.EnsureNotNull(attribute.Field);
+                var conditionField = query.Conditions.Collection.Where(o => o.Field.ToLower() == attribute.Field.ToLower()).FirstOrDefault();
+                if (conditionField == null)
+                {
+                    //No match?
+                    break;
+                }
+
+                var nextLevel = indexLeaves.Where(o => o.Value == conditionField.Value).FirstOrDefault();
+                if (nextLevel == null)
+                {
+                    //No match?
+                    break;
+                }
+
+                if (nextLevel.DocumentIDs?.Count != 0)
+                {
+                }
+
+                indexLeaves = nextLevel.Leaves.Entries; //Traverse down the tree.
+            }
+
+
+            //foreach (var leaf in persistIndexLeaves)
+            //{
+            //}
+
+            /*
+            HashSet<Guid> sessionFoundDocumentIds = new HashSet<Guid>();
+
+            //TODO: This is broken, very broken.
+            // We have scenarios where we have ANDs/ORs and nested ANDs/ORs.
+            // We also have to support the same key being used in an OR (e.g. Color = 'BLACK' OR Color = 'Silver')
+
+            foreach (var leaf in persistIndexLeaves.Leaves)
+            {
+                Condition condition = conditions[conditionOrdinal];
+
+                if (condition.IsMatch(leaf.Key) == true)
+                {
+                    if (conditions.Count == conditionOrdinal + 1)
+                    {
+                        //We have exausted all of our conditons, go ahead and skip to the document IDs.
+                        foreach (var documentId in leaf.Coalesce())
+                        {
+                            if (condition.ConditionType == ConditionType.None) //None means this is the first condition in a group.
+                            {
+                                sessionFoundDocumentIds.Add(documentId);
+                            }
+                            else if (condition.ConditionType == ConditionType.And)
+                            {
+                                if (foundDocumentIds.Contains(documentId))
+                                {
+                                    sessionFoundDocumentIds.Add(documentId);
+                                }
+                            }
+                            else if (condition.ConditionType == ConditionType.Or)
+                            {
+                                sessionFoundDocumentIds.Add(documentId);
+                            }
+                            else
+                            {
+                                throw new LeafSQLExceptionBase("Unsupported expression type.");
+                            }
+
+                        }
+                    }
+                    else if (leaf.IsBottom) //This is the bottom of the index, where the doucment IDs are stored.
+                    {
+                        //We have matched all of the index attributes.
+                        foreach (var documentId in leaf.DocumentIDs)
+                        {
+                            if (condition.ConditionType == ConditionType.None) //None means this is the first condition in a group.
+                            {
+                                sessionFoundDocumentIds.Add(documentId);
+                            }
+                            else if (condition.ConditionType == ConditionType.And)
+                            {
+                                if (foundDocumentIds.Contains(documentId))
+                                {
+                                    sessionFoundDocumentIds.Add(documentId);
+                                }
+                            }
+                            else if (condition.ConditionType == ConditionType.Or)
+                            {
+                                sessionFoundDocumentIds.Add(documentId);
+                            }
+                            else
+                            {
+                                throw new LeafSQLExceptionBase("Unsupported expression type.");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        //Match the next condition to the next lowest leaf level.
+                        MatchDocuments(nestedLevel++, leaf.Extent, indexSelection, foundDocumentIds);
+                        return;
+                    }
+                }
+            }
+            */
+        }
+
         public IndexSelections SelectIndexes(Transaction transaction, PersistSchema schemaMeta, Conditions conditions)
         {
             try
@@ -51,13 +181,13 @@ namespace Katzebase.Engine.Indexes
                         throw new Exception("Reversible action can ot be null");
                     }
 
-                    var keyName = indexMeta.Attributes[i].Name?.ToLower();
+                    var keyName = indexMeta.Attributes[i].Field?.ToLower();
                     if (keyName == null)
                     {
                         throw new Exception("keyName action can ot be null");
                     }
 
-                    if (indexKeyMatches.Find(o => o.Key == keyName && o.Handled == false) != null)
+                    if (indexKeyMatches.Find(o => o.Field == keyName && o.Handled == false) != null)
                     {
                         handledKeyNames.Add(keyName);
                     }
@@ -79,7 +209,7 @@ namespace Katzebase.Engine.Indexes
                 .ThenBy(t => t.Index.Attributes.Count).FirstOrDefault();
             if (firstIndex != null)
             {
-                var handledKeys = (from o in indexKeyMatches where firstIndex.HandledKeyNames.Contains(o.Key) select o).ToList();
+                var handledKeys = (from o in indexKeyMatches where firstIndex.HandledKeyNames.Contains(o.Field) select o).ToList();
                 foreach (var handledKey in handledKeys)
                 {
                     handledKey.Handled = true;
@@ -90,7 +220,7 @@ namespace Katzebase.Engine.Indexes
                 indexSelections.Add(new IndexSelection(firstIndex.Index, firstIndex.HandledKeyNames));
             }
 
-            indexSelections.UnhandledKeys.AddRange((from o in indexKeyMatches where o.Handled == false select o.Key).ToList());
+            indexSelections.UnhandledKeys.AddRange((from o in indexKeyMatches where o.Handled == false select o.Field).ToList());
 
             return indexSelections;
         }
@@ -261,12 +391,12 @@ namespace Katzebase.Engine.Indexes
 
                 foreach (var indexAttribute in indexMeta.Attributes)
                 {
-                    Utility.EnsureNotNull(indexAttribute.Name);
+                    Utility.EnsureNotNull(indexAttribute.Field);
 
                     var jsonContent = JObject.Parse(document.Content);
-                    if (jsonContent.TryGetValue(indexAttribute.Name, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                    if (jsonContent.TryGetValue(indexAttribute.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
                     {
-                        result.Add(jToken.ToString());
+                        result.Add(jToken.ToString().ToLower());
                     }
                 }
 
@@ -334,7 +464,7 @@ namespace Katzebase.Engine.Indexes
 
                         foreach (var leaf in result.Leaves)
                         {
-                            if (leaf.Key == token)
+                            if (leaf.Value == token)
                             {
                                 locatedExtent = true;
                                 foundExtentCount++;
@@ -742,6 +872,5 @@ namespace Katzebase.Engine.Indexes
                 throw;
             }
         }
-
     }
 }
