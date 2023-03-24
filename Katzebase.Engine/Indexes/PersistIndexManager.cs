@@ -7,6 +7,8 @@ using Katzebase.Library.Exceptions;
 using Katzebase.Library.Payloads;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Indexes
@@ -33,6 +35,21 @@ namespace Katzebase.Engine.Indexes
         }
 
         /// <summary>
+        /// Traverse to the bottom of the index tree (what whatever starting point is passed in) and return a list of all documentids.
+        /// </summary>
+        /// <param name="indexEntires"></param>
+        /// <returns></returns>
+        List<Guid> DistillAllDocumentIDs(List<PersistIndexLeaf> indexEntires)
+        {
+            while (indexEntires.Any(o => o.Leaves.Count > 0))
+            {
+                indexEntires = indexEntires.Select(o => o.Leaves).SelectMany(o => o.Entries).ToList(); //Traverse down the tree.
+            }
+
+            return indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
+        }
+
+        /// <summary>
         /// Finds document IDs given a set of conditions.
         /// </summary>
         /// <param name="persistIndexLeaves"></param>
@@ -40,7 +57,9 @@ namespace Katzebase.Engine.Indexes
         /// <param name="foundDocumentIds"></param>
         private void MatchDocuments(int nestedLevel, PersistIndexLeaves PersistIndexLeaves, IndexSelection indexSelection, PreparedQuery query, HashSet<Guid> foundDocumentIds)
         {
-            List<PersistIndexLeaf> indexLeaves = PersistIndexLeaves.Entries; //Start at the top of the index tree.
+            List<PersistIndexLeaf> indexEntires = PersistIndexLeaves.Entries; //Start at the top of the index tree.
+
+            bool fullMatch = true;
 
             //TODO: implement the observance of query.Conditions.Children
             foreach (var attribute in indexSelection.Index.Attributes)
@@ -49,23 +68,55 @@ namespace Katzebase.Engine.Indexes
                 var conditionField = query.Conditions.Collection.Where(o => o.Field.ToLower() == attribute.Field.ToLower()).FirstOrDefault();
                 if (conditionField == null)
                 {
-                    //No match?
+                    //No match? I think this is an exception....
+                    fullMatch = false;
                     break;
                 }
 
-                var nextLevel = indexLeaves.Where(o => o.Value == conditionField.Value).FirstOrDefault();
-                if (nextLevel == null)
+                List<PersistIndexLeaf>? nextIndexEntires = null;
+
+                //TODO: This assume every condition is an AND, thats a big problem. Ideas in comments below...
+
+                if (conditionField.ConditionQualifier == ConditionQualifier.Equals)
+                    nextIndexEntires = indexEntires.Where(o => o.Value == conditionField.Value)?.ToList();
+                else if (conditionField.ConditionQualifier == ConditionQualifier.NotEquals)
+                    nextIndexEntires = indexEntires.Where(o => o.Value != conditionField.Value)?.ToList();
+
+                //else if (conditionField.ConditionQualifier == ConditionQualifier.Like)
+                //    nextIndexEntires = indexEntires.Where(o => o.Value.Contains(conditionField.Value)).FirstOrDefault();
+                //else if (conditionField.ConditionQualifier == ConditionQualifier.LessThan)
+                //  nextIndexEntires = indexEntires.Where(o => o.Value < conditionField.Value).FirstOrDefault();
+                //else if (conditionField.ConditionQualifier == ConditionQualifier.GreaterThan)
+                //    nextIndexEntires = indexEntires.Where(o => o.Value > conditionField.Value).FirstOrDefault();
+                else throw new KbNotImplementedException($"Condition qualifier {conditionField.ConditionQualifier} has not been implemented.");
+
+                if (nextIndexEntires == null)
                 {
                     //No match?
+                    fullMatch = false;
                     break;
                 }
 
-                if (nextLevel.DocumentIDs?.Count != 0)
+                if (indexEntires.Any(o => o.Leaves.Count > 0)) //If we are at the base of the tree then there is no need to go further down.
                 {
+                    indexEntires = nextIndexEntires.Select(o => o.Leaves).SelectMany(o => o.Entries).ToList(); //Traverse down the tree.
                 }
-
-                indexLeaves = nextLevel.Leaves.Entries; //Traverse down the tree.
             }
+
+            if (fullMatch)
+            {
+                var allDocumentIds = indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
+                //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                foundDocumentIds.UnionWith(allDocumentIds);
+
+            }
+            else
+            {
+                var allDocumentIds = DistillAllDocumentIDs(indexEntires);
+                //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                foundDocumentIds.UnionWith(allDocumentIds);
+            }
+            return;
 
 
             //foreach (var leaf in persistIndexLeaves)
