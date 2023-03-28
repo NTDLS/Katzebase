@@ -3,13 +3,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Katzebase.Engine", "Katzebase.Engine\Katzebase.Engine.csproj", "{D69AE82D-107C-4B6C-BEEA-93399912A64F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Katzebase.Engine", "Katzebase.Engine\Katzebase.Engine.csproj", "{D69AE82D-107C-4B6C-BEEA-93399912A64F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Katzebase.Library", "Katzebase.Library\Katzebase.Library.csproj", "{5223EB47-9AF2-490B-84A2-58C7EFB577B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Katzebase.Library", "Katzebase.Library\Katzebase.Library.csproj", "{5223EB47-9AF2-490B-84A2-58C7EFB577B8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Katzebase.Service", "Katzebase.Service\Katzebase.Service.csproj", "{1C410B48-A5E9-46F3-BC6B-32DDCB5CDD55}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Katzebase.Service", "Katzebase.Service\Katzebase.Service.csproj", "{1C410B48-A5E9-46F3-BC6B-32DDCB5CDD55}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Katzebase.TestHarness", "Katzebase.TestHarness\Katzebase.TestHarness.csproj", "{50F9ABD6-1CF4-414A-9873-9175FCF11B61}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Katzebase.TestHarness", "Katzebase.TestHarness\Katzebase.TestHarness.csproj", "{50F9ABD6-1CF4-414A-9873-9175FCF11B61}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Katzebase.UI", "Katzebase.UI\Katzebase.UI.csproj", "{756AADB6-D503-4FAD-878F-0D166099ABD7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{50F9ABD6-1CF4-414A-9873-9175FCF11B61}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{50F9ABD6-1CF4-414A-9873-9175FCF11B61}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{50F9ABD6-1CF4-414A-9873-9175FCF11B61}.Release|Any CPU.Build.0 = Release|Any CPU
+		{756AADB6-D503-4FAD-878F-0D166099ABD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{756AADB6-D503-4FAD-878F-0D166099ABD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{756AADB6-D503-4FAD-878F-0D166099ABD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{756AADB6-D503-4FAD-878F-0D166099ABD7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

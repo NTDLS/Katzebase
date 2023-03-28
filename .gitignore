@@ -23,3 +23,7 @@ Katzebase.TestHarness/bin/
 Katzebase.TestHarness/obj/
 
 packages/
+
+Katzebase.UI/bin/
+
+Katzebase.UI/obj/
