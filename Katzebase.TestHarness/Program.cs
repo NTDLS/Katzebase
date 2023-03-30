@@ -21,7 +21,8 @@ namespace Katzebase.TestHarness
             //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf = 'A' AND Bin = 12");
             //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6");
             //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf = 'A'");
-            var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'A'"); 
+            //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'A'");
+            var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'A' AND Quantity = 299");
 
             //KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
             //string query = "SELECT TOP 100 ProductID, Name, ModifiedDate FROM :AdventureWorks2012:Production:Product WHERE SafetyStockLevel = 1000 Color = 'Silver'";

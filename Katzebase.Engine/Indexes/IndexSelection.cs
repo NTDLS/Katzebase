@@ -3,11 +3,14 @@
     public class IndexSelection
     {
         public PersistIndex Index;
-        public List<string> HandledKeyNames { get; set; }
+        /// <summary>
+        /// The names of the document fileds that are covered by the index.
+        /// </summary>
+        public List<string> CoveredFields { get; set; }
 
-        public IndexSelection(PersistIndex index, List<string> handledKeyNames)
+        public IndexSelection(PersistIndex index, List<string> coveredFields)
         {
-            this.HandledKeyNames = handledKeyNames;
+            this.CoveredFields = coveredFields;
             this.Index = index;
         }
     }
