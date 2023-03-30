@@ -62,12 +62,11 @@ namespace Katzebase.UI
         {
             try
             {
-                AssemblyName componentAssembly = AssemblyName.GetAssemblyName(appPath);
+                var componentAssembly = AssemblyName.GetAssemblyName(appPath);
                 var versionInfo = FileVersionInfo.GetVersionInfo(appPath);
-
                 var companyName = versionInfo.CompanyName;
 
-                if (componentAssembly.Version != null && companyName?.ToLower()?.Contains("katzebase") == true)
+                if (componentAssembly.Version != null && companyName?.ToLower()?.Contains("networkdls") == true)
                 {
                     listViewVersions.Items.Add(new ListViewItem(new string[] { componentAssembly.Name ?? "", componentAssembly.Version.ToString() }));
                 }
@@ -79,7 +78,7 @@ namespace Katzebase.UI
 
         private void linkWebsite_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            System.Diagnostics.Process.Start("http://www.NetworkDLS.com");
+            Process.Start("http://www.NetworkDLS.com");
         }
     }
 }

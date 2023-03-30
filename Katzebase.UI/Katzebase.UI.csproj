@@ -8,11 +8,10 @@
     <Nullable>enable</Nullable>
     <ApplicationIcon>Katzebase.UI.ico</ApplicationIcon>
     <UseWindowsForms>true</UseWindowsForms>
-    <Company>Vroom Performance Technologies</Company>
-    <Product>Vroom SQL Workload Generator</Product>
-    <Description>Generates dynamic workloads for relational database simulations.</Description>
-    <Copyright>Copyright © 2023 VPT</Copyright>
-    <Version>1.0.1.0</Version>
+    <Company>NetworkDLS</Company>
+    <Copyright>Copyright © 2023 NetworkDLS</Copyright>
+    <Version>1.0.0.0</Version>
+    <Authors>NetworkDLS</Authors>
   </PropertyGroup>
 
   <ItemGroup>
