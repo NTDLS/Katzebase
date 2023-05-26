@@ -40,33 +40,41 @@ namespace Katzebase.Engine.Query
             return false;
         }
 
-        static public ConditionQualifier ParseConditionQualifier(string text)
+        static public LogicalQualifier ParseLogicalQualifier(string text)
         {
             switch (text)
             {
                 case "=":
-                    return ConditionQualifier.Equals;
+                    return LogicalQualifier.Equals;
                 case "!=":
-                    return ConditionQualifier.NotEquals;
+                    return LogicalQualifier.NotEquals;
                 case ">":
-                    return ConditionQualifier.GreaterThan;
+                    return LogicalQualifier.GreaterThan;
                 case "<":
-                    return ConditionQualifier.LessThan;
+                    return LogicalQualifier.LessThan;
                 case ">=":
-                    return ConditionQualifier.GreaterThanOrEqual;
+                    return LogicalQualifier.GreaterThanOrEqual;
                 case "<=":
-                    return ConditionQualifier.LessThanOrEqual;
+                    return LogicalQualifier.LessThanOrEqual;
                 case "~":
-                    return ConditionQualifier.Like;
+                    return LogicalQualifier.Like;
                 case "!~":
-                    return ConditionQualifier.NotLike;
+                    return LogicalQualifier.NotLike;
             }
-            return ConditionQualifier.None;
+            return LogicalQualifier.None;
         }
 
         public static void SkipDelimiters(string query, ref int position)
         {
             SkipDelimiters(query, DefaultTokenDelimiters, ref position);
+        }
+
+        public static void SkipWhiteSpace(string query, ref int position)
+        {
+            while (position < query.Length && char.IsWhiteSpace(query[position]))
+            {
+                position++;
+            }
         }
 
         public static void SkipDelimiters(string query, char[] delimiters, ref int position)
@@ -85,8 +93,12 @@ namespace Katzebase.Engine.Query
 
         public static string GetNextToken(string query, char[] delimiters, ref int position)
         {
-
             string token = string.Empty;
+
+            if (position == query.Length)
+            {
+                return string.Empty;
+            }
 
             for (; position < query.Length; position++)
             {
@@ -103,6 +115,45 @@ namespace Katzebase.Engine.Query
             return token.Trim();
         }
 
+        /// <summary>
+        /// Used for parsing WHERE clauses.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="position"></param>
+        /// <returns></returns>
+        public static string GetNextClauseToken(string query, ref int position)
+        {
+            string token = string.Empty;
+
+            if (position == query.Length)
+            {
+                return string.Empty;
+            }
+
+            if (new char[] { '(', ')' }.Contains(query[position]))
+            {
+                token += query[position];
+                position++;
+                SkipWhiteSpace(query, ref position);
+                return token;
+            }
+
+            for (; position < query.Length; position++)
+            {
+                if (char.IsWhiteSpace(query[position]) || new char[] { '(', ')' }.Contains(query[position]))
+                {
+                    break;
+                }
+
+                token += query[position];
+            }
+
+            SkipWhiteSpace(query, ref position);
+            SkipDelimiters(query, ref position);
+
+            return token.Trim();
+        }
+
         public static void CleanQueryText(ref string query)
         {
             Dictionary<string, string> literalStrings = Utilities.SwapOutLiteralStrings(ref query);
@@ -111,6 +162,8 @@ namespace Katzebase.Engine.Query
             Utilities.TrimAllLines(ref query);
             Utilities.RemoveEmptyLines(ref query);
             Utilities.RemoveNewlines(ref query);
+            Utilities.RemoveDoubleWhitespace(ref query);
+            query = query.Trim();
         }
 
         public static Dictionary<string, string> SwapOutLiteralStrings(ref string query)
@@ -132,6 +185,10 @@ namespace Katzebase.Engine.Query
             }
 
             return mappings;
+        }
+        public static void RemoveDoubleWhitespace(ref string query)
+        {
+            query = Regex.Replace(query, @"\s+", " ");
         }
 
         public static void RemoveNewlines(ref string query)

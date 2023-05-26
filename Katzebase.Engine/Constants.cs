@@ -60,14 +60,14 @@
             Delete
         }
 
-        public enum ConditionType
+        public enum LogicalConnector
         {
             None,
             And,
             Or
         }
 
-        public enum ConditionQualifier
+        public enum LogicalQualifier
         {
             None,
             Equals,

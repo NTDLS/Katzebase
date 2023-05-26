@@ -78,7 +78,7 @@ namespace Katzebase.Engine.Documents
             var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
-            query.Conditions.MakeLowerCase();
+            //query.Conditions.MakeLowerCase();
 
             foreach (var field in query.SelectFields)
             {
@@ -104,6 +104,7 @@ namespace Katzebase.Engine.Documents
 
                     var jContent = JObject.Parse(persistDocument.Content);
 
+                    /*
                     if (query.Conditions.IsMatch(jContent))
                     {
                         var rowValues = new List<string>();
@@ -129,6 +130,7 @@ namespace Katzebase.Engine.Documents
 
                         result.Rows.Add(new KbQueryRow(rowValues));
                     }
+                    */
                 }
             }
             else //Indexed search!

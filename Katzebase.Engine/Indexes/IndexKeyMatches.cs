@@ -6,12 +6,14 @@ namespace Katzebase.Engine.Indexes
     {
         public IndexKeyMatches(Conditions conditions)
         {
+            /*
             conditions.MakeLowerCase();
 
             foreach (Condition condition in conditions.Collection)
             {
                 this.Add(new IndexKeyMatch(condition));
             }
+            */
         }
 
         public IndexKeyMatches()

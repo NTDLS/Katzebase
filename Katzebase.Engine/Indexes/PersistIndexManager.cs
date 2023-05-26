@@ -57,6 +57,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="foundDocumentIds"></param>
         private void MatchDocuments(int nestedLevel, PersistIndexLeaves PersistIndexLeaves, IndexSelection indexSelection, PreparedQuery query, HashSet<Guid> foundDocumentIds)
         {
+            /*
             List<PersistIndexLeaf> indexEntires = PersistIndexLeaves.Entries; //Start at the top of the index tree.
 
             bool fullMatch = true;
@@ -116,6 +117,7 @@ namespace Katzebase.Engine.Indexes
                 //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
                 foundDocumentIds.UnionWith(allDocumentIds);
             }
+            */
             return;
 
 

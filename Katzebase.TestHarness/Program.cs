@@ -1,4 +1,5 @@
-﻿using Katzebase.Library.Client;
+﻿using Katzebase.Engine.Query;
+using Katzebase.Library.Client;
 using Katzebase.Library.Payloads;
 using System;
 using System.Diagnostics;
@@ -10,6 +11,12 @@ namespace Katzebase.TestHarness
     {
         static void Main(string[] args)
         {
+            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'A' AND Quantity = 299) OR (LocationId = 6 AND Shelf != 'A' AND Quantity = 587) AND BIN = 8";
+            string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)";
+            var preparedQuery = ParserEngine.ParseQuery(stmt);
+
+            return;
+
             Assembly assembly = Assembly.GetExecutingAssembly();
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
             Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
@@ -22,7 +29,8 @@ namespace Katzebase.TestHarness
             //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6");
             //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf = 'A'");
             //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'A'");
-            var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'A' AND Quantity = 299");
+            //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'A' AND Quantity = 299");
+            //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'A' AND Quantity = 299) OR(LocationId = 6 AND Shelf != 'A' AND Quantity = 587) AND BIN = 8");
 
             //KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
             //string query = "SELECT TOP 100 ProductID, Name, ModifiedDate FROM :AdventureWorks2012:Production:Product WHERE SafetyStockLevel = 1000 Color = 'Silver'";

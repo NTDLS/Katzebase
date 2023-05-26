@@ -2,40 +2,46 @@
 
 namespace Katzebase.Engine.Query
 {
-    public class Condition
+    public class Condition : ConditionBase
     {
-        public string Field { get; set; }
+        public string Field { get; set; } = string.Empty;
         public bool IsKeyConstant { get; set; } = false;
         public string Value { get; set; } = string.Empty;
         public bool IsValueConstant { get; set; } = false;
-        public ConditionQualifier ConditionQualifier { get; set; } = ConditionQualifier.None;
-        public ConditionType ConditionType { get; set; } = ConditionType.None;
+        public LogicalQualifier LogicalQualifier { get; set; } = LogicalQualifier.None;
+        public LogicalConnector LogicalConnector { get; set; } = LogicalConnector.None;
+        public Conditions Children { get; set; } = new();
 
-        public Condition(ConditionType conditionType, string key)
+        public Condition(LogicalConnector logicalConnector, string key)
         {
-            ConditionType = conditionType;
+            LogicalConnector = logicalConnector;
             Field = key;
         }
 
-        public Condition(ConditionType conditionType, string key, ConditionQualifier conditionQualifier, string value)
+        public Condition(LogicalConnector logicalConnector)
+        {
+            LogicalConnector = logicalConnector;
+        }
+
+        public Condition(LogicalConnector logicalConnector, string key, LogicalQualifier logicalQualifier, string value)
         {
             this.Field = key;
             this.Value = value;
-            this.ConditionQualifier = conditionQualifier;
-            this.ConditionType = conditionType;
+            this.LogicalQualifier = logicalQualifier;
+            this.LogicalConnector = logicalConnector;
         }
 
         public bool IsMatch(string passedValue)
         {
-            if (this.ConditionQualifier == ConditionQualifier.Equals)
+            if (this.LogicalQualifier == LogicalQualifier.Equals)
             {
                 return (passedValue == (string)this.Value);
             }
-            else if (this.ConditionQualifier == ConditionQualifier.NotEquals)
+            else if (this.LogicalQualifier == LogicalQualifier.NotEquals)
             {
                 return (passedValue != (string)this.Value);
             }
-            else if (this.ConditionQualifier == ConditionQualifier.GreaterThan)
+            else if (this.LogicalQualifier == LogicalQualifier.GreaterThan)
             {
                 decimal left;
                 decimal right;
@@ -44,7 +50,7 @@ namespace Katzebase.Engine.Query
                     return (left > right);
                 }
             }
-            else if (this.ConditionQualifier == ConditionQualifier.LessThan)
+            else if (this.LogicalQualifier == LogicalQualifier.LessThan)
             {
                 decimal left;
                 decimal right;
@@ -53,7 +59,7 @@ namespace Katzebase.Engine.Query
                     return (left < right);
                 }
             }
-            else if (this.ConditionQualifier == ConditionQualifier.GreaterThanOrEqual)
+            else if (this.LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
             {
                 decimal left;
                 decimal right;
@@ -62,7 +68,7 @@ namespace Katzebase.Engine.Query
                     return (left >= right);
                 }
             }
-            else if (this.ConditionQualifier == ConditionQualifier.LessThanOrEqual)
+            else if (this.LogicalQualifier == LogicalQualifier.LessThanOrEqual)
             {
                 decimal left;
                 decimal right;
@@ -71,7 +77,7 @@ namespace Katzebase.Engine.Query
                     return (left <= right);
                 }
             }
-            else if (this.ConditionQualifier == ConditionQualifier.Like)
+            else if (this.LogicalQualifier == LogicalQualifier.Like)
             {
                 string right = (string)this.Value;
 
@@ -97,7 +103,7 @@ namespace Katzebase.Engine.Query
                     return (passedValue == (string)this.Value);
                 }
             }
-            else if (this.ConditionQualifier == ConditionQualifier.NotLike)
+            else if (this.LogicalQualifier == LogicalQualifier.NotLike)
             {
                 string right = (string)this.Value;
 

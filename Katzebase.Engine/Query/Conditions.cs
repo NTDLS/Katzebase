@@ -8,28 +8,27 @@ namespace Katzebase.Engine.Query
 {
     public class Conditions
     {
-        public List<Condition> Collection = new List<Condition>();
+        private List<ConditionGroup> _groups = new List<ConditionGroup>();
 
-        private List<Conditions> _children = new List<Conditions>();
-
-        public List<Conditions> Children
+        public List<ConditionGroup> Groups
         {
             get
             {
-                if (_children == null)
+                if (_groups == null)
                 {
-                    _children = new List<Conditions>();
+                    _groups = new List<ConditionGroup>();
                 }
-                return _children;
+                return _groups;
             }
             set
             {
-                _children = value;
+                _groups = value;
             }
         }
 
-        public ConditionType ConditionType { get; set; }
+        public LogicalConnector LogicalConnector { get; set; }
 
+        /*
         public bool LowerCased { get; private set; } = false;
 
         public void MakeLowerCase(bool force = false)
@@ -43,37 +42,37 @@ namespace Katzebase.Engine.Query
                     condition.Value = condition.Value.ToLower();
                 }
 
-                if (_children != null)
+                if (_groups != null)
                 {
-                    foreach (Conditions nestedCOnditions in _children)
+                    foreach (Conditions nestedConditions in _groups)
                     {
-                        nestedCOnditions.MakeLowerCase();
+                        nestedConditions.MakeLowerCase();
                     }
                 }
             }
         }
+        */
 
         public Conditions()
         {
         }
 
-        public void Add(Conditions conditions)
+        /*
+        public void AddRange(Conditions conditions)
         {
-            this.Children = conditions.Children;
+            Groups = conditions.Groups;
             foreach (Condition condition in conditions.Collection)
             {
-                this.Add(condition);
+                Add(condition);
             }
         }
 
-        public void Add(ConditionType conditionType, string key, ConditionQualifier conditionQualifier, string value)
+        public Condition Add(Condition condition)
         {
-            this.Collection.Add(new Condition(conditionType, key.ToLower(), conditionQualifier, value.ToLower()));
-        }
-
-        public void Add(Condition condition)
-        {
-            this.Add(condition.ConditionType, condition.Field, condition.ConditionQualifier, condition.Value);
+            var result = new Condition(condition.LogicalConnector, condition.Field, condition.ConditionQualifier, condition.Value);
+            result.Children.AddRange(condition.Children);
+            Collection.Add(result);
+            return result;
         }
 
         public bool IsMatch(PersistDocument persistDocument)
@@ -108,5 +107,6 @@ namespace Katzebase.Engine.Query
 
             return fullAttributeMatch;
         }
+        */
     }
 }
