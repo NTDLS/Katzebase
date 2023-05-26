@@ -204,6 +204,8 @@ namespace Katzebase.Engine.Indexes
 
         public IndexSelections SelectIndexes(Transaction transaction, PersistSchema schemaMeta, Conditions conditions)
         {
+            return null;
+            /*
             try
             {
 
@@ -276,6 +278,7 @@ namespace Katzebase.Engine.Indexes
             indexSelections.UnhandledKeys.AddRange((from o in indexKeyMatches where o.Handled == false select o.Field).ToList());
 
             return indexSelections;
+            */
         }
 
 

@@ -448,15 +448,14 @@ namespace Katzebase.Engine.Query
 
                         Utilities.SkipWhiteSpace(section, ref position);
 
-                        var condition = new Condition(logicalConnector, string.Empty);
-                        condition.Children = ParseConditionGroups(subSection);
-
-                        conditionGroup.Conditions.Add(condition);
-
+                        var conditionSubset = new ConditionSubset(logicalConnector);
+                        var parsedSubsetConditions = ParseConditionGroups(subSection);
+                        conditionSubset.Groups.AddRange(parsedSubsetConditions.Groups);
+                        conditionGroup.Conditions.Add(conditionSubset);
                     }
                     else
                     {
-                        var condition = new Condition(logicalConnector, token);
+                        var condition = new ConditionSingle(logicalConnector, token);
 
                         if ((token = Utilities.GetNextClauseToken(section, ref position)) == string.Empty)
                         {

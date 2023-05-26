@@ -5,5 +5,4 @@ namespace Katzebase.Engine.Query
     public class ConditionBase
     {
     }
-
 }

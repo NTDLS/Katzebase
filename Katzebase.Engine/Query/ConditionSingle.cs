@@ -2,7 +2,7 @@
 
 namespace Katzebase.Engine.Query
 {
-    public class Condition : ConditionBase
+    public class ConditionSingle : ConditionBase
     {
         public string Field { get; set; } = string.Empty;
         public bool IsKeyConstant { get; set; } = false;
@@ -10,20 +10,19 @@ namespace Katzebase.Engine.Query
         public bool IsValueConstant { get; set; } = false;
         public LogicalQualifier LogicalQualifier { get; set; } = LogicalQualifier.None;
         public LogicalConnector LogicalConnector { get; set; } = LogicalConnector.None;
-        public Conditions Children { get; set; } = new();
 
-        public Condition(LogicalConnector logicalConnector, string key)
+        public ConditionSingle(LogicalConnector logicalConnector, string key)
         {
             LogicalConnector = logicalConnector;
             Field = key;
         }
 
-        public Condition(LogicalConnector logicalConnector)
+        public ConditionSingle(LogicalConnector logicalConnector)
         {
             LogicalConnector = logicalConnector;
         }
 
-        public Condition(LogicalConnector logicalConnector, string key, LogicalQualifier logicalQualifier, string value)
+        public ConditionSingle(LogicalConnector logicalConnector, string key, LogicalQualifier logicalQualifier, string value)
         {
             this.Field = key;
             this.Value = value;

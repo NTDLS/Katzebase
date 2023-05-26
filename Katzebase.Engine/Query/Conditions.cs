@@ -8,24 +8,7 @@ namespace Katzebase.Engine.Query
 {
     public class Conditions
     {
-        private List<ConditionGroup> _groups = new List<ConditionGroup>();
-
-        public List<ConditionGroup> Groups
-        {
-            get
-            {
-                if (_groups == null)
-                {
-                    _groups = new List<ConditionGroup>();
-                }
-                return _groups;
-            }
-            set
-            {
-                _groups = value;
-            }
-        }
-
+        public List<ConditionGroup> Groups { get; set; } = new();
         public LogicalConnector LogicalConnector { get; set; }
 
         /*

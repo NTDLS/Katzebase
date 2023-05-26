@@ -3,7 +3,8 @@ using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Indexes
 {
-    public class IndexKeyMatch : Condition
+    /*
+    public class IndexKeyMatch
     {
         public bool Handled { get; set; }
 
@@ -24,4 +25,5 @@ namespace Katzebase.Engine.Indexes
             this.LogicalQualifier = condition.LogicalQualifier;
         }
     }
+    */
 }
