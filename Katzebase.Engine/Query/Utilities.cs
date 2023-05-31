@@ -115,6 +115,45 @@ namespace Katzebase.Engine.Query
             return token.Trim();
         }
 
+        public static string GetFirstClauseToken(string query, out int outPosition)
+        {
+            int position = 0;
+            var result = GetNextClauseToken(query, ref position);
+            outPosition = position;
+            return result;
+        }
+
+        public static void RewindTo(string str, char c, ref int position)
+        {
+            while (position > 0 && str[position] != c)
+            {
+                position--;
+            }
+        }
+
+        public static void RewindBefore(string str, char c, ref int position)
+        {
+            while (position > 0 && str[position] != c)
+            {
+                position--;
+            }
+
+            if (position == 0)
+            {
+                throw new Exception("Cannot rewind before position zero.");
+            }
+
+            position--;
+        }
+
+        public static void ForwardTo(string str, char c, ref int position)
+        {
+            while (position < str.Length && str[position] != c)
+            {
+                position++;
+            }
+        }
+
         /// <summary>
         /// Used for parsing WHERE clauses.
         /// </summary>

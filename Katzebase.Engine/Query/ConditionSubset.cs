@@ -7,10 +7,12 @@ namespace Katzebase.Engine.Query
         public LogicalConnector LogicalConnector { get; set; } = LogicalConnector.None;
         public List<ConditionGroup> Groups { get; set; } = new();
 
+        public ConditionSubset()
+        {
+        }
         public ConditionSubset(LogicalConnector logicalConnector)
         {
             LogicalConnector = logicalConnector;
         }
-
     }
 }

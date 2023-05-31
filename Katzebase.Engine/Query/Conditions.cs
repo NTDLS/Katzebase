@@ -9,7 +9,7 @@ namespace Katzebase.Engine.Query
     public class Conditions
     {
         public List<ConditionGroup> Groups { get; set; } = new();
-        public LogicalConnector LogicalConnector { get; set; }
+        //public LogicalConnector LogicalConnector { get; set; }
 
         /*
         public bool LowerCased { get; private set; } = false;

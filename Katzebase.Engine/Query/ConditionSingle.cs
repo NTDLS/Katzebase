@@ -22,6 +22,10 @@ namespace Katzebase.Engine.Query
             LogicalConnector = logicalConnector;
         }
 
+        public ConditionSingle()
+        {
+        }
+
         public ConditionSingle(LogicalConnector logicalConnector, string key, LogicalQualifier logicalQualifier, string value)
         {
             this.Field = key;
