@@ -9,36 +9,7 @@ namespace Katzebase.Engine.Query
     public class Conditions
     {
         public List<ConditionGroup> Groups { get; set; } = new();
-        //public LogicalConnector LogicalConnector { get; set; }
 
-        /*
-        public bool LowerCased { get; private set; } = false;
-
-        public void MakeLowerCase(bool force = false)
-        {
-            if (LowerCased == false || force)
-            {
-                LowerCased = true;
-                foreach (Condition condition in Collection)
-                {
-                    condition.Field = condition.Field.ToLower();
-                    condition.Value = condition.Value.ToLower();
-                }
-
-                if (_groups != null)
-                {
-                    foreach (Conditions nestedConditions in _groups)
-                    {
-                        nestedConditions.MakeLowerCase();
-                    }
-                }
-            }
-        }
-        */
-
-        public Conditions()
-        {
-        }
 
         /*
         public void AddRange(Conditions conditions)

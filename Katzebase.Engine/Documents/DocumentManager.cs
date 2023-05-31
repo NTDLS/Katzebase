@@ -78,8 +78,6 @@ namespace Katzebase.Engine.Documents
             var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
-            //query.Conditions.MakeLowerCase();
-
             foreach (var field in query.SelectFields)
             {
                 result.Fields.Add(new KbQueryField(field));

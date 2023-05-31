@@ -2,9 +2,8 @@
 {
     public class UpsertKeyValue
     {
-        public string? Key { get; set; }
-        public bool IsKeyConstant { get; set; }
-        public string? Value { get; set; }
-        public bool IsValueConstant { get; set; }
+        private string _key = string.Empty;
+        public string Key { get { return _key; } set { _key = value.ToLowerInvariant(); } }
+        public ConditionValue Value { get; set; } = new ConditionValue();
     }
 }

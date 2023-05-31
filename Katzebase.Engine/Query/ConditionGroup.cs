@@ -8,14 +8,9 @@ namespace Katzebase.Engine.Query
 
         public LogicalConnector LogicalConnector { get; set; }
 
-        public ConditionGroup()
-        {
-        }
-
         public ConditionGroup(LogicalConnector logicalConnector)
         {
             LogicalConnector = logicalConnector;
         }
-
     }
 }

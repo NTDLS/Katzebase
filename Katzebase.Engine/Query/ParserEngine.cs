@@ -17,16 +17,16 @@ namespace Katzebase.Engine.Query
         {
             PreparedQuery result = new PreparedQuery();
 
-            Utilities.CleanQueryText(ref query);
+            var literalStrings = Utilities.CleanQueryText(ref query);
 
-            var literalStrings = Utilities.SwapOutLiteralStrings(ref query);
+            //var literalStrings = Utilities.SwapOutLiteralStrings(ref query);
 
             int position = 0;
             string token = string.Empty;
 
-            token = Utilities.GetNextToken(query, ref position);
+            token = Utilities.GetNextToken(query, ref position).ToLower();
 
-            QueryType queryType = QueryType.Select;
+            var queryType = QueryType.Select;
 
             if (Enum.TryParse<QueryType>(token, true, out queryType) == false)
             {
@@ -37,6 +37,7 @@ namespace Katzebase.Engine.Query
             //--------------------------------------------------------------------------------------------------------------------------------------------
             if (queryType == QueryType.Delete)
             {
+                /*
                 token = Utilities.GetNextToken(query, ref position);
                 if (token.ToLower() == "top")
                 {
@@ -75,10 +76,12 @@ namespace Katzebase.Engine.Query
                 {
                     throw new Exception("Invalid query. Found [" + token + "], expected end of statement.");
                 }
+                */
             }
             //--------------------------------------------------------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Update)
             {
+                /*
                 token = Utilities.GetNextToken(query, ref position);
                 if (token.ToLower() == "top")
                 {
@@ -130,6 +133,7 @@ namespace Katzebase.Engine.Query
                 {
                     throw new Exception("Invalid query. Found [" + token + "], expected end of statement.");
                 }
+                */
             }
             //--------------------------------------------------------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Select)
@@ -203,98 +207,20 @@ namespace Katzebase.Engine.Query
             }
             //--------------------------------------------------------------------------------------------------------------------------------------------
 
-            /*
-            foreach (var literalString in literalStrings)
-            {
-                if (result.Conditions != null)
-                {
-                    foreach (var kvp in result.Conditions.Collection)
-                    {
-                        kvp.Field = kvp.Field.Replace(literalString.Key, literalString.Value);
-                        kvp.Value = kvp.Value.Replace(literalString.Key, literalString.Value);
-                    }
-                }
-
-                if (result.UpsertKeyValuePairs != null)
-                {
-                    foreach (var kvp in result.UpsertKeyValuePairs.Collection)
-                    {
-                        Utility.EnsureNotNull(kvp.Key);
-                        Utility.EnsureNotNull(kvp.Value);
-
-                        kvp.Key = kvp.Key.Replace(literalString.Key, literalString.Value);
-                        kvp.Value = kvp.Value.Replace(literalString.Key, literalString.Value);
-                    }
-                }
-            }
-
-            if (result.Conditions != null)
-            {
-                foreach (var kvp in result.Conditions.Collection)
-                {
-                    if (kvp.Field.StartsWith("\'") && kvp.Field.EndsWith("\'"))
-                    {
-                        kvp.Field = kvp.Field.Substring(1, kvp.Field.Length - 2);
-                        kvp.IsKeyConstant = true;
-                    }
-
-                    if (kvp.Value.StartsWith("\'") && kvp.Value.EndsWith("\'"))
-                    {
-                        kvp.Value = kvp.Value.Substring(1, kvp.Value.Length - 2);
-                        kvp.IsValueConstant = true;
-                    }
-
-                    //Process escape sequences:
-                    kvp.Field = kvp.Field.Replace("\\'", "\'");
-                    kvp.Value = kvp.Value.Replace("\\'", "\'");
-
-                    if (kvp.Field.All(Char.IsDigit))
-                    {
-                        kvp.IsKeyConstant = true;
-                    }
-                    if (kvp.Value.All(Char.IsDigit))
-                    {
-                        kvp.IsValueConstant = true;
-                    }
-                }
-            }
-            */
             if (result.UpsertKeyValuePairs != null)
             {
                 foreach (var kvp in result.UpsertKeyValuePairs.Collection)
                 {
                     Utility.EnsureNotNull(kvp.Key);
-                    Utility.EnsureNotNull(kvp.Value);
+                    Utility.EnsureNotNull(kvp.Value?.ToString());
 
-                    if (kvp.Key.StartsWith("\'") && kvp.Key.EndsWith("\'"))
+                    if (literalStrings.ContainsKey(kvp.Value.ToString()))
                     {
-                        kvp.Key = kvp.Key.Substring(1, kvp.Key.Length - 2);
-                        kvp.IsKeyConstant = true;
-                    }
-
-                    if (kvp.Value.StartsWith("\'") && kvp.Value.EndsWith("\'"))
-                    {
-                        kvp.Value = kvp.Value.Substring(1, kvp.Value.Length - 2);
-                        kvp.IsValueConstant = true;
-                    }
-
-                    //Process escape sequences:
-                    kvp.Key = kvp.Key.Replace("\\'", "\'");
-                    kvp.Value = kvp.Value.Replace("\\'", "\'");
-
-                    if (kvp.Key.All(Char.IsDigit))
-                    {
-                        kvp.IsKeyConstant = true;
-                    }
-                    if (kvp.Value.All(Char.IsDigit))
-                    {
-                        kvp.IsValueConstant = true;
+                        kvp.Value.Value = literalStrings[kvp.Value.ToString()];
                     }
                 }
             }
-
-            //result.Conditions?.MakeLowerCase(true);
-
+           
             return result;
         }
 
@@ -322,7 +248,7 @@ namespace Katzebase.Engine.Query
                     break; //Completed successfully.
                 }
 
-                UpsertKeyValue keyValue = new UpsertKeyValue();
+                var keyValue = new UpsertKeyValue();
 
                 if (token == string.Empty || Utilities.IsValidIdentifier(token) == false)
                 {
@@ -340,7 +266,7 @@ namespace Katzebase.Engine.Query
                 {
                     throw new Exception("Invalid query. Found [" + token + "], expected condition value.");
                 }
-                keyValue.Value = token;
+                keyValue.Value.Value = token;
 
                 keyValuePairs.Collection.Add(keyValue);
             }
@@ -464,11 +390,11 @@ namespace Katzebase.Engine.Query
                     {
                         throw new Exception("Invalid query. Found [" + token + "], expected condition value.");
                     }
-                    condition.Value = token;
+                    condition.Right.Value = token;
 
                     if (literalStrings.ContainsKey(token))
                     {
-                        condition.Value = literalStrings[token];
+                        condition.Right.Value = literalStrings[token];
                     }
 
                     result.Conditions.Add(condition);
@@ -589,7 +515,7 @@ namespace Katzebase.Engine.Query
         {
             conditionsText = conditionsText.Replace("( ", "(").Replace(" (", "(").Replace(") ", ")").Replace(" )", ")").Trim();
             var conditions = ParseConditionGroups(conditionsText, literalStrings);
-            DebugPrintConditions(conditions);
+            //DebugPrintConditions(conditions);
             return conditions;
         }
 
@@ -637,7 +563,6 @@ namespace Katzebase.Engine.Query
             if (condition is ConditionSubset)
             {
                 Console.WriteLine("".PadLeft(depth, '\t') + "(");
-
                 var subset = (ConditionSubset)condition;
                 foreach (var subsetCondition in subset.Conditions)
                 {
@@ -650,7 +575,7 @@ namespace Katzebase.Engine.Query
             {
                 var single = (ConditionSingle)condition;
                 Console.Write("".PadLeft(depth, '\t') + DebugLogicalConnectorToString(single.LogicalConnector));
-                Console.WriteLine($"[{single.Field.ToUpper()}] {DebugLogicalQualifierToString(single.LogicalQualifier)} [{single.Value}]");
+                Console.WriteLine($"[{single.Left}] {DebugLogicalQualifierToString(single.LogicalQualifier)} [{single.Right}]");
             }
         }
     }

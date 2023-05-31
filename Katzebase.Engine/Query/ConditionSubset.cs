@@ -12,6 +12,5 @@ namespace Katzebase.Engine.Query
         {
             LogicalConnector = logicalConnector;                
         }
-
     }
 }

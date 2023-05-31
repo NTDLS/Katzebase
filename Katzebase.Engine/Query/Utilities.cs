@@ -9,9 +9,8 @@ namespace Katzebase.Engine.Query
 
         static public bool IsValidIdentifier(string text)
         {
-            Regex regex = new Regex("^[a-zA-Z_][a-zA-Z0-9_]*$");
-
-            MatchCollection matches = regex.Matches(text);
+            var regex = new Regex("^[a-zA-Z_][a-zA-Z0-9_]*$");
+            var matches = regex.Matches(text);
 
             if (matches.Count == 1)
             {
@@ -28,9 +27,8 @@ namespace Katzebase.Engine.Query
                 text = text.Replace(ignore.ToString(), "");
             }
 
-            Regex regex = new Regex("^[a-zA-Z_][a-zA-Z0-9_]*$");
-
-            MatchCollection matches = regex.Matches(text);
+            var regex = new Regex("^[a-zA-Z_][a-zA-Z0-9_]*$");
+            var matches = regex.Matches(text);
 
             if (matches.Count == 1)
             {
@@ -93,7 +91,7 @@ namespace Katzebase.Engine.Query
 
         public static string GetNextToken(string query, char[] delimiters, ref int position)
         {
-            string token = string.Empty;
+            var token = string.Empty;
 
             if (position == query.Length)
             {
@@ -112,7 +110,7 @@ namespace Katzebase.Engine.Query
 
             SkipDelimiters(query, ref position);
 
-            return token.Trim();
+            return token.Trim().ToLowerInvariant();
         }
 
         public static string GetFirstClauseToken(string query, out int outPosition)
@@ -120,7 +118,7 @@ namespace Katzebase.Engine.Query
             int position = 0;
             var result = GetNextClauseToken(query, ref position);
             outPosition = position;
-            return result;
+            return result.ToLowerInvariant();
         }
 
         public static void RewindTo(string str, char c, ref int position)
@@ -162,7 +160,7 @@ namespace Katzebase.Engine.Query
         /// <returns></returns>
         public static string GetNextClauseToken(string query, ref int position)
         {
-            string token = string.Empty;
+            var token = string.Empty;
 
             if (position == query.Length)
             {
@@ -190,33 +188,47 @@ namespace Katzebase.Engine.Query
             SkipWhiteSpace(query, ref position);
             SkipDelimiters(query, ref position);
 
-            return token.Trim();
+            return token.Trim().ToLowerInvariant();
         }
 
-        public static void CleanQueryText(ref string query)
+        /// <summary>
+        /// Removes all unnecessary whitespace, newlines, comments and replaces literals with tokens to prepare query for parsing.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <param name="swapLiteralsBackIn"></param>
+        /// <returns></returns>
+        public static Dictionary<string, string> CleanQueryText(ref string query, bool swapLiteralsBackIn = false)
         {
-            Dictionary<string, string> literalStrings = Utilities.SwapOutLiteralStrings(ref query);
+            var literalStrings = Utilities.SwapOutLiteralStrings(ref query);
+            query = query.Trim().ToLowerInvariant();
             Utilities.RemoveComments(ref query);
-            Utilities.SwapInLiteralStrings(ref query, literalStrings);
+            if (swapLiteralsBackIn)
+            {
+                Utilities.SwapInLiteralStrings(ref query, literalStrings);
+            }
             Utilities.TrimAllLines(ref query);
             Utilities.RemoveEmptyLines(ref query);
             Utilities.RemoveNewlines(ref query);
             Utilities.RemoveDoubleWhitespace(ref query);
             query = query.Trim();
+            return literalStrings;
         }
 
+        /// <summary>
+        /// Replaces literals with tokens to prepare query for parsing.
+        /// </summary>
+        /// <param name="query"></param>
+        /// <returns></returns>
         public static Dictionary<string, string> SwapOutLiteralStrings(ref string query)
         {
-            Dictionary<string, string> mappings = new Dictionary<string, string>();
+            var mappings = new Dictionary<string, string>();
 
-            Regex regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
-            //Regex regex = new Regex("\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
-
+            var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
             var results = regex.Matches(query);
 
             foreach (Match match in results)
             {
-                string uuid = "$" + Guid.NewGuid().ToString() + "$";
+                string uuid = $"${Guid.NewGuid()}$";
 
                 mappings.Add(uuid, match.ToString());
 
@@ -225,6 +237,7 @@ namespace Katzebase.Engine.Query
 
             return mappings;
         }
+
         public static void RemoveDoubleWhitespace(ref string query)
         {
             query = Regex.Replace(query, @"\s+", " ");
