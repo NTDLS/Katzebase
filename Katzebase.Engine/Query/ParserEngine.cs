@@ -69,7 +69,7 @@ namespace Katzebase.Engine.Query
                         throw new Exception("Invalid query. Found [" + token + "], expected list of conditions.");
                     }
 
-                    result.Conditions = ParseConditions(conditionText);
+                    result.Conditions = ParseConditions(conditionText, literalStrings);
                 }
                 else if (token != string.Empty)
                 {
@@ -124,7 +124,7 @@ namespace Katzebase.Engine.Query
                         throw new Exception("Invalid query. Found [" + token + "], expected list of conditions.");
                     }
 
-                    result.Conditions = ParseConditions(conditionText);
+                    result.Conditions = ParseConditions(conditionText, literalStrings);
                 }
                 else if (token != string.Empty)
                 {
@@ -194,7 +194,7 @@ namespace Katzebase.Engine.Query
                         throw new Exception("Invalid query. Found [" + token + "], expected list of conditions.");
                     }
 
-                    result.Conditions = ParseConditions(conditionText);
+                    result.Conditions = ParseConditions(conditionText, literalStrings);
                 }
                 else if (token != string.Empty)
                 {
@@ -348,23 +348,15 @@ namespace Katzebase.Engine.Query
             return keyValuePairs;
         }
 
+        /// <summary>
+        /// Extraxts the condition text between parentheses.
+        /// </summary>
+        /// <param name="conditionsText"></param>
+        /// <param name="endPosition"></param>
+        /// <returns></returns>
         private static string GetConditionGroupExpression(string conditionsText, out int endPosition)
         {
             string resultingExpression = string.Empty;
-            /*
-            if (conditionsText.StartsWith("(") == false)
-            {
-                throw new Exception("Invalid query. Subexpression must start with an open parentheses.");
-            }
-            else if (conditionsText.EndsWith(")") == false)
-            {
-                throw new Exception("Invalid query. Subexpression must end with an open parentheses.");
-            }
-
-            //Trim the beinging and ending parentheses.
-            conditionsText = conditionsText.Substring(1, conditionsText.Length - 1);
-            */
-
             int position = 0;
             int nestLevel = 0;
             string token;
@@ -402,15 +394,17 @@ namespace Katzebase.Engine.Query
 
         }
 
-        private static ConditionGroup ParseConditionGroup(string conditionsText, LogicalConnector groupLogicalConnector)
+        /// <summary>
+        /// Parses the individual conditions in a group. 
+        /// </summary>
+        /// <param name="conditionsText"></param>
+        /// <param name="groupLogicalConnector"></param>
+        /// <param name="literalStrings"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        private static ConditionGroup ParseConditionGroup(string conditionsText, LogicalConnector groupLogicalConnector, Dictionary<string, string> literalStrings)
         {
             var result = new ConditionGroup(groupLogicalConnector);
-
-            Console.WriteLine(conditionsText);
-
-            if (conditionsText.Contains("("))
-            {
-            }
 
             int tokenPosition = 0;
 
@@ -447,8 +441,9 @@ namespace Katzebase.Engine.Query
                         groupExpression = groupExpression.Substring(1, groupExpression.Length - 2);
                     }
 
-                    var conditionSubset = new ConditionSubset();
-                    conditionSubset.Group = ParseConditionGroup(groupExpression, logicalConnector);
+                    var conditionGroup = ParseConditionGroup(groupExpression, logicalConnector, literalStrings);
+                    var conditionSubset = new ConditionSubset(logicalConnector);
+                    conditionSubset.Conditions = conditionGroup.Conditions;
                     result.Conditions.Add(conditionSubset);
 
                     logicalConnector = LogicalConnector.None; //We just used this, so reset it.
@@ -471,14 +466,26 @@ namespace Katzebase.Engine.Query
                     }
                     condition.Value = token;
 
+                    if (literalStrings.ContainsKey(token))
+                    {
+                        condition.Value = literalStrings[token];
+                    }
+
                     result.Conditions.Add(condition);
-                 }
+
+                }
             }
 
             return result;
         }
 
-        private static Conditions ParseConditionGroups(string conditionsText)
+        /// <summary>
+        /// Parses the groups of conditions (each set nested in parenthisis). If there are no groups, then a single one is asssumed.
+        /// </summary>
+        /// <param name="conditionsText"></param>
+        /// <param name="literalStrings"></param>
+        /// <returns></returns>
+        private static Conditions ParseConditionGroups(string conditionsText, Dictionary<string, string> literalStrings)
         {
             var conditions = new Conditions();
 
@@ -528,7 +535,7 @@ namespace Katzebase.Engine.Query
                             //We didnt find any subexpressions:
 
                             string simpleGroupExpression = conditionsText.Substring(0, tokenPosition).Trim().ToLower();
-                            var simpleConditionGroup = ParseConditionGroup(simpleGroupExpression, logicalConnector);
+                            var simpleConditionGroup = ParseConditionGroup(simpleGroupExpression, logicalConnector, literalStrings);
                             conditions.Groups.Add(simpleConditionGroup);
 
                             conditionsText = conditionsText.Substring(tokenPosition).Trim(); //Trim-up the working expression (this tuncates the entire string).
@@ -543,7 +550,7 @@ namespace Katzebase.Engine.Query
                             }
 
                             string simpleGroupExpression = conditionsText.Substring(0, trimPosition).Trim().ToLower();
-                            var simpleConditionGroup = ParseConditionGroup(simpleGroupExpression, logicalConnector);
+                            var simpleConditionGroup = ParseConditionGroup(simpleGroupExpression, logicalConnector, literalStrings);
                             conditions.Groups.Add(simpleConditionGroup);
 
                             conditionsText = conditionsText.Substring(trimPosition).Trim(); //Trim-up the working expression.
@@ -564,7 +571,7 @@ namespace Katzebase.Engine.Query
                         groupExpression = groupExpression.Substring(1, groupExpression.Length - 2);
                     }
 
-                    var conditionGroup = ParseConditionGroup(groupExpression, logicalConnector);
+                    var conditionGroup = ParseConditionGroup(groupExpression, logicalConnector, literalStrings);
                     conditions.Groups.Add(conditionGroup);
                 }
             }
@@ -572,210 +579,79 @@ namespace Katzebase.Engine.Query
             return conditions;
         }
 
-        private static Conditions ParseConditions(string conditionsText)
+        /// <summary>
+        /// Parses a nested set of conditions (A = 10 AND (B = 11 OR (C = 12))...
+        /// </summary>
+        /// <param name="conditionsText"></param>
+        /// <param name="literalStrings"></param>
+        /// <returns></returns>
+        private static Conditions ParseConditions(string conditionsText, Dictionary<string, string> literalStrings)
         {
             conditionsText = conditionsText.Replace("( ", "(").Replace(" (", "(").Replace(") ", ")").Replace(" )", ")").Trim();
-            /*
-            if (conditionsText.StartsWith("(") == false)
-            {
-                conditionsText = $"({conditionsText})";
-            }
-            */
-
-            var dbgCondition = ParseConditionGroups(conditionsText);
-
-
-            return null;
-
-            /*
-
-            string output = string.Empty;
-
-            do
-            {
-                output = conditionsText.Split('(', ')')[1];
-                conditionsText = conditionsText.Replace($"({output})", "ABC");
-
-
-            } while (string.IsNullOrEmpty(output) == false);
-
-
-
-            //I think we need to split on the ORs 
-            var result = new Conditions();
-            var conditions = new Conditions();
-
-            string token = string.Empty;
-            LogicalConnector logicalConnector = LogicalConnector.None;
-
-            int position = 0;
-
-            while (true)
-            {
-                if ((token = Utilities.GetNextClauseToken(conditionsText, ref position)) == string.Empty)
-                {
-                    if (conditions.Collection.Count > 0)
-                    {
-                        break; //Completed successfully.
-                    }
-                    throw new Exception("Invalid query. Unexpected end of query found.");
-                }
-
-                if (token == "(")
-                {
-                    if (conditions.Collection.Count > 0)
-                    {
-                        result.Children.Add(conditions);
-                    }
-                    conditions = new Conditions();
-                    conditions.LogicalConnector = logicalConnector;
-                    logicalConnector = LogicalConnector.None;
-                    continue;
-                }
-                else if (token == ")")
-                {
-                    continue;
-                }
-                if (token.ToLower() == "and")
-                {
-                    logicalConnector = LogicalConnector.And;
-                    continue;
-                }
-                else if (token.ToLower() == "or")
-                {
-                    logicalConnector = LogicalConnector.Or;
-                    continue;
-                }
-                else
-                {
-                    var condition = new Condition(logicalConnector, token);
-
-                    if ((token = Utilities.GetNextClauseToken(conditionsText, ref position)) == string.Empty)
-                    {
-                        throw new Exception("Invalid query. Found [" + token + "], expected condition type (=, !=, etc.).");
-                    }
-
-                    condition.LogicalQualifier = Utilities.ParseLogicalQualifier(token);
-                    if (condition.LogicalQualifier == LogicalQualifier.None)
-                    {
-                        throw new Exception("Invalid query. Found [" + token + "], expected valid condition type (=, !=, etc.). Found [" + token + "]");
-                    }
-
-                    if ((token = Utilities.GetNextClauseToken(conditionsText, ref position)) == string.Empty)
-                    {
-                        throw new Exception("Invalid query. Found [" + token + "], expected condition value.");
-                    }
-                    condition.Value = token;
-
-                    conditions.Add(condition);
-                }
-            }
-
-            if (conditions.Collection.Count > 0)
-            {
-                result.Children.Add(conditions);
-            }
-
-            return result;
-            */
-        }
-
-        /*
-
-        private static Conditions ParseConditionsOld(string conditionsText)
-        {
-            int position = 0;
-            return ParseConditionsOld(conditionsText, ref position, 0);
-        }
-
-        private static Conditions ParseConditionsOld(string conditionsText, ref int position, int nestLevel)
-        {
-            Conditions conditions = new Conditions();
-
-            string token = string.Empty;
-            LogicalConnector logicalConnector = logicalConnector.None;
-            Condition? condition = null;
-
-            while (true)
-            {
-                if ((token = Utilities.GetNextToken(conditionsText, ref position)) == string.Empty)
-                {
-                    if (conditions.Collection.Count > 0)
-                    {
-                        break; //Completed successfully.
-                    }
-                    throw new Exception("Invalid query. Unexpexted end of query found.");
-                }
-
-                if (token.ToLower() == "and")
-                {
-                    logicalConnector = logicalConnector.And;
-                    continue;
-                }
-                else if (token.ToLower() == "or")
-                {
-                    logicalConnector = LogicalConnector.Or;
-                    continue;
-                }
-                else if (token.ToLower() == "(")
-                {
-                    Conditions nestedConditions = ParseConditionsOld(conditionsText, ref position, nestLevel + 1);
-
-                    //if (condition == null)
-                    //{
-                    //    conditions.Add(nestedConditions);
-                    //}
-                    //else
-                    //{
-                        nestedConditions.LogicalConnector = logicalConnector;
-                        conditions.Children.Add(nestedConditions);
-                    //}
-                    continue;
-                }
-                else if (token.ToLower() == ")")
-                {
-                    if (nestLevel == 0)
-                    {
-                        throw new Exception("Invalid query. Unexpected token [)].");
-                    }
-                    return conditions;
-                }
-                else
-                {
-                    if (token == string.Empty || Utilities.IsValidIdentifier(token) == false)
-                    {
-                        throw new Exception("Invalid query. Found [" + token + "], expected identifier name.");
-                    }
-
-                    condition = new Condition(logicalConnector, token);
-
-
-                    if ((token = Utilities.GetNextToken(conditionsText, ref position)) == string.Empty)
-                    {
-                        throw new Exception("Invalid query. Found [" + token + "], expected condition type (=, !=, etc.).");
-                    }
-
-                    condition.LogicalQualifier = Utilities.ParseLogicalQualifier(token);
-                    if (condition.LogicalQualifier == LogicalQualifier.None)
-                    {
-                        throw new Exception("Invalid query. Found [" + token + "], expected valid condition type (=, !=, etc.). Found [" + token + "]");
-                    }
-
-                    if ((token = Utilities.GetNextToken(conditionsText, ref position)) == string.Empty)
-                    {
-                        throw new Exception("Invalid query. Found [" + token + "], expected condition value.");
-                    }
-                    condition.Value = token;
-
-                    conditions.Add(condition);
-                }
-            }
-
-            conditions.MakeLowerCase();
-
+            var conditions = ParseConditionGroups(conditionsText, literalStrings);
+            DebugPrintConditions(conditions);
             return conditions;
         }
-        */
 
+        private static void DebugPrintConditions(Conditions conditions)
+        {
+            foreach (var group in conditions.Groups)
+            {
+                Console.WriteLine(DebugLogicalConnectorToString(group.LogicalConnector) + " (");
+                foreach (var condition in group.Conditions)
+                {
+                    DebugPrintCondition(condition, 1);
+                }
+                Console.WriteLine(")");
+            }
+        }
+
+        private static string DebugLogicalConnectorToString(LogicalConnector logicalConnector)
+        {
+            return (logicalConnector == LogicalConnector.None ? "" : logicalConnector.ToString().ToUpper() + " ");
+        }
+
+        private static string DebugLogicalQualifierToString(LogicalQualifier logicalQualifier)
+        {
+            switch (logicalQualifier)
+            {
+                case LogicalQualifier.Equals:
+                    return "=";
+                case LogicalQualifier.NotEquals:
+                    return "!=";
+                case LogicalQualifier.GreaterThanOrEqual:
+                    return ">=";
+                case LogicalQualifier.LessThanOrEqual:
+                    return "<=";
+                case LogicalQualifier.LessThan:
+                    return "<";
+                case LogicalQualifier.GreaterThan:
+                    return ">";
+            }
+
+            return "";
+        }
+
+        private static void DebugPrintCondition(ConditionBase condition, int depth)
+        {
+            if (condition is ConditionSubset)
+            {
+                Console.WriteLine("".PadLeft(depth, '\t') + "(");
+
+                var subset = (ConditionSubset)condition;
+                foreach (var subsetCondition in subset.Conditions)
+                {
+                    DebugPrintCondition(subsetCondition, depth + 1);
+                }
+
+                Console.WriteLine("".PadLeft(depth, '\t') + ")");
+            }
+            else if(condition is ConditionSingle)
+            {
+                var single = (ConditionSingle)condition;
+                Console.Write("".PadLeft(depth, '\t') + DebugLogicalConnectorToString(single.LogicalConnector));
+                Console.WriteLine($"[{single.Field.ToUpper()}] {DebugLogicalQualifierToString(single.LogicalQualifier)} [{single.Value}]");
+            }
+        }
     }
 }

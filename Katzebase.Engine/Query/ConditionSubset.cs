@@ -4,6 +4,14 @@ namespace Katzebase.Engine.Query
 {
     public class ConditionSubset : ConditionBase
     {
-        public ConditionGroup Group { get; set; } = new();
+        public List<ConditionBase> Conditions = new();
+
+        public LogicalConnector LogicalConnector { get; set; }
+
+        public ConditionSubset(LogicalConnector logicalConnector)
+        {
+            LogicalConnector = logicalConnector;                
+        }
+
     }
 }

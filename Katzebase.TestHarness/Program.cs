@@ -14,10 +14,7 @@ namespace Katzebase.TestHarness
             //Handled:
             //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R'";
             //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R' AND (A = 10 AND B = 50)";
-
-            //Untested
             //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'A' AND Quantity = 299) OR (LocationId = 6 AND Shelf != 'A' AND Quantity = 587) AND BIN = 8";
-
             string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)";
             var preparedQuery = ParserEngine.ParseQuery(stmt);
 
