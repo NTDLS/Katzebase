@@ -412,12 +412,12 @@ namespace Katzebase.Engine.Query
             {
             }
 
-
             int tokenPosition = 0;
+
+            LogicalConnector logicalConnector = LogicalConnector.None;
 
             while (true)
             {
-                LogicalConnector logicalConnector = LogicalConnector.None;
                 string token = Utilities.GetNextClauseToken(conditionsText, ref tokenPosition).ToLower();
                 if (token == string.Empty)
                 {
@@ -449,14 +449,16 @@ namespace Katzebase.Engine.Query
 
                     var conditionGroup = ParseConditionGroup(groupExpression, logicalConnector);
 
-                    var conditionSubset = new ConditionSubset();
+                    var conditionSubset = new ConditionSubset(logicalConnector);
                     conditionSubset.Groups.Add(conditionGroup);
                     result.Conditions.Add(conditionSubset);
 
+                    logicalConnector = LogicalConnector.None; //We just used this, so reset it.
                 }
                 else
                 {
                     var condition = new ConditionSingle(logicalConnector, token);
+                    logicalConnector = LogicalConnector.None; //We just used this, so reset it.
 
                     token = Utilities.GetNextClauseToken(conditionsText, ref tokenPosition).ToLower();
                     condition.LogicalQualifier = Utilities.ParseLogicalQualifier(token);
