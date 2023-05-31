@@ -447,10 +447,8 @@ namespace Katzebase.Engine.Query
                         groupExpression = groupExpression.Substring(1, groupExpression.Length - 2);
                     }
 
-                    var conditionGroup = ParseConditionGroup(groupExpression, logicalConnector);
-
-                    var conditionSubset = new ConditionSubset(logicalConnector);
-                    conditionSubset.Groups.Add(conditionGroup);
+                    var conditionSubset = new ConditionSubset();
+                    conditionSubset.Group = ParseConditionGroup(groupExpression, logicalConnector);
                     result.Conditions.Add(conditionSubset);
 
                     logicalConnector = LogicalConnector.None; //We just used this, so reset it.
@@ -474,7 +472,6 @@ namespace Katzebase.Engine.Query
                     condition.Value = token;
 
                     result.Conditions.Add(condition);
-
                  }
             }
 
