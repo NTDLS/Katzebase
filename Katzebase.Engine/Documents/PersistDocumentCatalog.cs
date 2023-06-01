@@ -1,4 +1,6 @@
-﻿namespace Katzebase.Engine.Documents
+﻿using Katzebase.Library.Exceptions;
+
+namespace Katzebase.Engine.Documents
 {
     [Serializable]
     public class PersistDocumentCatalog
@@ -9,7 +11,7 @@
         {
             if (document.Id == null || document.Id == Guid.Empty)
             {
-                throw new ArgumentException(nameof(document.Id));
+                throw new KbInvalidArgumentException($"Invalid argument {nameof(document.Id)}.");
             }
 
             var catalogItem = new PersistDocumentCatalogItem()

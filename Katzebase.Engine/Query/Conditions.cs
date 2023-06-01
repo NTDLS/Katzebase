@@ -11,6 +11,7 @@ namespace Katzebase.Engine.Query
         public List<ConditionGroup> Groups { get; set; } = new();
 
 
+
         /*
         public void AddRange(Conditions conditions)
         {

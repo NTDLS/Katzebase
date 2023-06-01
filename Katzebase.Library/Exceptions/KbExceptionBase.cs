@@ -11,7 +11,7 @@ namespace Katzebase.Library.Exceptions
             Severity = LogSeverity.Exception;
         }
 
-        public KbExceptionBase(string message)
+        public KbExceptionBase(string? message)
             : base(message)
 
         {

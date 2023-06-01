@@ -18,7 +18,7 @@
             var projectpath = Path.GetDirectoryName(projectFile)?.TrimEnd(new char[] { '\\', '/' });
             if (projectpath == null)
             {
-                throw new Exception("Invalud project path.");
+                throw new Exception("Invalid project path.");
             }
 
             ProjectPath = projectpath;

@@ -2,18 +2,18 @@
 
 namespace Katzebase.Library.Exceptions
 {
-    public class KbInvalidSchemaException : KbExceptionBase
+    public class KbParserException : KbExceptionBase
     {
-        public KbInvalidSchemaException()
+        public KbParserException()
         {
             Severity = LogSeverity.Warning;
         }
 
-        public KbInvalidSchemaException(string ?message)
+        public KbParserException(string message)
             : base(message)
 
         {
-            Severity = LogSeverity.Exception;
+            Severity = LogSeverity.Warning;
         }
     }
 }

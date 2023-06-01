@@ -61,7 +61,7 @@ namespace Katzebase.Engine
             Log.Write("Initializing transaction manager.");
             Transactions = new TransactionManager(this);
 
-            Log.Write("Initializing namespace manager.");
+            Log.Write("Initializing schema manager.");
             Schemas = new SchemaManager(this);
 
             Log.Write("Initializing document manager.");

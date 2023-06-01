@@ -9,7 +9,7 @@ namespace Katzebase.Service.Controllers
     public class SchemaController
     {
         /// <summary>
-        /// Lists the existing namespaces within a given namespace.
+        /// Lists the existing schemas within a given schema.
         /// </summary>
         /// <param name="schema"></param>
         [HttpGet]
@@ -42,7 +42,7 @@ namespace Katzebase.Service.Controllers
         }
 
         /// <summary>
-        /// Creates a single namespace or an entire namespace path.
+        /// Creates a single schema or an entire schema path.
         /// </summary>
         /// <param name="schema"></param>
         [HttpGet]
@@ -96,7 +96,7 @@ namespace Katzebase.Service.Controllers
         }
 
         /// <summary>
-        /// Drops a single namespace or an entire namespace path.
+        /// Drops a single schema or an entire schema path.
         /// </summary>
         /// <param name="schema"></param>
         [HttpGet]

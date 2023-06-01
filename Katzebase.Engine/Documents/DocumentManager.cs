@@ -188,9 +188,9 @@ namespace Katzebase.Engine.Documents
             int rowCount = 0;
 
 
-            using (serverCore.ObjectLocks.Obtain(sessionId, LockType.Namespace, LockAccessType.Read, namespacePath))
+            using (serverCore.ObjectLocks.Obtain(sessionId, LockType.Namespace, LockAccessType.Read, schemaPath))
             {
-                IndexSelections indexSelections = serverCore.IndexOperations.SelectIndex(namespacePath, conditions, explanation);
+                IndexSelections indexSelections = serverCore.IndexOperations.SelectIndex(schemaPath, conditions, explanation);
 
                 if (indexSelections != null && indexSelections.Count > 0)
                 {
@@ -201,7 +201,7 @@ namespace Katzebase.Engine.Documents
 
                     foreach (var indexSelection in indexSelections)
                     {
-                        string indexPageCatalogFileName = Utility.MakePath(serverCore.Configuration.NamespacesPath, namespacePath, indexSelection.Index.Filename);
+                        string indexPageCatalogFileName = Utility.MakePath(serverCore.Configuration.NamespacesPath, schemaPath, indexSelection.Index.Filename);
                         PersistIndexPageCatalog IndexPageCatalog = serverCore.IO.DeserializeFromProtoBufFile<PersistIndexPageCatalog>(indexPageCatalogFileName);
 
                         List<Condition> keyValues = new List<Condition>();
@@ -291,7 +291,7 @@ namespace Katzebase.Engine.Documents
                         }
 
                         string persistDocumentFile = Utility.MakePath(serverCore.Configuration.NamespacesPath,
-                            namespacePath,
+                            schemaPath,
                             PersistIndexPageCatalog.DocumentFileName(documentId));
 
                         timer.Restart();
@@ -420,7 +420,7 @@ namespace Katzebase.Engine.Documents
 
                     bool foundKey = false;
 
-                    string documentCatalogFileName = Utility.MakePath(serverCore.Configuration.NamespacesPath, namespacePath, PersistDocumentCatalog.FileName);
+                    string documentCatalogFileName = Utility.MakePath(serverCore.Configuration.NamespacesPath, schemaPath, PersistDocumentCatalog.FileName);
 
                     timer.Restart();
                     PersistDocumentCatalog documentCatalog = serverCore.IO.DeserializeFromJsonFile<PersistDocumentCatalog>(documentCatalogFileName);
@@ -429,7 +429,7 @@ namespace Katzebase.Engine.Documents
 
                     foreach (PersistDocumentCatalogItem documentCatalogItem in documentCatalog.Collection)
                     {
-                        string persistDocumentFile = Utility.MakePath(serverCore.Configuration.NamespacesPath, namespacePath, documentCatalogItem.DocumentFileName);
+                        string persistDocumentFile = Utility.MakePath(serverCore.Configuration.NamespacesPath, schemaPath, documentCatalogItem.DocumentFileName);
 
                         timer.Restart();
                         PersistDocument persistDocument = serverCore.IO.DeserializeFromJsonFile<PersistDocument>(persistDocumentFile);

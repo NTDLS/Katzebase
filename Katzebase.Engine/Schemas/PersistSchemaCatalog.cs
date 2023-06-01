@@ -4,9 +4,9 @@
     {
         public List<PersistSchema> Collection = new List<PersistSchema>();
 
-        public void Add(PersistSchema namespaceMeta)
+        public void Add(PersistSchema schema)
         {
-            this.Collection.Add(namespaceMeta);
+            this.Collection.Add(schema);
         }
 
         public bool ContainsName(string name)

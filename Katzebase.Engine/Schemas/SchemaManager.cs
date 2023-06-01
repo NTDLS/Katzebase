@@ -56,19 +56,19 @@ namespace Katzebase.Engine.Schemas
 
             if (node.DiskPath == null)
             {
-                throw new Exception("DiskPath action can ot be null");
+                throw new KbNullException($"Value should not be null {nameof(node.DiskPath)}.");
             }
 
-            string namespaceCatalogDiskPath = Path.Combine(node.DiskPath, Constants.SchemaCatalogFile);
+            string schemaCatalogDiskPath = Path.Combine(node.DiskPath, Constants.SchemaCatalogFile);
 
-            if (core.IO.FileExists(transaction, namespaceCatalogDiskPath, intendedOperation))
+            if (core.IO.FileExists(transaction, schemaCatalogDiskPath, intendedOperation))
             {
-                var namespaceCatalog = core.IO.GetJson<PersistSchemaCatalog>(transaction, namespaceCatalogDiskPath, intendedOperation);
+                var schemaCatalog = core.IO.GetJson<PersistSchemaCatalog>(transaction, schemaCatalogDiskPath, intendedOperation);
 
-                Utility.EnsureNotNull(namespaceCatalog);
-                Utility.EnsureNotNull(namespaceCatalog.Collection);
+                Utility.EnsureNotNull(schemaCatalog);
+                Utility.EnsureNotNull(schemaCatalog.Collection);
 
-                foreach (var catalogItem in namespaceCatalog.Collection)
+                foreach (var catalogItem in schemaCatalog.Collection)
                 {
                     metaList.Add(new PersistSchema()
                     {
@@ -95,7 +95,7 @@ namespace Katzebase.Engine.Schemas
 
                 if (child.VirtualPath == null)
                 {
-                    throw new Exception("VirtualPath action can ot be null");
+                    throw new KbNullException($"Value should not be null {nameof(child.VirtualPath)}.");
                 }
 
                 var segments = child.VirtualPath.Split(':').ToList();
@@ -105,7 +105,7 @@ namespace Katzebase.Engine.Schemas
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to get parent namespace meta.", ex);
+                core.Log.Write("Failed to get parent schema.", ex);
                 throw;
             }
         }
@@ -125,8 +125,8 @@ namespace Katzebase.Engine.Schemas
                     var segments = schemaPath.Split(':');
                     string schemaName = segments[segments.Count() - 1];
 
-                    string namespaceDiskPath = Path.Combine(core.settings.DataRootPath, string.Join("\\", segments));
-                    string? parentSchemaDiskPath = Directory.GetParent(namespaceDiskPath)?.FullName;
+                    string schemaDiskPath = Path.Combine(core.settings.DataRootPath, string.Join("\\", segments));
+                    string? parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
 
                     Utility.EnsureNotNull(parentSchemaDiskPath);
 
@@ -142,17 +142,17 @@ namespace Katzebase.Engine.Schemas
 
                     Utility.EnsureNotNull(parentCatalog);
 
-                    var namespaceMeta = parentCatalog.GetByName(schemaName);
-                    if (namespaceMeta != null)
+                    var schemaMeta = parentCatalog.GetByName(schemaName);
+                    if (schemaMeta != null)
                     {
-                        namespaceMeta.Name = schemaName;
-                        namespaceMeta.DiskPath = namespaceDiskPath;
-                        namespaceMeta.VirtualPath = schemaPath;
-                        namespaceMeta.Exists = true;
+                        schemaMeta.Name = schemaName;
+                        schemaMeta.DiskPath = schemaDiskPath;
+                        schemaMeta.VirtualPath = schemaPath;
+                        schemaMeta.Exists = true;
                     }
                     else
                     {
-                        namespaceMeta = new PersistSchema()
+                        schemaMeta = new PersistSchema()
                         {
                             Name = schemaName,
                             DiskPath = core.settings.DataRootPath + "\\" + schemaPath.Replace(':', '\\'),
@@ -161,14 +161,14 @@ namespace Katzebase.Engine.Schemas
                         };
                     }
 
-                    transaction.LockDirectory(intendedOperation, namespaceMeta.DiskPath);
+                    transaction.LockDirectory(intendedOperation, schemaMeta.DiskPath);
 
-                    return namespaceMeta;
+                    return schemaMeta;
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to translate virtual path to namespace meta.", ex);
+                core.Log.Write("Failed to translate virtual path to schema.", ex);
                 throw;
             }
         }
@@ -189,16 +189,16 @@ namespace Katzebase.Engine.Schemas
 
                     if (schemaMeta.DiskPath == null)
                     {
-                        throw new Exception("DiskPath action can ot be null");
+                        throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
                     }
 
                     var filePath = Path.Combine(schemaMeta.DiskPath, Constants.SchemaCatalogFile);
-                    var namespaceCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, filePath, LockOperation.Read);
+                    var schemaCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, filePath, LockOperation.Read);
 
-                    Utility.EnsureNotNull(namespaceCatalog);
-                    Utility.EnsureNotNull(namespaceCatalog.Collection);
+                    Utility.EnsureNotNull(schemaCatalog);
+                    Utility.EnsureNotNull(schemaCatalog.Collection);
 
-                    foreach (var item in namespaceCatalog.Collection)
+                    foreach (var item in schemaCatalog.Collection)
                     {
                         list.Add(item);
                     }
@@ -210,7 +210,7 @@ namespace Katzebase.Engine.Schemas
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to get namespace list for process {processId}.", ex);
+                core.Log.Write($"Failed to get schema list for process {processId}.", ex);
                 throw;
             }
         }
@@ -227,7 +227,7 @@ namespace Katzebase.Engine.Schemas
                     if (schemaMeta.Exists)
                     {
                         txRef.Commit();
-                        //The namespace already exists.
+                        //The schema already exists.
                         return;
                     }
 
@@ -236,12 +236,12 @@ namespace Katzebase.Engine.Schemas
 
                     if (parentSchemaMeta.Exists == false)
                     {
-                        throw new Exception("The parent namespace does not exists. use CreateLineage() instead of CreateSingle().");
+                        throw new KbInvalidSchemaException("The parent schema does not exists. Use CreateLineage() instead of CreateSingle().");
                     }
 
                     if (parentSchemaMeta.DiskPath == null || schemaMeta.DiskPath == null)
                     {
-                        throw new Exception("DiskPath action can ot be null");
+                        throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
                     }
 
                     string parentSchemaCatalogFile = Path.Combine(parentSchemaMeta.DiskPath, Constants.SchemaCatalogFile);
@@ -252,7 +252,7 @@ namespace Katzebase.Engine.Schemas
 
                     core.IO.CreateDirectory(txRef.Transaction, schemaMeta.DiskPath);
 
-                    //Create default namespace catalog file.
+                    //Create default schema catalog file.
                     filePath = Path.Combine(schemaMeta.DiskPath, Constants.SchemaCatalogFile);
                     if (core.IO.FileExists(txRef.Transaction, filePath, LockOperation.Write) == false)
                     {
@@ -289,15 +289,15 @@ namespace Katzebase.Engine.Schemas
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create single namespace for process {processId}.", ex);
+                core.Log.Write($"Failed to create single schema for process {processId}.", ex);
                 throw;
             }
         }
 
         /// <summary>
-        /// Creates a structure of namespaces, denotaed by colons.
+        /// Creates a structure of schemas, denotaed by colons.
         /// </summary>
-        /// <param name="namespacePath"></param>
+        /// <param name="schemaPath"></param>
         public void Create(ulong processId, string schemaPath)
         {
             try
@@ -315,7 +315,7 @@ namespace Katzebase.Engine.Schemas
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create namespace lineage for process {processId}.", ex);
+                core.Log.Write($"Failed to create schema lineage for process {processId}.", ex);
                 throw;
             }
         }
@@ -323,7 +323,7 @@ namespace Katzebase.Engine.Schemas
         /// <summary>
         /// Returns true if the schema exists.
         /// </summary>
-        /// <param name="namespacePath"></param>
+        /// <param name="schemaPath"></param>
         public bool Exists(ulong processId, string schemaPath)
         {
             try
@@ -357,13 +357,13 @@ namespace Katzebase.Engine.Schemas
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to confirm namespace for process {processId}.", ex);
+                core.Log.Write($"Failed to confirm schema for process {processId}.", ex);
                 throw;
             }
         }
 
         /// <summary>
-        /// Drops a single namespace or an entire namespace path.
+        /// Drops a single schema or an entire schema path.
         /// </summary>
         /// <param name="schema"></param>
         public void Drop(ulong processId, string schema)
@@ -385,7 +385,7 @@ namespace Katzebase.Engine.Schemas
                     Utility.EnsureNotNull(parentSchemaMeta);
 
                     if (parentSchemaMeta.DiskPath == null || schemaMeta.DiskPath == null)
-                        throw new Exception("DiskPath action can ot be null");
+                        throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
 
                     string parentSchemaCatalogFile = Path.Combine(parentSchemaMeta.DiskPath, Constants.SchemaCatalogFile);
                     var parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
@@ -406,7 +406,7 @@ namespace Katzebase.Engine.Schemas
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to drop namespace for process {processId}.", ex);
+                core.Log.Write($"Failed to drop schema for process {processId}.", ex);
                 throw;
             }
         }

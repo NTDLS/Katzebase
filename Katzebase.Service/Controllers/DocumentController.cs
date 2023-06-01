@@ -10,7 +10,7 @@ namespace Katzebase.Service.Controllers
     public class DocumentController
     {
         /// <summary>
-        /// Lists the documents within a given namespace.
+        /// Lists the documents within a given schema.
         /// </summary>
         /// <param name="schema"></param>
         [HttpGet]

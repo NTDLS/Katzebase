@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using Katzebase.Library.Exceptions;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Katzebase.Engine
@@ -79,7 +80,7 @@ namespace Katzebase.Engine
         {
             if (diskPath == null)
             {
-                throw new ArgumentNullException(nameof(diskPath));
+                throw new KbNullException($"Value should not be null {nameof(diskPath)}.");
             }
 
             if (IsDirectoryEmpty(diskPath))

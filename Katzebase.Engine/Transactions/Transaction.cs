@@ -1,5 +1,6 @@
 ﻿using Katzebase.Engine.Locking;
 using Katzebase.Library;
+using Katzebase.Library.Exceptions;
 using Newtonsoft.Json;
 using static Katzebase.Engine.Constants;
 
@@ -437,7 +438,7 @@ namespace Katzebase.Engine.Transactions
                     }
                     else if (referenceCount < 0)
                     {
-                        throw new Exception("Transaction reference count fell below zero.");
+                        throw new KbGenericException("Transaction reference count fell below zero.");
                     }
                 }
             }

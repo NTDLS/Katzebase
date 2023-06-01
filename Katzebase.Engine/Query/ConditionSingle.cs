@@ -1,4 +1,5 @@
-﻿using static Katzebase.Engine.Constants;
+﻿using Katzebase.Library.Exceptions;
+using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Query
 {
@@ -6,7 +7,6 @@ namespace Katzebase.Engine.Query
     {
         public ConditionValue Left { get; set; } = new ConditionValue();
         public ConditionValue Right { get; set; } = new ConditionValue();
-
 
         public LogicalQualifier LogicalQualifier { get; set; } = LogicalQualifier.None;
         public LogicalConnector LogicalConnector { get; set; } = LogicalConnector.None;
@@ -122,7 +122,7 @@ namespace Katzebase.Engine.Query
             }
             else
             {
-                throw new Exception("Unsupprted condition type.");
+                throw new KbParserException("Unsupprted condition type.");
             }
 
             return false;

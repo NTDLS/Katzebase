@@ -1,17 +1,74 @@
-﻿namespace Katzebase.Engine.Query
+﻿using Katzebase.Library.Exceptions;
+
+namespace Katzebase.Engine.Query
 {
     public class ConditionValue
     {
+        /// <summary>
+        /// This value is a constant string.
+        /// </summary>
         public bool IsString { get; set; }
+
+        /// <summary>
+        /// This value is a constant (string or numeric). If false, then this value is a field name.
+        /// </summary>
         public bool IsConstant { get; set; }
+
+        /// <summary>
+        /// This value is numeric and does not contain string characters.
+        /// </summary>
         public bool IsNumeric { get; set; }
 
-        private string? _value = null;
+        /// <summary>
+        /// This value has been set.
+        /// </summary>
         public bool IsSet { get; private set; }
+
+        private string? _value = null;
 
         public override string ToString()
         {
             return _value?.ToString() ?? string.Empty;
+        }
+
+        public void SetString(string value)
+        {
+            this.Value = value;
+
+            IsConstant = true;
+            IsNumeric = false;
+            IsString = true;
+        }
+
+        /// <summary>
+        /// This is a field name, not a string.
+        /// </summary>
+        /// <param name="value"></param>
+        public void SetField(string value)
+        {
+            this.Value = value;
+
+            IsConstant = false;
+            IsNumeric = false;
+            IsString = false;
+        }
+
+        /// <summary>
+        /// This is a constant number.
+        /// </summary>
+        /// <param name="value"></param>
+        public void SetNumeric(string value)
+        {
+            this.Value = value;
+
+            IsConstant = true;
+            IsNumeric = true;
+            IsString = false;
+
+            if (value.All(Char.IsDigit) == false)
+            {
+                throw new KbInvalidArgumentException("The value must be numeric.");
+            }
         }
 
         public string? Value
@@ -27,7 +84,7 @@
 
                 if (_value != null)
                 {
-                    //Hanlde escape sequences:
+                    //Handle escape sequences:
                     _value = _value.Replace("\\'", "\'");
 
                     if (_value.StartsWith('\'') && _value.EndsWith('\''))

@@ -1,4 +1,5 @@
-﻿using System.Text.RegularExpressions;
+﻿using Katzebase.Library.Exceptions;
+using System.Text.RegularExpressions;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Query
@@ -138,7 +139,7 @@ namespace Katzebase.Engine.Query
 
             if (position == 0)
             {
-                throw new Exception("Cannot rewind before position zero.");
+                throw new KbParserException("Cannot rewind before position zero.");
             }
 
             position--;

@@ -1,4 +1,5 @@
-﻿using Katzebase.Library.Payloads;
+﻿using Katzebase.Library.Exceptions;
+using Katzebase.Library.Payloads;
 using Newtonsoft.Json;
 using System.Text;
 
@@ -29,7 +30,7 @@ namespace Katzebase.Library.Client.Management
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
             {
-                throw new Exception(result == null ? "Invalid response" : result.Message);
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.Message);
             }
         }
 
@@ -47,7 +48,7 @@ namespace Katzebase.Library.Client.Management
             var result = JsonConvert.DeserializeObject<KbActionResponseBoolean>(resultText);
             if (result == null || result.Success == false)
             {
-                throw new Exception(result == null ? "Invalid response" : result.Message);
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.Message);
             }
 
             return result.Value;

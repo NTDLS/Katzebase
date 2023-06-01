@@ -2,14 +2,14 @@
 
 namespace Katzebase.Library.Exceptions
 {
-    public class KbssertException : KbExceptionBase
+    public class KbAssertException : KbExceptionBase
     {
-        public KbssertException()
+        public KbAssertException()
         {
             Severity = LogSeverity.Warning;
         }
 
-        public KbssertException(string message)
+        public KbAssertException(string message)
             : base(message)
 
         {

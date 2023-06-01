@@ -17,7 +17,7 @@ namespace Katzebase.Library
         {
             if (value == null)
             {
-                throw new KbNullException($"{strName} cannot be null.");
+                throw new KbNullException($"Value should not be null {nameof(strName)}.");
             }
         }
 
@@ -25,7 +25,7 @@ namespace Katzebase.Library
         {
             if (value == null || value == Guid.Empty)
             {
-                throw new KbNullException($"{strName} cannot be null or empty.");
+                throw new KbNullException($"Value should not be null or empty {nameof(strName)}.");
             }
         }
 
@@ -33,7 +33,7 @@ namespace Katzebase.Library
         {
             if (string.IsNullOrEmpty(value))
             {
-                throw new KbNullException($"{strName} cannot be null or empty.");
+                throw new KbNullException($"Value should not be null or empty {nameof(strName)}.");
             }
         }
 
@@ -41,7 +41,7 @@ namespace Katzebase.Library
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new KbNullException($"{strName} cannot be null or empty.");
+                throw new KbNullException($"Value should not be null or empty {nameof(strName)}.");
             }
         }
 
@@ -50,7 +50,7 @@ namespace Katzebase.Library
         {
             if (condition)
             {
-                throw new KbssertException(message);
+                throw new KbAssertException(message);
             }
         }
     }

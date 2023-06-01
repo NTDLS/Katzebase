@@ -204,83 +204,77 @@ namespace Katzebase.Engine.Indexes
 
         public IndexSelections SelectIndexes(Transaction transaction, PersistSchema schemaMeta, Conditions conditions)
         {
-            return null;
-            /*
             try
             {
+                var indexKeyMatches = new IndexKeyMatches();
 
+                var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
+
+                var indexSelections = new IndexSelections();
+
+                //Loop though each index in the schema.
+                var potentialIndexs = new List<PotentialIndex>();
+
+                foreach (var indexMeta in indexCatalog.Collection)
+                {
+                    var handledKeyNames = new List<string>();
+
+                    for (int i = 0; i < indexMeta.Attributes.Count; i++)
+                    {
+                        if (indexMeta.Attributes == null || indexMeta.Attributes[i] == null)
+                        {
+                            throw new KbNullException($"Value should not be null {nameof(indexMeta.Attributes)}.");
+                        }
+
+                        var keyName = indexMeta.Attributes[i].Field?.ToLower();
+                        if (keyName == null)
+                        {
+                            throw new KbNullException($"Value should not be null {nameof(keyName)}.");
+                        }
+
+                        if (indexKeyMatches.Find(o => o.Field == keyName && o.Handled == false) != null)
+                        {
+                            handledKeyNames.Add(keyName);
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+
+                    if (handledKeyNames.Count > 0)
+                    {
+                        potentialIndexs.Add(new PotentialIndex(indexMeta, handledKeyNames));
+                    }
+                }
+
+                //Grab the index that matches the most of our supplied keys but also has the least attributes.
+                var firstIndex = (from o in potentialIndexs where o.Tried == false select o)
+                    .OrderByDescending(s => s.HandledKeyNames.Count)
+                    .ThenBy(t => t.Index.Attributes.Count).FirstOrDefault();
+                if (firstIndex != null)
+                {
+                    var handledKeys = (from o in indexKeyMatches where firstIndex.HandledKeyNames.Contains(o.Field) select o).ToList();
+                    foreach (var handledKey in handledKeys)
+                    {
+                        handledKey.Handled = true;
+                    }
+
+                    firstIndex.Tried = true;
+
+                    indexSelections.Add(new IndexSelection(firstIndex.Index, firstIndex.HandledKeyNames));
+                }
+
+                indexSelections.UnhandledKeys.AddRange((from o in indexKeyMatches where o.Handled == false select o.Field).ToList());
+
+                return indexSelections;
             }
             catch (Exception ex)
             {
                 core.Log.Write($"Failed to select indexes for process {transaction.ProcessId}.", ex);
                 throw;
             }
-
-            IndexKeyMatches indexKeyMatches = new IndexKeyMatches(conditions);
-
-            var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
-
-            IndexSelections indexSelections = new IndexSelections();
-
-            //Loop though each index in the schema.
-            List<PotentialIndex> potentialIndexs = new List<PotentialIndex>();
-
-            foreach (var indexMeta in indexCatalog.Collection)
-            {
-                List<string> handledKeyNames = new List<string>();
-
-                for (int i = 0; i < indexMeta.Attributes.Count; i++)
-                {
-                    if (indexMeta.Attributes == null || indexMeta.Attributes[i] == null)
-                    {
-                        throw new Exception("Reversible action can ot be null");
-                    }
-
-                    var keyName = indexMeta.Attributes[i].Field?.ToLower();
-                    if (keyName == null)
-                    {
-                        throw new Exception("keyName action can ot be null");
-                    }
-
-                    if (indexKeyMatches.Find(o => o.Field == keyName && o.Handled == false) != null)
-                    {
-                        handledKeyNames.Add(keyName);
-                    }
-                    else
-                    {
-                        break;
-                    }
-                }
-
-                if (handledKeyNames.Count > 0)
-                {
-                    potentialIndexs.Add(new PotentialIndex(indexMeta, handledKeyNames));
-                }
-            }
-
-            //Grab the index that matches the most of our supplied keys but also has the least attributes.
-            var firstIndex = (from o in potentialIndexs where o.Tried == false select o)
-                .OrderByDescending(s => s.HandledKeyNames.Count)
-                .ThenBy(t => t.Index.Attributes.Count).FirstOrDefault();
-            if (firstIndex != null)
-            {
-                var handledKeys = (from o in indexKeyMatches where firstIndex.HandledKeyNames.Contains(o.Field) select o).ToList();
-                foreach (var handledKey in handledKeys)
-                {
-                    handledKey.Handled = true;
-                }
-
-                firstIndex.Tried = true;
-
-                indexSelections.Add(new IndexSelection(firstIndex.Index, firstIndex.HandledKeyNames));
-            }
-
-            indexSelections.UnhandledKeys.AddRange((from o in indexKeyMatches where o.Handled == false select o.Field).ToList());
-
-            return indexSelections;
-            */
         }
-
 
         public bool Exists(ulong processId, string schema, string indexName)
         {
@@ -344,7 +338,7 @@ namespace Katzebase.Engine.Indexes
 
                     if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
                     {
-                        throw new Exception("DiskPath action can ot be null");
+                        throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
                     }
 
                     core.IO.PutJson(txRef.Transaction, indexCatalog.DiskPath, indexCatalog);
@@ -381,7 +375,7 @@ namespace Katzebase.Engine.Indexes
 
                     if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
                     {
-                        throw new Exception("DiskPath action can ot be null");
+                        throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
                     }
 
                     var indexMeta = indexCatalog.GetByName(indexName);
@@ -419,7 +413,7 @@ namespace Katzebase.Engine.Indexes
         {
             if (schemaMeta.DiskPath == null)
             {
-                throw new Exception("DiskPath action can ot be null");
+                throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
             }
 
             string indexCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.IndexCatalogFile);
@@ -779,7 +773,7 @@ namespace Katzebase.Engine.Indexes
 
                     if (param.SchemaMeta.DiskPath == null)
                     {
-                        throw new Exception("DiskPath action can ot be null");
+                        throw new KbNullException($"Value should not be null {nameof(param.SchemaMeta.DiskPath)}.");
                     }
 
                     string documentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
