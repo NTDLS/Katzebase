@@ -209,15 +209,15 @@ namespace Katzebase.Engine.Indexes
         /// <param name="schemaMeta"></param>
         /// <param name="conditions">Nested conditions.</param>
         /// <returns>A selection of indexes as well as a clone of the conditions with associated indexes</returns>
-        public IndexSelections SelectIndexes(Transaction transaction, PersistSchema schemaMeta, Conditions conditions)
+        public ConditionLookupOptimization SelectIndexesForConditionLookupOptimization(Transaction transaction, PersistSchema schemaMeta, Conditions conditions)
         {
             try
             {
                 var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
 
-                var indexSelections = new IndexSelections(conditions);
+                var lookupOptimization = new ConditionLookupOptimization(conditions);
 
-                foreach (var flatGroup in indexSelections.FlatConditionGroups)
+                foreach (var flatGroup in lookupOptimization.FlatConditionGroups)
                 {
                     var potentialIndexs = new List<PotentialIndex>();
 
@@ -272,10 +272,10 @@ namespace Katzebase.Engine.Indexes
 
                         var indexSelection = new IndexSelection(firstIndex.Index, firstIndex.CoveredFields);
 
-                        indexSelections.Add(indexSelection);
+                        lookupOptimization.IndexSelection.Add(indexSelection);
 
                         //Mark which condition this index selection satisifies.
-                        var sourceSubset = indexSelections.Conditions.SubsetByUID(flatGroup.SourceSubsetUID);
+                        var sourceSubset = lookupOptimization.Conditions.SubsetByUID(flatGroup.SourceSubsetUID);
                         Utility.EnsureNotNull(sourceSubset);
                         sourceSubset.Index = indexSelection;
 
@@ -292,7 +292,7 @@ namespace Katzebase.Engine.Indexes
                     //indexSelections.UncoveredFields.AddRange(uncoveredFields);
                 }
 
-                return indexSelections;
+                return lookupOptimization;
             }
             catch (Exception ex)
             {

@@ -61,6 +61,11 @@ namespace Katzebase.Engine.Documents
             }
         }
 
+        private void GetDocumentIDsByConditionGroup(PersistDocumentCatalog documentCatalog, ConditionSubset conditions)
+        {
+        }
+
+
         private KbQueryResult FindDocuments(Transaction transaction, PreparedQuery query)
         {
             var result = new KbQueryResult();
@@ -83,10 +88,26 @@ namespace Katzebase.Engine.Documents
                 result.Fields.Add(new KbQueryField(field));
             }
 
-            //Figure out which indexes could assist us in retrieving the desired documents.
-            var indexSelections = core.Indexes.SelectIndexes(transaction, schemaMeta, query.Conditions);
+            //Figure out which indexes could assist us in retrieving the desired documents (if any).
+            var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMeta, query.Conditions);
 
-            if (indexSelections.Count == 0) //Full schema scan. Ouch!
+            var conditionConsumptionTracker = new ConditionConsumptionTracker();
+
+            while (true)
+            {
+                var conditionSubset = lookupOptimization.Conditions.GetNext(ref conditionConsumptionTracker);
+                if (conditionSubset == null)
+                {
+                    break; //Complete.
+                }
+
+                GetDocumentIDsByConditionGroup(documentCatalog, conditionSubset);
+            }
+
+            return result;
+
+            /*
+            if (lookupOptimization.IndexSelection.Count == 0) //Full schema scan. Ouch!
             {
                 //Loop through each document in the catalog:
                 foreach (var item in documentCatalog.Collection)
@@ -99,7 +120,6 @@ namespace Katzebase.Engine.Documents
 
                     var jContent = JObject.Parse(persistDocument.Content);
 
-                    /*
                     if (query.Conditions.IsMatch(jContent))
                     {
                         var rowValues = new List<string>();
@@ -125,12 +145,11 @@ namespace Katzebase.Engine.Documents
 
                         result.Rows.Add(new KbQueryRow(rowValues));
                     }
-                    */
                 }
             }
             else //Indexed search!
             {
-                foreach (var indexSelection in indexSelections)
+                foreach (var indexSelection in lookupOptimization.IndexSelection)
                 {
                     Utility.EnsureNotNull(indexSelection.Index.DiskPath);
 
@@ -141,8 +160,7 @@ namespace Katzebase.Engine.Documents
                 }
 
             }
-
-            return result;
+            */
 
             /*
             try

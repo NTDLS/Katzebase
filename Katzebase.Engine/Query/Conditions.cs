@@ -10,7 +10,7 @@ namespace Katzebase.Engine.Query
     {
         public List<ConditionSubset> Subsets { get; set; } = new();
 
-        public ConditionSubset? SubsetByUID(Guid uid)
+        internal ConditionSubset? SubsetByUID(Guid uid)
         {
             foreach (var subset in this.Subsets)
             {
@@ -28,7 +28,7 @@ namespace Katzebase.Engine.Query
             return null;
         }
 
-        public ConditionSubset? SubsetByUID(ConditionSubset rootSubset, Guid uid)
+        private ConditionSubset? SubsetByUID(ConditionSubset rootSubset, Guid uid)
         {
             foreach (var subset in rootSubset.Conditions.OfType<ConditionSubset>())
             {
@@ -38,6 +38,45 @@ namespace Katzebase.Engine.Query
                 }
 
                 var result = SubsetByUID(subset, subset.UID);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
+        }
+
+        internal ConditionSubset? GetNext(ref ConditionConsumptionTracker tracker)
+        {
+            foreach (var subset in this.Subsets)
+            {
+                if (tracker.ConsumedSubsets.Contains(subset.UID) == false)
+                {
+                    tracker.ConsumedSubsets.Add(subset.UID);
+                    return subset;
+                }
+
+                var result = GetNext(subset, ref tracker);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+            return null;
+        }
+
+        private ConditionSubset? GetNext(ConditionSubset rootSubset, ref ConditionConsumptionTracker tracker)
+        {
+            foreach (var subset in rootSubset.Conditions.OfType<ConditionSubset>())
+            {
+                if (tracker.ConsumedSubsets.Contains(subset.UID) == false)
+                {
+                    tracker.ConsumedSubsets.Add(subset.UID);
+                    return subset;
+                }
+
+                var result = GetNext(subset, ref tracker);
                 if (result != null)
                 {
                     return result;

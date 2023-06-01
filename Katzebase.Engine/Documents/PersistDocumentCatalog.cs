@@ -5,7 +5,7 @@ namespace Katzebase.Engine.Documents
     [Serializable]
     public class PersistDocumentCatalog
     {
-        public List<PersistDocumentCatalogItem> Collection = new List<PersistDocumentCatalogItem>();
+        public List<PersistDocumentCatalogItem> Collection = new();
 
         public PersistDocumentCatalogItem Add(PersistDocument document)
         {
