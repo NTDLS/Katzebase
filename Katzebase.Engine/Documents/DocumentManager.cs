@@ -8,6 +8,7 @@ using Katzebase.Library.Payloads;
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net.Http.Json;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Documents
@@ -61,10 +62,95 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-        private void GetDocumentIDsByConditionGroup(PersistDocumentCatalog documentCatalog, ConditionSubset conditions)
+        private void GetDocumentIDsByConditions(Transaction transaction, PersistDocumentCatalog documentCatalog, PersistSchema schemaMeta, PreparedQuery query, List<ConditionSingle> conditions)
         {
+            //Loop through each document in the catalog:
+            foreach (var item in documentCatalog.Collection)
+            {
+                Utility.EnsureNotNull(schemaMeta.DiskPath);
+                var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, item.FileName);
+
+                var persistDocument = core.IO.GetJson<PersistDocument>(transaction, persistDocumentDiskPath, LockOperation.Read);
+                Utility.EnsureNotNull(persistDocument);
+                Utility.EnsureNotNull(persistDocument.Content);
+
+                var jContent = JObject.Parse(persistDocument.Content);
+
+                bool fullAttributeMatch = true;
+
+                //Loop though each condition in the prepared query:
+                foreach (var condition in conditions)
+                {
+                    Utility.EnsureNotNull(condition.Left.Value); //TODO: What do we really need to do here?
+
+                    //Get the value of the condition:
+                    if (jContent.TryGetValue(condition.Left.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                    {
+                        //If the condition does not match the value in the document then we break from checking the remainder of the conditions for this document and continue with the next document.
+                        //Otherwise we continue to the next condition until all conditions are matched.
+                        if (condition.IsMatch(jToken.ToString().ToLower()) == false)
+                        {
+                            fullAttributeMatch = false;
+                            break;
+                        }
+                    }
+                }
+
+                if (fullAttributeMatch)
+                {
+                    var rowValues = new List<string>();
+
+                    foreach (string field in query.SelectFields)
+                    {
+                        if (field == "#RID")
+                        {
+                            rowValues.Add((persistDocument.Id ?? Guid.Empty).ToString());
+                        }
+                        else
+                        {
+                            if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                            {
+                                rowValues.Add(jToken.ToString());
+                            }
+                            else
+                            {
+                                rowValues.Add(string.Empty);
+                            }
+                        }
+                    }
+
+                    //result.Rows.Add(new KbQueryRow(rowValues));
+                }
+            }
         }
 
+        private void GetDocumentIDsByConditionGroup(Transaction transaction, PersistDocumentCatalog documentCatalog, PersistSchema schemaMeta, PreparedQuery query, ConditionSubset conditionSubset)
+        {
+            var conditions = new List<ConditionSingle>();
+
+            LogicalConnector lastConnector = LogicalConnector.None;
+
+            //Get a selection of the conditions that have like logical connector. Execute them in groups of logical connectors.
+            foreach (var condition in conditionSubset.Conditions.OfType<ConditionSingle>())
+            {
+                if ((lastConnector == LogicalConnector.None || lastConnector == condition.LogicalConnector) == false)
+                {
+                    //Use the conditions here:
+                    GetDocumentIDsByConditions(transaction, documentCatalog, schemaMeta, query, conditions);
+                    conditions.Clear();
+                }
+
+                conditions.Add(condition);
+                lastConnector = condition.LogicalConnector;
+            }
+
+            if (conditions.Any()) //Use any remaining conditions here:
+            {
+                
+                GetDocumentIDsByConditions(transaction, documentCatalog, schemaMeta, query, conditions);
+                conditions.Clear();
+            }
+        }
 
         private KbQueryResult FindDocuments(Transaction transaction, PreparedQuery query)
         {
@@ -101,7 +187,7 @@ namespace Katzebase.Engine.Documents
                     break; //Complete.
                 }
 
-                GetDocumentIDsByConditionGroup(documentCatalog, conditionSubset);
+                GetDocumentIDsByConditionGroup(transaction, documentCatalog, schemaMeta, query, conditionSubset);
             }
 
             return result;

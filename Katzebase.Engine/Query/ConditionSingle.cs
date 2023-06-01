@@ -1,4 +1,7 @@
-﻿using Katzebase.Library.Exceptions;
+﻿using Katzebase.Engine.Documents;
+using Katzebase.Library;
+using Katzebase.Library.Exceptions;
+using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Query
@@ -37,6 +40,41 @@ namespace Katzebase.Engine.Query
         public ConditionSingle()
         {
         }
+
+        /*
+        public bool IsMatch(PersistDocument persistDocument)
+        {
+            Utility.EnsureNotNull(persistDocument);
+            Utility.EnsureNotNull(persistDocument.Content);
+
+            JObject jsonContent = JObject.Parse(persistDocument.Content);
+
+            return IsMatch(jsonContent);
+        }
+
+        public bool IsMatch(JObject jsonContent)
+        {
+            bool fullAttributeMatch = true;
+
+            //Loop though each condition in the prepared query:
+            foreach (var condition in Collection)
+            {
+                //Get the value of the condition:
+                if (jsonContent.TryGetValue(condition.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                {
+                    //If the condition does not match the value in the document then we break from checking the remainder of the conditions for this document and continue with the next document.
+                    //Otherwise we continue to the next condition until all conditions are matched.
+                    if (condition.IsMatch(jToken.ToString().ToLower()) == false)
+                    {
+                        fullAttributeMatch = false;
+                        break;
+                    }
+                }
+            }
+
+            return fullAttributeMatch;
+        }
+        */
 
         public bool IsMatch(string passedValue)
         {
