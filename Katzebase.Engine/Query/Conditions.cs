@@ -8,9 +8,164 @@ namespace Katzebase.Engine.Query
 {
     public class Conditions
     {
-        public List<ConditionGroup> Groups { get; set; } = new();
+        public List<ConditionSubset> Subsets { get; set; } = new();
 
+        public ConditionSubset? SubsetByUID(Guid uid)
+        {
+            foreach (var subset in this.Subsets)
+            {
+                if (subset.UID == uid)
+                {
+                    return subset;
+                }
 
+                var result = SubsetByUID(subset, uid);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+            return null;
+        }
+
+        public ConditionSubset? SubsetByUID(ConditionSubset rootSubset, Guid uid)
+        {
+            foreach (var subset in rootSubset.Conditions.OfType<ConditionSubset>())
+            {
+                if (subset.UID == uid)
+                {
+                    return subset;
+                }
+
+                var result = SubsetByUID(subset, subset.UID);
+                if (result != null)
+                {
+                    return result;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Creates a flattened list of conditions groups from nested conditions.
+        /// </summary>
+        /// <returns></returns>
+        public List<FlatConditionGroup> Flatten()
+        {
+            var flattenedGroups = new List<FlatConditionGroup>();
+
+            foreach (var subset in this.Subsets)
+            {
+                var flatGroup = new FlatConditionGroup(subset.LogicalConnector, subset.UID);
+                flattenedGroups.Add(flatGroup);
+
+                Console.WriteLine(DebugLogicalConnectorToString(subset.LogicalConnector) + " (");
+                foreach (var condition in subset.Conditions)
+                {
+                    Flatten(condition, ref flatGroup, ref flattenedGroups);
+                }
+            }
+
+            return flattenedGroups;
+        }
+
+        private void Flatten(ICondition condition, ref FlatConditionGroup flatGroup, ref List<FlatConditionGroup> flattenedGroups)
+        {
+            if (condition is ConditionSubset)
+            {
+                var subset = (ConditionSubset)condition;
+
+                var subsetFlatGroup = new FlatConditionGroup(subset.LogicalConnector, subset.UID);
+                flattenedGroups.Add(subsetFlatGroup);
+
+                foreach (var subsetCondition in subset.Conditions)
+                {
+                    Flatten(subsetCondition, ref subsetFlatGroup, ref flattenedGroups);
+                }
+            }
+            else if (condition is ConditionSingle)
+            {
+                flatGroup.Conditions.Add((ConditionSingle)condition);
+            }
+        }
+
+        #region Debug.
+
+        public void DebugPrint()
+        {
+            foreach (var subset in this.Subsets)
+            {
+                Console.WriteLine(DebugLogicalConnectorToString(subset.LogicalConnector) + " (");
+                foreach (var condition in subset.Conditions)
+                {
+                    DebugPrintCondition(condition, 1);
+                }
+                Console.WriteLine(")");
+            }
+        }
+
+        private string DebugLogicalConnectorToString(LogicalConnector logicalConnector)
+        {
+            return (logicalConnector == LogicalConnector.None ? "" : logicalConnector.ToString().ToUpper() + " ");
+        }
+
+        private string DebugLogicalQualifierToString(LogicalQualifier logicalQualifier)
+        {
+            switch (logicalQualifier)
+            {
+                case LogicalQualifier.Equals:
+                    return "=";
+                case LogicalQualifier.NotEquals:
+                    return "!=";
+                case LogicalQualifier.GreaterThanOrEqual:
+                    return ">=";
+                case LogicalQualifier.LessThanOrEqual:
+                    return "<=";
+                case LogicalQualifier.LessThan:
+                    return "<";
+                case LogicalQualifier.GreaterThan:
+                    return ">";
+            }
+
+            return "";
+        }
+
+        private void DebugPrintCondition(ICondition condition, int depth)
+        {
+            if (condition is ConditionSubset)
+            {
+                Console.WriteLine("".PadLeft(depth, '\t') + "(");
+                var subset = (ConditionSubset)condition;
+                foreach (var subsetCondition in subset.Conditions)
+                {
+                    DebugPrintCondition(subsetCondition, depth + 1);
+                }
+
+                Console.WriteLine("".PadLeft(depth, '\t') + ")");
+            }
+            else if (condition is ConditionSingle)
+            {
+                var single = (ConditionSingle)condition;
+                Console.Write("".PadLeft(depth, '\t') + DebugLogicalConnectorToString(single.LogicalConnector));
+                Console.WriteLine($"[{single.Left}] {DebugLogicalQualifierToString(single.LogicalQualifier)} [{single.Right}]");
+            }
+        }
+
+        #endregion
+
+        public Conditions Clone()
+        {
+            var result = new Conditions();
+
+            foreach (var subset in this.Subsets)
+            {
+                //Yes, this is recursive (though the interface).
+                result.Subsets.Add((ConditionSubset)subset.Clone());
+            }
+
+            return result;
+        }
 
         /*
         public void AddRange(Conditions conditions)

@@ -8,10 +8,12 @@
         /// </summary>
         public List<string> CoveredFields { get; set; }
 
+        public string CoveredHash => string.Join(":", CoveredFields.OrderBy(o => o)).ToLowerInvariant();
+
         public IndexSelection(PersistIndex index, List<string> coveredFields)
         {
-            this.CoveredFields = coveredFields;
-            this.Index = index;
+            CoveredFields = coveredFields;
+            Index = index;
         }
     }
 }

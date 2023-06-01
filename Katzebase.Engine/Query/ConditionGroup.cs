@@ -1,16 +1,13 @@
-﻿using static Katzebase.Engine.Constants;
+﻿using Katzebase.Engine.Indexes;
+using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Query
 {
-    public class ConditionGroup
+    public class ConditionGroup : ConditionSubset
     {
-        public List<ConditionBase> Conditions = new();
-
-        public LogicalConnector LogicalConnector { get; set; }
-
         public ConditionGroup(LogicalConnector logicalConnector)
+            : base(logicalConnector)
         {
-            LogicalConnector = logicalConnector;
         }
     }
 }

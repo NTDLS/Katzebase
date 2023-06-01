@@ -202,70 +202,95 @@ namespace Katzebase.Engine.Indexes
             */
         }
 
+        /// <summary>
+        /// Takes a nested set of conditions and returns a selection of indexes as well as a clone of the conditions with associated indexes.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="schemaMeta"></param>
+        /// <param name="conditions">Nested conditions.</param>
+        /// <returns>A selection of indexes as well as a clone of the conditions with associated indexes</returns>
         public IndexSelections SelectIndexes(Transaction transaction, PersistSchema schemaMeta, Conditions conditions)
         {
             try
             {
-                var indexKeyMatches = new IndexKeyMatches();
-
                 var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
 
-                var indexSelections = new IndexSelections();
+                var indexSelections = new IndexSelections(conditions);
 
-                //Loop though each index in the schema.
-                var potentialIndexs = new List<PotentialIndex>();
-
-                foreach (var indexMeta in indexCatalog.Collection)
+                foreach (var flatGroup in indexSelections.FlatConditionGroups)
                 {
-                    var handledKeyNames = new List<string>();
+                    var potentialIndexs = new List<PotentialIndex>();
 
-                    for (int i = 0; i < indexMeta.Attributes.Count; i++)
+                    //Loop though each index in the schema.
+                    foreach (var indexMeta in indexCatalog.Collection)
                     {
-                        if (indexMeta.Attributes == null || indexMeta.Attributes[i] == null)
+                        var handledKeyNames = new List<string>();
+
+                        for (int i = 0; i < indexMeta.Attributes.Count; i++)
                         {
-                            throw new KbNullException($"Value should not be null {nameof(indexMeta.Attributes)}.");
+                            if (indexMeta.Attributes == null || indexMeta.Attributes[i] == null)
+                            {
+                                throw new KbNullException($"Value should not be null {nameof(indexMeta.Attributes)}.");
+                            }
+
+                            var keyName = indexMeta.Attributes[i].Field?.ToLower();
+                            if (keyName == null)
+                            {
+                                throw new KbNullException($"Value should not be null {nameof(keyName)}.");
+                            }
+
+                            if (flatGroup.Conditions.Any(o => o.Left.Value == keyName && !o.CoveredByIndex))
+                            {
+                                handledKeyNames.Add(keyName);
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
 
-                        var keyName = indexMeta.Attributes[i].Field?.ToLower();
-                        if (keyName == null)
+                        if (handledKeyNames.Count > 0)
                         {
-                            throw new KbNullException($"Value should not be null {nameof(keyName)}.");
-                        }
-
-                        if (indexKeyMatches.Find(o => o.Field == keyName && o.Handled == false) != null)
-                        {
-                            handledKeyNames.Add(keyName);
-                        }
-                        else
-                        {
-                            break;
+                            var potentialIndex = new PotentialIndex(flatGroup.SourceSubsetUID, indexMeta, handledKeyNames);
+                            potentialIndexs.Add(potentialIndex);
                         }
                     }
 
-                    if (handledKeyNames.Count > 0)
+                    //Grab the index that matches the most of our supplied keys but also has the least attributes.
+                    var firstIndex = (from o in potentialIndexs where o.Tried == false select o)
+                        .OrderByDescending(s => s.CoveredFields.Count)
+                        .ThenBy(t => t.Index.Attributes.Count).FirstOrDefault();
+                    if (firstIndex != null)
                     {
-                        potentialIndexs.Add(new PotentialIndex(indexMeta, handledKeyNames));
+                        var handledKeys = (from o in flatGroup.Conditions where firstIndex.CoveredFields.Contains(o.Left.Value ?? string.Empty) select o).ToList();
+                        foreach (var handledKey in handledKeys)
+                        {
+                            handledKey.CoveredByIndex = true;
+                        }
+
+                        firstIndex.Tried = true;
+
+                        var indexSelection = new IndexSelection(firstIndex.Index, firstIndex.CoveredFields);
+
+                        indexSelections.Add(indexSelection);
+
+                        //Mark which condition this index selection satisifies.
+                        var sourceSubset = indexSelections.Conditions.SubsetByUID(flatGroup.SourceSubsetUID);
+                        Utility.EnsureNotNull(sourceSubset);
+                        sourceSubset.Index = indexSelection;
+
+                        foreach (var conditon in sourceSubset.Conditions.OfType<ConditionSingle>())
+                        {
+                            if (indexSelection.CoveredFields.Any(o => o == conditon.Left.Value))
+                            {
+                                conditon.CoveredByIndex = true;
+                            }
+                        }
                     }
+
+                    var uncoveredFields = (from o in flatGroup.Conditions where !o.CoveredByIndex select o.Left.Value).ToList();
+                    //indexSelections.UncoveredFields.AddRange(uncoveredFields);
                 }
-
-                //Grab the index that matches the most of our supplied keys but also has the least attributes.
-                var firstIndex = (from o in potentialIndexs where o.Tried == false select o)
-                    .OrderByDescending(s => s.HandledKeyNames.Count)
-                    .ThenBy(t => t.Index.Attributes.Count).FirstOrDefault();
-                if (firstIndex != null)
-                {
-                    var handledKeys = (from o in indexKeyMatches where firstIndex.HandledKeyNames.Contains(o.Field) select o).ToList();
-                    foreach (var handledKey in handledKeys)
-                    {
-                        handledKey.Handled = true;
-                    }
-
-                    firstIndex.Tried = true;
-
-                    indexSelections.Add(new IndexSelection(firstIndex.Index, firstIndex.HandledKeyNames));
-                }
-
-                indexSelections.UnhandledKeys.AddRange((from o in indexKeyMatches where o.Handled == false select o.Field).ToList());
 
                 return indexSelections;
             }

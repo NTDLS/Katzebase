@@ -3,13 +3,25 @@ using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Query
 {
-    public class ConditionSingle : ConditionBase
+    public class ConditionSingle : ICondition
     {
         public ConditionValue Left { get; set; } = new ConditionValue();
         public ConditionValue Right { get; set; } = new ConditionValue();
-
         public LogicalQualifier LogicalQualifier { get; set; } = LogicalQualifier.None;
         public LogicalConnector LogicalConnector { get; set; } = LogicalConnector.None;
+        public bool CoveredByIndex { get; set; }
+
+        public ICondition Clone()
+        {
+            return new ConditionSingle()
+            {
+                CoveredByIndex = CoveredByIndex,
+                LogicalQualifier = LogicalQualifier,
+                LogicalConnector = LogicalConnector,
+                Left = Left.Clone(),
+                Right = Left.Clone()
+            };
+        }
 
         public ConditionSingle(LogicalConnector logicalConnector, string left)
         {

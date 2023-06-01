@@ -466,7 +466,7 @@ namespace Katzebase.Engine.Query
 
                             string simpleGroupExpression = conditionsText.Substring(0, tokenPosition).Trim().ToLower();
                             var simpleConditionGroup = ParseConditionGroup(simpleGroupExpression, logicalConnector, literalStrings);
-                            conditions.Groups.Add(simpleConditionGroup);
+                            conditions.Subsets.Add(simpleConditionGroup);
 
                             conditionsText = conditionsText.Substring(tokenPosition).Trim(); //Trim-up the working expression (this tuncates the entire string).
                             break;
@@ -481,7 +481,7 @@ namespace Katzebase.Engine.Query
 
                             string simpleGroupExpression = conditionsText.Substring(0, trimPosition).Trim().ToLower();
                             var simpleConditionGroup = ParseConditionGroup(simpleGroupExpression, logicalConnector, literalStrings);
-                            conditions.Groups.Add(simpleConditionGroup);
+                            conditions.Subsets.Add(simpleConditionGroup);
 
                             conditionsText = conditionsText.Substring(trimPosition).Trim(); //Trim-up the working expression.
                             break;
@@ -502,7 +502,7 @@ namespace Katzebase.Engine.Query
                     }
 
                     var conditionGroup = ParseConditionGroup(groupExpression, logicalConnector, literalStrings);
-                    conditions.Groups.Add(conditionGroup);
+                    conditions.Subsets.Add(conditionGroup);
                 }
             }
 
@@ -521,66 +521,6 @@ namespace Katzebase.Engine.Query
             var conditions = ParseConditionGroups(conditionsText, literalStrings);
             //DebugPrintConditions(conditions);
             return conditions;
-        }
-
-        private static void DebugPrintConditions(Conditions conditions)
-        {
-            foreach (var group in conditions.Groups)
-            {
-                Console.WriteLine(DebugLogicalConnectorToString(group.LogicalConnector) + " (");
-                foreach (var condition in group.Conditions)
-                {
-                    DebugPrintCondition(condition, 1);
-                }
-                Console.WriteLine(")");
-            }
-        }
-
-        private static string DebugLogicalConnectorToString(LogicalConnector logicalConnector)
-        {
-            return (logicalConnector == LogicalConnector.None ? "" : logicalConnector.ToString().ToUpper() + " ");
-        }
-
-        private static string DebugLogicalQualifierToString(LogicalQualifier logicalQualifier)
-        {
-            switch (logicalQualifier)
-            {
-                case LogicalQualifier.Equals:
-                    return "=";
-                case LogicalQualifier.NotEquals:
-                    return "!=";
-                case LogicalQualifier.GreaterThanOrEqual:
-                    return ">=";
-                case LogicalQualifier.LessThanOrEqual:
-                    return "<=";
-                case LogicalQualifier.LessThan:
-                    return "<";
-                case LogicalQualifier.GreaterThan:
-                    return ">";
-            }
-
-            return "";
-        }
-
-        private static void DebugPrintCondition(ConditionBase condition, int depth)
-        {
-            if (condition is ConditionSubset)
-            {
-                Console.WriteLine("".PadLeft(depth, '\t') + "(");
-                var subset = (ConditionSubset)condition;
-                foreach (var subsetCondition in subset.Conditions)
-                {
-                    DebugPrintCondition(subsetCondition, depth + 1);
-                }
-
-                Console.WriteLine("".PadLeft(depth, '\t') + ")");
-            }
-            else if(condition is ConditionSingle)
-            {
-                var single = (ConditionSingle)condition;
-                Console.Write("".PadLeft(depth, '\t') + DebugLogicalConnectorToString(single.LogicalConnector));
-                Console.WriteLine($"[{single.Left}] {DebugLogicalQualifierToString(single.LogicalQualifier)} [{single.Right}]");
-            }
         }
     }
 }

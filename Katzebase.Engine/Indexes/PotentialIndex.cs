@@ -2,14 +2,17 @@
 {
     public class PotentialIndex
     {
-        public List<string> HandledKeyNames { get; set; }
+        public List<string> CoveredFields { get; private set; }
         public PersistIndex Index { get; set; }
         public bool Tried { get; set; }
+        public string CoveredHash => string.Join(":", CoveredFields.OrderBy(o => o)).ToLowerInvariant();
 
-        public PotentialIndex(PersistIndex index, List<string> handledKeyNames)
+        public Guid SourceSubsetUID { get; private set; }
+
+        public PotentialIndex(Guid sourceSubsetUID, PersistIndex index, List<string> coveredFields)
         {
             this.Index = index;
-            this.HandledKeyNames = handledKeyNames;
+            this.CoveredFields = coveredFields;
         }
     }
 }

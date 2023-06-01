@@ -86,11 +86,8 @@ namespace Katzebase.Engine.Documents
             //Figure out which indexes could assist us in retrieving the desired documents.
             var indexSelections = core.Indexes.SelectIndexes(transaction, schemaMeta, query.Conditions);
 
-            Console.WriteLine(indexSelections.UnhandledKeys.Count);
-
             if (indexSelections.Count == 0) //Full schema scan. Ouch!
             {
-
                 //Loop through each document in the catalog:
                 foreach (var item in documentCatalog.Collection)
                 {

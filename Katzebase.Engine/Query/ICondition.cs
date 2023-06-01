@@ -2,7 +2,8 @@
 
 namespace Katzebase.Engine.Query
 {
-    public class ConditionBase
+    public interface ICondition
     {
+        public ICondition Clone();
     }
 }

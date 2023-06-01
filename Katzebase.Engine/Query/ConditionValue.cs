@@ -8,23 +8,32 @@ namespace Katzebase.Engine.Query
         /// This value is a constant string.
         /// </summary>
         public bool IsString { get; set; }
-
         /// <summary>
         /// This value is a constant (string or numeric). If false, then this value is a field name.
         /// </summary>
         public bool IsConstant { get; set; }
-
         /// <summary>
         /// This value is numeric and does not contain string characters.
         /// </summary>
         public bool IsNumeric { get; set; }
-
         /// <summary>
         /// This value has been set.
         /// </summary>
         public bool IsSet { get; private set; }
 
         private string? _value = null;
+
+        public ConditionValue Clone()
+        {
+            return new ConditionValue()
+            {
+                IsConstant = IsConstant,
+                IsNumeric = IsNumeric,
+                IsString = IsString,
+                IsSet = IsSet,
+                _value = _value
+            };
+        }
 
         public override string ToString()
         {
