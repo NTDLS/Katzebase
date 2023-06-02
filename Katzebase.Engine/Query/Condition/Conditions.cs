@@ -125,6 +125,9 @@ namespace Katzebase.Engine.Query.Condition
                 {
                     subsetClone.Conditions.Add(condition.Clone());
                 }
+                subsetClone.ConditionKeys.UnionWith(subset.ConditionKeys);
+                subsetClone.SubsetKeys.UnionWith(subset.SubsetKeys);
+
                 clone.Subsets.Add(subsetClone);
             }
 
@@ -150,6 +153,15 @@ namespace Katzebase.Engine.Query.Condition
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
                 {
+                    if (token.StartsWith("$:ck"))
+                    {
+                        subset.ConditionKeys.Add(token.Substring(2, token.Length - 7));
+                    }
+                    else if (token.StartsWith("$:sk"))
+                    {
+                        subset.SubsetKeys.Add(token.Substring(2, token.Length - 7));
+                    }
+
                     continue;
                 }
                 else if (token == "and")

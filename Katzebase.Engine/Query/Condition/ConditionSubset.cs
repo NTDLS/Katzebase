@@ -8,6 +8,10 @@ namespace Katzebase.Engine.Query.Condition
         public string Expression { get; set; }
         public List<Condition> Conditions { get; set; } = new();
 
+        public HashSet<string> SubsetKeys { get; set; } = new();
+        public HashSet<string> ConditionKeys { get; set; } = new();
+
+
         /// <summary>
         /// If this condition is covered by an index, this is the index which we will use.
         /// </summary>

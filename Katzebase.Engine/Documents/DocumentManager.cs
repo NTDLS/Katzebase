@@ -221,7 +221,6 @@ namespace Katzebase.Engine.Documents
                 //        limitingDocumentIds = null;
                 //    }
                 //}
-                
 
                 limitingDocumentIds = new HashSet<Guid>();
                 limitingDocumentIds.UnionWith(documentCatalog.Collection.Select(o => o.Id).ToHashSet());
