@@ -252,7 +252,7 @@ namespace Katzebase.Engine.Indexes
 
                         if (handledKeyNames.Count > 0)
                         {
-                            var potentialIndex = new PotentialIndex(flatGroup.SourceSubsetUID, indexMeta, handledKeyNames);
+                            var potentialIndex = new PotentialIndex(flatGroup.SubsetUID, indexMeta, handledKeyNames);
                             potentialIndexs.Add(potentialIndex);
                         }
                     }
@@ -276,7 +276,7 @@ namespace Katzebase.Engine.Indexes
                         lookupOptimization.IndexSelection.Add(indexSelection);
 
                         //Mark which condition this index selection satisifies.
-                        var sourceSubset = lookupOptimization.Conditions.SubsetByUID(flatGroup.SourceSubsetUID);
+                        var sourceSubset = lookupOptimization.Conditions.SubsetByUID(flatGroup.SubsetUID);
                         Utility.EnsureNotNull(sourceSubset);
                         sourceSubset.Index = indexSelection;
 

@@ -6,12 +6,12 @@ namespace Katzebase.Engine.Documents
     {
         public LogicalConnector LogicalConnector { get; set; }
         public DocumentLookupResults Results { get; set; }
-        public Guid ConditionSubsetUID { get; set; }
+        public Guid SubsetUID { get; set; }
 
-        public DocumentLookupLogicSubsetResult(Guid conditionSubsetUID, LogicalConnector logicalConnector, DocumentLookupResults results)
+        public DocumentLookupLogicSubsetResult(Guid subsetUID, LogicalConnector logicalConnector, DocumentLookupResults results)
         {
             LogicalConnector = logicalConnector;
-            ConditionSubsetUID = conditionSubsetUID;
+            SubsetUID = subsetUID;
             Results = results;
         }
     }

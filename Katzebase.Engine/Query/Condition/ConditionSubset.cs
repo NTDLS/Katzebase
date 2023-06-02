@@ -7,8 +7,22 @@ namespace Katzebase.Engine.Query.Condition
     {
         public List<ICondition> Conditions = new();
         public LogicalConnector LogicalConnector { get; set; }
-        public Guid UID { get; private set; } = Guid.NewGuid();
-        public string SubsetVariableName { get; set; } = string.Empty;
+
+        private Guid _subsetUID;
+        public Guid SubsetUID
+        {
+            get
+            {
+                return _subsetUID;
+            }
+            set
+            {
+                _subsetUID = value;
+                _subsetVariableName = $"n{value.ToString().ToLower().Replace("-", "")}";
+            }
+        }
+        private string _subsetVariableName = string.Empty;
+        public string SubsetVariableName => _subsetVariableName;
 
         /// <summary>
         /// If this condition is covered by an index, this is the index which we will use.
@@ -18,12 +32,13 @@ namespace Katzebase.Engine.Query.Condition
         public ConditionSubset(LogicalConnector logicalConnector)
         {
             LogicalConnector = logicalConnector;
+            SubsetUID = Guid.NewGuid();
         }
 
-        public ConditionSubset(LogicalConnector logicalConnector, Guid uid)
+        public ConditionSubset(LogicalConnector logicalConnector, Guid subsetUID)
         {
             LogicalConnector = logicalConnector;
-            UID = uid;
+            SubsetUID = subsetUID;
         }
 
         public ICondition Clone()
@@ -31,8 +46,7 @@ namespace Katzebase.Engine.Query.Condition
             var clone = new ConditionSubset(LogicalConnector)
             {
                 Index = Index,
-                UID = UID,
-                SubsetVariableName = SubsetVariableName
+                SubsetUID = SubsetUID
             };
 
             foreach (var condition in Conditions)

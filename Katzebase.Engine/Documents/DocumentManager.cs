@@ -64,8 +64,17 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-
-        private DocumentLookupResults GetDocumentIDsByConditionSubset(Transaction transaction,
+        /// <summary>
+        /// Gets all documents by a subset of conditions.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="documentCatalog"></param>
+        /// <param name="schemaMeta"></param>
+        /// <param name="query"></param>
+        /// <param name="conditionSubset"></param>
+        /// <returns></returns>
+        /// <exception cref="KbParserException"></exception>
+        private DocumentLookupResults GetDocumentsByConditionSubset(Transaction transaction,
             PersistDocumentCatalog documentCatalog, PersistSchema schemaMeta, PreparedQuery query, ConditionSubset conditionSubset)
         {
             var results = new DocumentLookupResults();
@@ -84,7 +93,8 @@ namespace Katzebase.Engine.Documents
 
                 var expression = new StringBuilder();
 
-                //Loop though each condition in the prepared query:
+                //Loop though each condition in the prepared query and build an expression to see if the document meets the criteria
+                //  by building a logical expression that we can evaluate 
                 foreach (var condition in conditionSubset.Conditions.OfType<ConditionSingle>())
                 {
                     Utility.EnsureNotNull(condition.Left.Value); //TODO: What do we really need to do here?
@@ -173,8 +183,8 @@ namespace Katzebase.Engine.Documents
             foreach (var conditionGroup in lookupOptimization.FlatConditionGroups)
             {
                 var subset = conditionGroup.ToSubset();
-                var subsetResults = GetDocumentIDsByConditionSubset(transaction, documentCatalog, schemaMeta, query, subset);
-                allResults.Add(new DocumentLookupLogicSubsetResult(subset.UID, subset.LogicalConnector, subsetResults));
+                var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog, schemaMeta, query, subset);
+                allResults.Add(new DocumentLookupLogicSubsetResult(subset.SubsetUID, subset.LogicalConnector, subsetResults));
 
                 var currentRIDs = subsetResults.Collection.Select(o => o.RID).ToHashSet();
                 allResultRIDs.UnionWith(currentRIDs);
@@ -186,7 +196,7 @@ namespace Katzebase.Engine.Documents
 
                 foreach (var conditionGroup in lookupOptimization.FlatConditionGroups)
                 {
-                    var resultSet = allResults.Where(o => o.ConditionSubsetUID == conditionGroup.SourceSubsetUID).First();
+                    var resultSet = allResults.Where(o => o.SubsetUID == conditionGroup.SubsetUID).First();
                     var resultSetDocument = resultSet.Results.Collection.FirstOrDefault(o => o.RID == rid);
 
                     workingDocument ??= resultSetDocument; //Save the first instance of the document we found. This will be used for the final result.

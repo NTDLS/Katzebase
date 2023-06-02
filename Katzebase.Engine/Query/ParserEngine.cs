@@ -21,8 +21,6 @@ namespace Katzebase.Engine.Query
 
             var literalStrings = Utilities.CleanQueryText(ref query);
 
-            //var literalStrings = Utilities.SwapOutLiteralStrings(ref query);
-
             int position = 0;
             string token = string.Empty;
 
@@ -523,10 +521,6 @@ namespace Katzebase.Engine.Query
         {
             conditionsText = conditionsText.Replace("( ", "(").Replace(" (", "(").Replace(") ", ")").Replace(" )", ")").Trim();
             var conditions = ParseConditionGroups(conditionsText, literalStrings);
-            //DebugPrintConditions(conditions);
-
-            conditions.FillInSubsetVariableNames();
-
             return conditions;
         }
     }

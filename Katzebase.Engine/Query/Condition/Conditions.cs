@@ -15,55 +15,11 @@ namespace Katzebase.Engine.Query.Condition
     {
         public List<ConditionSubset> Subsets { get; set; } = new();
 
-        private string _lastVariableLetter = "";
-
-        public string GetNextVariableLetter()
-        {
-            if (_lastVariableLetter == string.Empty)
-            {
-                _lastVariableLetter = "A";
-                return _lastVariableLetter;
-            }
-            char[] chars = _lastVariableLetter.ToCharArray();
-            char lastChar = chars[chars.Length - 1];
-            char nextChar = (char)(lastChar + 1);
-
-            if (nextChar > 'Z')
-            {
-                _lastVariableLetter = _lastVariableLetter + "A";
-            }
-            else
-            {
-                chars[chars.Length - 1] = nextChar;
-                _lastVariableLetter = new string(chars);
-            }
-            return _lastVariableLetter;
-        }
-
-        public void FillInSubsetVariableNames()
+        public ConditionSubset? SubsetByUID(Guid uid)
         {
             foreach (var subset in Subsets)
             {
-                subset.SubsetVariableName = GetNextVariableLetter();
-                FillInSubsetVariableNames(subset);
-            }
-        }
-
-        private void FillInSubsetVariableNames(ConditionSubset rootSubset)
-        {
-            foreach (var subset in rootSubset.Conditions.OfType<ConditionSubset>())
-            {
-                subset.SubsetVariableName = GetNextVariableLetter();
-                FillInSubsetVariableNames(subset);
-            }
-        }
-
-
-        internal ConditionSubset? SubsetByUID(Guid uid)
-        {
-            foreach (var subset in Subsets)
-            {
-                if (subset.UID == uid)
+                if (subset.SubsetUID == uid)
                 {
                     return subset;
                 }
@@ -81,51 +37,12 @@ namespace Katzebase.Engine.Query.Condition
         {
             foreach (var subset in rootSubset.Conditions.OfType<ConditionSubset>())
             {
-                if (subset.UID == uid)
+                if (subset.SubsetUID == uid)
                 {
                     return subset;
                 }
 
-                var result = SubsetByUID(subset, subset.UID);
-                if (result != null)
-                {
-                    return result;
-                }
-            }
-
-            return null;
-        }
-
-        internal ConditionSubset? GetNext(ref ConditionConsumptionTracker tracker)
-        {
-            foreach (var subset in Subsets)
-            {
-                if (tracker.ConsumedSubsets.Contains(subset.UID) == false)
-                {
-                    tracker.ConsumedSubsets.Add(subset.UID);
-                    return subset;
-                }
-
-                var result = GetNext(subset, ref tracker);
-                if (result != null)
-                {
-                    return result;
-                }
-            }
-            return null;
-        }
-
-        private ConditionSubset? GetNext(ConditionSubset rootSubset, ref ConditionConsumptionTracker tracker)
-        {
-            foreach (var subset in rootSubset.Conditions.OfType<ConditionSubset>())
-            {
-                if (tracker.ConsumedSubsets.Contains(subset.UID) == false)
-                {
-                    tracker.ConsumedSubsets.Add(subset.UID);
-                    return subset;
-                }
-
-                var result = GetNext(subset, ref tracker);
+                var result = SubsetByUID(subset, subset.SubsetUID);
                 if (result != null)
                 {
                     return result;
@@ -157,6 +74,12 @@ namespace Katzebase.Engine.Query.Condition
             return flattenedGroups;
         }
 
+        /// <summary>
+        /// Recursive counterpart of Flatten.
+        /// </summary>
+        /// <param name="condition"></param>
+        /// <param name="flatGroup"></param>
+        /// <param name="flattenedGroups"></param>
         private void Flatten(ICondition condition, ref FlatConditionGroup flatGroup, ref List<FlatConditionGroup> flattenedGroups)
         {
             if (condition is ConditionSubset)
@@ -177,44 +100,10 @@ namespace Katzebase.Engine.Query.Condition
             }
         }
 
-        #region Debug.
-
-        public void DebugPrint()
-        {
-            foreach (var subset in Subsets)
-            {
-                Console.WriteLine(LogicalConnectorToString(subset.LogicalConnector) + " (");
-                foreach (var condition in subset.Conditions)
-                {
-                    DebugPrintCondition(condition, 1);
-                }
-                Console.WriteLine(")");
-            }
-        }
-
-        private void DebugPrintCondition(ICondition condition, int depth)
-        {
-            if (condition is ConditionSubset)
-            {
-                Console.WriteLine("".PadLeft(depth, '\t') + "(");
-                var subset = (ConditionSubset)condition;
-                foreach (var subsetCondition in subset.Conditions)
-                {
-                    DebugPrintCondition(subsetCondition, depth + 1);
-                }
-
-                Console.WriteLine("".PadLeft(depth, '\t') + ")");
-            }
-            else if (condition is ConditionSingle)
-            {
-                var single = (ConditionSingle)condition;
-                Console.Write("".PadLeft(depth, '\t') + LogicalConnectorToString(single.LogicalConnector));
-                Console.WriteLine($"[{single.Left}] {LogicalQualifierToString(single.LogicalQualifier)} [{single.Right}]");
-            }
-        }
-
-        #endregion
-
+        /// <summary>
+        /// Builds a mathematical expression tree that can be used to evaluate if all subset conditions have been met.
+        /// </summary>
+        /// <returns></returns>
         public string BuildSubsetExpressionTree()
         {
             var expression = new StringBuilder();
@@ -231,9 +120,14 @@ namespace Katzebase.Engine.Query.Condition
             return expression.ToString();
         }
 
+        /// <summary>
+        /// Recursive counterpart to BuildSubsetExpressionTree()
+        /// </summary>
+        /// <param name="condition"></param>
+        /// <param name="expression"></param>
+
         private void BuildSubsetExpressionTree(ConditionSubset condition, ref StringBuilder expression)
         {
-
             foreach (var subset in condition.Conditions.OfType<ConditionSubset>())
             {
                 expression.Append(LogicalConnectorToLogicString(condition.LogicalConnector));
@@ -244,6 +138,10 @@ namespace Katzebase.Engine.Query.Condition
             }
         }
 
+        /// <summary>
+        /// Builds a full expression tree, just used for debugging.
+        /// </summary>
+        /// <returns></returns>
         public string BuildFullExpressionTree()
         {
             var expression = new StringBuilder();
@@ -264,6 +162,11 @@ namespace Katzebase.Engine.Query.Condition
             return expression.ToString();
         }
 
+        /// <summary>
+        /// Recursive counterpart to BuildFullExpressionTree.
+        /// </summary>
+        /// <param name="condition"></param>
+        /// <param name="expression"></param>
         private void BuildFullExpressionTree(ICondition condition, ref StringBuilder expression)
         {
             if (condition is ConditionSubset)
@@ -298,24 +201,5 @@ namespace Katzebase.Engine.Query.Condition
 
             return result;
         }
-
-        /*
-        public void AddRange(Conditions conditions)
-        {
-            Groups = conditions.Groups;
-            foreach (Condition condition in conditions.Collection)
-            {
-                Add(condition);
-            }
-        }
-
-        public Condition Add(Condition condition)
-        {
-            var result = new Condition(condition.LogicalConnector, condition.Field, condition.ConditionQualifier, condition.Value);
-            result.Children.AddRange(condition.Children);
-            Collection.Add(result);
-            return result;
-        }
-        */
     }
 }
