@@ -201,7 +201,6 @@ namespace Katzebase.Engine.Documents
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
-                //TODO: This (recursion) is untested!
                 var subExpression = lookupOptimization.Conditions.SubsetByKey(subsetKey);
                 bool subExpressionResult = SatisifySubExpression(lookupOptimization, jContent, subExpression);
                 expression.Parameters[subsetKey] = subExpressionResult;
@@ -209,7 +208,7 @@ namespace Katzebase.Engine.Documents
 
             foreach (var condition in conditionSubset.Conditions)
             {
-                Utility.EnsureNotNull(condition.Left.Value); //TODO: What do we really need to do here?
+                Utility.EnsureNotNull(condition.Left.Value);
 
                 //Get the value of the condition:
                 if (jContent.TryGetValue(condition.Left.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
