@@ -104,6 +104,8 @@ namespace Katzebase.Engine.Documents
         {
             var results = new DocumentLookupResults();
 
+            var expression = new NCalc.Expression(conditionSubset.Expression);
+
             //Loop through each document in the catalog:
             foreach (var item in partialDocumentCatalog)
             {
@@ -124,8 +126,6 @@ namespace Katzebase.Engine.Documents
 
                 var jContent = JObject.Parse(persistDocument.Content);
 
-                var expression = new StringBuilder();
-
                 //Loop though each condition in the prepared query and build an expression to see if the document meets the criteria
                 //  by building a logical expression that we can evaluate 
                 foreach (var condition in conditionSubset.Conditions)
@@ -135,19 +135,7 @@ namespace Katzebase.Engine.Documents
                     //Get the value of the condition:
                     if (jContent.TryGetValue(condition.Left.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
                     {
-                        if (expression.Length > 0)
-                        {
-                            expression.Append(condition.LogicalConnector == LogicalConnector.And ? "&&" : "||");
-                        }
-
-                        if (condition.IsMatch(jToken.ToString().ToLower()))
-                        {
-                            expression.Append($"(1)");
-                        }
-                        else
-                        {
-                            expression.Append($"(0)");
-                        }
+                        expression.Parameters[condition.ConditionKey] = condition.IsMatch(jToken.ToString().ToLower());
                     }
                     else
                     {
@@ -155,7 +143,7 @@ namespace Katzebase.Engine.Documents
                     }
                 }
 
-                var expressionResult = (bool)(new NCalc.Expression(expression.ToString())).Evaluate();
+                var expressionResult = (bool)expression.Evaluate();
 
                 if (expressionResult)
                 {
