@@ -141,15 +141,18 @@ namespace Katzebase.Engine.Query.Condition
             foreach (var subset in Subsets)
             {
                 var connectorString = LogicalConnectorToString(subset.LogicalConnector);
-                expression.Append(string.IsNullOrWhiteSpace(connectorString) ? "" : $" {connectorString} ");
+                expression.AppendLine(string.IsNullOrWhiteSpace(connectorString) ? "" : $" {connectorString} ");
 
-                expression.Append('(');
+                expression.AppendLine("(");
+                expression.AppendLine($"/*{subset.SubsetVariableName}*/");
                 foreach (var condition in subset.Conditions)
                 {
                     BuildFullExpressionTree(condition, ref expression);
                 }
-                expression.Append(')');
+                expression.AppendLine(")");
             }
+
+            Console.WriteLine(expression.ToString());
 
             return expression.ToString();
         }
@@ -163,21 +166,22 @@ namespace Katzebase.Engine.Query.Condition
         {
             if (condition is ConditionSubset)
             {
-                expression.Append('(');
                 var subset = (ConditionSubset)condition;
+                expression.AppendLine("(");
+                expression.AppendLine($"/*{subset.SubsetVariableName}*/");
                 foreach (var subsetCondition in subset.Conditions)
                 {
                     BuildFullExpressionTree(subsetCondition, ref expression);
                 }
 
-                expression.Append(')');
+                expression.AppendLine(")");
             }
             else if (condition is ConditionSingle)
             {
                 var single = (ConditionSingle)condition;
                 var connectorString = LogicalConnectorToString(single.LogicalConnector);
                 expression.Append(string.IsNullOrWhiteSpace(connectorString) ? "" : $" {connectorString} ");
-                expression.Append($"[{single.Left}] {LogicalQualifierToString(single.LogicalQualifier)} [{single.Right}]");
+                expression.AppendLine($"[{single.Left}] {LogicalQualifierToString(single.LogicalQualifier)} [{single.Right}]");
             }
         }
 

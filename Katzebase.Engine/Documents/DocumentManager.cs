@@ -206,7 +206,10 @@ namespace Katzebase.Engine.Documents
             //Figure out which indexes could assist us in retrieving the desired documents (if any).
             var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMeta, query.Conditions);
 
+            string fullExpressionTree = query.Conditions.BuildFullExpressionTree();
             string subsetExpressionTree = query.Conditions.BuildSubsetExpressionTree();
+
+            Console.WriteLine(fullExpressionTree);
 
             var allResultRIDs = new HashSet<Guid>();
             var allResults = new List<DocumentLookupLogicSubsetResult>();
@@ -222,6 +225,7 @@ namespace Katzebase.Engine.Documents
 
                 HashSet<Guid>? limitingDocumentIds = null;
 
+                /*
                 if (conditionGroup.IndexSelection != null)
                 {
                     Utility.EnsureNotNull(conditionGroup.IndexSelection.Index.DiskPath);
@@ -229,19 +233,26 @@ namespace Katzebase.Engine.Documents
                     var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, conditionGroup.IndexSelection.Index.DiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(indexPageCatalog);
 
-                    //limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, conditionGroup.IndexSelection, subset);
+                    limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, conditionGroup.IndexSelection, subset);
                     if (limitingDocumentIds?.Count == 0)
                     {
                         limitingDocumentIds = null;
                     }
                 }
+                */
 
-                limitingDocumentIds = new HashSet<Guid>();
-                limitingDocumentIds.UnionWith(documentCatalog.Collection.Select(o => o.Id).ToHashSet());
-
+                //limitingDocumentIds = new HashSet<Guid>();
+                //limitingDocumentIds.UnionWith(documentCatalog.Collection.Select(o => o.Id).ToHashSet());
 
                 var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog.Collection, schemaMeta, query, subset, limitingDocumentIds);
-                allResults.Add(new DocumentLookupLogicSubsetResult(subset.SubsetUID, subset.LogicalConnector, subsetResults));
+
+                allResults.Add(new DocumentLookupLogicSubsetResult(subset.SubsetUID, subset.LogicalConnector, subsetResults) { DEBUGSUBSET = subset });
+
+                foreach (var dbg in subsetResults.Collection)
+                {
+                    Console.WriteLine(dbg.RID);
+                }
+
 
                 //Save a big list of all unique RIDs (Row IDs) so we can loop through them later an elimitate any that dont match all condition subsets.
                 var currentRIDs = subsetResults.Collection.Select(o => o.RID).ToHashSet();

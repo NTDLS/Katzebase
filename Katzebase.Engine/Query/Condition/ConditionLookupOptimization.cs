@@ -23,16 +23,17 @@ namespace Katzebase.Engine.Query.Condition
         {
             Conditions = conditions.Clone();
             FlattenConditionGroups();
-        }
 
-        public void FlattenConditionGroups()
-        {
-            FlatConditionGroups = Conditions.Flatten();
             foreach (var flatConditionGroup in FlatConditionGroups)
             {
                 //Order the conditions by (None, And, Or) - because this is the way the index selection process will evaluate them.
                 flatConditionGroup.Conditions = flatConditionGroup.Conditions.OrderBy(o => o.LogicalConnector).ToList();
             }
+        }
+
+        public void FlattenConditionGroups()
+        {
+            FlatConditionGroups = Conditions.Flatten();
         }
 
     }
