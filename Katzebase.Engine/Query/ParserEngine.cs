@@ -521,6 +521,9 @@ namespace Katzebase.Engine.Query
         {
             conditionsText = conditionsText.Replace("( ", "(").Replace(" (", "(").Replace(") ", ")").Replace(" )", ")").Trim();
             var conditions = ParseConditionGroups(conditionsText, literalStrings);
+
+            conditions.FillInSubsetVariableNames();
+
             return conditions;
         }
     }

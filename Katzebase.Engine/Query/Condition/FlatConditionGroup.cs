@@ -9,21 +9,8 @@ namespace Katzebase.Engine.Query.Condition
 
         public LogicalConnector LogicalConnector { get; set; }
 
-        private Guid _subsetUID;
-        public Guid SubsetUID
-        {
-            get
-            {
-                return _subsetUID;
-            }
-            set
-            {
-                _subsetUID = value;
-                _subsetVariableName = $"n{value.ToString().ToLower().Replace("-", "")}";
-            }
-        }
-        private string _subsetVariableName = string.Empty;
-        public string SubsetVariableName => _subsetVariableName;
+        public Guid SubsetUID { get; set; }
+        public string SubsetVariableName { get; set; } = string.Empty;
 
         /// <summary>
         /// If this condition is covered by an index, this is the index which we will use.

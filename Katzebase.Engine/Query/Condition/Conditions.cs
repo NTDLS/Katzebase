@@ -7,6 +7,49 @@ namespace Katzebase.Engine.Query.Condition
     {
         public List<ConditionSubset> Subsets { get; set; } = new();
 
+        private string _lastVariableLetter = "";
+
+        public string GetNextVariableLetter()
+        {
+            if (_lastVariableLetter == string.Empty)
+            {
+                _lastVariableLetter = "A";
+                return _lastVariableLetter;
+            }
+            char[] chars = _lastVariableLetter.ToCharArray();
+            char lastChar = chars[chars.Length - 1];
+            char nextChar = (char)(lastChar + 1);
+
+            if (nextChar > 'Z')
+            {
+                _lastVariableLetter = _lastVariableLetter + "A";
+            }
+            else
+            {
+                chars[chars.Length - 1] = nextChar;
+                _lastVariableLetter = new string(chars);
+            }
+            return _lastVariableLetter;
+        }
+
+        public void FillInSubsetVariableNames()
+        {
+            foreach (var subset in Subsets)
+            {
+                subset.SubsetVariableName = GetNextVariableLetter();
+                FillInSubsetVariableNames(subset);
+            }
+        }
+
+        private void FillInSubsetVariableNames(ConditionSubset rootSubset)
+        {
+            foreach (var subset in rootSubset.Conditions.OfType<ConditionSubset>())
+            {
+                subset.SubsetVariableName = GetNextVariableLetter();
+                FillInSubsetVariableNames(subset);
+            }
+        }
+
         public ConditionSubset? SubsetByUID(Guid uid)
         {
             foreach (var subset in Subsets)
@@ -98,18 +141,23 @@ namespace Katzebase.Engine.Query.Condition
         /// <returns></returns>
         public string BuildSubsetExpressionTree()
         {
-            var expression = new StringBuilder();
-
-            foreach (var subset in Subsets)
+            while (true)
             {
-                expression.Append(LogicalConnectorToLogicString(subset.LogicalConnector));
-                expression.Append('(');
-                expression.Append(subset.SubsetVariableName);
-                BuildSubsetExpressionTree(subset, ref expression);
-                expression.Append(')');
+                var expression = new StringBuilder();
+
+                foreach (var subset in Subsets)
+                {
+                    expression.Append(LogicalConnectorToLogicString(subset.LogicalConnector));
+                    expression.Append('(');
+                    expression.Append(subset.SubsetVariableName);
+                    BuildSubsetExpressionTree(subset, ref expression);
+                    expression.Append(')');
+                }
+
             }
 
-            return expression.ToString();
+            //return expression.ToString();
+            return "";
         }
 
         /// <summary>
@@ -151,8 +199,6 @@ namespace Katzebase.Engine.Query.Condition
                 }
                 expression.AppendLine(")");
             }
-
-            Console.WriteLine(expression.ToString());
 
             return expression.ToString();
         }
