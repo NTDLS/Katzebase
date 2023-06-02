@@ -233,30 +233,24 @@ namespace Katzebase.Engine.Documents
             //Figure out which indexes could assist us in retrieving the desired documents (if any).
             var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMeta, query.Conditions);
 
-            string subsetExpressionTree = query.Conditions.ExpressionTemplate;
-
-            Console.WriteLine(subsetExpressionTree);
-
-            var rootCondition = query.Conditions.SubsetByKey(subsetExpressionTree);
+            var rootCondition = query.Conditions.SubsetByKey(query.Conditions.RootExpressionKey);
 
             HashSet<Guid>? limitingDocumentIds = null;
 
-            /*//indexing limits the documents we need to scan.
-            //if (conditionGroup.IndexSelection != null)
-            //{
-            //    Utility.EnsureNotNull(conditionGroup.IndexSelection.Index.DiskPath);
-            //    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, conditionGroup.IndexSelection.Index.DiskPath, LockOperation.Read);
-            //    Utility.EnsureNotNull(indexPageCatalog);
-            //    limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, conditionGroup.IndexSelection, subset);
-            //    if (limitingDocumentIds?.Count == 0)
-            //    {
-            //        limitingDocumentIds = null;
-            //    }
-            //}
+            /*
+            //indexing limits the documents we need to scan.
+            if (rootCondition.IndexSelection != null)
+            {
+                Utility.EnsureNotNull(conditionGroup.IndexSelection.Index.DiskPath);
+                var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, conditionGroup.IndexSelection.Index.DiskPath, LockOperation.Read);
+                Utility.EnsureNotNull(indexPageCatalog);
+                limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, conditionGroup.IndexSelection, subset);
+                if (limitingDocumentIds?.Count == 0)
+                {
+                    limitingDocumentIds = null;
+                }
+            }
             */
-
-            limitingDocumentIds = new HashSet<Guid>();
-            limitingDocumentIds.UnionWith(documentCatalog.Collection.Select(o => o.Id).ToHashSet());
 
             var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog.Collection, schemaMeta, query, rootCondition, limitingDocumentIds);
 

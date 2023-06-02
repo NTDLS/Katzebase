@@ -7,7 +7,7 @@ namespace Katzebase.Engine.Query.Condition
     {
         public List<ConditionSubset> Subsets = new();
 
-        public string ExpressionTemplate { get; set; } = string.Empty;
+        public string RootExpressionKey { get; set; } = string.Empty;
 
         public static string VariableToKey(string str)
         {
@@ -69,7 +69,7 @@ namespace Katzebase.Engine.Query.Condition
                 }
             }
 
-            conditions.ExpressionTemplate = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
+            conditions.RootExpressionKey = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
 
             RemoveVariableMarkers(conditions);
 
@@ -78,7 +78,7 @@ namespace Katzebase.Engine.Query.Condition
 
         private static void RemoveVariableMarkers(Conditions conditions)
         {
-            conditions.ExpressionTemplate = RemoveVariableMarker(conditions.ExpressionTemplate);
+            conditions.RootExpressionKey = RemoveVariableMarker(conditions.RootExpressionKey);
 
             foreach (var subset in conditions.Subsets)
             {
