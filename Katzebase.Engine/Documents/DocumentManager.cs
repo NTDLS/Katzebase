@@ -206,22 +206,15 @@ namespace Katzebase.Engine.Documents
             //Figure out which indexes could assist us in retrieving the desired documents (if any).
             var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMeta, query.Conditions);
 
-            /*
-            string fullExpressionTree = query.Conditions.BuildFullExpressionTree();
-            string subsetExpressionTree = query.Conditions.BuildSubsetExpressionTree();
+            string subsetExpressionTree = query.Conditions.ExpressionTemplate;
 
-            Console.WriteLine(fullExpressionTree);
+            Console.WriteLine(subsetExpressionTree);
 
             var allResultRIDs = new HashSet<Guid>();
             var allResults = new List<DocumentLookupLogicSubsetResult>();
 
-            //var partialDocumentCatalog = new List<PersistDocumentCatalogItem>();
-            //partialDocumentCatalog.AddRange(documentCatalog.Collection); //For now, add all documents - this maybe we should defer doing this?
-
-            foreach (var conditionGroup in lookupOptimization.FlatConditionGroups)
+            foreach (var conditionSubset in lookupOptimization.Conditions.Subsets)
             {
-                var subset = conditionGroup.ToSubset();
-
                 //We should be able to use indexes to limit what is contained in [partialDocumentCatalog].
 
                 HashSet<Guid>? limitingDocumentIds = null;
@@ -242,12 +235,12 @@ namespace Katzebase.Engine.Documents
                 //}
                 
 
-                //limitingDocumentIds = new HashSet<Guid>();
-                //limitingDocumentIds.UnionWith(documentCatalog.Collection.Select(o => o.Id).ToHashSet());
+                limitingDocumentIds = new HashSet<Guid>();
+                limitingDocumentIds.UnionWith(documentCatalog.Collection.Select(o => o.Id).ToHashSet());
 
-                var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog.Collection, schemaMeta, query, subset, limitingDocumentIds);
+                var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog.Collection, schemaMeta, query, conditionSubset, limitingDocumentIds);
 
-                allResults.Add(new DocumentLookupLogicSubsetResult(subset.SubsetUID, subset.LogicalConnector, subsetResults) { DEBUGSUBSET = subset });
+                allResults.Add(new DocumentLookupLogicSubsetResult(conditionSubset.SubsetKey, subsetResults));
 
                 foreach (var dbg in subsetResults.Collection)
                 {
@@ -260,6 +253,7 @@ namespace Katzebase.Engine.Documents
                 allResultRIDs.UnionWith(currentRIDs);
             }
 
+            /*
             var expression = new NCalc.Expression(subsetExpressionTree);
 
             //Loop through ALL found document IDs and build an expression for each one that represents all condition subsets.

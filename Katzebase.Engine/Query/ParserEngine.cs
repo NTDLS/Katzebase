@@ -199,7 +199,6 @@ namespace Katzebase.Engine.Query
                     }
 
                     result.Conditions = Conditions.Parse(conditionText, literalStrings);
-
                 }
                 else if (token != string.Empty)
                 {

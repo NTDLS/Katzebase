@@ -1,4 +1,5 @@
-﻿using static Katzebase.Engine.Constants;
+﻿using System.Text;
+using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Query.Condition
 {
@@ -8,9 +9,35 @@ namespace Katzebase.Engine.Query.Condition
 
         public string ExpressionTemplate { get; set; } = string.Empty;
 
+        public static string VariableToKey(string str)
+        {
+            return $"$:{str}$";
+        }
+
+        private static string GetNextLetter(string letter)
+        {
+            if (letter == string.Empty)
+            {
+                return "a";
+            }
+            char[] chars = letter.ToCharArray();
+            char lastChar = chars[chars.Length - 1];
+            char nextChar = (char)(lastChar + 1);
+
+            if (nextChar > 'z')
+            {
+                return letter + "a";
+            }
+            else
+            {
+                chars[chars.Length - 1] = nextChar;
+                return new string(chars);
+            }
+        }
+
         public static Conditions Parse(string conditionsText, Dictionary<string, string> literalStrings)
         {
-            int keyCounter = 0;
+            string lastLetter = string.Empty;
 
             var conditions = new Conditions();
 
@@ -21,18 +48,19 @@ namespace Katzebase.Engine.Query.Condition
 
             while (true)
             {
-                string subsetKey = $"$sk:{keyCounter++}$";
-
                 int startPos = conditionsText.LastIndexOf('(');
                 if (startPos >= 0)
                 {
                     int endPos = conditionsText.IndexOf(')', startPos);
                     if (endPos > startPos)
                     {
+                        lastLetter = GetNextLetter(lastLetter);
+                        string subsetVariable = $"sk{lastLetter}"; //SK=Subset-Key
+
                         string subsetText = conditionsText.Substring(startPos, endPos - startPos + 1).Trim();
-                        var subset = new ConditionSubset(subsetKey, subsetText.Substring(1, subsetText.Length - 2).Trim());
+                        var subset = new ConditionSubset(subsetVariable, subsetText.Substring(1, subsetText.Length - 2).Trim());
                         conditions.AddSubset(literalStrings, subset);
-                        conditionsText = conditionsText.Replace(subsetText, subsetKey);
+                        conditionsText = conditionsText.Replace(subsetText, VariableToKey(subsetVariable));
                     }
                 }
                 else
@@ -41,9 +69,43 @@ namespace Katzebase.Engine.Query.Condition
                 }
             }
 
-            conditions.ExpressionTemplate = conditionsText.Trim();
+            conditions.ExpressionTemplate = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
+
+            RemoveVariableMarkers(conditions);
 
             return conditions;
+        }
+
+        private static void RemoveVariableMarkers(Conditions conditions)
+        {
+            conditions.ExpressionTemplate = RemoveVariableMarker(conditions.ExpressionTemplate);
+
+            foreach (var subset in conditions.Subsets)
+            {
+                subset.Expression = RemoveVariableMarker(subset.Expression);
+            }
+        }
+
+        private static string RemoveVariableMarker(string str)
+        {
+            while (true)
+            {
+                int spos = str.IndexOf("$:"); //Subset-Key.
+                if (spos >= 0)
+                {
+                    int epos = str.IndexOf("$", spos + 1);
+                    if (epos > spos)
+                    {
+                        var tok = str.Substring(spos, epos - spos + 1);
+                        var key = str.Substring(spos + 2, (epos - spos) - 2);
+                        str = str.Replace(tok, key);
+                    }
+                    else break;
+                }
+                else break;
+            }
+
+            return str;
         }
 
         public ConditionSubset? SubsetByKey(string key)
@@ -72,7 +134,7 @@ namespace Katzebase.Engine.Query.Condition
         public void AddSubset(Dictionary<string, string> literalStrings, ConditionSubset subset)
         {
             int position = 0;
-            int keyCounter = 0;
+            string lastLetter = string.Empty;
 
             LogicalConnector logicalConnector = LogicalConnector.None;
 
@@ -102,7 +164,8 @@ namespace Katzebase.Engine.Query.Condition
                 }
                 else
                 {
-                    string conditionKey = $"$ck:{keyCounter++}$";
+                    lastLetter = GetNextLetter(lastLetter);
+                    string conditionKey = $"ck{lastLetter}"; //CK=Condition-Key
 
                     string left = token;
 
@@ -122,11 +185,13 @@ namespace Katzebase.Engine.Query.Condition
                     var condition = new Condition(subset.SubsetKey, conditionKey, logicalConnector, left, logicalQualifier, right);
 
                     position = 0;
-                    subset.Expression = subset.Expression.Remove(startPosition, endPosition - startPosition).Insert(startPosition, conditionKey + " ");
+                    subset.Expression = subset.Expression.Remove(startPosition, endPosition - startPosition).Insert(startPosition, VariableToKey(conditionKey) + " ");
                     subset.Conditions.Add(condition);
                     logicalConnector = LogicalConnector.None;
                 }
             }
+
+            subset.Expression = subset.Expression.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
 
             Subsets.Add(subset);
         }
