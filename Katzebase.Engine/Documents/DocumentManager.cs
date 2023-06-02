@@ -99,13 +99,22 @@ namespace Katzebase.Engine.Documents
         /// <returns></returns>
         /// <exception cref="KbParserException"></exception>
         private DocumentLookupResults GetDocumentsByConditionSubset(Transaction transaction,
-            PersistDocumentCatalog documentCatalog, PersistSchema schemaMeta, PreparedQuery query, ConditionSubset conditionSubset)
+            List<PersistDocumentCatalogItem> partialDocumentCatalog, PersistSchema schemaMeta, PreparedQuery query,
+            ConditionSubset conditionSubset, HashSet<Guid>? limitingDocumentIds)
         {
             var results = new DocumentLookupResults();
 
             //Loop through each document in the catalog:
-            foreach (var item in documentCatalog.Collection)
+            foreach (var item in partialDocumentCatalog)
             {
+                if (limitingDocumentIds != null)
+                {
+                    if (limitingDocumentIds.Contains(item.Id) == false)
+                    {
+                        continue; //We have a limiting factor - probably an index that suggested that we dont scan everyhing - oblige.
+                    }
+                }
+
                 Utility.EnsureNotNull(schemaMeta.DiskPath);
                 var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, item.FileName);
 
@@ -202,12 +211,36 @@ namespace Katzebase.Engine.Documents
             var allResultRIDs = new HashSet<Guid>();
             var allResults = new List<DocumentLookupLogicSubsetResult>();
 
+            //var partialDocumentCatalog = new List<PersistDocumentCatalogItem>();
+            //partialDocumentCatalog.AddRange(documentCatalog.Collection); //For now, add all documents - this maybe we should defer doing this?
+
             foreach (var conditionGroup in lookupOptimization.FlatConditionGroups)
             {
                 var subset = conditionGroup.ToSubset();
 
-                var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog, schemaMeta, query, subset);
+                //We should be able to use indexes to limit what is contained in [partialDocumentCatalog].
 
+                HashSet<Guid>? limitingDocumentIds = null;
+
+                if (conditionGroup.IndexSelection != null)
+                {
+                    Utility.EnsureNotNull(conditionGroup.IndexSelection.Index.DiskPath);
+
+                    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, conditionGroup.IndexSelection.Index.DiskPath, LockOperation.Read);
+                    Utility.EnsureNotNull(indexPageCatalog);
+
+                    //limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, conditionGroup.IndexSelection, subset);
+                    if (limitingDocumentIds?.Count == 0)
+                    {
+                        limitingDocumentIds = null;
+                    }
+                }
+
+                limitingDocumentIds = new HashSet<Guid>();
+                limitingDocumentIds.UnionWith(documentCatalog.Collection.Select(o => o.Id).ToHashSet());
+
+
+                var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog.Collection, schemaMeta, query, subset, limitingDocumentIds);
                 allResults.Add(new DocumentLookupLogicSubsetResult(subset.SubsetUID, subset.LogicalConnector, subsetResults));
 
                 //Save a big list of all unique RIDs (Row IDs) so we can loop through them later an elimitate any that dont match all condition subsets.
@@ -247,61 +280,6 @@ namespace Katzebase.Engine.Documents
             }
 
             return result;
-
-            /*
-            if (lookupOptimization.IndexSelection.Count == 0)
-            {
-                //...
-            }
-            else //Indexed search!
-            {
-                foreach (var indexSelection in lookupOptimization.IndexSelection)
-                {
-                    Utility.EnsureNotNull(indexSelection.Index.DiskPath);
-
-                    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, indexSelection.Index.DiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(indexPageCatalog);
-
-                    var foundDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, indexSelection, query);
-                }
-
-            }
-            */
-
-            /*
-            try
-            {
-                using (var txRef = core.Transactions.Begin(transaction.ProcessId))
-                {
-                    PersistSchema schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
-                    {
-                        throw new KbSchemaDoesNotExistException(schema);
-                    }
-                    Utility.EnsureNotNull(schemaMeta.DiskPath);
-
-                    var list = new List<PersistDocumentCatalogItem>();
-
-                    var filePath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
-                    Utility.EnsureNotNull(documentCatalog);
-
-                    foreach (var item in documentCatalog.Collection)
-                    {
-                        list.Add(item);
-                    }
-
-                    txRef.Commit();
-
-                    return list;
-                }
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to get catalog for process {processId}.", ex);
-                throw;
-            }
-            */
         }
 
         /// <summary>

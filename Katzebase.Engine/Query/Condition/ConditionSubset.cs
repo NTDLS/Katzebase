@@ -27,7 +27,7 @@ namespace Katzebase.Engine.Query.Condition
         /// <summary>
         /// If this condition is covered by an index, this is the index which we will use.
         /// </summary>
-        public IndexSelection? Index { get; set; }
+        public IndexSelection? IndexSelection { get; set; }
 
         public ConditionSubset(LogicalConnector logicalConnector)
         {
@@ -41,11 +41,21 @@ namespace Katzebase.Engine.Query.Condition
             SubsetUID = subsetUID;
         }
 
+        public List<ConditionSingle> Singles()
+        {
+            return Conditions.OfType<ConditionSingle>().ToList();
+        }
+
+        public List<ConditionSubset> Subsets()
+        {
+            return Conditions.OfType<ConditionSubset>().ToList();
+        }
+
         public ICondition Clone()
         {
             var clone = new ConditionSubset(LogicalConnector)
             {
-                Index = Index,
+                IndexSelection = IndexSelection,
                 SubsetUID = SubsetUID
             };
 

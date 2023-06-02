@@ -25,49 +25,19 @@ namespace Katzebase.Engine.Indexes
         /// <summary>
         /// Finds document IDs given a set of conditions.
         /// </summary>
-        /// <param name="indexPageCatalog"></param>
-        /// <param name="conditions"></param>
-        /// <returns></returns>
-        public HashSet<Guid> MatchDocuments(PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, PreparedQuery query)
-        {
-            var foundDocumentIds = new HashSet<Guid>();
-            MatchDocuments(0, indexPageCatalog.Leaves, indexSelection, query, foundDocumentIds);
-            return foundDocumentIds;
-        }
-
-        /// <summary>
-        /// Traverse to the bottom of the index tree (what whatever starting point is passed in) and return a list of all documentids.
-        /// </summary>
-        /// <param name="indexEntires"></param>
-        /// <returns></returns>
-        List<Guid> DistillAllDocumentIDs(List<PersistIndexLeaf> indexEntires)
-        {
-            while (indexEntires.Any(o => o.Leaves.Count > 0))
-            {
-                indexEntires = indexEntires.Select(o => o.Leaves).SelectMany(o => o.Entries).ToList(); //Traverse down the tree.
-            }
-
-            return indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
-        }
-
-        /// <summary>
-        /// Finds document IDs given a set of conditions.
-        /// </summary>
         /// <param name="persistIndexLeaves"></param>
         /// <param name="conditions"></param>
         /// <param name="foundDocumentIds"></param>
-        private void MatchDocuments(int nestedLevel, PersistIndexLeaves PersistIndexLeaves, IndexSelection indexSelection, PreparedQuery query, HashSet<Guid> foundDocumentIds)
+        public HashSet<Guid> MatchDocuments(PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
         {
-            /*
-            List<PersistIndexLeaf> indexEntires = PersistIndexLeaves.Entries; //Start at the top of the index tree.
+            var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
 
             bool fullMatch = true;
 
-            //TODO: implement the observance of query.Conditions.Children
             foreach (var attribute in indexSelection.Index.Attributes)
             {
                 Utility.EnsureNotNull(attribute.Field);
-                var conditionField = query.Conditions.Collection.Where(o => o.Field.ToLower() == attribute.Field.ToLower()).FirstOrDefault();
+                var conditionField = conditionSubset.Singles().Where (o => o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
                 if (conditionField == null)
                 {
                     //No match? I think this is an exception....
@@ -75,22 +45,22 @@ namespace Katzebase.Engine.Indexes
                     break;
                 }
 
+                if (conditionField.LogicalConnector == LogicalConnector.Or)
+                {
+                    //TODO: Indexing only supports AND connectors, thats a performance problem.
+
+                    //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                    var resultintDocuments = DistillIndexLeaves(indexEntires);
+                    return resultintDocuments.ToHashSet();
+                }
+
                 List<PersistIndexLeaf>? nextIndexEntires = null;
 
-                //TODO: This assume every condition is an AND, thats a big problem. Ideas in comments below...
-
-                if (conditionField.ConditionQualifier == ConditionQualifier.Equals)
-                    nextIndexEntires = indexEntires.Where(o => o.Value == conditionField.Value)?.ToList();
-                else if (conditionField.ConditionQualifier == ConditionQualifier.NotEquals)
-                    nextIndexEntires = indexEntires.Where(o => o.Value != conditionField.Value)?.ToList();
-
-                //else if (conditionField.ConditionQualifier == ConditionQualifier.Like)
-                //    nextIndexEntires = indexEntires.Where(o => o.Value.Contains(conditionField.Value)).FirstOrDefault();
-                //else if (conditionField.ConditionQualifier == ConditionQualifier.LessThan)
-                //  nextIndexEntires = indexEntires.Where(o => o.Value < conditionField.Value).FirstOrDefault();
-                //else if (conditionField.ConditionQualifier == ConditionQualifier.GreaterThan)
-                //    nextIndexEntires = indexEntires.Where(o => o.Value > conditionField.Value).FirstOrDefault();
-                else throw new KbNotImplementedException($"Condition qualifier {conditionField.ConditionQualifier} has not been implemented.");
+                if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
+                    nextIndexEntires = indexEntires.Where(o => o.Value == conditionField.Right.Value)?.ToList();
+                else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
+                    nextIndexEntires = indexEntires.Where(o => o.Value != conditionField.Right.Value)?.ToList();
+                else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
 
                 if (nextIndexEntires == null)
                 {
@@ -107,100 +77,31 @@ namespace Katzebase.Engine.Indexes
 
             if (fullMatch)
             {
-                var allDocumentIds = indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
-                //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
-                foundDocumentIds.UnionWith(allDocumentIds);
-
+                var resultintDocuments = indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
+                //If we got here then we got a full match on the entire index. This is the best scenario.
+                return resultintDocuments.ToHashSet();
             }
             else
             {
-                var allDocumentIds = DistillAllDocumentIDs(indexEntires);
+                var resultintDocuments = DistillIndexLeaves(indexEntires);
                 //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
-                foundDocumentIds.UnionWith(allDocumentIds);
+                return resultintDocuments.ToHashSet();
             }
-            */
-            return;
+        }
 
-
-            //foreach (var leaf in persistIndexLeaves)
-            //{
-            //}
-
-            /*
-            HashSet<Guid> sessionFoundDocumentIds = new HashSet<Guid>();
-
-            //TODO: This is broken, very broken.
-            // We have scenarios where we have ANDs/ORs and nested ANDs/ORs.
-            // We also have to support the same key being used in an OR (e.g. Color = 'BLACK' OR Color = 'Silver')
-
-            foreach (var leaf in persistIndexLeaves.Leaves)
+        /// <summary>
+        /// Traverse to the bottom of the index tree (what whatever starting point is passed in) and return a list of all documentids.
+        /// </summary>
+        /// <param name="indexEntires"></param>
+        /// <returns></returns>
+        private List<Guid> DistillIndexLeaves(List<PersistIndexLeaf> indexEntires)
+        {
+            while (indexEntires.Any(o => o.Leaves.Count > 0))
             {
-                Condition condition = conditions[conditionOrdinal];
-
-                if (condition.IsMatch(leaf.Key) == true)
-                {
-                    if (conditions.Count == conditionOrdinal + 1)
-                    {
-                        //We have exausted all of our conditons, go ahead and skip to the document IDs.
-                        foreach (var documentId in leaf.Coalesce())
-                        {
-                            if (condition.ConditionType == ConditionType.None) //None means this is the first condition in a group.
-                            {
-                                sessionFoundDocumentIds.Add(documentId);
-                            }
-                            else if (condition.ConditionType == ConditionType.And)
-                            {
-                                if (foundDocumentIds.Contains(documentId))
-                                {
-                                    sessionFoundDocumentIds.Add(documentId);
-                                }
-                            }
-                            else if (condition.ConditionType == ConditionType.Or)
-                            {
-                                sessionFoundDocumentIds.Add(documentId);
-                            }
-                            else
-                            {
-                                throw new LeafSQLExceptionBase("Unsupported expression type.");
-                            }
-
-                        }
-                    }
-                    else if (leaf.IsBottom) //This is the bottom of the index, where the doucment IDs are stored.
-                    {
-                        //We have matched all of the index attributes.
-                        foreach (var documentId in leaf.DocumentIDs)
-                        {
-                            if (condition.ConditionType == ConditionType.None) //None means this is the first condition in a group.
-                            {
-                                sessionFoundDocumentIds.Add(documentId);
-                            }
-                            else if (condition.ConditionType == ConditionType.And)
-                            {
-                                if (foundDocumentIds.Contains(documentId))
-                                {
-                                    sessionFoundDocumentIds.Add(documentId);
-                                }
-                            }
-                            else if (condition.ConditionType == ConditionType.Or)
-                            {
-                                sessionFoundDocumentIds.Add(documentId);
-                            }
-                            else
-                            {
-                                throw new LeafSQLExceptionBase("Unsupported expression type.");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        //Match the next condition to the next lowest leaf level.
-                        MatchDocuments(nestedLevel++, leaf.Extent, indexSelection, foundDocumentIds);
-                        return;
-                    }
-                }
+                indexEntires = indexEntires.Select(o => o.Leaves).SelectMany(o => o.Entries).ToList(); //Traverse down the tree.
             }
-            */
+
+            return indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
         }
 
         /// <summary>
@@ -278,7 +179,7 @@ namespace Katzebase.Engine.Indexes
                         //Mark which condition this index selection satisifies.
                         var sourceSubset = lookupOptimization.Conditions.SubsetByUID(flatGroup.SubsetUID);
                         Utility.EnsureNotNull(sourceSubset);
-                        sourceSubset.Index = indexSelection;
+                        sourceSubset.IndexSelection = indexSelection;
 
                         foreach (var conditon in sourceSubset.Conditions.OfType<ConditionSingle>())
                         {
