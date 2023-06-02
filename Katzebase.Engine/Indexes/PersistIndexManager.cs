@@ -1,5 +1,6 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query;
+using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.Library;
@@ -287,10 +288,10 @@ namespace Katzebase.Engine.Indexes
                             }
                         }
                     }
-
-                    var uncoveredFields = (from o in flatGroup.Conditions where !o.CoveredByIndex select o.Left.Value).ToList();
-                    //indexSelections.UncoveredFields.AddRange(uncoveredFields);
                 }
+
+                //Re-flatten so that th eflat grouping has associated indexes.
+                lookupOptimization.FlattenConditionGroups();
 
                 return lookupOptimization;
             }

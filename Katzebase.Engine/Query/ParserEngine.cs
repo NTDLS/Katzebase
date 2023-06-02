@@ -1,4 +1,5 @@
-﻿using Katzebase.Library;
+﻿using Katzebase.Engine.Query.Condition;
+using Katzebase.Library;
 using Katzebase.Library.Client.Management;
 using Katzebase.Library.Exceptions;
 using Newtonsoft.Json.Linq;
@@ -200,6 +201,9 @@ namespace Katzebase.Engine.Query
                     }
 
                     result.Conditions = ParseConditions(conditionText, literalStrings);
+
+                    //var fff = result.Conditions.BuildSubsetExpressionTree();
+
                 }
                 else if (token != string.Empty)
                 {
@@ -520,6 +524,9 @@ namespace Katzebase.Engine.Query
             conditionsText = conditionsText.Replace("( ", "(").Replace(" (", "(").Replace(") ", ")").Replace(" )", ")").Trim();
             var conditions = ParseConditionGroups(conditionsText, literalStrings);
             //DebugPrintConditions(conditions);
+
+            conditions.FillInSubsetVariableNames();
+
             return conditions;
         }
     }

@@ -4,7 +4,7 @@ using Katzebase.Library.Exceptions;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.Constants;
 
-namespace Katzebase.Engine.Query
+namespace Katzebase.Engine.Query.Condition
 {
     public class ConditionSingle : ICondition
     {
@@ -22,7 +22,7 @@ namespace Katzebase.Engine.Query
                 LogicalQualifier = LogicalQualifier,
                 LogicalConnector = LogicalConnector,
                 Left = Left.Clone(),
-                Right = Left.Clone()
+                Right = Right.Clone()
             };
         }
 
@@ -78,45 +78,45 @@ namespace Katzebase.Engine.Query
 
         public bool IsMatch(string passedValue)
         {
-            if (this.LogicalQualifier == LogicalQualifier.Equals)
+            if (LogicalQualifier == LogicalQualifier.Equals)
             {
-                return (passedValue == this.Right.Value);
+                return passedValue == Right.Value;
             }
-            else if (this.LogicalQualifier == LogicalQualifier.NotEquals)
+            else if (LogicalQualifier == LogicalQualifier.NotEquals)
             {
-                return (passedValue != this.Right.Value);
+                return passedValue != Right.Value;
             }
-            else if (this.LogicalQualifier == LogicalQualifier.GreaterThan)
+            else if (LogicalQualifier == LogicalQualifier.GreaterThan)
             {
-                if (Decimal.TryParse(passedValue, out decimal left) && Decimal.TryParse(this.Right.Value, out decimal right))
+                if (decimal.TryParse(passedValue, out decimal left) && decimal.TryParse(Right.Value, out decimal right))
                 {
-                    return (left > right);
+                    return left > right;
                 }
             }
-            else if (this.LogicalQualifier == LogicalQualifier.LessThan)
+            else if (LogicalQualifier == LogicalQualifier.LessThan)
             {
-                if (Decimal.TryParse(passedValue, out decimal left) && Decimal.TryParse(this.Right.Value, out decimal right))
+                if (decimal.TryParse(passedValue, out decimal left) && decimal.TryParse(Right.Value, out decimal right))
                 {
-                    return (left < right);
+                    return left < right;
                 }
             }
-            else if (this.LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
+            else if (LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
             {
-                if (Decimal.TryParse(passedValue, out decimal left) && Decimal.TryParse(this.Right.Value, out decimal right))
+                if (decimal.TryParse(passedValue, out decimal left) && decimal.TryParse(Right.Value, out decimal right))
                 {
-                    return (left >= right);
+                    return left >= right;
                 }
             }
-            else if (this.LogicalQualifier == LogicalQualifier.LessThanOrEqual)
+            else if (LogicalQualifier == LogicalQualifier.LessThanOrEqual)
             {
-                if (Decimal.TryParse(passedValue, out decimal left) && Decimal.TryParse(this.Right.Value, out decimal right))
+                if (decimal.TryParse(passedValue, out decimal left) && decimal.TryParse(Right.Value, out decimal right))
                 {
-                    return (left <= right);
+                    return left <= right;
                 }
             }
-            else if (this.LogicalQualifier == LogicalQualifier.Like)
+            else if (LogicalQualifier == LogicalQualifier.Like)
             {
-                var right = this.Right.Value;
+                var right = Right.Value;
                 if (right != null)
                 {
                     bool startsWith = right.StartsWith("%");
@@ -138,13 +138,13 @@ namespace Katzebase.Engine.Query
                     }
                     else
                     {
-                        return (passedValue == this.Right.Value);
+                        return passedValue == Right.Value;
                     }
                 }
             }
-            else if (this.LogicalQualifier == LogicalQualifier.NotLike)
+            else if (LogicalQualifier == LogicalQualifier.NotLike)
             {
-                var right = this.Right.Value;
+                var right = Right.Value;
                 if (right != null)
                 {
                     bool startsWith = right.StartsWith("%");
@@ -166,7 +166,7 @@ namespace Katzebase.Engine.Query
                     }
                     else
                     {
-                        return (passedValue == this.Right.Value) == false;
+                        return passedValue == Right.Value == false;
                     }
                 }
             }

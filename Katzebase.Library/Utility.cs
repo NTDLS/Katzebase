@@ -13,11 +13,18 @@ namespace Katzebase.Library
             return (new StackTrace())?.GetFrame(1)?.GetMethod()?.Name ?? "{unknown frame}";
         }
 
-        public static void EnsureNotNull<T>([NotNull] T? value, [CallerArgumentExpression("value")] string strName = "")
+        public static void EnsureNotNull<T>([NotNull] T? value, string? message = null, [CallerArgumentExpression("value")] string strName = "")
         {
             if (value == null)
             {
-                throw new KbNullException($"Value should not be null {nameof(strName)}.");
+                if (message == null)
+                {
+                    throw new KbNullException($"Value should not be null {nameof(strName)}.");
+                }
+                else
+                {
+                    throw new KbNullException(message);
+                }
             }
         }
 

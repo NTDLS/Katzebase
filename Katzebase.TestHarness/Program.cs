@@ -26,16 +26,10 @@ namespace Katzebase.TestHarness
             //Exporter.ExportAll(); // This method just exports the entire AdventureWorks2012 database into the no SQL database.
             //TestIndexCreationProductInventory();
 
-
-            //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf = 'A' AND Bin = 12");
-            //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6");
-            //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf = 'A'");
-            //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'A'");
-            //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'A' AND Quantity = 299");
-            //var queryResult = TestExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'A' AND Quantity = 299) OR(LocationId = 6 AND Shelf != 'A' AND Quantity = 587) AND BIN = 8");
-
             KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
+            //string query = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)";
             string query = "SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)";
+            //string query = "SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)";
             client.Query.ExecuteQuery(query);
             //TestCreateAllAdventureWorks2012Indexes();
             //TestServerStress();

@@ -1,6 +1,6 @@
 ﻿using Katzebase.Library.Exceptions;
 
-namespace Katzebase.Engine.Query
+namespace Katzebase.Engine.Query.Condition
 {
     public class ConditionValue
     {
@@ -42,7 +42,7 @@ namespace Katzebase.Engine.Query
 
         public void SetString(string value)
         {
-            this.Value = value;
+            Value = value;
 
             IsConstant = true;
             IsNumeric = false;
@@ -55,7 +55,7 @@ namespace Katzebase.Engine.Query
         /// <param name="value"></param>
         public void SetField(string value)
         {
-            this.Value = value;
+            Value = value;
 
             IsConstant = false;
             IsNumeric = false;
@@ -68,13 +68,13 @@ namespace Katzebase.Engine.Query
         /// <param name="value"></param>
         public void SetNumeric(string value)
         {
-            this.Value = value;
+            Value = value;
 
             IsConstant = true;
             IsNumeric = true;
             IsString = false;
 
-            if (value.All(Char.IsDigit) == false)
+            if (value.All(char.IsDigit) == false)
             {
                 throw new KbInvalidArgumentException("The value must be numeric.");
             }
@@ -103,7 +103,7 @@ namespace Katzebase.Engine.Query
                         IsConstant = true;
                     }
 
-                    if (_value.All(Char.IsDigit))
+                    if (_value.All(char.IsDigit))
                     {
                         IsConstant = true;
                         IsNumeric = true;

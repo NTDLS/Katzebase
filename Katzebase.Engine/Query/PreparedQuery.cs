@@ -1,4 +1,5 @@
-﻿using static Katzebase.Engine.Constants;
+﻿using Katzebase.Engine.Query.Condition;
+using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Query
 {

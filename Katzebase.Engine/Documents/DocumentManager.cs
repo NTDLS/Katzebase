@@ -1,5 +1,6 @@
 ﻿using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query;
+using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.Library;
@@ -9,6 +10,7 @@ using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http.Json;
+using System.Text;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Documents
@@ -62,8 +64,12 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-        private void GetDocumentIDsByConditions(Transaction transaction, PersistDocumentCatalog documentCatalog, PersistSchema schemaMeta, PreparedQuery query, List<ConditionSingle> conditions)
+
+        private DocumentLookupResults GetDocumentIDsByConditionSubset(Transaction transaction,
+            PersistDocumentCatalog documentCatalog, PersistSchema schemaMeta, PreparedQuery query, ConditionSubset conditionSubset)
         {
+            var results = new DocumentLookupResults();
+
             //Loop through each document in the catalog:
             foreach (var item in documentCatalog.Collection)
             {
@@ -76,80 +82,60 @@ namespace Katzebase.Engine.Documents
 
                 var jContent = JObject.Parse(persistDocument.Content);
 
-                bool fullAttributeMatch = true;
+                var expression = new StringBuilder();
 
                 //Loop though each condition in the prepared query:
-                foreach (var condition in conditions)
+                foreach (var condition in conditionSubset.Conditions.OfType<ConditionSingle>())
                 {
                     Utility.EnsureNotNull(condition.Left.Value); //TODO: What do we really need to do here?
 
                     //Get the value of the condition:
                     if (jContent.TryGetValue(condition.Left.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
                     {
-                        //If the condition does not match the value in the document then we break from checking the remainder of the conditions for this document and continue with the next document.
-                        //Otherwise we continue to the next condition until all conditions are matched.
-                        if (condition.IsMatch(jToken.ToString().ToLower()) == false)
+                        if (expression.Length > 0)
                         {
-                            fullAttributeMatch = false;
-                            break;
+                            expression.Append(condition.LogicalConnector == LogicalConnector.And ? "&&" : "||");
                         }
-                    }
-                }
 
-                if (fullAttributeMatch)
-                {
-                    var rowValues = new List<string>();
-
-                    foreach (string field in query.SelectFields)
-                    {
-                        if (field == "#RID")
+                        if (condition.IsMatch(jToken.ToString().ToLower()))
                         {
-                            rowValues.Add((persistDocument.Id ?? Guid.Empty).ToString());
+                            expression.Append($"(1==1)");
                         }
                         else
                         {
-                            if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
-                            {
-                                rowValues.Add(jToken.ToString());
-                            }
-                            else
-                            {
-                                rowValues.Add(string.Empty);
-                            }
+                            expression.Append($"(1==0)");
+                        }
+                    }
+                    else
+                    {
+                        throw new KbParserException($"Field not found in document [{condition.Left.Value}].");
+                    }
+                }
+
+                var expressionResult = (bool)(new NCalc.Expression(expression.ToString())).Evaluate();
+
+                if (expressionResult)
+                {
+                    Utility.EnsureNotNull(persistDocument.Id);
+                    var result = new DocumentLookupResult((Guid)persistDocument.Id);
+
+                    foreach (string field in query.SelectFields)
+                    {
+                        if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                        {
+                            result.Values.Add(jToken.ToString());
+                        }
+                        else
+                        {
+                            result.Values.Add(string.Empty);
                         }
                     }
 
-                    //result.Rows.Add(new KbQueryRow(rowValues));
+                    results.Add(result);
                 }
             }
-        }
 
-        private void GetDocumentIDsByConditionGroup(Transaction transaction, PersistDocumentCatalog documentCatalog, PersistSchema schemaMeta, PreparedQuery query, ConditionSubset conditionSubset)
-        {
-            var conditions = new List<ConditionSingle>();
-
-            LogicalConnector lastConnector = LogicalConnector.None;
-
-            //Get a selection of the conditions that have like logical connector. Execute them in groups of logical connectors.
-            foreach (var condition in conditionSubset.Conditions.OfType<ConditionSingle>())
-            {
-                if ((lastConnector == LogicalConnector.None || lastConnector == condition.LogicalConnector) == false)
-                {
-                    //Use the conditions here:
-                    GetDocumentIDsByConditions(transaction, documentCatalog, schemaMeta, query, conditions);
-                    conditions.Clear();
-                }
-
-                conditions.Add(condition);
-                lastConnector = condition.LogicalConnector;
-            }
-
-            if (conditions.Any()) //Use any remaining conditions here:
-            {
-                
-                GetDocumentIDsByConditions(transaction, documentCatalog, schemaMeta, query, conditions);
-                conditions.Clear();
-            }
+            return results;
         }
 
         private KbQueryResult FindDocuments(Transaction transaction, PreparedQuery query)
@@ -177,18 +163,46 @@ namespace Katzebase.Engine.Documents
             //Figure out which indexes could assist us in retrieving the desired documents (if any).
             var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMeta, query.Conditions);
 
-            var conditionConsumptionTracker = new ConditionConsumptionTracker();
+            string subsetExpressionTree = query.Conditions.BuildSubsetExpressionTree();
 
-            while (true)
+            var allResultRIDs = new HashSet<Guid>();
+            var expression = new NCalc.Expression(subsetExpressionTree);
+
+            var allResults = new List<DocumentLookupLogicSubsetResult>();
+
+            foreach (var conditionGroup in lookupOptimization.FlatConditionGroups)
             {
-                var conditionSubset = lookupOptimization.Conditions.GetNext(ref conditionConsumptionTracker);
-                if (conditionSubset == null)
+                var subset = conditionGroup.ToSubset();
+                var subsetResults = GetDocumentIDsByConditionSubset(transaction, documentCatalog, schemaMeta, query, subset);
+                allResults.Add(new DocumentLookupLogicSubsetResult(subset.UID, subset.LogicalConnector, subsetResults));
+
+                var currentRIDs = subsetResults.Collection.Select(o => o.RID).ToHashSet();
+                allResultRIDs.UnionWith(currentRIDs);
+            }
+
+            foreach (var rid in allResultRIDs)
+            {
+                DocumentLookupResult? workingDocument = null;
+
+                foreach (var conditionGroup in lookupOptimization.FlatConditionGroups)
                 {
-                    break; //Complete.
+                    var resultSet = allResults.Where(o => o.ConditionSubsetUID == conditionGroup.SourceSubsetUID).First();
+                    var resultSetDocument = resultSet.Results.Collection.FirstOrDefault(o => o.RID == rid);
+
+                    workingDocument ??= resultSetDocument; //Save the first instance of the document we found. This will be used for the final result.
+
+                    expression.Parameters[conditionGroup.SubsetVariableName] = (resultSetDocument != null);
                 }
 
-                GetDocumentIDsByConditionGroup(transaction, documentCatalog, schemaMeta, query, conditionSubset);
+                Utility.EnsureNotNull(workingDocument);
+
+                var expressionResult = (bool)expression.Evaluate();
+                if (expressionResult)
+                {
+                    result.Rows.Add(new KbQueryRow(workingDocument.Values));
+                }
             }
+
 
             return result;
 

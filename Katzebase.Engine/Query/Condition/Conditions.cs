@@ -1,18 +1,67 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Library;
 using Katzebase.Library.Client.Management;
+using NCalc;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Linq.Expressions;
+using System.Security.Cryptography;
+using System.Text;
 using static Katzebase.Engine.Constants;
 
-namespace Katzebase.Engine.Query
+namespace Katzebase.Engine.Query.Condition
 {
     public class Conditions
     {
         public List<ConditionSubset> Subsets { get; set; } = new();
 
+        private string _lastVariableLetter = "";
+
+        public string GetNextVariableLetter()
+        {
+            if (_lastVariableLetter == string.Empty)
+            {
+                _lastVariableLetter = "A";
+                return _lastVariableLetter;
+            }
+            char[] chars = _lastVariableLetter.ToCharArray();
+            char lastChar = chars[chars.Length - 1];
+            char nextChar = (char)(lastChar + 1);
+
+            if (nextChar > 'Z')
+            {
+                _lastVariableLetter = _lastVariableLetter + "A";
+            }
+            else
+            {
+                chars[chars.Length - 1] = nextChar;
+                _lastVariableLetter = new string(chars);
+            }
+            return _lastVariableLetter;
+        }
+
+        public void FillInSubsetVariableNames()
+        {
+            foreach (var subset in Subsets)
+            {
+                subset.SubsetVariableName = GetNextVariableLetter();
+                FillInSubsetVariableNames(subset);
+            }
+        }
+
+        private void FillInSubsetVariableNames(ConditionSubset rootSubset)
+        {
+            foreach (var subset in rootSubset.Conditions.OfType<ConditionSubset>())
+            {
+                subset.SubsetVariableName = GetNextVariableLetter();
+                FillInSubsetVariableNames(subset);
+            }
+        }
+
+
         internal ConditionSubset? SubsetByUID(Guid uid)
         {
-            foreach (var subset in this.Subsets)
+            foreach (var subset in Subsets)
             {
                 if (subset.UID == uid)
                 {
@@ -49,7 +98,7 @@ namespace Katzebase.Engine.Query
 
         internal ConditionSubset? GetNext(ref ConditionConsumptionTracker tracker)
         {
-            foreach (var subset in this.Subsets)
+            foreach (var subset in Subsets)
             {
                 if (tracker.ConsumedSubsets.Contains(subset.UID) == false)
                 {
@@ -94,12 +143,11 @@ namespace Katzebase.Engine.Query
         {
             var flattenedGroups = new List<FlatConditionGroup>();
 
-            foreach (var subset in this.Subsets)
+            foreach (var subset in Subsets)
             {
-                var flatGroup = new FlatConditionGroup(subset.LogicalConnector, subset.UID);
+                var flatGroup = new FlatConditionGroup(subset);
                 flattenedGroups.Add(flatGroup);
 
-                Console.WriteLine(DebugLogicalConnectorToString(subset.LogicalConnector) + " (");
                 foreach (var condition in subset.Conditions)
                 {
                     Flatten(condition, ref flatGroup, ref flattenedGroups);
@@ -115,7 +163,7 @@ namespace Katzebase.Engine.Query
             {
                 var subset = (ConditionSubset)condition;
 
-                var subsetFlatGroup = new FlatConditionGroup(subset.LogicalConnector, subset.UID);
+                var subsetFlatGroup = new FlatConditionGroup(subset);
                 flattenedGroups.Add(subsetFlatGroup);
 
                 foreach (var subsetCondition in subset.Conditions)
@@ -133,41 +181,15 @@ namespace Katzebase.Engine.Query
 
         public void DebugPrint()
         {
-            foreach (var subset in this.Subsets)
+            foreach (var subset in Subsets)
             {
-                Console.WriteLine(DebugLogicalConnectorToString(subset.LogicalConnector) + " (");
+                Console.WriteLine(LogicalConnectorToString(subset.LogicalConnector) + " (");
                 foreach (var condition in subset.Conditions)
                 {
                     DebugPrintCondition(condition, 1);
                 }
                 Console.WriteLine(")");
             }
-        }
-
-        private string DebugLogicalConnectorToString(LogicalConnector logicalConnector)
-        {
-            return (logicalConnector == LogicalConnector.None ? "" : logicalConnector.ToString().ToUpper() + " ");
-        }
-
-        private string DebugLogicalQualifierToString(LogicalQualifier logicalQualifier)
-        {
-            switch (logicalQualifier)
-            {
-                case LogicalQualifier.Equals:
-                    return "=";
-                case LogicalQualifier.NotEquals:
-                    return "!=";
-                case LogicalQualifier.GreaterThanOrEqual:
-                    return ">=";
-                case LogicalQualifier.LessThanOrEqual:
-                    return "<=";
-                case LogicalQualifier.LessThan:
-                    return "<";
-                case LogicalQualifier.GreaterThan:
-                    return ">";
-            }
-
-            return "";
         }
 
         private void DebugPrintCondition(ICondition condition, int depth)
@@ -186,18 +208,89 @@ namespace Katzebase.Engine.Query
             else if (condition is ConditionSingle)
             {
                 var single = (ConditionSingle)condition;
-                Console.Write("".PadLeft(depth, '\t') + DebugLogicalConnectorToString(single.LogicalConnector));
-                Console.WriteLine($"[{single.Left}] {DebugLogicalQualifierToString(single.LogicalQualifier)} [{single.Right}]");
+                Console.Write("".PadLeft(depth, '\t') + LogicalConnectorToString(single.LogicalConnector));
+                Console.WriteLine($"[{single.Left}] {LogicalQualifierToString(single.LogicalQualifier)} [{single.Right}]");
             }
         }
 
         #endregion
 
+        public string BuildSubsetExpressionTree()
+        {
+            var expression = new StringBuilder();
+
+            foreach (var subset in Subsets)
+            {
+                expression.Append(LogicalConnectorToLogicString(subset.LogicalConnector));
+                expression.Append('(');
+                expression.Append(subset.SubsetVariableName);
+                BuildSubsetExpressionTree(subset, ref expression);
+                expression.Append(')');
+            }
+
+            return expression.ToString();
+        }
+
+        private void BuildSubsetExpressionTree(ConditionSubset condition, ref StringBuilder expression)
+        {
+
+            foreach (var subset in condition.Conditions.OfType<ConditionSubset>())
+            {
+                expression.Append(LogicalConnectorToLogicString(condition.LogicalConnector));
+                expression.Append('(');
+                expression.Append(subset.SubsetVariableName);
+                BuildSubsetExpressionTree(subset, ref expression);
+                expression.Append(')');
+            }
+        }
+
+        public string BuildFullExpressionTree()
+        {
+            var expression = new StringBuilder();
+
+            foreach (var subset in Subsets)
+            {
+                var connectorString = LogicalConnectorToString(subset.LogicalConnector);
+                expression.Append(string.IsNullOrWhiteSpace(connectorString) ? "" : $" {connectorString} ");
+
+                expression.Append('(');
+                foreach (var condition in subset.Conditions)
+                {
+                    BuildFullExpressionTree(condition, ref expression);
+                }
+                expression.Append(')');
+            }
+
+            return expression.ToString();
+        }
+
+        private void BuildFullExpressionTree(ICondition condition, ref StringBuilder expression)
+        {
+            if (condition is ConditionSubset)
+            {
+                expression.Append('(');
+                var subset = (ConditionSubset)condition;
+                foreach (var subsetCondition in subset.Conditions)
+                {
+                    BuildFullExpressionTree(subsetCondition, ref expression);
+                }
+
+                expression.Append(')');
+            }
+            else if (condition is ConditionSingle)
+            {
+                var single = (ConditionSingle)condition;
+                var connectorString = LogicalConnectorToString(single.LogicalConnector);
+                expression.Append(string.IsNullOrWhiteSpace(connectorString) ? "" : $" {connectorString} ");
+                expression.Append($"[{single.Left}] {LogicalQualifierToString(single.LogicalQualifier)} [{single.Right}]");
+            }
+        }
+
         public Conditions Clone()
         {
             var result = new Conditions();
 
-            foreach (var subset in this.Subsets)
+            foreach (var subset in Subsets)
             {
                 //Yes, this is recursive (though the interface).
                 result.Subsets.Add((ConditionSubset)subset.Clone());

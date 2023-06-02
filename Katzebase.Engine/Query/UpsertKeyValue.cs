@@ -1,4 +1,6 @@
-﻿namespace Katzebase.Engine.Query
+﻿using Katzebase.Engine.Query.Condition;
+
+namespace Katzebase.Engine.Query
 {
     public class UpsertKeyValue
     {

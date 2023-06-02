@@ -67,6 +67,24 @@
             Or
         }
 
+        public static string LogicalConnectorToString(LogicalConnector logicalConnector)
+        {
+            return logicalConnector == LogicalConnector.None ? string.Empty : logicalConnector.ToString().ToUpper();
+        }
+
+        public static string LogicalConnectorToLogicString(LogicalConnector logicalConnector)
+        {
+            switch (logicalConnector)
+            {
+                case LogicalConnector.Or:
+                    return "||";
+                case LogicalConnector.And:
+                    return "&&";
+            }
+
+            return string.Empty;
+        }
+
         public enum LogicalQualifier
         {
             None,
@@ -78,6 +96,27 @@
             GreaterThan,
             LessThanOrEqual,
             GreaterThanOrEqual
+        }
+
+        public static string LogicalQualifierToString(LogicalQualifier logicalQualifier)
+        {
+            switch (logicalQualifier)
+            {
+                case LogicalQualifier.Equals:
+                    return "=";
+                case LogicalQualifier.NotEquals:
+                    return "!=";
+                case LogicalQualifier.GreaterThanOrEqual:
+                    return ">=";
+                case LogicalQualifier.LessThanOrEqual:
+                    return "<=";
+                case LogicalQualifier.LessThan:
+                    return "<";
+                case LogicalQualifier.GreaterThan:
+                    return ">";
+            }
+
+            return "";
         }
     }
 }

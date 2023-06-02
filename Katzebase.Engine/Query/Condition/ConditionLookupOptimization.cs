@@ -1,6 +1,6 @@
 ﻿using Katzebase.Engine.Indexes;
 
-namespace Katzebase.Engine.Query
+namespace Katzebase.Engine.Query.Condition
 {
     public class ConditionLookupOptimization
     {
@@ -17,12 +17,16 @@ namespace Katzebase.Engine.Query
         /// <summary>
         /// A flattened list of conditions, used to build the index selections (not used outside of index selection algorithms).
         /// </summary>
-        public List<FlatConditionGroup> FlatConditionGroups { get; private set; }
+        public List<FlatConditionGroup> FlatConditionGroups { get; private set; } = new();
 
         public ConditionLookupOptimization(Conditions conditions)
         {
             Conditions = conditions.Clone();
+            FlattenConditionGroups();
+        }
 
+        public void FlattenConditionGroups()
+        {
             FlatConditionGroups = Conditions.Flatten();
             foreach (var flatConditionGroup in FlatConditionGroups)
             {
@@ -30,5 +34,6 @@ namespace Katzebase.Engine.Query
                 flatConditionGroup.Conditions = flatConditionGroup.Conditions.OrderBy(o => o.LogicalConnector).ToList();
             }
         }
+
     }
 }
