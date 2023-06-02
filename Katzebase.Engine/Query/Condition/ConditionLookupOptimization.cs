@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Indexes;
+using Katzebase.Engine.Query.Condition.NG;
 
 namespace Katzebase.Engine.Query.Condition
 {
@@ -12,29 +13,16 @@ namespace Katzebase.Engine.Query.Condition
         /// <summary>
         /// A clone of the conditions that this set of index selections was built for. Also contains the indexes associated with each subset of conditions.
         /// </summary>
-        public Conditions Conditions { get; private set; }
+        public NGConditions Conditions { get; private set; }
 
         /// <summary>
         /// A flattened list of conditions, used to build the index selections (not used outside of index selection algorithms).
         /// </summary>
-        public List<FlatConditionGroup> FlatConditionGroups { get; private set; } = new();
+        //public List<FlatConditionGroup> FlatConditionGroups { get; private set; } = new();
 
-        public ConditionLookupOptimization(Conditions conditions)
+        public ConditionLookupOptimization(NGConditions conditions)
         {
             Conditions = conditions.Clone();
-            FlattenConditionGroups();
-
-            foreach (var flatConditionGroup in FlatConditionGroups)
-            {
-                //Order the conditions by (None, And, Or) - because this is the way the index selection process will evaluate them.
-                flatConditionGroup.Conditions = flatConditionGroup.Conditions.OrderBy(o => o.LogicalConnector).ToList();
-            }
         }
-
-        public void FlattenConditionGroups()
-        {
-            FlatConditionGroups = Conditions.Flatten();
-        }
-
     }
 }

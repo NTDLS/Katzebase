@@ -206,6 +206,7 @@ namespace Katzebase.Engine.Documents
             //Figure out which indexes could assist us in retrieving the desired documents (if any).
             var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMeta, query.Conditions);
 
+            /*
             string fullExpressionTree = query.Conditions.BuildFullExpressionTree();
             string subsetExpressionTree = query.Conditions.BuildSubsetExpressionTree();
 
@@ -225,21 +226,21 @@ namespace Katzebase.Engine.Documents
 
                 HashSet<Guid>? limitingDocumentIds = null;
 
-                /*
-                if (conditionGroup.IndexSelection != null)
-                {
-                    Utility.EnsureNotNull(conditionGroup.IndexSelection.Index.DiskPath);
+                
+                //if (conditionGroup.IndexSelection != null)
+                //{
+                //    Utility.EnsureNotNull(conditionGroup.IndexSelection.Index.DiskPath);
 
-                    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, conditionGroup.IndexSelection.Index.DiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(indexPageCatalog);
+                //    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, conditionGroup.IndexSelection.Index.DiskPath, LockOperation.Read);
+                //    Utility.EnsureNotNull(indexPageCatalog);
 
-                    limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, conditionGroup.IndexSelection, subset);
-                    if (limitingDocumentIds?.Count == 0)
-                    {
-                        limitingDocumentIds = null;
-                    }
-                }
-                */
+                //    limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, conditionGroup.IndexSelection, subset);
+                //    if (limitingDocumentIds?.Count == 0)
+                //    {
+                //        limitingDocumentIds = null;
+                //    }
+                //}
+                
 
                 //limitingDocumentIds = new HashSet<Guid>();
                 //limitingDocumentIds.UnionWith(documentCatalog.Collection.Select(o => o.Id).ToHashSet());
@@ -289,6 +290,7 @@ namespace Katzebase.Engine.Documents
                     result.Rows.Add(new KbQueryRow(workingDocument.Values));
                 }
             }
+            */
 
             return result;
         }

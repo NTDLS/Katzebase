@@ -1,6 +1,7 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
+using Katzebase.Engine.Query.Condition.NG;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.Library;
@@ -111,7 +112,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="schemaMeta"></param>
         /// <param name="conditions">Nested conditions.</param>
         /// <returns>A selection of indexes as well as a clone of the conditions with associated indexes</returns>
-        public ConditionLookupOptimization SelectIndexesForConditionLookupOptimization(Transaction transaction, PersistSchema schemaMeta, Conditions conditions)
+        public ConditionLookupOptimization SelectIndexesForConditionLookupOptimization(Transaction transaction, PersistSchema schemaMeta, NGConditions conditions)
         {
             try
             {
@@ -119,7 +120,7 @@ namespace Katzebase.Engine.Indexes
 
                 var lookupOptimization = new ConditionLookupOptimization(conditions);
 
-                foreach (var flatGroup in lookupOptimization.FlatConditionGroups)
+                foreach (var subset in conditions.Subsets)
                 {
                     var potentialIndexs = new List<PotentialIndex>();
 
@@ -141,7 +142,7 @@ namespace Katzebase.Engine.Indexes
                                 throw new KbNullException($"Value should not be null {nameof(keyName)}.");
                             }
 
-                            if (flatGroup.Conditions.Any(o => o.Left.Value == keyName && !o.CoveredByIndex))
+                            if (subset.Conditions.Any(o => o.Left.Value == keyName && !o.CoveredByIndex))
                             {
                                 handledKeyNames.Add(keyName);
                             }
@@ -153,7 +154,7 @@ namespace Katzebase.Engine.Indexes
 
                         if (handledKeyNames.Count > 0)
                         {
-                            var potentialIndex = new PotentialIndex(flatGroup.SubsetUID, indexMeta, handledKeyNames);
+                            var potentialIndex = new PotentialIndex(indexMeta, handledKeyNames);
                             potentialIndexs.Add(potentialIndex);
                         }
                     }
@@ -164,7 +165,7 @@ namespace Katzebase.Engine.Indexes
                         .ThenBy(t => t.Index.Attributes.Count).FirstOrDefault();
                     if (firstIndex != null)
                     {
-                        var handledKeys = (from o in flatGroup.Conditions where firstIndex.CoveredFields.Contains(o.Left.Value ?? string.Empty) select o).ToList();
+                        var handledKeys = (from o in subset.Conditions where firstIndex.CoveredFields.Contains(o.Left.Value ?? string.Empty) select o).ToList();
                         foreach (var handledKey in handledKeys)
                         {
                             handledKey.CoveredByIndex = true;
@@ -177,11 +178,11 @@ namespace Katzebase.Engine.Indexes
                         lookupOptimization.IndexSelection.Add(indexSelection);
 
                         //Mark which condition this index selection satisifies.
-                        var sourceSubset = lookupOptimization.Conditions.SubsetByUID(flatGroup.SubsetUID);
+                        var sourceSubset = lookupOptimization.Conditions.SubsetByKey(subset.SubsetKey);
                         Utility.EnsureNotNull(sourceSubset);
                         sourceSubset.IndexSelection = indexSelection;
 
-                        foreach (var conditon in sourceSubset.Conditions.OfType<ConditionSingle>())
+                        foreach (var conditon in sourceSubset.Conditions)
                         {
                             if (indexSelection.CoveredFields.Any(o => o == conditon.Left.Value))
                             {
@@ -190,9 +191,6 @@ namespace Katzebase.Engine.Indexes
                         }
                     }
                 }
-
-                //Re-flatten so that th eflat grouping has associated indexes.
-                lookupOptimization.FlattenConditionGroups();
 
                 return lookupOptimization;
             }

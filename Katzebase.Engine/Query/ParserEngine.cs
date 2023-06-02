@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Query.Condition;
+using Katzebase.Engine.Query.Condition.NG;
 using Katzebase.Library;
 using Katzebase.Library.Client.Management;
 using Katzebase.Library.Exceptions;
@@ -198,9 +199,7 @@ namespace Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found [" + token + "], expected list of conditions.");
                     }
 
-                    result.Conditions = ParseConditions(conditionText, literalStrings);
-
-                    //var fff = result.Conditions.BuildSubsetExpressionTree();
+                    result.Conditions = NGConditions.Parse(conditionText, literalStrings);
 
                 }
                 else if (token != string.Empty)
@@ -223,7 +222,7 @@ namespace Katzebase.Engine.Query
                     }
                 }
             }
-           
+
             return result;
         }
 
@@ -517,7 +516,7 @@ namespace Katzebase.Engine.Query
         /// <param name="conditionsText"></param>
         /// <param name="literalStrings"></param>
         /// <returns></returns>
-        private static Conditions ParseConditions(string conditionsText, Dictionary<string, string> literalStrings)
+        private static Conditions workingish_ParseConditions(string conditionsText, Dictionary<string, string> literalStrings)
         {
             conditionsText = conditionsText.Replace("( ", "(").Replace(" (", "(").Replace(") ", ")").Replace(" )", ")").Trim();
             var conditions = ParseConditionGroups(conditionsText, literalStrings);
