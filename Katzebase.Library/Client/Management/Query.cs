@@ -30,5 +30,20 @@ namespace Katzebase.Library.Client.Management
             return result;
         }
 
+        public KbActionResponse ExecuteNonQuery(string statement)
+        {
+            string url = $"api/Query/{client.SessionId}/ExecuteNonQuery";
+
+            var postContent = new StringContent(JsonConvert.SerializeObject(statement), Encoding.UTF8);
+
+            using var response = client.Connection.PostAsync(url, postContent);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
+            if (result == null || result.Success == false)
+            {
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.Message);
+            }
+            return result;
+        }
     }
 }

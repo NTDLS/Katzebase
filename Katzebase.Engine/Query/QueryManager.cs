@@ -28,5 +28,28 @@ namespace Katzebase.Engine.Query
                 throw new NotImplementedException();
             }
         }
+
+        public KbActionResponse ExecuteNonQuery(ulong processId, string statement)
+        {
+            var preparedQuery = ParserEngine.ParseQuery(statement);
+            return ExecuteNonQuery(processId, preparedQuery);
+        }
+
+        public KbActionResponse ExecuteNonQuery(ulong processId, PreparedQuery preparedQuery)
+        {
+            if (preparedQuery.QueryType == Constants.QueryType.Select)
+            {
+                return core.Documents.ExecuteSelect(processId, preparedQuery);
+            }
+            else if (preparedQuery.QueryType == Constants.QueryType.Delete)
+            {
+                return core.Documents.ExecuteDelete(processId, preparedQuery);
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
+
     }
 }

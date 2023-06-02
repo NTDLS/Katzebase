@@ -28,11 +28,35 @@ namespace Katzebase.Engine.Documents
         {
             try
             {
-                KbQueryResult result = new KbQueryResult(); ;
+                var result = new KbQueryResult(); ;
 
                 using (var transaction = core.Transactions.Begin(processId))
                 {
                     result = FindDocuments(transaction.Transaction, preparedQuery);
+                    transaction.Commit();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to delete document by ID for process {processId}.", ex);
+                throw;
+            }
+        }
+
+        public KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
+        {
+            //TODO: This is a stub, this does NOT work.
+            try
+            {
+                var result = new KbActionResponse();
+
+                using (var transaction = core.Transactions.Begin(processId))
+                {
+                    result = FindDocuments(transaction.Transaction, preparedQuery);
+
+                    //TODO: Delete the documents.
 
                     /*
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
@@ -176,24 +200,30 @@ namespace Katzebase.Engine.Documents
             string subsetExpressionTree = query.Conditions.BuildSubsetExpressionTree();
 
             var allResultRIDs = new HashSet<Guid>();
-            var expression = new NCalc.Expression(subsetExpressionTree);
-
             var allResults = new List<DocumentLookupLogicSubsetResult>();
 
             foreach (var conditionGroup in lookupOptimization.FlatConditionGroups)
             {
                 var subset = conditionGroup.ToSubset();
+
                 var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog, schemaMeta, query, subset);
+
                 allResults.Add(new DocumentLookupLogicSubsetResult(subset.SubsetUID, subset.LogicalConnector, subsetResults));
 
+                //Save a big list of all unique RIDs (Row IDs) so we can loop through them later an elimitate any that dont match all condition subsets.
                 var currentRIDs = subsetResults.Collection.Select(o => o.RID).ToHashSet();
                 allResultRIDs.UnionWith(currentRIDs);
             }
 
+            var expression = new NCalc.Expression(subsetExpressionTree);
+
+            //Loop through ALL found document IDs and build an expression for each one that represents all condition subsets.
+            //  This way we can eliminate documents that do not match all condition subsets.
             foreach (var rid in allResultRIDs)
             {
                 DocumentLookupResult? workingDocument = null;
 
+                //Build a logical expression for each condition subset.
                 foreach (var conditionGroup in lookupOptimization.FlatConditionGroups)
                 {
                     var resultSet = allResults.Where(o => o.SubsetUID == conditionGroup.SubsetUID).First();
@@ -201,18 +231,20 @@ namespace Katzebase.Engine.Documents
 
                     workingDocument ??= resultSetDocument; //Save the first instance of the document we found. This will be used for the final result.
 
+                    //The expression is parameterized, so add a true/false parameter for each conditon which defines whether
+                    //  the document was found in the given condition subset.
                     expression.Parameters[conditionGroup.SubsetVariableName] = (resultSetDocument != null);
                 }
 
-                Utility.EnsureNotNull(workingDocument);
+                Utility.EnsureNotNull(workingDocument); //We absolutley expect to have a document here, if not - something is terribly wrong.
 
+                //Evaluate the expression and if its true, save the document results for the final result.
                 var expressionResult = (bool)expression.Evaluate();
                 if (expressionResult)
                 {
                     result.Rows.Add(new KbQueryRow(workingDocument.Values));
                 }
             }
-
 
             return result;
 
