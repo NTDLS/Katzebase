@@ -100,11 +100,28 @@ namespace Katzebase.Engine.Documents
         /// <exception cref="KbParserException"></exception>
         private DocumentLookupResults GetDocumentsByConditionSubset(Transaction transaction,
             List<PersistDocumentCatalogItem> partialDocumentCatalog, PersistSchema schemaMeta, PreparedQuery query,
-            ConditionSubset conditionSubset, HashSet<Guid>? limitingDocumentIds)
+            ConditionLookupOptimization lookupOptimization)
         {
             var results = new DocumentLookupResults();
+            var rootCondition = lookupOptimization.Conditions.SubsetByKey(query.Conditions.RootExpressionKey);
+            var expression = new NCalc.Expression(rootCondition.Expression);
 
-            var expression = new NCalc.Expression(conditionSubset.Expression);
+            HashSet<Guid>? limitingDocumentIds = null;
+
+            /*
+            //indexing limits the documents we need to scan.
+            if (rootCondition.IndexSelection != null)
+            {
+                Utility.EnsureNotNull(rootCondition.IndexSelection.Index.DiskPath);
+                var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, rootCondition.IndexSelection.Index.DiskPath, LockOperation.Read);
+                Utility.EnsureNotNull(indexPageCatalog);
+                limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, rootCondition.IndexSelection, rootCondition);
+                if (limitingDocumentIds?.Count == 0)
+                {
+                    limitingDocumentIds = null;
+                }
+            }
+            */
 
             //Loop through each document in the catalog:
             foreach (var item in partialDocumentCatalog)
@@ -127,16 +144,16 @@ namespace Katzebase.Engine.Documents
                 var jContent = JObject.Parse(persistDocument.Content);
 
                 //If we have subsets, then we need to satisify those in order to complete the equation.
-                foreach (var subsetKey in conditionSubset.SubsetKeys)
+                foreach (var subsetKey in rootCondition.SubsetKeys)
                 {
-                    var subExpression = query.Conditions.SubsetByKey(subsetKey);
-                    bool subExpressionResult = SatisifySubExpression(query, jContent, subExpression);
+                    var subExpression = lookupOptimization.Conditions.SubsetByKey(subsetKey);
+                    bool subExpressionResult = SatisifySubExpression(lookupOptimization, jContent, subExpression);
                     expression.Parameters[subsetKey] = subExpressionResult;
                 }
 
                 //Loop though each condition in the prepared query and build an expression to see if the document meets the criteria
                 //  by building a logical expression that we can evaluate 
-                foreach (var condition in conditionSubset.Conditions)
+                foreach (var condition in rootCondition.Conditions)
                 {
                     Utility.EnsureNotNull(condition.Left.Value); //TODO: What do we really need to do here?
 
@@ -177,7 +194,7 @@ namespace Katzebase.Engine.Documents
             return results;
         }
 
-        public bool SatisifySubExpression(PreparedQuery query, JObject jContent, ConditionSubset conditionSubset)
+        public bool SatisifySubExpression(ConditionLookupOptimization lookupOptimization, JObject jContent, ConditionSubset conditionSubset)
         {
             var expression = new NCalc.Expression(conditionSubset.Expression);
 
@@ -185,8 +202,8 @@ namespace Katzebase.Engine.Documents
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 //TODO: This (recursion) is untested!
-                var subExpression = query.Conditions.SubsetByKey(subsetKey);
-                bool subExpressionResult = SatisifySubExpression(query, jContent, subExpression);
+                var subExpression = lookupOptimization.Conditions.SubsetByKey(subsetKey);
+                bool subExpressionResult = SatisifySubExpression(lookupOptimization, jContent, subExpression);
                 expression.Parameters[subsetKey] = subExpressionResult;
             }
 
@@ -233,26 +250,7 @@ namespace Katzebase.Engine.Documents
             //Figure out which indexes could assist us in retrieving the desired documents (if any).
             var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMeta, query.Conditions);
 
-            var rootCondition = query.Conditions.SubsetByKey(query.Conditions.RootExpressionKey);
-
-            HashSet<Guid>? limitingDocumentIds = null;
-
-            /*
-            //indexing limits the documents we need to scan.
-            if (rootCondition.IndexSelection != null)
-            {
-                Utility.EnsureNotNull(conditionGroup.IndexSelection.Index.DiskPath);
-                var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, conditionGroup.IndexSelection.Index.DiskPath, LockOperation.Read);
-                Utility.EnsureNotNull(indexPageCatalog);
-                limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, conditionGroup.IndexSelection, subset);
-                if (limitingDocumentIds?.Count == 0)
-                {
-                    limitingDocumentIds = null;
-                }
-            }
-            */
-
-            var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog.Collection, schemaMeta, query, rootCondition, limitingDocumentIds);
+            var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog.Collection, schemaMeta, query, lookupOptimization);
 
             foreach (var subsetResult in subsetResults.Collection)
             {
