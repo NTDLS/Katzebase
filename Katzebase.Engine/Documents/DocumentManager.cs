@@ -692,6 +692,14 @@ namespace Katzebase.Engine.Documents
             */
         }
 
+        /// <summary>
+        /// Saves a new document, this is used for inserts.
+        /// </summary>
+        /// <param name="processId"></param>
+        /// <param name="schema"></param>
+        /// <param name="document"></param>
+        /// <param name="newId"></param>
+        /// <exception cref="KbSchemaDoesNotExistException"></exception>
         public void Store(ulong processId, string schema, KbDocument document, out Guid? newId)
         {
             try
@@ -746,6 +754,13 @@ namespace Katzebase.Engine.Documents
             }
         }
 
+        /// <summary>
+        /// Deletes a document by its ID.
+        /// </summary>
+        /// <param name="processId"></param>
+        /// <param name="schema"></param>
+        /// <param name="newId"></param>
+        /// <exception cref="KbSchemaDoesNotExistException"></exception>
         public void DeleteById(ulong processId, string schema, Guid newId)
         {
             try
@@ -790,6 +805,13 @@ namespace Katzebase.Engine.Documents
             }
         }
 
+        /// <summary>
+        /// Returns a list of all documents in a schema.
+        /// </summary>
+        /// <param name="processId"></param>
+        /// <param name="schema"></param>
+        /// <returns></returns>
+        /// <exception cref="KbSchemaDoesNotExistException"></exception>
         public List<PersistDocumentCatalogItem> EnumerateCatalog(ulong processId, string schema)
         {
             try

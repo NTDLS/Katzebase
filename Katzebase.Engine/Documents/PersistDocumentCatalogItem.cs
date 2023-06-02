@@ -2,6 +2,9 @@
 
 namespace Katzebase.Engine.Documents
 {
+    /// <summary>
+    /// Represents a document in the document catalog. This will just contain basic info like document ID and the document file name.
+    /// </summary>
     [Serializable]
     public class PersistDocumentCatalogItem
     {
@@ -11,7 +14,7 @@ namespace Katzebase.Engine.Documents
         {
             return new KbDocumentCatalogItem()
             {
-                Id = this.Id
+                Id = Id
             };
         }
 
@@ -27,7 +30,7 @@ namespace Katzebase.Engine.Documents
         {
             return new PersistDocumentCatalogItem
             {
-                Id = this.Id
+                Id = Id
             };
         }
     }
