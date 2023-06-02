@@ -99,11 +99,11 @@ namespace Katzebase.Engine.Documents
 
                         if (condition.IsMatch(jToken.ToString().ToLower()))
                         {
-                            expression.Append($"(1==1)");
+                            expression.Append($"(1)");
                         }
                         else
                         {
-                            expression.Append($"(1==0)");
+                            expression.Append($"(0)");
                         }
                     }
                     else
