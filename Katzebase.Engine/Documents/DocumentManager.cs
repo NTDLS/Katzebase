@@ -1,6 +1,7 @@
 ﻿using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
+using Katzebase.Engine.Query.Condition.NG;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.Library;
@@ -100,7 +101,7 @@ namespace Katzebase.Engine.Documents
         /// <exception cref="KbParserException"></exception>
         private DocumentLookupResults GetDocumentsByConditionSubset(Transaction transaction,
             List<PersistDocumentCatalogItem> partialDocumentCatalog, PersistSchema schemaMeta, PreparedQuery query,
-            ConditionSubset conditionSubset, HashSet<Guid>? limitingDocumentIds)
+            NGConditionSubset conditionSubset, HashSet<Guid>? limitingDocumentIds)
         {
             var results = new DocumentLookupResults();
 
@@ -128,7 +129,7 @@ namespace Katzebase.Engine.Documents
 
                 //Loop though each condition in the prepared query and build an expression to see if the document meets the criteria
                 //  by building a logical expression that we can evaluate 
-                foreach (var condition in conditionSubset.Conditions.OfType<ConditionSingle>())
+                foreach (var condition in conditionSubset.Conditions)
                 {
                     Utility.EnsureNotNull(condition.Left.Value); //TODO: What do we really need to do here?
 

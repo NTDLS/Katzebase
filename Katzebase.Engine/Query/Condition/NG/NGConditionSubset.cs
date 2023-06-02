@@ -2,7 +2,7 @@
 
 namespace Katzebase.Engine.Query.Condition.NG
 {
-    public class NGSubset
+    public class NGConditionSubset
     {
         public string SubsetKey { get; set; }
         public string Expression { get; set; }
@@ -13,7 +13,7 @@ namespace Katzebase.Engine.Query.Condition.NG
         /// </summary>
         public IndexSelection? IndexSelection { get; set; }
 
-        public NGSubset(string subsetKey, string expression)
+        public NGConditionSubset(string subsetKey, string expression)
         {
             SubsetKey = subsetKey;
             Expression = expression;

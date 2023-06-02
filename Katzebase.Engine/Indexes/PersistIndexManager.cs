@@ -10,7 +10,6 @@ using Katzebase.Library.Payloads;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Indexes
@@ -29,7 +28,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="persistIndexLeaves"></param>
         /// <param name="conditions"></param>
         /// <param name="foundDocumentIds"></param>
-        public HashSet<Guid> MatchDocuments(PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
+        public HashSet<Guid> MatchDocuments(PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, NGConditionSubset conditionSubset)
         {
             var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
 
@@ -38,7 +37,7 @@ namespace Katzebase.Engine.Indexes
             foreach (var attribute in indexSelection.Index.Attributes)
             {
                 Utility.EnsureNotNull(attribute.Field);
-                var conditionField = conditionSubset.Singles().Where (o => o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
+                var conditionField = conditionSubset.Conditions.Where (o => o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
                 if (conditionField == null)
                 {
                     //No match? I think this is an exception....

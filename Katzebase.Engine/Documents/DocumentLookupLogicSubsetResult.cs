@@ -9,8 +9,6 @@ namespace Katzebase.Engine.Documents
         public DocumentLookupResults Results { get; set; }
         public Guid SubsetUID { get; set; }
 
-        public ConditionSubset? DEBUGSUBSET { get; set; }
-
         public DocumentLookupLogicSubsetResult(Guid subsetUID, LogicalConnector logicalConnector, DocumentLookupResults results)
         {
             LogicalConnector = logicalConnector;

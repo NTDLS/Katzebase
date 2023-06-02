@@ -6,7 +6,7 @@ namespace Katzebase.Engine.Query.Condition.NG
 {
     public class NGConditions
     {
-        public List<NGSubset> Subsets = new();
+        public List<NGConditionSubset> Subsets = new();
 
         public static NGConditions Parse(string conditionsText, Dictionary<string, string> literalStrings)
         {
@@ -25,7 +25,7 @@ namespace Katzebase.Engine.Query.Condition.NG
                     if (endPos > startPos)
                     {
                         string subsetText = conditionsText.Substring(startPos, (endPos - startPos) + 1).Trim();
-                        var subset = new NGSubset(subsetKey, subsetText.Substring(1, subsetText.Length - 2).Trim());
+                        var subset = new NGConditionSubset(subsetKey, subsetText.Substring(1, subsetText.Length - 2).Trim());
                         conditions.AddSubset(literalStrings, subset);
                         conditionsText = conditionsText.Replace(subsetText, subsetKey);
                     }
@@ -40,7 +40,7 @@ namespace Katzebase.Engine.Query.Condition.NG
         }
 
 
-        public NGSubset? SubsetByKey(string key)
+        public NGConditionSubset? SubsetByKey(string key)
         {
             return Subsets.Where(o => o.SubsetKey == key).FirstOrDefault();
         }
@@ -51,7 +51,7 @@ namespace Katzebase.Engine.Query.Condition.NG
 
             foreach (var subset in Subsets)
             {
-                var subsetClone = new NGSubset(subset.SubsetKey, subset.Expression);
+                var subsetClone = new NGConditionSubset(subset.SubsetKey, subset.Expression);
 
                 foreach (var condition in subset.Conditions)
                 {
@@ -63,7 +63,7 @@ namespace Katzebase.Engine.Query.Condition.NG
             return clone;
         }
 
-        public void AddSubset(Dictionary<string, string> literalStrings, NGSubset subset)
+        public void AddSubset(Dictionary<string, string> literalStrings, NGConditionSubset subset)
         {
             int position = 0;
             int keyCounter = 0;
