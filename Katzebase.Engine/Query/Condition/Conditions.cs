@@ -108,9 +108,9 @@ namespace Katzebase.Engine.Query.Condition
             return str;
         }
 
-        public ConditionSubset? SubsetByKey(string key)
+        public ConditionSubset SubsetByKey(string key)
         {
-            return Subsets.Where(o => o.SubsetKey == key).FirstOrDefault();
+            return Subsets.Where(o => o.SubsetKey == key).First();
         }
 
         public Conditions Clone()
@@ -155,11 +155,11 @@ namespace Katzebase.Engine.Query.Condition
                 {
                     if (token.StartsWith("$:ck"))
                     {
-                        subset.ConditionKeys.Add(token.Substring(2, token.Length - 7));
+                        subset.ConditionKeys.Add(token.Substring(2, token.Length - 3));
                     }
                     else if (token.StartsWith("$:sk"))
                     {
-                        subset.SubsetKeys.Add(token.Substring(2, token.Length - 7));
+                        subset.SubsetKeys.Add(token.Substring(2, token.Length - 3));
                     }
 
                     continue;

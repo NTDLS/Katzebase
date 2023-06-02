@@ -126,6 +126,14 @@ namespace Katzebase.Engine.Documents
 
                 var jContent = JObject.Parse(persistDocument.Content);
 
+                //If we have subsets, then we need to satisify those in order to complete the equation.
+                foreach (var subsetKey in conditionSubset.SubsetKeys)
+                {
+                    var subExpression = query.Conditions.SubsetByKey(subsetKey);
+                    bool subExpressionResult = SatisifySubExpression(query, jContent, subExpression);
+                    expression.Parameters[subsetKey] = subExpressionResult;
+                }
+
                 //Loop though each condition in the prepared query and build an expression to see if the document meets the criteria
                 //  by building a logical expression that we can evaluate 
                 foreach (var condition in conditionSubset.Conditions)
@@ -169,6 +177,37 @@ namespace Katzebase.Engine.Documents
             return results;
         }
 
+        public bool SatisifySubExpression(PreparedQuery query, JObject jContent, ConditionSubset conditionSubset)
+        {
+            var expression = new NCalc.Expression(conditionSubset.Expression);
+
+            //If we have subsets, then we need to satisify those in order to complete the equation.
+            foreach (var subsetKey in conditionSubset.SubsetKeys)
+            {
+                //TODO: This (recursion) is untested!
+                var subExpression = query.Conditions.SubsetByKey(subsetKey);
+                bool subExpressionResult = SatisifySubExpression(query, jContent, subExpression);
+                expression.Parameters[subsetKey] = subExpressionResult;
+            }
+
+            foreach (var condition in conditionSubset.Conditions)
+            {
+                Utility.EnsureNotNull(condition.Left.Value); //TODO: What do we really need to do here?
+
+                //Get the value of the condition:
+                if (jContent.TryGetValue(condition.Left.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                {
+                    expression.Parameters[condition.ConditionKey] = condition.IsMatch(jToken.ToString().ToLower());
+                }
+                else
+                {
+                    throw new KbParserException($"Field not found in document [{condition.Left.Value}].");
+                }
+            }
+
+            return (bool)expression.Evaluate();
+        }
+
         private KbQueryResult FindDocuments(Transaction transaction, PreparedQuery query)
         {
             var result = new KbQueryResult();
@@ -198,80 +237,33 @@ namespace Katzebase.Engine.Documents
 
             Console.WriteLine(subsetExpressionTree);
 
-            var allResultRIDs = new HashSet<Guid>();
-            var allResults = new List<DocumentLookupLogicSubsetResult>();
+            var rootCondition = query.Conditions.SubsetByKey(subsetExpressionTree);
 
-            foreach (var conditionSubset in lookupOptimization.Conditions.Subsets)
-            {
-                //We should be able to use indexes to limit what is contained in [partialDocumentCatalog].
+            HashSet<Guid>? limitingDocumentIds = null;
 
-                HashSet<Guid>? limitingDocumentIds = null;
-
-                
-                //if (conditionGroup.IndexSelection != null)
-                //{
-                //    Utility.EnsureNotNull(conditionGroup.IndexSelection.Index.DiskPath);
-
-                //    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, conditionGroup.IndexSelection.Index.DiskPath, LockOperation.Read);
-                //    Utility.EnsureNotNull(indexPageCatalog);
-
-                //    limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, conditionGroup.IndexSelection, subset);
-                //    if (limitingDocumentIds?.Count == 0)
-                //    {
-                //        limitingDocumentIds = null;
-                //    }
-                //}
-
-                limitingDocumentIds = new HashSet<Guid>();
-                limitingDocumentIds.UnionWith(documentCatalog.Collection.Select(o => o.Id).ToHashSet());
-
-                var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog.Collection, schemaMeta, query, conditionSubset, limitingDocumentIds);
-
-                allResults.Add(new DocumentLookupLogicSubsetResult(conditionSubset.SubsetKey, subsetResults));
-
-                foreach (var dbg in subsetResults.Collection)
-                {
-                    Console.WriteLine(dbg.RID);
-                }
-
-
-                //Save a big list of all unique RIDs (Row IDs) so we can loop through them later an elimitate any that dont match all condition subsets.
-                var currentRIDs = subsetResults.Collection.Select(o => o.RID).ToHashSet();
-                allResultRIDs.UnionWith(currentRIDs);
-            }
-
-            /*
-            var expression = new NCalc.Expression(subsetExpressionTree);
-
-            //Loop through ALL found document IDs and build an expression for each one that represents all condition subsets.
-            //  This way we can eliminate documents that do not match all condition subsets.
-            foreach (var rid in allResultRIDs)
-            {
-                DocumentLookupResult? workingDocument = null;
-
-                //Build a logical expression for each condition subset.
-                foreach (var conditionGroup in lookupOptimization.FlatConditionGroups)
-                {
-                    var resultSet = allResults.Where(o => o.SubsetUID == conditionGroup.SubsetUID).First();
-                    var resultSetDocument = resultSet.Results.Collection.FirstOrDefault(o => o.RID == rid);
-
-                    workingDocument ??= resultSetDocument; //Save the first instance of the document we found. This will be used for the final result.
-
-                    //The expression is parameterized, so add a true/false parameter for each conditon which defines whether
-                    //  the document was found in the given condition subset.
-                    expression.Parameters[conditionGroup.SubsetVariableName] = (resultSetDocument != null);
-                }
-
-                Utility.EnsureNotNull(workingDocument); //We absolutley expect to have a document here, if not - something is terribly wrong.
-
-                //Evaluate the expression and if its true, save the document results for the final result.
-                var expressionResult = (bool)expression.Evaluate();
-                if (expressionResult)
-                {
-                    result.Rows.Add(new KbQueryRow(workingDocument.Values));
-                }
-            }
+            /*//indexing limits the documents we need to scan.
+            //if (conditionGroup.IndexSelection != null)
+            //{
+            //    Utility.EnsureNotNull(conditionGroup.IndexSelection.Index.DiskPath);
+            //    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, conditionGroup.IndexSelection.Index.DiskPath, LockOperation.Read);
+            //    Utility.EnsureNotNull(indexPageCatalog);
+            //    limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, conditionGroup.IndexSelection, subset);
+            //    if (limitingDocumentIds?.Count == 0)
+            //    {
+            //        limitingDocumentIds = null;
+            //    }
+            //}
             */
+
+            limitingDocumentIds = new HashSet<Guid>();
+            limitingDocumentIds.UnionWith(documentCatalog.Collection.Select(o => o.Id).ToHashSet());
+
+            var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog.Collection, schemaMeta, query, rootCondition, limitingDocumentIds);
+
+            foreach (var subsetResult in subsetResults.Collection)
+            {
+                result.Rows.Add(new KbQueryRow(subsetResult.Values));
+            }
 
             return result;
         }
