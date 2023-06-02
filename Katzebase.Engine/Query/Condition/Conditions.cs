@@ -1,22 +1,27 @@
-﻿using Katzebase.Engine.Indexes;
-using Microsoft.VisualBasic;
-using static Katzebase.Engine.Constants;
+﻿using static Katzebase.Engine.Constants;
 
-namespace Katzebase.Engine.Query.Condition.NG
+namespace Katzebase.Engine.Query.Condition
 {
-    public class NGConditions
+    public class Conditions
     {
-        public List<NGConditionSubset> Subsets = new();
+        public List<ConditionSubset> Subsets = new();
 
-        public static NGConditions Parse(string conditionsText, Dictionary<string, string> literalStrings)
+        public string ExpressionTemplate { get; set; } = string.Empty;
+
+        public static Conditions Parse(string conditionsText, Dictionary<string, string> literalStrings)
         {
             int keyCounter = 0;
 
-            var conditions = new NGConditions();
+            var conditions = new Conditions();
+
+            if (conditionsText.StartsWith('(') == false || conditionsText.StartsWith(')') == false)
+            {
+                conditionsText = $"({conditionsText})";
+            }
 
             while (true)
             {
-                string subsetKey = $"$SK:{keyCounter++}$";
+                string subsetKey = $"$sk:{keyCounter++}$";
 
                 int startPos = conditionsText.LastIndexOf('(');
                 if (startPos >= 0)
@@ -24,8 +29,8 @@ namespace Katzebase.Engine.Query.Condition.NG
                     int endPos = conditionsText.IndexOf(')', startPos);
                     if (endPos > startPos)
                     {
-                        string subsetText = conditionsText.Substring(startPos, (endPos - startPos) + 1).Trim();
-                        var subset = new NGConditionSubset(subsetKey, subsetText.Substring(1, subsetText.Length - 2).Trim());
+                        string subsetText = conditionsText.Substring(startPos, endPos - startPos + 1).Trim();
+                        var subset = new ConditionSubset(subsetKey, subsetText.Substring(1, subsetText.Length - 2).Trim());
                         conditions.AddSubset(literalStrings, subset);
                         conditionsText = conditionsText.Replace(subsetText, subsetKey);
                     }
@@ -36,22 +41,23 @@ namespace Katzebase.Engine.Query.Condition.NG
                 }
             }
 
+            conditions.ExpressionTemplate = conditionsText.Trim();
+
             return conditions;
         }
 
-
-        public NGConditionSubset? SubsetByKey(string key)
+        public ConditionSubset? SubsetByKey(string key)
         {
             return Subsets.Where(o => o.SubsetKey == key).FirstOrDefault();
         }
 
-        public NGConditions Clone()
+        public Conditions Clone()
         {
-            var clone = new NGConditions();
+            var clone = new Conditions();
 
             foreach (var subset in Subsets)
             {
-                var subsetClone = new NGConditionSubset(subset.SubsetKey, subset.Expression);
+                var subsetClone = new ConditionSubset(subset.SubsetKey, subset.Expression);
 
                 foreach (var condition in subset.Conditions)
                 {
@@ -63,7 +69,7 @@ namespace Katzebase.Engine.Query.Condition.NG
             return clone;
         }
 
-        public void AddSubset(Dictionary<string, string> literalStrings, NGConditionSubset subset)
+        public void AddSubset(Dictionary<string, string> literalStrings, ConditionSubset subset)
         {
             int position = 0;
             int keyCounter = 0;
@@ -96,7 +102,7 @@ namespace Katzebase.Engine.Query.Condition.NG
                 }
                 else
                 {
-                    string conditionKey = $"$CK:{keyCounter++}$";
+                    string conditionKey = $"$ck:{keyCounter++}$";
 
                     string left = token;
 
@@ -113,10 +119,10 @@ namespace Katzebase.Engine.Query.Condition.NG
                     }
 
                     int endPosition = position;
-                    var condition = new NGCondition(subset.SubsetKey, conditionKey, logicalConnector, left, logicalQualifier, right);
+                    var condition = new Condition(subset.SubsetKey, conditionKey, logicalConnector, left, logicalQualifier, right);
 
                     position = 0;
-                    subset.Expression = subset.Expression.Remove(startPosition, (endPosition - startPosition)).Insert(startPosition, conditionKey + " ");
+                    subset.Expression = subset.Expression.Remove(startPosition, endPosition - startPosition).Insert(startPosition, conditionKey + " ");
                     subset.Conditions.Add(condition);
                     logicalConnector = LogicalConnector.None;
                 }

@@ -2,9 +2,9 @@
 using Katzebase.Library.Exceptions;
 using static Katzebase.Engine.Constants;
 
-namespace Katzebase.Engine.Query.Condition.NG
+namespace Katzebase.Engine.Query.Condition
 {
-    public class NGCondition
+    public class Condition
     {
         public bool CoveredByIndex { get; set; } = false;
         public string SubsetKey { get; set; }
@@ -14,7 +14,7 @@ namespace Katzebase.Engine.Query.Condition.NG
         public LogicalConnector LogicalConnector { get; set; } = LogicalConnector.None;
         public LogicalQualifier LogicalQualifier { get; set; } = LogicalQualifier.None;
 
-        public NGCondition(string subsetKey, string conditionKey, LogicalConnector logicalConnector, string left, LogicalQualifier logicalQualifier, string right)
+        public Condition(string subsetKey, string conditionKey, LogicalConnector logicalConnector, string left, LogicalQualifier logicalQualifier, string right)
         {
             SubsetKey = subsetKey;
             ConditionKey = conditionKey;
@@ -24,9 +24,9 @@ namespace Katzebase.Engine.Query.Condition.NG
             LogicalQualifier = logicalQualifier;
         }
 
-        public NGCondition Clone()
+        public Condition Clone()
         {
-            var clone = new NGCondition(SubsetKey, ConditionKey, LogicalConnector, Left.Value ?? string.Empty, LogicalQualifier, Right.Value ?? string.Empty);
+            var clone = new Condition(SubsetKey, ConditionKey, LogicalConnector, Left.Value ?? string.Empty, LogicalQualifier, Right.Value ?? string.Empty);
 
             return clone;
         }

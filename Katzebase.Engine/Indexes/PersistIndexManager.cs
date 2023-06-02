@@ -1,7 +1,6 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
-using Katzebase.Engine.Query.Condition.NG;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.Library;
@@ -28,7 +27,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="persistIndexLeaves"></param>
         /// <param name="conditions"></param>
         /// <param name="foundDocumentIds"></param>
-        public HashSet<Guid> MatchDocuments(PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, NGConditionSubset conditionSubset)
+        public HashSet<Guid> MatchDocuments(PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
         {
             var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
 
@@ -111,7 +110,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="schemaMeta"></param>
         /// <param name="conditions">Nested conditions.</param>
         /// <returns>A selection of indexes as well as a clone of the conditions with associated indexes</returns>
-        public ConditionLookupOptimization SelectIndexesForConditionLookupOptimization(Transaction transaction, PersistSchema schemaMeta, NGConditions conditions)
+        public ConditionLookupOptimization SelectIndexesForConditionLookupOptimization(Transaction transaction, PersistSchema schemaMeta, Conditions conditions)
         {
             try
             {

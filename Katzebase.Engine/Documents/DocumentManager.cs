@@ -1,7 +1,6 @@
 ﻿using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
-using Katzebase.Engine.Query.Condition.NG;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.Library;
@@ -101,7 +100,7 @@ namespace Katzebase.Engine.Documents
         /// <exception cref="KbParserException"></exception>
         private DocumentLookupResults GetDocumentsByConditionSubset(Transaction transaction,
             List<PersistDocumentCatalogItem> partialDocumentCatalog, PersistSchema schemaMeta, PreparedQuery query,
-            NGConditionSubset conditionSubset, HashSet<Guid>? limitingDocumentIds)
+            ConditionSubset conditionSubset, HashSet<Guid>? limitingDocumentIds)
         {
             var results = new DocumentLookupResults();
 

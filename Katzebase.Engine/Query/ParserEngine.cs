@@ -1,5 +1,4 @@
 ﻿using Katzebase.Engine.Query.Condition;
-using Katzebase.Engine.Query.Condition.NG;
 using Katzebase.Library;
 using Katzebase.Library.Client.Management;
 using Katzebase.Library.Exceptions;
@@ -199,7 +198,7 @@ namespace Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found [" + token + "], expected list of conditions.");
                     }
 
-                    result.Conditions = NGConditions.Parse(conditionText, literalStrings);
+                    result.Conditions = Conditions.Parse(conditionText, literalStrings);
 
                 }
                 else if (token != string.Empty)
