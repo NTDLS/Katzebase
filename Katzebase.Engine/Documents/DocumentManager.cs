@@ -32,7 +32,7 @@ namespace Katzebase.Engine.Documents
 
                 using (var transaction = core.Transactions.Begin(processId))
                 {
-                    result = FindDocuments(transaction.Transaction, preparedQuery);
+                    result = FindDocumentsByPreparedQuery(transaction.Transaction, preparedQuery);
                     transaction.Commit();
                 }
 
@@ -54,7 +54,7 @@ namespace Katzebase.Engine.Documents
 
                 using (var transaction = core.Transactions.Begin(processId))
                 {
-                    result = FindDocuments(transaction.Transaction, preparedQuery);
+                    result = FindDocumentsByPreparedQuery(transaction.Transaction, preparedQuery);
 
                     //TODO: Delete the documents.
 
@@ -98,15 +98,13 @@ namespace Katzebase.Engine.Documents
         /// <param name="conditionSubset"></param>
         /// <returns></returns>
         /// <exception cref="KbParserException"></exception>
-        private DocumentLookupResults GetDocumentsByConditionSubset(Transaction transaction,
-            List<PersistDocumentCatalogItem> partialDocumentCatalog, PersistSchema schemaMeta, PreparedQuery query,
+        private DocumentLookupResults GetAllDocumentsByConditions(Transaction transaction,
+            List<PersistDocumentCatalogItem> documentCatalogItems, PersistSchema schemaMeta, PreparedQuery query,
             ConditionLookupOptimization lookupOptimization)
         {
             var results = new DocumentLookupResults();
             var rootCondition = lookupOptimization.Conditions.SubsetByKey(query.Conditions.RootExpressionKey);
             var expression = new NCalc.Expression(rootCondition.Expression);
-
-            HashSet<Guid>? limitingDocumentIds = null;
 
             /*
             //indexing limits the documents we need to scan.
@@ -124,18 +122,10 @@ namespace Katzebase.Engine.Documents
             */
 
             //Loop through each document in the catalog:
-            foreach (var item in partialDocumentCatalog)
+            foreach (var documentItem in documentCatalogItems)
             {
-                if (limitingDocumentIds != null)
-                {
-                    if (limitingDocumentIds.Contains(item.Id) == false)
-                    {
-                        continue; //We have a limiting factor - probably an index that suggested that we dont scan everyhing - oblige.
-                    }
-                }
-
                 Utility.EnsureNotNull(schemaMeta.DiskPath);
-                var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, item.FileName);
+                var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, documentItem.FileName);
 
                 var persistDocument = core.IO.GetJson<PersistDocument>(transaction, persistDocumentDiskPath, LockOperation.Read);
                 Utility.EnsureNotNull(persistDocument);
@@ -194,6 +184,14 @@ namespace Katzebase.Engine.Documents
             return results;
         }
 
+        /// <summary>
+        /// Mathematically collapses all subexpressions to return a boolean match.
+        /// </summary>
+        /// <param name="lookupOptimization"></param>
+        /// <param name="jContent"></param>
+        /// <param name="conditionSubset"></param>
+        /// <returns></returns>
+        /// <exception cref="KbParserException"></exception>
         public bool SatisifySubExpression(ConditionLookupOptimization lookupOptimization, JObject jContent, ConditionSubset conditionSubset)
         {
             var expression = new NCalc.Expression(conditionSubset.Expression);
@@ -224,7 +222,14 @@ namespace Katzebase.Engine.Documents
             return (bool)expression.Evaluate();
         }
 
-        private KbQueryResult FindDocuments(Transaction transaction, PreparedQuery query)
+        /// <summary>
+        /// Finds all document using a prepared query.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="query"></param>
+        /// <returns></returns>
+        /// <exception cref="KbSchemaDoesNotExistException"></exception>
+        private KbQueryResult FindDocumentsByPreparedQuery(Transaction transaction, PreparedQuery query)
         {
             var result = new KbQueryResult();
 
@@ -249,7 +254,7 @@ namespace Katzebase.Engine.Documents
             //Figure out which indexes could assist us in retrieving the desired documents (if any).
             var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMeta, query.Conditions);
 
-            var subsetResults = GetDocumentsByConditionSubset(transaction, documentCatalog.Collection, schemaMeta, query, lookupOptimization);
+            var subsetResults = GetAllDocumentsByConditions(transaction, documentCatalog.Collection, schemaMeta, query, lookupOptimization);
 
             foreach (var subsetResult in subsetResults.Collection)
             {
