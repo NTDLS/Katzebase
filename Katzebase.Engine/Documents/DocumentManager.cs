@@ -1,4 +1,5 @@
-﻿using Katzebase.Engine.Indexes;
+﻿using Katzebase.Engine.Documents.Threading;
+using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
@@ -11,7 +12,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text;
+using System.Threading;
 using static Katzebase.Engine.Constants;
+using static Katzebase.Engine.Documents.Threading.DocumentThreadingConstants;
 
 namespace Katzebase.Engine.Documents
 {
@@ -92,20 +95,15 @@ namespace Katzebase.Engine.Documents
         /// Gets all documents by a subset of conditions.
         /// </summary>
         /// <param name="transaction"></param>
-        /// <param name="documentCatalog"></param>
+        /// <param name="documentCatalogItems"></param>
         /// <param name="schemaMeta"></param>
         /// <param name="query"></param>
-        /// <param name="conditionSubset"></param>
+        /// <param name="lookupOptimization"></param>
         /// <returns></returns>
-        /// <exception cref="KbParserException"></exception>
         private DocumentLookupResults GetAllDocumentsByConditions(Transaction transaction,
             List<PersistDocumentCatalogItem> documentCatalogItems, PersistSchema schemaMeta, PreparedQuery query,
             ConditionLookupOptimization lookupOptimization)
         {
-            var results = new DocumentLookupResults();
-            var rootCondition = lookupOptimization.Conditions.SubsetByKey(query.Conditions.RootExpressionKey);
-            var expression = new NCalc.Expression(rootCondition.Expression);
-
             /*
             //indexing limits the documents we need to scan.
             if (rootCondition.IndexSelection != null)
@@ -121,13 +119,47 @@ namespace Katzebase.Engine.Documents
             }
             */
 
-            //Loop through each document in the catalog:
-            foreach (var documentItem in documentCatalogItems)
-            {
-                Utility.EnsureNotNull(schemaMeta.DiskPath);
-                var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, documentItem.FileName);
+            var threads = new DocumentLookupThreads(transaction, schemaMeta, query, lookupOptimization, DocumentLookupThreadProc);
 
-                var persistDocument = core.IO.GetJson<PersistDocument>(transaction, persistDocumentDiskPath, LockOperation.Read);
+            threads.Start(16);
+
+            //Loop through each document in the catalog:
+            foreach (var documentCatalogItem in documentCatalogItems)
+            {
+                threads.Enqueue(documentCatalogItem);
+            }
+
+            threads.WaitOnThreadCompletion();
+
+            return threads.Results;
+        }
+
+        /// <summary>
+        /// Thread proc for looking up documents. These are started in a batch per-query and listen for lookup requests.
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <exception cref="KbParserException"></exception>
+        private void DocumentLookupThreadProc(object? obj)
+        {
+            Utility.EnsureNotNull(obj);
+
+            var param = (DocumentLookupThreadParam)obj;
+            var rootCondition = param.LookupOptimization.Conditions.SubsetByKey(param.Query.Conditions.RootExpressionKey);
+            var expression = new NCalc.Expression(rootCondition.Expression);
+
+            Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
+
+            var slot = param.ThreadSlots[param.ThreadSlotNumber];
+
+            while (true)
+            {
+                slot.State = DocumentLookupThreadState.Ready;
+                slot.Event.WaitOne();
+                slot.State = DocumentLookupThreadState.Executing;
+
+                var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, slot.DocumentCatalogItem.FileName);
+
+                var persistDocument = core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPath, LockOperation.Read);
                 Utility.EnsureNotNull(persistDocument);
                 Utility.EnsureNotNull(persistDocument.Content);
 
@@ -136,8 +168,8 @@ namespace Katzebase.Engine.Documents
                 //If we have subsets, then we need to satisify those in order to complete the equation.
                 foreach (var subsetKey in rootCondition.SubsetKeys)
                 {
-                    var subExpression = lookupOptimization.Conditions.SubsetByKey(subsetKey);
-                    bool subExpressionResult = SatisifySubExpression(lookupOptimization, jContent, subExpression);
+                    var subExpression = param.LookupOptimization.Conditions.SubsetByKey(subsetKey);
+                    bool subExpressionResult = SatisifySubExpression(param.LookupOptimization, jContent, subExpression);
                     expression.Parameters[subsetKey] = subExpressionResult;
                 }
 
@@ -165,7 +197,7 @@ namespace Katzebase.Engine.Documents
                     Utility.EnsureNotNull(persistDocument.Id);
                     var result = new DocumentLookupResult((Guid)persistDocument.Id);
 
-                    foreach (string field in query.SelectFields)
+                    foreach (string field in param.Query.SelectFields)
                     {
                         if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
                         {
@@ -177,11 +209,9 @@ namespace Katzebase.Engine.Documents
                         }
                     }
 
-                    results.Add(result);
+                    param.Results.Add(result);
                 }
             }
-
-            return results;
         }
 
         /// <summary>
@@ -192,7 +222,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="conditionSubset"></param>
         /// <returns></returns>
         /// <exception cref="KbParserException"></exception>
-        public bool SatisifySubExpression(ConditionLookupOptimization lookupOptimization, JObject jContent, ConditionSubset conditionSubset)
+        private bool SatisifySubExpression(ConditionLookupOptimization lookupOptimization, JObject jContent, ConditionSubset conditionSubset)
         {
             var expression = new NCalc.Expression(conditionSubset.Expression);
 
