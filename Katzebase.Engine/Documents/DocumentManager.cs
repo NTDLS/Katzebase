@@ -131,6 +131,8 @@ namespace Katzebase.Engine.Documents
 
             threads.WaitOnThreadCompletion();
 
+            threads.Stop();
+
             return threads.Results;
         }
 
@@ -155,6 +157,12 @@ namespace Katzebase.Engine.Documents
             {
                 slot.State = DocumentLookupThreadState.Ready;
                 slot.Event.WaitOne();
+
+                if (slot.State == DocumentLookupThreadState.Shutdown)
+                {
+                    return;
+                }
+
                 slot.State = DocumentLookupThreadState.Executing;
 
                 var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, slot.DocumentCatalogItem.FileName);

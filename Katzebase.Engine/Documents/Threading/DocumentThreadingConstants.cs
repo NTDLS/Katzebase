@@ -7,7 +7,8 @@
             Initializing,
             Ready,
             Queued,
-            Executing
+            Executing,
+            Shutdown
         }
     }
 }

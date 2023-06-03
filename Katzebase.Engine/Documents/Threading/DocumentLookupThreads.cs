@@ -30,6 +30,17 @@ namespace Katzebase.Engine.Documents.Threading
             this.threadProc = threadProc;
         }
 
+        public void Stop()
+        {
+            WaitOnThreadCompletion();
+
+            for (int i = 0; i < MaxThreads; i++)
+            {
+                Slots[i].State = DocumentLookupThreadState.Shutdown;
+                Slots[i].Event.Set();
+            }
+        }
+
         public void Start(int maxThreads)
         {
             MaxThreads = maxThreads;
