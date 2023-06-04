@@ -5,11 +5,16 @@ namespace Katzebase.Engine.Query.Condition
 {
     public class Conditions
     {
+        private string _lastLetter = string.Empty;
+
         public List<ConditionSubset> Subsets = new();
 
+        /// Every condition instance starts with a single root node that all others poaint back to given some lineage. This is the name of the root node.
         public string RootExpressionKey { get; set; } = string.Empty;
 
-
+        /// <summary>
+        /// Every condition instance starts with a single root node that all others poaint back to given some lineage. This is the root node.
+        /// </summary>
         private ConditionSubset? _root;
         public ConditionSubset Root
         {
@@ -20,38 +25,46 @@ namespace Katzebase.Engine.Query.Condition
             }
         }
 
-        public static string VariableToKey(string str)
+        public IEnumerable<ConditionSubset> NonRootSubsets => Subsets.Where(o => o.SubsetKey != RootExpressionKey);
+
+        private static string VariableToKey(string str)
         {
             return $"$:{str}$";
         }
 
-        private static string GetNextLetter(string letter)
+        private string GetNextVariableLetter()
         {
-            if (letter == string.Empty)
+            if (_lastLetter == string.Empty)
             {
-                return "a";
+                _lastLetter = "a";
+                return _lastLetter;
             }
-            char[] chars = letter.ToCharArray();
+            char[] chars = _lastLetter.ToCharArray();
             char lastChar = chars[chars.Length - 1];
             char nextChar = (char)(lastChar + 1);
 
             if (nextChar > 'z')
             {
-                return letter + "a";
+                _lastLetter = _lastLetter + "a";
             }
             else
             {
                 chars[chars.Length - 1] = nextChar;
-                return new string(chars);
+                _lastLetter = new string(chars);
             }
+
+            return _lastLetter;
         }
 
         public static Conditions Parse(string conditionsText, Dictionary<string, string> literalStrings)
         {
-            string lastLetter = string.Empty;
-
             var conditions = new Conditions();
-
+            conditions.ParseInternal(conditionsText, literalStrings);
+            return conditions;
+        }
+        
+        private void ParseInternal(string conditionsText, Dictionary<string, string> literalStrings)
+        {
             if (conditionsText.StartsWith('(') == false || conditionsText.StartsWith(')') == false)
             {
                 conditionsText = $"({conditionsText})";
@@ -65,12 +78,11 @@ namespace Katzebase.Engine.Query.Condition
                     int endPos = conditionsText.IndexOf(')', startPos);
                     if (endPos > startPos)
                     {
-                        lastLetter = GetNextLetter(lastLetter);
-                        string subsetVariable = $"sk{lastLetter}"; //SK=Subset-Key
+                        string subsetVariable = $"s_{GetNextVariableLetter()}"; //S=Subset-Key
 
                         string subsetText = conditionsText.Substring(startPos, endPos - startPos + 1).Trim();
                         var subset = new ConditionSubset(subsetVariable, subsetText.Substring(1, subsetText.Length - 2).Trim());
-                        conditions.AddSubset(literalStrings, subset);
+                        this.AddSubset(literalStrings, subset);
                         conditionsText = conditionsText.Replace(subsetText, VariableToKey(subsetVariable));
                     }
                 }
@@ -80,18 +92,16 @@ namespace Katzebase.Engine.Query.Condition
                 }
             }
 
-            conditions.RootExpressionKey = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
+            this.RootExpressionKey = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
 
-            RemoveVariableMarkers(conditions);
-
-            return conditions;
+            RemoveVariableMarkers();
         }
 
-        private static void RemoveVariableMarkers(Conditions conditions)
+        private void RemoveVariableMarkers()
         {
-            conditions.RootExpressionKey = RemoveVariableMarker(conditions.RootExpressionKey);
+            RootExpressionKey = RemoveVariableMarker(RootExpressionKey);
 
-            foreach (var subset in conditions.Subsets)
+            foreach (var subset in Subsets)
             {
                 subset.Expression = RemoveVariableMarker(subset.Expression);
             }
@@ -151,7 +161,6 @@ namespace Katzebase.Engine.Query.Condition
         public void AddSubset(Dictionary<string, string> literalStrings, ConditionSubset subset)
         {
             int position = 0;
-            string lastLetter = string.Empty;
 
             LogicalConnector logicalConnector = LogicalConnector.None;
 
@@ -167,11 +176,11 @@ namespace Katzebase.Engine.Query.Condition
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
                 {
-                    if (token.StartsWith("$:ck"))
+                    if (token.StartsWith("$:c"))
                     {
                         subset.ConditionKeys.Add(token.Substring(2, token.Length - 3));
                     }
-                    else if (token.StartsWith("$:sk"))
+                    else if (token.StartsWith("$:s"))
                     {
                         subset.SubsetKeys.Add(token.Substring(2, token.Length - 3));
                     }
@@ -190,8 +199,7 @@ namespace Katzebase.Engine.Query.Condition
                 }
                 else
                 {
-                    lastLetter = GetNextLetter(lastLetter);
-                    string conditionKey = $"ck{lastLetter}"; //CK=Condition-Key
+                    string conditionKey = $"c_{GetNextVariableLetter()}"; //C=Condition-Key
 
                     string left = token;
 
@@ -221,5 +229,56 @@ namespace Katzebase.Engine.Query.Condition
 
             Subsets.Add(subset);
         }
+
+        #region Debug.
+
+
+        public string BuildFullVirtualExpression()
+        {
+            var result = new StringBuilder();
+            result.AppendLine(RootExpressionKey);
+            result.AppendLine("(");
+
+            foreach (var subsetKey in Root.SubsetKeys)
+            {
+                var subExpression = SubsetByKey(subsetKey);
+                result.AppendLine("  [" + subExpression.Expression + "]");
+                if (subExpression.SubsetKeys.Count > 0)
+                {
+                    result.AppendLine("  (");
+                    BuildFullVirtualExpression(ref result, subExpression, 1);
+                    result.AppendLine("  )");
+                }
+            }
+
+            result.AppendLine(")");
+
+            return result.ToString();
+        }
+
+        private void BuildFullVirtualExpression(ref StringBuilder result,  ConditionSubset conditionSubset, int depth)
+        {
+            //If we have subsets, then we need to satisify those in order to complete the equation.
+            foreach (var subsetKey in conditionSubset.SubsetKeys)
+            {
+                var subExpression = SubsetByKey(subsetKey);
+                result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "[" + subExpression.Expression + "]");
+
+                if (subExpression.SubsetKeys.Count > 0)
+                {
+                    result.AppendLine("  (");
+                    BuildFullVirtualExpression(ref result, subExpression, depth + 1);
+                    result.AppendLine("  )");
+                }
+            }
+
+            foreach (var condition in conditionSubset.Conditions)
+            {
+                //Print something
+            }
+        }
+
+        #endregion
+
     }
 }
