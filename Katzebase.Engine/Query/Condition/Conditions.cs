@@ -9,6 +9,17 @@ namespace Katzebase.Engine.Query.Condition
 
         public string RootExpressionKey { get; set; } = string.Empty;
 
+
+        private ConditionSubset? _root;
+        public ConditionSubset Root
+        {
+            get
+            {
+                _root ??= Subsets.Where(o => o.SubsetKey == RootExpressionKey).Single();
+                return _root;
+            }
+        }
+
         public static string VariableToKey(string str)
         {
             return $"$:{str}$";
@@ -115,7 +126,10 @@ namespace Katzebase.Engine.Query.Condition
 
         public Conditions Clone()
         {
-            var clone = new Conditions();
+            var clone = new Conditions()
+            {
+                RootExpressionKey = this.RootExpressionKey
+            };
 
             foreach (var subset in Subsets)
             {

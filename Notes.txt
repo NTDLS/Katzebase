@@ -1,0 +1,9 @@
+Since indexing requires that we can ensure document elimination, in order to implement indexing lookups that we
+	will need to first parse the condition groups and then ensure that we have a covering index on each group.
+
+Then we can search the indexes for each group to obtain a list of all possible document IDs,
+	then use those document Ids to early eliminate documents from the main lookup loop.
+
+If any one conditon group does not have an index, then no indexing will be used at all since all documents
+	will need to be scaned anyway. To prevent unindexed scans, reduce the number of condition groups.
+

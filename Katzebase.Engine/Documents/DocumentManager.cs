@@ -8,6 +8,7 @@ using Katzebase.Library;
 using Katzebase.Library.Exceptions;
 using Katzebase.Library.Payloads;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http.Json;
@@ -119,12 +120,21 @@ namespace Katzebase.Engine.Documents
             }
             */
 
+            DebugPrintConditions(lookupOptimization.Conditions);
+            //Console.WriteLine();
+
             var threads = new DocumentLookupThreads(transaction, schemaMeta, query, lookupOptimization, DocumentLookupThreadProc);
 
-            threads.Start(16);
+            int maxThreads = 1;
+            if (documentCatalogItems.Count > 100)
+            {
+                maxThreads = Environment.ProcessorCount * 2;
+            }
+
+            threads.InitializePool(maxThreads);
 
             //Loop through each document in the catalog:
-            foreach (var documentCatalogItem in documentCatalogItems)
+            foreach (var documentCatalogItem in documentCatalogItems.Take(1))
             {
                 threads.Enqueue(documentCatalogItem);
             }
@@ -136,6 +146,34 @@ namespace Katzebase.Engine.Documents
             return threads.Results;
         }
 
+        private void DebugPrintConditions(Conditions conditions)
+        {
+            foreach (var subsetKey in conditions.Root.SubsetKeys)
+            {
+                var subExpression = conditions.SubsetByKey(subsetKey);
+                Console.WriteLine(subExpression.Expression);
+                DebugPrintConditions(conditions, subExpression);
+            }
+        }
+
+        private void DebugPrintConditions(Conditions conditions, ConditionSubset conditionSubset)
+        {
+            //If we have subsets, then we need to satisify those in order to complete the equation.
+            foreach (var subsetKey in conditionSubset.SubsetKeys)
+            {
+                var subExpression = conditions.SubsetByKey(subsetKey);
+                Console.WriteLine(subExpression.Expression);
+
+                DebugPrintConditions(conditions, subExpression);
+            }
+
+            foreach (var condition in conditionSubset.Conditions)
+            {
+                //Print something
+            }
+        }
+
+
         /// <summary>
         /// Thread proc for looking up documents. These are started in a batch per-query and listen for lookup requests.
         /// </summary>
@@ -146,8 +184,7 @@ namespace Katzebase.Engine.Documents
             Utility.EnsureNotNull(obj);
 
             var param = (DocumentLookupThreadParam)obj;
-            var rootCondition = param.LookupOptimization.Conditions.SubsetByKey(param.Query.Conditions.RootExpressionKey);
-            var expression = new NCalc.Expression(rootCondition.Expression);
+            var expression = new NCalc.Expression(param.LookupOptimization.Conditions.Root.Expression);
 
             Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
 
@@ -174,16 +211,20 @@ namespace Katzebase.Engine.Documents
                 var jContent = JObject.Parse(persistDocument.Content);
 
                 //If we have subsets, then we need to satisify those in order to complete the equation.
-                foreach (var subsetKey in rootCondition.SubsetKeys)
+                foreach (var subsetKey in param.LookupOptimization.Conditions.Root.SubsetKeys)
                 {
                     var subExpression = param.LookupOptimization.Conditions.SubsetByKey(subsetKey);
+
+                    Console.WriteLine($"{subExpression.SubsetKey}: {subExpression.Expression}");
+
                     bool subExpressionResult = SatisifySubExpression(param.LookupOptimization, jContent, subExpression);
                     expression.Parameters[subsetKey] = subExpressionResult;
                 }
 
+                /*//I dont think we will EVER have conditons at this level becuse the ROOT is always a single expression (a pointer to a sub-expression).
                 //Loop though each condition in the prepared query and build an expression to see if the document meets the criteria
                 //  by building a logical expression that we can evaluate 
-                foreach (var condition in rootCondition.Conditions)
+                foreach (var condition in param.LookupOptimization.Conditions.Root.Conditions)
                 {
                     Utility.EnsureNotNull(condition.Left.Value); //TODO: What do we really need to do here?
 
@@ -197,6 +238,7 @@ namespace Katzebase.Engine.Documents
                         throw new KbParserException($"Field not found in document [{condition.Left.Value}].");
                     }
                 }
+                */
 
                 var expressionResult = (bool)expression.Evaluate();
 
@@ -232,18 +274,25 @@ namespace Katzebase.Engine.Documents
         /// <exception cref="KbParserException"></exception>
         private bool SatisifySubExpression(ConditionLookupOptimization lookupOptimization, JObject jContent, ConditionSubset conditionSubset)
         {
+            Console.WriteLine($"SSE->Entry");
+
             var expression = new NCalc.Expression(conditionSubset.Expression);
 
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = lookupOptimization.Conditions.SubsetByKey(subsetKey);
+
+                Console.WriteLine($"SSE->{subExpression.SubsetKey}: {subExpression.Expression}");
+
                 bool subExpressionResult = SatisifySubExpression(lookupOptimization, jContent, subExpression);
                 expression.Parameters[subsetKey] = subExpressionResult;
             }
 
             foreach (var condition in conditionSubset.Conditions)
             {
+                Console.WriteLine($"SSE:C->{condition.Left}: {condition.LogicalQualifier}");
+
                 Utility.EnsureNotNull(condition.Left.Value);
 
                 //Get the value of the condition:

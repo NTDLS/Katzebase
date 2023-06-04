@@ -41,7 +41,7 @@ namespace Katzebase.Engine.Documents.Threading
             }
         }
 
-        public void Start(int maxThreads)
+        public void InitializePool(int maxThreads)
         {
             MaxThreads = maxThreads;
 
