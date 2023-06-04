@@ -132,7 +132,8 @@ namespace Katzebase.Engine.Documents
 
                 }
             }
-            else {
+            else
+            {
                 /* One or more of the conditon subsets lacks an index.
                  *
                  *   Since indexing requires that we can ensure document elimination, we will have
@@ -143,10 +144,14 @@ namespace Katzebase.Engine.Documents
                  *
                  *   If any one conditon group does not have an index, then no indexing will be used at all since all documents
 	             *       will need to be scaned anyway. To prevent unindexed scans, reduce the number of condition groups (nested in parentheses).
+	             *
+                 * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we cant use an index.
+                 * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
+	             *
                 */
             }
 
-            return new DocumentLookupResults();
+            //return new DocumentLookupResults();
 
             var threads = new DocumentLookupThreads(transaction, schemaMeta, query, lookupOptimization, DocumentLookupThreadProc);
 
@@ -159,7 +164,7 @@ namespace Katzebase.Engine.Documents
             threads.InitializePool(maxThreads);
 
             //Loop through each document in the catalog:
-            foreach (var documentCatalogItem in documentCatalogItems.Take(1))
+            foreach (var documentCatalogItem in documentCatalogItems)
             {
                 threads.Enqueue(documentCatalogItem);
             }
@@ -216,9 +221,7 @@ namespace Katzebase.Engine.Documents
                     expression.Parameters[subsetKey] = subExpressionResult;
                 }
 
-                var expressionResult = (bool)expression.Evaluate();
-
-                if (expressionResult)
+                if ((bool)expression.Evaluate())
                 {
                     Utility.EnsureNotNull(persistDocument.Id);
                     var result = new DocumentLookupResult((Guid)persistDocument.Id);

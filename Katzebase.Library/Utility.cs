@@ -60,5 +60,13 @@ namespace Katzebase.Library
                 throw new KbAssertException(message);
             }
         }
+
+        public static void Assert(bool condition, string message)
+        {
+            if (condition)
+            {
+                throw new KbAssertException(message);
+            }
+        }
     }
 }

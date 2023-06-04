@@ -1,16 +1,18 @@
-﻿using System.Text;
+﻿using Katzebase.Library;
+using System.Text;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Query.Condition
 {
     public class Conditions
     {
+
         private string _lastLetter = string.Empty;
 
         public List<ConditionSubset> Subsets = new();
 
         /// Every condition instance starts with a single root node that all others poaint back to given some lineage. This is the name of the root node.
-        public string RootExpressionKey { get; set; } = string.Empty;
+        public string RootSubsetKey { get; set; } = string.Empty;
 
         /// <summary>
         /// Every condition instance starts with a single root node that all others poaint back to given some lineage. This is the root node.
@@ -20,12 +22,12 @@ namespace Katzebase.Engine.Query.Condition
         {
             get
             {
-                _root ??= Subsets.Where(o => o.SubsetKey == RootExpressionKey).Single();
+                _root ??= Subsets.Where(o => o.IsRoot).Single();
                 return _root;
             }
         }
 
-        public IEnumerable<ConditionSubset> NonRootSubsets => Subsets.Where(o => o.SubsetKey != RootExpressionKey);
+        public IEnumerable<ConditionSubset> NonRootSubsets => Subsets.Where(o => !o.IsRoot);
 
         private static string VariableToKey(string str)
         {
@@ -62,11 +64,18 @@ namespace Katzebase.Engine.Query.Condition
             conditions.ParseInternal(conditionsText, literalStrings);
             return conditions;
         }
-        
+
         private void ParseInternal(string conditionsText, Dictionary<string, string> literalStrings)
         {
+            //We parse by parentheses so wrap the expression in them if it is not already.
             if (conditionsText.StartsWith('(') == false || conditionsText.StartsWith(')') == false)
             {
+                if (conditionsText.Contains('(') == false && conditionsText.Contains(')') == false)
+                {
+                    //If we have no sub-expressions at all, push the conditions one group deeper since we want to process all expreessions as groups.
+                    conditionsText = $"({conditionsText})";
+                }
+
                 conditionsText = $"({conditionsText})";
             }
 
@@ -92,14 +101,19 @@ namespace Katzebase.Engine.Query.Condition
                 }
             }
 
-            this.RootExpressionKey = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
+            this.RootSubsetKey = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
 
             RemoveVariableMarkers();
+
+            //Mark the root subset as such.
+            Subsets.Where(o => o.SubsetKey == RootSubsetKey).Single().IsRoot = true;
+
+            Utility.Assert(Root.Conditions.Any(), "The root expression cannot contain conditions.");
         }
 
         private void RemoveVariableMarkers()
         {
-            RootExpressionKey = RemoveVariableMarker(RootExpressionKey);
+            RootSubsetKey = RemoveVariableMarker(RootSubsetKey);
 
             foreach (var subset in Subsets)
             {
@@ -138,12 +152,15 @@ namespace Katzebase.Engine.Query.Condition
         {
             var clone = new Conditions()
             {
-                RootExpressionKey = this.RootExpressionKey
+                RootSubsetKey = this.RootSubsetKey
             };
 
             foreach (var subset in Subsets)
             {
-                var subsetClone = new ConditionSubset(subset.SubsetKey, subset.Expression);
+                var subsetClone = new ConditionSubset(subset.SubsetKey, subset.Expression)
+                {
+                    IsRoot = subset.IsRoot,
+                };
 
                 foreach (var condition in subset.Conditions)
                 {
@@ -236,27 +253,31 @@ namespace Katzebase.Engine.Query.Condition
         public string BuildFullVirtualExpression()
         {
             var result = new StringBuilder();
-            result.AppendLine(RootExpressionKey);
-            result.AppendLine("(");
+            result.AppendLine(RootSubsetKey);
 
-            foreach (var subsetKey in Root.SubsetKeys)
+            if (Root.SubsetKeys.Count > 0)
             {
-                var subExpression = SubsetByKey(subsetKey);
-                result.AppendLine("  [" + subExpression.Expression + "]");
-                if (subExpression.SubsetKeys.Count > 0)
-                {
-                    result.AppendLine("  (");
-                    BuildFullVirtualExpression(ref result, subExpression, 1);
-                    result.AppendLine("  )");
-                }
-            }
+                result.AppendLine("(");
 
-            result.AppendLine(")");
+                foreach (var subsetKey in Root.SubsetKeys)
+                {
+                    var subExpression = SubsetByKey(subsetKey);
+                    result.AppendLine("  [" + subExpression.Expression + "]");
+                    if (subExpression.SubsetKeys.Count > 0)
+                    {
+                        result.AppendLine("  (");
+                        BuildFullVirtualExpression(ref result, subExpression, 1);
+                        result.AppendLine("  )");
+                    }
+                }
+
+                result.AppendLine(")");
+            }
 
             return result.ToString();
         }
 
-        private void BuildFullVirtualExpression(ref StringBuilder result,  ConditionSubset conditionSubset, int depth)
+        private void BuildFullVirtualExpression(ref StringBuilder result, ConditionSubset conditionSubset, int depth)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)

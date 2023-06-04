@@ -61,22 +61,26 @@ namespace Katzebase.Engine.Query.Condition
         public string BuildFullVirtualExpression()
         {
             var result = new StringBuilder();
-            result.AppendLine($"[{Conditions.RootExpressionKey}]" + (CanApplyIndexing() ? " {Indexable}" : ""));
-            result.AppendLine("(");
+            result.AppendLine($"[{Conditions.RootSubsetKey}]" + (CanApplyIndexing() ? " {Indexable}" : " {non-Indexable}"));
 
-            foreach (var subsetKey in Conditions.Root.SubsetKeys)
+            if (Conditions.Root.SubsetKeys.Count > 0)
             {
-                var subExpression = Conditions.SubsetByKey(subsetKey);
-                result.AppendLine($"  [{subExpression.Expression}]" + (CanApplyIndexing(subExpression) ? " {Indexable}" : ""));
-                if (subExpression.SubsetKeys.Count > 0)
-                {
-                    result.AppendLine("  (");
-                    BuildFullVirtualExpression(ref result, subExpression, 1);
-                    result.AppendLine("  )");
-                }
-            }
+                result.AppendLine("(");
 
-            result.AppendLine(")");
+                foreach (var subsetKey in Conditions.Root.SubsetKeys)
+                {
+                    var subExpression = Conditions.SubsetByKey(subsetKey);
+                    result.AppendLine($"  [{subExpression.Expression}]" + (CanApplyIndexing(subExpression) ? " {Indexable}" : " {non-Indexable}"));
+                    if (subExpression.SubsetKeys.Count > 0)
+                    {
+                        result.AppendLine("  (");
+                        BuildFullVirtualExpression(ref result, subExpression, 1);
+                        result.AppendLine("  )");
+                    }
+                }
+
+                result.AppendLine(")");
+            }
 
             return result.ToString();
         }
@@ -87,7 +91,7 @@ namespace Katzebase.Engine.Query.Condition
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = Conditions.SubsetByKey(subsetKey);
-                result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + $"[{subExpression.Expression}]" + (CanApplyIndexing(subExpression) ? " {Indexable}" : ""));
+                result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + $"[{subExpression.Expression}]" + (CanApplyIndexing(subExpression) ? " {Indexable}" : " {non-Indexable}"));
 
                 if (subExpression.SubsetKeys.Count > 0)
                 {
