@@ -121,11 +121,16 @@ namespace Katzebase.Engine.Documents
             */
 
             var virtualExpression = lookupOptimization.BuildFullVirtualExpression();
-
             Console.WriteLine(virtualExpression);
+
+            //Create a reference to the entire document catalog.
+            var limitedDocumentCatalogItems = documentCatalogItems;
 
             if (lookupOptimization.CanApplyIndexing())
             {
+                //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
+                limitedDocumentCatalogItems = new List<PersistDocumentCatalogItem>();
+
                 //All condition subsets have a selected index. Start building a list of possible document IDs.
                 foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
                 {
@@ -153,6 +158,7 @@ namespace Katzebase.Engine.Documents
 
             //return new DocumentLookupResults();
 
+
             var threads = new DocumentLookupThreads(transaction, schemaMeta, query, lookupOptimization, DocumentLookupThreadProc);
 
             int maxThreads = 1;
@@ -164,7 +170,7 @@ namespace Katzebase.Engine.Documents
             threads.InitializePool(maxThreads);
 
             //Loop through each document in the catalog:
-            foreach (var documentCatalogItem in documentCatalogItems)
+            foreach (var documentCatalogItem in limitedDocumentCatalogItems)
             {
                 threads.Enqueue(documentCatalogItem);
             }
@@ -175,7 +181,6 @@ namespace Katzebase.Engine.Documents
 
             return threads.Results;
         }
-
 
         /// <summary>
         /// Thread proc for looking up documents. These are started in a batch per-query and listen for lookup requests.
