@@ -2,6 +2,7 @@
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using System.Xml;
+using static Katzebase.UI.FormStudio;
 
 namespace Katzebase.UI.Classes
 {
@@ -25,7 +26,7 @@ namespace Katzebase.UI.Classes
             _form = form;
         }
 
-        public TextEditor Create(ProjectTreeNode forNode)
+        public TextEditor Create(TabFile tabFile)
         {
             var editor = new TextEditor
             {
@@ -33,42 +34,20 @@ namespace Katzebase.UI.Classes
                 FontFamily = new System.Windows.Media.FontFamily("Courier New"),
                 FontSize = 16f,
                 WordWrap = false,
-                Tag = forNode
+                Tag = tabFile
             };
 
-            if (forNode.NodeType == Constants.ProjectNodeType.Script)
+            if (File.Exists(sqlHighlighter))
             {
-                if (File.Exists(sqlHighlighter))
-                {
-                    using XmlReader reader = XmlReader.Create(sqlHighlighter);
-                    editor.SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
-                    reader.Close();
-                }
-
-                if (File.Exists(forNode.FullFilePath))
-                {
-                    editor.Document.FileName = forNode.FullFilePath;
-                    editor.Text = File.ReadAllText(editor.Document.FileName);
-                }
+                using XmlReader reader = XmlReader.Create(sqlHighlighter);
+                editor.SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
+                reader.Close();
             }
-            else if (forNode.NodeType == Constants.ProjectNodeType.Workloads || forNode.NodeType == Constants.ProjectNodeType.Workload)
-            {
-                if (File.Exists(configHighlighter))
-                {
-                    using XmlReader reader = XmlReader.Create(configHighlighter);
-                    editor.SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
-                    reader.Close();
-                }
 
-                if (File.Exists(forNode.ConfigFilePath))
-                {
-                    editor.Document.FileName = forNode.ConfigFilePath;
-                    editor.Text = File.ReadAllText(editor.Document.FileName);
-                }
-            }
-            else if (File.Exists(forNode.FullFilePath))
+            if (File.Exists(tabFile.FullFilePath))
             {
-                editor.Text = File.ReadAllText(forNode.FullFilePath);
+                editor.Document.FileName = tabFile.FullFilePath;
+                editor.Text = File.ReadAllText(editor.Document.FileName);
             }
 
             editor.TextChanged += TextEditor_TextChanged;
@@ -121,9 +100,9 @@ namespace Katzebase.UI.Classes
             return editor;
         }
 
-        private ProjectTabPage? EditorToTab(TextEditor editor)
+        private TabFilePage? EditorToTab(TextEditor editor)
         {
-            foreach (ProjectTabPage tab in _tabControl.TabPages)
+            foreach (TabFilePage tab in _tabControl.TabPages)
             {
                 if (tab.Editor == editor)
                 {

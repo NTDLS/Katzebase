@@ -5,6 +5,7 @@ using Katzebase.UI.Classes;
 using Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
+using System.Xml.Linq;
 
 namespace Katzebase.UI
 {
@@ -20,8 +21,6 @@ namespace Katzebase.UI
         private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
         private bool _scriptExecuting = false;
 
-        internal Project? CurrentProject { get; set; }
-
         public FormStudio()
         {
             InitializeComponent();
@@ -32,7 +31,6 @@ namespace Katzebase.UI
         {
             InitializeComponent();
             _editorFactory = new EditorFactory(this, this.tabControlBody);
-            CurrentProject = new Project(projectFile);
         }
 
         private void FormStudio_Load(object sender, EventArgs e)
@@ -152,7 +150,6 @@ namespace Katzebase.UI
         {
             var tab = CurrentTabInfo();
 
-            bool isProjectOpen = (CurrentProject?.IsLoaded == true);
             bool isTabOpen = (tab?.Tab != null);
             bool isTextSelected = (tab?.Tab != null) && (tab?.Editor?.SelectionLength > 0);
 
@@ -163,16 +160,14 @@ namespace Katzebase.UI
             toolStripButtonPaste.Enabled = isTabOpen;
             toolStripButtonRedo.Enabled = isTabOpen;
             toolStripButtonReplace.Enabled = isTabOpen;
-            toolStripButtonExecuteProject.Enabled = isProjectOpen;
             toolStripButtonExecuteScript.Enabled = isTabOpen && !_scriptExecuting;
             toolStripButtonUndo.Enabled = isTabOpen;
-            toolStripButtonPreview.Enabled = isTabOpen;
 
             toolStripButtonDecreaseIndent.Enabled = isTextSelected;
             toolStripButtonIncreaseIndent.Enabled = isTextSelected;
 
-            toolStripButtonSave.Enabled = isProjectOpen;
-            toolStripButtonSaveAll.Enabled = isProjectOpen;
+            toolStripButtonSave.Enabled = isTabOpen;
+            toolStripButtonSaveAll.Enabled = isTabOpen;
             toolStripButtonSnippets.Enabled = isTabOpen;
         }
 
@@ -196,30 +191,12 @@ namespace Katzebase.UI
             if (_firstShown)
             {
                 _firstShown = false;
-            }
 
-            if (File.Exists(CurrentProject?.ProjectFile))
-            {
-                LoadProject(CurrentProject.ProjectFile);
-            }
-            else if (Preferences.Instance.ShowWelcome && CurrentProject?.IsLoaded != true)
-            {
-                using (var form = new FormWelcome())
+                using (var form = new FormConnect())
                 {
                     if (form.ShowDialog() == DialogResult.OK)
                     {
-                        if (form.FormalResult == FormWelcome.Result.CreateNew)
-                        {
-                            CreateNewProject();
-                        }
-                        else if (form.FormalResult == FormWelcome.Result.OpenExisting)
-                        {
-                            BrowseForProject();
-                        }
-                        else if (form.FormalResult == FormWelcome.Result.OpenRecent)
-                        {
-                            LoadProject(form.SelectedProject);
-                        }
+                        //TODO: Add blank document.
                     }
                 }
             }
@@ -230,20 +207,6 @@ namespace Katzebase.UI
         #endregion
 
         #region Project Treeview Shenanigans.
-
-        private List<ProjectTreeNode> GetFlatProjectNodes()
-        {
-            List<ProjectTreeNode> flatList = new();
-
-            foreach (var node in treeViewProject.Nodes.Cast<ProjectTreeNode>())
-            {
-                flatList.Add(node);
-                FlattendTreeViewNodes(ref flatList, node);
-            }
-
-
-            return flatList;
-        }
 
         private void FlattendTreeViewNodes(ref List<ProjectTreeNode> flatList, ProjectTreeNode parent)
         {
@@ -274,6 +237,7 @@ namespace Katzebase.UI
 
         private void TreeViewProject_KeyUp(object? sender, KeyEventArgs e)
         {
+            /*
             var node = treeViewProject.SelectedNode as ProjectTreeNode;
             if (node != null)
             {
@@ -291,10 +255,12 @@ namespace Katzebase.UI
                     }
                 }
             }
+            */
         }
 
         private void TreeViewProject_BeforeLabelEdit(object? sender, NodeLabelEditEventArgs e)
         {
+            /*
             if (e.Node is not ProjectTreeNode node)
             {
                 throw new Exception("Invlaid node type.");
@@ -307,10 +273,12 @@ namespace Katzebase.UI
             {
                 e.CancelEdit = true;
             }
+            */
         }
 
         private void TreeViewProject_AfterLabelEdit(object? sender, NodeLabelEditEventArgs e)
         {
+            /*
             if (e.Node is not ProjectTreeNode node)
             {
                 throw new Exception("Invlaid node type.");
@@ -371,11 +339,12 @@ namespace Katzebase.UI
             {
                 throw new NotImplementedException();
             }
+            */
         }
 
         private void TreeViewProject_NodeMouseClick(object? sender, TreeNodeMouseClickEventArgs e)
         {
-            //Tested: Good
+            /*
             if (e.Button != MouseButtons.Right)
             {
                 return;
@@ -442,10 +411,12 @@ namespace Katzebase.UI
 
             popupMenu.Items.Add("Open containing folder", FormUtility.TransparentImage(Resources.ToolOpenFile));
             popupMenu.Show(treeViewProject, e.Location);
+            */
         }
 
         private void PopupMenu_ItemClicked(object? sender, ToolStripItemClickedEventArgs e)
         {
+            /*
             var menuStrip = sender as ContextMenuStrip;
             if (menuStrip == null)
             {
@@ -467,13 +438,7 @@ namespace Katzebase.UI
 
             if (e.ClickedItem?.Text == "Refresh")
             {
-                if (CurrentProject != null && CurrentProject.IsLoaded)
-                {
-                    if (CloseAllTabs() == true)
-                    {
-                        LoadProject(CurrentProject.ProjectFile);
-                    }
-                }
+                //TODO: Refresh schema?
             }
             else if (e.ClickedItem?.Text == "Delete")
             {
@@ -545,6 +510,7 @@ namespace Katzebase.UI
                     Verb = "open"
                 });
             }
+            */
         }
 
         #endregion
@@ -553,15 +519,6 @@ namespace Katzebase.UI
 
         private void TreeViewProject_NodeMouseDoubleClick(object? sender, TreeNodeMouseClickEventArgs e)
         {
-            var node = (ProjectTreeNode)e.Node;
-            if (node.NodeType == Constants.ProjectNodeType.Script
-                || node.NodeType == Constants.ProjectNodeType.Asset
-                || node.NodeType == Constants.ProjectNodeType.Workload
-                || node.NodeType == Constants.ProjectNodeType.Workloads
-                || node.NodeType == Constants.ProjectNodeType.Note)
-            {
-                AddOrSelectTab(node);
-            }
         }
 
         private void TreeViewProject_MouseDown(object? sender, MouseEventArgs e)
@@ -674,7 +631,7 @@ namespace Katzebase.UI
                 return;
             }
 
-            ProjectTabPage? clickedTab = contextMenu.Tag as ProjectTabPage;
+            TabFilePage? clickedTab = contextMenu.Tag as TabFilePage;
             if (clickedTab == null)
             {
                 return;
@@ -686,11 +643,11 @@ namespace Katzebase.UI
             }
             else if (clickedItem.Text == "Open containing folder")
             {
-                if (clickedTab.Node != null)
+                if (clickedTab.TabFile != null)
                 {
-                    var directory = clickedTab.Node.FullFilePath;
+                    var directory = clickedTab.TabFile.FullFilePath;
 
-                    if (Directory.Exists(clickedTab.Node.FullFilePath) == false)
+                    if (Directory.Exists(clickedTab.TabFile.FullFilePath) == false)
                     {
                         directory = Path.GetDirectoryName(directory);
                     }
@@ -703,22 +660,16 @@ namespace Katzebase.UI
                     });
                 }
             }
-            else if (clickedItem.Text == "Find in project")
-            {
-                clickedTab.Node.EnsureVisible();
-                treeViewProject.SelectedNode = clickedTab.Node;
-                treeViewProject.Focus();
-            }
             else if (clickedItem.Text == "Close all but this")
             {
-                var tabsToClose = new List<ProjectTabPage>();
+                var tabsToClose = new List<TabFilePage>();
 
                 //Minimize the number of "SelectedIndexChanged" events that get fired.
                 //We get a big ol' thread exception when we dont do this. Looks like an internal control exception.
                 tabControlBody.SelectedTab = clickedTab;
                 System.Windows.Forms.Application.DoEvents(); //Make sure the message pump can actually select the tab before we start closing.
 
-                foreach (var tab in tabControlBody.TabPages.Cast<ProjectTabPage>())
+                foreach (var tab in tabControlBody.TabPages.Cast<TabFilePage>())
                 {
                     if (tab != clickedTab)
                     {
@@ -742,38 +693,47 @@ namespace Katzebase.UI
             //UpdateToolbarButtonStates();
         }
 
-        private ProjectTabPage? GetClickedTab(Point mouseLocation)
+        private TabFilePage? GetClickedTab(Point mouseLocation)
         {
             for (int i = 0; i < tabControlBody.TabCount; i++)
             {
                 Rectangle r = tabControlBody.GetTabRect(i);
                 if (r.Contains(mouseLocation))
                 {
-                    return (ProjectTabPage)tabControlBody.TabPages[i];
+                    return (TabFilePage)tabControlBody.TabPages[i];
                 }
             }
             return null;
         }
 
-        private void AddOrSelectTab(ProjectTreeNode node)
+        private void AddOrSelectTab()
         {
-            var tabPage = FindTabByFilePath(node.FullFilePath);
+            var tabFile = new TabFile()
+            {
+                 FullFilePath = string.Empty
+            };
+            AddOrSelectTab(tabFile);
+        }
+
+        private void AddOrSelectTab(TabFile tabFile)
+        {
+            var tabPage = FindTabByFilePath(tabFile.FullFilePath);
             if (tabPage != null)
             {
                 tabControlBody.SelectedTab = tabPage;
             }
             else
             {
-                AddTab(node);
+                AddTab(tabFile);
             }
             SyncToolbarAndMenuStates();
         }
 
-        private ProjectTabPage? FindTabByFilePath(string filePath)
+        private TabFilePage? FindTabByFilePath(string filePath)
         {
-            foreach (var tab in tabControlBody.TabPages.Cast<ProjectTabPage>())
+            foreach (var tab in tabControlBody.TabPages.Cast<TabFilePage>())
             {
-                if (tab.Node.FullFilePath == filePath)
+                if (tab.TabFile.FullFilePath == filePath)
                 {
                     return tab;
                 }
@@ -781,12 +741,12 @@ namespace Katzebase.UI
             return null;
         }
 
-        private void AddTab(ProjectTreeNode node)
+        private void AddTab(TabFile tabFile)
         {
             if (_editorFactory != null)
             {
-                var editor = _editorFactory.Create(node);
-                var tab = new ProjectTabPage(node, editor);
+                var editor = _editorFactory.Create(tabFile);
+                var tab = new TabFilePage(tabFile, editor);
 
                 tab.Controls.Add(new System.Windows.Forms.Integration.ElementHost
                 {
@@ -803,7 +763,7 @@ namespace Katzebase.UI
         /// Removes a tab, saved or not - no prompting.
         /// </summary>
         /// <param name="tab"></param>
-        private void RemoveTab(ProjectTabPage? tab)
+        private void RemoveTab(TabFilePage? tab)
         {
             if (tab != null)
             {
@@ -812,65 +772,16 @@ namespace Katzebase.UI
             SyncToolbarAndMenuStates();
         }
 
-        bool CloseProject()
+        bool Disconnect()
         {
-            if (CurrentProject != null && CurrentProject.IsLoaded)
+            if (CloseAllTabs() == false)
             {
-                if (CloseAllTabs() == false)
-                {
-                    return false;
-                }
-
-                CurrentProject = new Project();
-                treeViewProject.Nodes.Clear();
+                return false;
             }
+
+            treeViewProject.Nodes.Clear();
 
             return true;
-        }
-
-        bool BrowseForProject()
-        {
-            using (var openFileDialog = new OpenFileDialog())
-            {
-                openFileDialog.Filter = "Katzebase Projects (*.vwgp)|*.vwgp|All files (*.*)|*.*";
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    return LoadProject(openFileDialog.FileName);
-                }
-            }
-
-            return false;
-        }
-
-        bool LoadProject(string projectFile)
-        {
-            if (CloseProject())
-            {
-                CurrentProject = Project.Load(projectFile, treeViewProject);
-
-                GetFlatProjectNodes().Where(o => o.NodeType == Constants.ProjectNodeType.Workloads).FirstOrDefault()?.Expand();
-
-                return true;
-            }
-            return false;
-        }
-
-
-        bool CreateNewProject()
-        {
-            if (CloseProject())
-            {
-                using (var form = new FormNewProject())
-                {
-                    if (form.ShowDialog() == DialogResult.OK)
-                    {
-                        Project.Create(form.FullProjectFilePath);
-                        LoadProject(form.FullProjectFilePath);
-                        return true;
-                    }
-                }
-            }
-            return false;
         }
 
         bool CloseAllTabs()
@@ -885,7 +796,7 @@ namespace Katzebase.UI
             bool result = true;
             while (tabControlBody.TabPages.Count != 0)
             {
-                if (!CloseTab(tabControlBody.TabPages[tabControlBody.TabPages.Count - 1] as ProjectTabPage))
+                if (!CloseTab(tabControlBody.TabPages[tabControlBody.TabPages.Count - 1] as TabFilePage))
                 {
                     result = false;
                     break;
@@ -903,7 +814,7 @@ namespace Katzebase.UI
         /// Usser friendly tab close.
         /// </summary>
         /// <param name="tab"></param>
-        private bool CloseTab(ProjectTabPage? tab)
+        private bool CloseTab(TabFilePage? tab)
         {
             if (tab != null)
             {
@@ -933,11 +844,11 @@ namespace Katzebase.UI
 
         private TabInfo? CurrentTabInfo()
         {
-            var currentTab = tabControlBody.SelectedTab as ProjectTabPage;
+            var currentTab = tabControlBody.SelectedTab as TabFilePage;
             if (currentTab?.Editor != null)
             {
-                var node = (ProjectTreeNode)currentTab.Editor.Tag;
-                return new TabInfo(node, currentTab.Editor, currentTab);
+                var tabFile = (TabFile)currentTab.Editor.Tag;
+                return new TabInfo(tabFile, currentTab.Editor, currentTab);
             }
             return null;
         }
@@ -945,24 +856,6 @@ namespace Katzebase.UI
         #endregion
 
         #region Toolbar Clicks.
-
-        private void toolStripButtonExecuteProject_Click(object sender, EventArgs e)
-        {
-            if (CurrentProject == null || CurrentProject.ProjectPath == null)
-            {
-                return;
-            }
-
-            if (MessageBox.Show($"Execute the current project against the database server?", $"Are You sure?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
-            {
-                return;
-            }
-
-            using (var form = new FormExecute(CurrentProject.ProjectFile))
-            {
-                form.ShowDialog();
-            }
-        }
 
         private void toolStripButtonExecuteScript_Click(object sender, EventArgs e)
         {
@@ -992,15 +885,10 @@ namespace Katzebase.UI
 
         private void toolStripButtonSaveAll_Click(object sender, EventArgs e)
         {
-            foreach (var tab in tabControlBody.TabPages.Cast<ProjectTabPage>())
+            foreach (var tab in tabControlBody.TabPages.Cast<TabFilePage>())
             {
                 tab.Save();
             }
-        }
-
-        private void toolStripButtonNewProject_Click(object sender, EventArgs e)
-        {
-            CreateNewProject();
         }
 
         private void toolStripButtonFind_Click(object sender, EventArgs e)
@@ -1213,11 +1101,6 @@ namespace Katzebase.UI
             CloseTab(selection?.Tab);
         }
 
-        private void newProjectToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            CreateNewProject();
-        }
-
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (var form = new FormAbout())
@@ -1226,9 +1109,9 @@ namespace Katzebase.UI
             }
         }
 
-        private void closeProjectToolStripMenuItem_Click(object sender, EventArgs e)
+        private void disconnectToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            CloseProject();
+            Disconnect();
         }
 
         private void closeAllToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1239,11 +1122,6 @@ namespace Katzebase.UI
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Close();
-        }
-
-        private void openExistingProjectToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            BrowseForProject();
         }
 
         #endregion
@@ -1269,7 +1147,7 @@ namespace Katzebase.UI
             dataGridViewResults.Rows.Clear();
             dataGridViewResults.Columns.Clear();
 
-            string fileName = tabInfo.Tab.Node.FullFilePath;
+            string fileName = tabInfo.Tab.TabFile.FullFilePath;
 
             Task.Run(() =>
             {
@@ -1296,12 +1174,6 @@ namespace Katzebase.UI
 
             splitContainerOutput.Panel2Collapsed = false;
             tabControlOutput.SelectedTab = tabPageOutput;
-
-            if (CurrentProject != null)
-            {
-                string relPath = Path.GetRelativePath(CurrentProject.ProjectPath, tabInfo.Node.FullFilePath);
-                AppendToOutput($"Executing '{relPath}'...", Color.Black);
-            }
         }
 
         private void PostExecuteEvent(TabInfo tabInfo)
@@ -1335,14 +1207,11 @@ namespace Katzebase.UI
                 group.OnException += Group_OnException;
                 group.OnStatus += Group_OnStatus;
 
-                if (_outputEditor != null && CurrentProject != null)
-                {
-                    AppentOutputText("debug text");
-                    DateTime startTime = DateTime.UtcNow;
+                AppentOutputText("debug text");
+                DateTime startTime = DateTime.UtcNow;
 
-                    var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                    AppendToOutput($"Execution completed in {duration:N0}ms.", Color.Black);
-                }
+                var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                AppendToOutput($"Execution completed in {duration:N0}ms.", Color.Black);
             }
             catch (KbExceptionBase ex)
             {
@@ -1393,5 +1262,10 @@ namespace Katzebase.UI
         }
 
         #endregion
+
+        private void toolStripButtonNewProject_Click(object sender, EventArgs e)
+        {
+            AddOrSelectTab();
+        }
     }
 }

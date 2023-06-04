@@ -4,7 +4,7 @@ namespace Katzebase.UI
 {
     internal partial class FormFindText : Form
     {
-        private readonly ProjectTabPage? _projectTabPage;
+        private readonly TabFilePage? _projectTabPage;
         private int _lastIndex = -1;
         public string SearchText => textBoxFindText.Text;
 
@@ -14,7 +14,7 @@ namespace Katzebase.UI
             textBoxFindText.TextChanged += TextBoxFindText_TextChanged;
         }
 
-        public FormFindText(ProjectTabPage projectTabPage)
+        public FormFindText(TabFilePage projectTabPage)
         {
             InitializeComponent();
             _projectTabPage = projectTabPage;

@@ -34,7 +34,6 @@ namespace Katzebase.UI.Classes
         }
 
         public List<string> RecentProjects { get; set; } = new List<string>();
-        public bool ShowWelcome { get; set; } = true;
 
         public void AddRecentProject(string projectFile)
         {

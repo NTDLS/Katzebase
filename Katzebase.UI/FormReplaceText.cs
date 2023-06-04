@@ -4,7 +4,7 @@ namespace Katzebase.UI
 {
     internal partial class FormReplaceText : Form
     {
-        private ProjectTabPage? _projectTabPage;
+        private TabFilePage? _projectTabPage;
         private int _lastIndex = -1;
 
         public FormReplaceText()
@@ -12,7 +12,7 @@ namespace Katzebase.UI
             InitializeComponent();
         }
 
-        public FormReplaceText(ProjectTabPage projectTabPage)
+        public FormReplaceText(TabFilePage projectTabPage)
         {
             InitializeComponent();
             _projectTabPage = projectTabPage;

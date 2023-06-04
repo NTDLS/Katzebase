@@ -2,8 +2,6 @@
 {
     public static class Constants
     {
-        public const string PROJECT_EXTENSION = ".vwgp";
-
         public enum ProjectNodeType
         {
             None,
