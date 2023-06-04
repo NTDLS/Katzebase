@@ -2,7 +2,6 @@
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using System.Xml;
-using static Katzebase.UI.FormStudio;
 
 namespace Katzebase.UI.Classes
 {
@@ -11,10 +10,8 @@ namespace Katzebase.UI.Classes
 
 #if DEBUG
         private static string sqlHighlighter => @"C:\NTDLS\Katzebase\Installers\Syntax Highlighters\SQL.xshd";
-        private static string configHighlighter = @"C:\NTDLS\Katzebase\Installers\Syntax Highlighters\Config.xshd";
 #else
         private static string sqlHighlighter => Path.Combine(Path.GetDirectoryName(Application.ExecutablePath) ?? "", "Highlighters", "SQL.xshd");
-        private static string configHighlighter = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath) ?? "", "Highlighters", "Config.xshd"); //Workload generator highlighter.
 #endif
 
         private TabControl _tabControl;
@@ -26,7 +23,7 @@ namespace Katzebase.UI.Classes
             _form = form;
         }
 
-        public TextEditor Create(TabFile tabFile)
+        public TabFilePage Create(string filePath)
         {
             var editor = new TextEditor
             {
@@ -34,8 +31,11 @@ namespace Katzebase.UI.Classes
                 FontFamily = new System.Windows.Media.FontFamily("Courier New"),
                 FontSize = 16f,
                 WordWrap = false,
-                Tag = tabFile
             };
+
+            var tabFilePage = new TabFilePage(filePath, editor);
+
+            editor.Tag = tabFilePage;
 
             if (File.Exists(sqlHighlighter))
             {
@@ -44,9 +44,9 @@ namespace Katzebase.UI.Classes
                 reader.Close();
             }
 
-            if (File.Exists(tabFile.FullFilePath))
+            if (File.Exists(filePath))
             {
-                editor.Document.FileName = tabFile.FullFilePath;
+                editor.Document.FileName = filePath;
                 editor.Text = File.ReadAllText(editor.Document.FileName);
             }
 
@@ -55,7 +55,7 @@ namespace Katzebase.UI.Classes
             editor.Drop += Editor_Drop;
             editor.KeyUp += Editor_KeyUp;
 
-            return editor;
+            return tabFilePage;
         }
 
         private void Editor_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)

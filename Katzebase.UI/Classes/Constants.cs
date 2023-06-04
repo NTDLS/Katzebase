@@ -5,14 +5,8 @@
         public enum ProjectNodeType
         {
             None,
-            Project,
-            Folder,
-            Script,
-            Assets,
-            Asset,
-            Note,
-            Workloads,
-            Workload
+            Schema,
+            Index
         }
     }
 }

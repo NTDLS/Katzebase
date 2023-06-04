@@ -63,7 +63,7 @@ namespace Katzebase.UI
             treeViewProject.KeyUp += TreeViewProject_KeyUp;
 
             treeViewMacros.ShowNodeToolTips = true;
-            treeViewMacros.Nodes.AddRange(FormUtility.GetMacroTreeNoded());
+            //treeViewMacros.Nodes.AddRange(...);
             treeViewMacros.ItemDrag += TreeViewMacros_ItemDrag;
 
             _outputEditor = EditorFactory.CreateGeneric();
@@ -102,45 +102,6 @@ namespace Katzebase.UI
 
                 SyncToolbarAndMenuStates();
 
-                var macroNode = GetMacroAssetsNode();
-                var projectNode = GetProjectAssetsNode();
-
-                if (projectNode == null)
-                {
-                    macroNode.Nodes.Clear();
-                }
-                else
-                {
-                    bool expand = false;
-
-                    var macroList = BuildMacroNodeTextList(macroNode);
-                    var projectList = BuildMacroNodeTextList(projectNode);
-
-                    var nodesToRemove = macroList.Except(projectList);
-                    var nodesToAdd = projectList.Except(macroList);
-
-                    foreach (var nodeText in nodesToRemove)
-                    {
-                        FormUtility.FindNode(macroNode, nodeText)?.Remove();
-                    }
-
-                    expand = macroList.Count == 0;
-
-                    foreach (var nodeText in nodesToAdd)
-                    {
-                        macroNode.Nodes.Add(FormUtility.MacroNode(nodeText, $"::DS({nodeText})", $"Gets a random record from the {nodeText} asset file."));
-                    }
-                    if (nodesToAdd.Count() > 0)
-                    {
-                        FormUtility.SortChildNodes(macroNode);
-                    }
-
-                    if (expand)
-                    {
-                        macroNode.Expand();
-                    }
-                }
-
                 _timerTicking = false;
             }
             catch { }
@@ -148,10 +109,10 @@ namespace Katzebase.UI
 
         private void SyncToolbarAndMenuStates()
         {
-            var tab = CurrentTabInfo();
+            var tabFilePage = CurrentTabFilePage();
 
-            bool isTabOpen = (tab?.Tab != null);
-            bool isTextSelected = (tab?.Tab != null) && (tab?.Editor?.SelectionLength > 0);
+            bool isTabOpen = (tabFilePage != null);
+            bool isTextSelected = (tabFilePage != null) && (tabFilePage?.Editor?.SelectionLength > 0);
 
             toolStripButtonCloseCurrentTab.Enabled = isTabOpen;
             toolStripButtonCopy.Enabled = isTextSelected;
@@ -196,7 +157,7 @@ namespace Katzebase.UI
                 {
                     if (form.ShowDialog() == DialogResult.OK)
                     {
-                        //TODO: Add blank document.
+                        AddTab("New File.kbs");
                     }
                 }
             }
@@ -445,7 +406,7 @@ namespace Katzebase.UI
                 var messageBoxResult = MessageBox.Show($"Delete {node.Text} to the recycle bin?", $"Delete {node.NodeType}?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (messageBoxResult == DialogResult.Yes)
                 {
-                    var tab = FindTabByFilePath(node.FullFilePath);
+                    var tabFilePage = FindTabByFilePath(node.FullFilePath);
                     if (tab != null)
                     {
                         if (CloseTab(tab) == false)
@@ -542,41 +503,6 @@ namespace Katzebase.UI
 
         #region Macros Treeview Bullshit.
 
-        private TreeNode GetMacroAssetsNode()
-        {
-            foreach (var node in treeViewMacros.Nodes.Cast<TreeNode>())
-            {
-                if (node.Text == "Assets")
-                {
-                    return node;
-                }
-            }
-            throw new Exception("Assets node was not found.");
-        }
-
-        private List<string> BuildMacroNodeTextList(TreeNode root)
-        {
-            var list = new List<string>();
-            foreach (var node in root.Nodes.Cast<TreeNode>())
-            {
-                list.Add(Path.GetFileNameWithoutExtension(node.Text));
-            }
-            return list;
-        }
-
-        private ProjectTreeNode? GetProjectAssetsNode()
-        {
-            foreach (var node in treeViewProject.Nodes.Cast<ProjectTreeNode>())
-            {
-                var result = GetProjectAssetsNode(node);
-                if (result != null)
-                {
-                    return result;
-                }
-            }
-            return null;
-        }
-
         private void TreeViewMacros_ItemDrag(object? sender, ItemDragEventArgs e)
         {
             if (e.Item != null)
@@ -643,11 +569,11 @@ namespace Katzebase.UI
             }
             else if (clickedItem.Text == "Open containing folder")
             {
-                if (clickedTab.TabFile != null)
+                if (clickedTab != null)
                 {
-                    var directory = clickedTab.TabFile.FullFilePath;
+                    var directory = clickedTab.FilePath;
 
-                    if (Directory.Exists(clickedTab.TabFile.FullFilePath) == false)
+                    if (Directory.Exists(clickedTab.FilePath) == false)
                     {
                         directory = Path.GetDirectoryName(directory);
                     }
@@ -669,17 +595,17 @@ namespace Katzebase.UI
                 tabControlBody.SelectedTab = clickedTab;
                 System.Windows.Forms.Application.DoEvents(); //Make sure the message pump can actually select the tab before we start closing.
 
-                foreach (var tab in tabControlBody.TabPages.Cast<TabFilePage>())
+                foreach (var tabFilePage in tabControlBody.TabPages.Cast<TabFilePage>())
                 {
-                    if (tab != clickedTab)
+                    if (tabFilePage != clickedTab)
                     {
-                        tabsToClose.Add(tab);
+                        tabsToClose.Add(tabFilePage);
                     }
                 }
 
-                foreach (var tab in tabsToClose)
+                foreach (var tabFilePage in tabsToClose)
                 {
-                    if (CloseTab(tab) == false)
+                    if (CloseTab(tabFilePage) == false)
                     {
                         break;
                     }
@@ -706,58 +632,49 @@ namespace Katzebase.UI
             return null;
         }
 
-        private void AddOrSelectTab()
+        private void AddOrSelectTab(string filePath)
         {
-            var tabFile = new TabFile()
+            var tabFilePage = FindTabByFilePath(filePath);
+            if (tabFilePage != null)
             {
-                 FullFilePath = string.Empty
-            };
-            AddOrSelectTab(tabFile);
-        }
-
-        private void AddOrSelectTab(TabFile tabFile)
-        {
-            var tabPage = FindTabByFilePath(tabFile.FullFilePath);
-            if (tabPage != null)
-            {
-                tabControlBody.SelectedTab = tabPage;
+                tabControlBody.SelectedTab = tabFilePage;
             }
             else
             {
-                AddTab(tabFile);
+                AddTab(filePath);
             }
             SyncToolbarAndMenuStates();
         }
 
         private TabFilePage? FindTabByFilePath(string filePath)
         {
-            foreach (var tab in tabControlBody.TabPages.Cast<TabFilePage>())
+            filePath = filePath.ToLower();
+
+            foreach (var tabFilePage in tabControlBody.TabPages.Cast<TabFilePage>())
             {
-                if (tab.TabFile.FullFilePath == filePath)
+                if (tabFilePage.FilePath.ToLower() == filePath)
                 {
-                    return tab;
+                    return tabFilePage;
                 }
             }
             return null;
         }
 
-        private void AddTab(TabFile tabFile)
+        private void AddTab(string filePath)
         {
             if (_editorFactory != null)
             {
-                var editor = _editorFactory.Create(tabFile);
-                var tab = new TabFilePage(tabFile, editor);
+                var tabFilePage = _editorFactory.Create(filePath);
 
-                tab.Controls.Add(new System.Windows.Forms.Integration.ElementHost
+                tabFilePage.Controls.Add(new System.Windows.Forms.Integration.ElementHost
                 {
                     Dock = DockStyle.Fill,
-                    Child = editor
+                    Child = tabFilePage.Editor
                 });
-                tabControlBody.TabPages.Add(tab);
-                tabControlBody.SelectedTab = tab;
+                tabControlBody.TabPages.Add(tabFilePage);
+                tabControlBody.SelectedTab = tabFilePage;
             }
         }
-
 
         /// <summary>
         /// Removes a tab, saved or not - no prompting.
@@ -842,13 +759,12 @@ namespace Katzebase.UI
             return true;
         }
 
-        private TabInfo? CurrentTabInfo()
+        private TabFilePage? CurrentTabFilePage()
         {
             var currentTab = tabControlBody.SelectedTab as TabFilePage;
             if (currentTab?.Editor != null)
             {
-                var tabFile = (TabFile)currentTab.Editor.Tag;
-                return new TabInfo(tabFile, currentTab.Editor, currentTab);
+                return (TabFilePage)currentTab.Editor.Tag;
             }
             return null;
         }
@@ -869,25 +785,25 @@ namespace Katzebase.UI
 
         private void toolStripButtonCloseCurrentTab_Click(object sender, EventArgs e)
         {
-            var selection = CurrentTabInfo();
-            CloseTab(selection?.Tab);
+            var selection = CurrentTabFilePage();
+            CloseTab(selection);
         }
 
         private void toolStripButtonSave_Click(object sender, EventArgs e)
         {
-            var selection = CurrentTabInfo();
+            var selection = CurrentTabFilePage();
             if (selection == null)
             {
                 return;
             }
-            selection.Tab.Save();
+            selection.Save();
         }
 
         private void toolStripButtonSaveAll_Click(object sender, EventArgs e)
         {
-            foreach (var tab in tabControlBody.TabPages.Cast<TabFilePage>())
+            foreach (var tabFilePage in tabControlBody.TabPages.Cast<TabFilePage>())
             {
-                tab.Save();
+                tabFilePage.Save();
             }
         }
 
@@ -903,32 +819,32 @@ namespace Katzebase.UI
 
         private void toolStripButtonRedo_Click(object sender, EventArgs e)
         {
-            var tab = CurrentTabInfo();
-            tab?.Editor.Redo();
+            var tabFilePage = CurrentTabFilePage();
+            tabFilePage?.Editor.Redo();
         }
 
         private void toolStripButtonUndo_Click(object sender, EventArgs e)
         {
-            var tab = CurrentTabInfo();
-            tab?.Editor.Undo();
+            var tabFilePage = CurrentTabFilePage();
+            tabFilePage?.Editor.Undo();
         }
 
         private void toolStripButtonCut_Click(object sender, EventArgs e)
         {
-            var tab = CurrentTabInfo();
-            tab?.Editor.Cut();
+            var tabFilePage = CurrentTabFilePage();
+            tabFilePage?.Editor.Cut();
         }
 
         private void toolStripButtonCopy_Click(object sender, EventArgs e)
         {
-            var tab = CurrentTabInfo();
-            tab?.Editor.Copy();
+            var tabFilePage = CurrentTabFilePage();
+            tabFilePage?.Editor.Copy();
         }
 
         private void toolStripButtonPaste_Click(object sender, EventArgs e)
         {
-            var tab = CurrentTabInfo();
-            tab?.Editor.Paste();
+            var tabFilePage = CurrentTabFilePage();
+            tabFilePage?.Editor.Paste();
         }
 
         private void toolStripButtonIncreaseIndent_Click(object sender, EventArgs e)
@@ -938,8 +854,8 @@ namespace Katzebase.UI
 
         public void IncreaseCurrentTabIndent()
         {
-            var tab = CurrentTabInfo();
-            if (tab != null)
+            var tabFilePage = CurrentTabFilePage();
+            if (tabFilePage != null)
             {
                 SendKeys.Send("{TAB}");
             }
@@ -967,34 +883,34 @@ namespace Katzebase.UI
 
         public void ShowReplace()
         {
-            var info = CurrentTabInfo();
+            var info = CurrentTabFilePage();
             if (info != null)
             {
-                info.Tab.ReplaceTextForm.ShowDialog();
+                info.ReplaceTextForm.ShowDialog();
             }
         }
 
         public void ShowFind()
         {
-            var info = CurrentTabInfo();
+            var info = CurrentTabFilePage();
             if (info != null)
             {
-                info.Tab.FindTextForm.ShowDialog();
+                info.FindTextForm.ShowDialog();
             }
         }
 
         public void FindNext()
         {
-            var info = CurrentTabInfo();
+            var info = CurrentTabFilePage();
             if (info != null)
             {
-                if (string.IsNullOrEmpty(info.Tab.FindTextForm.SearchText))
+                if (string.IsNullOrEmpty(info.FindTextForm.SearchText))
                 {
-                    info.Tab.FindTextForm.ShowDialog();
+                    info.FindTextForm.ShowDialog();
                 }
                 else
                 {
-                    info.Tab.FindTextForm.FindNext();
+                    info.FindTextForm.FindNext();
                 }
             }
         }
@@ -1067,15 +983,15 @@ namespace Katzebase.UI
 
         private void toolStripButtonSnippets_Click(object sender, EventArgs e)
         {
-            var tab = CurrentTabInfo();
-            if (tab != null)
+            var tabFilePage = CurrentTabFilePage();
+            if (tabFilePage != null)
             {
 
                 using (var form = new FormSnippets())
                 {
                     if (form.ShowDialog() == DialogResult.OK)
                     {
-                        tab.Editor.Document.Insert(tab.Editor.CaretOffset, form.SelectedSnippetText);
+                        tabFilePage.Editor.Document.Insert(tabFilePage.Editor.CaretOffset, form.SelectedSnippetText);
                     }
                 }
             }
@@ -1087,18 +1003,18 @@ namespace Katzebase.UI
 
         private void saveToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var selection = CurrentTabInfo();
+            var selection = CurrentTabFilePage();
             if (selection == null)
             {
                 return;
             }
-            selection.Tab.Save();
+            selection.Save();
         }
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var selection = CurrentTabInfo();
-            CloseTab(selection?.Tab);
+            var selection = CurrentTabFilePage();
+            CloseTab(selection);
         }
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1133,36 +1049,34 @@ namespace Katzebase.UI
         /// </summary>
         private void ExecuteCurrentScriptAsync()
         {
-            var tabInfo = CurrentTabInfo();
-            if (tabInfo == null)
+            var tabFilePage = CurrentTabFilePage();
+            if (tabFilePage == null)
             {
                 return;
             }
-            tabInfo.Tab.Save();
+            tabFilePage.Save();
 
-            PreExecuteEvent(tabInfo);
+            PreExecuteEvent(tabFilePage);
 
             DateTime startTime = DateTime.UtcNow;
 
             dataGridViewResults.Rows.Clear();
             dataGridViewResults.Columns.Clear();
 
-            string fileName = tabInfo.Tab.TabFile.FullFilePath;
-
             Task.Run(() =>
             {
-                ExecuteCurrentScriptSync(fileName);
+                ExecuteCurrentScriptSync(tabFilePage.FilePath);
             }).ContinueWith((t) =>
             {
-                PostExecuteEvent(tabInfo);
+                PostExecuteEvent(tabFilePage);
             });
         }
 
-        private void PreExecuteEvent(TabInfo tabInfo)
+        private void PreExecuteEvent(TabFilePage tabFilePage)
         {
             if (InvokeRequired)
             {
-                Invoke(new Action<TabInfo>(PreExecuteEvent), tabInfo);
+                Invoke(new Action<TabFilePage>(PreExecuteEvent), tabFilePage);
                 return;
             }
 
@@ -1176,11 +1090,11 @@ namespace Katzebase.UI
             tabControlOutput.SelectedTab = tabPageOutput;
         }
 
-        private void PostExecuteEvent(TabInfo tabInfo)
+        private void PostExecuteEvent(TabFilePage tabFilePage)
         {
             if (InvokeRequired)
             {
-                Invoke(new Action<TabInfo>(PostExecuteEvent), tabInfo);
+                Invoke(new Action<TabFilePage>(PostExecuteEvent), tabFilePage);
                 return;
             }
 
@@ -1265,7 +1179,7 @@ namespace Katzebase.UI
 
         private void toolStripButtonNewProject_Click(object sender, EventArgs e)
         {
-            AddOrSelectTab();
+            AddTab("New File.kbs");
         }
     }
 }

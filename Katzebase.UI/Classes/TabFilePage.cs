@@ -8,13 +8,12 @@ namespace Katzebase.UI.Classes
         public TextEditor Editor { get; set; }
         public FormFindText FindTextForm { get; set; }
         public FormReplaceText ReplaceTextForm { get; set; }
+        public string FilePath { get; set; } = string.Empty;
 
-        public TabFile TabFile{ get; set; }
-
-        public TabFilePage(TabFile tabFile, TextEditor editor) :
-             base(tabFile.FullFilePath)
+        public TabFilePage(string filePath, TextEditor editor) :
+             base(filePath)
         {
-            TabFile = tabFile;
+            FilePath = filePath;
             Editor = editor;
             FindTextForm = new FormFindText(this);
             ReplaceTextForm = new FormReplaceText(this);
