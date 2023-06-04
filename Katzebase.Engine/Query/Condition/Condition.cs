@@ -1,80 +1,35 @@
-﻿using Katzebase.Engine.Documents;
-using Katzebase.Library;
+﻿using Katzebase.Engine.Indexes;
 using Katzebase.Library.Exceptions;
-using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Query.Condition
 {
-    public class ConditionSingle : ICondition
+    public class Condition
     {
-        public ConditionValue Left { get; set; } = new ConditionValue();
-        public ConditionValue Right { get; set; } = new ConditionValue();
-        public LogicalQualifier LogicalQualifier { get; set; } = LogicalQualifier.None;
+        public bool CoveredByIndex { get; set; } = false;
+        public string SubsetKey { get; set; }
+        public string ConditionKey { get; set; }
+        public ConditionValue Left { get; set; } = new();
+        public ConditionValue Right { get; set; } = new();
         public LogicalConnector LogicalConnector { get; set; } = LogicalConnector.None;
-        public bool CoveredByIndex { get; set; }
+        public LogicalQualifier LogicalQualifier { get; set; } = LogicalQualifier.None;
 
-        public ICondition Clone()
+        public Condition(string subsetKey, string conditionKey, LogicalConnector logicalConnector, string left, LogicalQualifier logicalQualifier, string right)
         {
-            return new ConditionSingle()
-            {
-                CoveredByIndex = CoveredByIndex,
-                LogicalQualifier = LogicalQualifier,
-                LogicalConnector = LogicalConnector,
-                Left = Left.Clone(),
-                Right = Right.Clone()
-            };
-        }
-
-        public ConditionSingle(LogicalConnector logicalConnector, string left)
-        {
-            LogicalConnector = logicalConnector;
+            SubsetKey = subsetKey;
+            ConditionKey = conditionKey;
             Left.Value = left;
-        }
-
-        public ConditionSingle(LogicalConnector logicalConnector)
-        {
+            Right.Value = right;
             LogicalConnector = logicalConnector;
+            LogicalQualifier = logicalQualifier;
         }
 
-        public ConditionSingle()
+        public Condition Clone()
         {
+            var clone = new Condition(SubsetKey, ConditionKey, LogicalConnector, Left.Value ?? string.Empty, LogicalQualifier, Right.Value ?? string.Empty);
+
+            return clone;
         }
-
-        /*
-        public bool IsMatch(PersistDocument persistDocument)
-        {
-            Utility.EnsureNotNull(persistDocument);
-            Utility.EnsureNotNull(persistDocument.Content);
-
-            JObject jsonContent = JObject.Parse(persistDocument.Content);
-
-            return IsMatch(jsonContent);
-        }
-
-        public bool IsMatch(JObject jsonContent)
-        {
-            bool fullAttributeMatch = true;
-
-            //Loop though each condition in the prepared query:
-            foreach (var condition in Collection)
-            {
-                //Get the value of the condition:
-                if (jsonContent.TryGetValue(condition.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
-                {
-                    //If the condition does not match the value in the document then we break from checking the remainder of the conditions for this document and continue with the next document.
-                    //Otherwise we continue to the next condition until all conditions are matched.
-                    if (condition.IsMatch(jToken.ToString().ToLower()) == false)
-                    {
-                        fullAttributeMatch = false;
-                        break;
-                    }
-                }
-            }
-
-            return fullAttributeMatch;
-        }
-        */
 
         public bool IsMatch(string passedValue)
         {

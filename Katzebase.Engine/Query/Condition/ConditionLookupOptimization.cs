@@ -17,24 +17,11 @@ namespace Katzebase.Engine.Query.Condition
         /// <summary>
         /// A flattened list of conditions, used to build the index selections (not used outside of index selection algorithms).
         /// </summary>
-        public List<FlatConditionGroup> FlatConditionGroups { get; private set; } = new();
+        //public List<FlatConditionGroup> FlatConditionGroups { get; private set; } = new();
 
         public ConditionLookupOptimization(Conditions conditions)
         {
             Conditions = conditions.Clone();
-            FlattenConditionGroups();
-
-            foreach (var flatConditionGroup in FlatConditionGroups)
-            {
-                //Order the conditions by (None, And, Or) - because this is the way the index selection process will evaluate them.
-                flatConditionGroup.Conditions = flatConditionGroup.Conditions.OrderBy(o => o.LogicalConnector).ToList();
-            }
         }
-
-        public void FlattenConditionGroups()
-        {
-            FlatConditionGroups = Conditions.Flatten();
-        }
-
     }
 }

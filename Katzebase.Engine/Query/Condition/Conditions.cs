@@ -5,243 +5,221 @@ namespace Katzebase.Engine.Query.Condition
 {
     public class Conditions
     {
-        public List<ConditionSubset> Subsets { get; set; } = new();
+        public List<ConditionSubset> Subsets = new();
 
-        private string _lastVariableLetter = "";
+        public string RootExpressionKey { get; set; } = string.Empty;
 
-        public string GetNextVariableLetter()
+
+        private ConditionSubset? _root;
+        public ConditionSubset Root
         {
-            if (_lastVariableLetter == string.Empty)
+            get
             {
-                _lastVariableLetter = "A";
-                return _lastVariableLetter;
+                _root ??= Subsets.Where(o => o.SubsetKey == RootExpressionKey).Single();
+                return _root;
             }
-            char[] chars = _lastVariableLetter.ToCharArray();
+        }
+
+        public static string VariableToKey(string str)
+        {
+            return $"$:{str}$";
+        }
+
+        private static string GetNextLetter(string letter)
+        {
+            if (letter == string.Empty)
+            {
+                return "a";
+            }
+            char[] chars = letter.ToCharArray();
             char lastChar = chars[chars.Length - 1];
             char nextChar = (char)(lastChar + 1);
 
-            if (nextChar > 'Z')
+            if (nextChar > 'z')
             {
-                _lastVariableLetter = _lastVariableLetter + "A";
+                return letter + "a";
             }
             else
             {
                 chars[chars.Length - 1] = nextChar;
-                _lastVariableLetter = new string(chars);
-            }
-            return _lastVariableLetter;
-        }
-
-        public void FillInSubsetVariableNames()
-        {
-            foreach (var subset in Subsets)
-            {
-                subset.SubsetVariableName = GetNextVariableLetter();
-                FillInSubsetVariableNames(subset);
+                return new string(chars);
             }
         }
 
-        private void FillInSubsetVariableNames(ConditionSubset rootSubset)
+        public static Conditions Parse(string conditionsText, Dictionary<string, string> literalStrings)
         {
-            foreach (var subset in rootSubset.Conditions.OfType<ConditionSubset>())
-            {
-                subset.SubsetVariableName = GetNextVariableLetter();
-                FillInSubsetVariableNames(subset);
-            }
-        }
+            string lastLetter = string.Empty;
 
-        public ConditionSubset? SubsetByUID(Guid uid)
-        {
-            foreach (var subset in Subsets)
+            var conditions = new Conditions();
+
+            if (conditionsText.StartsWith('(') == false || conditionsText.StartsWith(')') == false)
             {
-                if (subset.SubsetUID == uid)
+                conditionsText = $"({conditionsText})";
+            }
+
+            while (true)
+            {
+                int startPos = conditionsText.LastIndexOf('(');
+                if (startPos >= 0)
                 {
-                    return subset;
+                    int endPos = conditionsText.IndexOf(')', startPos);
+                    if (endPos > startPos)
+                    {
+                        lastLetter = GetNextLetter(lastLetter);
+                        string subsetVariable = $"sk{lastLetter}"; //SK=Subset-Key
+
+                        string subsetText = conditionsText.Substring(startPos, endPos - startPos + 1).Trim();
+                        var subset = new ConditionSubset(subsetVariable, subsetText.Substring(1, subsetText.Length - 2).Trim());
+                        conditions.AddSubset(literalStrings, subset);
+                        conditionsText = conditionsText.Replace(subsetText, VariableToKey(subsetVariable));
+                    }
                 }
-
-                var result = SubsetByUID(subset, uid);
-                if (result != null)
+                else
                 {
-                    return result;
-                }
-            }
-            return null;
-        }
-
-        private ConditionSubset? SubsetByUID(ConditionSubset rootSubset, Guid uid)
-        {
-            foreach (var subset in rootSubset.Conditions.OfType<ConditionSubset>())
-            {
-                if (subset.SubsetUID == uid)
-                {
-                    return subset;
-                }
-
-                var result = SubsetByUID(subset, subset.SubsetUID);
-                if (result != null)
-                {
-                    return result;
+                    break;
                 }
             }
 
-            return null;
+            conditions.RootExpressionKey = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
+
+            RemoveVariableMarkers(conditions);
+
+            return conditions;
         }
 
-        /// <summary>
-        /// Creates a flattened list of conditions groups from nested conditions.
-        /// </summary>
-        /// <returns></returns>
-        public List<FlatConditionGroup> Flatten()
+        private static void RemoveVariableMarkers(Conditions conditions)
         {
-            var flattenedGroups = new List<FlatConditionGroup>();
+            conditions.RootExpressionKey = RemoveVariableMarker(conditions.RootExpressionKey);
 
-            foreach (var subset in Subsets)
+            foreach (var subset in conditions.Subsets)
             {
-                var flatGroup = new FlatConditionGroup(subset);
-                flattenedGroups.Add(flatGroup);
-
-                foreach (var condition in subset.Conditions)
-                {
-                    Flatten(condition, ref flatGroup, ref flattenedGroups);
-                }
-            }
-
-            return flattenedGroups;
-        }
-
-        /// <summary>
-        /// Recursive counterpart of Flatten.
-        /// </summary>
-        /// <param name="condition"></param>
-        /// <param name="flatGroup"></param>
-        /// <param name="flattenedGroups"></param>
-        private void Flatten(ICondition condition, ref FlatConditionGroup flatGroup, ref List<FlatConditionGroup> flattenedGroups)
-        {
-            if (condition is ConditionSubset)
-            {
-                var subset = (ConditionSubset)condition;
-
-                var subsetFlatGroup = new FlatConditionGroup(subset);
-                flattenedGroups.Add(subsetFlatGroup);
-
-                foreach (var subsetCondition in subset.Conditions)
-                {
-                    Flatten(subsetCondition, ref subsetFlatGroup, ref flattenedGroups);
-                }
-            }
-            else if (condition is ConditionSingle)
-            {
-                flatGroup.Conditions.Add((ConditionSingle)condition);
+                subset.Expression = RemoveVariableMarker(subset.Expression);
             }
         }
 
-        /// <summary>
-        /// Builds a mathematical expression tree that can be used to evaluate if all subset conditions have been met.
-        /// </summary>
-        /// <returns></returns>
-        public string BuildSubsetExpressionTree()
+        private static string RemoveVariableMarker(string str)
         {
             while (true)
             {
-                var expression = new StringBuilder();
-
-                foreach (var subset in Subsets)
+                int spos = str.IndexOf("$:"); //Subset-Key.
+                if (spos >= 0)
                 {
-                    expression.Append(LogicalConnectorToLogicString(subset.LogicalConnector));
-                    expression.Append('(');
-                    expression.Append(subset.SubsetVariableName);
-                    BuildSubsetExpressionTree(subset, ref expression);
-                    expression.Append(')');
+                    int epos = str.IndexOf("$", spos + 1);
+                    if (epos > spos)
+                    {
+                        var tok = str.Substring(spos, epos - spos + 1);
+                        var key = str.Substring(spos + 2, (epos - spos) - 2);
+                        str = str.Replace(tok, key);
+                    }
+                    else break;
                 }
-
+                else break;
             }
 
-            //return expression.ToString();
-            return "";
+            return str;
         }
 
-        /// <summary>
-        /// Recursive counterpart to BuildSubsetExpressionTree()
-        /// </summary>
-        /// <param name="condition"></param>
-        /// <param name="expression"></param>
-
-        private void BuildSubsetExpressionTree(ConditionSubset condition, ref StringBuilder expression)
+        public ConditionSubset SubsetByKey(string key)
         {
-            foreach (var subset in condition.Conditions.OfType<ConditionSubset>())
-            {
-                expression.Append(LogicalConnectorToLogicString(condition.LogicalConnector));
-                expression.Append('(');
-                expression.Append(subset.SubsetVariableName);
-                BuildSubsetExpressionTree(subset, ref expression);
-                expression.Append(')');
-            }
-        }
-
-        /// <summary>
-        /// Builds a full expression tree, just used for debugging.
-        /// </summary>
-        /// <returns></returns>
-        public string BuildFullExpressionTree()
-        {
-            var expression = new StringBuilder();
-
-            foreach (var subset in Subsets)
-            {
-                var connectorString = LogicalConnectorToString(subset.LogicalConnector);
-                expression.AppendLine(string.IsNullOrWhiteSpace(connectorString) ? "" : $" {connectorString} ");
-
-                expression.AppendLine("(");
-                expression.AppendLine($"/*{subset.SubsetVariableName}*/");
-                foreach (var condition in subset.Conditions)
-                {
-                    BuildFullExpressionTree(condition, ref expression);
-                }
-                expression.AppendLine(")");
-            }
-
-            return expression.ToString();
-        }
-
-        /// <summary>
-        /// Recursive counterpart to BuildFullExpressionTree.
-        /// </summary>
-        /// <param name="condition"></param>
-        /// <param name="expression"></param>
-        private void BuildFullExpressionTree(ICondition condition, ref StringBuilder expression)
-        {
-            if (condition is ConditionSubset)
-            {
-                var subset = (ConditionSubset)condition;
-                expression.AppendLine("(");
-                expression.AppendLine($"/*{subset.SubsetVariableName}*/");
-                foreach (var subsetCondition in subset.Conditions)
-                {
-                    BuildFullExpressionTree(subsetCondition, ref expression);
-                }
-
-                expression.AppendLine(")");
-            }
-            else if (condition is ConditionSingle)
-            {
-                var single = (ConditionSingle)condition;
-                var connectorString = LogicalConnectorToString(single.LogicalConnector);
-                expression.Append(string.IsNullOrWhiteSpace(connectorString) ? "" : $" {connectorString} ");
-                expression.AppendLine($"[{single.Left}] {LogicalQualifierToString(single.LogicalQualifier)} [{single.Right}]");
-            }
+            return Subsets.Where(o => o.SubsetKey == key).First();
         }
 
         public Conditions Clone()
         {
-            var result = new Conditions();
+            var clone = new Conditions()
+            {
+                RootExpressionKey = this.RootExpressionKey
+            };
 
             foreach (var subset in Subsets)
             {
-                //Yes, this is recursive (though the interface).
-                result.Subsets.Add((ConditionSubset)subset.Clone());
+                var subsetClone = new ConditionSubset(subset.SubsetKey, subset.Expression);
+
+                foreach (var condition in subset.Conditions)
+                {
+                    subsetClone.Conditions.Add(condition.Clone());
+                }
+                subsetClone.ConditionKeys.UnionWith(subset.ConditionKeys);
+                subsetClone.SubsetKeys.UnionWith(subset.SubsetKeys);
+
+                clone.Subsets.Add(subsetClone);
             }
 
-            return result;
+            return clone;
+        }
+
+        public void AddSubset(Dictionary<string, string> literalStrings, ConditionSubset subset)
+        {
+            int position = 0;
+            string lastLetter = string.Empty;
+
+            LogicalConnector logicalConnector = LogicalConnector.None;
+
+            while (true)
+            {
+                int startPosition = position;
+
+                string token = Utilities.GetNextClauseToken(subset.Expression, ref position).ToLower();
+
+                if (token == string.Empty)
+                {
+                    break; //Done.
+                }
+                else if (token.StartsWith('$') && token.EndsWith('$'))
+                {
+                    if (token.StartsWith("$:ck"))
+                    {
+                        subset.ConditionKeys.Add(token.Substring(2, token.Length - 3));
+                    }
+                    else if (token.StartsWith("$:sk"))
+                    {
+                        subset.SubsetKeys.Add(token.Substring(2, token.Length - 3));
+                    }
+
+                    continue;
+                }
+                else if (token == "and")
+                {
+                    logicalConnector = LogicalConnector.And;
+                    continue;
+                }
+                else if (token == "or")
+                {
+                    logicalConnector = LogicalConnector.Or;
+                    continue;
+                }
+                else
+                {
+                    lastLetter = GetNextLetter(lastLetter);
+                    string conditionKey = $"ck{lastLetter}"; //CK=Condition-Key
+
+                    string left = token;
+
+                    //Logical Qualifier
+                    token = Utilities.GetNextClauseToken(subset.Expression, ref position).ToLower();
+                    LogicalQualifier logicalQualifier = Utilities.ParseLogicalQualifier(token);
+
+                    //Righthand value:
+                    string right = Utilities.GetNextClauseToken(subset.Expression, ref position).ToLower();
+
+                    if (literalStrings.ContainsKey(right))
+                    {
+                        right = literalStrings[right];
+                    }
+
+                    int endPosition = position;
+                    var condition = new Condition(subset.SubsetKey, conditionKey, logicalConnector, left, logicalQualifier, right);
+
+                    position = 0;
+                    subset.Expression = subset.Expression.Remove(startPosition, endPosition - startPosition).Insert(startPosition, VariableToKey(conditionKey) + " ");
+                    subset.Conditions.Add(condition);
+                    logicalConnector = LogicalConnector.None;
+                }
+            }
+
+            subset.Expression = subset.Expression.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
+
+            Subsets.Add(subset);
         }
     }
 }
