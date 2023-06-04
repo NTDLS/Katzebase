@@ -105,21 +105,6 @@ namespace Katzebase.Engine.Documents
             List<PersistDocumentCatalogItem> documentCatalogItems, PersistSchema schemaMeta, PreparedQuery query,
             ConditionLookupOptimization lookupOptimization)
         {
-            /*
-            //indexing limits the documents we need to scan.
-            if (rootCondition.IndexSelection != null)
-            {
-                Utility.EnsureNotNull(rootCondition.IndexSelection.Index.DiskPath);
-                var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, rootCondition.IndexSelection.Index.DiskPath, LockOperation.Read);
-                Utility.EnsureNotNull(indexPageCatalog);
-                limitingDocumentIds = core.Indexes.MatchDocuments(indexPageCatalog, rootCondition.IndexSelection, rootCondition);
-                if (limitingDocumentIds?.Count == 0)
-                {
-                    limitingDocumentIds = null;
-                }
-            }
-            */
-
             var virtualExpression = lookupOptimization.BuildFullVirtualExpression();
             Console.WriteLine(virtualExpression);
 
@@ -134,7 +119,14 @@ namespace Katzebase.Engine.Documents
                 //All condition subsets have a selected index. Start building a list of possible document IDs.
                 foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
                 {
+                    Utility.EnsureNotNull(subset.IndexSelection);
+                    Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
 
+                    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                    Utility.EnsureNotNull(indexPageCatalog);
+                    var documentIds  = core.Indexes.MatchDocuments(indexPageCatalog, subset.IndexSelection, subset);
+
+                    limitedDocumentCatalogItems.AddRange(documentCatalogItems.Where(o => documentIds.Contains(o.Id)).ToList());
                 }
             }
             else
@@ -156,15 +148,16 @@ namespace Katzebase.Engine.Documents
                 */
             }
 
-            //return new DocumentLookupResults();
-
-
             var threads = new DocumentLookupThreads(transaction, schemaMeta, query, lookupOptimization, DocumentLookupThreadProc);
 
-            int maxThreads = 1;
-            if (documentCatalogItems.Count > 100)
+            int maxThreads = 4;
+            if (limitedDocumentCatalogItems.Count > 100)
             {
-                maxThreads = Environment.ProcessorCount * 2;
+                maxThreads = Environment.ProcessorCount;
+                if (limitedDocumentCatalogItems.Count > 1000)
+                {
+                    maxThreads = Environment.ProcessorCount * 2;
+                }
             }
 
             threads.InitializePool(maxThreads);
