@@ -30,48 +30,89 @@
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormConnect));
             groupBox2 = new GroupBox();
-            radButtonConnect = new Button();
-            radButtonCancel = new Button();
+            labelServerAddress = new Label();
+            labelPort = new Label();
+            textBoxPort = new TextBox();
+            textBoxServerAddress = new TextBox();
+            buttonConnect = new Button();
+            buttonCancel = new Button();
+            groupBox2.SuspendLayout();
             SuspendLayout();
             // 
             // groupBox2
             // 
+            groupBox2.Controls.Add(labelServerAddress);
+            groupBox2.Controls.Add(labelPort);
+            groupBox2.Controls.Add(textBoxPort);
+            groupBox2.Controls.Add(textBoxServerAddress);
             groupBox2.Location = new Point(14, 14);
             groupBox2.Margin = new Padding(4, 3, 4, 3);
             groupBox2.Name = "groupBox2";
             groupBox2.Padding = new Padding(4, 3, 4, 3);
-            groupBox2.Size = new Size(399, 149);
+            groupBox2.Size = new Size(319, 91);
             groupBox2.TabIndex = 1;
             groupBox2.TabStop = false;
             groupBox2.Text = "Connect to Katzebase instance";
             // 
-            // radButtonConnect
+            // labelServerAddress
             // 
-            radButtonConnect.Location = new Point(217, 169);
-            radButtonConnect.Margin = new Padding(4, 3, 4, 3);
-            radButtonConnect.Name = "radButtonConnect";
-            radButtonConnect.Size = new Size(94, 28);
-            radButtonConnect.TabIndex = 4;
-            radButtonConnect.Text = "Connect";
-            radButtonConnect.Click += buttonOk_Click;
+            labelServerAddress.AutoSize = true;
+            labelServerAddress.Location = new Point(11, 28);
+            labelServerAddress.Name = "labelServerAddress";
+            labelServerAddress.Size = new Size(84, 15);
+            labelServerAddress.TabIndex = 3;
+            labelServerAddress.Text = "Server Address";
             // 
-            // radButtonCancel
+            // labelPort
             // 
-            radButtonCancel.Location = new Point(319, 169);
-            radButtonCancel.Margin = new Padding(4, 3, 4, 3);
-            radButtonCancel.Name = "radButtonCancel";
-            radButtonCancel.Size = new Size(94, 28);
-            radButtonCancel.TabIndex = 5;
-            radButtonCancel.Text = "Cancel";
-            radButtonCancel.Click += buttonCancel_Click;
+            labelPort.AutoSize = true;
+            labelPort.Location = new Point(245, 28);
+            labelPort.Name = "labelPort";
+            labelPort.Size = new Size(29, 15);
+            labelPort.TabIndex = 2;
+            labelPort.Text = "Port";
+            // 
+            // textBoxPort
+            // 
+            textBoxPort.Location = new Point(245, 46);
+            textBoxPort.Name = "textBoxPort";
+            textBoxPort.Size = new Size(56, 23);
+            textBoxPort.TabIndex = 1;
+            // 
+            // textBoxServerAddress
+            // 
+            textBoxServerAddress.Location = new Point(11, 46);
+            textBoxServerAddress.Name = "textBoxServerAddress";
+            textBoxServerAddress.Size = new Size(228, 23);
+            textBoxServerAddress.TabIndex = 0;
+            // 
+            // buttonConnect
+            // 
+            buttonConnect.Location = new Point(137, 119);
+            buttonConnect.Margin = new Padding(4, 3, 4, 3);
+            buttonConnect.Name = "buttonConnect";
+            buttonConnect.Size = new Size(94, 28);
+            buttonConnect.TabIndex = 4;
+            buttonConnect.Text = "Connect";
+            buttonConnect.Click += buttonOk_Click;
+            // 
+            // buttonCancel
+            // 
+            buttonCancel.Location = new Point(239, 119);
+            buttonCancel.Margin = new Padding(4, 3, 4, 3);
+            buttonCancel.Name = "buttonCancel";
+            buttonCancel.Size = new Size(94, 28);
+            buttonCancel.TabIndex = 5;
+            buttonCancel.Text = "Cancel";
+            buttonCancel.Click += buttonCancel_Click;
             // 
             // FormConnect
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(424, 208);
-            Controls.Add(radButtonConnect);
-            Controls.Add(radButtonCancel);
+            ClientSize = new Size(349, 159);
+            Controls.Add(buttonConnect);
+            Controls.Add(buttonCancel);
             Controls.Add(groupBox2);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
@@ -83,12 +124,19 @@
             SizeGripStyle = SizeGripStyle.Hide;
             StartPosition = FormStartPosition.CenterParent;
             Text = "Connect";
+            Load += FormConnect_Load;
+            groupBox2.ResumeLayout(false);
+            groupBox2.PerformLayout();
             ResumeLayout(false);
         }
 
         #endregion
         private GroupBox groupBox2;
-        private Button radButtonConnect;
-        private Button radButtonCancel;
+        private Button buttonConnect;
+        private Button buttonCancel;
+        private Label labelServerAddress;
+        private Label labelPort;
+        private TextBox textBoxPort;
+        private TextBox textBoxServerAddress;
     }
 }

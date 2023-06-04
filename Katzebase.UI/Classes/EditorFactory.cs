@@ -23,7 +23,7 @@ namespace Katzebase.UI.Classes
             _form = form;
         }
 
-        public TabFilePage Create(string filePath)
+        public TabFilePage Create(string serverAddressURL, string filePath)
         {
             var editor = new TextEditor
             {
@@ -33,7 +33,10 @@ namespace Katzebase.UI.Classes
                 WordWrap = false,
             };
 
-            var tabFilePage = new TabFilePage(filePath, editor);
+            var tabFilePage = new TabFilePage(serverAddressURL, filePath, editor)
+            {
+                //..
+            };
 
             editor.Tag = tabFilePage;
 

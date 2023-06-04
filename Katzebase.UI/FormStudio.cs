@@ -1,4 +1,5 @@
 using ICSharpCode.AvalonEdit;
+using Katzebase.Library.Client;
 using Katzebase.Library.Exceptions;
 using Katzebase.Library.Payloads;
 using Katzebase.UI.Classes;
@@ -20,6 +21,7 @@ namespace Katzebase.UI
         private TextEditor? _outputEditor;
         private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
         private bool _scriptExecuting = false;
+        public string _serverAddressURL = string.Empty;
 
         public FormStudio()
         {
@@ -81,6 +83,7 @@ namespace Katzebase.UI
             tabControlBody.MouseUp += TabControlBody_MouseUp;
 
             splitContainerOutput.Panel2Collapsed = true; //For now, we just hide the bottom panel since we dont really do debugging.
+            splitContainerMacros.Panel2Collapsed = true;
 
             _toolbarSyncTimer.Tick += _toolbarSyncTimer_Tick;
             _toolbarSyncTimer.Interval = 250;
@@ -153,12 +156,13 @@ namespace Katzebase.UI
             {
                 _firstShown = false;
 
-                using (var form = new FormConnect())
+                using var form = new FormConnect();
+                if (form.ShowDialog() == DialogResult.OK)
                 {
-                    if (form.ShowDialog() == DialogResult.OK)
-                    {
-                        AddTab("New File.kbs");
-                    }
+                    _serverAddressURL = form.ServerAddressURL;
+
+                    var tabFilePage = AddTab("New File.kbs");
+                    tabFilePage.Editor.Text = "SELECT TOP 100\r\n\tProductID, LocationID, Shelf, Bin,\r\n\tQuantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\nWHERE\r\n\tLocationId = 6 AND Shelf != 'M' AND quantity = 299";
                 }
             }
 
@@ -660,11 +664,11 @@ namespace Katzebase.UI
             return null;
         }
 
-        private void AddTab(string filePath)
+        private TabFilePage AddTab(string filePath)
         {
             if (_editorFactory != null)
             {
-                var tabFilePage = _editorFactory.Create(filePath);
+                var tabFilePage = _editorFactory.Create(_serverAddressURL, filePath);
 
                 tabFilePage.Controls.Add(new System.Windows.Forms.Integration.ElementHost
                 {
@@ -673,7 +677,10 @@ namespace Katzebase.UI
                 });
                 tabControlBody.TabPages.Add(tabFilePage);
                 tabControlBody.SelectedTab = tabFilePage;
+
+                return tabFilePage;
             }
+            return null;
         }
 
         /// <summary>
@@ -775,11 +782,6 @@ namespace Katzebase.UI
 
         private void toolStripButtonExecuteScript_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show($"Execute the current script against the database server?", $"Are You sure?", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
-            {
-                return;
-            }
-
             ExecuteCurrentScriptAsync();
         }
 
@@ -1063,9 +1065,11 @@ namespace Katzebase.UI
             dataGridViewResults.Rows.Clear();
             dataGridViewResults.Columns.Clear();
 
+            string scriptText = tabFilePage.Editor.Text;
+
             Task.Run(() =>
             {
-                ExecuteCurrentScriptSync(tabFilePage.FilePath);
+                ExecuteCurrentScriptSync(tabFilePage.Client, scriptText);
             }).ContinueWith((t) =>
             {
                 PostExecuteEvent(tabFilePage);
@@ -1112,16 +1116,20 @@ namespace Katzebase.UI
             _scriptExecuting = false;
         }
 
-        private void ExecuteCurrentScriptSync(string fileName)
+        private void ExecuteCurrentScriptSync(KatzebaseClient client, string scriptText)
         {
             WorkloadGroup group = new WorkloadGroup();
+
+            var result = client.Server.Ping();
+
+            //MessageBox.Show(tabFilePage.Editor.Text);
 
             try
             {
                 group.OnException += Group_OnException;
                 group.OnStatus += Group_OnStatus;
 
-                AppentOutputText("debug text");
+                AppentOutputText(scriptText);
                 DateTime startTime = DateTime.UtcNow;
 
                 var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
@@ -1179,7 +1187,8 @@ namespace Katzebase.UI
 
         private void toolStripButtonNewProject_Click(object sender, EventArgs e)
         {
-            AddTab("New File.kbs");
+            var tabFilePage = AddTab("New File.kbs");
+            tabFilePage.Editor.Text = "SELECT TOP 100\r\n\tProductID, LocationID, Shelf, Bin,\r\n\tQuantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\nWHERE\r\n\tLocationId = 6 AND Shelf != 'M' AND quantity = 299";
         }
     }
 }

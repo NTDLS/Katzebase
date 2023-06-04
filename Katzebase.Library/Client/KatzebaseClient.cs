@@ -6,6 +6,7 @@
         public Guid SessionId { get; set; }
         public Management.Document Document { get; set; }
         public Management.Schema Schema { get; set; }
+        public Management.Server Server { get; set; }
         public Management.Transaction Transaction { get; set; }
         public Management.Query Query { get; set; }
 
@@ -20,6 +21,7 @@
 
             Document = new Management.Document(this);
             Schema = new Management.Schema(this);
+            Server = new Management.Server(this);
             Transaction = new Management.Transaction(this);
             Query = new Management.Query(this);
         }
@@ -35,6 +37,7 @@
 
             Document = new Management.Document(this);
             Schema = new Management.Schema(this);
+            Server = new Management.Server(this);
             Transaction = new Management.Transaction(this);
             Query = new Management.Query(this);
         }

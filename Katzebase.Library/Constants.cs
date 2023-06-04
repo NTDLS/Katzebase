@@ -2,6 +2,8 @@
 {
     public static class Constants
     {
+        public static string FriendlyName = "Katzebase";
+
         public enum LogSeverity
         {
             Trace = 0, //Super-verbose, debug-like information.
