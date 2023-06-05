@@ -1,8 +1,8 @@
 using ICSharpCode.AvalonEdit;
-using Katzebase.Library;
-using Katzebase.Library.Client;
-using Katzebase.Library.Exceptions;
-using Katzebase.Library.Payloads;
+using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Client;
+using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
 using Katzebase.UI.Classes;
 using Katzebase.UI.Properties;
 using System.Data;

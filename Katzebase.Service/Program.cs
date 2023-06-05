@@ -1,6 +1,5 @@
-
 using Katzebase.Engine;
-using Katzebase.Library;
+using Katzebase.PrivateLibrary;
 
 namespace Katzebase.Service
 {
@@ -32,13 +31,13 @@ namespace Katzebase.Service
                                  .Build();
 
                     // Get values from the config given their key and their target type.
-                    var settings = config.GetRequiredSection("Settings").Get<Library.Settings>();
+                    var settings = config.GetRequiredSection("Settings").Get<Settings>();
                     if (settings == null)
                     {
                         throw new Exception("Failed to load settings");
                     }
 
-                    _configuration = new Library.Settings()
+                    _configuration = new Settings()
                     {
                         BaseAddress = settings.BaseAddress,
                         DataRootPath = settings.DataRootPath.TrimEnd(new char[] { '/', '\\' }),

@@ -2,9 +2,9 @@
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
-using Katzebase.Library;
-using Katzebase.Library.Exceptions;
-using Katzebase.Library.Payloads;
+using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.Constants;
 
@@ -111,6 +111,12 @@ namespace Katzebase.Engine.Indexes
         {
             try
             {
+                var cacheItem = core.LookupOptimizationCache.Get(conditions.Hash) as ConditionLookupOptimization;
+                if (cacheItem != null)
+                {
+                    return cacheItem;
+                }
+
                 var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
 
                 var lookupOptimization = new ConditionLookupOptimization(conditions);
@@ -186,6 +192,8 @@ namespace Katzebase.Engine.Indexes
                         }
                     }
                 }
+
+                core.LookupOptimizationCache.Add(conditions.Hash, lookupOptimization, DateTime.Now.AddMinutes(10));
 
                 return lookupOptimization;
             }

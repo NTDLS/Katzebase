@@ -17,7 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Katzebase.Engine\Katzebase.Engine.csproj" />
-    <ProjectReference Include="..\Katzebase.Library\Katzebase.Library.csproj" />
+    <ProjectReference Include="..\Katzebase.PublicLibrary\Katzebase.PublicLibrary.csproj" />
   </ItemGroup>
 
 </Project>

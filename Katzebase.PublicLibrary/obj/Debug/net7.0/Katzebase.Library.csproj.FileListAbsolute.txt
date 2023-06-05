@@ -1,0 +1,12 @@
+C:\NTDLS\Katzebase\Katzebase.Library\bin\Debug\net7.0\Katzebase.Library.deps.json
+C:\NTDLS\Katzebase\Katzebase.Library\bin\Debug\net7.0\Katzebase.Library.dll
+C:\NTDLS\Katzebase\Katzebase.Library\bin\Debug\net7.0\Katzebase.Library.pdb
+C:\NTDLS\Katzebase\Katzebase.Library\obj\Debug\net7.0\Katzebase.Library.csproj.AssemblyReference.cache
+C:\NTDLS\Katzebase\Katzebase.Library\obj\Debug\net7.0\Katzebase.Library.GeneratedMSBuildEditorConfig.editorconfig
+C:\NTDLS\Katzebase\Katzebase.Library\obj\Debug\net7.0\Katzebase.Library.AssemblyInfoInputs.cache
+C:\NTDLS\Katzebase\Katzebase.Library\obj\Debug\net7.0\Katzebase.Library.AssemblyInfo.cs
+C:\NTDLS\Katzebase\Katzebase.Library\obj\Debug\net7.0\Katzebase.Library.csproj.CoreCompileInputs.cache
+C:\NTDLS\Katzebase\Katzebase.Library\obj\Debug\net7.0\Katzebase.Library.dll
+C:\NTDLS\Katzebase\Katzebase.Library\obj\Debug\net7.0\refint\Katzebase.Library.dll
+C:\NTDLS\Katzebase\Katzebase.Library\obj\Debug\net7.0\Katzebase.Library.pdb
+C:\NTDLS\Katzebase\Katzebase.Library\obj\Debug\net7.0\ref\Katzebase.Library.dll

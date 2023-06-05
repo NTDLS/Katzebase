@@ -1,4 +1,4 @@
-﻿using Katzebase.Library.Client;
+﻿using Katzebase.PublicLibrary.Client;
 
 namespace Katzebase.UI
 {
@@ -35,7 +35,7 @@ namespace Katzebase.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Unable to connect to the specified server: \"{ex.Message}\".", Library.Constants.FriendlyName);
+                MessageBox.Show($"Unable to connect to the specified server: \"{ex.Message}\".", PublicLibrary.Constants.FriendlyName);
             }
 
         }

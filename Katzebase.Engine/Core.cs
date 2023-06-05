@@ -9,9 +9,10 @@ using Katzebase.Engine.Query;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Sessions;
 using Katzebase.Engine.Transactions;
-using Katzebase.Library;
+using Katzebase.PrivateLibrary;
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.Caching;
 
 namespace Katzebase.Engine
 {
@@ -29,6 +30,8 @@ namespace Katzebase.Engine
         public CacheManager Cache;
         public PersistIndexManager Indexes;
         public QueryManager Query;
+
+        public MemoryCache LookupOptimizationCache { get; set; } = new MemoryCache("ConditionLookupOptimization");
 
         public Core(Settings settings)
         {

@@ -1,6 +1,6 @@
-﻿using Katzebase.Library;
+﻿using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
-using static Katzebase.Library.Constants;
+using static Katzebase.PublicLibrary.Constants;
 
 namespace Katzebase.Engine.Transactions
 {

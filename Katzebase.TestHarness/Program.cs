@@ -1,6 +1,6 @@
 ﻿using Katzebase.Engine.Query;
-using Katzebase.Library.Client;
-using Katzebase.Library.Payloads;
+using Katzebase.PublicLibrary.Client;
+using Katzebase.PublicLibrary.Payloads;
 using System.Diagnostics;
 using System.Reflection;
 

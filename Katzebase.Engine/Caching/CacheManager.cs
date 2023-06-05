@@ -1,12 +1,12 @@
-﻿using Katzebase.Library;
+﻿using Katzebase.PublicLibrary;
 using System.Diagnostics;
 
 namespace Katzebase.Engine.Caching
 {
     public class CacheManager
     {
-        private Dictionary<string, CacheItem> collection = new Dictionary<string, CacheItem>();
-        private Core core;
+        private Dictionary<string, CacheItem> collection = new();
+        private readonly Core core;
 
         public CacheManager(Core core)
         {
@@ -56,7 +56,7 @@ namespace Katzebase.Engine.Caching
 
                     core.Log.Trace("Cache scavenge start: " + (Process.GetCurrentProcess().PrivateMemorySize64 / 1024.0 / 1024.0).ToString("N") + "MB");
 
-                    HashSet<string> triedKeys = new HashSet<string>();
+                    var triedKeys = new HashSet<string>();
 
                     while (Process.GetCurrentProcess().WorkingSet64 > (tryFreetreshold * ((100 - core.settings.CacheScavengeBuffer) / 100.0)))
                     {

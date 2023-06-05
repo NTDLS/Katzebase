@@ -1,4 +1,4 @@
-﻿using Katzebase.Library;
+﻿using Katzebase.PublicLibrary;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Health

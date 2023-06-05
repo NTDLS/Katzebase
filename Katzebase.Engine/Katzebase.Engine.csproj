@@ -15,10 +15,12 @@
     <PackageReference Include="CoreCLR-NCalc" Version="2.2.113" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="protobuf-net" Version="3.2.16" />
+    <PackageReference Include="System.Runtime.Caching" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Katzebase.Library\Katzebase.Library.csproj" />
+    <ProjectReference Include="..\Katzebase.PrivateLibrary\Katzebase.PrivateLibrary.csproj" />
+    <ProjectReference Include="..\Katzebase.PublicLibrary\Katzebase.PublicLibrary.csproj" />
   </ItemGroup>
 
 </Project>

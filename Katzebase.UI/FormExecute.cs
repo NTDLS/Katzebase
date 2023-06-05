@@ -1,4 +1,4 @@
-﻿using Katzebase.Library.Exceptions;
+﻿using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
 using System.Windows.Forms.DataVisualization.Charting;
 

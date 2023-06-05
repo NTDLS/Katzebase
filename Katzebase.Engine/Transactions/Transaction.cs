@@ -1,6 +1,6 @@
 ﻿using Katzebase.Engine.Locking;
-using Katzebase.Library;
-using Katzebase.Library.Exceptions;
+using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json;
 using static Katzebase.Engine.Constants;
 

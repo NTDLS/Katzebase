@@ -1,7 +1,7 @@
 ﻿using Katzebase.Engine.Query.Condition;
-using Katzebase.Library;
-using Katzebase.Library.Client.Management;
-using Katzebase.Library.Exceptions;
+using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Client.Management;
+using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
 using System.Collections;
 using System.Collections.Generic;

@@ -1,5 +1,5 @@
 ﻿using ICSharpCode.AvalonEdit;
-using Katzebase.Library.Client;
+using Katzebase.PublicLibrary.Client;
 
 namespace Katzebase.UI.Classes
 {

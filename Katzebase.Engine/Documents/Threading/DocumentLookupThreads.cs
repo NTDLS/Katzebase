@@ -2,7 +2,7 @@
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
-using Katzebase.Library;
+using Katzebase.PublicLibrary;
 using static Katzebase.Engine.Documents.Threading.DocumentThreadingConstants;
 
 namespace Katzebase.Engine.Documents.Threading

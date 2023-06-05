@@ -1,6 +1,6 @@
 ﻿using Katzebase.Engine.Transactions;
-using Katzebase.Library;
-using Katzebase.Library.Exceptions;
+using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Exceptions;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Locking

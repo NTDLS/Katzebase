@@ -1,4 +1,4 @@
-﻿using Katzebase.Library.Exceptions;
+﻿using Katzebase.PublicLibrary.Exceptions;
 
 namespace Katzebase.Engine.Query.Condition
 {
