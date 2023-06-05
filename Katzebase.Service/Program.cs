@@ -73,6 +73,9 @@ namespace Katzebase.Service
                 options.InputFormatters.Add(new TextPlainInputFormatter());
             });
 
+            builder.Logging.ClearProviders();
+            builder.Logging.SetMinimumLevel(LogLevel.Warning);
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

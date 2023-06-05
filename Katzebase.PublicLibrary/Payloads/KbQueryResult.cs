@@ -4,8 +4,8 @@
     {
         public List<KbQueryField> Fields { get; set; } = new();
         public List<KbQueryRow> Rows { get; set; } = new();
-
         public List<KbNameValue<double>> WaitTimes { get; set; } = new();
+        public string Explanation { get; set; } = string.Empty;
 
         public static KbQueryResult FromActionResponse(KbActionResponse actionResponse)
         {

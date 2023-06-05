@@ -25,6 +25,56 @@ namespace Katzebase.Engine.Documents
             this.core = core;
         }
 
+        public KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                var result = new KbQueryResult();
+                PerformanceTrace? pt = null;
+
+                var session = core.Sessions.ByProcessId(processId);
+                if (session.TraceWaitTimesEnabled)
+                {
+                    pt = new PerformanceTrace();
+                }
+
+                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    ptAcquireTransaction?.EndTrace();
+
+                    var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
+                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schema, LockOperation.Read);
+                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    {
+                        throw new KbInvalidSchemaException(preparedQuery.Schema);
+                    }
+                    ptLockSchema?.EndTrace();
+                    Utility.EnsureNotNull(schemaMeta.DiskPath);
+
+                    var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(txRef.Transaction, schemaMeta, preparedQuery.Conditions);
+                    result.Explanation = lookupOptimization.BuildFullVirtualExpression();
+
+                    txRef.Commit(); //Not that we did any work.
+                }
+
+                if (session.TraceWaitTimesEnabled && pt != null)
+                {
+                    foreach (var wt in pt.Aggregations)
+                    {
+                        result.WaitTimes.Add(new KbNameValue<double>(wt.Key, wt.Value));
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+        }
+
         public KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
         {
             try
@@ -39,11 +89,11 @@ namespace Katzebase.Engine.Documents
                 }
 
                 var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var txRef = core.Transactions.Begin(processId))
                 {
                     ptAcquireTransaction?.EndTrace();
-                    result = FindDocumentsByPreparedQuery(pt, transaction.Transaction, preparedQuery);
-                    transaction.Commit();
+                    result = FindDocumentsByPreparedQuery(pt, txRef.Transaction, preparedQuery);
+                    txRef.Commit();
                 }
 
                 if (session.TraceWaitTimesEnabled && pt != null)
@@ -72,11 +122,11 @@ namespace Katzebase.Engine.Documents
                 var pt = new PerformanceTrace();
 
                 var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var txRef = core.Transactions.Begin(processId))
                 {
                     ptAcquireTransaction?.EndTrace();
 
-                    result = FindDocumentsByPreparedQuery(pt, transaction.Transaction, preparedQuery);
+                    result = FindDocumentsByPreparedQuery(pt, txRef.Transaction, preparedQuery);
 
                     //TODO: Delete the documents.
 
@@ -98,7 +148,7 @@ namespace Katzebase.Engine.Documents
                     }
                     */
 
-                    transaction.Commit();
+                    txRef.Commit();
                 }
 
                 return result;
@@ -504,9 +554,9 @@ namespace Katzebase.Engine.Documents
         {
             try
             {
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var txRef = core.Transactions.Begin(processId))
                 {
-                    PersistSchema schemaMeta = core.Schemas.VirtualPathToMeta(transaction.Transaction, schema, LockOperation.Read);
+                    PersistSchema schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
                         throw new KbInvalidSchemaException(schema);
@@ -514,7 +564,7 @@ namespace Katzebase.Engine.Documents
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
                     var filePath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction.Transaction, filePath, LockOperation.Read);
+                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
                     Utility.EnsureNotNull(documentCatalog);
 
                     var list = new List<PersistDocumentCatalogItem>();
@@ -522,7 +572,7 @@ namespace Katzebase.Engine.Documents
                     {
                         list.Add(item);
                     }
-                    transaction.Commit();
+                    txRef.Commit();
 
                     return list;
                 }

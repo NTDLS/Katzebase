@@ -342,6 +342,16 @@ namespace Katzebase.Engine.Query.Condition
                 var subset = SubsetByKey(subsetKey);
                 result.Append($"[{subset.Expression}]");
 
+                if (subset.Conditions.Count > 0)
+                {
+                    result.Append('(');
+                    foreach (var condition in subset.Conditions)
+                    {
+                        result.Append($"{condition.ConditionKey}: {condition.Left} {condition.LogicalQualifier}");
+                    }
+                    result.Append(')');
+                }
+
                 if (subset.SubsetKeys.Count > 0)
                 {
                     result.Append('(');

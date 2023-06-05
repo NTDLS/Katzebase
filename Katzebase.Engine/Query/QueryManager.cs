@@ -1,5 +1,9 @@
 ﻿using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Query.Condition;
+using Katzebase.PublicLibrary.Client.Management;
 using Katzebase.PublicLibrary.Payloads;
+using System.Runtime.Intrinsics.X86;
+using System;
 
 namespace Katzebase.Engine.Query
 {
@@ -10,6 +14,30 @@ namespace Katzebase.Engine.Query
         public QueryManager(Core core)
         {
             this.core = core;
+        }
+
+        public KbQueryResult ExplainQuery(ulong processId, string statement)
+        {
+            var preparedQuery = ParserEngine.ParseQuery(statement);
+            return ExplainQuery(processId, preparedQuery);
+        }
+
+        public KbQueryResult ExplainQuery(ulong processId, PreparedQuery preparedQuery)
+        {
+            if (preparedQuery.QueryType == EngineConstants.QueryType.Select
+                || preparedQuery.QueryType == EngineConstants.QueryType.Delete
+                || preparedQuery.QueryType == EngineConstants.QueryType.Update)
+            {
+                return core.Documents.ExecuteExplain(processId, preparedQuery);
+            }
+            else if (preparedQuery.QueryType == EngineConstants.QueryType.Set)
+            {
+                return new KbQueryResult();
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public KbQueryResult ExecuteQuery(ulong processId, string statement)

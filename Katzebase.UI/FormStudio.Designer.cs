@@ -40,6 +40,7 @@
             toolStripButtonSaveAll = new ToolStripButton();
             toolStripButtonCloseCurrentTab = new ToolStripButton();
             toolStripSeparator1 = new ToolStripSeparator();
+            toolStripButtonExplainPlan = new ToolStripButton();
             toolStripButtonExecuteScript = new ToolStripButton();
             toolStripSeparator2 = new ToolStripSeparator();
             toolStripButtonFind = new ToolStripButton();
@@ -80,6 +81,7 @@
             richTextBoxOutput = new RichTextBox();
             tabPageResults = new TabPage();
             dataGridViewResults = new DataGridView();
+            richTextBoxExplain = new RichTextBox();
             ((System.ComponentModel.ISupportInitialize)splitContainerProject).BeginInit();
             splitContainerProject.Panel1.SuspendLayout();
             splitContainerProject.Panel2.SuspendLayout();
@@ -95,6 +97,7 @@
             splitContainerOutput.Panel2.SuspendLayout();
             splitContainerOutput.SuspendLayout();
             tabControlOutput.SuspendLayout();
+            tabPagePreview.SuspendLayout();
             tabPageOutput.SuspendLayout();
             tabPageResults.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewResults).BeginInit();
@@ -158,7 +161,7 @@
             // 
             // toolStrip1
             // 
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonNewProject, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExecuteScript, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonRedo, toolStripButtonUndo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonNewProject, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonRedo, toolStripButtonUndo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
             toolStrip1.Location = new Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(1032, 25);
@@ -210,10 +213,20 @@
             toolStripSeparator1.Name = "toolStripSeparator1";
             toolStripSeparator1.Size = new Size(6, 25);
             // 
+            // toolStripButtonExplainPlan
+            // 
+            toolStripButtonExplainPlan.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonExplainPlan.Image = Properties.Resources.ToolRunOne;
+            toolStripButtonExplainPlan.ImageTransparentColor = Color.Magenta;
+            toolStripButtonExplainPlan.Name = "toolStripButtonExplainPlan";
+            toolStripButtonExplainPlan.Size = new Size(23, 22);
+            toolStripButtonExplainPlan.Text = "Explain Plan";
+            toolStripButtonExplainPlan.Click += toolStripButtonExplainPlan_Click;
+            // 
             // toolStripButtonExecuteScript
             // 
             toolStripButtonExecuteScript.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonExecuteScript.Image = Properties.Resources.ToolRunOne;
+            toolStripButtonExecuteScript.Image = Properties.Resources.ToolRun;
             toolStripButtonExecuteScript.ImageTransparentColor = Color.Magenta;
             toolStripButtonExecuteScript.Name = "toolStripButtonExecuteScript";
             toolStripButtonExecuteScript.Size = new Size(23, 22);
@@ -501,6 +514,7 @@
             // 
             // tabPagePreview
             // 
+            tabPagePreview.Controls.Add(richTextBoxExplain);
             tabPagePreview.Location = new Point(4, 24);
             tabPagePreview.Name = "tabPagePreview";
             tabPagePreview.Size = new Size(1024, 162);
@@ -551,6 +565,15 @@
             dataGridViewResults.Size = new Size(1024, 162);
             dataGridViewResults.TabIndex = 1;
             // 
+            // richTextBoxExplain
+            // 
+            richTextBoxExplain.Dock = DockStyle.Fill;
+            richTextBoxExplain.Location = new Point(0, 0);
+            richTextBoxExplain.Name = "richTextBoxExplain";
+            richTextBoxExplain.Size = new Size(1024, 162);
+            richTextBoxExplain.TabIndex = 1;
+            richTextBoxExplain.Text = "";
+            // 
             // FormStudio
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -581,6 +604,7 @@
             ((System.ComponentModel.ISupportInitialize)splitContainerOutput).EndInit();
             splitContainerOutput.ResumeLayout(false);
             tabControlOutput.ResumeLayout(false);
+            tabPagePreview.ResumeLayout(false);
             tabPageOutput.ResumeLayout(false);
             tabPageResults.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridViewResults).EndInit();
@@ -641,5 +665,7 @@
         private ToolStripButton toolStripButtonExecuteScript;
         private TabPage tabPageResults;
         private DataGridView dataGridViewResults;
+        private ToolStripButton toolStripButtonExplainPlan;
+        private RichTextBox richTextBoxExplain;
     }
 }

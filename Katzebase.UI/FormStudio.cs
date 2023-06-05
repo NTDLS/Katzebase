@@ -19,7 +19,6 @@ namespace Katzebase.UI
         private bool _firstShown = true;
         private readonly EditorFactory? _editorFactory = null;
         private readonly ImageList _treeImages = new ImageList();
-        private TextEditor? _outputEditor;
         private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
         private bool _scriptExecuting = false;
         public string _serverAddressURL = string.Empty;
@@ -69,15 +68,6 @@ namespace Katzebase.UI
             //treeViewMacros.Nodes.AddRange(...);
             treeViewMacros.ItemDrag += TreeViewMacros_ItemDrag;
 
-            _outputEditor = EditorFactory.CreateGeneric();
-
-            var host = new System.Windows.Forms.Integration.ElementHost
-            {
-                Dock = DockStyle.Fill,
-                Child = _outputEditor
-            };
-            tabPagePreview.Controls.Add(host);
-
             this.Shown += FormStudio_Shown;
             this.FormClosing += FormStudio_FormClosing;
 
@@ -126,6 +116,7 @@ namespace Katzebase.UI
             toolStripButtonRedo.Enabled = isTabOpen;
             toolStripButtonReplace.Enabled = isTabOpen;
             toolStripButtonExecuteScript.Enabled = isTabOpen && !_scriptExecuting;
+            toolStripButtonExplainPlan.Enabled = isTabOpen && !_scriptExecuting;
             toolStripButtonUndo.Enabled = isTabOpen;
 
             toolStripButtonDecreaseIndent.Enabled = isTextSelected;
@@ -163,7 +154,7 @@ namespace Katzebase.UI
                     _serverAddressURL = form.ServerAddressURL;
 
                     var tabFilePage = AddTab("New File.kbs");
-                    tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\tProductID, LocationID, Shelf,\r\n\tBin, Quantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\nWHERE\r\n\t(LocationId = 6 AND Shelf != 'R' AND Quantity = 299)\r\n\tOR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299\r\n\tOR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)\r\n";
+                    tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\tProductID, LocationID, Shelf,\r\n\tBin, Quantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\nWHERE\r\n\t(\r\n\t\tLocationId = 6\r\n\t\tAND Shelf != 'R'\r\n\t\tAND Quantity = 299\r\n\t)\r\n\tOR\r\n\t(\r\n\t\t(\r\n\t\t\tLocationId = 6\r\n\t\t\tAND Shelf != 'M'\r\n\t\t)\r\n\t\tAND Quantity = 299\r\n\t\tOR ProductId = 366\r\n\t)\r\n\tAND\r\n\t(\r\n\t\tBIN = 8\r\n\t\tOR Bin = 11\r\n\t\tOR Bin = 19\r\n\t)\r\n";
                 }
             }
 
@@ -688,7 +679,7 @@ namespace Katzebase.UI
         {
             if (e.Key == System.Windows.Input.Key.F5)
             {
-                ExecuteCurrentScriptAsync();
+                ExecuteCurrentScriptAsync(false);
             }
         }
 
@@ -791,7 +782,12 @@ namespace Katzebase.UI
 
         private void toolStripButtonExecuteScript_Click(object sender, EventArgs e)
         {
-            ExecuteCurrentScriptAsync();
+            ExecuteCurrentScriptAsync(false);
+        }
+
+        private void toolStripButtonExplainPlan_Click(object sender, EventArgs e)
+        {
+            ExecuteCurrentScriptAsync(true);
         }
 
         private void toolStripButtonCloseCurrentTab_Click(object sender, EventArgs e)
@@ -937,17 +933,23 @@ namespace Katzebase.UI
             AppendToOutput(text, color);
         }
 
-        private void AppentOutputText(string text)
+        private void AppendToExplain(string text, Color color)
         {
             if (InvokeRequired)
             {
-                Invoke(new Action<string>(AppentOutputText), text);
+                Invoke(new Action<string, Color>(AppendToOutput), text, color);
                 return;
             }
-            if (_outputEditor != null)
-            {
-                _outputEditor.Text += text;
-            }
+
+            richTextBoxExplain.SelectionStart = richTextBoxExplain.TextLength;
+            richTextBoxExplain.SelectionLength = 0;
+
+            richTextBoxExplain.SelectionColor = color;
+            richTextBoxExplain.AppendText($"{text}\r\n");
+            richTextBoxExplain.SelectionColor = richTextBoxExplain.ForeColor;
+
+            richTextBoxExplain.SelectionStart = richTextBoxExplain.Text.Length;
+            richTextBoxExplain.ScrollToCaret();
         }
 
         private void AppendToOutput(string text, Color color)
@@ -981,10 +983,7 @@ namespace Katzebase.UI
 
             splitContainerOutput.Panel2Collapsed = false;
 
-            if (_outputEditor != null)
-            {
-                AppendToOutput($"Exception: {ex.Message}\r\n", Color.DarkRed);
-            }
+            AppendToOutput($"Exception: {ex.Message}\r\n", Color.DarkRed);
         }
 
         private void toolStripButtonOutput_Click(object sender, EventArgs e)
@@ -1058,7 +1057,7 @@ namespace Katzebase.UI
         /// <summary>
         /// This is for actually executing the script against a live database.
         /// </summary>
-        private void ExecuteCurrentScriptAsync()
+        private void ExecuteCurrentScriptAsync(bool justExplain)
         {
             if (_scriptExecuting)
             {
@@ -1082,7 +1081,7 @@ namespace Katzebase.UI
 
             Task.Run(() =>
             {
-                ExecuteCurrentScriptSync(tabFilePage.Client, scriptText);
+                ExecuteCurrentScriptSync(tabFilePage.Client, scriptText, justExplain);
             }).ContinueWith((t) =>
             {
                 PostExecuteEvent(tabFilePage);
@@ -1098,7 +1097,7 @@ namespace Katzebase.UI
             }
 
             richTextBoxOutput.Text = "";
-            if (_outputEditor != null) _outputEditor.Text = "";
+            richTextBoxExplain.Text = "";
             _executionExceptionCount = 0;
 
             splitContainerOutput.Panel2Collapsed = false;
@@ -1126,7 +1125,7 @@ namespace Katzebase.UI
             _scriptExecuting = false;
         }
 
-        private void ExecuteCurrentScriptSync(KatzebaseClient client, string scriptText)
+        private void ExecuteCurrentScriptSync(KatzebaseClient client, string scriptText, bool justExplain)
         {
             WorkloadGroup group = new WorkloadGroup();
 
@@ -1135,17 +1134,30 @@ namespace Katzebase.UI
                 group.OnException += Group_OnException;
                 group.OnStatus += Group_OnStatus;
 
-                AppentOutputText(scriptText);
-
                 var scripts = scriptText.Split(";"); //TODO: This needs to be MUCH more intelligent!
 
                 foreach (var script in scripts)
                 {
                     DateTime startTime = DateTime.UtcNow;
 
-                    var result = client.Query.ExecuteQuery(script);
+                    KbQueryResult result;
+
+                    if (justExplain)
+                    {
+                        result = client.Query.ExplainQuery(script);
+                    }
+                    else
+                    {
+                        result = client.Query.ExecuteQuery(script);
+                    }
+
                     var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
                     AppendToOutput($"Execution completed in {duration:N0}ms.", Color.Black);
+
+                    if (justExplain && string.IsNullOrWhiteSpace(result.Explanation) == false)
+                    {
+                        AppendToOutput(result.Explanation, Color.DarkGreen);
+                    }
 
                     if (result.WaitTimes.Count > 0)
                     {
@@ -1153,7 +1165,7 @@ namespace Katzebase.UI
 
                         var waitTimes = new StringBuilder();
                         waitTimes.AppendLine("Trace wait times {");
-                        foreach (var wt in result.WaitTimes.Where(o=> o.Value > 0.5).OrderBy(o => o.Value))
+                        foreach (var wt in result.WaitTimes.Where(o => o.Value > 0.5).OrderBy(o => o.Value))
                         {
                             waitTimes.AppendLine($"\t{wt.Name}: {wt.Value:n0}");
                         }
@@ -1164,7 +1176,10 @@ namespace Katzebase.UI
 
                     PopulateResultsGrid(result);
 
-                    AppendToOutput($"{result.Message}", Color.Black);
+                    if (string.IsNullOrWhiteSpace(result.Message) == false)
+                    {
+                        AppendToOutput($"{result.Message}", Color.Black);
+                    }
                 }
             }
             catch (KbExceptionBase ex)

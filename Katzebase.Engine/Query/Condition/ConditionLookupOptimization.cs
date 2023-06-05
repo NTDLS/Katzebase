@@ -58,10 +58,12 @@ namespace Katzebase.Engine.Query.Condition
 
         #region Debug
 
+        string FriendlyExp(string val) => val.ToUpper().Replace("C_", "Condition").Replace("S_", "SubExpression").Replace("||", "OR").Replace("&&", "AND");
+
         public string BuildFullVirtualExpression()
         {
             var result = new StringBuilder();
-            result.AppendLine($"[{Conditions.RootSubsetKey}]" + (CanApplyIndexing() ? " {Indexable}" : " {non-Indexable}"));
+            result.AppendLine($"[{FriendlyExp(Conditions.RootSubsetKey)}]" + (CanApplyIndexing() ? " {Indexable}" : " {non-Indexable}"));
 
             if (Conditions.Root.SubsetKeys.Count > 0)
             {
@@ -70,8 +72,11 @@ namespace Katzebase.Engine.Query.Condition
                 foreach (var subsetKey in Conditions.Root.SubsetKeys)
                 {
                     var subset = Conditions.SubsetByKey(subsetKey);
-                    result.AppendLine($"  [{subset.Expression}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.Index.Name + ")}" : " {non-Indexable}"));
+                    result.AppendLine($"  [{FriendlyExp(subset.Expression)}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.Index.Name + ")}" : " {non-Indexable}"));
+
+                    result.AppendLine("  (");
                     BuildFullVirtualExpression(ref result, subset, 1);
+                    result.AppendLine("  )");
                 }
 
                 result.AppendLine(")");
@@ -86,7 +91,17 @@ namespace Katzebase.Engine.Query.Condition
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subset = Conditions.SubsetByKey(subsetKey);
-                result.AppendLine("".PadLeft((depth) * 2, ' ') + $"[{subset.Expression}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.Index.Name + ")}" : " {non-Indexable}"));
+                result.AppendLine("".PadLeft((depth) * 4, ' ') + $"[{FriendlyExp(subset.Expression)}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.Index.Name + ")}" : " {non-Indexable}"));
+
+                if (subset.Conditions.Count > 0)
+                {
+                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "(");
+                    foreach (var condition in subset.Conditions)
+                    {
+                        result.AppendLine("".PadLeft((depth + 1) * 4, ' ') + $"{condition.ConditionKey}: {condition.Left} {condition.LogicalQualifier} '{condition.Right}'");
+                    }
+                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
+                }
 
                 if (subset.SubsetKeys.Count > 0)
                 {
@@ -98,12 +113,12 @@ namespace Katzebase.Engine.Query.Condition
 
             if (conditionSubset.Conditions.Count > 0)
             {
-                result.AppendLine("".PadLeft((depth + 1) * 1, ' ') + "(");
+                result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "(");
                 foreach (var condition in conditionSubset.Conditions)
                 {
-                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + $"{condition.ConditionKey}: {condition.Left} {condition.LogicalQualifier}");
+                    result.AppendLine("".PadLeft((depth + 1) * 4, ' ') + $"{FriendlyExp(condition.ConditionKey)}: {condition.Left} {condition.LogicalQualifier} '{condition.Right}'");
                 }
-                result.AppendLine("".PadLeft((depth + 1) * 1, ' ') + ")");
+                result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
             }
         }
 
