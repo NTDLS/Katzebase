@@ -9,7 +9,7 @@ namespace Katzebase.PublicLibrary.Exceptions
             Severity = LogSeverity.Warning;
         }
 
-        public KbGenericException(string ?message)
+        public KbGenericException(string? message)
             : base($"Generic exception: {message}.")
 
         {

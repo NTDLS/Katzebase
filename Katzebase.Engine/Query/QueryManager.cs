@@ -1,4 +1,5 @@
-﻿using Katzebase.PublicLibrary.Payloads;
+﻿using Katzebase.Engine.KbLib;
+using Katzebase.PublicLibrary.Payloads;
 
 namespace Katzebase.Engine.Query
 {
@@ -19,7 +20,7 @@ namespace Katzebase.Engine.Query
 
         public KbQueryResult ExecuteQuery(ulong processId, PreparedQuery preparedQuery)
         {
-            if (preparedQuery.QueryType == Constants.QueryType.Select)
+            if (preparedQuery.QueryType == EngineConstants.QueryType.Select)
             {
                 return core.Documents.ExecuteSelect(processId, preparedQuery);
             }
@@ -37,11 +38,11 @@ namespace Katzebase.Engine.Query
 
         public KbActionResponse ExecuteNonQuery(ulong processId, PreparedQuery preparedQuery)
         {
-            if (preparedQuery.QueryType == Constants.QueryType.Select)
+            if (preparedQuery.QueryType == EngineConstants.QueryType.Select)
             {
                 return core.Documents.ExecuteSelect(processId, preparedQuery);
             }
-            else if (preparedQuery.QueryType == Constants.QueryType.Delete)
+            else if (preparedQuery.QueryType == EngineConstants.QueryType.Delete)
             {
                 return core.Documents.ExecuteDelete(processId, preparedQuery);
             }

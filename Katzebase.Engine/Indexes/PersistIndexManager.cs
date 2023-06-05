@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
@@ -6,7 +7,7 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
-using static Katzebase.Engine.Constants;
+using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Indexes
 {
@@ -33,7 +34,7 @@ namespace Katzebase.Engine.Indexes
             foreach (var attribute in indexSelection.Index.Attributes)
             {
                 Utility.EnsureNotNull(attribute.Field);
-                var conditionField = conditionSubset.Conditions.Where (o => o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
+                var conditionField = conditionSubset.Conditions.Where(o => o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
                 if (conditionField == null)
                 {
                     //No match? I think this is an exception....
@@ -344,7 +345,7 @@ namespace Katzebase.Engine.Indexes
                 throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
             }
 
-            string indexCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.IndexCatalogFile);
+            string indexCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, IndexCatalogFile);
 
             var indexCatalog = core.IO.GetJson<PersistIndexCatalog>(transaction, indexCatalogDiskPath, intendedOperation);
             Utility.EnsureNotNull(indexCatalog);
@@ -734,7 +735,7 @@ namespace Katzebase.Engine.Indexes
                 Utility.EnsureNotNull(indexMeta.DiskPath);
                 Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-                var filePath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
+                var filePath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
                 var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, filePath, LockOperation.Read);
 
                 //Clear out the existing index pages.

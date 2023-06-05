@@ -1,5 +1,4 @@
-﻿using System;
-using static Katzebase.Engine.Documents.Threading.DocumentThreadingConstants;
+﻿using static Katzebase.Engine.Documents.Threading.DocumentThreadingConstants;
 
 namespace Katzebase.Engine.Documents.Threading
 {

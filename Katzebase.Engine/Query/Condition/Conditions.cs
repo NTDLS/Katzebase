@@ -1,6 +1,7 @@
-﻿using Katzebase.PublicLibrary;
+﻿using Katzebase.Engine.KbLib;
+using Katzebase.PublicLibrary;
 using System.Text;
-using static Katzebase.Engine.Constants;
+using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Query.Condition
 {

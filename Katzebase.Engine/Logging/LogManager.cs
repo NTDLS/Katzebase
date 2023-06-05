@@ -1,6 +1,7 @@
 ﻿using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
+using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.PublicLibrary.Constants;
 
 namespace Katzebase.Engine.Logging
@@ -64,11 +65,11 @@ namespace Katzebase.Engine.Logging
             {
                 if (entry.Severity == LogSeverity.Warning)
                 {
-                    core.Health.Increment(Constants.HealthCounterType.Warnings);
+                    core.Health.Increment(HealthCounterType.Warnings);
                 }
                 else if (entry.Severity == LogSeverity.Exception)
                 {
-                    core.Health.Increment(Constants.HealthCounterType.Exceptions);
+                    core.Health.Increment(HealthCounterType.Exceptions);
                 }
 
                 RecycleLog();

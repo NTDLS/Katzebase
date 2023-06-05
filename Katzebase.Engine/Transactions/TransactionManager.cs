@@ -1,5 +1,6 @@
 ﻿using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
+using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.PublicLibrary.Constants;
 
 namespace Katzebase.Engine.Transactions
@@ -43,7 +44,7 @@ namespace Katzebase.Engine.Transactions
 
                 Directory.CreateDirectory(core.settings.TransactionDataPath);
 
-                var transactionFiles = Directory.EnumerateFiles(core.settings.TransactionDataPath, Constants.TransactionActionsFile, SearchOption.AllDirectories);
+                var transactionFiles = Directory.EnumerateFiles(core.settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories);
 
                 if (transactionFiles.Count() > 0)
                 {

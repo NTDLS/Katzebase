@@ -1,8 +1,9 @@
-﻿using Katzebase.Engine.Locking;
+﻿using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Locking;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json;
-using static Katzebase.Engine.Constants;
+using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Transactions
 {
@@ -126,7 +127,7 @@ namespace Katzebase.Engine.Transactions
         {
             get
             {
-                return TransactionPath + "\\" + Constants.TransactionActionsFile;
+                return TransactionPath + "\\" + TransactionActionsFile;
             }
         }
 

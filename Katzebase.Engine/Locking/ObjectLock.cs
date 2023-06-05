@@ -1,5 +1,6 @@
-﻿using Katzebase.Engine.Transactions;
-using static Katzebase.Engine.Constants;
+﻿using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Transactions;
+using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Locking
 {

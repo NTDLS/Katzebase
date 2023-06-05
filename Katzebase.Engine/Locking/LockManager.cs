@@ -1,4 +1,6 @@
-﻿namespace Katzebase.Engine.Locking
+﻿using Katzebase.Engine.KbLib;
+
+namespace Katzebase.Engine.Locking
 {
     public class LockManager
     {

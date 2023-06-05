@@ -2,7 +2,7 @@
 
 namespace Katzebase.UI
 {
-    public  class WorkloadGroup
+    public class WorkloadGroup
     {
         public bool IsRunning { get; set; }
         public bool IsStopping { get; set; }

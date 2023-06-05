@@ -1,6 +1,6 @@
 ﻿using ICSharpCode.AvalonEdit;
-using System.Diagnostics;
 using Katzebase.UI.Classes;
+using System.Diagnostics;
 
 namespace Katzebase.UI
 {

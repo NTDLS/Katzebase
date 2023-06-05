@@ -1,5 +1,5 @@
 ﻿using Katzebase.PublicLibrary;
-using static Katzebase.Engine.Constants;
+using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Health
 {
@@ -14,7 +14,7 @@ namespace Katzebase.Engine.Health
         {
             this.core = core;
 
-            string healthCounterDiskPath = Path.Combine(core.settings.LogDirectory, Constants.HealthStatsFile);
+            string healthCounterDiskPath = Path.Combine(core.settings.LogDirectory, HealthStatsFile);
             if (File.Exists(healthCounterDiskPath))
             {
                 var result = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath);
@@ -39,7 +39,7 @@ namespace Katzebase.Engine.Health
             {
                 lastCheckpoint = DateTime.UtcNow;
                 Counters = Counters.Where(o => o.Value > 0).ToList();
-                core.IO.PutJsonNonTracked(Path.Combine(core.settings.LogDirectory, Constants.HealthStatsFile), Counters);
+                core.IO.PutJsonNonTracked(Path.Combine(core.settings.LogDirectory, HealthStatsFile), Counters);
             }
         }
 

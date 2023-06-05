@@ -1,10 +1,11 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
+using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
-using static Katzebase.Engine.Constants;
+using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Schemas
 {
@@ -22,7 +23,7 @@ namespace Katzebase.Engine.Schemas
                 {
                     rootSchemaMeta = new PersistSchema()
                     {
-                        Id = Constants.RootSchemaGUID,
+                        Id = RootSchemaGUID,
                         DiskPath = core.settings.DataRootPath,
                         VirtualPath = string.Empty,
                         Exists = true,
@@ -37,16 +38,16 @@ namespace Katzebase.Engine.Schemas
         {
             this.core = core;
 
-            rootCatalogFile = Path.Combine(core.settings.DataRootPath, Constants.SchemaCatalogFile);
+            rootCatalogFile = Path.Combine(core.settings.DataRootPath, SchemaCatalogFile);
 
             //If the catalog doesnt exist, create a new empty one.
             if (File.Exists(rootCatalogFile) == false)
             {
                 Directory.CreateDirectory(core.settings.DataRootPath);
 
-                core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, Constants.SchemaCatalogFile), new PersistSchemaCatalog());
-                core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, Constants.DocumentCatalogFile), new PersistDocumentCatalog());
-                core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, Constants.IndexCatalogFile), new PersistIndexCatalog());
+                core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, SchemaCatalogFile), new PersistSchemaCatalog());
+                core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, DocumentCatalogFile), new PersistDocumentCatalog());
+                core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, IndexCatalogFile), new PersistIndexCatalog());
             }
         }
 
@@ -59,7 +60,7 @@ namespace Katzebase.Engine.Schemas
                 throw new KbNullException($"Value should not be null {nameof(node.DiskPath)}.");
             }
 
-            string schemaCatalogDiskPath = Path.Combine(node.DiskPath, Constants.SchemaCatalogFile);
+            string schemaCatalogDiskPath = Path.Combine(node.DiskPath, SchemaCatalogFile);
 
             if (core.IO.FileExists(transaction, schemaCatalogDiskPath, intendedOperation))
             {
@@ -130,7 +131,7 @@ namespace Katzebase.Engine.Schemas
 
                     Utility.EnsureNotNull(parentSchemaDiskPath);
 
-                    string parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, Constants.SchemaCatalogFile);
+                    string parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, SchemaCatalogFile);
 
                     if (core.IO.FileExists(transaction, parentCatalogDiskPath, intendedOperation) == false)
                     {
@@ -138,7 +139,7 @@ namespace Katzebase.Engine.Schemas
                     }
 
                     var parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(transaction,
-                        Path.Combine(parentSchemaDiskPath, Constants.SchemaCatalogFile), intendedOperation);
+                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), intendedOperation);
 
                     Utility.EnsureNotNull(parentCatalog);
 
@@ -192,7 +193,7 @@ namespace Katzebase.Engine.Schemas
                         throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
                     }
 
-                    var filePath = Path.Combine(schemaMeta.DiskPath, Constants.SchemaCatalogFile);
+                    var filePath = Path.Combine(schemaMeta.DiskPath, SchemaCatalogFile);
                     var schemaCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, filePath, LockOperation.Read);
 
                     Utility.EnsureNotNull(schemaCatalog);
@@ -244,7 +245,7 @@ namespace Katzebase.Engine.Schemas
                         throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
                     }
 
-                    string parentSchemaCatalogFile = Path.Combine(parentSchemaMeta.DiskPath, Constants.SchemaCatalogFile);
+                    string parentSchemaCatalogFile = Path.Combine(parentSchemaMeta.DiskPath, SchemaCatalogFile);
                     PersistSchemaCatalog? parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
                     Utility.EnsureNotNull(parentCatalog);
 
@@ -253,21 +254,21 @@ namespace Katzebase.Engine.Schemas
                     core.IO.CreateDirectory(txRef.Transaction, schemaMeta.DiskPath);
 
                     //Create default schema catalog file.
-                    filePath = Path.Combine(schemaMeta.DiskPath, Constants.SchemaCatalogFile);
+                    filePath = Path.Combine(schemaMeta.DiskPath, SchemaCatalogFile);
                     if (core.IO.FileExists(txRef.Transaction, filePath, LockOperation.Write) == false)
                     {
                         core.IO.PutJson(txRef.Transaction, filePath, new PersistSchemaCatalog());
                     }
 
                     //Create default document catalog file.
-                    filePath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
+                    filePath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
                     if (core.IO.FileExists(txRef.Transaction, filePath, LockOperation.Write) == false)
                     {
                         core.IO.PutJson(txRef.Transaction, filePath, new PersistDocumentCatalog());
                     }
 
                     //Create default index catalog file.
-                    filePath = Path.Combine(schemaMeta.DiskPath, Constants.IndexCatalogFile);
+                    filePath = Path.Combine(schemaMeta.DiskPath, IndexCatalogFile);
                     if (core.IO.FileExists(txRef.Transaction, filePath, LockOperation.Write) == false)
                     {
                         core.IO.PutJson(txRef.Transaction, filePath, new PersistIndexCatalog());
@@ -387,7 +388,7 @@ namespace Katzebase.Engine.Schemas
                     if (parentSchemaMeta.DiskPath == null || schemaMeta.DiskPath == null)
                         throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
 
-                    string parentSchemaCatalogFile = Path.Combine(parentSchemaMeta.DiskPath, Constants.SchemaCatalogFile);
+                    string parentSchemaCatalogFile = Path.Combine(parentSchemaMeta.DiskPath, SchemaCatalogFile);
                     var parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
                     Utility.EnsureNotNull(parentCatalog);
 

@@ -1,4 +1,5 @@
-﻿using Katzebase.PublicLibrary.Payloads;
+﻿using Katzebase.Engine.KbLib;
+using Katzebase.PublicLibrary.Payloads;
 
 namespace Katzebase.Engine.Documents
 {

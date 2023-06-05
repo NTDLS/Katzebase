@@ -9,7 +9,7 @@ namespace Katzebase.PublicLibrary.Exceptions
             Severity = LogSeverity.Warning;
         }
 
-        public KbInvalidSchemaException(string ?message)
+        public KbInvalidSchemaException(string? message)
             : base($"Invalid schema exception: {message}.")
 
         {

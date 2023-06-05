@@ -1,6 +1,6 @@
-﻿namespace Katzebase.Engine
+﻿namespace Katzebase.Engine.KbLib
 {
-    public static class Constants
+    public static class EngineConstants
     {
         public const string DocumentExtension = ".json";
         public const string SchemaCatalogFile = "@SchemaCatalog.json";

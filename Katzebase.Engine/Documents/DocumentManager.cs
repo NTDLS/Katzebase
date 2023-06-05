@@ -1,5 +1,6 @@
 ﻿using Katzebase.Engine.Documents.Threading;
 using Katzebase.Engine.Indexes;
+using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
@@ -8,8 +9,8 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
-using static Katzebase.Engine.Constants;
 using static Katzebase.Engine.Documents.Threading.DocumentThreadingConstants;
+using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Documents
 {
@@ -115,7 +116,7 @@ namespace Katzebase.Engine.Documents
 
                     var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(indexPageCatalog);
-                    var documentIds  = core.Indexes.MatchDocuments(indexPageCatalog, subset.IndexSelection, subset);
+                    var documentIds = core.Indexes.MatchDocuments(indexPageCatalog, subset.IndexSelection, subset);
 
                     limitedDocumentCatalogItems.AddRange(documentCatalogItems.Where(o => documentIds.Contains(o.Id)).ToList());
                 }
@@ -307,7 +308,7 @@ namespace Katzebase.Engine.Documents
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
             //Lock the document catalog:
-            var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
+            var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
             var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
@@ -365,7 +366,7 @@ namespace Katzebase.Engine.Documents
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-                    string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
+                    string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
 
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
                     Utility.EnsureNotNull(documentCatalog);
@@ -412,7 +413,7 @@ namespace Katzebase.Engine.Documents
 
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-                    string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
+                    string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
 
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
 
@@ -462,7 +463,7 @@ namespace Katzebase.Engine.Documents
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-                    var filePath = Path.Combine(schemaMeta.DiskPath, Constants.DocumentCatalogFile);
+                    var filePath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction.Transaction, filePath, LockOperation.Read);
                     Utility.EnsureNotNull(documentCatalog);
 

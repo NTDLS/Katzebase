@@ -1,5 +1,4 @@
-﻿using Katzebase.PublicLibrary.Client;
-using Katzebase.PublicLibrary.Exceptions;
+﻿using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
 using System.Text;

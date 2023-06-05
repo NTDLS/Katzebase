@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Katzebase.Engine
+namespace Katzebase.Engine.KbLib
 {
     public static class Helpers
     {
@@ -31,7 +31,7 @@ namespace Katzebase.Engine
         {
             string idString = id.ToString();
             int checksum = Checksum(idString);
-            return $"{{{(checksum % 1000)}}}\\{idString}{Constants.DocumentExtension}";
+            return $"{{{checksum % 1000}}}\\{idString}{EngineConstants.DocumentExtension}";
         }
 
         /*
@@ -64,7 +64,7 @@ namespace Katzebase.Engine
             ushort sum = 0;
             foreach (var b in buffer)
             {
-                sum += (ushort)(sum ^ ((ushort)b));
+                sum += (ushort)(sum ^ b);
             }
             return sum;
         }

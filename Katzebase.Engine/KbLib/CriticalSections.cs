@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine
+﻿namespace Katzebase.Engine.KbLib
 {
     public static class CriticalSections
     {

@@ -1,6 +1,5 @@
-﻿using Katzebase.Engine.Indexes;
-using Katzebase.PublicLibrary.Exceptions;
-using static Katzebase.Engine.Constants;
+﻿using Katzebase.PublicLibrary.Exceptions;
+using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Query.Condition
 {
