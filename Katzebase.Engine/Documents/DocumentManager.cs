@@ -358,6 +358,7 @@ namespace Katzebase.Engine.Documents
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = lookupOptimization.Conditions.SubsetByKey(subsetKey);
+
                 bool subExpressionResult = SatisifySubExpression(pt, lookupOptimization, jContent, subExpression);
                 expression.Parameters[subsetKey] = subExpressionResult;
             }

@@ -56,7 +56,10 @@ namespace Katzebase.Engine.Query.Condition
             return false;
         }
 
-        #region Debug
+        #region Optimization explanation.
+        /*
+         * Probably need to redo these, there is a better way to explain whats going on. :)
+         */
 
         string FriendlyExp(string val) => val.ToUpper().Replace("C_", "Condition").Replace("S_", "SubExpression").Replace("||", "OR").Replace("&&", "AND");
 
@@ -95,10 +98,10 @@ namespace Katzebase.Engine.Query.Condition
 
                 if (subset.Conditions.Count > 0)
                 {
-                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "(");
+                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + FriendlyExp(subsetKey) + "->" + "(");
                     foreach (var condition in subset.Conditions)
                     {
-                        result.AppendLine("".PadLeft((depth + 1) * 4, ' ') + $"{condition.ConditionKey}: {condition.Left} {condition.LogicalQualifier} '{condition.Right}'");
+                        result.AppendLine("".PadLeft((depth + 1) * 4, ' ') + $"{FriendlyExp(condition.ConditionKey)}: {condition.Left} {condition.LogicalQualifier} '{condition.Right}'");
                     }
                     result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
                 }
