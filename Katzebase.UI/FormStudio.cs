@@ -162,7 +162,8 @@ namespace Katzebase.UI
                     _serverAddressURL = form.ServerAddressURL;
 
                     var tabFilePage = AddTab("New File.kbs");
-                    tabFilePage.Editor.Text = "SELECT TOP 100\r\n\tProductID, LocationID, Shelf, Bin,\r\n\tQuantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\nWHERE\r\n\tLocationId = 6 AND Shelf != 'M' AND quantity = 299";
+                    tabFilePage.Editor.Text = "SELECT TOP 100\r\n\tProductID, LocationID, Shelf, Bin,\r\n\tQuantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\n"; // WHERE\r\n\tLocationId = 6 AND Shelf != 'M' AND quantity = 299";
+                    tabFilePage.Editor.Text += "WHERE\r\n\t(LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)";
                 }
             }
 

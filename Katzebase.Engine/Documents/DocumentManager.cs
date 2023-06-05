@@ -99,9 +99,6 @@ namespace Katzebase.Engine.Documents
             List<PersistDocumentCatalogItem> documentCatalogItems, PersistSchema schemaMeta, PreparedQuery query,
             ConditionLookupOptimization lookupOptimization)
         {
-            var virtualExpression = lookupOptimization.BuildFullVirtualExpression();
-            Console.WriteLine(virtualExpression);
-
             //Create a reference to the entire document catalog.
             var limitedDocumentCatalogItems = documentCatalogItems;
 

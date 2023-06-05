@@ -27,6 +27,17 @@ namespace Katzebase.Engine.Query.Condition
             }
         }
 
+        private string? _hash = null;
+
+        public string Hash
+        {
+            get
+            {
+                _hash ??= BuildConditionHash();
+                return _hash;
+            }
+        }
+
         public IEnumerable<ConditionSubset> NonRootSubsets => Subsets.Where(o => !o.IsRoot);
 
         private static string VariableToKey(string str)
@@ -249,11 +260,10 @@ namespace Katzebase.Engine.Query.Condition
 
         #region Debug.
 
-
         public string BuildFullVirtualExpression()
         {
             var result = new StringBuilder();
-            result.AppendLine(RootSubsetKey);
+            result.AppendLine($"[{RootSubsetKey}]");
 
             if (Root.SubsetKeys.Count > 0)
             {
@@ -261,14 +271,9 @@ namespace Katzebase.Engine.Query.Condition
 
                 foreach (var subsetKey in Root.SubsetKeys)
                 {
-                    var subExpression = SubsetByKey(subsetKey);
-                    result.AppendLine("  [" + subExpression.Expression + "]");
-                    if (subExpression.SubsetKeys.Count > 0)
-                    {
-                        result.AppendLine("  (");
-                        BuildFullVirtualExpression(ref result, subExpression, 1);
-                        result.AppendLine("  )");
-                    }
+                    var subset = SubsetByKey(subsetKey);
+                    result.AppendLine($"  [{subset.Expression}]");
+                    BuildFullVirtualExpression(ref result, subset, 1);
                 }
 
                 result.AppendLine(")");
@@ -282,24 +287,77 @@ namespace Katzebase.Engine.Query.Condition
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
-                var subExpression = SubsetByKey(subsetKey);
-                result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "[" + subExpression.Expression + "]");
+                var subset = SubsetByKey(subsetKey);
+                result.AppendLine("".PadLeft((depth) * 2, ' ') + $"[{subset.Expression}]");
 
-                if (subExpression.SubsetKeys.Count > 0)
+                if (subset.SubsetKeys.Count > 0)
                 {
-                    result.AppendLine("  (");
-                    BuildFullVirtualExpression(ref result, subExpression, depth + 1);
-                    result.AppendLine("  )");
+                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "(");
+                    BuildFullVirtualExpression(ref result, subset, depth + 1);
+                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
                 }
             }
 
-            foreach (var condition in conditionSubset.Conditions)
+            if (conditionSubset.Conditions.Count > 0)
             {
-                //Print something
+                result.AppendLine("".PadLeft((depth + 1) * 1, ' ') + "(");
+                foreach (var condition in conditionSubset.Conditions)
+                {
+                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + $"{condition.ConditionKey}: {condition.Left} {condition.LogicalQualifier}");
+                }
+                result.AppendLine("".PadLeft((depth + 1) * 1, ' ') + ")");
             }
         }
 
         #endregion
 
+        public string BuildConditionHash()
+        {
+            var result = new StringBuilder();
+            result.Append($"[{RootSubsetKey}]");
+
+            if (Root.SubsetKeys.Count > 0)
+            {
+                result.Append('(');
+
+                foreach (var subsetKey in Root.SubsetKeys)
+                {
+                    var subset = SubsetByKey(subsetKey);
+                    result.Append($"[{subset.Expression}]");
+                    BuildConditionHash(ref result, subset, 1);
+                }
+
+                result.Append(')');
+            }
+
+            return Helpers.ComputeSHA256(result.ToString());
+        }
+
+        private void BuildConditionHash(ref StringBuilder result, ConditionSubset conditionSubset, int depth)
+        {
+            //If we have subsets, then we need to satisify those in order to complete the equation.
+            foreach (var subsetKey in conditionSubset.SubsetKeys)
+            {
+                var subset = SubsetByKey(subsetKey);
+                result.Append($"[{subset.Expression}]");
+
+                if (subset.SubsetKeys.Count > 0)
+                {
+                    result.Append('(');
+                    BuildConditionHash(ref result, subset, depth + 1);
+                    result.Append(')');
+                }
+            }
+
+            if (conditionSubset.Conditions.Count > 0)
+            {
+                result.Append('(');
+                foreach (var condition in conditionSubset.Conditions)
+                {
+                    result.Append($"{condition.ConditionKey}: {condition.Left} {condition.LogicalQualifier}");
+                }
+                result.Append(')');
+            }
+        }
     }
 }

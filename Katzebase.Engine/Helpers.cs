@@ -1,4 +1,5 @@
 ﻿using Katzebase.Library.Exceptions;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -76,6 +77,7 @@ namespace Katzebase.Engine
             }
             return false;
         }
+
         public static void RemoveDirectoryIfEmpty(string? diskPath)
         {
             if (diskPath == null)
@@ -87,6 +89,18 @@ namespace Katzebase.Engine
             {
                 Directory.Delete(diskPath);
             }
+        }
+
+        public static string ComputeSHA256(string rawData)
+        {
+            byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
+
+            var builder = new StringBuilder();
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                builder.Append(bytes[i].ToString("x2"));
+            }
+            return builder.ToString();
         }
     }
 }

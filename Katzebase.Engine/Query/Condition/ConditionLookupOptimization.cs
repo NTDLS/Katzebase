@@ -69,14 +69,9 @@ namespace Katzebase.Engine.Query.Condition
 
                 foreach (var subsetKey in Conditions.Root.SubsetKeys)
                 {
-                    var subExpression = Conditions.SubsetByKey(subsetKey);
-                    result.AppendLine($"  [{subExpression.Expression}]" + (CanApplyIndexing(subExpression) ? " {Indexable}" : " {non-Indexable}"));
-                    if (subExpression.SubsetKeys.Count > 0)
-                    {
-                        result.AppendLine("  (");
-                        BuildFullVirtualExpression(ref result, subExpression, 1);
-                        result.AppendLine("  )");
-                    }
+                    var subset = Conditions.SubsetByKey(subsetKey);
+                    result.AppendLine($"  [{subset.Expression}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.Index.Name + ")}" : " {non-Indexable}"));
+                    BuildFullVirtualExpression(ref result, subset, 1);
                 }
 
                 result.AppendLine(")");
@@ -90,24 +85,28 @@ namespace Katzebase.Engine.Query.Condition
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
-                var subExpression = Conditions.SubsetByKey(subsetKey);
-                result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + $"[{subExpression.Expression}]" + (CanApplyIndexing(subExpression) ? " {Indexable}" : " {non-Indexable}"));
+                var subset = Conditions.SubsetByKey(subsetKey);
+                result.AppendLine("".PadLeft((depth) * 2, ' ') + $"[{subset.Expression}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.Index.Name + ")}" : " {non-Indexable}"));
 
-                if (subExpression.SubsetKeys.Count > 0)
+                if (subset.SubsetKeys.Count > 0)
                 {
-                    result.AppendLine("  (");
-                    BuildFullVirtualExpression(ref result, subExpression, depth + 1);
-                    result.AppendLine("  )");
+                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "(");
+                    BuildFullVirtualExpression(ref result, subset, depth + 1);
+                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
                 }
             }
 
-            foreach (var condition in conditionSubset.Conditions)
+            if (conditionSubset.Conditions.Count > 0)
             {
-                //Print something
+                result.AppendLine("".PadLeft((depth + 1) * 1, ' ') + "(");
+                foreach (var condition in conditionSubset.Conditions)
+                {
+                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + $"{condition.ConditionKey}: {condition.Left} {condition.LogicalQualifier}");
+                }
+                result.AppendLine("".PadLeft((depth + 1) * 1, ' ') + ")");
             }
         }
 
         #endregion
-
     }
 }
