@@ -8,12 +8,6 @@ using Katzebase.Library;
 using Katzebase.Library.Exceptions;
 using Katzebase.Library.Payloads;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Net.Http.Json;
-using System.Text;
-using System.Threading;
 using static Katzebase.Engine.Constants;
 using static Katzebase.Engine.Documents.Threading.DocumentThreadingConstants;
 
@@ -44,7 +38,7 @@ namespace Katzebase.Engine.Documents
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete document by ID for process {processId}.", ex);
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
                 throw;
             }
         }
@@ -87,7 +81,7 @@ namespace Katzebase.Engine.Documents
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete document by ID for process {processId}.", ex);
+                core.Log.Write($"Failed to ExecuteDelete for process {processId}.", ex);
                 throw;
             }
         }
@@ -170,6 +164,16 @@ namespace Katzebase.Engine.Documents
 
             threads.WaitOnThreadCompletion();
 
+            var exceptionThreads = threads.Slots.Where(o => o.State == DocumentLookupThreadState.Exception);
+            if (exceptionThreads.Any())
+            {
+                var firstException = exceptionThreads.First();
+                if (firstException != null && firstException.Exception != null)
+                {
+                    throw firstException.Exception;
+                }
+            }
+
             threads.Stop();
 
             return threads.Results;
@@ -183,61 +187,68 @@ namespace Katzebase.Engine.Documents
         private void DocumentLookupThreadProc(object? obj)
         {
             Utility.EnsureNotNull(obj);
-
             var param = (DocumentLookupThreadParam)obj;
-            var expression = new NCalc.Expression(param.LookupOptimization.Conditions.Root.Expression);
-
-            Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
-
             var slot = param.ThreadSlots[param.ThreadSlotNumber];
 
-            while (true)
+            try
             {
-                slot.State = DocumentLookupThreadState.Ready;
-                slot.Event.WaitOne();
+                var expression = new NCalc.Expression(param.LookupOptimization.Conditions.Root.Expression);
 
-                if (slot.State == DocumentLookupThreadState.Shutdown)
+                Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
+
+                while (true)
                 {
-                    return;
-                }
+                    slot.State = DocumentLookupThreadState.Ready;
+                    slot.Event.WaitOne();
 
-                slot.State = DocumentLookupThreadState.Executing;
-
-                var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, slot.DocumentCatalogItem.FileName);
-
-                var persistDocument = core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPath, LockOperation.Read);
-                Utility.EnsureNotNull(persistDocument);
-                Utility.EnsureNotNull(persistDocument.Content);
-
-                var jContent = JObject.Parse(persistDocument.Content);
-
-                //If we have subsets, then we need to satisify those in order to complete the equation.
-                foreach (var subsetKey in param.LookupOptimization.Conditions.Root.SubsetKeys)
-                {
-                    var subExpression = param.LookupOptimization.Conditions.SubsetByKey(subsetKey);
-                    bool subExpressionResult = SatisifySubExpression(param.LookupOptimization, jContent, subExpression);
-                    expression.Parameters[subsetKey] = subExpressionResult;
-                }
-
-                if ((bool)expression.Evaluate())
-                {
-                    Utility.EnsureNotNull(persistDocument.Id);
-                    var result = new DocumentLookupResult((Guid)persistDocument.Id);
-
-                    foreach (string field in param.Query.SelectFields)
+                    if (slot.State == DocumentLookupThreadState.Shutdown)
                     {
-                        if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
-                        {
-                            result.Values.Add(jToken.ToString());
-                        }
-                        else
-                        {
-                            result.Values.Add(string.Empty);
-                        }
+                        return;
                     }
 
-                    param.Results.Add(result);
+                    slot.State = DocumentLookupThreadState.Executing;
+
+                    var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, slot.DocumentCatalogItem.FileName);
+
+                    var persistDocument = core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPath, LockOperation.Read);
+                    Utility.EnsureNotNull(persistDocument);
+                    Utility.EnsureNotNull(persistDocument.Content);
+
+                    var jContent = JObject.Parse(persistDocument.Content);
+
+                    //If we have subsets, then we need to satisify those in order to complete the equation.
+                    foreach (var subsetKey in param.LookupOptimization.Conditions.Root.SubsetKeys)
+                    {
+                        var subExpression = param.LookupOptimization.Conditions.SubsetByKey(subsetKey);
+                        bool subExpressionResult = SatisifySubExpression(param.LookupOptimization, jContent, subExpression);
+                        expression.Parameters[subsetKey] = subExpressionResult;
+                    }
+
+                    if ((bool)expression.Evaluate())
+                    {
+                        Utility.EnsureNotNull(persistDocument.Id);
+                        var result = new DocumentLookupResult((Guid)persistDocument.Id);
+
+                        foreach (string field in param.Query.SelectFields)
+                        {
+                            if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                            {
+                                result.Values.Add(jToken.ToString());
+                            }
+                            else
+                            {
+                                result.Values.Add(string.Empty);
+                            }
+                        }
+
+                        param.Results.Add(result);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                slot.State = DocumentLookupThreadState.Exception;
+                slot.Exception = ex;
             }
         }
 
@@ -285,7 +296,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="transaction"></param>
         /// <param name="query"></param>
         /// <returns></returns>
-        /// <exception cref="KbSchemaDoesNotExistException"></exception>
+        /// <exception cref="KbInvalidSchemaException"></exception>
         private KbQueryResult FindDocumentsByPreparedQuery(Transaction transaction, PreparedQuery query)
         {
             var result = new KbQueryResult();
@@ -294,7 +305,7 @@ namespace Katzebase.Engine.Documents
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, query.Schema, LockOperation.Read);
             if (schemaMeta == null || schemaMeta.Exists == false)
             {
-                throw new KbSchemaDoesNotExistException(query.Schema);
+                throw new KbInvalidSchemaException(query.Schema);
             }
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
@@ -328,7 +339,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="schema"></param>
         /// <param name="document"></param>
         /// <param name="newId"></param>
-        /// <exception cref="KbSchemaDoesNotExistException"></exception>
+        /// <exception cref="KbInvalidSchemaException"></exception>
         public void Store(ulong processId, string schema, KbDocument document, out Guid? newId)
         {
             try
@@ -353,7 +364,7 @@ namespace Katzebase.Engine.Documents
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbSchemaDoesNotExistException(schema);
+                        throw new KbInvalidSchemaException(schema);
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
@@ -389,7 +400,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="processId"></param>
         /// <param name="schema"></param>
         /// <param name="newId"></param>
-        /// <exception cref="KbSchemaDoesNotExistException"></exception>
+        /// <exception cref="KbInvalidSchemaException"></exception>
         public void DeleteById(ulong processId, string schema, Guid newId)
         {
             try
@@ -399,7 +410,7 @@ namespace Katzebase.Engine.Documents
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbSchemaDoesNotExistException(schema);
+                        throw new KbInvalidSchemaException(schema);
                     }
 
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
@@ -440,7 +451,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="processId"></param>
         /// <param name="schema"></param>
         /// <returns></returns>
-        /// <exception cref="KbSchemaDoesNotExistException"></exception>
+        /// <exception cref="KbInvalidSchemaException"></exception>
         public List<PersistDocumentCatalogItem> EnumerateCatalog(ulong processId, string schema)
         {
             try
@@ -450,7 +461,7 @@ namespace Katzebase.Engine.Documents
                     PersistSchema schemaMeta = core.Schemas.VirtualPathToMeta(transaction.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbSchemaDoesNotExistException(schema);
+                        throw new KbInvalidSchemaException(schema);
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 

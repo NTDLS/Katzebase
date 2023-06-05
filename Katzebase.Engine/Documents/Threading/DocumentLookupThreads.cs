@@ -9,6 +9,7 @@ namespace Katzebase.Engine.Documents.Threading
 {
     internal class DocumentLookupThreads
     {
+        public bool HasExcepted { get; set; }
         public DocumentLookupResults Results { get; private set; } = new();
         public List<Thread> Threads { get; private set; } = new();
         public List<DocumentLookupThreadSlot> Slots { get; private set; } = new();
@@ -58,11 +59,14 @@ namespace Katzebase.Engine.Documents.Threading
         public void Enqueue(PersistDocumentCatalogItem documentCatalogItem)
         {
             var threadSlot = GetReadyThread();
-            threadSlot.DocumentCatalogItem = documentCatalogItem;
-            threadSlot.Event.Set();
+            if (threadSlot != null)
+            {
+                threadSlot.DocumentCatalogItem = documentCatalogItem;
+                threadSlot.Event.Set();
+            }
         }
 
-        public DocumentLookupThreadSlot GetReadyThread()
+        public DocumentLookupThreadSlot? GetReadyThread()
         {
             Utility.EnsureNotNull(Slots);
 
@@ -70,6 +74,17 @@ namespace Katzebase.Engine.Documents.Threading
             {
                 for (int i = 0; i < MaxThreads; i++)
                 {
+                    if (Slots[i].State == DocumentLookupThreadState.Shutdown)
+                    {
+                        return null;
+                    }
+
+                    if (Slots[i].State == DocumentLookupThreadState.Exception)
+                    {
+                        HasExcepted = true;
+                        return null;
+                    }
+
                     if (Slots[i].State == DocumentLookupThreadState.Ready)
                     {
                         Slots[i].State = DocumentLookupThreadState.Queued;
@@ -91,7 +106,8 @@ namespace Katzebase.Engine.Documents.Threading
                 stillWaiting = false;
                 for (int i = 0; i < MaxThreads; i++)
                 {
-                    if (Slots[i].State != DocumentLookupThreadState.Ready)
+                    if (Slots[i].State != DocumentLookupThreadState.Ready
+                        && Slots[i].State != DocumentLookupThreadState.Exception)
                     {
                         Thread.Sleep(1);
                         stillWaiting = true;

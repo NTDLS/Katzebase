@@ -10,7 +10,7 @@ namespace Katzebase.Library.Exceptions
         }
 
         public KbIndexDoesNotExistException(string message)
-            : base(message)
+            : base($"Index does not exist exception: {message}.")
 
         {
             Severity = LogSeverity.Warning;

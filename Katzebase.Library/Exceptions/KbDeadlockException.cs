@@ -10,7 +10,7 @@ namespace Katzebase.Library.Exceptions
         }
 
         public KbDeadlockException(string message)
-            : base(message)
+            : base($"Deadlock exception: {message}.")
 
         {
             Severity = LogSeverity.Warning;

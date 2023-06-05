@@ -10,7 +10,7 @@ namespace Katzebase.Library.Exceptions
         }
 
         public KbFatalException(string ?message)
-            : base(message)
+            : base($"Fatal exception: {message}.")
 
         {
             Severity = LogSeverity.Exception;

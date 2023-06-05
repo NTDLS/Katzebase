@@ -1,5 +1,4 @@
 ﻿using Katzebase.Engine.Documents;
-using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
@@ -7,8 +6,6 @@ using Katzebase.Library;
 using Katzebase.Library.Exceptions;
 using Katzebase.Library.Payloads;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Linq;
 using static Katzebase.Engine.Constants;
 
 namespace Katzebase.Engine.Indexes
@@ -253,7 +250,7 @@ namespace Katzebase.Engine.Indexes
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbSchemaDoesNotExistException(schema);
+                        throw new KbInvalidSchemaException(schema);
                     }
 
                     var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
@@ -291,7 +288,7 @@ namespace Katzebase.Engine.Indexes
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbSchemaDoesNotExistException(schema);
+                        throw new KbInvalidSchemaException(schema);
                     }
 
                     var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);

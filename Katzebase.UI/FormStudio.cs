@@ -1,4 +1,5 @@
 using ICSharpCode.AvalonEdit;
+using Katzebase.Library;
 using Katzebase.Library.Client;
 using Katzebase.Library.Exceptions;
 using Katzebase.Library.Payloads;
@@ -6,7 +7,6 @@ using Katzebase.UI.Classes;
 using Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
-using System.Xml.Linq;
 
 namespace Katzebase.UI
 {
@@ -666,21 +666,29 @@ namespace Katzebase.UI
 
         private TabFilePage AddTab(string filePath)
         {
-            if (_editorFactory != null)
+            Utility.EnsureNotNull(_editorFactory);
+
+            var tabFilePage = _editorFactory.Create(_serverAddressURL, filePath);
+
+            tabFilePage.Editor.KeyUp += Editor_KeyUp;
+
+            tabFilePage.Controls.Add(new System.Windows.Forms.Integration.ElementHost
             {
-                var tabFilePage = _editorFactory.Create(_serverAddressURL, filePath);
+                Dock = DockStyle.Fill,
+                Child = tabFilePage.Editor
+            });
+            tabControlBody.TabPages.Add(tabFilePage);
+            tabControlBody.SelectedTab = tabFilePage;
 
-                tabFilePage.Controls.Add(new System.Windows.Forms.Integration.ElementHost
-                {
-                    Dock = DockStyle.Fill,
-                    Child = tabFilePage.Editor
-                });
-                tabControlBody.TabPages.Add(tabFilePage);
-                tabControlBody.SelectedTab = tabFilePage;
+            return tabFilePage;
+        }
 
-                return tabFilePage;
+        private void Editor_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.F5)
+            {
+                ExecuteCurrentScriptAsync();
             }
-            return null;
         }
 
         /// <summary>
@@ -1051,6 +1059,12 @@ namespace Katzebase.UI
         /// </summary>
         private void ExecuteCurrentScriptAsync()
         {
+            if (_scriptExecuting)
+            {
+                return;
+            }
+            _scriptExecuting = true;
+
             var tabFilePage = CurrentTabFilePage();
             if (tabFilePage == null)
             {
@@ -1084,14 +1098,11 @@ namespace Katzebase.UI
                 return;
             }
 
-            _scriptExecuting = true;
-
             richTextBoxOutput.Text = "";
             if (_outputEditor != null) _outputEditor.Text = "";
             _executionExceptionCount = 0;
 
             splitContainerOutput.Panel2Collapsed = false;
-            tabControlOutput.SelectedTab = tabPageOutput;
         }
 
         private void PostExecuteEvent(TabFilePage tabFilePage)
@@ -1120,10 +1131,6 @@ namespace Katzebase.UI
         {
             WorkloadGroup group = new WorkloadGroup();
 
-            var result = client.Server.Ping();
-
-            //MessageBox.Show(tabFilePage.Editor.Text);
-
             try
             {
                 group.OnException += Group_OnException;
@@ -1133,7 +1140,13 @@ namespace Katzebase.UI
                 DateTime startTime = DateTime.UtcNow;
 
                 var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                var result = client.Query.ExecuteQuery(scriptText);
+
+                PopulateResultsGrid(result);
+
                 AppendToOutput($"Execution completed in {duration:N0}ms.", Color.Black);
+                AppendToOutput($"{result.Message}", Color.Black);
             }
             catch (KbExceptionBase ex)
             {

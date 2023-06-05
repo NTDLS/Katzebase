@@ -10,7 +10,7 @@ namespace Katzebase.Library.Exceptions
         }
 
         public KbDuplicateKeyViolationException(string message)
-            : base(message)
+            : base($"Duplicate key violation exception: {message}.")
 
         {
             Severity = LogSeverity.Warning;

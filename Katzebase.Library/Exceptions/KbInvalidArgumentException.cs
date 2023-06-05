@@ -10,7 +10,7 @@ namespace Katzebase.Library.Exceptions
         }
 
         public KbInvalidArgumentException(string message)
-            : base(message)
+            : base($"Invalid argument exception: {message}.")
 
         {
             Severity = LogSeverity.Warning;

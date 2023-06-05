@@ -10,7 +10,7 @@ namespace Katzebase.Library.Exceptions
         }
 
         public KbNullException(string message)
-            : base(message)
+            : base($"Null exception: {message}.")
 
         {
             Severity = LogSeverity.Exception;

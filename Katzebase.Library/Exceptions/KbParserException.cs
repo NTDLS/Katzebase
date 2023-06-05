@@ -10,7 +10,7 @@ namespace Katzebase.Library.Exceptions
         }
 
         public KbParserException(string message)
-            : base(message)
+            : base($"Parser exception: {message}.")
 
         {
             Severity = LogSeverity.Warning;

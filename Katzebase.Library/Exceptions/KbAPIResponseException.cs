@@ -10,7 +10,7 @@ namespace Katzebase.Library.Exceptions
         }
 
         public KbAPIResponseException(string? message)
-            : base(message)
+            : base($"API exception: {message}.")
 
         {
             Severity = LogSeverity.Exception;

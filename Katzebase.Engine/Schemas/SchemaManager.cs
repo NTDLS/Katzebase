@@ -182,7 +182,7 @@ namespace Katzebase.Engine.Schemas
                     PersistSchema schemaMeta = VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbSchemaDoesNotExistException(schema);
+                        throw new KbInvalidSchemaException(schema);
                     }
 
                     var list = new List<PersistSchema>();
@@ -378,7 +378,7 @@ namespace Katzebase.Engine.Schemas
                     var schemaMeta = VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbSchemaDoesNotExistException(schema);
+                        throw new KbInvalidSchemaException(schema);
                     }
 
                     var parentSchemaMeta = GetParentMeta(txRef.Transaction, schemaMeta, LockOperation.Write);

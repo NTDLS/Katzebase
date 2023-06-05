@@ -10,7 +10,7 @@ namespace Katzebase.Library.Exceptions
         }
 
         public KbAssertException(string message)
-            : base(message)
+            : base($"Assert exception: {message}.")
 
         {
             Severity = LogSeverity.Exception;

@@ -8,6 +8,7 @@
             Ready,
             Queued,
             Executing,
+            Exception,
             Shutdown
         }
     }

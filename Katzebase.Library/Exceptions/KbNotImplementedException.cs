@@ -10,7 +10,7 @@ namespace Katzebase.Library.Exceptions
         }
 
         public KbNotImplementedException(string message)
-            : base(message)
+            : base($"Not implemented exception: {message}.")
 
         {
             Severity = LogSeverity.Warning;
