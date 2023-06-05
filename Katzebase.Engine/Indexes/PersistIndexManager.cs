@@ -2,6 +2,7 @@
 using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
+using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
@@ -25,7 +26,8 @@ namespace Katzebase.Engine.Indexes
         /// <param name="persistIndexLeaves"></param>
         /// <param name="conditions"></param>
         /// <param name="foundDocumentIds"></param>
-        public HashSet<Guid> MatchDocuments(PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
+        public HashSet<Guid> MatchDocuments(PerformanceTrace? pt,
+            PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
         {
             var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
 
@@ -47,17 +49,23 @@ namespace Katzebase.Engine.Indexes
                     //TODO: Indexing only supports AND connectors, thats a performance problem.
 
                     //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                    var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
                     var resultintDocuments = DistillIndexLeaves(indexEntires);
+                    ptIndexDistillation?.EndTrace();
                     return resultintDocuments.ToHashSet();
                 }
 
                 List<PersistIndexLeaf>? nextIndexEntires = null;
+
+                var ptIndexSeek = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexSeek);
 
                 if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
                     nextIndexEntires = indexEntires.Where(o => o.Value == conditionField.Right.Value)?.ToList();
                 else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
                     nextIndexEntires = indexEntires.Where(o => o.Value != conditionField.Right.Value)?.ToList();
                 else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
+
+                ptIndexSeek?.EndTrace();
 
                 if (nextIndexEntires == null)
                 {
@@ -74,13 +82,17 @@ namespace Katzebase.Engine.Indexes
 
             if (fullMatch)
             {
+                var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
                 var resultintDocuments = indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
                 //If we got here then we got a full match on the entire index. This is the best scenario.
+                ptIndexDistillation?.EndTrace();
                 return resultintDocuments.ToHashSet();
             }
             else
             {
+                var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
                 var resultintDocuments = DistillIndexLeaves(indexEntires);
+                ptIndexDistillation?.EndTrace();
                 //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
                 return resultintDocuments.ToHashSet();
             }

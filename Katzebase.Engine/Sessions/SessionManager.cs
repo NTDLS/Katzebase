@@ -1,17 +1,22 @@
-﻿namespace Katzebase.Engine.Sessions
+﻿using Katzebase.Engine.Query;
+using Katzebase.Engine.Trace;
+using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
+using Microsoft.Win32;
+using System.Xml.Linq;
+using static Katzebase.Engine.Trace.PerformanceTrace;
+
+namespace Katzebase.Engine.Sessions
 {
     public class SessionManager
     {
         private Core core;
-
         private ulong nextProcessId = 1;
-
-        public Dictionary<Guid, ulong> Collection { get; set; }
+        public Dictionary<Guid, SessionState> Collection { get; set; } = new();
 
         public SessionManager(Core core)
         {
             this.core = core;
-            Collection = new Dictionary<Guid, ulong>();
         }
 
         public ulong UpsertSessionId(Guid sessionId)
@@ -20,17 +25,87 @@
             {
                 if (Collection.ContainsKey(sessionId))
                 {
-                    return Collection[sessionId];
+                    return Collection[sessionId].ProcessId;
                 }
                 else
                 {
                     ulong processId = nextProcessId++;
-                    Collection.Add(sessionId, processId);
+                    Collection.Add(sessionId, new SessionState(processId, sessionId));
                     return processId;
                 }
             }
-
         }
 
+        public SessionState ByProcessId(ulong sessionId)
+        {
+            lock (Collection)
+            {
+                var result = Collection.Where(o => o.Value.ProcessId == sessionId).FirstOrDefault();
+                if (result.Value != null)
+                {
+                    return result.Value;
+                }
+                throw new KbSessionNotFoundException($"The session was not found: {sessionId}");
+            }
+        }
+
+        public KbActionResponse ExecuteSetVariable(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                var result = new KbActionResponse();
+                var pt = new PerformanceTrace();
+
+                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
+                using (var transaction = core.Transactions.Begin(processId))
+                {
+                    ptAcquireTransaction?.EndTrace();
+
+                    var session = ByProcessId(processId);
+
+                    bool VariableOnOff(string value)
+                    {
+                        if (value == "on")
+                        {
+                            return true;
+                        }
+                        else  if (value == "on")
+                        {
+                            return false;
+                        }
+                        throw new KbGenericException($"Undefined variable value: {value}.");
+                    }
+
+                    foreach (var variable in preparedQuery.VariableValues)
+                    {
+                        if (variable.Name.StartsWith("@")) //User session variable
+                        {
+                            session.UpsertVariable(variable.Name.Substring(1), variable.Value);
+                        }
+                        else //System variable:
+                        {
+                            string systemVariableName = variable.Name.ToLower();
+                            if (systemVariableName == "tracewaittimes")
+                            {
+                                session.TraceWaitTimesEnabled = VariableOnOff(variable.Value.ToLower());
+                            }
+                            else
+                            {
+                                throw new KbGenericException($"Unknown system variable: {variable.Name}.");
+                            }
+                        }
+                    }
+
+                    transaction.Commit();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSetVariable for process {processId}.", ex);
+                throw;
+            }
+        }
     }
 }

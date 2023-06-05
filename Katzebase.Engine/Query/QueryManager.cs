@@ -24,6 +24,16 @@ namespace Katzebase.Engine.Query
             {
                 return core.Documents.ExecuteSelect(processId, preparedQuery);
             }
+            else if (preparedQuery.QueryType == EngineConstants.QueryType.Set)
+            {
+                //Reroute to non-query as appropriate:
+                return KbQueryResult.FromActionResponse(ExecuteNonQuery(processId, preparedQuery));
+            }
+            else if (preparedQuery.QueryType == EngineConstants.QueryType.Delete)
+            {
+                //Reroute to non-query as appropriate:
+                return KbQueryResult.FromActionResponse(ExecuteNonQuery(processId, preparedQuery));
+            }
             else
             {
                 throw new NotImplementedException();
@@ -38,13 +48,13 @@ namespace Katzebase.Engine.Query
 
         public KbActionResponse ExecuteNonQuery(ulong processId, PreparedQuery preparedQuery)
         {
-            if (preparedQuery.QueryType == EngineConstants.QueryType.Select)
-            {
-                return core.Documents.ExecuteSelect(processId, preparedQuery);
-            }
-            else if (preparedQuery.QueryType == EngineConstants.QueryType.Delete)
+            if (preparedQuery.QueryType == EngineConstants.QueryType.Delete)
             {
                 return core.Documents.ExecuteDelete(processId, preparedQuery);
+            }
+            else if (preparedQuery.QueryType == EngineConstants.QueryType.Set)
+            {
+                return core.Sessions.ExecuteSetVariable(processId, preparedQuery);
             }
             else
             {

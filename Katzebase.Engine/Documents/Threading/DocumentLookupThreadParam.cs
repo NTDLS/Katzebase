@@ -1,6 +1,7 @@
 ﻿using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
+using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 
 namespace Katzebase.Engine.Documents.Threading
@@ -14,7 +15,10 @@ namespace Katzebase.Engine.Documents.Threading
         public ConditionLookupOptimization LookupOptimization { get; set; }
         public int ThreadSlotNumber { get; private set; }
         public List<DocumentLookupThreadSlot> ThreadSlots { get; set; }
-        public DocumentLookupThreadParam(Transaction transaction, PersistSchema schemaMeta, PreparedQuery query,
+
+        public PerformanceTrace? PT { get; private set; }
+
+        public DocumentLookupThreadParam(PerformanceTrace? pt, Transaction transaction, PersistSchema schemaMeta, PreparedQuery query,
             ConditionLookupOptimization lookupOptimization, List<DocumentLookupThreadSlot> threadSlots, int threadSlotNumber, DocumentLookupResults results)
         {
             ThreadSlotNumber = threadSlotNumber;
@@ -24,6 +28,7 @@ namespace Katzebase.Engine.Documents.Threading
             LookupOptimization = lookupOptimization;
             ThreadSlots = threadSlots;
             Results = results;
+            PT = pt;
         }
     }
 }

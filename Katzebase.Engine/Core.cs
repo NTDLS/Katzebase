@@ -6,6 +6,7 @@ using Katzebase.Engine.IO;
 using Katzebase.Engine.Locking;
 using Katzebase.Engine.Logging;
 using Katzebase.Engine.Query;
+using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Sessions;
 using Katzebase.Engine.Transactions;
 using Katzebase.PrivateLibrary;

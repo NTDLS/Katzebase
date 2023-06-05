@@ -4,6 +4,7 @@ using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
+using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
@@ -11,6 +12,7 @@ using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.Documents.Threading.DocumentThreadingConstants;
 using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Documents
 {
@@ -27,12 +29,29 @@ namespace Katzebase.Engine.Documents
         {
             try
             {
-                var result = new KbQueryResult(); ;
+                var result = new KbQueryResult();
+                PerformanceTrace? pt = null;
 
+                var session = core.Sessions.ByProcessId(processId);
+                if (session.TraceWaitTimesEnabled)
+                {
+                    pt = new PerformanceTrace();
+                }
+
+                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
                 using (var transaction = core.Transactions.Begin(processId))
                 {
-                    result = FindDocumentsByPreparedQuery(transaction.Transaction, preparedQuery);
+                    ptAcquireTransaction?.EndTrace();
+                    result = FindDocumentsByPreparedQuery(pt, transaction.Transaction, preparedQuery);
                     transaction.Commit();
+                }
+
+                if (session.TraceWaitTimesEnabled && pt != null)
+                {
+                    foreach (var wt in pt.Aggregations)
+                    {
+                        result.WaitTimes.Add(new KbNameValue<double>(wt.Key, wt.Value));
+                    }
                 }
 
                 return result;
@@ -50,10 +69,14 @@ namespace Katzebase.Engine.Documents
             try
             {
                 var result = new KbActionResponse();
+                var pt = new PerformanceTrace();
 
+                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
                 using (var transaction = core.Transactions.Begin(processId))
                 {
-                    result = FindDocumentsByPreparedQuery(transaction.Transaction, preparedQuery);
+                    ptAcquireTransaction?.EndTrace();
+
+                    result = FindDocumentsByPreparedQuery(pt, transaction.Transaction, preparedQuery);
 
                     //TODO: Delete the documents.
 
@@ -96,7 +119,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="query"></param>
         /// <param name="lookupOptimization"></param>
         /// <returns></returns>
-        private DocumentLookupResults GetAllDocumentsByConditions(Transaction transaction,
+        private DocumentLookupResults GetAllDocumentsByConditions(PerformanceTrace? pt, Transaction transaction,
             List<PersistDocumentCatalogItem> documentCatalogItems, PersistSchema schemaMeta, PreparedQuery query,
             ConditionLookupOptimization lookupOptimization)
         {
@@ -114,9 +137,10 @@ namespace Katzebase.Engine.Documents
                     Utility.EnsureNotNull(subset.IndexSelection);
                     Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
 
-                    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(pt, transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(indexPageCatalog);
-                    var documentIds = core.Indexes.MatchDocuments(indexPageCatalog, subset.IndexSelection, subset);
+
+                    var documentIds = core.Indexes.MatchDocuments(pt, indexPageCatalog, subset.IndexSelection, subset);
 
                     limitedDocumentCatalogItems.AddRange(documentCatalogItems.Where(o => documentIds.Contains(o.Id)).ToList());
                 }
@@ -140,7 +164,8 @@ namespace Katzebase.Engine.Documents
                 */
             }
 
-            var threads = new DocumentLookupThreads(transaction, schemaMeta, query, lookupOptimization, DocumentLookupThreadProc);
+            var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
+            var threads = new DocumentLookupThreads(pt, transaction, schemaMeta, query, lookupOptimization, DocumentLookupThreadProc);
 
             int maxThreads = 4;
             if (limitedDocumentCatalogItems.Count > 100)
@@ -154,13 +179,19 @@ namespace Katzebase.Engine.Documents
 
             threads.InitializePool(maxThreads);
 
+            ptThreadCreation?.EndTrace();
+
             //Loop through each document in the catalog:
             foreach (var documentCatalogItem in limitedDocumentCatalogItems)
             {
+                var ptThreadQueue = pt?.BeginTrace(PerformanceTraceType.ThreadQueue);
                 threads.Enqueue(documentCatalogItem);
+                ptThreadQueue?.EndTrace();
             }
 
+            var ptThreadCompletion = pt?.BeginTrace(PerformanceTraceType.ThreadCompletion);
             threads.WaitOnThreadCompletion();
+            ptThreadCompletion?.EndTrace();
 
             var exceptionThreads = threads.Slots.Where(o => o.State == DocumentLookupThreadState.Exception);
             if (exceptionThreads.Any())
@@ -172,7 +203,9 @@ namespace Katzebase.Engine.Documents
                 }
             }
 
+            var ptThreadCompletion2 = pt?.BeginTrace(PerformanceTraceType.ThreadCompletion);
             threads.Stop();
+            ptThreadCompletion2?.EndTrace();
 
             return threads.Results;
         }
@@ -190,6 +223,7 @@ namespace Katzebase.Engine.Documents
 
             try
             {
+
                 var expression = new NCalc.Expression(param.LookupOptimization.Conditions.Root.Expression);
 
                 Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
@@ -197,7 +231,10 @@ namespace Katzebase.Engine.Documents
                 while (true)
                 {
                     slot.State = DocumentLookupThreadState.Ready;
+
+                    var ptThreadReady = param.PT?.BeginTrace(PerformanceTraceType.ThreadReady);
                     slot.Event.WaitOne();
+                    ptThreadReady?.EndTrace();
 
                     if (slot.State == DocumentLookupThreadState.Shutdown)
                     {
@@ -208,7 +245,7 @@ namespace Katzebase.Engine.Documents
 
                     var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, slot.DocumentCatalogItem.FileName);
 
-                    var persistDocument = core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPath, LockOperation.Read);
+                    var persistDocument = core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(persistDocument);
                     Utility.EnsureNotNull(persistDocument.Content);
 
@@ -218,11 +255,15 @@ namespace Katzebase.Engine.Documents
                     foreach (var subsetKey in param.LookupOptimization.Conditions.Root.SubsetKeys)
                     {
                         var subExpression = param.LookupOptimization.Conditions.SubsetByKey(subsetKey);
-                        bool subExpressionResult = SatisifySubExpression(param.LookupOptimization, jContent, subExpression);
+                        bool subExpressionResult = SatisifySubExpression(param.PT, param.LookupOptimization, jContent, subExpression);
                         expression.Parameters[subsetKey] = subExpressionResult;
                     }
 
-                    if ((bool)expression.Evaluate())
+                    var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
+                    bool evaluation = (bool)expression.Evaluate();
+                    ptEvaluate?.EndTrace();
+
+                    if (evaluation)
                     {
                         Utility.EnsureNotNull(persistDocument.Id);
                         var result = new DocumentLookupResult((Guid)persistDocument.Id);
@@ -258,7 +299,8 @@ namespace Katzebase.Engine.Documents
         /// <param name="conditionSubset"></param>
         /// <returns></returns>
         /// <exception cref="KbParserException"></exception>
-        private bool SatisifySubExpression(ConditionLookupOptimization lookupOptimization, JObject jContent, ConditionSubset conditionSubset)
+        private bool SatisifySubExpression(PerformanceTrace? pt,
+            ConditionLookupOptimization lookupOptimization, JObject jContent, ConditionSubset conditionSubset)
         {
             var expression = new NCalc.Expression(conditionSubset.Expression);
 
@@ -266,7 +308,7 @@ namespace Katzebase.Engine.Documents
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = lookupOptimization.Conditions.SubsetByKey(subsetKey);
-                bool subExpressionResult = SatisifySubExpression(lookupOptimization, jContent, subExpression);
+                bool subExpressionResult = SatisifySubExpression(pt, lookupOptimization, jContent, subExpression);
                 expression.Parameters[subsetKey] = subExpressionResult;
             }
 
@@ -285,7 +327,11 @@ namespace Katzebase.Engine.Documents
                 }
             }
 
-            return (bool)expression.Evaluate();
+            var ptEvaluate = pt?.BeginTrace(PerformanceTraceType.Evaluate);
+            var evaluation = (bool)expression.Evaluate();
+            ptEvaluate?.EndTrace();
+
+            return evaluation;
         }
 
         /// <summary>
@@ -295,21 +341,23 @@ namespace Katzebase.Engine.Documents
         /// <param name="query"></param>
         /// <returns></returns>
         /// <exception cref="KbInvalidSchemaException"></exception>
-        private KbQueryResult FindDocumentsByPreparedQuery(Transaction transaction, PreparedQuery query)
+        private KbQueryResult FindDocumentsByPreparedQuery(PerformanceTrace? pt, Transaction transaction, PreparedQuery query)
         {
             var result = new KbQueryResult();
 
             //Lock the schema:
+            var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, query.Schema, LockOperation.Read);
             if (schemaMeta == null || schemaMeta.Exists == false)
             {
                 throw new KbInvalidSchemaException(query.Schema);
             }
+            ptLockSchema?.EndTrace();
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
             //Lock the document catalog:
             var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
-            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, documentCatalogDiskPath, LockOperation.Read);
+            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
             foreach (var field in query.SelectFields)
@@ -318,9 +366,11 @@ namespace Katzebase.Engine.Documents
             }
 
             //Figure out which indexes could assist us in retrieving the desired documents (if any).
+            var ptOptimization = pt?.BeginTrace(PerformanceTraceType.Optimization);
             var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMeta, query.Conditions);
+            ptOptimization?.EndTrace();
 
-            var subsetResults = GetAllDocumentsByConditions(transaction, documentCatalog.Collection, schemaMeta, query, lookupOptimization);
+            var subsetResults = GetAllDocumentsByConditions(pt, transaction, documentCatalog.Collection, schemaMeta, query, lookupOptimization);
 
             foreach (var subsetResult in subsetResults.Collection)
             {

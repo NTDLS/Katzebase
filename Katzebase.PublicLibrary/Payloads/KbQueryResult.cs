@@ -2,13 +2,18 @@
 {
     public class KbQueryResult : KbActionResponse
     {
-        public List<KbQueryField> Fields { get; set; }
-        public List<KbQueryRow> Rows { get; set; }
+        public List<KbQueryField> Fields { get; set; } = new();
+        public List<KbQueryRow> Rows { get; set; } = new();
 
-        public KbQueryResult()
+        public List<KbNameValue<double>> WaitTimes { get; set; } = new();
+
+        public static KbQueryResult FromActionResponse(KbActionResponse actionResponse)
         {
-            Fields = new List<KbQueryField>();
-            Rows = new List<KbQueryRow>();
+            return new KbQueryResult()
+            {
+                Success = actionResponse.Success,
+                Message = actionResponse.Message,
+            };
         }
     }
 }

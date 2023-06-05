@@ -1,4 +1,5 @@
-﻿using Katzebase.Engine.Query.Condition;
+﻿using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Query.Condition;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using static Katzebase.Engine.KbLib.EngineConstants;
@@ -26,6 +27,8 @@ namespace Katzebase.Engine.Query
             }
 
             result.QueryType = queryType;
+
+            #region Delete.
             //--------------------------------------------------------------------------------------------------------------------------------------------
             if (queryType == QueryType.Delete)
             {
@@ -70,6 +73,8 @@ namespace Katzebase.Engine.Query
                 }
                 */
             }
+            #endregion
+            #region Update.
             //--------------------------------------------------------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Update)
             {
@@ -127,6 +132,8 @@ namespace Katzebase.Engine.Query
                 }
                 */
             }
+            #endregion
+            #region Select.
             //--------------------------------------------------------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Select)
             {
@@ -197,7 +204,17 @@ namespace Katzebase.Engine.Query
                     throw new KbParserException("Invalid query. Found [" + token + "], expected end of statement.");
                 }
             }
+            #endregion
+            #region Set.
             //--------------------------------------------------------------------------------------------------------------------------------------------
+            else if (queryType == QueryType.Set)
+            {
+                //Variable 
+                string variableName = Utilities.GetNextToken(query, ref position);
+                string variableValue = query.Substring(position);
+                result.VariableValues.Add(new KbNameValuePair(variableName, variableValue));
+            }
+            #endregion
 
             if (result.UpsertKeyValuePairs != null)
             {

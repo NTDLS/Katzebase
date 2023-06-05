@@ -1,6 +1,7 @@
 ﻿using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
+using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using static Katzebase.Engine.Documents.Threading.DocumentThreadingConstants;
@@ -15,13 +16,14 @@ namespace Katzebase.Engine.Documents.Threading
         public List<DocumentLookupThreadSlot> Slots { get; private set; } = new();
         public int MaxThreads { get; private set; }
 
+        private PerformanceTrace? pt;
         private Transaction transaction { get; set; }
         private PersistSchema schemaMeta { get; set; }
         private PreparedQuery query { get; set; }
         private ConditionLookupOptimization lookupOptimization { get; set; }
         private ParameterizedThreadStart threadProc { get; set; }
 
-        public DocumentLookupThreads(Transaction transaction, PersistSchema schemaMeta, PreparedQuery query,
+        public DocumentLookupThreads(PerformanceTrace? pt, Transaction transaction, PersistSchema schemaMeta, PreparedQuery query,
             ConditionLookupOptimization lookupOptimization, ParameterizedThreadStart threadProc)
         {
             this.transaction = transaction;
@@ -29,6 +31,7 @@ namespace Katzebase.Engine.Documents.Threading
             this.query = query;
             this.lookupOptimization = lookupOptimization;
             this.threadProc = threadProc;
+            this.pt = pt;
         }
 
         public void Stop()
@@ -49,7 +52,7 @@ namespace Katzebase.Engine.Documents.Threading
             for (int i = 0; i < maxThreads; i++)
             {
                 Slots.Add(new DocumentLookupThreadSlot(i));
-                var param = new DocumentLookupThreadParam(transaction, schemaMeta, query, lookupOptimization, Slots, i, Results);
+                var param = new DocumentLookupThreadParam(pt, transaction, schemaMeta, query, lookupOptimization, Slots, i, Results);
                 var thread = new Thread(threadProc);
                 thread.Start(param);
                 Threads.Add(thread);

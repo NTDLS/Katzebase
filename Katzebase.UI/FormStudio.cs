@@ -7,6 +7,7 @@ using Katzebase.UI.Classes;
 using Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
+using System.Text;
 
 namespace Katzebase.UI
 {
@@ -162,8 +163,7 @@ namespace Katzebase.UI
                     _serverAddressURL = form.ServerAddressURL;
 
                     var tabFilePage = AddTab("New File.kbs");
-                    tabFilePage.Editor.Text = "SELECT TOP 100\r\n\tProductID, LocationID, Shelf, Bin,\r\n\tQuantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\n"; // WHERE\r\n\tLocationId = 6 AND Shelf != 'M' AND quantity = 299";
-                    tabFilePage.Editor.Text += "WHERE\r\n\t(LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)";
+                    tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\tProductID, LocationID, Shelf,\r\n\tBin, Quantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\nWHERE\r\n\t(LocationId = 6 AND Shelf != 'R' AND Quantity = 299)\r\n\tOR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299\r\n\tOR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)\r\n";
                 }
             }
 
@@ -1075,8 +1075,6 @@ namespace Katzebase.UI
 
             PreExecuteEvent(tabFilePage);
 
-            DateTime startTime = DateTime.UtcNow;
-
             dataGridViewResults.Rows.Clear();
             dataGridViewResults.Columns.Clear();
 
@@ -1138,16 +1136,36 @@ namespace Katzebase.UI
                 group.OnStatus += Group_OnStatus;
 
                 AppentOutputText(scriptText);
-                DateTime startTime = DateTime.UtcNow;
 
-                var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                var scripts = scriptText.Split(";"); //TODO: This needs to be MUCH more intelligent!
 
-                var result = client.Query.ExecuteQuery(scriptText);
+                foreach (var script in scripts)
+                {
+                    DateTime startTime = DateTime.UtcNow;
 
-                PopulateResultsGrid(result);
+                    var result = client.Query.ExecuteQuery(script);
+                    var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                    AppendToOutput($"Execution completed in {duration:N0}ms.", Color.Black);
 
-                AppendToOutput($"Execution completed in {duration:N0}ms.", Color.Black);
-                AppendToOutput($"{result.Message}", Color.Black);
+                    if (result.WaitTimes.Count > 0)
+                    {
+                        var waitTimeTotal = result.WaitTimes.Sum(o => o.Value);
+
+                        var waitTimes = new StringBuilder();
+                        waitTimes.AppendLine("Trace wait times {");
+                        foreach (var wt in result.WaitTimes.Where(o=> o.Value > 0.5).OrderBy(o => o.Value))
+                        {
+                            waitTimes.AppendLine($"\t{wt.Name}: {wt.Value:n0}");
+                        }
+                        waitTimes.AppendLine($"}} = {waitTimeTotal:n0}ms");
+
+                        AppendToOutput(waitTimes.ToString(), Color.DarkBlue);
+                    }
+
+                    PopulateResultsGrid(result);
+
+                    AppendToOutput($"{result.Message}", Color.Black);
+                }
             }
             catch (KbExceptionBase ex)
             {
@@ -1161,6 +1179,11 @@ namespace Katzebase.UI
 
         private void PopulateResultsGrid(KbQueryResult result)
         {
+            if (result.Rows.Count == 0)
+            {
+                return;
+            }
+
             if (InvokeRequired)
             {
                 Invoke(new Action<KbQueryResult>(PopulateResultsGrid), result);
@@ -1202,7 +1225,7 @@ namespace Katzebase.UI
         private void toolStripButtonNewProject_Click(object sender, EventArgs e)
         {
             var tabFilePage = AddTab("New File.kbs");
-            tabFilePage.Editor.Text = "SELECT TOP 100\r\n\tProductID, LocationID, Shelf, Bin,\r\n\tQuantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\nWHERE\r\n\tLocationId = 6 AND Shelf != 'M' AND quantity = 299";
+            tabFilePage.Editor.Text = "SET TraceWaitTimes OFF;\r\n\r\n";
         }
     }
 }

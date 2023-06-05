@@ -57,7 +57,8 @@
             Select,
             Insert,
             Update,
-            Delete
+            Delete,
+            Set
         }
 
         public enum LogicalConnector

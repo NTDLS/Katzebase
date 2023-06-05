@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
@@ -29,26 +30,41 @@ namespace Katzebase.Engine.IO
             }
         }
 
+        public T? GetJson<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation)
+        {
+            return InternalTrackedGet<T>(pt, transaction, filePath, intendedOperation, IOFormat.JSON);
+        }
+
         public T? GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
-            return InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON);
+            return InternalTrackedGet<T>(null, transaction, filePath, intendedOperation, IOFormat.JSON);
+        }
+
+        public T? GetPBuf<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation)
+        {
+            return InternalTrackedGet<T>(pt, transaction, filePath, intendedOperation, IOFormat.PBuf);
         }
 
         public T? GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
-            return InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf);
+            return InternalTrackedGet<T>(null, transaction, filePath, intendedOperation, IOFormat.PBuf);
         }
 
-        public T? InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
+        public T? InternalTrackedGet<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
         {
             try
             {
                 string cacheKey = Helpers.RemoveModFileName(filePath.ToLower());
+
+                var ptLock = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.Lock);
                 transaction.LockFile(intendedOperation, cacheKey);
+                ptLock?.EndTrace();
 
                 if (core.settings.AllowIOCaching)
                 {
+                    var ptCacheRead = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.CacheRead);
                     var cachedObject = core.Cache.Get(cacheKey);
+                    ptCacheRead?.EndTrace();
 
                     if (cachedObject != null)
                     {
@@ -68,14 +84,23 @@ namespace Katzebase.Engine.IO
 
                 if (format == IOFormat.JSON)
                 {
+                    var ptIORead = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.IORead);
                     string text = File.ReadAllText(filePath);
+                    ptIORead?.EndTrace();
+
+                    var ptDeserialize = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.Deserialize);
                     deserializedObject = JsonConvert.DeserializeObject<T?>(text);
+                    ptDeserialize?.EndTrace();
                 }
                 else if (format == IOFormat.PBuf)
                 {
+                    var ptIORead = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.IORead);
                     using (var file = File.OpenRead(filePath))
                     {
+                        ptIORead?.EndTrace();
+                        var ptDeserialize = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.Deserialize);
                         deserializedObject = ProtoBuf.Serializer.Deserialize<T>(file);
+                        ptDeserialize?.EndTrace();
                         file.Close();
                     }
                 }
@@ -86,7 +111,9 @@ namespace Katzebase.Engine.IO
 
                 if (core.settings.AllowIOCaching && deserializedObject != null)
                 {
+                    var ptCacheWrite = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.CacheWrite);
                     core.Cache.Upsert(cacheKey, deserializedObject);
+                    ptCacheWrite?.EndTrace();
                     core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
                 }
 
