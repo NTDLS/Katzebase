@@ -318,6 +318,26 @@ namespace Katzebase.Engine.Documents
                         Utility.EnsureNotNull(persistDocument.Id);
                         var result = new DocumentLookupResult((Guid)persistDocument.Id);
 
+                        if (param.Query.SelectFields.Count == 0)
+                        {
+                            //If we do not have any select fields, then add all fields from the first document that we encounter.
+
+                            //If more than one thread has found a document then more than one will probably see this as empty and try to lock.
+                            //Therefore they will all block here except for the one that obtains the lock.
+                            lock (param.Query.SelectFields)
+                            {
+                                //The one thread will add the rows, so when the other threads are
+                                //  unblocked they will see that they have been added and skip adding them.
+                                if (param.Query.SelectFields.Count == 0)
+                                {
+                                    foreach (var child in jContent)
+                                    {
+                                        param.Query.SelectFields.Add(child.Key);
+                                    }
+                                }
+                            }
+                        }
+
                         foreach (string field in param.Query.SelectFields)
                         {
                             if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
@@ -411,9 +431,9 @@ namespace Katzebase.Engine.Documents
             var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
-            foreach (var field in query.SelectFields)
+            if (query.SelectFields.Count == 1 && query.SelectFields[0] == "*")
             {
-                result.Fields.Add(new KbQueryField(field));
+                query.SelectFields.Clear();
             }
 
             //Figure out which indexes could assist us in retrieving the desired documents (if any).
@@ -422,6 +442,11 @@ namespace Katzebase.Engine.Documents
             ptOptimization?.EndTrace();
 
             var subsetResults = GetAllDocumentsByConditions(pt, transaction, documentCatalog.Collection, schemaMeta, query, lookupOptimization);
+
+            foreach (var field in query.SelectFields)
+            {
+                result.Fields.Add(new KbQueryField(field));
+            }
 
             foreach (var subsetResult in subsetResults.Collection)
             {

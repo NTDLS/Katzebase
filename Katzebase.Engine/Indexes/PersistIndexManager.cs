@@ -124,11 +124,13 @@ namespace Katzebase.Engine.Indexes
         {
             try
             {
+                /* This still has condition values in it, that wont work. *Face palm*
                 var cacheItem = core.LookupOptimizationCache.Get(conditions.Hash) as ConditionLookupOptimization;
                 if (cacheItem != null)
                 {
                     return cacheItem;
                 }
+                */
 
                 var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
 
@@ -206,7 +208,7 @@ namespace Katzebase.Engine.Indexes
                     }
                 }
 
-                core.LookupOptimizationCache.Add(conditions.Hash, lookupOptimization, DateTime.Now.AddMinutes(10));
+                //core.LookupOptimizationCache.Add(conditions.Hash, lookupOptimization, DateTime.Now.AddMinutes(10));
 
                 return lookupOptimization;
             }
