@@ -1,5 +1,6 @@
 ﻿using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query.Condition;
+using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using static Katzebase.Engine.KbLib.EngineConstants;
@@ -8,16 +9,16 @@ namespace Katzebase.Engine.Query
 {
     public class ParserEngine
     {
-        static public PreparedQuery ParseQuery(string query)
+        static public PreparedQuery ParseQuery(string queryText)
         {
             PreparedQuery result = new PreparedQuery();
 
-            var literalStrings = Utilities.CleanQueryText(ref query);
 
-            int position = 0;
+            var query = new QueryTokenizer(queryText);
+
             string token = string.Empty;
 
-            token = Utilities.GetNextToken(query, ref position).ToLower();
+            token = query.GetNextToken().ToLower();
 
             var queryType = QueryType.Select;
 
@@ -33,10 +34,10 @@ namespace Katzebase.Engine.Query
             if (queryType == QueryType.Delete)
             {
                 /*
-                token = Utilities.GetNextToken(query, ref position);
+                token = query.GetNextToken();
                 if (token.ToLower() == "top")
                 {
-                    token = Utilities.GetNextToken(query, ref position);
+                    token = query.GetNextToken();
                     int rowLimit = 0;
 
                     if (Int32.TryParse(token, out rowLimit) == false)
@@ -47,7 +48,7 @@ namespace Katzebase.Engine.Query
                     result.RowLimit = rowLimit;
 
                     //Get schema name:
-                    token = Utilities.GetNextToken(query, ref position);
+                    token = query.GetNextToken();
                 }
 
                 if (token == string.Empty || Utilities.IsValidIdentifier(token, "/\\") == false)
@@ -56,7 +57,7 @@ namespace Katzebase.Engine.Query
                 }
                 result.Schema = token;
 
-                token = Utilities.GetNextToken(query, ref position);
+                token = query.GetNextToken();
                 if (token.ToLower() == "where")
                 {
                     string conditionText = query.Substring(position).Trim();
@@ -79,10 +80,10 @@ namespace Katzebase.Engine.Query
             else if (queryType == QueryType.Update)
             {
                 /*
-                token = Utilities.GetNextToken(query, ref position);
+                token = query.GetNextToken();
                 if (token.ToLower() == "top")
                 {
-                    token = Utilities.GetNextToken(query, ref position);
+                    token = query.GetNextToken();
                     int rowLimit = 0;
 
                     if (Int32.TryParse(token, out rowLimit) == false)
@@ -93,7 +94,7 @@ namespace Katzebase.Engine.Query
                     result.RowLimit = rowLimit;
 
                     //Get schema name:
-                    token = Utilities.GetNextToken(query, ref position);
+                    token = query.GetNextToken();
                 }
 
                 if (token == string.Empty || Utilities.IsValidIdentifier(token, "/\\") == false)
@@ -102,7 +103,7 @@ namespace Katzebase.Engine.Query
                 }
                 result.Schema = token;
 
-                token = Utilities.GetNextToken(query, ref position);
+                token = query.GetNextToken();
                 if (token.ToLower() != "set")
                 {
                     throw new KbParserException("Invalid query. Found [" + token + "], expected [SET].");
@@ -110,7 +111,7 @@ namespace Katzebase.Engine.Query
 
                 result.UpsertKeyValuePairs = ParseUpsertKeyValues(query, ref position);
 
-                token = Utilities.GetNextToken(query, ref position);
+                token = query.GetNextToken();
                 if (token != string.Empty && token.ToLower() != "where")
                 {
                     throw new KbParserException("Invalid query. Found [" + token + "], expected [WHERE] or end of statement.");
@@ -137,24 +138,17 @@ namespace Katzebase.Engine.Query
             //--------------------------------------------------------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Select)
             {
-                token = Utilities.GetNextToken(query, ref position);
+                token = query.PeekNextToken();
                 if (token.ToLower() == "top")
                 {
-                    token = Utilities.GetNextToken(query, ref position);
-                    int rowLimit = 0;
-
-                    if (Int32.TryParse(token, out rowLimit) == false)
-                    {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected numeric row limit.");
-                    }
-
-                    result.RowLimit = rowLimit;
-
-                    token = Utilities.GetNextToken(query, ref position); //Select the first column name for the loop below.
+                    query.SkipNextToken();
+                    result.RowLimit = query.GetNextTokenAsInt();
                 }
 
                 while (true)
                 {
+                    token = query.GetNextToken(); //Grab thr next field name (or FROM).
+
                     if (token.ToLower() == "from" || token == string.Empty)
                     {
                         break;
@@ -169,14 +163,12 @@ namespace Katzebase.Engine.Query
                         token = splitTok[1];
                     }
 
-                    if (Utilities.IsValidIdentifier(token) == false && token != "*")
+                    if (TokenHelpers.IsValidIdentifier(token) == false && token != "*")
                     {
                         throw new KbParserException("Invalid token. Found [" + token + "] a valid identifier.");
                     }
 
                     result.SelectFields.Add(new QueryField(token, fieldSchemaAlias, token));
-
-                    token = Utilities.GetNextToken(query, ref position);
                 }
 
                 if (token.ToLower() != "from")
@@ -184,23 +176,23 @@ namespace Katzebase.Engine.Query
                     throw new KbParserException("Invalid query. Found [" + token + "], expected [FROM].");
                 }
 
-                string sourceSchema = Utilities.GetNextToken(query, ref position);
+                string sourceSchema = query.GetNextToken();
                 string schemaAlias = string.Empty;
-                if (sourceSchema == string.Empty || Utilities.IsValidIdentifier(sourceSchema, ":") == false)
+                if (sourceSchema == string.Empty || TokenHelpers.IsValidIdentifier(sourceSchema, ":") == false)
                 {
                     throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
                 }
 
-                token = Utilities.PeekNextToken(query, position);
-                if (token != string.Empty && token.ToLower() == "as")
+                token = query.PeekNextToken();
+                if (token.ToLower() == "as")
                 {
-                    Utilities.SkipNextToken(query, ref position);
-                    schemaAlias = Utilities.GetNextToken(query, ref position);
+                    query.SkipNextToken();
+                    schemaAlias = query.GetNextToken();
                 }
 
                 result.Schemas.Add(new QuerySchema(sourceSchema, schemaAlias));
 
-                token = Utilities.GetNextToken(query, ref position);
+                token = query.GetNextToken();
                 if (token != string.Empty && token.ToLower() != "where")
                 {
                     throw new KbParserException("Invalid query. Found [" + token + "], expected [WHERE] or end of statement.");
@@ -208,13 +200,13 @@ namespace Katzebase.Engine.Query
 
                 if (token.ToLower() == "where")
                 {
-                    string conditionText = query.Substring(position).Trim();
+                    string conditionText = query.Remainder();
                     if (conditionText == string.Empty)
                     {
                         throw new KbParserException("Invalid query. Found [" + token + "], expected list of conditions.");
                     }
 
-                    result.Conditions = Conditions.Parse(conditionText, literalStrings);
+                    result.Conditions = Conditions.Parse(conditionText, query.LiteralStrings);
                 }
                 else if (token != string.Empty)
                 {
@@ -227,8 +219,8 @@ namespace Katzebase.Engine.Query
             else if (queryType == QueryType.Set)
             {
                 //Variable 
-                string variableName = Utilities.GetNextToken(query, ref position);
-                string variableValue = query.Substring(position);
+                string variableName = query.GetNextToken();
+                string variableValue = query.Remainder();
                 result.VariableValues.Add(new KbNameValuePair(variableName, variableValue));
             }
             #endregion
@@ -240,9 +232,9 @@ namespace Katzebase.Engine.Query
                     Utility.EnsureNotNull(kvp.Key);
                     Utility.EnsureNotNull(kvp.Value?.ToString());
 
-                    if (literalStrings.ContainsKey(kvp.Value.ToString()))
+                    if (query.LiteralStrings.ContainsKey(kvp.Value.ToString()))
                     {
-                        kvp.Value.Value = literalStrings[kvp.Value.ToString()];
+                        kvp.Value.Value = query.LiteralStrings[kvp.Value.ToString()];
                     }
                 }
             }
@@ -250,6 +242,7 @@ namespace Katzebase.Engine.Query
             return result;
         }
 
+        /*
         private static UpsertKeyValues ParseUpsertKeyValues(string conditionsText, ref int position)
         {
             UpsertKeyValues keyValuePairs = new UpsertKeyValues();
@@ -299,6 +292,7 @@ namespace Katzebase.Engine.Query
 
             return keyValuePairs;
         }
+        */
 
         /// <summary>
         /// Extraxts the condition text between parentheses.
@@ -315,7 +309,7 @@ namespace Katzebase.Engine.Query
 
             while (true)
             {
-                if ((token = Utilities.GetNextClauseToken(conditionsText, ref position)) == string.Empty)
+                if ((token = ConditionTokenizer.GetNextClauseToken(conditionsText, ref position)) == string.Empty)
                 {
                     break;
                 }

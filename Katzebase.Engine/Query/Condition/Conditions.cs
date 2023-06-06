@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
@@ -197,7 +198,7 @@ namespace Katzebase.Engine.Query.Condition
             {
                 int startPosition = position;
 
-                string token = Utilities.GetNextClauseToken(subset.Expression, ref position).ToLower();
+                string token = ConditionTokenizer.GetNextClauseToken(subset.Expression, ref position).ToLower();
 
                 if (token == string.Empty)
                 {
@@ -233,11 +234,11 @@ namespace Katzebase.Engine.Query.Condition
                     string left = token;
 
                     //Logical Qualifier
-                    token = Utilities.GetNextClauseToken(subset.Expression, ref position).ToLower();
-                    LogicalQualifier logicalQualifier = Utilities.ParseLogicalQualifier(token);
+                    token = ConditionTokenizer.GetNextClauseToken(subset.Expression, ref position).ToLower();
+                    LogicalQualifier logicalQualifier = ConditionTokenizer.ParseLogicalQualifier(token);
 
                     //Righthand value:
-                    string right = Utilities.GetNextClauseToken(subset.Expression, ref position).ToLower();
+                    string right = ConditionTokenizer.GetNextClauseToken(subset.Expression, ref position).ToLower();
 
                     if (literalStrings.ContainsKey(right))
                     {
