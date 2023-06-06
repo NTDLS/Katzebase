@@ -160,12 +160,21 @@ namespace Katzebase.Engine.Query
                         break;
                     }
 
+                    string fieldSchemaAlias = string.Empty;
+
+                    if (token.Contains('.'))
+                    {
+                        var splitTok = token.Split('.');
+                        fieldSchemaAlias = splitTok[0];
+                        token = splitTok[1];
+                    }
+
                     if (Utilities.IsValidIdentifier(token) == false && token != "*")
                     {
                         throw new KbParserException("Invalid token. Found [" + token + "] a valid identifier.");
                     }
 
-                    result.SelectFields.Add(token);
+                    result.SelectFields.Add(new QueryField(token, fieldSchemaAlias, token));
 
                     token = Utilities.GetNextToken(query, ref position);
                 }
@@ -175,13 +184,21 @@ namespace Katzebase.Engine.Query
                     throw new KbParserException("Invalid query. Found [" + token + "], expected [FROM].");
                 }
 
-                token = Utilities.GetNextToken(query, ref position);
-                if (token == string.Empty || Utilities.IsValidIdentifier(token, ":") == false)
+                string sourceSchema = Utilities.GetNextToken(query, ref position);
+                string schemaAlias = string.Empty;
+                if (sourceSchema == string.Empty || Utilities.IsValidIdentifier(sourceSchema, ":") == false)
                 {
                     throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
                 }
 
-                result.Schema = token;
+                token = Utilities.PeekNextToken(query, position);
+                if (token != string.Empty && token.ToLower() == "as")
+                {
+                    Utilities.SkipNextToken(query, ref position);
+                    schemaAlias = Utilities.GetNextToken(query, ref position);
+                }
+
+                result.Schemas.Add(new QuerySchema(sourceSchema, schemaAlias));
 
                 token = Utilities.GetNextToken(query, ref position);
                 if (token != string.Empty && token.ToLower() != "where")

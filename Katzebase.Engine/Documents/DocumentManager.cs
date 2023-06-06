@@ -44,10 +44,10 @@ namespace Katzebase.Engine.Documents
                     ptAcquireTransaction?.EndTrace();
 
                     var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schema, LockOperation.Read);
+                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schemas[0].Key, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(preparedQuery.Schema);
+                        throw new KbInvalidSchemaException(preparedQuery.Schemas[0].Key);
                     }
                     ptLockSchema?.EndTrace();
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
@@ -202,13 +202,13 @@ namespace Katzebase.Engine.Documents
                         //  unblocked they will see that they have been added and skip adding them.
                         foreach (var child in jContent)
                         {
-                            query.SelectFields.Add(child.Key);
+                            query.SelectFields.Add(new QueryField(child.Key, "", child.Key));
                         }
                     }
 
-                    foreach (string field in query.SelectFields)
+                    foreach (var field in query.SelectFields)
                     {
-                        if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                        if (jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
                         {
                             result.Values.Add(jToken.ToString());
                         }
@@ -396,7 +396,7 @@ namespace Katzebase.Engine.Documents
                                 {
                                     foreach (var child in jContent)
                                     {
-                                        param.Query.SelectFields.Add(child.Key);
+                                        param.Query.SelectFields.Add(new QueryField(child.Key, "", child.Key));
                                     }
                                 }
                                 param.SyncObj.Set();
@@ -406,9 +406,9 @@ namespace Katzebase.Engine.Documents
                         //We could have some threads that were between here and where we add fields.
                         param.SyncObj.WaitOne();
 
-                        foreach (string field in param.Query.SelectFields)
+                        foreach (var field in param.Query.SelectFields)
                         {
-                            if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                            if (jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
                             {
                                 result.Values.Add(jToken.ToString());
                             }
@@ -486,10 +486,10 @@ namespace Katzebase.Engine.Documents
 
             //Lock the schema:
             var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
-            var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, query.Schema, LockOperation.Read);
+            var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, query.Schemas[0].Key, LockOperation.Read);
             if (schemaMeta == null || schemaMeta.Exists == false)
             {
-                throw new KbInvalidSchemaException(query.Schema);
+                throw new KbInvalidSchemaException(query.Schemas[0].Key);
             }
             ptLockSchema?.EndTrace();
             Utility.EnsureNotNull(schemaMeta.DiskPath);
@@ -499,7 +499,7 @@ namespace Katzebase.Engine.Documents
             var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
-            if (query.SelectFields.Count == 1 && query.SelectFields[0] == "*")
+            if (query.SelectFields.Count == 1 && query.SelectFields[0].Key == "*")
             {
                 query.SelectFields.Clear();
             }
@@ -513,7 +513,7 @@ namespace Katzebase.Engine.Documents
 
             foreach (var field in query.SelectFields)
             {
-                result.Fields.Add(new KbQueryField(field));
+                result.Fields.Add(new KbQueryField(field.Alias));
             }
 
             foreach (var subsetResult in subsetResults.Collection)

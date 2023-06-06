@@ -89,6 +89,27 @@ namespace Katzebase.Engine.Query
             return GetNextToken(query, DefaultTokenDelimiters, ref position);
         }
 
+        public static string PeekNextToken(string query, int position)
+        {
+            int originalPosition = position;
+            return GetNextToken(query, DefaultTokenDelimiters, ref originalPosition);
+        }
+
+        public static void SkipNextToken(string query, ref int position)
+        {
+            GetNextToken(query, DefaultTokenDelimiters, ref position);
+        }
+
+        public static string PeekNextToken(string query, char[] delimiters, int position)
+        {
+            int originalPosition = position;
+            return GetNextToken(query, delimiters, ref originalPosition);
+        }
+
+        public static void SkipNextToken(string query, char[] delimiters, ref int position)
+        {
+            GetNextToken(query, delimiters, ref position);
+        }
 
         public static string GetNextToken(string query, char[] delimiters, ref int position)
         {
