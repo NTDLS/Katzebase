@@ -15,8 +15,6 @@ namespace Katzebase.Engine.Documents.Threading
         public ConditionLookupOptimization LookupOptimization { get; set; }
         public int ThreadSlotNumber { get; private set; }
         public List<DocumentLookupThreadSlot> ThreadSlots { get; set; }
-        public ManualResetEvent SyncObj { get; set; } = new ManualResetEvent(true);
-
         public PerformanceTrace? PT { get; private set; }
 
         public DocumentLookupThreadParam(PerformanceTrace? pt, Transaction transaction, PersistSchema schemaMeta, PreparedQuery query,

@@ -13,7 +13,6 @@ namespace Katzebase.Engine.Query
         {
             PreparedQuery result = new PreparedQuery();
 
-
             var query = new QueryTokenizer(queryText);
 
             string token = string.Empty;
@@ -138,8 +137,7 @@ namespace Katzebase.Engine.Query
             //--------------------------------------------------------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Select)
             {
-                token = query.PeekNextToken();
-                if (token.ToLower() == "top")
+                if (query.IsNextToken("top"))
                 {
                     query.SkipNextToken();
                     result.RowLimit = query.GetNextTokenAsInt();
@@ -147,33 +145,67 @@ namespace Katzebase.Engine.Query
 
                 while (true)
                 {
-                    token = query.GetNextToken(); //Grab thr next field name (or FROM).
-
-                    if (token.ToLower() == "from" || token == string.Empty)
+                    if (query.IsNextToken("from"))
                     {
                         break;
                     }
 
+                    string fieldName = query.GetNextToken();
+                    if (string.IsNullOrWhiteSpace(fieldName))
+                    {
+                        throw new KbParserException("Invalid token. Found whitespace expected identifer.");
+                    }
+
                     string fieldSchemaAlias = string.Empty;
+                    string fieldAlias;
 
-                    if (token.Contains('.'))
+
+                    if (fieldName.Contains('.'))
                     {
-                        var splitTok = token.Split('.');
+                        var splitTok = fieldName.Split('.');
                         fieldSchemaAlias = splitTok[0];
-                        token = splitTok[1];
+                        fieldName = splitTok[1];
                     }
 
-                    if (TokenHelpers.IsValidIdentifier(token) == false && token != "*")
+                    query.SwapFieldLiteral(ref fieldName);
+
+                    if (TokenHelpers.IsValidIdentifier(fieldName) == false && fieldName != "*")
                     {
-                        throw new KbParserException("Invalid token. Found [" + token + "] a valid identifier.");
+                        throw new KbParserException("Invalid token identifier [" + fieldName + "].");
                     }
 
-                    result.SelectFields.Add(new QueryField(token, fieldSchemaAlias, token));
+                    if (query.IsNextToken("as"))
+                    {
+                        query.SkipNextToken();
+                        fieldAlias = query.GetNextToken();
+                    }
+                    else
+                    {
+                        fieldAlias = fieldName;
+                    }
+
+                    query.SwapFieldLiteral(ref fieldAlias);
+
+                    result.SelectFields.Add(new QueryField(fieldName, fieldSchemaAlias, fieldAlias));
+
+                    if (query.IsCurrentChar(','))
+                    {
+                        query.SkipDelimiters();
+                    }
+                    else
+                    {
+                        //We should have found a delimiter here, if not either we are done parsing or the query is malformed. The next check will find out.
+                        break;
+                    }
                 }
 
-                if (token.ToLower() != "from")
+                if (query.IsNextToken("from"))
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [FROM].");
+                    query.SkipNextToken();
+                }
+                else
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected [FROM].");
                 }
 
                 string sourceSchema = query.GetNextToken();
@@ -183,8 +215,7 @@ namespace Katzebase.Engine.Query
                     throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
                 }
 
-                token = query.PeekNextToken();
-                if (token.ToLower() == "as")
+                if (query.IsNextToken("as"))
                 {
                     query.SkipNextToken();
                     schemaAlias = query.GetNextToken();

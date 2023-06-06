@@ -380,32 +380,6 @@ namespace Katzebase.Engine.Documents
                         Utility.EnsureNotNull(persistDocument.Id);
                         var result = new DocumentLookupResult((Guid)persistDocument.Id);
 
-                        if (param.Query.SelectFields.Count == 0)
-                        {
-                            //If we do not have any select fields, then add all fields from the first document that we encounter.
-
-                            //If more than one thread has found a document then more than one will probably see this as empty and try to lock.
-                            //Therefore they will all block here except for the one that obtains the lock.
-                            lock (param.Query.SelectFields)
-                            {
-                                param.SyncObj.Reset();
-
-                                //The one thread will add the rows, so when the other threads are
-                                //  unblocked they will see that they have been added and skip adding them.
-                                if (param.Query.SelectFields.Count == 0)
-                                {
-                                    foreach (var child in jContent)
-                                    {
-                                        param.Query.SelectFields.Add(new QueryField(child.Key, "", child.Key));
-                                    }
-                                }
-                                param.SyncObj.Set();
-                            }
-                        }
-
-                        //We could have some threads that were between here and where we add fields.
-                        param.SyncObj.WaitOne();
-
                         foreach (var field in param.Query.SelectFields)
                         {
                             if (jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
@@ -502,6 +476,12 @@ namespace Katzebase.Engine.Documents
             if (query.SelectFields.Count == 1 && query.SelectFields[0].Key == "*")
             {
                 query.SelectFields.Clear();
+                throw new KbNotImplementedException("Select * is not implemented. This will require schema scampling.");
+            }
+            else if (query.SelectFields.Count == 0)
+            {
+                query.SelectFields.Clear();
+                throw new KbNotImplementedException("No fields were selected.");
             }
 
             //Figure out which indexes could assist us in retrieving the desired documents (if any).

@@ -1,4 +1,5 @@
-﻿using Katzebase.PublicLibrary.Exceptions;
+﻿using Katzebase.PublicLibrary.Client.Management;
+using Katzebase.PublicLibrary.Exceptions;
 using System.Text.RegularExpressions;
 
 namespace Katzebase.Engine.Query.Tokenizers
@@ -13,10 +14,28 @@ namespace Katzebase.Engine.Query.Tokenizers
 
         public Dictionary<string, string> LiteralStrings { get; private set; }
 
+        public void SwapFieldLiteral(ref string value)
+        {
+            if (string.IsNullOrEmpty(value) == false && LiteralStrings.ContainsKey(value))
+            {
+                value = LiteralStrings[value];
+
+                if (value.StartsWith('\'') && value.EndsWith('\''))
+                {
+                    value = value.Substring(1, value.Length - 2);
+                }
+            }
+        }
+
         public QueryTokenizer(string text)
         {
             _text = text;
             LiteralStrings = CleanQueryText(ref _text);
+        }
+
+        public bool IsCurrentChar(char ch)
+        {
+            return (_text.Substring(_position, 1)[0] == ch);
         }
 
         public string Remainder()
@@ -38,6 +57,11 @@ namespace Katzebase.Engine.Query.Tokenizers
         public string GetNextToken()
         {
             return GetNextToken(DefaultTokenDelimiters);
+        }
+
+        public bool IsNextToken(string token)
+        {
+            return PeekNextToken().ToLower() == token.ToLower();
         }
 
         public string PeekNextToken()
@@ -85,9 +109,9 @@ namespace Katzebase.Engine.Query.Tokenizers
                 token += _text[_position];
             }
 
-            SkipDelimiters();
+            SkipWhiteSpace();
 
-            return token.Trim().ToLowerInvariant();
+            return token.Trim();
         }
 
         public void SkipDelimiters()
@@ -120,7 +144,7 @@ namespace Katzebase.Engine.Query.Tokenizers
         public static Dictionary<string, string> CleanQueryText(ref string query, bool swapLiteralsBackIn = false)
         {
             var literalStrings = SwapOutLiteralStrings(ref query);
-            query = query.Trim().ToLowerInvariant();
+            query = query.Trim();
             RemoveComments(ref query);
             if (swapLiteralsBackIn)
             {

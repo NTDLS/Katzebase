@@ -1,6 +1,8 @@
 ﻿using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary;
+using Newtonsoft.Json.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
@@ -74,6 +76,7 @@ namespace Katzebase.Engine.Query.Condition
         public static Conditions Parse(string conditionsText, Dictionary<string, string> literalStrings)
         {
             var conditions = new Conditions();
+            conditionsText = conditionsText.ToLowerInvariant();
             conditions.ParseInternal(conditionsText, literalStrings);
             return conditions;
         }
@@ -242,7 +245,7 @@ namespace Katzebase.Engine.Query.Condition
 
                     if (literalStrings.ContainsKey(right))
                     {
-                        right = literalStrings[right];
+                        right = literalStrings[right].ToLowerInvariant();
                     }
 
                     int endPosition = position;
