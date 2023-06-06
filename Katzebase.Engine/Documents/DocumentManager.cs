@@ -173,6 +173,57 @@ namespace Katzebase.Engine.Documents
             List<PersistDocumentCatalogItem> documentCatalogItems, PersistSchema schemaMeta, PreparedQuery query,
             ConditionLookupOptimization lookupOptimization)
         {
+            if (query.Conditions.Subsets.Count == 0)
+            {
+                Utility.EnsureNotNull(schemaMeta.DiskPath);
+
+                var results = new DocumentLookupResults();
+                foreach (var documentCatalogItem in documentCatalogItems)
+                {
+                    if (query.RowLimit != 0 && results.Collection.Count >= query.RowLimit)
+                    {
+                        break;
+                    }
+
+                    var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, documentCatalogItem.FileName);
+
+                    var persistDocument = core.IO.GetJson<PersistDocument>(pt, transaction, persistDocumentDiskPath, LockOperation.Read);
+                    Utility.EnsureNotNull(persistDocument);
+                    Utility.EnsureNotNull(persistDocument.Content);
+
+                    var jContent = JObject.Parse(persistDocument.Content);
+
+                    Utility.EnsureNotNull(documentCatalogItem.Id);
+                    var result = new DocumentLookupResult((Guid)documentCatalogItem.Id);
+
+                    if (query.SelectFields.Count == 0)
+                    {
+                        //The one thread will add the rows, so when the other threads are
+                        //  unblocked they will see that they have been added and skip adding them.
+                        foreach (var child in jContent)
+                        {
+                            query.SelectFields.Add(child.Key);
+                        }
+                    }
+
+                    foreach (string field in query.SelectFields)
+                    {
+                        if (jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                        {
+                            result.Values.Add(jToken.ToString());
+                        }
+                        else
+                        {
+                            result.Values.Add(string.Empty);
+                        }
+                    }
+
+                    results.Add(result);
+
+                }
+                return results;
+            }
+
             //Create a reference to the entire document catalog.
             var limitedDocumentCatalogItems = documentCatalogItems;
 
@@ -235,6 +286,12 @@ namespace Katzebase.Engine.Documents
             foreach (var documentCatalogItem in limitedDocumentCatalogItems)
             {
                 var ptThreadQueue = pt?.BeginTrace(PerformanceTraceType.ThreadQueue);
+
+                if (query.RowLimit != 0 && threads.Results.Collection.Count >= query.RowLimit)
+                {
+                    break;
+                }
+
                 threads.Enqueue(documentCatalogItem);
                 ptThreadQueue?.EndTrace();
             }
@@ -257,6 +314,12 @@ namespace Katzebase.Engine.Documents
             threads.Stop();
             ptThreadCompletion2?.EndTrace();
 
+            if (query.RowLimit > 0)
+            {
+                //Multithreading can yeild a few more rows than we need if we have a limiter.
+                threads.Results.Collection = threads.Results.Collection.Take(query.RowLimit).ToList();
+            }
+
             return threads.Results;
         }
 
@@ -273,7 +336,6 @@ namespace Katzebase.Engine.Documents
 
             try
             {
-
                 var expression = new NCalc.Expression(param.LookupOptimization.Conditions.Root.Expression);
 
                 Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
@@ -326,6 +388,8 @@ namespace Katzebase.Engine.Documents
                             //Therefore they will all block here except for the one that obtains the lock.
                             lock (param.Query.SelectFields)
                             {
+                                param.SyncObj.Reset();
+
                                 //The one thread will add the rows, so when the other threads are
                                 //  unblocked they will see that they have been added and skip adding them.
                                 if (param.Query.SelectFields.Count == 0)
@@ -335,8 +399,12 @@ namespace Katzebase.Engine.Documents
                                         param.Query.SelectFields.Add(child.Key);
                                     }
                                 }
+                                param.SyncObj.Set();
                             }
                         }
+
+                        //We could have some threads that were between here and where we add fields.
+                        param.SyncObj.WaitOne();
 
                         foreach (string field in param.Query.SelectFields)
                         {

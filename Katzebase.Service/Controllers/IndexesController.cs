@@ -55,7 +55,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Indexes.Exists(processId, schema, name);
+                Program.Core.Indexes.Rebuild(processId, schema, name);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -92,5 +92,35 @@ namespace Katzebase.Service.Controllers
 
             return result;
         }
+
+        /// <summary>
+        /// Lists the existing indexes within a given schema.
+        /// </summary>
+        /// <param name="schema"></param>
+        [HttpGet]
+        [Route("{sessionId}/{schema}/List")]
+        public KbActionResponseIndexes List(Guid sessionId, string schema)
+        {
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+            Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
+            var result = new KbActionResponseIndexes();
+
+            try
+            {
+                result.List = Program.Core.Indexes.GetList(processId, schema);
+
+                result.Success = true;
+            }
+            catch (Exception ex)
+            {
+                result.Message = ex.Message;
+            }
+
+            return result;
+        }
+
+
     }
 }

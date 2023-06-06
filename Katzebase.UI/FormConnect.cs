@@ -19,7 +19,7 @@ namespace Katzebase.UI
             textBoxPort.Text = "6858";
 
             AcceptButton = buttonConnect;
-            AcceptButton = buttonCancel;
+            CancelButton = buttonCancel;
         }
 
         private void buttonOk_Click(object sender, EventArgs e)

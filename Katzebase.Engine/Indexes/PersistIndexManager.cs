@@ -8,6 +8,7 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Indexes
@@ -218,6 +219,39 @@ namespace Katzebase.Engine.Indexes
                 throw;
             }
         }
+
+        public List<KbIndex> GetList(ulong processId, string schema)
+        {
+            var result = new List<KbIndex>();
+            try
+            {
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
+                    if (schemaMeta != null && schemaMeta.Exists)
+                    {
+                        var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
+                        if (indexCatalog != null)
+                        {
+                            foreach (var index in indexCatalog.Collection)
+                            {
+                                result.Add(PersistIndex.ToPayload(index));
+                            }
+                        }
+                    }
+
+                    txRef.Commit();
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to list indexes for process {processId}.", ex);
+                throw;
+            }
+
+            return result;
+        }
+
 
         public bool Exists(ulong processId, string schema, string indexName)
         {

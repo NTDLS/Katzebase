@@ -1,4 +1,5 @@
-﻿using Katzebase.PublicLibrary.Payloads;
+﻿using Katzebase.PublicLibrary.Client.Management;
+using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
 
 namespace Katzebase.Engine.Schemas
@@ -15,12 +16,12 @@ namespace Katzebase.Engine.Schemas
         [JsonIgnore]
         public bool Exists { get; set; }
 
-        public KbSchema ToPayload()
+        static public KbSchema ToPayload(PersistSchema schema)
         {
             return new KbSchema()
             {
-                Id = Id,
-                Name = Name
+                Id = schema.Id,
+                Name = schema.Name
             };
         }
 

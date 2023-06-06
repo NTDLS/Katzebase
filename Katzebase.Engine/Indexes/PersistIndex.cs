@@ -61,5 +61,24 @@ namespace Katzebase.Engine.Indexes
 
             return persistIndex;
         }
+
+        static public PublicLibrary.Payloads.KbIndex ToPayload(PersistIndex index)
+        {
+            var persistIndex = new PublicLibrary.Payloads.KbIndex()
+            {
+                Id = index.Id,
+                Name = index.Name,
+                Created = index.Created,
+                Modfied = index.Modfied,
+                IsUnique = index.IsUnique
+            };
+
+            foreach (var indexAttribute in index.Attributes)
+            {
+                persistIndex.AddAttribute(PersistIndexAttribute.ToPayload(indexAttribute));
+            }
+
+            return persistIndex;
+        }
     }
 }

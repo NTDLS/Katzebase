@@ -24,13 +24,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                var persistSchemas = Program.Core.Schemas.GetList(processId, schema);
-
-                foreach (var persistSchema in persistSchemas)
-                {
-                    result.Add(persistSchema.ToPayload());
-                }
-
+                result.List = Program.Core.Schemas.GetList(processId, schema);
                 result.Success = true;
             }
             catch (Exception ex)

@@ -81,5 +81,18 @@ namespace Katzebase.PublicLibrary.Client.Management
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             return JsonConvert.DeserializeObject<KbActionResponseSchemas>(resultText) ?? new KbActionResponseSchemas();
         }
+
+        /// <summary>
+        /// Lists the existing root schemas.
+        /// </summary>
+        /// <param name="schema"></param>
+        public KbActionResponseSchemas List()
+        {
+            string url = $"api/Schema/{client.SessionId}/:/List";
+
+            using var response = client.Connection.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            return JsonConvert.DeserializeObject<KbActionResponseSchemas>(resultText) ?? new KbActionResponseSchemas();
+        }
     }
 }

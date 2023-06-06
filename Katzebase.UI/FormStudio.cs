@@ -1,12 +1,14 @@
 using ICSharpCode.AvalonEdit;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Client;
+using Katzebase.PublicLibrary.Client.Management;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Katzebase.UI.Classes;
 using Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
+using System.Security.Policy;
 using System.Text;
 
 namespace Katzebase.UI
@@ -15,13 +17,12 @@ namespace Katzebase.UI
     {
         private int _executionExceptionCount = 0;
         private bool _timerTicking = false;
-        private bool _isDoubleClick = false;
         private bool _firstShown = true;
         private readonly EditorFactory? _editorFactory = null;
         private readonly ImageList _treeImages = new ImageList();
         private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
         private bool _scriptExecuting = false;
-        public string _serverAddressURL = string.Empty;
+        public string _lastusedServerAddress = string.Empty;
 
         public FormStudio()
         {
@@ -44,25 +45,17 @@ namespace Katzebase.UI
             treeViewMacros.Dock = DockStyle.Fill;
 
             _treeImages.ColorDepth = ColorDepth.Depth32Bit;
-            _treeImages.Images.Add("Folder", Resources.Folder);
-            _treeImages.Images.Add("Script", Resources.Script);
-            _treeImages.Images.Add("Project", Resources.Project);
-            _treeImages.Images.Add("Assets", Resources.Assets);
-            _treeImages.Images.Add("Asset", Resources.Asset);
-            _treeImages.Images.Add("Note", Resources.Note);
-            _treeImages.Images.Add("Workloads", Resources.Workloads);
-            _treeImages.Images.Add("Workload", Resources.Workload);
+            _treeImages.Images.Add("Folder", Resources.TreeFolder);
+            _treeImages.Images.Add("Server", Resources.TreeServer);
+            _treeImages.Images.Add("Schema", Resources.TreeSchema);
+            _treeImages.Images.Add("Index", Resources.TreeIndex);
+            _treeImages.Images.Add("IndexFolder", Resources.TreeIndexFolder);
+            _treeImages.Images.Add("TreeNotLoaded", Resources.TreeNotLoaded);
             treeViewProject.ImageList = _treeImages;
-            treeViewProject.LabelEdit = true;
 
-            treeViewProject.NodeMouseDoubleClick += TreeViewProject_NodeMouseDoubleClick;
-            treeViewProject.BeforeCollapse += TreeViewProject_BeforeCollapse;
+
             treeViewProject.BeforeExpand += TreeViewProject_BeforeExpand;
-            treeViewProject.MouseDown += TreeViewProject_MouseDown;
             treeViewProject.NodeMouseClick += TreeViewProject_NodeMouseClick;
-            treeViewProject.AfterLabelEdit += TreeViewProject_AfterLabelEdit;
-            treeViewProject.BeforeLabelEdit += TreeViewProject_BeforeLabelEdit;
-            treeViewProject.KeyUp += TreeViewProject_KeyUp;
 
             treeViewMacros.ShowNodeToolTips = true;
             //treeViewMacros.Nodes.AddRange(...);
@@ -148,14 +141,7 @@ namespace Katzebase.UI
             {
                 _firstShown = false;
 
-                using var form = new FormConnect();
-                if (form.ShowDialog() == DialogResult.OK)
-                {
-                    _serverAddressURL = form.ServerAddressURL;
-
-                    var tabFilePage = AddTab("New File.kbs");
-                    tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\tProductID, LocationID, Shelf,\r\n\tBin, Quantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\nWHERE\r\n\t(\r\n\t\tLocationId = 6\r\n\t\tAND Shelf != 'R'\r\n\t\tAND Quantity = 299\r\n\t)\r\n\tOR\r\n\t(\r\n\t\t(\r\n\t\t\tLocationId = 6\r\n\t\t\tAND Shelf != 'M'\r\n\t\t)\r\n\t\tAND Quantity = 299\r\n\t\tOR ProductId = 366\r\n\t)\r\n\tAND\r\n\t(\r\n\t\tBIN = 8\r\n\t\tOR Bin = 11\r\n\t\tOR Bin = 19\r\n\t)\r\n";
-                }
+                Connect();
             }
 
             SyncToolbarAndMenuStates();
@@ -165,18 +151,18 @@ namespace Katzebase.UI
 
         #region Project Treeview Shenanigans.
 
-        private void FlattendTreeViewNodes(ref List<ProjectTreeNode> flatList, ProjectTreeNode parent)
+        private void FlattendTreeViewNodes(ref List<ServerTreeNode> flatList, ServerTreeNode parent)
         {
-            foreach (var node in parent.Nodes.Cast<ProjectTreeNode>())
+            foreach (var node in parent.Nodes.Cast<ServerTreeNode>())
             {
                 flatList.Add(node);
                 FlattendTreeViewNodes(ref flatList, node);
             }
         }
 
-        private ProjectTreeNode? GetProjectAssetsNode(ProjectTreeNode startNode)
+        private ServerTreeNode? GetProjectAssetsNode(ServerTreeNode startNode)
         {
-            foreach (var node in startNode.Nodes.Cast<ProjectTreeNode>())
+            foreach (var node in startNode.Nodes.Cast<ServerTreeNode>())
             {
                 if (node.Text == "Assets")
                 {
@@ -192,116 +178,9 @@ namespace Katzebase.UI
             return null;
         }
 
-        private void TreeViewProject_KeyUp(object? sender, KeyEventArgs e)
-        {
-            /*
-            var node = treeViewProject.SelectedNode as ProjectTreeNode;
-            if (node != null)
-            {
-                if (e.KeyCode == Keys.F2)
-                {
-                    node.BeginEdit();
-                }
-                else if (e.KeyCode == Keys.Enter)
-                {
-                    if (node.NodeType == Constants.ProjectNodeType.Script || node.NodeType == Constants.ProjectNodeType.Asset
-                        || node.NodeType == Constants.ProjectNodeType.Note || node.NodeType == Constants.ProjectNodeType.Workloads
-                        || node.NodeType == Constants.ProjectNodeType.Workload)
-                    {
-                        AddOrSelectTab(node);
-                    }
-                }
-            }
-            */
-        }
-
-        private void TreeViewProject_BeforeLabelEdit(object? sender, NodeLabelEditEventArgs e)
-        {
-            /*
-            if (e.Node is not ProjectTreeNode node)
-            {
-                throw new Exception("Invlaid node type.");
-            }
-
-            if (node.NodeType != Constants.ProjectNodeType.Asset
-               && node.NodeType != Constants.ProjectNodeType.Script
-               && node.NodeType != Constants.ProjectNodeType.Workload
-               && node.NodeType != Constants.ProjectNodeType.Note)
-            {
-                e.CancelEdit = true;
-            }
-            */
-        }
-
-        private void TreeViewProject_AfterLabelEdit(object? sender, NodeLabelEditEventArgs e)
-        {
-            /*
-            if (e.Node is not ProjectTreeNode node)
-            {
-                throw new Exception("Invlaid node type.");
-            }
-
-            string newLabel = e.Label ?? string.Empty;
-            if (newLabel == string.Empty)
-            {
-                e.CancelEdit = true;
-                return;
-            }
-
-            if (node.NodeType == Constants.ProjectNodeType.Asset
-                || node.NodeType == Constants.ProjectNodeType.Script
-                || node.NodeType == Constants.ProjectNodeType.Note)
-            {
-                string newExtension = Path.GetExtension(newLabel);
-                if (newExtension == string.Empty)
-                {
-                    string oldExtension = Path.GetExtension(node.Text);
-                    if (oldExtension != string.Empty)
-                    {
-                        newLabel = $"{newLabel}{oldExtension}";
-                    }
-                }
-
-                var openTab = FindTabByFilePath(node.FullFilePath);
-                string newFullPath = node.Rename(newLabel);
-
-                node.Text = newLabel;
-
-                if (openTab != null)
-                {
-                    openTab.Text = Path.GetFileName(newFullPath);
-                    openTab.Node = node;
-                }
-
-                e.CancelEdit = true; //Because we may need to add an extension, we changed the label manually, no need to allow the event to do it.
-            }
-            else if (node.NodeType == Constants.ProjectNodeType.Workload)
-            {
-                string newFullPath = node.Rename(newLabel);
-
-                foreach (ProjectTreeNode child in node.Nodes)
-                {
-                    var openTab = FindTabByFilePath(child.FullFilePath);
-
-                    child.FullFilePath = Path.Combine(newFullPath, Path.GetFileName(child.FullFilePath));
-
-                    if (openTab != null)
-                    {
-                        openTab.Text = Path.GetFileName(newFullPath);
-                        openTab.Node = child;
-                    }
-                }
-            }
-            else
-            {
-                throw new NotImplementedException();
-            }
-            */
-        }
 
         private void TreeViewProject_NodeMouseClick(object? sender, TreeNodeMouseClickEventArgs e)
         {
-            /*
             if (e.Button != MouseButtons.Right)
             {
                 return;
@@ -312,86 +191,48 @@ namespace Katzebase.UI
 
             popupMenu.ItemClicked += PopupMenu_ItemClicked;
 
-            var node = e.Node as ProjectTreeNode;
+            var node = e.Node as ServerTreeNode;
             if (node == null)
             {
                 throw new Exception("Invalid node type.");
             }
 
-            popupMenu.Tag = e.Node as ProjectTreeNode;
+            popupMenu.Tag = e.Node as ServerTreeNode;
 
-            if (node.NodeType == Constants.ProjectNodeType.Project)
+            if (node.NodeType == Classes.Constants.ServerNodeType.Server)
             {
                 popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
-
-            if (node.NodeType == Constants.ProjectNodeType.Workloads
-                || node.NodeType == Constants.ProjectNodeType.Workload
-                || node.NodeType == Constants.ProjectNodeType.Asset
-                || node.NodeType == Constants.ProjectNodeType.Script
-                )
+            else if (node.NodeType == Classes.Constants.ServerNodeType.Schema)
             {
-                popupMenu.Items.Add("Edit", FormUtility.TransparentImage(Resources.ToolProjectPanel));
+                popupMenu.Items.Add("Create Index", FormUtility.TransparentImage(Resources.Asset));
+                popupMenu.Items.Add("Select top n...", FormUtility.TransparentImage(Resources.Workload));
                 popupMenu.Items.Add("-");
+                popupMenu.Items.Add("Delete", FormUtility.TransparentImage(Resources.Asset));
+            }
+            else if (node.NodeType == Classes.Constants.ServerNodeType.IndexFolder)
+            {
+                popupMenu.Items.Add("Create Index", FormUtility.TransparentImage(Resources.Asset));
+            }
+            else if (node.NodeType == Classes.Constants.ServerNodeType.Index)
+            {
+                popupMenu.Items.Add("Delete Index", FormUtility.TransparentImage(Resources.Asset));
             }
 
-            if (node.NodeType == Constants.ProjectNodeType.Workloads)
-            {
-                popupMenu.Items.Add("New Workload", FormUtility.TransparentImage(Resources.Workload));
-                popupMenu.Items.Add("-");
-            }
-            if (node.NodeType == Constants.ProjectNodeType.Workload)
-            {
-                popupMenu.Items.Add("New Script", FormUtility.TransparentImage(Resources.Workload));
-                popupMenu.Items.Add("-");
-            }
-            if (node.NodeType == Constants.ProjectNodeType.Assets)
-            {
-                popupMenu.Items.Add("New Asset", FormUtility.TransparentImage(Resources.Asset));
-                popupMenu.Items.Add("-");
-            }
-            if (node.NodeType == Constants.ProjectNodeType.Project)
-            {
-                popupMenu.Items.Add("New Note", FormUtility.TransparentImage(Resources.Asset));
-                popupMenu.Items.Add("-");
-            }
-
-            if (node.NodeType == Constants.ProjectNodeType.Asset
-                || node.NodeType == Constants.ProjectNodeType.Script
-                || node.NodeType == Constants.ProjectNodeType.Workload
-                || node.NodeType == Constants.ProjectNodeType.Note)
-            {
-                popupMenu.Items.Add("Delete", FormUtility.TransparentImage(Resources.ToolDelete));
-                popupMenu.Items.Add("Rename", FormUtility.TransparentImage(Resources.ToolReplace));
-                popupMenu.Items.Add("-");
-            }
-
-            popupMenu.Items.Add("Open containing folder", FormUtility.TransparentImage(Resources.ToolOpenFile));
             popupMenu.Show(treeViewProject, e.Location);
-            */
         }
 
         private void PopupMenu_ItemClicked(object? sender, ToolStripItemClickedEventArgs e)
         {
-            /*
             var menuStrip = sender as ContextMenuStrip;
-            if (menuStrip == null)
-            {
-                throw new Exception("Menu should never be null.");
-            }
+            Utility.EnsureNotNull(menuStrip);
 
             menuStrip.Close();
 
-            if (menuStrip.Tag == null)
-            {
-                throw new Exception("Tag should never be null.");
-            }
+            Utility.EnsureNotNull(menuStrip.Tag);
 
-            var node = (menuStrip.Tag) as ProjectTreeNode;
-            if (node == null)
-            {
-                throw new Exception("Node should never be null.");
-            }
+            var node = (menuStrip.Tag) as ServerTreeNode;
+            Utility.EnsureNotNull(node);
 
             if (e.ClickedItem?.Text == "Refresh")
             {
@@ -399,100 +240,32 @@ namespace Katzebase.UI
             }
             else if (e.ClickedItem?.Text == "Delete")
             {
-                var messageBoxResult = MessageBox.Show($"Delete {node.Text} to the recycle bin?", $"Delete {node.NodeType}?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                /*
+                var messageBoxResult = MessageBox.Show($"Delete {node.Text}?", $"Delete {node.NodeType}?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (messageBoxResult == DialogResult.Yes)
                 {
-                    var tabFilePage = FindTabByFilePath(node.FullFilePath);
-                    if (tab != null)
-                    {
-                        if (CloseTab(tab) == false)
-                        {
-                            return;
-                        }
-                    }
-
-                    FormUtility.Recycle(node.FullFilePath);
                     node.Remove();
                 }
+                */
             }
-            else if (e.ClickedItem?.Text == "Edit")
+            else if (e.ClickedItem?.Text == "Select top n...")
             {
-                AddOrSelectTab(node);
+                var rootNode = TreeManagement.GetRootNode(node);
+                var tabFilePage = AddTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\t" + TreeManagement.CalculateFullSchema(node);
             }
-            else if (e.ClickedItem?.Text == "New Script")
-            {
-                var newNode = node.AddScriptNode();
-                if (node.IsExpanded == false) node.Expand();
-                treeViewProject.SelectedNode = newNode;
-                newNode.BeginEdit();
-            }
-            else if (e.ClickedItem?.Text == "New Asset")
-            {
-                var newNode = node.AddAssetNode();
-                if (node.IsExpanded == false) node.Expand();
-                treeViewProject.SelectedNode = newNode;
-                newNode.BeginEdit();
-            }
-            else if (e.ClickedItem?.Text == "New Note")
-            {
-                var newNode = node.AddNoteNode();
-                if (node.IsExpanded == false) node.Expand();
-                treeViewProject.SelectedNode = newNode;
-                newNode.BeginEdit();
-            }
-            else if (e.ClickedItem?.Text == "New Workload")
-            {
-                var newNode = node.AddWorkloadNode();
-                if (node.IsExpanded == false) node.Expand();
-                treeViewProject.SelectedNode = newNode;
-                newNode.BeginEdit();
-            }
-            else if (e.ClickedItem?.Text == "Rename")
-            {
-                node.BeginEdit();
-            }
-            else if (e.ClickedItem?.Text == "Open containing folder")
-            {
-                var directory = node.FullFilePath;
-
-                if (Directory.Exists(node.FullFilePath) == false)
-                {
-                    directory = Path.GetDirectoryName(directory);
-                }
-
-                Process.Start(new ProcessStartInfo()
-                {
-                    FileName = directory,
-                    UseShellExecute = true,
-                    Verb = "open"
-                });
-            }
-            */
         }
 
         #endregion
 
         #region Project Treeview Events.
 
-        private void TreeViewProject_NodeMouseDoubleClick(object? sender, TreeNodeMouseClickEventArgs e)
-        {
-        }
-
-        private void TreeViewProject_MouseDown(object? sender, MouseEventArgs e)
-        {
-            _isDoubleClick = e.Clicks > 1;
-        }
-
         private void TreeViewProject_BeforeExpand(object? sender, TreeViewCancelEventArgs e)
         {
-            if (_isDoubleClick && e.Action == TreeViewAction.Expand)
-                e.Cancel = true;
-        }
-
-        private void TreeViewProject_BeforeCollapse(object? sender, TreeViewCancelEventArgs e)
-        {
-            if (_isDoubleClick && e.Action == TreeViewAction.Collapse)
-                e.Cancel = true;
+            if (e.Node != null && (e.Node as ServerTreeNode)?.NodeType == Classes.Constants.ServerNodeType.Schema)
+            {
+                TreeManagement.PopulateSchemaNodeOnExpand(treeViewProject, (ServerTreeNode)e.Node);
+            }
         }
 
         #endregion
@@ -628,39 +401,11 @@ namespace Katzebase.UI
             return null;
         }
 
-        private void AddOrSelectTab(string filePath)
-        {
-            var tabFilePage = FindTabByFilePath(filePath);
-            if (tabFilePage != null)
-            {
-                tabControlBody.SelectedTab = tabFilePage;
-            }
-            else
-            {
-                AddTab(filePath);
-            }
-            SyncToolbarAndMenuStates();
-        }
-
-        private TabFilePage? FindTabByFilePath(string filePath)
-        {
-            filePath = filePath.ToLower();
-
-            foreach (var tabFilePage in tabControlBody.TabPages.Cast<TabFilePage>())
-            {
-                if (tabFilePage.FilePath.ToLower() == filePath)
-                {
-                    return tabFilePage;
-                }
-            }
-            return null;
-        }
-
-        private TabFilePage AddTab(string filePath)
+        private TabFilePage AddTab(string filePath, string serverAddress)
         {
             Utility.EnsureNotNull(_editorFactory);
 
-            var tabFilePage = _editorFactory.Create(_serverAddressURL, filePath);
+            var tabFilePage = _editorFactory.Create(serverAddress, filePath);
 
             tabFilePage.Editor.KeyUp += Editor_KeyUp;
 
@@ -694,6 +439,34 @@ namespace Katzebase.UI
                 tabControlBody.TabPages.Remove(tab);
             }
             SyncToolbarAndMenuStates();
+        }
+
+        bool Connect()
+        {
+            try
+            {
+                using var form = new FormConnect();
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    _lastusedServerAddress = form.ServerAddressURL;
+
+                    var tabFilePage = AddTab(FormUtility.GetNextNewFileName(), _lastusedServerAddress);
+                    tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\tProductID, LocationID, Shelf,\r\n\tBin, Quantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\nWHERE\r\n\t(\r\n\t\tLocationId = 6\r\n\t\tAND Shelf != 'R'\r\n\t\tAND Quantity = 299\r\n\t)\r\n\tOR\r\n\t(\r\n\t\t(\r\n\t\t\tLocationId = 6\r\n\t\t\tAND Shelf != 'M'\r\n\t\t)\r\n\t\tAND Quantity = 299\r\n\t\tOR ProductId = 366\r\n\t)\r\n\tAND\r\n\t(\r\n\t\tBIN = 8\r\n\t\tOR Bin = 11\r\n\t\tOR Bin = 19\r\n\t)\r\n";
+                    //tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\n";
+                    TreeManagement.PopulateServer(treeViewProject, _lastusedServerAddress);
+
+                    foreach (TreeNode node in treeViewProject.Nodes)
+                    {
+                        node.Expand();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, PublicLibrary.Constants.FriendlyName);
+            }
+
+            return false;
         }
 
         bool Disconnect()
@@ -1035,6 +808,25 @@ namespace Katzebase.UI
             }
         }
 
+        private void saveAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (var tabFilePage in tabControlBody.TabPages.Cast<TabFilePage>())
+            {
+                tabFilePage.Save();
+            }
+        }
+
+        private void toolStripButtonNewProject_Click(object sender, EventArgs e)
+        {
+            var tabFilePage = AddTab(FormUtility.GetNextNewFileName(), _lastusedServerAddress);
+            tabFilePage.Editor.Text = "SET TraceWaitTimes OFF;\r\n\r\n";
+        }
+
+        private void connectToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Connect();
+        }
+
         private void disconnectToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Disconnect();
@@ -1236,11 +1028,5 @@ namespace Katzebase.UI
         }
 
         #endregion
-
-        private void toolStripButtonNewProject_Click(object sender, EventArgs e)
-        {
-            var tabFilePage = AddTab("New File.kbs");
-            tabFilePage.Editor.Text = "SET TraceWaitTimes OFF;\r\n\r\n";
-        }
     }
 }

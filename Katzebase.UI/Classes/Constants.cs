@@ -2,11 +2,14 @@
 {
     public static class Constants
     {
-        public enum ProjectNodeType
+        public enum ServerNodeType
         {
             None,
+            Server,
             Schema,
-            Index
+            Index,
+            IndexFolder,
+            TreeNotLoaded
         }
     }
 }

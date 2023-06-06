@@ -4,6 +4,8 @@ using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
+using System.Collections.Generic;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
@@ -174,7 +176,7 @@ namespace Katzebase.Engine.Schemas
             }
         }
 
-        public List<PersistSchema> GetList(ulong processId, string schema)
+        public List<KbSchema> GetList(ulong processId, string schema)
         {
             try
             {
@@ -186,7 +188,7 @@ namespace Katzebase.Engine.Schemas
                         throw new KbInvalidSchemaException(schema);
                     }
 
-                    var list = new List<PersistSchema>();
+                    var result = new List<KbSchema>();
 
                     if (schemaMeta.DiskPath == null)
                     {
@@ -201,12 +203,12 @@ namespace Katzebase.Engine.Schemas
 
                     foreach (var item in schemaCatalog.Collection)
                     {
-                        list.Add(item);
+                        result.Add(PersistSchema.ToPayload(item));
                     }
 
                     txRef.Commit();
 
-                    return list;
+                    return result;
                 }
             }
             catch (Exception ex)

@@ -27,3 +27,7 @@ packages/
 Katzebase.UI/bin/
 
 Katzebase.UI/obj/
+
+Katzebase.PublicLibrary/bin/
+
+Katzebase.PublicLibrary/obj/

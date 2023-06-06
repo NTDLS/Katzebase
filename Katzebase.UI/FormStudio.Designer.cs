@@ -63,6 +63,7 @@
             toolStripButtonSnippets = new ToolStripButton();
             menuStrip1 = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
+            connectToolStripMenuItem = new ToolStripMenuItem();
             closeProjectToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem2 = new ToolStripSeparator();
             saveAllToolStripMenuItem = new ToolStripMenuItem();
@@ -77,11 +78,11 @@
             splitContainerOutput = new SplitContainer();
             tabControlOutput = new TabControl();
             tabPagePreview = new TabPage();
+            richTextBoxExplain = new RichTextBox();
             tabPageOutput = new TabPage();
             richTextBoxOutput = new RichTextBox();
             tabPageResults = new TabPage();
             dataGridViewResults = new DataGridView();
-            richTextBoxExplain = new RichTextBox();
             ((System.ComponentModel.ISupportInitialize)splitContainerProject).BeginInit();
             splitContainerProject.Panel1.SuspendLayout();
             splitContainerProject.Panel2.SuspendLayout();
@@ -404,10 +405,17 @@
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { closeProjectToolStripMenuItem, toolStripMenuItem2, saveAllToolStripMenuItem, toolStripMenuItem1, exitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectToolStripMenuItem, closeProjectToolStripMenuItem, toolStripMenuItem2, saveAllToolStripMenuItem, toolStripMenuItem1, exitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new Size(37, 20);
             fileToolStripMenuItem.Text = "File";
+            // 
+            // connectToolStripMenuItem
+            // 
+            connectToolStripMenuItem.Name = "connectToolStripMenuItem";
+            connectToolStripMenuItem.Size = new Size(133, 22);
+            connectToolStripMenuItem.Text = "Connect";
+            connectToolStripMenuItem.Click += connectToolStripMenuItem_Click;
             // 
             // closeProjectToolStripMenuItem
             // 
@@ -426,6 +434,7 @@
             saveAllToolStripMenuItem.Name = "saveAllToolStripMenuItem";
             saveAllToolStripMenuItem.Size = new Size(133, 22);
             saveAllToolStripMenuItem.Text = "Save All";
+            saveAllToolStripMenuItem.Click += saveAllToolStripMenuItem_Click;
             // 
             // toolStripMenuItem1
             // 
@@ -522,6 +531,15 @@
             tabPagePreview.Text = "Preview";
             tabPagePreview.UseVisualStyleBackColor = true;
             // 
+            // richTextBoxExplain
+            // 
+            richTextBoxExplain.Dock = DockStyle.Fill;
+            richTextBoxExplain.Location = new Point(0, 0);
+            richTextBoxExplain.Name = "richTextBoxExplain";
+            richTextBoxExplain.Size = new Size(1024, 162);
+            richTextBoxExplain.TabIndex = 1;
+            richTextBoxExplain.Text = "";
+            // 
             // tabPageOutput
             // 
             tabPageOutput.Controls.Add(richTextBoxOutput);
@@ -564,15 +582,6 @@
             dataGridViewResults.RowTemplate.Height = 25;
             dataGridViewResults.Size = new Size(1024, 162);
             dataGridViewResults.TabIndex = 1;
-            // 
-            // richTextBoxExplain
-            // 
-            richTextBoxExplain.Dock = DockStyle.Fill;
-            richTextBoxExplain.Location = new Point(0, 0);
-            richTextBoxExplain.Name = "richTextBoxExplain";
-            richTextBoxExplain.Size = new Size(1024, 162);
-            richTextBoxExplain.TabIndex = 1;
-            richTextBoxExplain.Text = "";
             // 
             // FormStudio
             // 
@@ -667,5 +676,6 @@
         private DataGridView dataGridViewResults;
         private ToolStripButton toolStripButtonExplainPlan;
         private RichTextBox richTextBoxExplain;
+        private ToolStripMenuItem connectToolStripMenuItem;
     }
 }

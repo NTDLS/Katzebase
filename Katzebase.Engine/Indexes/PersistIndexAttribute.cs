@@ -14,6 +14,14 @@ namespace Katzebase.Engine.Indexes
             };
         }
 
+        public static KbIndexAttribute ToPayload(PersistIndexAttribute indexAttribute)
+        {
+            return new KbIndexAttribute()
+            {
+                Field = indexAttribute.Field
+            };
+        }
+
         public PersistIndexAttribute Clone()
         {
             return new PersistIndexAttribute()

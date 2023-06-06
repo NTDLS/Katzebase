@@ -65,6 +65,11 @@ namespace Katzebase.Engine.Query.Condition
 
         public string BuildFullVirtualExpression()
         {
+            if (Conditions.Subsets.Count == 0)
+            {
+                return string.Empty;
+            }
+
             var result = new StringBuilder();
             result.AppendLine($"[{FriendlyExp(Conditions.RootSubsetKey)}]" + (CanApplyIndexing() ? " {Indexable}" : " {non-Indexable}"));
 

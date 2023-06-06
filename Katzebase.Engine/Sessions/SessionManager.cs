@@ -69,7 +69,7 @@ namespace Katzebase.Engine.Sessions
                         {
                             return true;
                         }
-                        else  if (value == "on")
+                        else  if (value == "off")
                         {
                             return false;
                         }
