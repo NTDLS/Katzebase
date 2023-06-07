@@ -56,7 +56,7 @@ namespace Katzebase.Engine.Query.Tokenizers
             return logicalConnector == LogicalConnector.None ? string.Empty : logicalConnector.ToString().ToUpper();
         }
 
-        public static string LogicalConnectorToLogicString(LogicalConnector logicalConnector)
+        public static string LogicalConnectorToOperator(LogicalConnector logicalConnector)
         {
             switch (logicalConnector)
             {

@@ -32,97 +32,84 @@ namespace Katzebase.Engine.Query.Condition
 
         public bool IsMatch(string passedValue)
         {
-            if (LogicalQualifier == LogicalQualifier.Equals)
+            return IsMatch(passedValue, this.LogicalQualifier, Right.Value);
+        }
+
+        public static bool IsMatch(string? leftString, LogicalQualifier logicalQualifier, string? rightString)
+        {
+            if (logicalQualifier == LogicalQualifier.Equals)
             {
-                return passedValue == Right.Value;
+                return leftString == rightString;
             }
-            else if (LogicalQualifier == LogicalQualifier.NotEquals)
+            else if (logicalQualifier == LogicalQualifier.NotEquals)
             {
-                return passedValue != Right.Value;
+                return leftString != rightString;
             }
-            else if (LogicalQualifier == LogicalQualifier.GreaterThan)
+            else if (logicalQualifier == LogicalQualifier.GreaterThan)
             {
-                if (decimal.TryParse(passedValue, out decimal left) && decimal.TryParse(Right.Value, out decimal right))
+                if (decimal.TryParse(leftString, out decimal left) && decimal.TryParse(rightString, out decimal right))
                 {
                     return left > right;
                 }
             }
-            else if (LogicalQualifier == LogicalQualifier.LessThan)
+            else if (logicalQualifier == LogicalQualifier.LessThan)
             {
-                if (decimal.TryParse(passedValue, out decimal left) && decimal.TryParse(Right.Value, out decimal right))
+                if (decimal.TryParse(leftString, out decimal left) && decimal.TryParse(rightString, out decimal right))
                 {
                     return left < right;
                 }
             }
-            else if (LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
+            else if (logicalQualifier == LogicalQualifier.GreaterThanOrEqual)
             {
-                if (decimal.TryParse(passedValue, out decimal left) && decimal.TryParse(Right.Value, out decimal right))
+                if (decimal.TryParse(leftString, out decimal left) && decimal.TryParse(rightString, out decimal right))
                 {
                     return left >= right;
                 }
             }
-            else if (LogicalQualifier == LogicalQualifier.LessThanOrEqual)
+            else if (logicalQualifier == LogicalQualifier.LessThanOrEqual)
             {
-                if (decimal.TryParse(passedValue, out decimal left) && decimal.TryParse(Right.Value, out decimal right))
+                if (decimal.TryParse(leftString, out decimal left) && decimal.TryParse(rightString, out decimal right))
                 {
                     return left <= right;
                 }
             }
-            else if (LogicalQualifier == LogicalQualifier.Like)
+            else if (logicalQualifier == LogicalQualifier.Like
+                || logicalQualifier == LogicalQualifier.NotLike)
             {
-                var right = Right.Value;
+                var right = rightString;
+                bool result = false;
+
                 if (right != null)
                 {
                     bool startsWith = right.StartsWith("%");
                     bool endsWith = right.EndsWith("%");
 
+
                     right = right.Trim('%');
 
                     if (startsWith == true && endsWith == true)
                     {
-                        return passedValue.Contains(right);
+                        result = leftString?.Contains(right) ?? false;
                     }
                     else if (startsWith == true)
                     {
-                        return passedValue.EndsWith(right);
+                        result = leftString?.EndsWith(right) ?? false;
                     }
                     else if (endsWith == true)
                     {
-                        return passedValue.StartsWith(right);
+                        result = leftString?.StartsWith(right) ?? false;
                     }
                     else
                     {
-                        return passedValue == Right.Value;
+                        result = leftString == rightString;
                     }
                 }
-            }
-            else if (LogicalQualifier == LogicalQualifier.NotLike)
-            {
-                var right = Right.Value;
-                if (right != null)
+
+                if (logicalQualifier == LogicalQualifier.NotLike)
                 {
-                    bool startsWith = right.StartsWith("%");
-                    bool endsWith = right.EndsWith("%");
-
-                    right = right.Trim('%');
-
-                    if (startsWith == true && endsWith == true)
-                    {
-                        return passedValue.Contains(right) == false;
-                    }
-                    else if (startsWith == true)
-                    {
-                        return passedValue.EndsWith(right) == false;
-                    }
-                    else if (endsWith == true)
-                    {
-                        return passedValue.StartsWith(right) == false;
-                    }
-                    else
-                    {
-                        return passedValue == Right.Value == false;
-                    }
+                    return result == false;
                 }
+                return result;
             }
             else
             {

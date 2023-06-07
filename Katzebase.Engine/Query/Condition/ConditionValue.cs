@@ -23,6 +23,8 @@ namespace Katzebase.Engine.Query.Condition
 
         private string? _value = null;
 
+        public string Prefix { get; set; } = string.Empty;
+
         public ConditionValue Clone()
         {
             return new ConditionValue()
@@ -93,14 +95,28 @@ namespace Katzebase.Engine.Query.Condition
 
                 if (_value != null)
                 {
-                    //Handle escape sequences:
-                    _value = _value.Replace("\\'", "\'");
-
                     if (_value.StartsWith('\'') && _value.EndsWith('\''))
                     {
+                        //Handle escape sequences:
+                        _value = _value.Replace("\\'", "\'");
+
                         _value = _value.Substring(1, _value.Length - 2);
                         IsString = true;
                         IsConstant = true;
+                    }
+                    else
+                    {
+                        if (_value.Contains('.'))
+                        {
+                            var parts = _value.Split('.');
+                            if (parts.Count() != 2)
+                            {
+                                throw new KbParserException("Invalid query. Found [" + _value + "], Expected a multi-part condition field.");
+                            }
+
+                            Prefix = parts[0];
+                            _value = parts[1];
+                        }
                     }
 
                     if (_value.All(char.IsDigit))

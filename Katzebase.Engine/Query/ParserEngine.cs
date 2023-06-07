@@ -221,7 +221,7 @@ namespace Katzebase.Engine.Query
                     schemaAlias = query.GetNextToken();
                 }
 
-                result.Schemas.Add(new QuerySchema(sourceSchema, schemaAlias));
+                result.Schemas.Add(new QuerySchema(sourceSchema.ToLower(), schemaAlias.ToLower()));
 
                 while (query.IsNextToken("inner"))
                 {
@@ -286,7 +286,7 @@ namespace Katzebase.Engine.Query
                     var joinConditionsText = query.Text.Substring(joinCoOnditionsStartPosition, query.Position - joinCoOnditionsStartPosition).Trim();
                     var joinConditions = Conditions.Parse(joinConditionsText, query.LiteralStrings);
 
-                    result.Schemas.Add(new QuerySchema(subSchemaSchema, subSchemaAlias, joinConditions));
+                    result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLower(), subSchemaAlias.ToLower(), joinConditions));
                 }
 
                 token = query.GetNextToken();
