@@ -1,5 +1,4 @@
-﻿using Katzebase.PublicLibrary.Client.Management;
-using Katzebase.PublicLibrary.Payloads;
+﻿using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
 
 namespace Katzebase.Engine.Schemas

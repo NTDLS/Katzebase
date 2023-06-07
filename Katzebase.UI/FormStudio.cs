@@ -1,14 +1,11 @@
-using ICSharpCode.AvalonEdit;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Client;
-using Katzebase.PublicLibrary.Client.Management;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Katzebase.UI.Classes;
 using Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
-using System.Security.Policy;
 using System.Text;
 
 namespace Katzebase.UI

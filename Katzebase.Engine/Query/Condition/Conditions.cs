@@ -1,8 +1,6 @@
 ﻿using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary;
-using Newtonsoft.Json.Linq;
-using System.Reflection.Metadata;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 

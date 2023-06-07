@@ -2,8 +2,6 @@
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using Microsoft.Win32;
-using System.Xml.Linq;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Sessions
@@ -69,7 +67,7 @@ namespace Katzebase.Engine.Sessions
                         {
                             return true;
                         }
-                        else  if (value == "off")
+                        else if (value == "off")
                         {
                             return false;
                         }

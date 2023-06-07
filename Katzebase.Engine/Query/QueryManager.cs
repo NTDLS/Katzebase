@@ -1,9 +1,5 @@
 ﻿using Katzebase.Engine.KbLib;
-using Katzebase.Engine.Query.Condition;
-using Katzebase.PublicLibrary.Client.Management;
 using Katzebase.PublicLibrary.Payloads;
-using System.Runtime.Intrinsics.X86;
-using System;
 
 namespace Katzebase.Engine.Query
 {

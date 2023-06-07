@@ -1,22 +1,16 @@
-﻿using Katzebase.Engine.Indexes;
-using Katzebase.Engine.Query.Condition;
+﻿using Katzebase.Engine.Documents.Query.SingleSchema.Threading;
+using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query;
+using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
-using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static Katzebase.Engine.Documents.Query.SingleSchema.Threading.SSQDocumentThreadingConstants;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
-using Katzebase.Engine.Transactions;
-using System.Web;
-using Katzebase.Engine.Documents.Query.SingleSchema.Threading;
 
 namespace Katzebase.Engine.Documents.Query.SingleSchema
 {
@@ -49,7 +43,7 @@ namespace Katzebase.Engine.Documents.Query.SingleSchema
             var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
-            var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMeta, query.Conditions);
+            var lookupOptimization = SSQStaticOptimization.SelectIndexesForConditionLookupOptimization(core, transaction, schemaMeta, query.Conditions);
 
             //If we dont have anby conditions then we just need to return all rows from the schema.
             //TODO: Add threading.

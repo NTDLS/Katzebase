@@ -1,5 +1,4 @@
-﻿using Katzebase.Engine.Documents.Query.SingleSchema;
-using Katzebase.Engine.Query;
+﻿using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;

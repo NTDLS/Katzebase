@@ -1,12 +1,4 @@
 ﻿using Katzebase.PublicLibrary.Client;
-using Katzebase.PublicLibrary.Client.Management;
-using Katzebase.PublicLibrary.Payloads;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static Katzebase.UI.Classes.Constants;
 
 namespace Katzebase.UI.Classes

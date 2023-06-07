@@ -1,5 +1,4 @@
-﻿using Katzebase.PublicLibrary.Client.Management;
-using Katzebase.PublicLibrary.Exceptions;
+﻿using Katzebase.PublicLibrary.Exceptions;
 using System.Text.RegularExpressions;
 
 namespace Katzebase.Engine.Query.Tokenizers

@@ -50,7 +50,7 @@ namespace Katzebase.Engine.Documents
                     ptLockSchema?.EndTrace();
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-                    var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(txRef.Transaction, schemaMeta, preparedQuery.Conditions);
+                    var lookupOptimization = SSQStaticOptimization.SelectIndexesForConditionLookupOptimization(core, txRef.Transaction, schemaMeta, preparedQuery.Conditions);
                     result.Explanation = lookupOptimization.BuildFullVirtualExpression();
 
                     txRef.Commit(); //Not that we did any work.
@@ -230,7 +230,7 @@ namespace Katzebase.Engine.Documents
 
                 //Figure out which indexes could assist us in retrieving the desired documents (if any).
                 var ptOptimization = pt?.BeginTrace(PerformanceTraceType.Optimization);
-                var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMap.First().Value.SchemaMeta, query.Conditions);
+                var lookupOptimization = SSQStaticOptimization.SelectIndexesForConditionLookupOptimization(core, transaction, schemaMap.First().Value.SchemaMeta, query.Conditions);
                 ptOptimization?.EndTrace();
 
                 /*

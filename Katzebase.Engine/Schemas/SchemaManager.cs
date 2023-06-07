@@ -1,11 +1,9 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
-using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using System.Collections.Generic;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
