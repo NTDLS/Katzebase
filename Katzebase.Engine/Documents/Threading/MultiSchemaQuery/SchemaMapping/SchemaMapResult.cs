@@ -1,6 +1,6 @@
-﻿namespace Katzebase.Engine.Documents
+﻿namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping
 {
-    internal class SchemaMapResult
+    public class SchemaMapResult
     {
         public Dictionary<string, string> Values { get; set; } = new();
 

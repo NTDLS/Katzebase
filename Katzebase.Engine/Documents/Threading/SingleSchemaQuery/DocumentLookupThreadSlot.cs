@@ -1,6 +1,6 @@
-﻿using static Katzebase.Engine.Documents.Threading.DocumentThreadingConstants;
+﻿using static Katzebase.Engine.Documents.Threading.SingleSchemaQuery.DocumentThreadingConstants;
 
-namespace Katzebase.Engine.Documents.Threading
+namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
 {
     internal class DocumentLookupThreadSlot
     {

@@ -4,10 +4,9 @@ using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
-using static Katzebase.Engine.Documents.DocumentManager;
-using static Katzebase.Engine.Documents.Threading.DocumentThreadingConstants;
+using static Katzebase.Engine.Documents.Threading.SingleSchemaQuery.DocumentThreadingConstants;
 
-namespace Katzebase.Engine.Documents.Threading
+namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
 {
     internal class DocumentLookupThreads
     {
@@ -18,17 +17,19 @@ namespace Katzebase.Engine.Documents.Threading
         public int MaxThreads { get; private set; }
 
         private PerformanceTrace? pt;
-        private Transaction transaction { get; set; }
-        private QuerySchemaMap SchemaMap { get; set; }
-        private PreparedQuery query { get; set; }
-        private ConditionLookupOptimization lookupOptimization { get; set; }
-        private ParameterizedThreadStart threadProc { get; set; }
+        private Transaction transaction;
+        private PersistSchema SchemaMeta;
+        private PreparedQuery query;
+        private ConditionLookupOptimization lookupOptimization;
+        private ParameterizedThreadStart threadProc;
+        private Core core;
 
-        public DocumentLookupThreads(PerformanceTrace? pt, Transaction transaction, QuerySchemaMap schemaMap, PreparedQuery query,
+        public DocumentLookupThreads(Core core, PerformanceTrace? pt, Transaction transaction, PersistSchema schemaMeta, PreparedQuery query,
             ConditionLookupOptimization lookupOptimization, ParameterizedThreadStart threadProc)
         {
+            this.core = core;
             this.transaction = transaction;
-            this.SchemaMap = schemaMap;
+            this.SchemaMeta = schemaMeta;
             this.query = query;
             this.lookupOptimization = lookupOptimization;
             this.threadProc = threadProc;
@@ -53,7 +54,7 @@ namespace Katzebase.Engine.Documents.Threading
             for (int i = 0; i < maxThreads; i++)
             {
                 Slots.Add(new DocumentLookupThreadSlot(i));
-                var param = new DocumentLookupThreadParam(pt, transaction, SchemaMap, query, lookupOptimization, Slots, i, Results);
+                var param = new DocumentLookupThreadParam(core, pt, transaction, SchemaMeta, query, lookupOptimization, Slots, i, Results);
                 var thread = new Thread(threadProc);
                 thread.Start(param);
                 Threads.Add(thread);

@@ -1,9 +1,6 @@
-﻿namespace Katzebase.Engine.Documents
+﻿namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
 {
-    /// <summary>
-    /// We may kill this class in favor for a better one that has a collection of dictonaries.
-    /// </summary>
-    internal class DocumentLookupResults
+    public class DocumentLookupResults
     {
         public List<DocumentLookupResult> Collection { get; set; } = new();
 
