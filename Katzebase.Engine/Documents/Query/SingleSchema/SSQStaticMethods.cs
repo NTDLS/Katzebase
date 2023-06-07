@@ -11,13 +11,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Katzebase.Engine.Documents.Threading.SingleSchemaQuery.SSQDocumentThreadingConstants;
+using static Katzebase.Engine.Documents.Query.SingleSchema.Threading.SSQDocumentThreadingConstants;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 using Katzebase.Engine.Transactions;
 using System.Web;
+using Katzebase.Engine.Documents.Query.SingleSchema.Threading;
 
-namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
+namespace Katzebase.Engine.Documents.Query.SingleSchema
 {
     public static class SSQStaticMethods
     {
@@ -73,7 +74,7 @@ namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
                     var jContent = JObject.Parse(persistDocument.Content);
 
                     Utility.EnsureNotNull(documentCatalogItem.Id);
-                    var result = new SSQDocumentLookupResult((Guid)documentCatalogItem.Id);
+                    var result = new SSQDocumentLookupResult(documentCatalogItem.Id);
 
                     if (query.SelectFields.Count == 0)
                     {

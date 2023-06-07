@@ -23,4 +23,9 @@
     <ProjectReference Include="..\Katzebase.PublicLibrary\Katzebase.PublicLibrary.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Documents\Query\MultiSchema\Intersection\Threading\" />
+    <Folder Include="Documents\Query\MultiSchema\Threading\" />
+  </ItemGroup>
+
 </Project>

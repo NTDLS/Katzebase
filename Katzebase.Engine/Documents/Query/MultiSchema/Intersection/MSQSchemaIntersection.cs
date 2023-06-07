@@ -1,17 +1,17 @@
-﻿namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping
+﻿namespace Katzebase.Engine.Documents.Query.MultiSchema.Intersection
 {
     public class MSQSchemaIntersection
     {
-        public List<MSQSchemaMapResult> Collection { get; set; } = new();
+        public List<MSQSchemaIntersectionItem> Collection { get; set; } = new();
 
         public Dictionary<string, HashSet<Guid>> SchemaRIDs { get; set; } = new();
 
-        public void Add(MSQSchemaMapResult result)
+        public void Add(MSQSchemaIntersectionItem result)
         {
             Collection.Add(result);
         }
 
-        public void AddRange(List<MSQSchemaMapResult> result)
+        public void AddRange(List<MSQSchemaIntersectionItem> result)
         {
             Collection.AddRange(result);
         }

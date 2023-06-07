@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
+﻿namespace Katzebase.Engine.Documents.Query.SingleSchema.Threading
 {
     internal class SSQDocumentThreadingConstants
     {

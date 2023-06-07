@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping
+﻿namespace Katzebase.Engine.Documents.Query.MultiSchema.Intersection
 {
     public class MSQSchemaIntersectionItem
     {

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery
+namespace Katzebase.Engine.Documents.Query.MultiSchema
 {
     public static class MSQStaticMethods
     {

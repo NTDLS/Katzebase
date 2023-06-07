@@ -1,7 +1,7 @@
 ﻿using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
 
-namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping
+namespace Katzebase.Engine.Documents.Query.MultiSchema.Mapping
 {
     /// <summary>
     /// This class maps the schema and documents to a query supplied schema alias.

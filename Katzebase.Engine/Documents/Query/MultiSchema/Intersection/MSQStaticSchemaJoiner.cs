@@ -1,4 +1,5 @@
-﻿using Katzebase.Engine.Query;
+﻿using Katzebase.Engine.Documents.Query.MultiSchema.Mapping;
+using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
@@ -9,15 +10,15 @@ using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping
+namespace Katzebase.Engine.Documents.Query.MultiSchema.Intersection
 {
-    public static class MSQStaticSchemaMapper
+    public static class MSQStaticSchemaJoiner
     {
         /// <summary>
         /// Build a generic key/value dataset which is the combined fieldset from each inner joined document.
         /// </summary>
         public static MSQSchemaIntersection IntersetSchemas(Core core, PerformanceTrace? pt, Transaction transaction,
-            QuerySchemaMap schemaMap, PreparedQuery query, ConditionLookupOptimization lookupOptimization)
+            MSQQuerySchemaMap schemaMap, PreparedQuery query, ConditionLookupOptimization lookupOptimization)
         {
             var results = new MSQSchemaIntersection();
             //Here we should evaluate the join conditions (and probably the supplied actual conditions)
@@ -95,7 +96,7 @@ namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping
                             }
                             results.SchemaRIDs[nextLevel.Key].Add(nextLevelDocument.Id);
 
-                            results.Add(new MSQSchemaMapResult()); //TODO: add values.
+                            results.Add(new MSQSchemaIntersectionItem()); //TODO: add values.
                         }
 
                         jContentByAlias.Remove(nextLevel.Key);//We are no longer working with the document at this level.

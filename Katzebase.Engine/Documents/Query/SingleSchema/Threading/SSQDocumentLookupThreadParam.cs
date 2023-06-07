@@ -1,10 +1,11 @@
-﻿using Katzebase.Engine.Query;
+﻿using Katzebase.Engine.Documents.Query.SingleSchema;
+using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 
-namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
+namespace Katzebase.Engine.Documents.Query.SingleSchema.Threading
 {
     internal class SSQDocumentLookupThreadParam
     {

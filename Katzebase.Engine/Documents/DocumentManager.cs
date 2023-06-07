@@ -1,5 +1,6 @@
-﻿using Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping;
-using Katzebase.Engine.Documents.Threading.SingleSchemaQuery;
+﻿using Katzebase.Engine.Documents.Query.MultiSchema.Intersection;
+using Katzebase.Engine.Documents.Query.MultiSchema.Mapping;
+using Katzebase.Engine.Documents.Query.SingleSchema;
 using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Schemas;
@@ -78,7 +79,7 @@ namespace Katzebase.Engine.Documents
             {
                 var result = new KbQueryResult();
                 PerformanceTrace? pt = null;
-                
+
                 var session = core.Sessions.ByProcessId(processId);
                 if (session.TraceWaitTimesEnabled)
                 {
@@ -177,10 +178,33 @@ namespace Katzebase.Engine.Documents
             else if (query.SelectFields.Count == 0)
             {
                 query.SelectFields.Clear();
-                throw new KbNotImplementedException("No fields were selected.");
+                throw new KbGenericException("No fields were selected.");
             }
 
-            if (query.Schemas.Count > 1)
+            if (query.Schemas.Count == 0)
+            {
+                //I'm not even sure we can get here. Thats an exception, right?
+                throw new KbGenericException("No schemas were selected.");
+            }
+            //If we are querying a single schema, then we just have to apply the conditions in a few threads. Hand off the request and make it so.
+            else if (query.Schemas.Count == 1)
+            {
+                var singleSchema = query.Schemas.First();
+
+                var subsetResults = SSQStaticMethods.GetSingleSchemaDocumentsByConditions(core, pt, transaction, singleSchema.Name, query);
+
+                foreach (var field in query.SelectFields)
+                {
+                    result.Fields.Add(new KbQueryField(field.Alias));
+                }
+
+                foreach (var subsetResult in subsetResults.Collection)
+                {
+                    result.Rows.Add(new KbQueryRow(subsetResult.Values));
+                }
+            }
+            //If we are querying multiple schemas then we have to intersect the schemas and apply the conditions. Oh boy.
+            else if (query.Schemas.Count > 1)
             {
                 var schemaMap = new MSQQuerySchemaMap();
 
@@ -216,23 +240,7 @@ namespace Katzebase.Engine.Documents
 
                 var schemaMapResults = MSQStaticSchemaJoiner.IntersetSchemas(core, pt, transaction, schemaMap, query, lookupOptimization);
 
-                HashSet<string> strings = new HashSet<string>();    
-            }
-            else
-            {
-                var singleSchema = query.Schemas.First();
-
-                var subsetResults = SSQStaticMethods.GetSingleSchemaDocumentsByConditions(core, pt, transaction, singleSchema.Name, query);
-
-                foreach (var field in query.SelectFields)
-                {
-                    result.Fields.Add(new KbQueryField(field.Alias));
-                }
-
-                foreach (var subsetResult in subsetResults.Collection)
-                {
-                    result.Rows.Add(new KbQueryRow(subsetResult.Values));
-                }
+                HashSet<string> strings = new HashSet<string>();
             }
 
             return result;
