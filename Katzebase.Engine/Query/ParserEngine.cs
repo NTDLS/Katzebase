@@ -223,6 +223,72 @@ namespace Katzebase.Engine.Query
 
                 result.Schemas.Add(new QuerySchema(sourceSchema, schemaAlias));
 
+                while (query.IsNextToken("inner"))
+                {
+                    query.SkipNextToken();
+                    if (query.IsNextToken("join") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected [JOIN].");
+                    }
+                    query.SkipNextToken();
+
+                    string subSchemaSchema = query.GetNextToken();
+                    string subSchemaAlias = string.Empty;
+                    if (subSchemaSchema == string.Empty || TokenHelpers.IsValidIdentifier(subSchemaSchema, ":") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                    }
+
+                    if (query.IsNextToken("as"))
+                    {
+                        query.SkipNextToken();
+                        subSchemaAlias = query.GetNextToken();
+                    }
+
+                    token = query.GetNextToken();
+                    if (token.ToLower() != "on")
+                    {
+                        throw new KbParserException("Invalid query. Found [" + token + "], expected ON.");
+                    }
+
+                    int joinCoOnditionsStartPosition = query.Position;
+
+                    while (true)
+                    {
+                        if (query.IsNextToken(new string[] { "where", "" }))
+                        {
+                            break;
+                        }
+
+                        var joinLeftCondition = query.GetNextToken();
+                        if (joinLeftCondition == string.Empty || TokenHelpers.IsValidIdentifier(joinLeftCondition, ".") == false)
+                        {
+                            throw new KbParserException("Invalid query. Found [" + joinLeftCondition + "], expected left side of join expression.");
+                        }
+
+                        int logicalQualifierPos = query.Position;
+
+                        token = ConditionTokenizer.GetNextClauseToken(query.Text, ref logicalQualifierPos);
+                        if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
+                        {
+                            throw new KbParserException("Invalid query. Found [" + token + "], logical qualifier.");
+                        }
+
+                        query.SkipTo(logicalQualifierPos);
+
+                        var joinRightCondition = query.GetNextToken();
+                        if (joinRightCondition == string.Empty || TokenHelpers.IsValidIdentifier(joinRightCondition, ".") == false)
+                        {
+                            throw new KbParserException("Invalid query. Found [" + joinRightCondition + "], expected right side of join expression.");
+                        }
+                    }
+
+                    var joinConditionsText = query.Text.Substring(joinCoOnditionsStartPosition, query.Position - joinCoOnditionsStartPosition).Trim();
+                    var joinConditions = Conditions.Parse(joinConditionsText, query.LiteralStrings);
+
+                    result.Schemas.Add(new QuerySchema(subSchemaSchema, subSchemaAlias, joinConditions));
+                }
+
                 token = query.GetNextToken();
                 if (token != string.Empty && token.ToLower() != "where")
                 {
