@@ -4,16 +4,16 @@ using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
-using static Katzebase.Engine.Documents.Threading.SingleSchemaQuery.DocumentThreadingConstants;
+using static Katzebase.Engine.Documents.Threading.SingleSchemaQuery.SSQDocumentThreadingConstants;
 
 namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
 {
-    internal class DocumentLookupThreads
+    internal class SSQDocumentLookupThreads
     {
         public bool HasExcepted { get; set; }
-        public DocumentLookupResults Results { get; private set; } = new();
+        public SSQDocumentLookupResults Results { get; private set; } = new();
         public List<Thread> Threads { get; private set; } = new();
-        public List<DocumentLookupThreadSlot> Slots { get; private set; } = new();
+        public List<SSQDocumentLookupThreadSlot> Slots { get; private set; } = new();
         public int MaxThreads { get; private set; }
 
         private PerformanceTrace? pt;
@@ -24,7 +24,7 @@ namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
         private ParameterizedThreadStart threadProc;
         private Core core;
 
-        public DocumentLookupThreads(Core core, PerformanceTrace? pt, Transaction transaction, PersistSchema schemaMeta, PreparedQuery query,
+        public SSQDocumentLookupThreads(Core core, PerformanceTrace? pt, Transaction transaction, PersistSchema schemaMeta, PreparedQuery query,
             ConditionLookupOptimization lookupOptimization, ParameterizedThreadStart threadProc)
         {
             this.core = core;
@@ -53,8 +53,8 @@ namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
 
             for (int i = 0; i < maxThreads; i++)
             {
-                Slots.Add(new DocumentLookupThreadSlot(i));
-                var param = new DocumentLookupThreadParam(core, pt, transaction, SchemaMeta, query, lookupOptimization, Slots, i, Results);
+                Slots.Add(new SSQDocumentLookupThreadSlot(i));
+                var param = new SSQDocumentLookupThreadParam(core, pt, transaction, SchemaMeta, query, lookupOptimization, Slots, i, Results);
                 var thread = new Thread(threadProc);
                 thread.Start(param);
                 Threads.Add(thread);
@@ -71,7 +71,7 @@ namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
             }
         }
 
-        public DocumentLookupThreadSlot? GetReadyThread()
+        public SSQDocumentLookupThreadSlot? GetReadyThread()
         {
             Utility.EnsureNotNull(Slots);
 

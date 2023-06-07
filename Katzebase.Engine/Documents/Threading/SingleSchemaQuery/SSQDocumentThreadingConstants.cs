@@ -1,6 +1,6 @@
 ﻿namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
 {
-    internal class DocumentThreadingConstants
+    internal class SSQDocumentThreadingConstants
     {
         internal enum DocumentLookupThreadState
         {

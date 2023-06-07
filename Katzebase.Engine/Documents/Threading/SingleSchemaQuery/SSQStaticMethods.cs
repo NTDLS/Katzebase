@@ -11,7 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using static Katzebase.Engine.Documents.Threading.SingleSchemaQuery.DocumentThreadingConstants;
+using static Katzebase.Engine.Documents.Threading.SingleSchemaQuery.SSQDocumentThreadingConstants;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 using Katzebase.Engine.Transactions;
@@ -19,7 +19,7 @@ using System.Web;
 
 namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
 {
-    public static class StaticSingleSchemaDocumentSearcher
+    public static class SSQStaticMethods
     {
         /// <summary>
         /// Gets all documents by a subset of conditions.
@@ -30,7 +30,7 @@ namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
         /// <param name="query"></param>
         /// <param name="lookupOptimization"></param>
         /// <returns></returns>
-        public static DocumentLookupResults GetSingleSchemaDocumentsByConditions(Core core,
+        public static SSQDocumentLookupResults GetSingleSchemaDocumentsByConditions(Core core,
             PerformanceTrace? pt, Transaction transaction, string schemaName, PreparedQuery query)
         {
             //Lock the schema:
@@ -56,7 +56,7 @@ namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
             {
                 Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-                var results = new DocumentLookupResults();
+                var results = new SSQDocumentLookupResults();
                 foreach (var documentCatalogItem in documentCatalog.Collection)
                 {
                     if (query.RowLimit != 0 && results.Collection.Count >= query.RowLimit)
@@ -73,7 +73,7 @@ namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
                     var jContent = JObject.Parse(persistDocument.Content);
 
                     Utility.EnsureNotNull(documentCatalogItem.Id);
-                    var result = new DocumentLookupResult((Guid)documentCatalogItem.Id);
+                    var result = new SSQDocumentLookupResult((Guid)documentCatalogItem.Id);
 
                     if (query.SelectFields.Count == 0)
                     {
@@ -144,7 +144,7 @@ namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
             }
 
             var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
-            var threads = new DocumentLookupThreads(core, pt, transaction, schemaMeta, query, lookupOptimization, DocumentLookupThreadProc);
+            var threads = new SSQDocumentLookupThreads(core, pt, transaction, schemaMeta, query, lookupOptimization, DocumentLookupThreadProc);
 
             string fistSchemaAlias = query.Schemas.First().Alias;
 
@@ -211,7 +211,7 @@ namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
         private static void DocumentLookupThreadProc(object? obj)
         {
             Utility.EnsureNotNull(obj);
-            var param = (DocumentLookupThreadParam)obj;
+            var param = (SSQDocumentLookupThreadParam)obj;
             var slot = param.ThreadSlots[param.ThreadSlotNumber];
 
             try
@@ -258,7 +258,7 @@ namespace Katzebase.Engine.Documents.Threading.SingleSchemaQuery
                     if (evaluation)
                     {
                         Utility.EnsureNotNull(persistDocument.Id);
-                        var result = new DocumentLookupResult((Guid)persistDocument.Id);
+                        var result = new SSQDocumentLookupResult((Guid)persistDocument.Id);
 
                         foreach (var field in param.Query.SelectFields)
                         {

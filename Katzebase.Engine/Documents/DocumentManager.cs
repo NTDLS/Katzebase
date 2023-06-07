@@ -78,7 +78,7 @@ namespace Katzebase.Engine.Documents
             {
                 var result = new KbQueryResult();
                 PerformanceTrace? pt = null;
-
+                
                 var session = core.Sessions.ByProcessId(processId);
                 if (session.TraceWaitTimesEnabled)
                 {
@@ -172,7 +172,7 @@ namespace Katzebase.Engine.Documents
             if (query.SelectFields.Count == 1 && query.SelectFields[0].Key == "*")
             {
                 query.SelectFields.Clear();
-                throw new KbNotImplementedException("Select * is not implemented. This will require schema scampling.");
+                throw new KbNotImplementedException("Select * is not implemented. This will require schema sampling.");
             }
             else if (query.SelectFields.Count == 0)
             {
@@ -182,7 +182,7 @@ namespace Katzebase.Engine.Documents
 
             if (query.Schemas.Count > 1)
             {
-                var schemaMap = new QuerySchemaMap();
+                var schemaMap = new MSQQuerySchemaMap();
 
                 foreach (var querySchema in query.Schemas)
                 {
@@ -214,13 +214,15 @@ namespace Katzebase.Engine.Documents
                  *  Then we use the conditions that were supplied to eliminate results from that dataset.
                 */
 
-                var schemaMapResults = StaticSchemaMapper.Join(core, pt, transaction, schemaMap, query, lookupOptimization);
+                var schemaMapResults = MSQStaticSchemaJoiner.IntersetSchemas(core, pt, transaction, schemaMap, query, lookupOptimization);
+
+                HashSet<string> strings = new HashSet<string>();    
             }
             else
             {
                 var singleSchema = query.Schemas.First();
 
-                var subsetResults = StaticSingleSchemaDocumentSearcher.GetSingleSchemaDocumentsByConditions(core, pt, transaction, singleSchema.Name, query);
+                var subsetResults = SSQStaticMethods.GetSingleSchemaDocumentsByConditions(core, pt, transaction, singleSchema.Name, query);
 
                 foreach (var field in query.SelectFields)
                 {

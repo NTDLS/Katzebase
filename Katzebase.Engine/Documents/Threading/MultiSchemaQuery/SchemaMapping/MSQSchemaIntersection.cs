@@ -1,22 +1,22 @@
 ﻿namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping
 {
-    public class SchemaMapResults
+    public class MSQSchemaIntersection
     {
-        public List<SchemaMapResult> Collection { get; set; } = new();
+        public List<MSQSchemaMapResult> Collection { get; set; } = new();
 
         public Dictionary<string, HashSet<Guid>> SchemaRIDs { get; set; } = new();
 
-        public void Add(SchemaMapResult result)
+        public void Add(MSQSchemaMapResult result)
         {
             Collection.Add(result);
         }
 
-        public void AddRange(List<SchemaMapResult> result)
+        public void AddRange(List<MSQSchemaMapResult> result)
         {
             Collection.AddRange(result);
         }
 
-        public void AddRange(SchemaMapResults result)
+        public void AddRange(MSQSchemaIntersection result)
         {
             Collection.AddRange(result.Collection);
         }

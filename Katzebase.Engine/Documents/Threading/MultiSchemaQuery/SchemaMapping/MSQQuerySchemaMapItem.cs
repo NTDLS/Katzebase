@@ -1,15 +1,18 @@
 ﻿using Katzebase.Engine.Query.Condition;
 using Katzebase.Engine.Schemas;
 
-namespace Katzebase.Engine.Documents
+namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping
 {
-    public class QuerySchemaMapItem
+    /// <summary>
+    /// This class maps the schema and documents to a query supplied schema alias.
+    /// </summary>
+    public class MSQQuerySchemaMapItem
     {
         public PersistSchema SchemaMeta { get; set; }
         public PersistDocumentCatalog DocuemntCatalog { get; set; }
         public Conditions? Conditions { get; set; }
 
-        public QuerySchemaMapItem(PersistSchema schemaMeta, PersistDocumentCatalog docuemntCatalog, Conditions? conditions)
+        public MSQQuerySchemaMapItem(PersistSchema schemaMeta, PersistDocumentCatalog docuemntCatalog, Conditions? conditions)
         {
             SchemaMeta = schemaMeta;
             DocuemntCatalog = docuemntCatalog;

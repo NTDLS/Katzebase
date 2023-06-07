@@ -11,15 +11,15 @@ using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping
 {
-    public static class StaticSchemaMapper
+    public static class MSQStaticSchemaMapper
     {
         /// <summary>
         /// Build a generic key/value dataset which is the combined fieldset from each inner joined document.
         /// </summary>
-        public static SchemaMapResults Join(Core core, PerformanceTrace? pt, Transaction transaction,
+        public static MSQSchemaIntersection IntersetSchemas(Core core, PerformanceTrace? pt, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, ConditionLookupOptimization lookupOptimization)
         {
-            var results = new SchemaMapResults();
+            var results = new MSQSchemaIntersection();
             //Here we should evaluate the join conditions (and probably the supplied actual conditions)
             //  to see if we can do some early document elimination. We should also evaluate the indexes
             //  for use on the join clause.
@@ -95,7 +95,7 @@ namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping
                             }
                             results.SchemaRIDs[nextLevel.Key].Add(nextLevelDocument.Id);
 
-                            results.Add(new SchemaMapResult()); //TODO: add values.
+                            results.Add(new MSQSchemaMapResult()); //TODO: add values.
                         }
 
                         jContentByAlias.Remove(nextLevel.Key);//We are no longer working with the document at this level.

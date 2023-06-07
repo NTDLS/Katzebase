@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery.SchemaMapping
+namespace Katzebase.Engine.Documents.Threading.MultiSchemaQuery
 {
-    public static class StaticMultiSchemaDocumentSearcher
+    public static class MSQStaticMethods
     {
     }
 }
