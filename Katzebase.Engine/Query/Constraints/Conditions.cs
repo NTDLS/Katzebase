@@ -1,8 +1,12 @@
 ﻿using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query.Tokenizers;
+using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Exceptions;
+using Newtonsoft.Json.Linq;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Query.Constraints
 {
@@ -14,7 +18,9 @@ namespace Katzebase.Engine.Query.Constraints
         public List<ConditionSubset> Subsets = new();
 
         /// Every condition instance starts with a single root node that all others poaint back to given some lineage. This is the name of the root node.
-        public string RootSubsetKey { get; set; } = string.Empty;
+        public string RootSubsetKey { get; private set; } = string.Empty;
+
+        public string HighLevelExpressionTree { get; private set; } = string.Empty;
 
         /// <summary>
         /// Every condition instance starts with a single root node that all others poaint back to given some lineage. This is the root node.
@@ -71,15 +77,16 @@ namespace Katzebase.Engine.Query.Constraints
             return _lastLetter;
         }
 
-        public static Conditions Parse(string conditionsText, Dictionary<string, string> literalStrings)
+        public static Conditions Create(string conditionsText, Dictionary<string, string> literalStrings)
         {
             var conditions = new Conditions();
             conditionsText = conditionsText.ToLowerInvariant();
-            conditions.ParseInternal(conditionsText, literalStrings);
+            conditions.Parse(conditionsText, literalStrings);
+
             return conditions;
         }
 
-        private void ParseInternal(string conditionsText, Dictionary<string, string> literalStrings)
+        private void Parse(string conditionsText, Dictionary<string, string> literalStrings)
         {
             //We parse by parentheses so wrap the expression in them if it is not already.
             if (conditionsText.StartsWith('(') == false || conditionsText.StartsWith(')') == false)
@@ -102,10 +109,10 @@ namespace Katzebase.Engine.Query.Constraints
                     if (endPos > startPos)
                     {
                         string subsetVariable = $"s_{GetNextVariableLetter()}"; //S=Subset-Key
-
                         string subsetText = conditionsText.Substring(startPos, endPos - startPos + 1).Trim();
-                        var subset = new ConditionSubset(subsetVariable, subsetText.Substring(1, subsetText.Length - 2).Trim());
-                        this.AddSubset(literalStrings, subset);
+                        string parenTrimmedSubsetText = subsetText.Substring(1, subsetText.Length - 2).Trim();
+                        var subset = new ConditionSubset(subsetVariable, parenTrimmedSubsetText);
+                        AddSubset(literalStrings, subset);
                         conditionsText = conditionsText.Replace(subsetText, VariableToKey(subsetVariable));
                     }
                 }
@@ -115,14 +122,27 @@ namespace Katzebase.Engine.Query.Constraints
                 }
             }
 
-            this.RootSubsetKey = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
+            RootSubsetKey = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
 
             RemoveVariableMarkers();
 
             //Mark the root subset as such.
             Subsets.Where(o => o.SubsetKey == RootSubsetKey).Single().IsRoot = true;
 
+            HighLevelExpressionTree = BuildHighlevelExpressionTree();
+
+
             Utility.Assert(Root.Conditions.Any(), "The root expression cannot contain conditions.");
+        }
+
+        public string ReplaceFirst(string text, string search, string replace)
+        {
+            int pos = text.IndexOf(search);
+            if (pos < 0)
+            {
+                return text;
+            }
+            return text.Substring(0, pos) + replace + text.Substring(pos + search.Length);
         }
 
         private void RemoveVariableMarkers()
@@ -166,7 +186,8 @@ namespace Katzebase.Engine.Query.Constraints
         {
             var clone = new Conditions()
             {
-                RootSubsetKey = this.RootSubsetKey
+                RootSubsetKey = this.RootSubsetKey,
+                HighLevelExpressionTree = this.HighLevelExpressionTree,
             };
 
             foreach (var subset in Subsets)
@@ -313,6 +334,34 @@ namespace Katzebase.Engine.Query.Constraints
         }
 
         #endregion
+
+        /// <summary>
+        /// This function is used to build a logical expression at the subset level, it also demonstrates how we process the recursive logic.
+        /// </summary>
+        /// <returns></returns>
+        public string BuildHighlevelExpressionTree()
+        {
+            var expression = new StringBuilder($"({Root.Expression})");
+
+            foreach (var subsetKey in Root.SubsetKeys)
+            {
+                var subExpression = SubsetByKey(subsetKey);
+                expression.Replace(subsetKey, $"({subExpression.Expression})");
+                BuildHighlevelExpressionTree(ref expression, subExpression);
+            }
+
+            return expression.ToString();
+        }
+
+        public void BuildHighlevelExpressionTree(ref StringBuilder expression, ConditionSubset conditionSubset)
+        {
+            foreach (var subsetKey in conditionSubset.SubsetKeys)
+            {
+                var subExpression = SubsetByKey(subsetKey);
+                expression.Replace(subsetKey, $"({subExpression.Expression})");
+                BuildHighlevelExpressionTree(ref expression, subExpression);
+            }
+        }
 
         public string BuildConditionHash()
         {

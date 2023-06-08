@@ -211,7 +211,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             try
             {
-                var expression = new NCalc.Expression(param.LookupOptimization.Conditions.Root.Expression);
+                var expression = new NCalc.Expression(param.LookupOptimization.Conditions.HighLevelExpressionTree);
 
                 Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
 
@@ -238,13 +238,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
                     var jContent = JObject.Parse(persistDocument.Content);
 
-                    //If we have subsets, then we need to satisify those in order to complete the equation.
-                    foreach (var subsetKey in param.LookupOptimization.Conditions.Root.SubsetKeys)
-                    {
-                        var subExpression = param.LookupOptimization.Conditions.SubsetByKey(subsetKey);
-                        bool subExpressionResult = SatisifySubExpression(param.PT, param.LookupOptimization, jContent, subExpression);
-                        expression.Parameters[subsetKey] = subExpressionResult;
-                    }
+                    SetExpressionParameters(ref expression, param.LookupOptimization.Conditions, jContent);
 
                     var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
                     bool evaluation = (bool)expression.Evaluate();
@@ -279,25 +273,28 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         }
 
         /// <summary>
-        /// Mathematically collapses all subexpressions to return a boolean match.
+        /// Gets the json content values for the specified conditions.
         /// </summary>
-        /// <param name="lookupOptimization"></param>
+        /// <param name="expression"></param>
+        /// <param name="conditions"></param>
         /// <param name="jContent"></param>
-        /// <param name="conditionSubset"></param>
-        /// <returns></returns>
-        /// <exception cref="KbParserException"></exception>
-        private static bool SatisifySubExpression(PerformanceTrace? pt,
-            ConditionLookupOptimization lookupOptimization, JObject jContent, ConditionSubset conditionSubset)
+        private static void SetExpressionParameters(ref NCalc.Expression expression, Conditions conditions, JObject jContent)
         {
-            var expression = new NCalc.Expression(conditionSubset.Expression);
+            //If we have subsets, then we need to satisify those in order to complete the equation.
+            foreach (var subsetKey in conditions.Root.SubsetKeys)
+            {
+                var subExpression = conditions.SubsetByKey(subsetKey);
+                SetExpressionParametersRecursive(ref expression, conditions, subExpression, jContent);
+            }
+        }
 
+        private static void SetExpressionParametersRecursive(ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset, JObject jContent)
+        {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
-                var subExpression = lookupOptimization.Conditions.SubsetByKey(subsetKey);
-
-                bool subExpressionResult = SatisifySubExpression(pt, lookupOptimization, jContent, subExpression);
-                expression.Parameters[subsetKey] = subExpressionResult;
+                var subExpression = conditions.SubsetByKey(subsetKey);
+                SetExpressionParametersRecursive(ref expression, conditions, subExpression, jContent);
             }
 
             foreach (var condition in conditionSubset.Conditions)
@@ -314,12 +311,6 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     throw new KbParserException($"Field not found in document [{condition.Left.Value}].");
                 }
             }
-
-            var ptEvaluate = pt?.BeginTrace(PerformanceTraceType.Evaluate);
-            var evaluation = (bool)expression.Evaluate();
-            ptEvaluate?.EndTrace();
-
-            return evaluation;
         }
 
     }

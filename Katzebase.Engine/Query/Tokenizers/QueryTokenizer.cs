@@ -169,6 +169,9 @@ namespace Katzebase.Engine.Query.Tokenizers
         {
             var literalStrings = SwapOutLiteralStrings(ref query);
             query = query.Trim();
+
+            query = query.Replace("(", " ( ").Replace(")", " ) ");
+
             RemoveComments(ref query);
             if (swapLiteralsBackIn)
             {

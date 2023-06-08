@@ -284,7 +284,7 @@ namespace Katzebase.Engine.Query
                     }
 
                     var joinConditionsText = query.Text.Substring(joinCoOnditionsStartPosition, query.Position - joinCoOnditionsStartPosition).Trim();
-                    var joinConditions = Conditions.Parse(joinConditionsText, query.LiteralStrings);
+                    var joinConditions = Conditions.Create(joinConditionsText, query.LiteralStrings);
 
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLower(), subSchemaAlias.ToLower(), joinConditions));
                 }
@@ -303,7 +303,7 @@ namespace Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found [" + token + "], expected list of conditions.");
                     }
 
-                    result.Conditions = Conditions.Parse(conditionText, query.LiteralStrings);
+                    result.Conditions = Conditions.Create(conditionText, query.LiteralStrings);
                 }
                 else if (token != string.Empty)
                 {
