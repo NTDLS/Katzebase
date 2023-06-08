@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Documents.Query.MultiSchema.Intersection
+﻿namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 {
     public class MSQSchemaIntersection
     {

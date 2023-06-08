@@ -1,10 +1,10 @@
 ﻿using Katzebase.Engine.KbLib;
-using Katzebase.Engine.Query.Condition;
+using Katzebase.Engine.Query.Constraints;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Query
 {
-    public class PreparedQuery
+    internal class PreparedQuery
     {
         public List<QuerySchema> Schemas { get; set; } = new();
         public int RowLimit { get; set; }

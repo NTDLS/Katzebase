@@ -1,8 +1,8 @@
-﻿using Katzebase.Engine.Query.Condition;
+﻿using Katzebase.Engine.Query.Constraints;
 
 namespace Katzebase.Engine.Query
 {
-    public class QuerySchema
+    internal class QuerySchema
     {
         public string Name { get; set; }
         public string Alias { get; set; }

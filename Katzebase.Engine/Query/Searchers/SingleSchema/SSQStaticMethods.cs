@@ -1,20 +1,20 @@
-﻿using Katzebase.Engine.Documents.Query.SingleSchema.Threading;
+﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
-using Katzebase.Engine.Query;
-using Katzebase.Engine.Query.Condition;
+using Katzebase.Engine.Query.Constraints;
+using Katzebase.Engine.Query.Searchers.SingleSchema.Threading;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
-using static Katzebase.Engine.Documents.Query.SingleSchema.Threading.SSQDocumentThreadingConstants;
 using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Query.Searchers.SingleSchema.Threading.SSQDocumentThreadingConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace Katzebase.Engine.Documents.Query.SingleSchema
+namespace Katzebase.Engine.Query.Searchers.SingleSchema
 {
-    public static class SSQStaticMethods
+    internal static class SSQStaticMethods
     {
         /// <summary>
         /// Gets all documents by a subset of conditions.

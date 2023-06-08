@@ -1,6 +1,6 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
 
-namespace Katzebase.Engine.Query.Condition
+namespace Katzebase.Engine.Query.Constraints
 {
     public class ConditionValue
     {

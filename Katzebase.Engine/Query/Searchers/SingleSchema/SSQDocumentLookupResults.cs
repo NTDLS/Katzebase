@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Documents.Query.SingleSchema
+﻿namespace Katzebase.Engine.Query.Searchers.SingleSchema
 {
     public class SSQDocumentLookupResults
     {

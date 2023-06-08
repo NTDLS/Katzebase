@@ -1,9 +1,9 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Query.Condition
+namespace Katzebase.Engine.Query.Constraints
 {
-    public class Condition
+    internal class Condition
     {
         public bool CoveredByIndex { get; set; } = false;
         public string SubsetKey { get; set; }

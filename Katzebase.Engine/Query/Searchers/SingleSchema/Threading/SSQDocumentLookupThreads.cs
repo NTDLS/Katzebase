@@ -1,12 +1,12 @@
-﻿using Katzebase.Engine.Query;
-using Katzebase.Engine.Query.Condition;
+﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
-using static Katzebase.Engine.Documents.Query.SingleSchema.Threading.SSQDocumentThreadingConstants;
+using static Katzebase.Engine.Query.Searchers.SingleSchema.Threading.SSQDocumentThreadingConstants;
 
-namespace Katzebase.Engine.Documents.Query.SingleSchema.Threading
+namespace Katzebase.Engine.Query.Searchers.SingleSchema.Threading
 {
     internal class SSQDocumentLookupThreads
     {

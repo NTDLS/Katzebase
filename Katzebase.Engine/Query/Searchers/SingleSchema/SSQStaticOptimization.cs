@@ -1,14 +1,14 @@
 ﻿using Katzebase.Engine.Indexes;
-using Katzebase.Engine.Query.Condition;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Documents.Query.SingleSchema
+namespace Katzebase.Engine.Query.Searchers.SingleSchema
 {
-    public static class SSQStaticOptimization
+    internal static class SSQStaticOptimization
     {
         /// <summary>
         /// Takes a nested set of conditions and returns a selection of indexes as well as a clone of the conditions with associated indexes.

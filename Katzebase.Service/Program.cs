@@ -18,12 +18,12 @@ namespace Katzebase.Service
             }
         }
 
-        private static Settings? _configuration = null;
-        public static Settings Configuration
+        private static KatzebaseSettings? _settings = null;
+        public static KatzebaseSettings Configuration
         {
             get
             {
-                if (_configuration == null)
+                if (_settings == null)
                 {
                     IConfiguration config = new ConfigurationBuilder()
                                  .AddJsonFile("appsettings.json")
@@ -31,13 +31,13 @@ namespace Katzebase.Service
                                  .Build();
 
                     // Get values from the config given their key and their target type.
-                    var settings = config.GetRequiredSection("Settings").Get<Settings>();
+                    var settings = config.GetRequiredSection("Settings").Get<KatzebaseSettings>();
                     if (settings == null)
                     {
                         throw new Exception("Failed to load settings");
                     }
 
-                    _configuration = new Settings()
+                    _settings = new KatzebaseSettings()
                     {
                         BaseAddress = settings.BaseAddress,
                         DataRootPath = settings.DataRootPath.TrimEnd(new char[] { '/', '\\' }),
@@ -54,7 +54,7 @@ namespace Katzebase.Service
                     };
                 }
 
-                return _configuration;
+                return _settings;
             }
         }
 
@@ -101,7 +101,7 @@ namespace Katzebase.Service
             Core.Log.Write($"Stopping...");
 
             app.StopAsync();
-            Core.Shutdown();
+            Core.Stop();
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace Katzebase.PrivateLibrary
 {
-    public class Settings
+    public class KatzebaseSettings
     {
         /// <summary>
         /// Whether the engine will keep instance level health metrics. This can be useful but will have a serious impact on performance.

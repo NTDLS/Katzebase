@@ -18,22 +18,23 @@ namespace Katzebase.Engine
 {
     public class Core
     {
+        internal IOManager IO;
+        internal LockManager Locking;
+        internal CacheManager Cache;
+        internal KatzebaseSettings settings;
+
         public SchemaManager Schemas;
-        public IOManager IO;
-        public LockManager Locking;
         public DocumentManager Documents;
         public TransactionManager Transactions;
-        public Settings settings;
         public LogManager Log;
         public HealthManager Health;
         public SessionManager Sessions;
-        public CacheManager Cache;
         public PersistIndexManager Indexes;
         public QueryManager Query;
 
         public MemoryCache LookupOptimizationCache { get; set; } = new MemoryCache("ConditionLookupOptimization");
 
-        public Core(Settings settings)
+        public Core(KatzebaseSettings settings)
         {
             this.settings = settings;
 
@@ -78,14 +79,14 @@ namespace Katzebase.Engine
 
         public void Start()
         {
-            Log.Write("Starting server.");
+            Log.Write("Starting the server.");
 
             Transactions.Recover();
         }
 
-        public void Shutdown()
+        public void Stop()
         {
-            Log.Write("Shutting down server.");
+            Log.Write("Stopping the server.");
 
             Health.Close();
             Log.Close();

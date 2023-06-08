@@ -10,7 +10,7 @@ namespace Katzebase.Engine.Sessions
     {
         private Core core;
         private ulong nextProcessId = 1;
-        public Dictionary<Guid, SessionState> Collection { get; set; } = new();
+        internal Dictionary<Guid, SessionState> Collection { get; set; } = new();
 
         public SessionManager(Core core)
         {
@@ -47,7 +47,7 @@ namespace Katzebase.Engine.Sessions
             }
         }
 
-        public KbActionResponse ExecuteSetVariable(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteSetVariable(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {

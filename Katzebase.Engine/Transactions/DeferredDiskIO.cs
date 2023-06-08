@@ -2,7 +2,7 @@
 
 namespace Katzebase.Engine.Transactions
 {
-    public class DeferredDiskIO
+    internal class DeferredDiskIO
     {
         private Core core;
         public Dictionary<string, DeferredDiskIOObject> Collection = new Dictionary<string, DeferredDiskIOObject>();

@@ -1,8 +1,8 @@
 ﻿using Katzebase.Engine.Indexes;
 
-namespace Katzebase.Engine.Query.Condition
+namespace Katzebase.Engine.Query.Constraints
 {
-    public class ConditionSubset
+    internal class ConditionSubset
     {
         public bool IsRoot { get; set; } = false;
         public string SubsetKey { get; set; }

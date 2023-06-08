@@ -1,11 +1,9 @@
-﻿using Katzebase.Engine.Documents.Query.MultiSchema.Intersection;
-using Katzebase.Engine.Documents.Query.MultiSchema.Mapping;
-using Katzebase.Engine.Documents.Query.SingleSchema;
-using Katzebase.Engine.KbLib;
+﻿using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query;
+using Katzebase.Engine.Query.Searchers;
+using Katzebase.Engine.Query.Searchers.SingleSchema;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
-using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
@@ -23,7 +21,7 @@ namespace Katzebase.Engine.Documents
             this.core = core;
         }
 
-        public KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -73,7 +71,7 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-        public KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -90,7 +88,7 @@ namespace Katzebase.Engine.Documents
                 using (var txRef = core.Transactions.Begin(processId))
                 {
                     ptAcquireTransaction?.EndTrace();
-                    result = FindDocumentsByPreparedQuery(pt, txRef.Transaction, preparedQuery);
+                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, pt, txRef.Transaction, preparedQuery);
                     txRef.Commit();
                 }
 
@@ -111,7 +109,7 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-        public KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
         {
             //TODO: This is a stub, this does NOT work.
             try
@@ -124,7 +122,7 @@ namespace Katzebase.Engine.Documents
                 {
                     ptAcquireTransaction?.EndTrace();
 
-                    result = FindDocumentsByPreparedQuery(pt, txRef.Transaction, preparedQuery);
+                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, pt, txRef.Transaction, preparedQuery);
 
                     //TODO: Delete the documents.
 
@@ -157,95 +155,6 @@ namespace Katzebase.Engine.Documents
                 throw;
             }
         }
-
-
-        /// <summary>
-        /// Finds all document using a prepared query.
-        /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="query"></param>
-        /// <returns></returns>
-        /// <exception cref="KbInvalidSchemaException"></exception>
-        private KbQueryResult FindDocumentsByPreparedQuery(PerformanceTrace? pt, Transaction transaction, PreparedQuery query)
-        {
-            var result = new KbQueryResult();
-
-            if (query.SelectFields.Count == 1 && query.SelectFields[0].Key == "*")
-            {
-                query.SelectFields.Clear();
-                throw new KbNotImplementedException("Select * is not implemented. This will require schema sampling.");
-            }
-            else if (query.SelectFields.Count == 0)
-            {
-                query.SelectFields.Clear();
-                throw new KbGenericException("No fields were selected.");
-            }
-
-            if (query.Schemas.Count == 0)
-            {
-                //I'm not even sure we can get here. Thats an exception, right?
-                throw new KbGenericException("No schemas were selected.");
-            }
-            //If we are querying a single schema, then we just have to apply the conditions in a few threads. Hand off the request and make it so.
-            else if (query.Schemas.Count == 1)
-            {
-                var singleSchema = query.Schemas.First();
-
-                var subsetResults = SSQStaticMethods.GetSingleSchemaDocumentsByConditions(core, pt, transaction, singleSchema.Name, query);
-
-                foreach (var field in query.SelectFields)
-                {
-                    result.Fields.Add(new KbQueryField(field.Alias));
-                }
-
-                foreach (var subsetResult in subsetResults.Collection)
-                {
-                    result.Rows.Add(new KbQueryRow(subsetResult.Values));
-                }
-            }
-            //If we are querying multiple schemas then we have to intersect the schemas and apply the conditions. Oh boy.
-            else if (query.Schemas.Count > 1)
-            {
-                var schemaMap = new MSQQuerySchemaMap();
-
-                foreach (var querySchema in query.Schemas)
-                {
-                    //Lock the schema:
-                    var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, querySchema.Name, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
-                    {
-                        throw new KbInvalidSchemaException(querySchema.Name);
-                    }
-                    ptLockSchema?.EndTrace();
-                    Utility.EnsureNotNull(schemaMeta.DiskPath);
-
-                    //Lock the document catalog:
-                    var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(documentCatalog);
-
-                    schemaMap.Add(querySchema.Alias, schemaMeta, documentCatalog, querySchema.Conditions);
-                }
-
-                //Figure out which indexes could assist us in retrieving the desired documents (if any).
-                var ptOptimization = pt?.BeginTrace(PerformanceTraceType.Optimization);
-                var lookupOptimization = SSQStaticOptimization.SelectIndexesForConditionLookupOptimization(core, transaction, schemaMap.First().Value.SchemaMeta, query.Conditions);
-                ptOptimization?.EndTrace();
-
-                /*
-                 *  We need to build a generic key/value dataset which is the combined fieldset from each inner joined document.
-                 *  Then we use the conditions that were supplied to eliminate results from that dataset.
-                */
-
-                var schemaMapResults = MSQStaticSchemaJoiner.IntersetSchemas(core, pt, transaction, schemaMap, query, lookupOptimization);
-
-                HashSet<string> strings = new HashSet<string>();
-            }
-
-            return result;
-        }
-
 
         /// <summary>
         /// Saves a new document, this is used for inserts.

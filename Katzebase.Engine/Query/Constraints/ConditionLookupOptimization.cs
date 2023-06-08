@@ -2,9 +2,9 @@
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Query.Condition
+namespace Katzebase.Engine.Query.Constraints
 {
-    public class ConditionLookupOptimization
+    internal class ConditionLookupOptimization
     {
         /// <summary>
         /// A list of the indexes that have been selected by the optimizer for the specified conditions.

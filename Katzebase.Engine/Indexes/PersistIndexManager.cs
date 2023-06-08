@@ -1,6 +1,6 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.KbLib;
-using Katzebase.Engine.Query.Condition;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
@@ -26,7 +26,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="persistIndexLeaves"></param>
         /// <param name="conditions"></param>
         /// <param name="foundDocumentIds"></param>
-        public HashSet<Guid> MatchDocuments(PerformanceTrace? pt,
+        internal HashSet<Guid> MatchDocuments(PerformanceTrace? pt,
             PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
         {
             var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
@@ -144,7 +144,6 @@ namespace Katzebase.Engine.Indexes
 
             return result;
         }
-
 
         public bool Exists(ulong processId, string schema, string indexName)
         {
@@ -425,7 +424,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        public void UpdateDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
+        internal void UpdateDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
         {
             try
             {
@@ -453,7 +452,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        public void InsertDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
+        internal void InsertDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
         {
             try
             {
@@ -577,7 +576,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        class RebuildIndexItemThreadProc_ParallelState
+        internal class RebuildIndexItemThreadProc_ParallelState
         {
             public int ThreadsCompleted { get; set; }
             public int ThreadsStarted { get; set; }
@@ -595,7 +594,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        class RebuildIndexItemThreadProc_Params
+        internal class RebuildIndexItemThreadProc_Params
         {
             public RebuildIndexItemThreadProc_ParallelState? State { get; set; }
             public Transaction? Transaction { get; set; }
@@ -612,7 +611,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        void RebuildIndexItemThreadProc(object? oParam)
+        internal void RebuildIndexItemThreadProc(object? oParam)
         {
             int threadMod = 0;
 
@@ -721,7 +720,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        public void DeleteDocumentFromIndexes(Transaction transaction, PersistSchema schemaMeta, Guid documentId)
+        internal void DeleteDocumentFromIndexes(Transaction transaction, PersistSchema schemaMeta, Guid documentId)
         {
             try
             {

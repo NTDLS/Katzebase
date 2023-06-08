@@ -51,7 +51,7 @@ namespace Katzebase.Engine.Schemas
             }
         }
 
-        public List<PersistSchema> GetChildrenMeta(Transaction transaction, PersistSchema node, LockOperation intendedOperation)
+        internal List<PersistSchema> GetChildrenMeta(Transaction transaction, PersistSchema node, LockOperation intendedOperation)
         {
             List<PersistSchema> metaList = new List<PersistSchema>();
 
@@ -85,7 +85,7 @@ namespace Katzebase.Engine.Schemas
             return metaList;
         }
 
-        public PersistSchema? GetParentMeta(Transaction transaction, PersistSchema child, LockOperation intendedOperation)
+        internal PersistSchema? GetParentMeta(Transaction transaction, PersistSchema child, LockOperation intendedOperation)
         {
             try
             {
@@ -111,7 +111,7 @@ namespace Katzebase.Engine.Schemas
             }
         }
 
-        public PersistSchema VirtualPathToMeta(Transaction transaction, string schemaPath, LockOperation intendedOperation)
+        internal PersistSchema VirtualPathToMeta(Transaction transaction, string schemaPath, LockOperation intendedOperation)
         {
             try
             {

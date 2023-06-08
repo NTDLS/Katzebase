@@ -1,13 +1,14 @@
-﻿using Katzebase.Engine.Query.Condition;
+﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 
-namespace Katzebase.Engine.Documents.Query.MultiSchema.Mapping
+namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
 {
     /// <summary>
     /// This class maps the schema and documents to a query supplied schema alias.
     /// The key to the dictonary is the schema alias.
     /// </summary>
-    public class MSQQuerySchemaMap : Dictionary<string, MSQQuerySchemaMapItem>
+    internal class MSQQuerySchemaMap : Dictionary<string, MSQQuerySchemaMapItem>
     {
         /// <summary>
         /// Adds a mapping to the schema mapping collection/

@@ -1,6 +1,6 @@
-﻿using Katzebase.Engine.Documents.Query.MultiSchema.Mapping;
-using Katzebase.Engine.Query;
-using Katzebase.Engine.Query.Condition;
+﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.Query.Constraints;
+using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
@@ -10,9 +10,9 @@ using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace Katzebase.Engine.Documents.Query.MultiSchema.Intersection
+namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 {
-    public static class MSQStaticSchemaJoiner
+    internal static class MSQStaticSchemaJoiner
     {
         /// <summary>
         /// Build a generic key/value dataset which is the combined fieldset from each inner joined document.

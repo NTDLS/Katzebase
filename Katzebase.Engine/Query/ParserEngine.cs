@@ -1,5 +1,5 @@
 ﻿using Katzebase.Engine.KbLib;
-using Katzebase.Engine.Query.Condition;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
@@ -7,7 +7,7 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Query
 {
-    public class ParserEngine
+    internal class ParserEngine
     {
         static public PreparedQuery ParseQuery(string queryText)
         {

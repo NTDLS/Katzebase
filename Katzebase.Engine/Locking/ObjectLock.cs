@@ -4,7 +4,7 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Locking
 {
-    public class ObjectLock
+    internal class ObjectLock
     {
         private Core core;
         public string DiskPath { get; set; }

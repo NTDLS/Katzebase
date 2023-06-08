@@ -4,9 +4,9 @@ using Katzebase.PublicLibrary;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Query.Condition
+namespace Katzebase.Engine.Query.Constraints
 {
-    public class Conditions
+    internal class Conditions
     {
 
         private string _lastLetter = string.Empty;

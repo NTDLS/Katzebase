@@ -24,8 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Documents\Query\MultiSchema\Intersection\Threading\" />
-    <Folder Include="Documents\Query\MultiSchema\Threading\" />
+    <Folder Include="Documents\Query\" />
+    <Folder Include="Query\Searchers\MultiSchema\Intersection\Threading\" />
+    <Folder Include="Query\Searchers\MultiSchema\Threading\" />
   </ItemGroup>
 
 </Project>
