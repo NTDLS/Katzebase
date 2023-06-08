@@ -72,20 +72,23 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 }
                 else
                 {
+                    #region Why no indexing? Find out here!
                     //   * One or more of the conditon subsets lacks an index.
                     //   *
-                    //   *   Since indexing requires that we can ensure document elimination, we will have
+                    //   *   Since indexing requires that we can ensure document elimination we will have
                     //   *      to ensure that we have a covering index on EACH-and-EVERY conditon group.
                     //   *
-                    //   *   Then we can search the indexes for each condition group to obtain a list of all possible document IDs,
-                    //   *       then use those document IDs to early eliminate documents from the main lookup loop.
+                    //   *   Then we can search the indexes for each condition group to obtain a list of all possible
+                    //   *       document IDs, then use those document IDs to early eliminate documents from the main lookup loop.
                     //   *
-                    //   *   If any one conditon group does not have an index, then no indexing will be used at all since all documents
-                    //   *       will need to be scaned anyway. To prevent unindexed scans, reduce the number of condition groups (nested in parentheses).
+                    //   *   If any one conditon group does not have an index, then no indexing will be used at all since all
+                    //   *      documents will need to be scaned anyway. To prevent unindexed scans, reduce the number of
+                    //   *      condition groups (nested in parentheses).
                     //   *
                     //   * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we cant use an index.
                     //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
                     //*
+                    #endregion
                 }
             }
 
