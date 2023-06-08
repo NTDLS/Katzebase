@@ -46,7 +46,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             //If we dont have anby conditions then we just need to return all rows from the schema.
             if (query.Conditions.Subsets.Count > 0)
             {
-                lookupOptimization = SSQStaticOptimization.SelectIndexesForConditionLookupOptimization(core, transaction, schemaMeta, query.Conditions);
+                lookupOptimization = ConditionLookupOptimization.Build(core, transaction, schemaMeta, query.Conditions);
 
                 //Create a reference to the entire document catalog.
                 var limitedDocumentCatalogItems = documentCatalog.Collection;

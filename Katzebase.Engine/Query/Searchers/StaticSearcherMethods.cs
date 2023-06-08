@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Intersection;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
 using Katzebase.Engine.Query.Searchers.SingleSchema;
@@ -45,6 +46,9 @@ namespace Katzebase.Engine.Query.Searchers
             //If we are querying a single schema, then we just have to apply the conditions in a few threads. Hand off the request and make it so.
             else if (query.Schemas.Count == 1)
             {
+                //-------------------------------------------------------------------------------------------------------------
+                //This is where we do SSQ stuff (Single Schema Query), e.g. queried with NO joins.
+                //-------------------------------------------------------------------------------------------------------------
                 var singleSchema = query.Schemas.First();
 
                 var subsetResults = SSQStaticMethods.GetSingleSchemaDocumentsByConditions(core, pt, transaction, singleSchema.Name, query);
@@ -62,6 +66,10 @@ namespace Katzebase.Engine.Query.Searchers
             //If we are querying multiple schemas then we have to intersect the schemas and apply the conditions. Oh boy.
             else if (query.Schemas.Count > 1)
             {
+                //-------------------------------------------------------------------------------------------------------------
+                //This is where we do MSQ stuff (Multi Schema Query), e.g. queried WITH joins.
+                //-------------------------------------------------------------------------------------------------------------
+
                 var schemaMap = new MSQQuerySchemaMap();
 
                 foreach (var querySchema in query.Schemas)
@@ -86,7 +94,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                 //Figure out which indexes could assist us in retrieving the desired documents (if any).
                 var ptOptimization = pt?.BeginTrace(PerformanceTraceType.Optimization);
-                var lookupOptimization = SSQStaticOptimization.SelectIndexesForConditionLookupOptimization(core, transaction, schemaMap.First().Value.SchemaMeta, query.Conditions);
+                var lookupOptimization = ConditionLookupOptimization.Build(core, transaction, schemaMap.First().Value.SchemaMeta, query.Conditions);
                 ptOptimization?.EndTrace();
 
                 /*

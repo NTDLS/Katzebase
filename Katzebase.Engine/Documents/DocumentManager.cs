@@ -1,7 +1,7 @@
 ﻿using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers;
-using Katzebase.Engine.Query.Searchers.SingleSchema;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
@@ -48,7 +48,7 @@ namespace Katzebase.Engine.Documents
                     ptLockSchema?.EndTrace();
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-                    var lookupOptimization = SSQStaticOptimization.SelectIndexesForConditionLookupOptimization(core, txRef.Transaction, schemaMeta, preparedQuery.Conditions);
+                    var lookupOptimization = ConditionLookupOptimization.Build(core, txRef.Transaction, schemaMeta, preparedQuery.Conditions);
                     result.Explanation = lookupOptimization.BuildFullVirtualExpression();
 
                     txRef.Commit(); //Not that we did any work.
