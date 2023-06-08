@@ -1,3 +1,4 @@
+using ICSharpCode.AvalonEdit.Editing;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Exceptions;
@@ -94,6 +95,9 @@ namespace Katzebase.UI
         private void SyncToolbarAndMenuStates()
         {
             var tabFilePage = CurrentTabFilePage();
+
+            toolStripStatusLabelServerName.Text = "Server: " + tabFilePage?.Client.Connection.BaseAddress?.ToString() ?? string.Empty;
+            toolStripStatusLabelProcessId.Text = "PID: " + tabFilePage?.Client.ServerProcessId.ToString("N0") ?? string.Empty;
 
             bool isTabOpen = (tabFilePage != null);
             bool isTextSelected = (tabFilePage != null) && (tabFilePage?.Editor?.SelectionLength > 0);
@@ -400,11 +404,21 @@ namespace Katzebase.UI
 
         private TabFilePage AddTab(string filePath, string serverAddress)
         {
+            foreach (var tab in tabControlBody.TabPages.Cast<TabFilePage>())
+            {
+                if (tab.FilePath.ToLower() == filePath.ToLower())
+                {
+                    tabControlBody.SelectedTab = tab;
+                    return tab;
+                }
+            }
+
             Utility.EnsureNotNull(_editorFactory);
 
             var tabFilePage = _editorFactory.Create(serverAddress, filePath);
 
             tabFilePage.Editor.KeyUp += Editor_KeyUp;
+            tabFilePage.Editor.Drop += Editor_Drop;
 
             tabFilePage.Controls.Add(new System.Windows.Forms.Integration.ElementHost
             {
@@ -414,7 +428,21 @@ namespace Katzebase.UI
             tabControlBody.TabPages.Add(tabFilePage);
             tabControlBody.SelectedTab = tabFilePage;
 
+            tabFilePage.Client.Server.Ping();
+
             return tabFilePage;
+        }
+
+        private void Editor_Drop(object sender, System.Windows.DragEventArgs e)
+        {
+            var files = e.Data?.GetData(DataFormats.FileDrop, false) as string[];
+            if (files != null)
+            {
+                foreach (var file in files)
+                {
+                    AddTab(file, _lastusedServerAddress);
+                }
+            }
         }
 
         private void Editor_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
@@ -483,7 +511,7 @@ namespace Katzebase.UI
             //Minimize the number of "SelectedIndexChanged" events that get fired.
             //We get a big ol' thread exception when we dont do this. Looks like an internal control exception.
             tabControlBody.SelectedIndex = 0;
-            System.Windows.Forms.Application.DoEvents(); //Make sure the message pump can actually select the tab before we start closing.
+            Application.DoEvents(); //Make sure the message pump can actually select the tab before we start closing.
 
             tabControlBody.SuspendLayout();
 
@@ -573,6 +601,24 @@ namespace Katzebase.UI
             {
                 return;
             }
+
+            if (File.Exists(selection.FilePath) == false)
+            {
+                using (var sfd = new SaveFileDialog())
+                {
+                    sfd.Filter = "Katzebase Script (*.kbs)|*.kbs|All files (*.*)|*.*";
+                    sfd.FileName = selection.FilePath;
+                    if (sfd.ShowDialog() == DialogResult.OK)
+                    {
+                        selection.FilePath = sfd.FileName;
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+            }
+
             selection.Save();
         }
 
@@ -580,6 +626,23 @@ namespace Katzebase.UI
         {
             foreach (var tabFilePage in tabControlBody.TabPages.Cast<TabFilePage>())
             {
+                if (File.Exists(tabFilePage.FilePath) == false)
+                {
+                    using (var sfd = new SaveFileDialog())
+                    {
+                        sfd.Filter = "Katzebase Script (*.kbs)|*.kbs|All files (*.*)|*.*";
+                        sfd.FileName = tabFilePage.FilePath;
+                        if (sfd.ShowDialog() == DialogResult.OK)
+                        {
+                            tabFilePage.FilePath = sfd.FileName;
+                        }
+                        else
+                        {
+                            return;
+                        }
+                    }
+                }
+
                 tabFilePage.Save();
             }
         }
@@ -813,7 +876,7 @@ namespace Katzebase.UI
             }
         }
 
-        private void toolStripButtonNewProject_Click(object sender, EventArgs e)
+        private void toolStripButtonNewFile_Click(object sender, EventArgs e)
         {
             var tabFilePage = AddTab(FormUtility.GetNextNewFileName(), _lastusedServerAddress);
             tabFilePage.Editor.Text = "SET TraceWaitTimes OFF;\r\n\r\n";
@@ -923,7 +986,8 @@ namespace Katzebase.UI
                 group.OnException += Group_OnException;
                 group.OnStatus += Group_OnStatus;
 
-                var scripts = scriptText.Split(";"); //TODO: This needs to be MUCH more intelligent!
+                //TODO: This needs to be MUCH more intelligent! What about ';' in strings? ... :/
+                var scripts = scriptText.Split(";").Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
 
                 foreach (var script in scripts)
                 {
@@ -1025,5 +1089,22 @@ namespace Katzebase.UI
         }
 
         #endregion
+
+        private void FormStudio_DragDrop(object sender, DragEventArgs e)
+        {
+            var files = e.Data?.GetData(DataFormats.FileDrop, false) as string[];
+            if (files != null)
+            {
+                foreach (var file in files)
+                {
+                    AddTab(file, _lastusedServerAddress);
+                }
+            }
+        }
+
+        private void FormStudio_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = DragDropEffects.Copy;
+        }
     }
 }

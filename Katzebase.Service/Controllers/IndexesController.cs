@@ -11,13 +11,13 @@ namespace Katzebase.Service.Controllers
     {
         [HttpPost]
         [Route("{sessionId}/{schema}/Create")]
-        public KbActionResponseID Create(Guid sessionId, string schema, [FromBody] string value)
+        public KbActionResponseGuid Create(Guid sessionId, string schema, [FromBody] string value)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            KbActionResponseID result = new KbActionResponseID();
+            KbActionResponseGuid result = new KbActionResponseGuid();
 
             try
             {

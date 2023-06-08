@@ -214,7 +214,7 @@ namespace Katzebase.Engine.Query.Constraints
         {
             int position = 0;
 
-            LogicalConnector logicalConnector = LogicalConnector.None;
+            var logicalConnector = LogicalConnector.None;
 
             while (true)
             {

@@ -2,13 +2,18 @@
 {
     public class KatzebaseClient
     {
-        public HttpClient Connection;
-        public Guid SessionId { get; set; }
-        public Management.Document Document { get; set; }
-        public Management.Schema Schema { get; set; }
-        public Management.Server Server { get; set; }
-        public Management.Transaction Transaction { get; set; }
-        public Management.Query Query { get; set; }
+        public HttpClient Connection { get; private set; }
+        public Guid SessionId { get; private set; }
+        public Management.Document Document { get; private set; }
+        public Management.Schema Schema { get; private set; }
+        public Management.Server Server { get; private set; }
+        public Management.Transaction Transaction { get; private set; }
+        public Management.Query Query { get; private set; }
+
+        /// <summary>
+        /// This is the process id of the session on the server. This is populated with each call to Client.Server.Ping().
+        /// </summary>
+        public ulong ServerProcessId { get; set; }
 
         public KatzebaseClient(string baseAddress)
         {

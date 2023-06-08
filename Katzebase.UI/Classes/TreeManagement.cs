@@ -8,7 +8,7 @@ namespace Katzebase.UI.Classes
         public static void PopulateServer(TreeView treeView, string serverAddress)
         {
             var client = new KatzebaseClient(serverAddress);
-            if (client.Server.Ping() == false)
+            if (client.Server.Ping().Success == false)
             {
                 throw new Exception("Could not api ping the server.");
             }

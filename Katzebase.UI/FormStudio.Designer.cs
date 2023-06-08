@@ -31,11 +31,13 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormStudio));
             splitContainerProject = new SplitContainer();
             treeViewProject = new TreeView();
+            statusStripDocument = new StatusStrip();
+            toolStripStatusLabelServerName = new ToolStripStatusLabel();
             splitContainerMacros = new SplitContainer();
             tabControlBody = new TabControl();
             treeViewMacros = new TreeView();
             toolStrip1 = new ToolStrip();
-            toolStripButtonNewProject = new ToolStripButton();
+            toolStripButtonNewFile = new ToolStripButton();
             toolStripButtonSave = new ToolStripButton();
             toolStripButtonSaveAll = new ToolStripButton();
             toolStripButtonCloseCurrentTab = new ToolStripButton();
@@ -83,10 +85,12 @@
             richTextBoxOutput = new RichTextBox();
             tabPageResults = new TabPage();
             dataGridViewResults = new DataGridView();
+            toolStripStatusLabelProcessId = new ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)splitContainerProject).BeginInit();
             splitContainerProject.Panel1.SuspendLayout();
             splitContainerProject.Panel2.SuspendLayout();
             splitContainerProject.SuspendLayout();
+            statusStripDocument.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainerMacros).BeginInit();
             splitContainerMacros.Panel1.SuspendLayout();
             splitContainerMacros.Panel2.SuspendLayout();
@@ -116,6 +120,7 @@
             // 
             // splitContainerProject.Panel2
             // 
+            splitContainerProject.Panel2.Controls.Add(statusStripDocument);
             splitContainerProject.Panel2.Controls.Add(splitContainerMacros);
             splitContainerProject.Size = new Size(921, 349);
             splitContainerProject.SplitterDistance = 320;
@@ -127,6 +132,23 @@
             treeViewProject.Name = "treeViewProject";
             treeViewProject.Size = new Size(256, 292);
             treeViewProject.TabIndex = 0;
+            treeViewProject.DragDrop += FormStudio_DragDrop;
+            // 
+            // statusStripDocument
+            // 
+            statusStripDocument.Items.AddRange(new ToolStripItem[] { toolStripStatusLabelServerName, toolStripStatusLabelProcessId });
+            statusStripDocument.Location = new Point(0, 327);
+            statusStripDocument.Name = "statusStripDocument";
+            statusStripDocument.Size = new Size(597, 22);
+            statusStripDocument.SizingGrip = false;
+            statusStripDocument.TabIndex = 2;
+            statusStripDocument.Text = "statusStripDocument";
+            // 
+            // toolStripStatusLabelServerName
+            // 
+            toolStripStatusLabelServerName.Name = "toolStripStatusLabelServerName";
+            toolStripStatusLabelServerName.Size = new Size(39, 17);
+            toolStripStatusLabelServerName.Text = "Server";
             // 
             // splitContainerMacros
             // 
@@ -162,22 +184,22 @@
             // 
             // toolStrip1
             // 
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonNewProject, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonRedo, toolStripButtonUndo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonNewFile, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonRedo, toolStripButtonUndo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
             toolStrip1.Location = new Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(1032, 25);
             toolStrip1.TabIndex = 1;
             toolStrip1.Text = "toolStrip1";
             // 
-            // toolStripButtonNewProject
+            // toolStripButtonNewFile
             // 
-            toolStripButtonNewProject.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonNewProject.Image = Properties.Resources.ToolNewProject;
-            toolStripButtonNewProject.ImageTransparentColor = Color.Magenta;
-            toolStripButtonNewProject.Name = "toolStripButtonNewProject";
-            toolStripButtonNewProject.Size = new Size(23, 22);
-            toolStripButtonNewProject.Text = "New Project";
-            toolStripButtonNewProject.Click += toolStripButtonNewProject_Click;
+            toolStripButtonNewFile.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonNewFile.Image = Properties.Resources.ToolNewFile;
+            toolStripButtonNewFile.ImageTransparentColor = Color.Magenta;
+            toolStripButtonNewFile.Name = "toolStripButtonNewFile";
+            toolStripButtonNewFile.Size = new Size(23, 22);
+            toolStripButtonNewFile.Text = "New File";
+            toolStripButtonNewFile.Click += toolStripButtonNewFile_Click;
             // 
             // toolStripButtonSave
             // 
@@ -583,8 +605,15 @@
             dataGridViewResults.Size = new Size(1024, 162);
             dataGridViewResults.TabIndex = 1;
             // 
+            // toolStripStatusLabelProcessId
+            // 
+            toolStripStatusLabelProcessId.Name = "toolStripStatusLabelProcessId";
+            toolStripStatusLabelProcessId.Size = new Size(47, 17);
+            toolStripStatusLabelProcessId.Text = "Process";
+            // 
             // FormStudio
             // 
+            AllowDrop = true;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1032, 646);
@@ -596,10 +625,15 @@
             Name = "FormStudio";
             Text = "Katzebase";
             Load += FormStudio_Load;
+            DragDrop += FormStudio_DragDrop;
+            DragEnter += FormStudio_DragEnter;
             splitContainerProject.Panel1.ResumeLayout(false);
             splitContainerProject.Panel2.ResumeLayout(false);
+            splitContainerProject.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainerProject).EndInit();
             splitContainerProject.ResumeLayout(false);
+            statusStripDocument.ResumeLayout(false);
+            statusStripDocument.PerformLayout();
             splitContainerMacros.Panel1.ResumeLayout(false);
             splitContainerMacros.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainerMacros).EndInit();
@@ -664,7 +698,7 @@
         private ToolStripButton toolStripButtonSnippets;
         private SplitContainer splitContainerMacros;
         private TreeView treeViewMacros;
-        private ToolStripButton toolStripButtonNewProject;
+        private ToolStripButton toolStripButtonNewFile;
         private ToolStripButton toolStripButtonProject;
         private ToolStripButton toolStripButtonOutput;
         private ToolStripSeparator toolStripSeparator7;
@@ -677,5 +711,8 @@
         private ToolStripButton toolStripButtonExplainPlan;
         private RichTextBox richTextBoxExplain;
         private ToolStripMenuItem connectToolStripMenuItem;
+        private StatusStrip statusStripDocument;
+        private ToolStripStatusLabel toolStripStatusLabelServerName;
+        private ToolStripStatusLabel toolStripStatusLabelProcessId;
     }
 }

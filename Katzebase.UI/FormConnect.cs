@@ -27,7 +27,7 @@ namespace Katzebase.UI
             try
             {
                 var client = new KatzebaseClient(ServerAddressURL);
-                if (client.Server.Ping())
+                if (client.Server.Ping().Success)
                 {
                     DialogResult = DialogResult.OK;
                     this.Close();
