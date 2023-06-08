@@ -29,51 +29,50 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormSnippets));
-            this.splitContainerBody = new System.Windows.Forms.SplitContainer();
-            this.treeViewSnippets = new System.Windows.Forms.TreeView();
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerBody)).BeginInit();
-            this.splitContainerBody.Panel1.SuspendLayout();
-            this.splitContainerBody.SuspendLayout();
-            this.SuspendLayout();
+            splitContainerBody = new SplitContainer();
+            treeViewSnippets = new TreeView();
+            ((System.ComponentModel.ISupportInitialize)splitContainerBody).BeginInit();
+            splitContainerBody.Panel1.SuspendLayout();
+            splitContainerBody.SuspendLayout();
+            SuspendLayout();
             // 
             // splitContainerBody
             // 
-            this.splitContainerBody.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.splitContainerBody.Location = new System.Drawing.Point(0, 0);
-            this.splitContainerBody.Name = "splitContainerBody";
+            splitContainerBody.Dock = DockStyle.Fill;
+            splitContainerBody.Location = new Point(0, 0);
+            splitContainerBody.Name = "splitContainerBody";
             // 
             // splitContainerBody.Panel1
             // 
-            this.splitContainerBody.Panel1.Controls.Add(this.treeViewSnippets);
-            this.splitContainerBody.Size = new System.Drawing.Size(800, 450);
-            this.splitContainerBody.SplitterDistance = 266;
-            this.splitContainerBody.TabIndex = 0;
+            splitContainerBody.Panel1.Controls.Add(treeViewSnippets);
+            splitContainerBody.Size = new Size(800, 450);
+            splitContainerBody.SplitterDistance = 266;
+            splitContainerBody.TabIndex = 0;
             // 
             // treeViewSnippets
             // 
-            this.treeViewSnippets.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.treeViewSnippets.Location = new System.Drawing.Point(0, 0);
-            this.treeViewSnippets.Name = "treeViewSnippets";
-            this.treeViewSnippets.Size = new System.Drawing.Size(266, 450);
-            this.treeViewSnippets.TabIndex = 0;
+            treeViewSnippets.Dock = DockStyle.Fill;
+            treeViewSnippets.Location = new Point(0, 0);
+            treeViewSnippets.Name = "treeViewSnippets";
+            treeViewSnippets.Size = new Size(266, 450);
+            treeViewSnippets.TabIndex = 0;
             // 
             // FormSnippets
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Controls.Add(this.splitContainerBody);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Name = "FormSnippets";
-            this.ShowInTaskbar = false;
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Snippets";
-            this.Load += new System.EventHandler(this.FormSnippets_Load);
-            this.splitContainerBody.Panel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.splitContainerBody)).EndInit();
-            this.splitContainerBody.ResumeLayout(false);
-            this.ResumeLayout(false);
-
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(800, 450);
+            Controls.Add(splitContainerBody);
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            Name = "FormSnippets";
+            ShowInTaskbar = false;
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Snippets";
+            Load += FormSnippets_Load;
+            splitContainerBody.Panel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainerBody).EndInit();
+            splitContainerBody.ResumeLayout(false);
+            ResumeLayout(false);
         }
 
         #endregion

@@ -30,10 +30,20 @@ namespace Katzebase.UI
             _editorFactory = new EditorFactory(this, this.tabControlBody);
         }
 
-        public FormStudio(string projectFile)
+        public FormStudio(string filePath)
         {
             InitializeComponent();
             _editorFactory = new EditorFactory(this, this.tabControlBody);
+
+            try
+            {
+                CreateNewTab(Path.GetFileName(filePath)).OpenFile(filePath);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
         }
 
         private void FormStudio_Load(object sender, EventArgs e)
@@ -227,36 +237,44 @@ namespace Katzebase.UI
 
         private void PopupMenu_ItemClicked(object? sender, ToolStripItemClickedEventArgs e)
         {
-            var menuStrip = sender as ContextMenuStrip;
-            Utility.EnsureNotNull(menuStrip);
-
-            menuStrip.Close();
-
-            Utility.EnsureNotNull(menuStrip.Tag);
-
-            var node = (menuStrip.Tag) as ServerTreeNode;
-            Utility.EnsureNotNull(node);
-
-            if (e.ClickedItem?.Text == "Refresh")
+            try
             {
-                //TODO: Refresh schema?
-            }
-            else if (e.ClickedItem?.Text == "Delete")
-            {
-                /*
-                var messageBoxResult = MessageBox.Show($"Delete {node.Text}?", $"Delete {node.NodeType}?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (messageBoxResult == DialogResult.Yes)
+                var menuStrip = sender as ContextMenuStrip;
+                Utility.EnsureNotNull(menuStrip);
+
+                menuStrip.Close();
+
+                Utility.EnsureNotNull(menuStrip.Tag);
+
+                var node = (menuStrip.Tag) as ServerTreeNode;
+                Utility.EnsureNotNull(node);
+
+                if (e.ClickedItem?.Text == "Refresh")
                 {
-                    node.Remove();
+                    //TODO: Refresh schema?
                 }
-                */
+                else if (e.ClickedItem?.Text == "Delete")
+                {
+                    /*
+                    var messageBoxResult = MessageBox.Show($"Delete {node.Text}?", $"Delete {node.NodeType}?", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                    if (messageBoxResult == DialogResult.Yes)
+                    {
+                        node.Remove();
+                    }
+                    */
+                }
+                else if (e.ClickedItem?.Text == "Select top n...")
+                {
+                    var rootNode = TreeManagement.GetRootNode(node);
+                    var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                    tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\t" + TreeManagement.CalculateFullSchema(node);
+                }
             }
-            else if (e.ClickedItem?.Text == "Select top n...")
+            catch (Exception ex)
             {
-                var rootNode = TreeManagement.GetRootNode(node);
-                var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
-                tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\t" + TreeManagement.CalculateFullSchema(node);
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+
         }
 
         #endregion
@@ -450,21 +468,28 @@ namespace Katzebase.UI
 
         private void Editor_Drop(object sender, System.Windows.DragEventArgs e)
         {
-            var files = e.Data?.GetData(DataFormats.FileDrop, false) as string[];
-            if (files != null)
+            try
             {
-                foreach (var file in files)
+                var files = e.Data?.GetData(DataFormats.FileDrop, false) as string[];
+                if (files != null)
                 {
-                    var alreadyOpenTab = FindTabByFileName(file);
-                    if (alreadyOpenTab == null)
+                    foreach (var file in files)
                     {
-                        CreateNewTab(Path.GetFileName(file)).OpenFile(file);
-                    }
-                    else
-                    {
-                        tabControlBody.SelectedTab = alreadyOpenTab;
+                        var alreadyOpenTab = FindTabByFileName(file);
+                        if (alreadyOpenTab == null)
+                        {
+                            CreateNewTab(Path.GetFileName(file)).OpenFile(file);
+                        }
+                        else
+                        {
+                            tabControlBody.SelectedTab = alreadyOpenTab;
+                        }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -897,8 +922,15 @@ namespace Katzebase.UI
 
         private void toolStripButtonNewFile_Click(object sender, EventArgs e)
         {
-            var tabFilePage = CreateNewTab();
-            tabFilePage.Editor.Text = "SET TraceWaitTimes OFF;\r\n\r\n";
+            try
+            {
+                var tabFilePage = CreateNewTab();
+                tabFilePage.Editor.Text = "SET TraceWaitTimes OFF;\r\n\r\n";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void connectToolStripMenuItem_Click(object sender, EventArgs e)

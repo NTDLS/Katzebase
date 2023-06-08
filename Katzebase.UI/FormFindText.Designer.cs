@@ -29,80 +29,79 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormFindText));
-            this.buttonFindNext = new System.Windows.Forms.Button();
-            this.buttonFind = new System.Windows.Forms.Button();
-            this.textBoxFindText = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.buttonClose = new System.Windows.Forms.Button();
-            this.SuspendLayout();
+            buttonFindNext = new Button();
+            buttonFind = new Button();
+            textBoxFindText = new TextBox();
+            label1 = new Label();
+            buttonClose = new Button();
+            SuspendLayout();
             // 
             // buttonFindNext
             // 
-            this.buttonFindNext.Location = new System.Drawing.Point(315, 56);
-            this.buttonFindNext.Name = "buttonFindNext";
-            this.buttonFindNext.Size = new System.Drawing.Size(75, 23);
-            this.buttonFindNext.TabIndex = 1;
-            this.buttonFindNext.Text = "Find Next";
-            this.buttonFindNext.UseVisualStyleBackColor = true;
-            this.buttonFindNext.Click += new System.EventHandler(this.buttonFindNext_Click);
+            buttonFindNext.Location = new Point(315, 56);
+            buttonFindNext.Name = "buttonFindNext";
+            buttonFindNext.Size = new Size(75, 23);
+            buttonFindNext.TabIndex = 1;
+            buttonFindNext.Text = "Find Next";
+            buttonFindNext.UseVisualStyleBackColor = true;
+            buttonFindNext.Click += buttonFindNext_Click;
             // 
             // buttonFind
             // 
-            this.buttonFind.Location = new System.Drawing.Point(234, 56);
-            this.buttonFind.Name = "buttonFind";
-            this.buttonFind.Size = new System.Drawing.Size(75, 23);
-            this.buttonFind.TabIndex = 2;
-            this.buttonFind.Text = "Find";
-            this.buttonFind.UseVisualStyleBackColor = true;
-            this.buttonFind.Click += new System.EventHandler(this.buttonFind_Click);
+            buttonFind.Location = new Point(234, 56);
+            buttonFind.Name = "buttonFind";
+            buttonFind.Size = new Size(75, 23);
+            buttonFind.TabIndex = 2;
+            buttonFind.Text = "Find";
+            buttonFind.UseVisualStyleBackColor = true;
+            buttonFind.Click += buttonFind_Click;
             // 
             // textBoxFindText
             // 
-            this.textBoxFindText.Location = new System.Drawing.Point(12, 27);
-            this.textBoxFindText.Name = "textBoxFindText";
-            this.textBoxFindText.Size = new System.Drawing.Size(474, 23);
-            this.textBoxFindText.TabIndex = 0;
+            textBoxFindText.Location = new Point(12, 27);
+            textBoxFindText.Name = "textBoxFindText";
+            textBoxFindText.Size = new Size(474, 23);
+            textBoxFindText.TabIndex = 0;
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(10, 9);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(54, 15);
-            this.label1.TabIndex = 3;
-            this.label1.Text = "Find Text";
+            label1.AutoSize = true;
+            label1.Location = new Point(10, 9);
+            label1.Name = "label1";
+            label1.Size = new Size(54, 15);
+            label1.TabIndex = 3;
+            label1.Text = "Find Text";
             // 
             // buttonClose
             // 
-            this.buttonClose.Location = new System.Drawing.Point(411, 56);
-            this.buttonClose.Name = "buttonClose";
-            this.buttonClose.Size = new System.Drawing.Size(75, 23);
-            this.buttonClose.TabIndex = 3;
-            this.buttonClose.Text = "Close";
-            this.buttonClose.UseVisualStyleBackColor = true;
-            this.buttonClose.Click += new System.EventHandler(this.buttonClose_Click);
+            buttonClose.Location = new Point(411, 56);
+            buttonClose.Name = "buttonClose";
+            buttonClose.Size = new Size(75, 23);
+            buttonClose.TabIndex = 3;
+            buttonClose.Text = "Close";
+            buttonClose.UseVisualStyleBackColor = true;
+            buttonClose.Click += buttonClose_Click;
             // 
             // FormFindText
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(498, 98);
-            this.Controls.Add(this.buttonClose);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.textBoxFindText);
-            this.Controls.Add(this.buttonFind);
-            this.Controls.Add(this.buttonFindNext);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MaximizeBox = false;
-            this.Name = "FormFindText";
-            this.ShowInTaskbar = false;
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Find";
-            this.Load += new System.EventHandler(this.FormFind_Load);
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(498, 98);
+            Controls.Add(buttonClose);
+            Controls.Add(label1);
+            Controls.Add(textBoxFindText);
+            Controls.Add(buttonFind);
+            Controls.Add(buttonFindNext);
+            FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            MaximizeBox = false;
+            Name = "FormFindText";
+            ShowInTaskbar = false;
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Find";
+            Load += FormFind_Load;
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion

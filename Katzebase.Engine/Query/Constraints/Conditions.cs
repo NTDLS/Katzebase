@@ -1,12 +1,8 @@
 ﻿using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query.Tokenizers;
-using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
-using Katzebase.PublicLibrary.Exceptions;
-using Newtonsoft.Json.Linq;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
-using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Query.Constraints
 {

@@ -29,124 +29,123 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormReplaceText));
-            this.buttonFindNext = new System.Windows.Forms.Button();
-            this.buttonFind = new System.Windows.Forms.Button();
-            this.textBoxFindText = new System.Windows.Forms.TextBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.buttonClose = new System.Windows.Forms.Button();
-            this.label2 = new System.Windows.Forms.Label();
-            this.textBoxReplaceWith = new System.Windows.Forms.TextBox();
-            this.buttonReplace = new System.Windows.Forms.Button();
-            this.buttonReplaceAll = new System.Windows.Forms.Button();
-            this.SuspendLayout();
+            buttonFindNext = new Button();
+            buttonFind = new Button();
+            textBoxFindText = new TextBox();
+            label1 = new Label();
+            buttonClose = new Button();
+            label2 = new Label();
+            textBoxReplaceWith = new TextBox();
+            buttonReplace = new Button();
+            buttonReplaceAll = new Button();
+            SuspendLayout();
             // 
             // buttonFindNext
             // 
-            this.buttonFindNext.Location = new System.Drawing.Point(110, 138);
-            this.buttonFindNext.Name = "buttonFindNext";
-            this.buttonFindNext.Size = new System.Drawing.Size(75, 23);
-            this.buttonFindNext.TabIndex = 5;
-            this.buttonFindNext.Text = "Find Next";
-            this.buttonFindNext.UseVisualStyleBackColor = true;
-            this.buttonFindNext.Click += new System.EventHandler(this.buttonFindNext_Click);
+            buttonFindNext.Location = new Point(110, 138);
+            buttonFindNext.Name = "buttonFindNext";
+            buttonFindNext.Size = new Size(75, 23);
+            buttonFindNext.TabIndex = 5;
+            buttonFindNext.Text = "Find Next";
+            buttonFindNext.UseVisualStyleBackColor = true;
+            buttonFindNext.Click += buttonFindNext_Click;
             // 
             // buttonFind
             // 
-            this.buttonFind.Location = new System.Drawing.Point(29, 138);
-            this.buttonFind.Name = "buttonFind";
-            this.buttonFind.Size = new System.Drawing.Size(75, 23);
-            this.buttonFind.TabIndex = 4;
-            this.buttonFind.Text = "Find";
-            this.buttonFind.UseVisualStyleBackColor = true;
-            this.buttonFind.Click += new System.EventHandler(this.buttonFind_Click);
+            buttonFind.Location = new Point(29, 138);
+            buttonFind.Name = "buttonFind";
+            buttonFind.Size = new Size(75, 23);
+            buttonFind.TabIndex = 4;
+            buttonFind.Text = "Find";
+            buttonFind.UseVisualStyleBackColor = true;
+            buttonFind.Click += buttonFind_Click;
             // 
             // textBoxFindText
             // 
-            this.textBoxFindText.Location = new System.Drawing.Point(12, 27);
-            this.textBoxFindText.Name = "textBoxFindText";
-            this.textBoxFindText.Size = new System.Drawing.Size(474, 23);
-            this.textBoxFindText.TabIndex = 0;
+            textBoxFindText.Location = new Point(12, 27);
+            textBoxFindText.Name = "textBoxFindText";
+            textBoxFindText.Size = new Size(474, 23);
+            textBoxFindText.TabIndex = 0;
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(10, 9);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(54, 15);
-            this.label1.TabIndex = 3;
-            this.label1.Text = "Find Text";
+            label1.AutoSize = true;
+            label1.Location = new Point(10, 9);
+            label1.Name = "label1";
+            label1.Size = new Size(54, 15);
+            label1.TabIndex = 3;
+            label1.Text = "Find Text";
             // 
             // buttonClose
             // 
-            this.buttonClose.Location = new System.Drawing.Point(411, 138);
-            this.buttonClose.Name = "buttonClose";
-            this.buttonClose.Size = new System.Drawing.Size(75, 23);
-            this.buttonClose.TabIndex = 6;
-            this.buttonClose.Text = "Close";
-            this.buttonClose.UseVisualStyleBackColor = true;
-            this.buttonClose.Click += new System.EventHandler(this.buttonClose_Click);
+            buttonClose.Location = new Point(411, 138);
+            buttonClose.Name = "buttonClose";
+            buttonClose.Size = new Size(75, 23);
+            buttonClose.TabIndex = 6;
+            buttonClose.Text = "Close";
+            buttonClose.UseVisualStyleBackColor = true;
+            buttonClose.Click += buttonClose_Click;
             // 
             // label2
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(10, 62);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(76, 15);
-            this.label2.TabIndex = 5;
-            this.label2.Text = "Replace With";
+            label2.AutoSize = true;
+            label2.Location = new Point(10, 62);
+            label2.Name = "label2";
+            label2.Size = new Size(76, 15);
+            label2.TabIndex = 5;
+            label2.Text = "Replace With";
             // 
             // textBoxReplaceWith
             // 
-            this.textBoxReplaceWith.Location = new System.Drawing.Point(12, 80);
-            this.textBoxReplaceWith.Name = "textBoxReplaceWith";
-            this.textBoxReplaceWith.Size = new System.Drawing.Size(474, 23);
-            this.textBoxReplaceWith.TabIndex = 1;
+            textBoxReplaceWith.Location = new Point(12, 80);
+            textBoxReplaceWith.Name = "textBoxReplaceWith";
+            textBoxReplaceWith.Size = new Size(474, 23);
+            textBoxReplaceWith.TabIndex = 1;
             // 
             // buttonReplace
             // 
-            this.buttonReplace.Location = new System.Drawing.Point(216, 138);
-            this.buttonReplace.Name = "buttonReplace";
-            this.buttonReplace.Size = new System.Drawing.Size(75, 23);
-            this.buttonReplace.TabIndex = 2;
-            this.buttonReplace.Text = "Replace";
-            this.buttonReplace.UseVisualStyleBackColor = true;
-            this.buttonReplace.Click += new System.EventHandler(this.buttonReplace_Click);
+            buttonReplace.Location = new Point(216, 138);
+            buttonReplace.Name = "buttonReplace";
+            buttonReplace.Size = new Size(75, 23);
+            buttonReplace.TabIndex = 2;
+            buttonReplace.Text = "Replace";
+            buttonReplace.UseVisualStyleBackColor = true;
+            buttonReplace.Click += buttonReplace_Click;
             // 
             // buttonReplaceAll
             // 
-            this.buttonReplaceAll.Location = new System.Drawing.Point(297, 138);
-            this.buttonReplaceAll.Name = "buttonReplaceAll";
-            this.buttonReplaceAll.Size = new System.Drawing.Size(75, 23);
-            this.buttonReplaceAll.TabIndex = 3;
-            this.buttonReplaceAll.Text = "Replace All";
-            this.buttonReplaceAll.UseVisualStyleBackColor = true;
-            this.buttonReplaceAll.Click += new System.EventHandler(this.buttonReplaceAll_Click);
+            buttonReplaceAll.Location = new Point(297, 138);
+            buttonReplaceAll.Name = "buttonReplaceAll";
+            buttonReplaceAll.Size = new Size(75, 23);
+            buttonReplaceAll.TabIndex = 3;
+            buttonReplaceAll.Text = "Replace All";
+            buttonReplaceAll.UseVisualStyleBackColor = true;
+            buttonReplaceAll.Click += buttonReplaceAll_Click;
             // 
             // FormReplaceText
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(498, 220);
-            this.Controls.Add(this.buttonReplaceAll);
-            this.Controls.Add(this.buttonReplace);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.textBoxReplaceWith);
-            this.Controls.Add(this.buttonClose);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.textBoxFindText);
-            this.Controls.Add(this.buttonFind);
-            this.Controls.Add(this.buttonFindNext);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.MaximizeBox = false;
-            this.Name = "FormReplaceText";
-            this.ShowInTaskbar = false;
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Find";
-            this.Load += new System.EventHandler(this.FormFind_Load);
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(498, 220);
+            Controls.Add(buttonReplaceAll);
+            Controls.Add(buttonReplace);
+            Controls.Add(label2);
+            Controls.Add(textBoxReplaceWith);
+            Controls.Add(buttonClose);
+            Controls.Add(label1);
+            Controls.Add(textBoxFindText);
+            Controls.Add(buttonFind);
+            Controls.Add(buttonFindNext);
+            FormBorderStyle = FormBorderStyle.FixedToolWindow;
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            MaximizeBox = false;
+            Name = "FormReplaceText";
+            ShowInTaskbar = false;
+            StartPosition = FormStartPosition.CenterParent;
+            Text = "Find";
+            Load += FormFind_Load;
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion

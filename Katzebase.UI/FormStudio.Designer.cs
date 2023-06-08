@@ -33,6 +33,7 @@
             treeViewProject = new TreeView();
             statusStripDocument = new StatusStrip();
             toolStripStatusLabelServerName = new ToolStripStatusLabel();
+            toolStripStatusLabelProcessId = new ToolStripStatusLabel();
             splitContainerMacros = new SplitContainer();
             tabControlBody = new TabControl();
             treeViewMacros = new TreeView();
@@ -85,7 +86,6 @@
             richTextBoxOutput = new RichTextBox();
             tabPageResults = new TabPage();
             dataGridViewResults = new DataGridView();
-            toolStripStatusLabelProcessId = new ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)splitContainerProject).BeginInit();
             splitContainerProject.Panel1.SuspendLayout();
             splitContainerProject.Panel2.SuspendLayout();
@@ -149,6 +149,12 @@
             toolStripStatusLabelServerName.Name = "toolStripStatusLabelServerName";
             toolStripStatusLabelServerName.Size = new Size(39, 17);
             toolStripStatusLabelServerName.Text = "Server";
+            // 
+            // toolStripStatusLabelProcessId
+            // 
+            toolStripStatusLabelProcessId.Name = "toolStripStatusLabelProcessId";
+            toolStripStatusLabelProcessId.Size = new Size(47, 17);
+            toolStripStatusLabelProcessId.Text = "Process";
             // 
             // splitContainerMacros
             // 
@@ -604,12 +610,6 @@
             dataGridViewResults.RowTemplate.Height = 25;
             dataGridViewResults.Size = new Size(1024, 162);
             dataGridViewResults.TabIndex = 1;
-            // 
-            // toolStripStatusLabelProcessId
-            // 
-            toolStripStatusLabelProcessId.Name = "toolStripStatusLabelProcessId";
-            toolStripStatusLabelProcessId.Size = new Size(47, 17);
-            toolStripStatusLabelProcessId.Text = "Process";
             // 
             // FormStudio
             // 
