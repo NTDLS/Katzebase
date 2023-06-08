@@ -1,70 +1,19 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query.Constraints;
-using Katzebase.Engine.Query.Searchers.SingleSchema.Threading;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
-using Katzebase.PrivateLibrary;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;
-using static Katzebase.Engine.Query.Searchers.SingleSchema.Threading.SSQDocumentThreadingConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Query.Searchers.SingleSchema
 {
     internal static class SSQStaticMethods
     {
-        internal static void SingleSchemaNoConditionLookupThreadProc(object? p)
-        {
-            var param = p as SSQNoConditionLookupThreadPool;
-            Utility.EnsureNotNull(param);
-
-            try
-            {
-                Utility.EnsureNotNull(param.SchemaMeta);
-                Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
-
-                while (param.ContinueToProcessQueue)
-                {
-                    var documentCatalogItem = param.Queue.Dequeue();
-                    if (documentCatalogItem == null)
-                    {
-                        continue;
-                    }
-
-                    var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
-
-                    var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(persistDocument);
-                    Utility.EnsureNotNull(persistDocument.Content);
-
-                    var jContent = JObject.Parse(persistDocument.Content);
-
-                    Utility.EnsureNotNull(documentCatalogItem.Id);
-                    var result = new SSQDocumentLookupResult(documentCatalogItem.Id);
-
-                    foreach (var field in param.Query.SelectFields)
-                    {
-                        jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
-                        result.Values.Add(jToken?.ToString() ?? string.Empty);
-                    }
-
-                    param.Results.Add(result);
-                }
-            }
-            catch (Exception ex)
-            {
-                param.Exception = ex;
-            }
-            finally
-            {
-                param.DecrementRunningThreadCount();
-            }
-        }
-
         /// <summary>
         /// Gets all documents by a subset of conditions.
         /// </summary>
@@ -92,171 +41,118 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
-            var lookupOptimization = SSQStaticOptimization.SelectIndexesForConditionLookupOptimization(core, transaction, schemaMeta, query.Conditions);
+            ConditionLookupOptimization? lookupOptimization = null;
 
             //If we dont have anby conditions then we just need to return all rows from the schema.
-            //TODO: Add threading.
-            if (query.Conditions.Subsets.Count == 0)
+            if (query.Conditions.Subsets.Count > 0)
             {
-                Utility.EnsureNotNull(schemaMeta.DiskPath);
+                lookupOptimization = SSQStaticOptimization.SelectIndexesForConditionLookupOptimization(core, transaction, schemaMeta, query.Conditions);
 
-                var threadPool = new SSQNoConditionLookupThreadPool(core, pt, transaction, schemaMeta, query);
+                //Create a reference to the entire document catalog.
+                var limitedDocumentCatalogItems = documentCatalog.Collection;
 
-                threadPool.Start(SingleSchemaNoConditionLookupThreadProc, Environment.ProcessorCount * 2);
-
-                foreach (var documentCatalogItem in documentCatalog.Collection)
+                if (lookupOptimization.CanApplyIndexing())
                 {
-                    if (query.RowLimit != 0 && threadPool.Results.Collection.Count >= query.RowLimit)
-                    {
-                        break;
-                    }
+                    //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
+                    limitedDocumentCatalogItems = new List<PersistDocumentCatalogItem>();
 
-                    if (threadPool.HasException)
+                    //All condition subsets have a selected index. Start building a list of possible document IDs.
+                    foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
                     {
-                        break;
-                    }
+                        Utility.EnsureNotNull(subset.IndexSelection);
+                        Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
 
-                    threadPool.Queue.Enqueue(documentCatalogItem);
+                        var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(pt, transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                        Utility.EnsureNotNull(indexPageCatalog);
+
+                        var documentIds = core.Indexes.MatchDocuments(pt, indexPageCatalog, subset.IndexSelection, subset);
+
+                        limitedDocumentCatalogItems.AddRange(documentCatalog.Collection.Where(o => documentIds.Contains(o.Id)).ToList());
+                    }
                 }
-
-                threadPool.WaitForCompletion();
-
-                return threadPool.Results;
-            }
-
-            //Create a reference to the entire document catalog.
-            var limitedDocumentCatalogItems = documentCatalog.Collection;
-
-            if (lookupOptimization.CanApplyIndexing())
-            {
-                //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                limitedDocumentCatalogItems = new List<PersistDocumentCatalogItem>();
-
-                //All condition subsets have a selected index. Start building a list of possible document IDs.
-                foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
+                else
                 {
-                    Utility.EnsureNotNull(subset.IndexSelection);
-                    Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
-
-                    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(pt, transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(indexPageCatalog);
-
-                    var documentIds = core.Indexes.MatchDocuments(pt, indexPageCatalog, subset.IndexSelection, subset);
-
-                    limitedDocumentCatalogItems.AddRange(documentCatalog.Collection.Where(o => documentIds.Contains(o.Id)).ToList());
+                    //   * One or more of the conditon subsets lacks an index.
+                    //   *
+                    //   *   Since indexing requires that we can ensure document elimination, we will have
+                    //   *      to ensure that we have a covering index on EACH-and-EVERY conditon group.
+                    //   *
+                    //   *   Then we can search the indexes for each condition group to obtain a list of all possible document IDs,
+                    //   *       then use those document IDs to early eliminate documents from the main lookup loop.
+                    //   *
+                    //   *   If any one conditon group does not have an index, then no indexing will be used at all since all documents
+                    //   *       will need to be scaned anyway. To prevent unindexed scans, reduce the number of condition groups (nested in parentheses).
+                    //   *
+                    //   * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we cant use an index.
+                    //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
+                    //*
                 }
             }
-            else
-            {
-                //   * One or more of the conditon subsets lacks an index.
-                //   *
-                //   *   Since indexing requires that we can ensure document elimination, we will have
-                //   *      to ensure that we have a covering index on EACH-and-EVERY conditon group.
-                //   *
-                //   *   Then we can search the indexes for each condition group to obtain a list of all possible document IDs,
-                //   *       then use those document IDs to early eliminate documents from the main lookup loop.
-                //   *
-                //   *   If any one conditon group does not have an index, then no indexing will be used at all since all documents
-                //   *       will need to be scaned anyway. To prevent unindexed scans, reduce the number of condition groups (nested in parentheses).
-                //   *
-                //   * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we cant use an index.
-                //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
-                //*
-            }
+
+            Utility.EnsureNotNull(schemaMeta.DiskPath);
 
             var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
-            var threads = new SSQDocumentLookupThreads(core, pt, transaction, schemaMeta, query, lookupOptimization, DocumentLookupThreadProc);
 
-            string fistSchemaAlias = query.Schemas.First().Alias;
-
-            int maxThreads = 4;
-            if (limitedDocumentCatalogItems.Count > 100)
-            {
-                maxThreads = Environment.ProcessorCount;
-                if (limitedDocumentCatalogItems.Count > 1000)
-                {
-                    maxThreads = Environment.ProcessorCount * 2;
-                }
-            }
-
-            threads.InitializePool(maxThreads);
+            var threadPool = new SSQLookupThreadPool(core, pt, transaction, schemaMeta, query, lookupOptimization);
+            int threadCount = Environment.ProcessorCount * 4;
+            threadPool.Start(SingleSchemaLookupThreadProc, threadCount > 32 ? 32 : threadCount);
 
             ptThreadCreation?.EndTrace();
 
-            //Loop through each document in the catalog:
-            foreach (var documentCatalogItem in limitedDocumentCatalogItems)
+            foreach (var documentCatalogItem in documentCatalog.Collection)
             {
-                var ptThreadQueue = pt?.BeginTrace(PerformanceTraceType.ThreadQueue);
-
-                if (query.RowLimit != 0 && threads.Results.Collection.Count >= query.RowLimit)
+                if (query.RowLimit != 0 && threadPool.Results.Collection.Count >= query.RowLimit)
                 {
                     break;
                 }
 
-                threads.Enqueue(documentCatalogItem);
-                ptThreadQueue?.EndTrace();
+                if (threadPool.HasException)
+                {
+                    break;
+                }
+
+                threadPool.Queue.Enqueue(documentCatalogItem);
             }
 
             var ptThreadCompletion = pt?.BeginTrace(PerformanceTraceType.ThreadCompletion);
-            threads.WaitOnThreadCompletion();
+            threadPool.WaitForCompletion();
             ptThreadCompletion?.EndTrace();
-
-            var exceptionThreads = threads.Slots.Where(o => o.State == DocumentLookupThreadState.Exception);
-            if (exceptionThreads.Any())
-            {
-                var firstException = exceptionThreads.First();
-                if (firstException != null && firstException.Exception != null)
-                {
-                    throw firstException.Exception;
-                }
-            }
-
-            var ptThreadCompletion2 = pt?.BeginTrace(PerformanceTraceType.ThreadCompletion);
-            threads.Stop();
-            ptThreadCompletion2?.EndTrace();
 
             if (query.RowLimit > 0)
             {
                 //Multithreading can yeild a few more rows than we need if we have a limiter.
-                threads.Results.Collection = threads.Results.Collection.Take(query.RowLimit).ToList();
+                threadPool.Results.Collection = threadPool.Results.Collection.Take(query.RowLimit).ToList();
             }
 
-            return threads.Results;
+            return threadPool.Results;
         }
 
-        /// <summary>
-        /// Thread proc for looking up documents. These are started in a batch per-query and listen for lookup requests.
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <exception cref="KbParserException"></exception>
-        private static void DocumentLookupThreadProc(object? obj)
+        internal static void SingleSchemaLookupThreadProc(object? p)
         {
-            Utility.EnsureNotNull(obj);
-            var param = (SSQDocumentLookupThreadParam)obj;
-            var slot = param.ThreadSlots[param.ThreadSlotNumber];
+            var param = p as SSQLookupThreadPool;
+            Utility.EnsureNotNull(param);
 
             try
             {
-                var expression = new NCalc.Expression(param.LookupOptimization.Conditions.HighLevelExpressionTree);
-
+                Utility.EnsureNotNull(param.SchemaMeta);
                 Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
 
-                while (true)
+                NCalc.Expression? expression = null;
+
+                if (param.LookupOptimization != null)
                 {
-                    slot.State = DocumentLookupThreadState.Ready;
+                    expression = new NCalc.Expression(param.LookupOptimization.Conditions.HighLevelExpressionTree);
+                }
 
-                    var ptThreadReady = param.PT?.BeginTrace(PerformanceTraceType.ThreadReady);
-                    slot.Event.WaitOne();
-                    ptThreadReady?.EndTrace();
-
-                    if (slot.State == DocumentLookupThreadState.Shutdown)
+                while (param.ContinueToProcessQueue)
+                {
+                    var documentCatalogItem = param.Queue.Dequeue();
+                    if (documentCatalogItem == null)
                     {
-                        return;
+                        continue;
                     }
 
-                    slot.State = DocumentLookupThreadState.Executing;
-
-                    var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, slot.DocumentCatalogItem.FileName);
+                    var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
 
                     var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(persistDocument);
@@ -264,10 +160,15 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
                     var jContent = JObject.Parse(persistDocument.Content);
 
-                    SetExpressionParameters(ref expression, param.LookupOptimization.Conditions, jContent);
+                    Utility.EnsureNotNull(documentCatalogItem.Id);
+
+                    if (expression != null && param.LookupOptimization != null)
+                    {
+                        SetExpressionParameters(ref expression, param.LookupOptimization.Conditions, jContent);
+                    }
 
                     var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
-                    bool evaluation = (bool)expression.Evaluate();
+                    bool evaluation = (expression == null) || (bool)expression.Evaluate();
                     ptEvaluate?.EndTrace();
 
                     if (evaluation)
@@ -287,8 +188,11 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             }
             catch (Exception ex)
             {
-                slot.State = DocumentLookupThreadState.Exception;
-                slot.Exception = ex;
+                param.Exception = ex;
+            }
+            finally
+            {
+                param.DecrementRunningThreadCount();
             }
         }
 

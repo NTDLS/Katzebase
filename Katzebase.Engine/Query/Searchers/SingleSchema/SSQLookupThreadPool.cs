@@ -1,13 +1,13 @@
 ﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PrivateLibrary;
-using System.Threading;
 
-namespace Katzebase.Engine.Query.Searchers.SingleSchema.Threading
+namespace Katzebase.Engine.Query.Searchers.SingleSchema
 {
-    internal class SSQNoConditionLookupThreadPool
+    internal class SSQLookupThreadPool
     {
         private List<Thread> _threads = new();
         private int _runningThreadCount = 0;
@@ -18,20 +18,23 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema.Threading
 
         public SSQDocumentLookupResults Results = new();
         public FixedSizeWaitQueue<PersistDocumentCatalogItem> Queue { get; set; } = new(100);
-        public PersistSchema SchemaMeta { get; set; }
-        public Core Core { get; set; }
-        public PerformanceTrace? PT { get; set; }
-        public Transaction Transaction { get; set; }
-        public PreparedQuery Query { get; set; }
+        public PersistSchema SchemaMeta { get; private set; }
+        public Core Core { get; private set; }
+        public PerformanceTrace? PT { get; private set; }
+        public Transaction Transaction { get; private set; }
+        public PreparedQuery Query { get; private set; }
+        public ConditionLookupOptimization? LookupOptimization { get; private set; }
         public bool ContinueToProcessQueue { get; private set; } = true;
 
-        public SSQNoConditionLookupThreadPool(Core core, PerformanceTrace? pt, Transaction transaction, PersistSchema schemaMeta, PreparedQuery query)
+        public SSQLookupThreadPool(Core core, PerformanceTrace? pt, Transaction transaction,
+            PersistSchema schemaMeta, PreparedQuery query, ConditionLookupOptimization? lookupOptimization = null)
         {
             Core = core;
             SchemaMeta = schemaMeta;
             PT = pt;
             Transaction = transaction;
             Query = query;
+            LookupOptimization = lookupOptimization;
         }
         public void IncrementRunningThreadCount()
         {
