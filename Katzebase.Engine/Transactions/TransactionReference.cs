@@ -2,7 +2,7 @@
 {
     public class TransactionReference : IDisposable
     {
-        public Transaction Transaction { get; set; }
+        internal Transaction Transaction { get; private set; }
 
         private bool isComittedOrRolledBack = false;
 
@@ -31,7 +31,7 @@
             }
         }
 
-        public TransactionReference(Transaction transaction)
+        internal TransactionReference(Transaction transaction)
         {
             this.Transaction = transaction;
         }

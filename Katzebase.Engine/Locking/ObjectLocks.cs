@@ -6,7 +6,7 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Locking
 {
-    public class ObjectLocks
+    internal class ObjectLocks
     {
         private List<ObjectLock> objectLocks = new List<ObjectLock>();
         private Dictionary<Transaction, LockIntention> lockWaits = new Dictionary<Transaction, LockIntention>();

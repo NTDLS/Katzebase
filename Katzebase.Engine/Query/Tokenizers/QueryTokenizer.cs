@@ -1,5 +1,4 @@
-﻿using Katzebase.PublicLibrary.Client.Management;
-using Katzebase.PublicLibrary.Exceptions;
+﻿using Katzebase.PublicLibrary.Exceptions;
 using System.Text.RegularExpressions;
 
 namespace Katzebase.Engine.Query.Tokenizers
@@ -11,6 +10,8 @@ namespace Katzebase.Engine.Query.Tokenizers
         public string _text;
         public string Text => _text;
         private int _position = 0;
+
+        public int Position => _position;
 
         public Dictionary<string, string> LiteralStrings { get; private set; }
 
@@ -24,6 +25,15 @@ namespace Katzebase.Engine.Query.Tokenizers
                 {
                     value = value.Substring(1, value.Length - 2);
                 }
+            }
+        }
+
+        public void SkipTo(int position)
+        {
+            _position = position;
+            if (_position >= _text.Length)
+            {
+                throw new KbParserException("Skip position is greater than query length.");
             }
         }
 
@@ -58,6 +68,20 @@ namespace Katzebase.Engine.Query.Tokenizers
         {
             return GetNextToken(DefaultTokenDelimiters);
         }
+
+        public bool IsNextToken(string[] tokens)
+        {
+            var token = PeekNextToken().ToLower();
+            foreach (var given in tokens)
+            {
+                if (token == given.ToLower())
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
 
         public bool IsNextToken(string token)
         {
@@ -145,6 +169,9 @@ namespace Katzebase.Engine.Query.Tokenizers
         {
             var literalStrings = SwapOutLiteralStrings(ref query);
             query = query.Trim();
+
+            query = query.Replace("(", " ( ").Replace(")", " ) ");
+
             RemoveComments(ref query);
             if (swapLiteralsBackIn)
             {

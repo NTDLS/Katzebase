@@ -1,12 +1,4 @@
 ﻿using Katzebase.PublicLibrary.Client;
-using Katzebase.PublicLibrary.Client.Management;
-using Katzebase.PublicLibrary.Payloads;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static Katzebase.UI.Classes.Constants;
 
 namespace Katzebase.UI.Classes
@@ -16,7 +8,7 @@ namespace Katzebase.UI.Classes
         public static void PopulateServer(TreeView treeView, string serverAddress)
         {
             var client = new KatzebaseClient(serverAddress);
-            if (client.Server.Ping() == false)
+            if (client.Server.Ping().Success == false)
             {
                 throw new Exception("Could not api ping the server.");
             }

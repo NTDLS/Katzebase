@@ -7,7 +7,7 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Transactions
 {
-    public class Transaction
+    internal class Transaction
     {
         public List<ReversibleAction> ReversibleActions = new List<ReversibleAction>();
         public ulong ProcessId { get; set; }

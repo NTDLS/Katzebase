@@ -7,7 +7,7 @@ namespace Katzebase.Engine.Transactions
 {
     public class TransactionManager
     {
-        public List<Transaction> Collection = new List<Transaction>();
+        internal List<Transaction> Collection = new List<Transaction>();
         private Core core;
 
         public TransactionManager(Core core)
@@ -15,7 +15,7 @@ namespace Katzebase.Engine.Transactions
             this.core = core;
         }
 
-        public Transaction? GetByProcessId(ulong processId)
+        internal Transaction? GetByProcessId(ulong processId)
         {
             lock (Collection)
             {
@@ -24,7 +24,7 @@ namespace Katzebase.Engine.Transactions
             }
         }
 
-        public void RemoveByProcessId(ulong processId)
+        internal void RemoveByProcessId(ulong processId)
         {
             lock (Collection)
             {
@@ -36,7 +36,7 @@ namespace Katzebase.Engine.Transactions
             }
         }
 
-        public void Recover()
+        internal void Recover()
         {
             try
             {
@@ -127,7 +127,7 @@ namespace Katzebase.Engine.Transactions
             }
         }
 
-        public TransactionReference Begin(ulong processId)
+        internal TransactionReference Begin(ulong processId)
         {
             return Begin(processId, false);
         }

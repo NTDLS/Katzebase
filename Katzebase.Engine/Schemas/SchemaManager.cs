@@ -1,11 +1,9 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
-using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using System.Collections.Generic;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
@@ -53,7 +51,7 @@ namespace Katzebase.Engine.Schemas
             }
         }
 
-        public List<PersistSchema> GetChildrenMeta(Transaction transaction, PersistSchema node, LockOperation intendedOperation)
+        internal List<PersistSchema> GetChildrenMeta(Transaction transaction, PersistSchema node, LockOperation intendedOperation)
         {
             List<PersistSchema> metaList = new List<PersistSchema>();
 
@@ -87,7 +85,7 @@ namespace Katzebase.Engine.Schemas
             return metaList;
         }
 
-        public PersistSchema? GetParentMeta(Transaction transaction, PersistSchema child, LockOperation intendedOperation)
+        internal PersistSchema? GetParentMeta(Transaction transaction, PersistSchema child, LockOperation intendedOperation)
         {
             try
             {
@@ -113,7 +111,7 @@ namespace Katzebase.Engine.Schemas
             }
         }
 
-        public PersistSchema VirtualPathToMeta(Transaction transaction, string schemaPath, LockOperation intendedOperation)
+        internal PersistSchema VirtualPathToMeta(Transaction transaction, string schemaPath, LockOperation intendedOperation)
         {
             try
             {

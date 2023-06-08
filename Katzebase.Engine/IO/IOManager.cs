@@ -7,7 +7,7 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.IO
 {
-    public class IOManager
+    internal class IOManager
     {
         private Core core;
         public IOManager(Core core)
@@ -30,27 +30,27 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        public T? GetJson<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation)
+        internal T? GetJson<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation)
         {
             return InternalTrackedGet<T>(pt, transaction, filePath, intendedOperation, IOFormat.JSON);
         }
 
-        public T? GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
+        internal T? GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
             return InternalTrackedGet<T>(null, transaction, filePath, intendedOperation, IOFormat.JSON);
         }
 
-        public T? GetPBuf<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation)
+        internal T? GetPBuf<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation)
         {
             return InternalTrackedGet<T>(pt, transaction, filePath, intendedOperation, IOFormat.PBuf);
         }
 
-        public T? GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
+        internal T? GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
             return InternalTrackedGet<T>(null, transaction, filePath, intendedOperation, IOFormat.PBuf);
         }
 
-        public T? InternalTrackedGet<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
+        internal T? InternalTrackedGet<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
         {
             try
             {
@@ -130,12 +130,12 @@ namespace Katzebase.Engine.IO
 
         #region Putters.
 
-        public void PutJsonNonTracked(string filePath, object deserializedObject)
+        internal void PutJsonNonTracked(string filePath, object deserializedObject)
         {
             File.WriteAllText(filePath, JsonConvert.SerializeObject(deserializedObject));
         }
 
-        public void PutPBufNonTracked(string filePath, object deserializedObject)
+        internal void PutPBufNonTracked(string filePath, object deserializedObject)
         {
             using (var file = File.Create(filePath))
             {
@@ -143,12 +143,12 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        public void PutJson(Transaction transaction, string filePath, object deserializedObject)
+        internal void PutJson(Transaction transaction, string filePath, object deserializedObject)
         {
             InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.JSON);
         }
 
-        public void PutPBuf(Transaction transaction, string filePath, object deserializedObject)
+        internal void PutPBuf(Transaction transaction, string filePath, object deserializedObject)
         {
             InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.PBuf);
         }
@@ -225,7 +225,7 @@ namespace Katzebase.Engine.IO
 
         #endregion
 
-        public bool DirectoryExists(Transaction transaction, string diskPath, LockOperation intendedOperation)
+        internal bool DirectoryExists(Transaction transaction, string diskPath, LockOperation intendedOperation)
         {
             try
             {
@@ -243,7 +243,7 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        public void CreateDirectory(Transaction transaction, string? diskPath)
+        internal void CreateDirectory(Transaction transaction, string? diskPath)
         {
             if (diskPath == null)
             {
@@ -272,7 +272,7 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        public bool FileExists(Transaction transaction, string filePath, LockOperation intendedOperation)
+        internal bool FileExists(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
             try
             {
@@ -301,7 +301,7 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        public void DeleteFile(Transaction transaction, string filePath)
+        internal void DeleteFile(Transaction transaction, string filePath)
         {
             try
             {
@@ -327,7 +327,7 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        public void DeletePath(Transaction transaction, string diskPath)
+        internal void DeletePath(Transaction transaction, string diskPath)
         {
             try
             {

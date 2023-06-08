@@ -14,17 +14,19 @@ namespace Katzebase.Service.Controllers
         /// <param name="schema"></param>
         [HttpGet]
         [Route("{sessionId}/Ping")]
-        public KbActionResponseBoolean Exists(Guid sessionId)
+        public KbActionResponsePing Exists(Guid sessionId)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            KbActionResponseBoolean result = new KbActionResponseBoolean();
+            var result = new KbActionResponsePing();
 
             try
             {
-                result.Value = true;
+                result.ProcessId = processId;
+                result.SessionId = sessionId;
+                result.ServerTimeUTC = DateTime.UtcNow;
                 result.Success = true;
             }
             catch (Exception ex)

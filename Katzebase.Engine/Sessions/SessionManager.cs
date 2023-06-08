@@ -2,8 +2,6 @@
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using Microsoft.Win32;
-using System.Xml.Linq;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Sessions
@@ -12,7 +10,7 @@ namespace Katzebase.Engine.Sessions
     {
         private Core core;
         private ulong nextProcessId = 1;
-        public Dictionary<Guid, SessionState> Collection { get; set; } = new();
+        internal Dictionary<Guid, SessionState> Collection { get; set; } = new();
 
         public SessionManager(Core core)
         {
@@ -49,7 +47,7 @@ namespace Katzebase.Engine.Sessions
             }
         }
 
-        public KbActionResponse ExecuteSetVariable(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteSetVariable(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -69,7 +67,7 @@ namespace Katzebase.Engine.Sessions
                         {
                             return true;
                         }
-                        else  if (value == "off")
+                        else if (value == "off")
                         {
                             return false;
                         }

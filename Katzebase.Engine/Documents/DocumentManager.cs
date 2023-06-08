@@ -1,16 +1,12 @@
-﻿using Katzebase.Engine.Documents.Threading;
-using Katzebase.Engine.Indexes;
-using Katzebase.Engine.KbLib;
+﻿using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query;
-using Katzebase.Engine.Query.Condition;
+using Katzebase.Engine.Query.Searchers;
+using Katzebase.Engine.Query.Searchers.SingleSchema;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
-using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using Newtonsoft.Json.Linq;
-using static Katzebase.Engine.Documents.Threading.DocumentThreadingConstants;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
@@ -25,7 +21,7 @@ namespace Katzebase.Engine.Documents
             this.core = core;
         }
 
-        public KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -44,15 +40,15 @@ namespace Katzebase.Engine.Documents
                     ptAcquireTransaction?.EndTrace();
 
                     var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schemas[0].Key, LockOperation.Read);
+                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schemas[0].Alias, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(preparedQuery.Schemas[0].Key);
+                        throw new KbInvalidSchemaException(preparedQuery.Schemas[0].Alias);
                     }
                     ptLockSchema?.EndTrace();
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-                    var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(txRef.Transaction, schemaMeta, preparedQuery.Conditions);
+                    var lookupOptimization = SSQStaticOptimization.SelectIndexesForConditionLookupOptimization(core, txRef.Transaction, schemaMeta, preparedQuery.Conditions);
                     result.Explanation = lookupOptimization.BuildFullVirtualExpression();
 
                     txRef.Commit(); //Not that we did any work.
@@ -75,7 +71,7 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-        public KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -92,7 +88,7 @@ namespace Katzebase.Engine.Documents
                 using (var txRef = core.Transactions.Begin(processId))
                 {
                     ptAcquireTransaction?.EndTrace();
-                    result = FindDocumentsByPreparedQuery(pt, txRef.Transaction, preparedQuery);
+                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, pt, txRef.Transaction, preparedQuery);
                     txRef.Commit();
                 }
 
@@ -113,7 +109,7 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-        public KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
         {
             //TODO: This is a stub, this does NOT work.
             try
@@ -126,7 +122,7 @@ namespace Katzebase.Engine.Documents
                 {
                     ptAcquireTransaction?.EndTrace();
 
-                    result = FindDocumentsByPreparedQuery(pt, txRef.Transaction, preparedQuery);
+                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, pt, txRef.Transaction, preparedQuery);
 
                     //TODO: Delete the documents.
 
@@ -158,350 +154,6 @@ namespace Katzebase.Engine.Documents
                 core.Log.Write($"Failed to ExecuteDelete for process {processId}.", ex);
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Gets all documents by a subset of conditions.
-        /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="documentCatalogItems"></param>
-        /// <param name="schemaMeta"></param>
-        /// <param name="query"></param>
-        /// <param name="lookupOptimization"></param>
-        /// <returns></returns>
-        private DocumentLookupResults GetAllDocumentsByConditions(PerformanceTrace? pt, Transaction transaction,
-            List<PersistDocumentCatalogItem> documentCatalogItems, PersistSchema schemaMeta, PreparedQuery query,
-            ConditionLookupOptimization lookupOptimization)
-        {
-            if (query.Conditions.Subsets.Count == 0)
-            {
-                Utility.EnsureNotNull(schemaMeta.DiskPath);
-
-                var results = new DocumentLookupResults();
-                foreach (var documentCatalogItem in documentCatalogItems)
-                {
-                    if (query.RowLimit != 0 && results.Collection.Count >= query.RowLimit)
-                    {
-                        break;
-                    }
-
-                    var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, documentCatalogItem.FileName);
-
-                    var persistDocument = core.IO.GetJson<PersistDocument>(pt, transaction, persistDocumentDiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(persistDocument);
-                    Utility.EnsureNotNull(persistDocument.Content);
-
-                    var jContent = JObject.Parse(persistDocument.Content);
-
-                    Utility.EnsureNotNull(documentCatalogItem.Id);
-                    var result = new DocumentLookupResult((Guid)documentCatalogItem.Id);
-
-                    if (query.SelectFields.Count == 0)
-                    {
-                        //The one thread will add the rows, so when the other threads are
-                        //  unblocked they will see that they have been added and skip adding them.
-                        foreach (var child in jContent)
-                        {
-                            query.SelectFields.Add(new QueryField(child.Key, "", child.Key));
-                        }
-                    }
-
-                    foreach (var field in query.SelectFields)
-                    {
-                        if (jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
-                        {
-                            result.Values.Add(jToken.ToString());
-                        }
-                        else
-                        {
-                            result.Values.Add(string.Empty);
-                        }
-                    }
-
-                    results.Add(result);
-
-                }
-                return results;
-            }
-
-            //Create a reference to the entire document catalog.
-            var limitedDocumentCatalogItems = documentCatalogItems;
-
-            if (lookupOptimization.CanApplyIndexing())
-            {
-                //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                limitedDocumentCatalogItems = new List<PersistDocumentCatalogItem>();
-
-                //All condition subsets have a selected index. Start building a list of possible document IDs.
-                foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
-                {
-                    Utility.EnsureNotNull(subset.IndexSelection);
-                    Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
-
-                    var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(pt, transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(indexPageCatalog);
-
-                    var documentIds = core.Indexes.MatchDocuments(pt, indexPageCatalog, subset.IndexSelection, subset);
-
-                    limitedDocumentCatalogItems.AddRange(documentCatalogItems.Where(o => documentIds.Contains(o.Id)).ToList());
-                }
-            }
-            else
-            {
-                /* One or more of the conditon subsets lacks an index.
-                 *
-                 *   Since indexing requires that we can ensure document elimination, we will have
-                 *      to ensure that we have a covering index on EACH-and-EVERY conditon group.
-                 *
-                 *   Then we can search the indexes for each condition group to obtain a list of all possible document IDs,
-	             *       then use those document IDs to early eliminate documents from the main lookup loop.
-                 *
-                 *   If any one conditon group does not have an index, then no indexing will be used at all since all documents
-	             *       will need to be scaned anyway. To prevent unindexed scans, reduce the number of condition groups (nested in parentheses).
-	             *
-                 * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we cant use an index.
-                 * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
-	             *
-                */
-            }
-
-            var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
-            var threads = new DocumentLookupThreads(pt, transaction, schemaMeta, query, lookupOptimization, DocumentLookupThreadProc);
-
-            int maxThreads = 4;
-            if (limitedDocumentCatalogItems.Count > 100)
-            {
-                maxThreads = Environment.ProcessorCount;
-                if (limitedDocumentCatalogItems.Count > 1000)
-                {
-                    maxThreads = Environment.ProcessorCount * 2;
-                }
-            }
-
-            threads.InitializePool(maxThreads);
-
-            ptThreadCreation?.EndTrace();
-
-            //Loop through each document in the catalog:
-            foreach (var documentCatalogItem in limitedDocumentCatalogItems)
-            {
-                var ptThreadQueue = pt?.BeginTrace(PerformanceTraceType.ThreadQueue);
-
-                if (query.RowLimit != 0 && threads.Results.Collection.Count >= query.RowLimit)
-                {
-                    break;
-                }
-
-                threads.Enqueue(documentCatalogItem);
-                ptThreadQueue?.EndTrace();
-            }
-
-            var ptThreadCompletion = pt?.BeginTrace(PerformanceTraceType.ThreadCompletion);
-            threads.WaitOnThreadCompletion();
-            ptThreadCompletion?.EndTrace();
-
-            var exceptionThreads = threads.Slots.Where(o => o.State == DocumentLookupThreadState.Exception);
-            if (exceptionThreads.Any())
-            {
-                var firstException = exceptionThreads.First();
-                if (firstException != null && firstException.Exception != null)
-                {
-                    throw firstException.Exception;
-                }
-            }
-
-            var ptThreadCompletion2 = pt?.BeginTrace(PerformanceTraceType.ThreadCompletion);
-            threads.Stop();
-            ptThreadCompletion2?.EndTrace();
-
-            if (query.RowLimit > 0)
-            {
-                //Multithreading can yeild a few more rows than we need if we have a limiter.
-                threads.Results.Collection = threads.Results.Collection.Take(query.RowLimit).ToList();
-            }
-
-            return threads.Results;
-        }
-
-        /// <summary>
-        /// Thread proc for looking up documents. These are started in a batch per-query and listen for lookup requests.
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <exception cref="KbParserException"></exception>
-        private void DocumentLookupThreadProc(object? obj)
-        {
-            Utility.EnsureNotNull(obj);
-            var param = (DocumentLookupThreadParam)obj;
-            var slot = param.ThreadSlots[param.ThreadSlotNumber];
-
-            try
-            {
-                var expression = new NCalc.Expression(param.LookupOptimization.Conditions.Root.Expression);
-
-                Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
-
-                while (true)
-                {
-                    slot.State = DocumentLookupThreadState.Ready;
-
-                    var ptThreadReady = param.PT?.BeginTrace(PerformanceTraceType.ThreadReady);
-                    slot.Event.WaitOne();
-                    ptThreadReady?.EndTrace();
-
-                    if (slot.State == DocumentLookupThreadState.Shutdown)
-                    {
-                        return;
-                    }
-
-                    slot.State = DocumentLookupThreadState.Executing;
-
-                    var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, slot.DocumentCatalogItem.FileName);
-
-                    var persistDocument = core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(persistDocument);
-                    Utility.EnsureNotNull(persistDocument.Content);
-
-                    var jContent = JObject.Parse(persistDocument.Content);
-
-                    //If we have subsets, then we need to satisify those in order to complete the equation.
-                    foreach (var subsetKey in param.LookupOptimization.Conditions.Root.SubsetKeys)
-                    {
-                        var subExpression = param.LookupOptimization.Conditions.SubsetByKey(subsetKey);
-                        bool subExpressionResult = SatisifySubExpression(param.PT, param.LookupOptimization, jContent, subExpression);
-                        expression.Parameters[subsetKey] = subExpressionResult;
-                    }
-
-                    var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
-                    bool evaluation = (bool)expression.Evaluate();
-                    ptEvaluate?.EndTrace();
-
-                    if (evaluation)
-                    {
-                        Utility.EnsureNotNull(persistDocument.Id);
-                        var result = new DocumentLookupResult((Guid)persistDocument.Id);
-
-                        foreach (var field in param.Query.SelectFields)
-                        {
-                            if (jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
-                            {
-                                result.Values.Add(jToken.ToString());
-                            }
-                            else
-                            {
-                                result.Values.Add(string.Empty);
-                            }
-                        }
-
-                        param.Results.Add(result);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                slot.State = DocumentLookupThreadState.Exception;
-                slot.Exception = ex;
-            }
-        }
-
-        /// <summary>
-        /// Mathematically collapses all subexpressions to return a boolean match.
-        /// </summary>
-        /// <param name="lookupOptimization"></param>
-        /// <param name="jContent"></param>
-        /// <param name="conditionSubset"></param>
-        /// <returns></returns>
-        /// <exception cref="KbParserException"></exception>
-        private bool SatisifySubExpression(PerformanceTrace? pt,
-            ConditionLookupOptimization lookupOptimization, JObject jContent, ConditionSubset conditionSubset)
-        {
-            var expression = new NCalc.Expression(conditionSubset.Expression);
-
-            //If we have subsets, then we need to satisify those in order to complete the equation.
-            foreach (var subsetKey in conditionSubset.SubsetKeys)
-            {
-                var subExpression = lookupOptimization.Conditions.SubsetByKey(subsetKey);
-
-                bool subExpressionResult = SatisifySubExpression(pt, lookupOptimization, jContent, subExpression);
-                expression.Parameters[subsetKey] = subExpressionResult;
-            }
-
-            foreach (var condition in conditionSubset.Conditions)
-            {
-                Utility.EnsureNotNull(condition.Left.Value);
-
-                //Get the value of the condition:
-                if (jContent.TryGetValue(condition.Left.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
-                {
-                    expression.Parameters[condition.ConditionKey] = condition.IsMatch(jToken.ToString().ToLower());
-                }
-                else
-                {
-                    throw new KbParserException($"Field not found in document [{condition.Left.Value}].");
-                }
-            }
-
-            var ptEvaluate = pt?.BeginTrace(PerformanceTraceType.Evaluate);
-            var evaluation = (bool)expression.Evaluate();
-            ptEvaluate?.EndTrace();
-
-            return evaluation;
-        }
-
-        /// <summary>
-        /// Finds all document using a prepared query.
-        /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="query"></param>
-        /// <returns></returns>
-        /// <exception cref="KbInvalidSchemaException"></exception>
-        private KbQueryResult FindDocumentsByPreparedQuery(PerformanceTrace? pt, Transaction transaction, PreparedQuery query)
-        {
-            var result = new KbQueryResult();
-
-            //Lock the schema:
-            var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
-            var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, query.Schemas[0].Key, LockOperation.Read);
-            if (schemaMeta == null || schemaMeta.Exists == false)
-            {
-                throw new KbInvalidSchemaException(query.Schemas[0].Key);
-            }
-            ptLockSchema?.EndTrace();
-            Utility.EnsureNotNull(schemaMeta.DiskPath);
-
-            //Lock the document catalog:
-            var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
-            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
-            Utility.EnsureNotNull(documentCatalog);
-
-            if (query.SelectFields.Count == 1 && query.SelectFields[0].Key == "*")
-            {
-                query.SelectFields.Clear();
-                throw new KbNotImplementedException("Select * is not implemented. This will require schema scampling.");
-            }
-            else if (query.SelectFields.Count == 0)
-            {
-                query.SelectFields.Clear();
-                throw new KbNotImplementedException("No fields were selected.");
-            }
-
-            //Figure out which indexes could assist us in retrieving the desired documents (if any).
-            var ptOptimization = pt?.BeginTrace(PerformanceTraceType.Optimization);
-            var lookupOptimization = core.Indexes.SelectIndexesForConditionLookupOptimization(transaction, schemaMeta, query.Conditions);
-            ptOptimization?.EndTrace();
-
-            var subsetResults = GetAllDocumentsByConditions(pt, transaction, documentCatalog.Collection, schemaMeta, query, lookupOptimization);
-
-            foreach (var field in query.SelectFields)
-            {
-                result.Fields.Add(new KbQueryField(field.Alias));
-            }
-
-            foreach (var subsetResult in subsetResults.Collection)
-            {
-                result.Rows.Add(new KbQueryRow(subsetResult.Values));
-            }
-
-            return result;
         }
 
         /// <summary>

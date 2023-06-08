@@ -1,4 +1,4 @@
-﻿using Katzebase.Engine.Query.Condition;
+﻿using Katzebase.Engine.Query.Constraints;
 
 namespace Katzebase.Engine.Query
 {

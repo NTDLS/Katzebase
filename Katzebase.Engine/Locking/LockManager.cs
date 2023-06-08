@@ -2,7 +2,7 @@
 
 namespace Katzebase.Engine.Locking
 {
-    public class LockManager
+    internal class LockManager
     {
         public ObjectLocks Locks { get; set; }
         private Core core;

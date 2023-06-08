@@ -1,6 +1,6 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.KbLib;
-using Katzebase.Engine.Query.Condition;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
@@ -8,7 +8,6 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
-using System.Diagnostics;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Indexes
@@ -27,7 +26,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="persistIndexLeaves"></param>
         /// <param name="conditions"></param>
         /// <param name="foundDocumentIds"></param>
-        public HashSet<Guid> MatchDocuments(PerformanceTrace? pt,
+        internal HashSet<Guid> MatchDocuments(PerformanceTrace? pt,
             PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
         {
             var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
@@ -114,112 +113,6 @@ namespace Katzebase.Engine.Indexes
             return indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
         }
 
-        /// <summary>
-        /// Takes a nested set of conditions and returns a selection of indexes as well as a clone of the conditions with associated indexes.
-        /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="schemaMeta"></param>
-        /// <param name="conditions">Nested conditions.</param>
-        /// <returns>A selection of indexes as well as a clone of the conditions with associated indexes</returns>
-        public ConditionLookupOptimization SelectIndexesForConditionLookupOptimization(Transaction transaction, PersistSchema schemaMeta, Conditions conditions)
-        {
-            try
-            {
-                /* This still has condition values in it, that wont work. *Face palm*
-                var cacheItem = core.LookupOptimizationCache.Get(conditions.Hash) as ConditionLookupOptimization;
-                if (cacheItem != null)
-                {
-                    return cacheItem;
-                }
-                */
-
-                var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
-
-                var lookupOptimization = new ConditionLookupOptimization(conditions);
-
-                foreach (var subset in conditions.Subsets)
-                {
-                    var potentialIndexs = new List<PotentialIndex>();
-
-                    //Loop though each index in the schema.
-                    foreach (var indexMeta in indexCatalog.Collection)
-                    {
-                        var handledKeyNames = new List<string>();
-
-                        for (int i = 0; i < indexMeta.Attributes.Count; i++)
-                        {
-                            if (indexMeta.Attributes == null || indexMeta.Attributes[i] == null)
-                            {
-                                throw new KbNullException($"Value should not be null {nameof(indexMeta.Attributes)}.");
-                            }
-
-                            var keyName = indexMeta.Attributes[i].Field?.ToLower();
-                            if (keyName == null)
-                            {
-                                throw new KbNullException($"Value should not be null {nameof(keyName)}.");
-                            }
-
-                            if (subset.Conditions.Any(o => o.Left.Value == keyName && !o.CoveredByIndex))
-                            {
-                                handledKeyNames.Add(keyName);
-                            }
-                            else
-                            {
-                                break;
-                            }
-                        }
-
-                        if (handledKeyNames.Count > 0)
-                        {
-                            var potentialIndex = new PotentialIndex(indexMeta, handledKeyNames);
-                            potentialIndexs.Add(potentialIndex);
-                        }
-                    }
-
-                    //Grab the index that matches the most of our supplied keys but also has the least attributes.
-                    var firstIndex = (from o in potentialIndexs where o.Tried == false select o)
-                        .OrderByDescending(s => s.CoveredFields.Count)
-                        .ThenBy(t => t.Index.Attributes.Count).FirstOrDefault();
-                    if (firstIndex != null)
-                    {
-                        var handledKeys = (from o in subset.Conditions where firstIndex.CoveredFields.Contains(o.Left.Value ?? string.Empty) select o).ToList();
-                        foreach (var handledKey in handledKeys)
-                        {
-                            handledKey.CoveredByIndex = true;
-                        }
-
-                        firstIndex.Tried = true;
-
-                        var indexSelection = new IndexSelection(firstIndex.Index, firstIndex.CoveredFields);
-
-                        lookupOptimization.IndexSelection.Add(indexSelection);
-
-                        //Mark which condition this index selection satisifies.
-                        var sourceSubset = lookupOptimization.Conditions.SubsetByKey(subset.SubsetKey);
-                        Utility.EnsureNotNull(sourceSubset);
-                        sourceSubset.IndexSelection = indexSelection;
-
-                        foreach (var conditon in sourceSubset.Conditions)
-                        {
-                            if (indexSelection.CoveredFields.Any(o => o == conditon.Left.Value))
-                            {
-                                conditon.CoveredByIndex = true;
-                            }
-                        }
-                    }
-                }
-
-                //core.LookupOptimizationCache.Add(conditions.Hash, lookupOptimization, DateTime.Now.AddMinutes(10));
-
-                return lookupOptimization;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to select indexes for process {transaction.ProcessId}.", ex);
-                throw;
-            }
-        }
-
         public List<KbIndex> GetList(ulong processId, string schema)
         {
             var result = new List<KbIndex>();
@@ -251,7 +144,6 @@ namespace Katzebase.Engine.Indexes
 
             return result;
         }
-
 
         public bool Exists(ulong processId, string schema, string indexName)
         {
@@ -375,7 +267,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        private PersistIndexCatalog GetIndexCatalog(Transaction transaction, string schema, LockOperation intendedOperation)
+        internal PersistIndexCatalog GetIndexCatalog(Transaction transaction, string schema, LockOperation intendedOperation)
         {
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schema, intendedOperation);
             return GetIndexCatalog(transaction, schemaMeta, intendedOperation);
@@ -386,7 +278,7 @@ namespace Katzebase.Engine.Indexes
             return $"@Index_{0}_Pages_{Helpers.MakeSafeFileName(indexName)}.PBuf";
         }
 
-        private PersistIndexCatalog GetIndexCatalog(Transaction transaction, PersistSchema schemaMeta, LockOperation intendedOperation)
+        internal PersistIndexCatalog GetIndexCatalog(Transaction transaction, PersistSchema schemaMeta, LockOperation intendedOperation)
         {
             if (schemaMeta.DiskPath == null)
             {
@@ -532,7 +424,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        public void UpdateDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
+        internal void UpdateDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
         {
             try
             {
@@ -560,7 +452,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        public void InsertDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
+        internal void InsertDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
         {
             try
             {
@@ -684,7 +576,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        class RebuildIndexItemThreadProc_ParallelState
+        internal class RebuildIndexItemThreadProc_ParallelState
         {
             public int ThreadsCompleted { get; set; }
             public int ThreadsStarted { get; set; }
@@ -702,7 +594,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        class RebuildIndexItemThreadProc_Params
+        internal class RebuildIndexItemThreadProc_Params
         {
             public RebuildIndexItemThreadProc_ParallelState? State { get; set; }
             public Transaction? Transaction { get; set; }
@@ -719,7 +611,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        void RebuildIndexItemThreadProc(object? oParam)
+        internal void RebuildIndexItemThreadProc(object? oParam)
         {
             int threadMod = 0;
 
@@ -828,7 +720,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        public void DeleteDocumentFromIndexes(Transaction transaction, PersistSchema schemaMeta, Guid documentId)
+        internal void DeleteDocumentFromIndexes(Transaction transaction, PersistSchema schemaMeta, Guid documentId)
         {
             try
             {

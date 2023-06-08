@@ -1,9 +1,5 @@
 ﻿using Katzebase.Engine.KbLib;
-using Katzebase.Engine.Query.Condition;
-using Katzebase.PublicLibrary.Client.Management;
 using Katzebase.PublicLibrary.Payloads;
-using System.Runtime.Intrinsics.X86;
-using System;
 
 namespace Katzebase.Engine.Query
 {
@@ -22,7 +18,7 @@ namespace Katzebase.Engine.Query
             return ExplainQuery(processId, preparedQuery);
         }
 
-        public KbQueryResult ExplainQuery(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryResult ExplainQuery(ulong processId, PreparedQuery preparedQuery)
         {
             if (preparedQuery.QueryType == EngineConstants.QueryType.Select
                 || preparedQuery.QueryType == EngineConstants.QueryType.Delete
@@ -46,7 +42,7 @@ namespace Katzebase.Engine.Query
             return ExecuteQuery(processId, preparedQuery);
         }
 
-        public KbQueryResult ExecuteQuery(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteQuery(ulong processId, PreparedQuery preparedQuery)
         {
             if (preparedQuery.QueryType == EngineConstants.QueryType.Select)
             {
@@ -74,7 +70,7 @@ namespace Katzebase.Engine.Query
             return ExecuteNonQuery(processId, preparedQuery);
         }
 
-        public KbActionResponse ExecuteNonQuery(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteNonQuery(ulong processId, PreparedQuery preparedQuery)
         {
             if (preparedQuery.QueryType == EngineConstants.QueryType.Delete)
             {

@@ -1,13 +1,22 @@
-﻿namespace Katzebase.Engine.Query
-{
-    public class QuerySchema
-    {
-        public string Key { get; set; }
-        public string Alias { get; set; }
+﻿using Katzebase.Engine.Query.Constraints;
 
-        public QuerySchema(string key, string alias)
+namespace Katzebase.Engine.Query
+{
+    internal class QuerySchema
+    {
+        public string Name { get; set; }
+        public string Alias { get; set; }
+        public Conditions? Conditions { get; set; }
+
+        public QuerySchema(string name, string alias, Conditions conditions)
         {
-            Key = key;
+            Name = name;
+            Alias = alias;
+            Conditions = conditions;
+        }
+        public QuerySchema(string name, string alias)
+        {
+            Name = name;
             Alias = alias;
         }
     }

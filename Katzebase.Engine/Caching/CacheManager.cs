@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Katzebase.Engine.Caching
 {
-    public class CacheManager
+    internal class CacheManager
     {
         private Dictionary<string, CacheItem> collection = new();
         private readonly Core core;
