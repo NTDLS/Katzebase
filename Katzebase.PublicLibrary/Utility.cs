@@ -13,6 +13,7 @@ namespace Katzebase.PublicLibrary
             return (new StackTrace())?.GetFrame(1)?.GetMethod()?.Name ?? "{unknown frame}";
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void EnsureNotNull<T>([NotNull] T? value, string? message = null, [CallerArgumentExpression("value")] string strName = "")
         {
             if (value == null)
@@ -28,6 +29,7 @@ namespace Katzebase.PublicLibrary
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void EnsureNotNullOrEmpty([NotNull] Guid? value, [CallerArgumentExpression("value")] string strName = "")
         {
             if (value == null || value == Guid.Empty)
@@ -36,6 +38,7 @@ namespace Katzebase.PublicLibrary
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void EnsureNotNullOrEmpty([NotNull] string? value, [CallerArgumentExpression("value")] string strName = "")
         {
             if (string.IsNullOrEmpty(value))
@@ -44,6 +47,7 @@ namespace Katzebase.PublicLibrary
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void EnsureNotNullOrWhiteSpace([NotNull] string? value, [CallerArgumentExpression("value")] string strName = "")
         {
             if (string.IsNullOrWhiteSpace(value))
@@ -61,6 +65,7 @@ namespace Katzebase.PublicLibrary
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Assert(bool condition, string message)
         {
             if (condition)

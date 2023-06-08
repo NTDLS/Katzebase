@@ -70,26 +70,10 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     Utility.EnsureNotNull(documentCatalogItem.Id);
                     var result = new SSQDocumentLookupResult(documentCatalogItem.Id);
 
-                    if (query.SelectFields.Count == 0)
-                    {
-                        //The one thread will add the rows, so when the other threads are
-                        //  unblocked they will see that they have been added and skip adding them.
-                        foreach (var child in jContent)
-                        {
-                            query.SelectFields.Add(new QueryField(child.Key, "", child.Key));
-                        }
-                    }
-
                     foreach (var field in query.SelectFields)
                     {
-                        if (jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
-                        {
-                            result.Values.Add(jToken.ToString());
-                        }
-                        else
-                        {
-                            result.Values.Add(string.Empty);
-                        }
+                        jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                        result.Values.Add(jToken?.ToString() ?? string.Empty);
                     }
 
                     results.Add(result);
@@ -251,14 +235,8 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
                         foreach (var field in param.Query.SelectFields)
                         {
-                            if (jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
-                            {
-                                result.Values.Add(jToken.ToString());
-                            }
-                            else
-                            {
-                                result.Values.Add(string.Empty);
-                            }
+                            jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                            result.Values.Add(jToken?.ToString() ?? string.Empty);
                         }
 
                         param.Results.Add(result);
@@ -302,16 +280,13 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 Utility.EnsureNotNull(condition.Left.Value);
 
                 //Get the value of the condition:
-                if (jContent.TryGetValue(condition.Left.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
-                {
-                    expression.Parameters[condition.ConditionKey] = condition.IsMatch(jToken.ToString().ToLower());
-                }
-                else
+                if (!jContent.TryGetValue(condition.Left.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
                 {
                     throw new KbParserException($"Field not found in document [{condition.Left.Value}].");
                 }
+
+                expression.Parameters[condition.ConditionKey] = condition.IsMatch(jToken.ToString().ToLower());
             }
         }
-
     }
 }
