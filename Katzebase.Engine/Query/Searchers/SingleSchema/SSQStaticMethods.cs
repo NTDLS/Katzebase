@@ -5,6 +5,7 @@ using Katzebase.Engine.Query.Searchers.SingleSchema.Threading;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
+using Katzebase.PrivateLibrary;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
@@ -16,6 +17,54 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 {
     internal static class SSQStaticMethods
     {
+        internal static void SingleSchemaNoConditionLookupThreadProc(object? p)
+        {
+            var param = p as SSQNoConditionLookupThreadPool;
+            Utility.EnsureNotNull(param);
+
+            try
+            {
+                Utility.EnsureNotNull(param.SchemaMeta);
+                Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
+
+                while (param.ContinueToProcessQueue)
+                {
+                    var documentCatalogItem = param.Queue.Dequeue();
+                    if (documentCatalogItem == null)
+                    {
+                        continue;
+                    }
+
+                    var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
+
+                    var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
+                    Utility.EnsureNotNull(persistDocument);
+                    Utility.EnsureNotNull(persistDocument.Content);
+
+                    var jContent = JObject.Parse(persistDocument.Content);
+
+                    Utility.EnsureNotNull(documentCatalogItem.Id);
+                    var result = new SSQDocumentLookupResult(documentCatalogItem.Id);
+
+                    foreach (var field in param.Query.SelectFields)
+                    {
+                        jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                        result.Values.Add(jToken?.ToString() ?? string.Empty);
+                    }
+
+                    param.Results.Add(result);
+                }
+            }
+            catch (Exception ex)
+            {
+                param.Exception = ex;
+            }
+            finally
+            {
+                param.DecrementRunningThreadCount();
+            }
+        }
+
         /// <summary>
         /// Gets all documents by a subset of conditions.
         /// </summary>
@@ -51,35 +100,28 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             {
                 Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-                var results = new SSQDocumentLookupResults();
+                var threadPool = new SSQNoConditionLookupThreadPool(core, pt, transaction, schemaMeta, query);
+
+                threadPool.Start(SingleSchemaNoConditionLookupThreadProc, Environment.ProcessorCount * 2);
+
                 foreach (var documentCatalogItem in documentCatalog.Collection)
                 {
-                    if (query.RowLimit != 0 && results.Collection.Count >= query.RowLimit)
+                    if (query.RowLimit != 0 && threadPool.Results.Collection.Count >= query.RowLimit)
                     {
                         break;
                     }
 
-                    var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, documentCatalogItem.FileName);
-
-                    var persistDocument = core.IO.GetJson<PersistDocument>(pt, transaction, persistDocumentDiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(persistDocument);
-                    Utility.EnsureNotNull(persistDocument.Content);
-
-                    var jContent = JObject.Parse(persistDocument.Content);
-
-                    Utility.EnsureNotNull(documentCatalogItem.Id);
-                    var result = new SSQDocumentLookupResult(documentCatalogItem.Id);
-
-                    foreach (var field in query.SelectFields)
+                    if (threadPool.HasException)
                     {
-                        jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
-                        result.Values.Add(jToken?.ToString() ?? string.Empty);
+                        break;
                     }
 
-                    results.Add(result);
-
+                    threadPool.Queue.Enqueue(documentCatalogItem);
                 }
-                return results;
+
+                threadPool.WaitForCompletion();
+
+                return threadPool.Results;
             }
 
             //Create a reference to the entire document catalog.

@@ -1,4 +1,3 @@
-using ICSharpCode.AvalonEdit.Editing;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Exceptions;
@@ -8,8 +7,6 @@ using Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
 using System.Text;
-using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Katzebase.UI
 {
@@ -523,8 +520,8 @@ namespace Katzebase.UI
                 {
                     _lastusedServerAddress = form.ServerAddressURL;
 
-                    var tabFilePage = CreateNewTab();
-                    tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\tProductID, LocationID, Shelf,\r\n\tBin, Quantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\nWHERE\r\n\t(\r\n\t\tLocationId = 6\r\n\t\tAND Shelf != 'R'\r\n\t\tAND Quantity = 299\r\n\t)\r\n\tOR\r\n\t(\r\n\t\t(\r\n\t\t\tLocationId = 6\r\n\t\t\tAND Shelf != 'M'\r\n\t\t)\r\n\t\tAND Quantity = 299\r\n\t\tOR ProductId = 366\r\n\t)\r\n\tAND\r\n\t(\r\n\t\tBIN = 8\r\n\t\tOR Bin = 11\r\n\t\tOR Bin = 19\r\n\t)\r\n";
+                    var tabFilePage = CreateNewTab("Debug Tab");
+                    tabFilePage.Editor.Text = "SELECT TOP 100\r\n/*\r\n\tP.Name,\r\n\tP.ProductNumber,\r\n*/\r\n\tInv.ProductID,\r\n\tInv.LocationID,\r\n\tInv.Shelf,\r\n\tInv.'Bin' as Box,\r\n\tInv.Quantity\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory as Inv\r\nINNER JOIN AdventureWorks2012:Production:Product as P\r\n\tON P.ProductID = Inv.ProductID\r\nWHERE\r\n\tShelf = 'R'\r\n\t--Class = 'M'\r\n";
                     //tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\n";
                     TreeManagement.PopulateServer(treeViewProject, _lastusedServerAddress);
 
