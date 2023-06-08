@@ -9,9 +9,9 @@ namespace Katzebase.UI.Classes
     {
 
 #if DEBUG
-        private static string sqlHighlighter => @"C:\NTDLS\Katzebase\Installers\Syntax Highlighters\SQL.xshd";
+        private static string sqlHighlighter => @"C:\NTDLS\Katzebase\@Installers\Highlighters\KBS.xshd";
 #else
-        private static string sqlHighlighter => Path.Combine(Path.GetDirectoryName(Application.ExecutablePath) ?? "", "Highlighters", "SQL.xshd");
+        private static string sqlHighlighter => Path.Combine(Path.GetDirectoryName(Application.ExecutablePath) ?? "", "Highlighters", "KBS.xshd");
 #endif
 
         private TabControl _tabControl;
@@ -23,7 +23,7 @@ namespace Katzebase.UI.Classes
             _form = form;
         }
 
-        public TabFilePage Create(string serverAddressURL, string filePath)
+        public TabFilePage Create(string serverAddressURL, string tabText)
         {
             var editor = new TextEditor
             {
@@ -33,7 +33,7 @@ namespace Katzebase.UI.Classes
                 WordWrap = false,
             };
 
-            var tabFilePage = new TabFilePage(serverAddressURL, filePath, editor)
+            var tabFilePage = new TabFilePage(serverAddressURL, tabText, editor)
             {
                 //..
             };
@@ -45,12 +45,6 @@ namespace Katzebase.UI.Classes
                 using XmlReader reader = XmlReader.Create(sqlHighlighter);
                 editor.SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
                 reader.Close();
-            }
-
-            if (File.Exists(filePath))
-            {
-                editor.Document.FileName = filePath;
-                editor.Text = File.ReadAllText(editor.Document.FileName);
             }
 
             editor.TextChanged += TextEditor_TextChanged;

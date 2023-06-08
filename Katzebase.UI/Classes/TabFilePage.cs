@@ -10,8 +10,8 @@ namespace Katzebase.UI.Classes
         public FormFindText FindTextForm { get; private set; }
         public FormReplaceText ReplaceTextForm { get; private set; }
         public string ServerAddressURL { get; set; }
-        public KatzebaseClient Client { get; private set; }
-
+        public KatzebaseClient? Client { get; private set; }
+        public bool IsFileOpen { get; private set; } = false;
 
         private string _filePath = string.Empty;
         public string FilePath
@@ -24,21 +24,42 @@ namespace Katzebase.UI.Classes
             }
         }
 
-        public TabFilePage(string serverAddressURL, string filePath, TextEditor editor) :
-             base(filePath)
+        public TabFilePage(string serverAddressURL, string tabText, TextEditor editor) :
+             base(tabText)
         {
-            FilePath = filePath;
             Editor = editor;
             FindTextForm = new FormFindText(this);
             ReplaceTextForm = new FormReplaceText(this);
             ServerAddressURL = serverAddressURL;
-            Client = new KatzebaseClient(ServerAddressURL);
+            if (string.IsNullOrEmpty(serverAddressURL) == false)
+            {
+                Client = new KatzebaseClient(ServerAddressURL);
+            }
         }
 
-        public void Save()
+        public void OpenFile(string filePath)
         {
-            File.WriteAllText(FilePath, Editor.Text);
-            IsSaved = true;
+            if (File.Exists(filePath))
+            {
+                Editor.Document.FileName = filePath;
+                Editor.Text = File.ReadAllText(Editor.Document.FileName);
+                IsSaved = true;
+            }
+
+            this.FilePath = FilePath;
+
+            IsFileOpen = true;
+        }
+
+        public bool Save()
+        {
+            if (IsFileOpen)
+            {
+                File.WriteAllText(FilePath, Editor.Text);
+                IsSaved = true;
+                return true;
+            }
+            return false;
         }
     }
 }

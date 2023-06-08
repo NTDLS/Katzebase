@@ -8,6 +8,8 @@ using Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
 using System.Text;
+using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Katzebase.UI
 {
@@ -96,8 +98,8 @@ namespace Katzebase.UI
         {
             var tabFilePage = CurrentTabFilePage();
 
-            toolStripStatusLabelServerName.Text = "Server: " + tabFilePage?.Client.Connection.BaseAddress?.ToString() ?? string.Empty;
-            toolStripStatusLabelProcessId.Text = "PID: " + tabFilePage?.Client.ServerProcessId.ToString("N0") ?? string.Empty;
+            toolStripStatusLabelServerName.Text = "Server: " + tabFilePage?.Client?.Connection.BaseAddress?.ToString() ?? string.Empty;
+            toolStripStatusLabelProcessId.Text = "PID: " + tabFilePage?.Client?.ServerProcessId.ToString("N0") ?? string.Empty;
 
             bool isTabOpen = (tabFilePage != null);
             bool isTextSelected = (tabFilePage != null) && (tabFilePage?.Editor?.SelectionLength > 0);
@@ -252,7 +254,7 @@ namespace Katzebase.UI
             else if (e.ClickedItem?.Text == "Select top n...")
             {
                 var rootNode = TreeManagement.GetRootNode(node);
-                var tabFilePage = AddTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
                 tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\t" + TreeManagement.CalculateFullSchema(node);
             }
         }
@@ -402,20 +404,33 @@ namespace Katzebase.UI
             return null;
         }
 
-        private TabFilePage AddTab(string filePath, string serverAddress)
+        private TabFilePage? FindTabByFileName(string filePath)
         {
             foreach (var tab in tabControlBody.TabPages.Cast<TabFilePage>())
             {
                 if (tab.FilePath.ToLower() == filePath.ToLower())
                 {
-                    tabControlBody.SelectedTab = tab;
                     return tab;
                 }
             }
+            return null;
+        }
 
+        private TabFilePage CreateNewTab(string tabText = "", string serverAddress = "")
+        {
             Utility.EnsureNotNull(_editorFactory);
 
-            var tabFilePage = _editorFactory.Create(serverAddress, filePath);
+            if (string.IsNullOrWhiteSpace(serverAddress))
+            {
+                serverAddress = _lastusedServerAddress;
+            }
+
+            if (string.IsNullOrWhiteSpace(tabText))
+            {
+                tabText = FormUtility.GetNextNewFileName();
+            }
+
+            var tabFilePage = _editorFactory.Create(serverAddress, tabText);
 
             tabFilePage.Editor.KeyUp += Editor_KeyUp;
             tabFilePage.Editor.Drop += Editor_Drop;
@@ -428,7 +443,7 @@ namespace Katzebase.UI
             tabControlBody.TabPages.Add(tabFilePage);
             tabControlBody.SelectedTab = tabFilePage;
 
-            tabFilePage.Client.Server.Ping();
+            tabFilePage.Client?.Server.Ping();
 
             return tabFilePage;
         }
@@ -440,7 +455,15 @@ namespace Katzebase.UI
             {
                 foreach (var file in files)
                 {
-                    AddTab(file, _lastusedServerAddress);
+                    var alreadyOpenTab = FindTabByFileName(file);
+                    if (alreadyOpenTab == null)
+                    {
+                        CreateNewTab(Path.GetFileName(file)).OpenFile(file);
+                    }
+                    else
+                    {
+                        tabControlBody.SelectedTab = alreadyOpenTab;
+                    }
                 }
             }
         }
@@ -475,7 +498,7 @@ namespace Katzebase.UI
                 {
                     _lastusedServerAddress = form.ServerAddressURL;
 
-                    var tabFilePage = AddTab(FormUtility.GetNextNewFileName(), _lastusedServerAddress);
+                    var tabFilePage = CreateNewTab();
                     tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\tProductID, LocationID, Shelf,\r\n\tBin, Quantity, rowguid, ModifiedDate\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\nWHERE\r\n\t(\r\n\t\tLocationId = 6\r\n\t\tAND Shelf != 'R'\r\n\t\tAND Quantity = 299\r\n\t)\r\n\tOR\r\n\t(\r\n\t\t(\r\n\t\t\tLocationId = 6\r\n\t\t\tAND Shelf != 'M'\r\n\t\t)\r\n\t\tAND Quantity = 299\r\n\t\tOR ProductId = 366\r\n\t)\r\n\tAND\r\n\t(\r\n\t\tBIN = 8\r\n\t\tOR Bin = 11\r\n\t\tOR Bin = 19\r\n\t)\r\n";
                     //tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\n";
                     TreeManagement.PopulateServer(treeViewProject, _lastusedServerAddress);
@@ -545,7 +568,10 @@ namespace Katzebase.UI
                     var messageBoxResult = MessageBox.Show("Save " + tab.Text + " before closing?", "Save File?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
                     if (messageBoxResult == DialogResult.Yes)
                     {
-                        tab.Save();
+                        if (SaveTab(tab) == false)
+                        {
+                            return false;
+                        }
                     }
                     else if (messageBoxResult == DialogResult.No)
                     {
@@ -597,53 +623,43 @@ namespace Katzebase.UI
         private void toolStripButtonSave_Click(object sender, EventArgs e)
         {
             var selection = CurrentTabFilePage();
-            if (selection == null)
+            if (selection != null)
             {
-                return;
+                SaveTab(selection);
             }
+        }
 
-            if (File.Exists(selection.FilePath) == false)
+        bool SaveTab(TabFilePage tab)
+        {
+            if (tab.IsFileOpen == false)
             {
                 using (var sfd = new SaveFileDialog())
                 {
                     sfd.Filter = "Katzebase Script (*.kbs)|*.kbs|All files (*.*)|*.*";
-                    sfd.FileName = selection.FilePath;
+                    sfd.FileName = tab.FilePath;
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
-                        selection.FilePath = sfd.FileName;
+                        tab.FilePath = sfd.FileName;
+                        return tab.Save();
                     }
                     else
                     {
-                        return;
+                        return false;
                     }
                 }
             }
 
-            selection.Save();
+            return tab.Save();
         }
 
         private void toolStripButtonSaveAll_Click(object sender, EventArgs e)
         {
             foreach (var tabFilePage in tabControlBody.TabPages.Cast<TabFilePage>())
             {
-                if (File.Exists(tabFilePage.FilePath) == false)
+                if (SaveTab(tabFilePage) == false)
                 {
-                    using (var sfd = new SaveFileDialog())
-                    {
-                        sfd.Filter = "Katzebase Script (*.kbs)|*.kbs|All files (*.*)|*.*";
-                        sfd.FileName = tabFilePage.FilePath;
-                        if (sfd.ShowDialog() == DialogResult.OK)
-                        {
-                            tabFilePage.FilePath = sfd.FileName;
-                        }
-                        else
-                        {
-                            return;
-                        }
-                    }
+                    return;
                 }
-
-                tabFilePage.Save();
             }
         }
 
@@ -851,7 +867,7 @@ namespace Katzebase.UI
             {
                 return;
             }
-            selection.Save();
+            SaveTab(selection);
         }
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
@@ -872,13 +888,16 @@ namespace Katzebase.UI
         {
             foreach (var tabFilePage in tabControlBody.TabPages.Cast<TabFilePage>())
             {
-                tabFilePage.Save();
+                if (SaveTab(tabFilePage) == false)
+                {
+                    break;
+                }
             }
         }
 
         private void toolStripButtonNewFile_Click(object sender, EventArgs e)
         {
-            var tabFilePage = AddTab(FormUtility.GetNextNewFileName(), _lastusedServerAddress);
+            var tabFilePage = CreateNewTab();
             tabFilePage.Editor.Text = "SET TraceWaitTimes OFF;\r\n\r\n";
         }
 
@@ -899,7 +918,7 @@ namespace Katzebase.UI
 
         private void exitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
 
         #endregion
@@ -911,70 +930,91 @@ namespace Katzebase.UI
         /// </summary>
         private void ExecuteCurrentScriptAsync(bool justExplain)
         {
-            if (_scriptExecuting)
+            try
             {
-                return;
+                if (_scriptExecuting)
+                {
+                    return;
+                }
+                _scriptExecuting = true;
+
+                var tabFilePage = CurrentTabFilePage();
+                if (tabFilePage == null || tabFilePage.Client == null)
+                {
+                    _scriptExecuting = false;
+                    return;
+                }
+
+                PreExecuteEvent(tabFilePage);
+
+                dataGridViewResults.Rows.Clear();
+                dataGridViewResults.Columns.Clear();
+
+                string scriptText = tabFilePage.Editor.Text;
+
+                Task.Run(() =>
+                {
+                    ExecuteCurrentScriptSync(tabFilePage.Client, scriptText, justExplain);
+                }).ContinueWith((t) =>
+                {
+                    PostExecuteEvent(tabFilePage);
+                });
             }
-            _scriptExecuting = true;
-
-            var tabFilePage = CurrentTabFilePage();
-            if (tabFilePage == null)
+            catch (Exception ex)
             {
-                return;
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            tabFilePage.Save();
-
-            PreExecuteEvent(tabFilePage);
-
-            dataGridViewResults.Rows.Clear();
-            dataGridViewResults.Columns.Clear();
-
-            string scriptText = tabFilePage.Editor.Text;
-
-            Task.Run(() =>
-            {
-                ExecuteCurrentScriptSync(tabFilePage.Client, scriptText, justExplain);
-            }).ContinueWith((t) =>
-            {
-                PostExecuteEvent(tabFilePage);
-            });
         }
 
         private void PreExecuteEvent(TabFilePage tabFilePage)
         {
-            if (InvokeRequired)
+            try
             {
-                Invoke(new Action<TabFilePage>(PreExecuteEvent), tabFilePage);
-                return;
+                if (InvokeRequired)
+                {
+                    Invoke(new Action<TabFilePage>(PreExecuteEvent), tabFilePage);
+                    return;
+                }
+
+                richTextBoxOutput.Text = "";
+                richTextBoxExplain.Text = "";
+                _executionExceptionCount = 0;
+
+                splitContainerOutput.Panel2Collapsed = false;
             }
-
-            richTextBoxOutput.Text = "";
-            richTextBoxExplain.Text = "";
-            _executionExceptionCount = 0;
-
-            splitContainerOutput.Panel2Collapsed = false;
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void PostExecuteEvent(TabFilePage tabFilePage)
         {
-            if (InvokeRequired)
+            try
             {
-                Invoke(new Action<TabFilePage>(PostExecuteEvent), tabFilePage);
-                return;
+                if (InvokeRequired)
+                {
+                    Invoke(new Action<TabFilePage>(PostExecuteEvent), tabFilePage);
+                    return;
+                }
+
+                splitContainerOutput.Panel2Collapsed = false;
+
+                if (dataGridViewResults.RowCount > 0)
+                {
+                    tabControlOutput.SelectedTab = tabPageResults;
+                }
+                else
+                {
+                    tabControlOutput.SelectedTab = tabPageOutput;
+                }
+
+                _scriptExecuting = false;
             }
-
-            splitContainerOutput.Panel2Collapsed = false;
-
-            if (dataGridViewResults.RowCount > 0)
+            catch (Exception ex)
             {
-                tabControlOutput.SelectedTab = tabPageResults;
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            else
-            {
-                tabControlOutput.SelectedTab = tabPageOutput;
-            }
-
-            _scriptExecuting = false;
         }
 
         private void ExecuteCurrentScriptSync(KatzebaseClient client, string scriptText, bool justExplain)
@@ -1047,45 +1087,52 @@ namespace Katzebase.UI
 
         private void PopulateResultsGrid(KbQueryResult result)
         {
-            if (result.Rows.Count == 0)
+            try
             {
-                return;
-            }
-
-            if (InvokeRequired)
-            {
-                Invoke(new Action<KbQueryResult>(PopulateResultsGrid), result);
-                return;
-            }
-
-            dataGridViewResults.SuspendLayout();
-
-            foreach (var field in result.Fields)
-            {
-                dataGridViewResults.Columns.Add(field.Name, field.Name);
-            }
-
-            int maxRowsToLoad = 100;
-            foreach (var row in result.Rows)
-            {
-                var rowValues = new List<string>();
-
-                for (int fieldIndex = 0; fieldIndex < result.Fields.Count; fieldIndex++)
+                if (result.Rows.Count == 0)
                 {
-                    var fieldValue = row.Values[fieldIndex];
-                    rowValues.Add(fieldValue ?? string.Empty);
+                    return;
                 }
 
-                dataGridViewResults.Rows.Add(rowValues.ToArray());
-
-                maxRowsToLoad--;
-                if (maxRowsToLoad <= 0)
+                if (InvokeRequired)
                 {
-                    break;
+                    Invoke(new Action<KbQueryResult>(PopulateResultsGrid), result);
+                    return;
                 }
-            }
 
-            dataGridViewResults.ResumeLayout();
+                dataGridViewResults.SuspendLayout();
+
+                foreach (var field in result.Fields)
+                {
+                    dataGridViewResults.Columns.Add(field.Name, field.Name);
+                }
+
+                int maxRowsToLoad = 100;
+                foreach (var row in result.Rows)
+                {
+                    var rowValues = new List<string>();
+
+                    for (int fieldIndex = 0; fieldIndex < result.Fields.Count; fieldIndex++)
+                    {
+                        var fieldValue = row.Values[fieldIndex];
+                        rowValues.Add(fieldValue ?? string.Empty);
+                    }
+
+                    dataGridViewResults.Rows.Add(rowValues.ToArray());
+
+                    maxRowsToLoad--;
+                    if (maxRowsToLoad <= 0)
+                    {
+                        break;
+                    }
+                }
+
+                dataGridViewResults.ResumeLayout();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         #endregion
@@ -1097,7 +1144,15 @@ namespace Katzebase.UI
             {
                 foreach (var file in files)
                 {
-                    AddTab(file, _lastusedServerAddress);
+                    var alreadyOpenTab = FindTabByFileName(file);
+                    if (alreadyOpenTab == null)
+                    {
+                        CreateNewTab(Path.GetFileName(file)).OpenFile(file);
+                    }
+                    else
+                    {
+                        tabControlBody.SelectedTab = alreadyOpenTab;
+                    }
                 }
             }
         }

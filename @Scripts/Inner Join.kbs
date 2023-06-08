@@ -1,0 +1,17 @@
+SELECT TOP 100
+/*
+	P.Name,
+	P.ProductNumber,
+*/
+	Inv.ProductID,
+	Inv.LocationID,
+	Inv.Shelf,
+	Inv.'Bin' as Box,
+	Inv.Quantity
+FROM
+	AdventureWorks2012:Production:ProductInventory as Inv
+INNER JOIN AdventureWorks2012:Production:Product as P
+	ON P.ProductID = Inv.ProductID
+WHERE
+	Shelf = 'R'
+	--Class = 'M'
