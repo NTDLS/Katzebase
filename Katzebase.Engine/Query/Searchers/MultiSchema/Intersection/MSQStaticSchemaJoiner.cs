@@ -70,12 +70,12 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             public LookupThreadParam(Core core, PerformanceTrace? pt, Transaction transaction,
                 MSQQuerySchemaMap schemaMap, PreparedQuery query, ConditionLookupOptimization? lookupOptimization)
             {
-                this.Core = core;
-                this.PT = pt;
-                this.Transaction = transaction;
-                this.SchemaMap = schemaMap;
-                this.Query = query;
-                this.LookupOptimization = lookupOptimization;
+                Core = core;
+                PT = pt;
+                Transaction = transaction;
+                SchemaMap = schemaMap;
+                Query = query;
+                LookupOptimization = lookupOptimization;
             }
         }
 
@@ -89,16 +89,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             Utility.EnsureNotNull(topLevelMap.SchemaMeta);
             Utility.EnsureNotNull(topLevelMap.SchemaMeta.DiskPath);
             Utility.EnsureNotNull(param.LookupOptimization);
-
-            /*
-            NCalc.Expression? expression = null;
-
-            if (param.LookupOptimization != null)
-            {
-                expression = new NCalc.Expression(param.LookupOptimization.Conditions.HighLevelExpressionTree);
-            }
-            */
-
+           
             while (pool.ContinueToProcessQueue)
             {
                 var toplevelDocument = pool.DequeueWorkItem();
@@ -124,8 +115,11 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
                 {
                     var nextLevelMap = nextLevel.Value;
 
+                    Utility.EnsureNotNull(nextLevelMap.Conditions);
                     Utility.EnsureNotNull(nextLevelMap.SchemaMeta);
                     Utility.EnsureNotNull(nextLevelMap.SchemaMeta.DiskPath);
+
+                    var expression = new NCalc.Expression(nextLevelMap.Conditions.HighLevelExpressionTree);
 
                     foreach (var nextLevelDocument in nextLevelMap.DocuemntCatalog.Collection)
                     {
@@ -139,18 +133,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 
                         jContentByAlias.Add(nextLevel.Key, jContentNextLevel);
 
-                        Utility.EnsureNotNull(nextLevelMap.Conditions);
-
-                        var expression = new NCalc.Expression(nextLevelMap.Conditions.Root.Expression);
-
-                        //If we have subsets, then we need to satisify those in order to complete the equation.
-                        foreach (var subsetKey in nextLevelMap.Conditions.Root.SubsetKeys)
-                        {
-                            var subExpression = nextLevelMap.Conditions.SubsetByKey(subsetKey);
-
-                            bool subExpressionResult = SatisifySubExpressionByJsonContentAlias(param.PT, param.LookupOptimization, jContentByAlias, subExpression);
-                            expression.Parameters[subsetKey] = subExpressionResult;
-                        }
+                        SetExpressionParameters(ref expression, nextLevelMap.Conditions, jContentByAlias);
 
                         var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
                         bool evaluation = (bool)expression.Evaluate();
@@ -182,37 +165,33 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             }
         }
 
-        /// <summary>
-        /// Mathematically collapses all subexpressions to return a boolean match.
+                /// <summary>
+        /// Gets the json content values for the specified conditions.
         /// </summary>
-        /// <param name="lookupOptimization"></param>
+        /// <param name="expression"></param>
+        /// <param name="conditions"></param>
         /// <param name="jContent"></param>
-        /// <param name="conditionSubset"></param>
-        /// <returns></returns>
-        /// <exception cref="KbParserException"></exception>
-        private static bool SatisifySubExpressionByJsonContentAlias(PerformanceTrace? pt,
-            ConditionLookupOptimization lookupOptimization, Dictionary<string, JObject> jContentByAlias, ConditionSubset conditionSubset)
+        private static void SetExpressionParameters(ref NCalc.Expression expression, Conditions conditions, Dictionary<string, JObject> jContentByAlias)
         {
-            var expression = new NCalc.Expression(conditionSubset.Expression);
+            //If we have subsets, then we need to satisify those in order to complete the equation.
+            foreach (var subsetKey in conditions.Root.SubsetKeys)
+            {
+                var subExpression = conditions.SubsetByKey(subsetKey);
+                SetExpressionParametersRecursive(ref expression, conditions, subExpression, jContentByAlias);
+            }
+        }
 
-            /*
-            //TODO: What do we do here?
+        private static void SetExpressionParametersRecursive(ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, JObject> jContentByAlias)
+        {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
-                var subExpression = lookupOptimization.Conditions.SubsetByKey(subsetKey);
-
-                bool subExpressionResult = SatisifySubExpressionByJsonContentAlias(pt, lookupOptimization, jContentByAlias, subExpression);
-                expression.Parameters[subsetKey] = subExpressionResult;
+                var subExpression = conditions.SubsetByKey(subsetKey);
+                SetExpressionParametersRecursive(ref expression, conditions, subExpression, jContentByAlias);
             }
-            */
-
-            var expressionString = new StringBuilder();
 
             foreach (var condition in conditionSubset.Conditions)
             {
-                expressionString.Clear();
-
                 Utility.EnsureNotNull(condition.Left.Value);
                 Utility.EnsureNotNull(condition.Right.Value);
 
@@ -232,26 +211,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
                     throw new KbParserException($"Field not found in document [{condition.Right.Value}].");
                 }
 
-                /*
-                if (expressionString.Length > 0)
-                {
-                    expressionString.Append(ConditionTokenizer.LogicalConnectorToOperator(condition.LogicalConnector));
-                }
-                var singleConditionResult =  Condition.IsMatch(jLeftToken.ToString().ToLower(), condition.LogicalQualifier, jRightToken.ToString());
-                expressionString.Append(singleConditionResult ? "1==1" : "1==0");
-                */
-
                 var singleConditionResult = Condition.IsMatch(jLeftToken.ToString().ToLower(), condition.LogicalQualifier, jRightToken.ToString());
 
                 expression.Parameters[condition.ConditionKey] = singleConditionResult;
             }
-
-            var ptEvaluate = pt?.BeginTrace(PerformanceTraceType.Evaluate);
-            var evaluation = (bool)expression.Evaluate();
-            ptEvaluate?.EndTrace();
-
-            return evaluation;
         }
-
     }
 }
