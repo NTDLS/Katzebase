@@ -70,7 +70,7 @@ namespace Katzebase.Engine.Query.Searchers
                 //This is where we do MSQ stuff (Multi Schema Query), e.g. queried WITH joins.
                 //-------------------------------------------------------------------------------------------------------------
 
-                var schemaMap = new MSQQuerySchemaMap();
+                var schemaMap = new MSQQuerySchemaMap(core, transaction);
 
                 foreach (var querySchema in query.Schemas)
                 {

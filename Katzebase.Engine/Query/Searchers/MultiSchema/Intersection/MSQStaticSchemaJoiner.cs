@@ -1,14 +1,12 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
-using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PrivateLibrary;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
-using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
