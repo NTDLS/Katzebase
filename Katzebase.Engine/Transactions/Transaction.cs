@@ -68,13 +68,7 @@ namespace Katzebase.Engine.Transactions
 
                 lock (HeldLockKeys)
                 {
-                    var lockIntention = new LockIntention()
-                    {
-                        Type = LockType.File,
-                        Operation = lockOperation,
-                        DiskPath = diskpath
-                    };
-
+                    var lockIntention = new LockIntention(diskpath, LockType.File, lockOperation);
                     core.Locking.Locks.Acquire(this, lockIntention);
                 }
             }
@@ -95,13 +89,7 @@ namespace Katzebase.Engine.Transactions
 
                 lock (HeldLockKeys)
                 {
-                    var lockIntention = new LockIntention()
-                    {
-                        Type = LockType.Directory,
-                        Operation = lockOperation,
-                        DiskPath = diskpath
-                    };
-
+                    var lockIntention = new LockIntention(diskpath, LockType.Directory, lockOperation);
                     core.Locking.Locks.Acquire(this, lockIntention);
                 }
             }

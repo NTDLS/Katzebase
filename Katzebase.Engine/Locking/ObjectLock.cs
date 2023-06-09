@@ -7,15 +7,26 @@ namespace Katzebase.Engine.Locking
     internal class ObjectLock
     {
         private Core core;
-        public string DiskPath { get; set; }
-        public LockType LockType { get; set; }
+        public string DiskPath { get; private set; }
+        public LockType LockType { get; private set; }
         public List<ObjectLockKey> Keys = new List<ObjectLockKey>();
+
+        /// <summary>
+        /// The total number of times we attmepted to lock this object.
+        /// If this is a directory lock, then this also includes the number of file locks that defered to this higher level lock.
+        /// </summary>
+        public ulong Hits { get; set; }
 
         public ObjectLock(Core core, LockIntention intention)
         {
             this.core = core;
-            this.DiskPath = intention.DiskPath;
-            this.LockType = intention.Type;
+            DiskPath = intention.DiskPath;
+            LockType = intention.LockType;
+
+            if (LockType == LockType.Directory && (DiskPath.EndsWith('\\') == false))
+            {
+                DiskPath = $"{DiskPath}\\";
+            }
         }
 
         enum LockDisposition

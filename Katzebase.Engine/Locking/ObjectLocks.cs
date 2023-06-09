@@ -8,8 +8,8 @@ namespace Katzebase.Engine.Locking
 {
     internal class ObjectLocks
     {
-        private List<ObjectLock> objectLocks = new List<ObjectLock>();
-        private Dictionary<Transaction, LockIntention> lockWaits = new Dictionary<Transaction, LockIntention>();
+        private readonly List<ObjectLock> collection = new();
+        private readonly Dictionary<Transaction, LockIntention> transactionWaitingForLocks = new();
 
         private Core core;
         public ObjectLocks(Core core)
@@ -23,7 +23,7 @@ namespace Katzebase.Engine.Locking
             {
                 lock (CriticalSections.AcquireLock)
                 {
-                    objectLocks.Remove(objectLock);
+                    collection.Remove(objectLock);
                 }
             }
             catch (Exception ex)
@@ -40,9 +40,9 @@ namespace Katzebase.Engine.Locking
                 //We keep track of all transactions that are waiting on locks for a few reasons:
                 // (1) When we suspect a deadlock we know what all transactions are potentially involved
                 // (2) We are safe to poke around those transaction's properties because we know their threda are in this method.
-                lock (lockWaits)
+                lock (transactionWaitingForLocks)
                 {
-                    lockWaits.Add(transaction, intention);
+                    transactionWaitingForLocks.Add(transaction, intention);
                 }
 
                 DateTime startTime = DateTime.UtcNow;
@@ -60,22 +60,21 @@ namespace Katzebase.Engine.Locking
                         //Find any existing locks:
                         List<ObjectLock> lockedObjects = new List<ObjectLock>();
 
-                        if (intention.Type == LockType.File)
+                        if (intention.LockType == LockType.File)
                         {
-                            lockedObjects.AddRange((from o in objectLocks where o.LockType == LockType.File && o.DiskPath == intention.DiskPath select o).ToList());
-                        }
-                        else
-                        {
-                            lockedObjects.AddRange((from o in objectLocks where o.DiskPath.StartsWith(intention.DiskPath) select o).ToList());
+                            //See if there are any other locks on this file:
+                            lockedObjects.AddRange(collection.Where(o => o.LockType == LockType.File && o.DiskPath == intention.DiskPath));
                         }
 
-                        lockedObjects.AddRange((from o in objectLocks where o.LockType == LockType.Directory && intention.DiskPath.StartsWith(o.DiskPath) select o).ToList());
+                        //See if there are any other locks on the directory containig this file (or directory) or any of its parents.
+                        //When we lock a directory, we intend all lower directories to be locked too.
+                        lockedObjects.AddRange(collection.Where(o => o.LockType == LockType.Directory && intention.DiskPath.StartsWith(o.DiskPath)));
 
                         if (lockedObjects.Count() == 0)
                         {
                             //No locks on the object exist - so add one to the local and class collections.
                             var lockedObject = new ObjectLock(core, intention);
-                            this.objectLocks.Add(lockedObject);
+                            collection.Add(lockedObject);
                             lockedObjects.Add(lockedObject);
                         }
 
@@ -90,10 +89,16 @@ namespace Katzebase.Engine.Locking
 
                                 foreach (var lockedObject in lockedObjects)
                                 {
+                                    lockedObject.Hits++;
+
+                                    if (lockedObject.Keys.Any(o => o.ProcessId == transaction.ProcessId && o.LockOperation == intention.Operation))
+                                    {
+                                        //Do we really need to hand out multiple keys to the same object of the same type? I dont think we do. Just continue...
+                                        continue;
+                                    }
+
                                     var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-
                                     Utility.EnsureNotNull(transaction.HeldLockKeys);
-
                                     transaction.HeldLockKeys.Add(lockKey);
                                 }
 
@@ -113,13 +118,20 @@ namespace Katzebase.Engine.Locking
                         else if (intention.Operation == LockOperation.Write)
                         {
                             var blockers = lockedObjects.SelectMany(o => o.Keys).Where(o => o.ProcessId != transaction.ProcessId).ToList();
-                            //If there are no existing un-owned locks.
-                            if (blockers.Count() == 0)
+                            if (blockers.Count() == 0) //If there are no existing un-owned locks.
                             {
                                 transaction.BlockedBy.Clear();
 
                                 foreach (var lockedObject in lockedObjects)
                                 {
+                                    lockedObject.Hits++;
+
+                                    if (lockedObject.Keys.Any(o => o.ProcessId == transaction.ProcessId && o.LockOperation == intention.Operation))
+                                    {
+                                        //Do we really need to hand out multiple keys to the same object of the same type? I dont think we do.
+                                        continue;
+                                    }
+
                                     var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
                                     Utility.EnsureNotNull(transaction.HeldLockKeys);
                                     transaction.HeldLockKeys.Add(lockKey);
@@ -140,19 +152,19 @@ namespace Katzebase.Engine.Locking
                     }
 
                     //Deadlock Search.
-                    lock (lockWaits)
+                    lock (transactionWaitingForLocks)
                     {
-                        var actualWaiters = lockWaits.Keys.Where(o => o.IsDeadlocked == false).ToList();
-                        if (actualWaiters.Count() > 1)
+                        var actualWaiters = transactionWaitingForLocks.Keys.Where(o => o.IsDeadlocked == false).ToList();
+                        if (actualWaiters.Count > 1) //Cant deadlock if there is only 1 transaction.
                         {
                             foreach (var waiter in actualWaiters)
                             {
-                                var blockedByMe = (from o in actualWaiters where o != waiter && o.BlockedBy.Contains(waiter.ProcessId) select o).ToList();
+                                var blockedByMe = (actualWaiters.Where(o => o != waiter && o.BlockedBy.Contains(waiter.ProcessId)));
 
-                                if (blockedByMe != null && blockedByMe.Count > 0)
+                                if (blockedByMe.Any())
                                 {
-                                    var blockingMe = (from o in blockedByMe where waiter.BlockedBy.Contains(o.ProcessId) select o).ToList();
-                                    if (blockingMe != null && blockingMe.Count > 0)
+                                    var blockingMe = (blockedByMe.Where(o=>  waiter.BlockedBy.Contains(o.ProcessId)));
+                                    if (blockingMe.Any())
                                     {
                                         transaction.IsDeadlocked = true;
                                         break;
@@ -162,8 +174,7 @@ namespace Katzebase.Engine.Locking
                         }
                     }
 
-
-                    System.Threading.Thread.Sleep(1);
+                    Thread.Sleep(1);
                 }
             }
             catch (Exception ex)
@@ -173,9 +184,9 @@ namespace Katzebase.Engine.Locking
             }
             finally
             {
-                lock (lockWaits)
+                lock (transactionWaitingForLocks)
                 {
-                    lockWaits.Remove(transaction);
+                    transactionWaitingForLocks.Remove(transaction);
                 }
             }
         }

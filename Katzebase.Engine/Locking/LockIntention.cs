@@ -4,32 +4,39 @@ namespace Katzebase.Engine.Locking
 {
     public class LockIntention
     {
-        public LockType Type { get; set; }
-        public LockOperation Operation { get; set; }
-        public string DiskPath { get; set; }
+        public LockType LockType { get; private set; }
+        public LockOperation Operation { get; private set; }
+        public string DiskPath { get; private set; }
 
-        public LockIntention()
+        public LockIntention(string diskPath, LockType lockType, LockOperation operation)
         {
-            DiskPath = string.Empty;
+            DiskPath = diskPath;
+            LockType = lockType;
+            Operation = operation;
+
+            if (lockType == LockType.Directory && (DiskPath.EndsWith('\\') == false))
+            {
+                DiskPath = $"{DiskPath}\\";
+            }
         }
 
         public string ObjectName
         {
             get
             {
-                return $"{Type}:{DiskPath}";
+                return $"{LockType}:{DiskPath}";
             }
         }
 
         public bool IsObjectEqual(LockIntention intention)
         {
-            return (intention.Type == this.Type
+            return (intention.LockType == this.LockType
                 && intention.DiskPath == this.DiskPath);
         }
 
         public bool IsEqual(LockIntention intention)
         {
-            return (intention.Type == this.Type
+            return (intention.LockType == this.LockType
                 && intention.Operation == this.Operation
                 && intention.DiskPath == this.DiskPath);
         }
