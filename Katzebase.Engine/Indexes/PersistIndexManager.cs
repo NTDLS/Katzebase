@@ -74,9 +74,13 @@ namespace Katzebase.Engine.Indexes
                     fullMatch ??= true; //Set this as a FULL INDEX match on the first match. This is true until we fail to match on a subsequent condition.
                 }
 
-                if (indexEntires.Any(o => o.Leaves.Count > 0)) //If we are at the base of the tree then there is no need to go further down.
+                if (nextIndexEntires.Any(o => o.Leaves.Count > 0)) //If we are at the base of the tree then there is no need to go further down.
                 {
                     indexEntires = nextIndexEntires.Select(o => o.Leaves).SelectMany(o => o.Entries).ToList(); //Traverse down the tree.
+                }
+                else
+                {
+                    indexEntires = nextIndexEntires;
                 }
             }
 
@@ -155,6 +159,10 @@ namespace Katzebase.Engine.Indexes
                 if (indexEntires.Any(o => o.Leaves.Count > 0)) //If we are at the base of the tree then there is no need to go further down.
                 {
                     indexEntires = nextIndexEntires.Select(o => o.Leaves).SelectMany(o => o.Entries).ToList(); //Traverse down the tree.
+                }
+                else
+                {
+                    indexEntires = nextIndexEntires;
                 }
             }
 
