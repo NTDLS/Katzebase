@@ -47,8 +47,6 @@ namespace Katzebase.Service
                         AllowIOCaching = settings.AllowIOCaching,
                         AllowDeferredIO = settings.AllowDeferredIO,
                         WriteTraceData = settings.WriteTraceData,
-                        CacheScavengeBuffer = settings.CacheScavengeBuffer,
-                        CacheScavengeRate = settings.CacheScavengeRate,
                         MaxCacheMemory = settings.MaxCacheMemory,
                         RecordInstanceHealth = settings.RecordInstanceHealth
                     };

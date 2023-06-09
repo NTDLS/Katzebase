@@ -2,6 +2,7 @@
 {
     public class KatzebaseSettings
     {
+
         /// <summary>
         /// Whether the engine will keep instance level health metrics. This can be useful but will have a serious impact on performance.
         /// </summary>
@@ -10,14 +11,6 @@
         /// The maximum amount of memory that the server will be allowed to use before scavenging the cache.
         /// </summary>
         public long MaxCacheMemory { get; set; }
-        /// <summary>
-        /// The number of cache items that will be evaluated (per scavenge iteration) for removal when memory limit is hit.
-        /// </summary>
-        public int CacheScavengeRate { get; set; }
-        /// <summary>
-        /// The percentage of MaxCacheMemory that the server will need to go below MaxCacheMemory before finishing cache scavenge.
-        /// </summary>
-        public double CacheScavengeBuffer { get; set; }
         /// <summary>
         /// The base listening URL for the web-services.
         /// </summary>

@@ -3,6 +3,7 @@ using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
+using System.Runtime.Caching;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.IO
@@ -72,7 +73,7 @@ namespace Katzebase.Engine.IO
 
                         core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
-                        return (T?)cachedObject.Value;
+                        return (T?)cachedObject;
                     }
                 }
 
@@ -327,6 +328,8 @@ namespace Katzebase.Engine.IO
             }
         }
 
+        MemoryCache memCache = new MemoryCache("JJ");
+
         internal void DeletePath(Transaction transaction, string diskPath)
         {
             try
@@ -336,7 +339,7 @@ namespace Katzebase.Engine.IO
 
                 if (core.settings.AllowIOCaching)
                 {
-                    core.Cache.RemoveStartsWith(cacheKey);
+                    core.Cache.RemoveItemsWithPrefix(cacheKey);
                 }
 
                 transaction.RecordPathDelete(diskPath);
