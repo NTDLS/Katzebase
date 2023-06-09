@@ -4,6 +4,7 @@ using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
+using Katzebase.PrivateLibrary;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
@@ -96,15 +97,18 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
 
-            var threadPool = new SSQLookupThreadPool(core, pt, transaction, schemaMeta, query, lookupOptimization);
+            var threadParam = new LookupThreadParam(core, pt, transaction, schemaMeta, query, lookupOptimization);
+
             int threadCount = Environment.ProcessorCount * 4;
-            threadPool.Start(SingleSchemaLookupThreadProc, threadCount > 32 ? 32 : threadCount);
+
+            var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(
+                LookupThreadProc, threadParam, threadCount > 32 ? 32 : threadCount, 100);
 
             ptThreadCreation?.EndTrace();
 
             foreach (var documentCatalogItem in documentCatalog.Collection)
             {
-                if (query.RowLimit != 0 && threadPool.Results.Collection.Count >= query.RowLimit)
+                if (query.RowLimit != 0 && threadParam.Results.Collection.Count >= query.RowLimit)
                 {
                     break;
                 }
@@ -114,7 +118,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     break;
                 }
 
-                threadPool.Queue.Enqueue(documentCatalogItem);
+                threadPool.EnqueueWorkItem(documentCatalogItem);
             }
 
             var ptThreadCompletion = pt?.BeginTrace(PerformanceTraceType.ThreadCompletion);
@@ -124,78 +128,88 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             if (query.RowLimit > 0)
             {
                 //Multithreading can yeild a few more rows than we need if we have a limiter.
-                threadPool.Results.Collection = threadPool.Results.Collection.Take(query.RowLimit).ToList();
+                threadParam.Results.Collection = threadParam.Results.Collection.Take(query.RowLimit).ToList();
             }
 
-            return threadPool.Results;
+            return threadParam.Results;
         }
 
-        internal static void SingleSchemaLookupThreadProc(object? p)
+        internal class LookupThreadParam
         {
-            var param = p as SSQLookupThreadPool;
+            public SSQDocumentLookupResults Results = new();
+            public PersistSchema SchemaMeta { get; private set; }
+            public Core Core { get; private set; }
+            public PerformanceTrace? PT { get; private set; }
+            public Transaction Transaction { get; private set; }
+            public PreparedQuery Query { get; private set; }
+            public ConditionLookupOptimization? LookupOptimization { get; private set; }
+
+            public LookupThreadParam(Core core, PerformanceTrace? pt, Transaction transaction,
+                PersistSchema schemaMeta, PreparedQuery query, ConditionLookupOptimization? lookupOptimization)
+            {
+                this.Core = core;
+                this.PT = pt;
+                this.Transaction = transaction;
+                this.SchemaMeta = schemaMeta;
+                this.Query = query;
+                this.LookupOptimization = lookupOptimization;
+            }
+        }
+
+        internal static void LookupThreadProc(ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam> pool, LookupThreadParam? param)
+        {
             Utility.EnsureNotNull(param);
 
-            try
+            Utility.EnsureNotNull(param.SchemaMeta);
+            Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
+
+            NCalc.Expression? expression = null;
+
+            if (param.LookupOptimization != null)
             {
-                Utility.EnsureNotNull(param.SchemaMeta);
-                Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
+                expression = new NCalc.Expression(param.LookupOptimization.Conditions.HighLevelExpressionTree);
+            }
 
-                NCalc.Expression? expression = null;
-
-                if (param.LookupOptimization != null)
+            while (pool.ContinueToProcessQueue)
+            {
+                var documentCatalogItem = pool.DequeueWorkItem();
+                if (documentCatalogItem == null)
                 {
-                    expression = new NCalc.Expression(param.LookupOptimization.Conditions.HighLevelExpressionTree);
+                    continue;
                 }
 
-                while (param.ContinueToProcessQueue)
+                var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
+
+                var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
+                Utility.EnsureNotNull(persistDocument);
+                Utility.EnsureNotNull(persistDocument.Content);
+
+                var jContent = JObject.Parse(persistDocument.Content);
+
+                Utility.EnsureNotNull(documentCatalogItem.Id);
+
+                if (expression != null && param.LookupOptimization != null)
                 {
-                    var documentCatalogItem = param.Queue.Dequeue();
-                    if (documentCatalogItem == null)
-                    {
-                        continue;
-                    }
-
-                    var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
-
-                    var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(persistDocument);
-                    Utility.EnsureNotNull(persistDocument.Content);
-
-                    var jContent = JObject.Parse(persistDocument.Content);
-
-                    Utility.EnsureNotNull(documentCatalogItem.Id);
-
-                    if (expression != null && param.LookupOptimization != null)
-                    {
-                        SetExpressionParameters(ref expression, param.LookupOptimization.Conditions, jContent);
-                    }
-
-                    var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
-                    bool evaluation = (expression == null) || (bool)expression.Evaluate();
-                    ptEvaluate?.EndTrace();
-
-                    if (evaluation)
-                    {
-                        Utility.EnsureNotNull(persistDocument.Id);
-                        var result = new SSQDocumentLookupResult((Guid)persistDocument.Id);
-
-                        foreach (var field in param.Query.SelectFields)
-                        {
-                            jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
-                            result.Values.Add(jToken?.ToString() ?? string.Empty);
-                        }
-
-                        param.Results.Add(result);
-                    }
+                    SetExpressionParameters(ref expression, param.LookupOptimization.Conditions, jContent);
                 }
-            }
-            catch (Exception ex)
-            {
-                param.Exception = ex;
-            }
-            finally
-            {
-                param.DecrementRunningThreadCount();
+
+                var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
+                bool evaluation = (expression == null) || (bool)expression.Evaluate();
+                ptEvaluate?.EndTrace();
+
+                if (evaluation)
+                {
+                    Utility.EnsureNotNull(persistDocument.Id);
+                    var result = new SSQDocumentLookupResult((Guid)persistDocument.Id);
+
+                    foreach (var field in param.Query.SelectFields)
+                    {
+                        jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                        result.Values.Add(jToken?.ToString() ?? string.Empty);
+                    }
+
+                    param.Results.Add(result);
+                }
             }
         }
 
