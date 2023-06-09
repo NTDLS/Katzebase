@@ -1,7 +1,28 @@
 ﻿using Katzebase.PublicLibrary;
+using System.Reflection.PortableExecutable;
 
 namespace Katzebase.PrivateLibrary
 {
+    public static class ThreadPoolHelper
+    {
+        public static int CalculateThreadCount(int expectedItemCount, double multiplier = 1)
+        {
+            int maxThreads = (int)Math.Ceiling(Environment.ProcessorCount * 16.0 * multiplier);
+
+            int threads = (int)Math.Ceiling(maxThreads * (expectedItemCount / 10000.0));
+            if (threads < 1)
+            {
+                return 1;
+            }
+            else if (threads > maxThreads)
+            {
+                return maxThreads;
+            }
+
+            return threads;
+        }
+    }
+
     /// <summary>
     /// Creates a pool of threads and a queue of a specified type.
     /// </summary>

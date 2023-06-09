@@ -21,8 +21,8 @@ namespace Katzebase.Engine.Indexes
             this.core = core;
         }
 
-        internal HashSet<Guid> MatchDocuments(PerformanceTrace? pt,
-            PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, AmbidextrousConditionValue> conditionValues)
+        internal HashSet<Guid> MatchDocuments(PerformanceTrace? pt, PersistIndexPageCatalog indexPageCatalog,
+            IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
         {
             var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
 
@@ -57,9 +57,9 @@ namespace Katzebase.Engine.Indexes
                 var conditionValue = conditionValues[attribute.Field.ToLower()];
 
                 if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
-                    nextIndexEntires = indexEntires.Where(o => o.Value == conditionValue.Value)?.ToList();
+                    nextIndexEntires = indexEntires.Where(o => o.Value == conditionValue)?.ToList();
                 else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
-                    nextIndexEntires = indexEntires.Where(o => o.Value != conditionValue.Value)?.ToList();
+                    nextIndexEntires = indexEntires.Where(o => o.Value != conditionValue)?.ToList();
                 else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
 
                 ptIndexSeek?.EndTrace();
@@ -105,8 +105,7 @@ namespace Katzebase.Engine.Indexes
         /// <summary>
         /// Finds document IDs given a set of conditions.
         /// </summary>
-        internal HashSet<Guid> MatchDocuments(PerformanceTrace? pt,
-        PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
+        internal HashSet<Guid> MatchDocuments(PerformanceTrace? pt, PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
         {
             var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
 

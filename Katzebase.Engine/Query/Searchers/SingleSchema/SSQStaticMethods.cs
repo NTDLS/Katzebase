@@ -89,17 +89,15 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-            //TODO: We should put some intelligence behind the thread count and queue size.
-            int threadCount = Environment.ProcessorCount * 4 > 32 ? 32 : Environment.ProcessorCount * 4;
-
             var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
-            var param = new LookupThreadParam(core, pt, transaction, schemaMeta, query, lookupOptimization);
-            var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(LookupThreadProc, param, threadCount);
+            var threadParam = new LookupThreadParam(core, pt, transaction, schemaMeta, query, lookupOptimization);
+            int threadCount = ThreadPoolHelper.CalculateThreadCount(documentCatalog.Collection.Count);
+            var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
             ptThreadCreation?.EndTrace();
 
             foreach (var documentCatalogItem in documentCatalog.Collection)
             {
-                if (query.RowLimit != 0 && param.Results.Collection.Count >= query.RowLimit)
+                if (query.RowLimit != 0 && threadParam.Results.Collection.Count >= query.RowLimit)
                 {
                     break;
                 }
@@ -119,10 +117,10 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             if (query.RowLimit > 0)
             {
                 //Multithreading can yeild a few more rows than we need if we have a limiter.
-                param.Results.Collection = param.Results.Collection.Take(query.RowLimit).ToList();
+                threadParam.Results.Collection = threadParam.Results.Collection.Take(query.RowLimit).ToList();
             }
 
-            return param.Results;
+            return threadParam.Results;
         }
 
         private class LookupThreadParam

@@ -32,12 +32,11 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             Utility.EnsureNotNull(topLevelMap.SchemaMeta);
             Utility.EnsureNotNull(topLevelMap.SchemaMeta.DiskPath);
 
-            //TODO: We should put some intelligence behind the thread count and queue size.
-            int threadCount = Environment.ProcessorCount * 4 > 32 ? 32 : Environment.ProcessorCount * 4;
-
+            //TODO: We should put some intelligence behind the thread count.
             var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
-            var param = new LookupThreadParam(core, pt, transaction, schemaMap, query, lookupOptimization);
-            var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(LookupThreadProc, param, threadCount);
+            var threadParam = new LookupThreadParam(core, pt, transaction, schemaMap, query, lookupOptimization);
+            int threadCount = ThreadPoolHelper.CalculateThreadCount(topLevelMap.DocuemntCatalog.Collection.Count);
+            var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
             ptThreadCreation?.EndTrace();
 
             foreach (var toplevelDocument in topLevelMap.DocuemntCatalog.Collection)
@@ -54,7 +53,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             threadPool.WaitForCompletion();
             ptThreadCompletion?.EndTrace();
 
-            return param.Results;
+            return threadParam.Results;
         }
 
         private class LookupThreadParam
@@ -140,7 +139,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
                             var indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.PT, param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
                             Utility.EnsureNotNull(indexPageCatalog);
 
-                            var keyValuePairs = new Dictionary<string, AmbidextrousConditionValue>();
+                            var keyValuePairs = new Dictionary<string, string>();
 
                             foreach (var condition in subset.Conditions)
                             {
@@ -153,7 +152,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
                                     {
                                         throw new KbParserException($"Join clause field not found in document [{topLevel.Key}].");
                                     }
-                                    keyValuePairs.Add(condition.Left?.Value ?? "", new AmbidextrousConditionValue(AmbidextrousConditionValue.Side.Left, conditionToken?.ToString() ?? ""));
+                                    keyValuePairs.Add(condition.Left?.Value ?? "", conditionToken?.ToString() ?? "");
                                 }
                                 else if (condition?.Right?.Prefix == topLevel.Key)
                                 {
@@ -161,7 +160,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
                                     {
                                         throw new KbParserException($"Join clause field not found in document [{topLevel.Key}].");
                                     }
-                                    keyValuePairs.Add(condition.Right?.Value ?? "", new AmbidextrousConditionValue(AmbidextrousConditionValue.Side.Right, conditionToken?.ToString() ?? ""));
+                                    keyValuePairs.Add(condition.Right?.Value ?? "", conditionToken?.ToString() ?? "");
                                 }
                                 else
                                 {
