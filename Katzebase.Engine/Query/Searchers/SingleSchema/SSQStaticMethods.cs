@@ -18,12 +18,6 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         /// <summary>
         /// Gets all documents by a subset of conditions.
         /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="documentCatalogItems"></param>
-        /// <param name="schemaMeta"></param>
-        /// <param name="query"></param>
-        /// <param name="lookupOptimization"></param>
-        /// <returns></returns>
         public static SSQDocumentLookupResults GetSingleSchemaDocumentsByConditions(Core core,
             PerformanceTrace? pt, Transaction transaction, string schemaName, PreparedQuery query)
         {
@@ -44,7 +38,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             ConditionLookupOptimization? lookupOptimization = null;
 
-            //If we dont have anby conditions then we just need to return all rows from the schema.
+            //If we dont have any conditions then we just need to return all rows from the schema.
             if (query.Conditions.Subsets.Count > 0)
             {
                 lookupOptimization = ConditionLookupOptimization.Build(core, transaction, schemaMeta, query.Conditions);
@@ -95,20 +89,17 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
+            //TODO: We should put some intelligence behind the thread count and queue size.
+            int threadCount = Environment.ProcessorCount * 4 > 32 ? 32 : Environment.ProcessorCount * 4;
+
             var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
-
-            var threadParam = new LookupThreadParam(core, pt, transaction, schemaMeta, query, lookupOptimization);
-
-            int threadCount = Environment.ProcessorCount * 4;
-
-            var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(
-                LookupThreadProc, threadParam, threadCount > 32 ? 32 : threadCount, 100);
-
+            var param = new LookupThreadParam(core, pt, transaction, schemaMeta, query, lookupOptimization);
+            var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(LookupThreadProc, param, threadCount);
             ptThreadCreation?.EndTrace();
 
             foreach (var documentCatalogItem in documentCatalog.Collection)
             {
-                if (query.RowLimit != 0 && threadParam.Results.Collection.Count >= query.RowLimit)
+                if (query.RowLimit != 0 && param.Results.Collection.Count >= query.RowLimit)
                 {
                     break;
                 }
@@ -128,10 +119,10 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             if (query.RowLimit > 0)
             {
                 //Multithreading can yeild a few more rows than we need if we have a limiter.
-                threadParam.Results.Collection = threadParam.Results.Collection.Take(query.RowLimit).ToList();
+                param.Results.Collection = param.Results.Collection.Take(query.RowLimit).ToList();
             }
 
-            return threadParam.Results;
+            return param.Results;
         }
 
         internal class LookupThreadParam

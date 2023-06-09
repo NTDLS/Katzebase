@@ -13,12 +13,9 @@ namespace Katzebase.PrivateLibrary
         private int _runningThreadCount = 0;
         private object UserThreadParam { get; set; }
         private UserThreadThread UserThreadProc { get; set; }
-
-        public delegate void UserThreadThread(ThreadPoolQueue<T, P> pool, P? obj);
-
         private FixedSizeWaitQueue<T> Queue { get; set; }
 
-        //Whatever exception one of the threads threw (could be more than one, will overwrite).
+        public delegate void UserThreadThread(ThreadPoolQueue<T, P> pool, P? obj);
         public Exception? Exception { get; set; } = null;
         public bool HasException => Exception != null;
         public bool ContinueToProcessQueue { get; private set; } = true;
@@ -27,7 +24,7 @@ namespace Katzebase.PrivateLibrary
 
         public ThreadPoolQueue(UserThreadThread userThreadProc, object userThreadParam, int threadCount, int queueSize)
         {
-            Queue = new FixedSizeWaitQueue<T>(10);
+            Queue = new FixedSizeWaitQueue<T>(queueSize);
             UserThreadParam = userThreadParam;
             UserThreadProc = userThreadProc;
             ThreadCount = threadCount;
@@ -50,16 +47,16 @@ namespace Katzebase.PrivateLibrary
             }
         }
 
-        public static ThreadPoolQueue<T, P> Create(UserThreadThread userThreadProc, object userThreadParam, int threadCount, int queueSize)
+        public static ThreadPoolQueue<T, P> Create(UserThreadThread userThreadProc, object userThreadParam, int threadCount)
         {
-            var pool = new ThreadPoolQueue<T, P>(userThreadProc, userThreadParam, threadCount, queueSize);
+            var pool = new ThreadPoolQueue<T, P>(userThreadProc, userThreadParam, threadCount, threadCount * 10);
 
             return pool;
         }
 
-        public static ThreadPoolQueue<T, P> CreateAndStart(UserThreadThread userThreadProc, object userThreadParam, int threadCount, int queueSize)
+        public static ThreadPoolQueue<T, P> CreateAndStart(UserThreadThread userThreadProc, object userThreadParam, int threadCount)
         {
-            var pool = new ThreadPoolQueue<T, P>(userThreadProc, userThreadParam, threadCount, queueSize);
+            var pool = new ThreadPoolQueue<T, P>(userThreadProc, userThreadParam, threadCount, threadCount * 10);
             pool.Start();
             return pool;
         }
