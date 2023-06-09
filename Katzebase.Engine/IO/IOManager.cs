@@ -3,7 +3,6 @@ using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
-using System.Runtime.Caching;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.IO
@@ -324,8 +323,6 @@ namespace Katzebase.Engine.IO
                 throw;
             }
         }
-
-        MemoryCache memCache = new MemoryCache("JJ");
 
         internal void DeletePath(Transaction transaction, string diskPath)
         {
