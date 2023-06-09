@@ -56,9 +56,6 @@ namespace Katzebase.Engine.Transactions
                 {
                     var wrapper = Collection[key];
                     wrapper.Hits++;
-
-                    wrapper.DiskPath = diskPath;
-                    wrapper.LowerDiskPath = diskPath.ToLower();
                     wrapper.Reference = reference;
                     wrapper.DeferredFormat = deferredFormat;
                 }
@@ -71,7 +68,6 @@ namespace Katzebase.Engine.Transactions
                     };
 
                     Collection.Add(key, wrapper);
-
                 }
 
                 return true;

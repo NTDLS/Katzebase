@@ -15,7 +15,11 @@ namespace Katzebase.Engine.Transactions
         public List<ulong> BlockedBy { get; set; }
         public bool IsDeadlocked { get; set; }
         public List<ObjectLockKey>? HeldLockKeys { get; set; }
-        public bool IsLongLived { get; set; } //True if the transaction was created by the user, otherwise false;
+
+        /// <summary>
+        /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
+        /// </summary>
+        public bool IsUserCreated { get; set; } 
         public DeferredDiskIO? DeferredIOs { get; set; }
 
         private Core core;

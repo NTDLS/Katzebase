@@ -2,43 +2,90 @@
 {
     public class KatzebaseSettings
     {
-
         /// <summary>
-        /// Whether the engine will keep instance level health metrics. This can be useful but will have a serious impact on performance.
+        /// If true, the all applicable IO operations will be cached on read and write.
         /// </summary>
-        public bool RecordInstanceHealth { get; set; }
+        public bool CacheEnabled { get; set; }
         /// <summary>
         /// The maximum amount of memory that the server will be allowed to use before scavenging the cache.
         /// </summary>
-        public long MaxCacheMemory { get; set; }
+        public long CacheMaxMemory { get; set; }
+
+        /// <summary>
+        /// The number of memory cache partitions to create. (0 = CPU Count)
+        /// </summary>
+        public int CachePartitions { get; set; }
+
+        /// <summary>
+        /// The number of seconds to keep an item in cache (sliding expiration).
+        /// </summary>
+        public int CacheSeconds { get; set; }
+
+        /// <summary>
+        /// Whether the engine will keep health metrics.
+        /// </summary>
+        public bool HealthMonitoringEnabled { get; set; }
+
+        /// <summary>
+        /// Whether the engine will keep instance level health metrics. This can be useful but will have a serious impact on performance.
+        /// Must also enable [HealthMonitoringEnabled].
+        /// </summary>
+        public bool HealthMonitoringInstanceLevelEnabled { get; set; }
+
+        /// <summary>
+        /// The total number of seconds that instance level counters should stay in the health monitor for observation.
+        /// </summary>
+        public int HealthMonitoringInstanceLevelTimeToLiveSeconds { get; set; }
+
+        /// <summary>
+        /// The number of seconds between writing health statistics to disk and trimming any instance level counters.
+        /// </summary>
+        public int HealthMonitoringChekpointSeconds { get; set; }
+
         /// <summary>
         /// The base listening URL for the web-services.
         /// </summary>
         public string BaseAddress { get; set; } = string.Empty;
+
         /// <summary>
         /// The top level directory for all schemas.
         /// </summary>
-        public string DataRootPath { get; set; } = string.Empty;
+        public string DataRootPath
+        {
+            get => dataRootPath;
+            set => dataRootPath = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+        }
+        private string dataRootPath = string.Empty;
+
         /// <summary>
         /// The directory where transaction logs are stored.
         /// </summary>
-        public string TransactionDataPath { get; set; } = string.Empty;
+        public string TransactionDataPath
+        {
+            get => transactionDataPath;
+            set => transactionDataPath = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+        }
+        private string transactionDataPath = string.Empty;
+
         /// <summary>
         /// The directory where text and performance logs are stores.
         /// </summary>
-        public string LogDirectory { get; set; } = string.Empty;
+        public string LogDirectory
+        {
+            get => logDirectory;
+            set => logDirectory = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+        }
+        private string logDirectory = string.Empty;
+
         /// <summary>
         /// If true, text logs will be flused at every write. This ensures that the log file is always up-to-date on disk.
         /// </summary>
         public bool FlushLog { get; set; }
+
         /// <summary>
-        /// If true, the all applicable IO operations will be cached on read and write.
+        /// When true, all write operations associated with a transaction are deferred until the transaction is comitted.
         /// </summary>
-        public bool AllowIOCaching { get; set; }
-        /// <summary>
-        /// When true, IO operations that occur in a transaction will be deferred until transaction commit.
-        /// </summary>
-        public bool AllowDeferredIO { get; set; }
+        public bool DeferredIOEnabled { get; set; }
 
         /// <summary>
         /// Causes the server to write super-verbose information about almost every internal operation.

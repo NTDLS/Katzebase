@@ -61,7 +61,7 @@ namespace Katzebase.Engine.IO
                 transaction.LockFile(intendedOperation, cacheKey);
                 ptLock?.EndTrace();
 
-                if (core.settings.AllowIOCaching)
+                if (core.settings.CacheEnabled)
                 {
                     var ptCacheRead = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.CacheRead);
                     var cachedObject = core.Cache.Get(cacheKey);
@@ -110,7 +110,7 @@ namespace Katzebase.Engine.IO
                     throw new NotImplementedException();
                 }
 
-                if (core.settings.AllowIOCaching && deserializedObject != null)
+                if (core.settings.CacheEnabled && deserializedObject != null)
                 {
                     var ptCacheWrite = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.CacheWrite);
                     core.Cache.Upsert(cacheKey, deserializedObject);
@@ -176,10 +176,9 @@ namespace Katzebase.Engine.IO
                         transaction.RecordFileAlter(filePath);
                     }
 
-                    if (core.settings.AllowDeferredIO && transaction.IsLongLived)
+                    if (core.settings.DeferredIOEnabled && transaction.IsUserCreated)
                     {
                         Utility.EnsureNotNull(transaction.DeferredIOs);
-
                         deferDiskWrite = transaction.DeferredIOs.RecordDeferredDiskIO(cacheKey, filePath, deserializedObject, format);
                     }
                 }
@@ -211,7 +210,7 @@ namespace Katzebase.Engine.IO
                     core.Log.Trace($"IO:Write-Deferred:{filePath}");
                 }
 
-                if (core.settings.AllowIOCaching)
+                if (core.settings.CacheEnabled)
                 {
                     core.Cache.Upsert(cacheKey, deserializedObject);
                     core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
@@ -281,11 +280,9 @@ namespace Katzebase.Engine.IO
 
                 Utility.EnsureNotNull(transaction.DeferredIOs);
 
-                var deferredExists = transaction.DeferredIOs.Collection.Values.FirstOrDefault(o => o.LowerDiskPath == lowerFilePath);
-                if (deferredExists != null)
+                if(transaction.DeferredIOs.Collection.Values.Any(o => o.DiskPath == lowerFilePath))
                 {
-                    //The file might not yet exist, but its in the cache.
-                    return true;
+                    return true; //The file might not yet exist, but its in the cache.
                 }
 
                 string cacheKey = Helpers.RemoveModFileName(lowerFilePath);
@@ -309,7 +306,7 @@ namespace Katzebase.Engine.IO
                 string cacheKey = Helpers.RemoveModFileName(filePath.ToLower());
                 transaction.LockFile(LockOperation.Write, cacheKey);
 
-                if (core.settings.AllowIOCaching)
+                if (core.settings.CacheEnabled)
                 {
                     core.Cache.Remove(cacheKey);
                 }
@@ -337,7 +334,7 @@ namespace Katzebase.Engine.IO
                 string cacheKey = Helpers.RemoveModFileName(diskPath.ToLower());
                 transaction.LockDirectory(LockOperation.Write, cacheKey);
 
-                if (core.settings.AllowIOCaching)
+                if (core.settings.CacheEnabled)
                 {
                     core.Cache.RemoveItemsWithPrefix(cacheKey);
                 }

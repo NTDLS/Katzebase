@@ -10,5 +10,6 @@ namespace Katzebase.Engine.Health
         public HealthCounterType Type { get; set; }
         public string Instance { get; set; } = string.Empty;
         public double Value { get; set; }
+        public DateTime WaitDateTimeUtc { get; set; }
     }
 }

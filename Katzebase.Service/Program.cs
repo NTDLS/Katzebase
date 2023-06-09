@@ -31,25 +31,11 @@ namespace Katzebase.Service
                                  .Build();
 
                     // Get values from the config given their key and their target type.
-                    var settings = config.GetRequiredSection("Settings").Get<KatzebaseSettings>();
-                    if (settings == null)
+                    _settings = config.GetRequiredSection("Settings").Get<KatzebaseSettings>();
+                    if (_settings == null)
                     {
                         throw new Exception("Failed to load settings");
                     }
-
-                    _settings = new KatzebaseSettings()
-                    {
-                        BaseAddress = settings.BaseAddress,
-                        DataRootPath = settings.DataRootPath.TrimEnd(new char[] { '/', '\\' }),
-                        TransactionDataPath = settings.TransactionDataPath.TrimEnd(new char[] { '/', '\\' }),
-                        LogDirectory = settings.LogDirectory.TrimEnd(new char[] { '/', '\\' }),
-                        FlushLog = settings.FlushLog,
-                        AllowIOCaching = settings.AllowIOCaching,
-                        AllowDeferredIO = settings.AllowDeferredIO,
-                        WriteTraceData = settings.WriteTraceData,
-                        MaxCacheMemory = settings.MaxCacheMemory,
-                        RecordInstanceHealth = settings.RecordInstanceHealth
-                    };
                 }
 
                 return _settings;

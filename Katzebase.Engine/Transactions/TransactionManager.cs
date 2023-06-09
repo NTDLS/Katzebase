@@ -94,11 +94,12 @@ namespace Katzebase.Engine.Transactions
         }
 
         /// <summary>
-        /// Begin an atomic operation. If the session already has an open transaction then its reference count is incremented and then decremented on TransactionReference.Dispose();
+        /// Begin an atomic operation. If the session already has an open transaction then its
+        /// reference count is incremented and then decremented on TransactionReference.Dispose();
         /// </summary>
         /// <param name="processId"></param>
         /// <returns></returns>
-        public TransactionReference Begin(ulong processId, bool isLongLived)
+        public TransactionReference Begin(ulong processId, bool isUserCreated)
         {
             try
             {
@@ -109,7 +110,7 @@ namespace Katzebase.Engine.Transactions
                     {
                         transaction = new Transaction(core, this, processId, false)
                         {
-                            IsLongLived = isLongLived
+                            IsUserCreated = isUserCreated
                         };
 
                         Collection.Add(transaction);
