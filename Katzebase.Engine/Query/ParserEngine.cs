@@ -260,6 +260,11 @@ namespace Katzebase.Engine.Query
                             break;
                         }
 
+                        if (query.IsNextToken(new string[] { "and", "or" }))
+                        {
+                            query.SkipNextToken();
+                        }
+
                         var joinLeftCondition = query.GetNextToken();
                         if (joinLeftCondition == string.Empty || TokenHelpers.IsValidIdentifier(joinLeftCondition, ".") == false)
                         {
