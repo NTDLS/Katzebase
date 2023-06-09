@@ -104,7 +104,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     break;
                 }
 
-                if (threadPool.HasException)
+                if (threadPool.HasException || threadPool.ContinueToProcessQueue == false)
                 {
                     break;
                 }
@@ -125,7 +125,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             return param.Results;
         }
 
-        internal class LookupThreadParam
+        private class LookupThreadParam
         {
             public SSQDocumentLookupResults Results = new();
             public PersistSchema SchemaMeta { get; private set; }
@@ -147,7 +147,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             }
         }
 
-        internal static void LookupThreadProc(ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam> pool, LookupThreadParam? param)
+        private static void LookupThreadProc(ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam> pool, LookupThreadParam? param)
         {
             Utility.EnsureNotNull(param);
 
@@ -199,7 +199,10 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                         result.Values.Add(jToken?.ToString() ?? string.Empty);
                     }
 
-                    param.Results.Add(result);
+                    lock (param.Results)
+                    {
+                        param.Results.Add(result);
+                    }
                 }
             }
         }
