@@ -4,6 +4,7 @@ using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
+using Katzebase.PrivateLibrary;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
@@ -20,18 +21,92 @@ namespace Katzebase.Engine.Indexes
             this.core = core;
         }
 
-        /// <summary>
-        /// Finds document IDs given a set of conditions.
-        /// </summary>
-        /// <param name="persistIndexLeaves"></param>
-        /// <param name="conditions"></param>
-        /// <param name="foundDocumentIds"></param>
         internal HashSet<Guid> MatchDocuments(PerformanceTrace? pt,
-            PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
+            PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, AmbidextrousConditionValue> conditionValues)
         {
             var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
 
-            bool fullMatch = true;
+            bool? fullMatch = null;
+
+            foreach (var attribute in indexSelection.Index.Attributes)
+            {
+                Utility.EnsureNotNull(attribute.Field);
+                var conditionField = conditionSubset.Conditions.Where(o => o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
+                if (conditionField == null)
+                {
+                    //No match? I think this is an exception....
+                    fullMatch = false;
+                    break;
+                }
+
+                if (conditionField.LogicalConnector == LogicalConnector.Or)
+                {
+                    //TODO: Indexing only supports AND connectors, thats a performance problem.
+
+                    //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                    var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                    var resultintDocuments = DistillIndexLeaves(indexEntires);
+                    ptIndexDistillation?.EndTrace();
+                    return resultintDocuments.ToHashSet();
+                }
+
+                List<PersistIndexLeaf>? nextIndexEntires = null;
+
+                var ptIndexSeek = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexSeek);
+
+                var conditionValue = conditionValues[attribute.Field.ToLower()];
+
+                if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
+                    nextIndexEntires = indexEntires.Where(o => o.Value == conditionValue.Value)?.ToList();
+                else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
+                    nextIndexEntires = indexEntires.Where(o => o.Value != conditionValue.Value)?.ToList();
+                else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
+
+                ptIndexSeek?.EndTrace();
+
+                if (nextIndexEntires == null)
+                {
+                    fullMatch = false; //No match, bail out!
+                    break;
+                }
+                else
+                {
+                    fullMatch ??= true; //Set this as a FULL INDEX match on the first match. This is true until we fail to match on a subsequent condition.
+                }
+
+                if (indexEntires.Any(o => o.Leaves.Count > 0)) //If we are at the base of the tree then there is no need to go further down.
+                {
+                    indexEntires = nextIndexEntires.Select(o => o.Leaves).SelectMany(o => o.Entries).ToList(); //Traverse down the tree.
+                }
+            }
+
+            if (fullMatch == true)
+            {
+                var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                var resultintDocuments = indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
+                //If we got here then we got a full match on the entire index. This is the best scenario.
+                ptIndexDistillation?.EndTrace();
+                return resultintDocuments.ToHashSet();
+            }
+            else
+            {
+                var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                var resultintDocuments = DistillIndexLeaves(indexEntires);
+                ptIndexDistillation?.EndTrace();
+                //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                return resultintDocuments.ToHashSet();
+            }
+        }
+
+        /// <summary>
+        /// Finds document IDs given a set of conditions.
+        /// </summary>
+        internal HashSet<Guid> MatchDocuments(PerformanceTrace? pt,
+        PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
+        {
+            var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
+
+            bool? fullMatch = null;
 
             foreach (var attribute in indexSelection.Index.Attributes)
             {
@@ -69,9 +144,12 @@ namespace Katzebase.Engine.Indexes
 
                 if (nextIndexEntires == null)
                 {
-                    //No match?
-                    fullMatch = false;
+                    fullMatch = false; //No match, bail out!
                     break;
+                }
+                else
+                {
+                    fullMatch ??= true; //Set this as a FULL INDEX match on the first match. This is true until we fail to match on a subsequent condition.
                 }
 
                 if (indexEntires.Any(o => o.Leaves.Count > 0)) //If we are at the base of the tree then there is no need to go further down.
@@ -80,7 +158,7 @@ namespace Katzebase.Engine.Indexes
                 }
             }
 
-            if (fullMatch)
+            if (fullMatch == true)
             {
                 var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
                 var resultintDocuments = indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();

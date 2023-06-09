@@ -28,8 +28,8 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
         /// <param name="docuemntCatalog">The document catalog contained in the associated schema.</param>
         /// <param name="conditions">The conditons used to join this schema mapping to the one before it.</param>
         public void Add(string key, PersistSchema schemaMeta, PersistDocumentCatalog docuemntCatalog, Conditions? conditions)
-    {
-        Add(key, new MSQQuerySchemaMapItem(core, Transaction, schemaMeta, docuemntCatalog, conditions));
+        {
+            Add(key, new MSQQuerySchemaMapItem(core, Transaction, schemaMeta, docuemntCatalog, conditions));
+        }
     }
-}
 }

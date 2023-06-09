@@ -32,6 +32,7 @@ namespace Katzebase.Engine.Query.Constraints
                 IsConstant = IsConstant,
                 IsNumeric = IsNumeric,
                 IsString = IsString,
+                Prefix = Prefix,
                 IsSet = IsSet,
                 _value = _value
             };

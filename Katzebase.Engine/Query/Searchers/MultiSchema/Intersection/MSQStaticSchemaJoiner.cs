@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
 using Katzebase.Engine.Trace;
@@ -7,6 +8,7 @@ using Katzebase.PrivateLibrary;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
+using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
@@ -87,7 +89,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             Utility.EnsureNotNull(topLevelMap.SchemaMeta);
             Utility.EnsureNotNull(topLevelMap.SchemaMeta.DiskPath);
             Utility.EnsureNotNull(param.LookupOptimization);
-           
+
             while (pool.ContinueToProcessQueue)
             {
                 var toplevelDocument = pool.DequeueWorkItem();
@@ -119,7 +121,84 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 
                     var expression = new NCalc.Expression(nextLevelMap.Conditions.HighLevelExpressionTree);
 
-                    foreach (var nextLevelDocument in nextLevelMap.DocuemntCatalog.Collection)
+                    #region New indexing stuff..
+
+                    //Create a reference to the entire document catalog.
+                    var limitedDocumentCatalogItems = nextLevelMap.DocuemntCatalog.Collection;
+
+                    if (nextLevelMap.Optimization?.CanApplyIndexing() == true)
+                    {
+                        //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
+                        limitedDocumentCatalogItems = new List<PersistDocumentCatalogItem>();
+
+                        //All condition subsets have a selected index. Start building a list of possible document IDs.
+                        foreach (var subset in nextLevelMap.Optimization.Conditions.NonRootSubsets)
+                        {
+                            Utility.EnsureNotNull(subset.IndexSelection);
+                            Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
+
+                            var indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.PT, param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                            Utility.EnsureNotNull(indexPageCatalog);
+
+                            var keyValuePairs = new Dictionary<string, AmbidextrousConditionValue>();
+
+                            foreach (var condition in subset.Conditions)
+                            {
+                                JToken? conditionToken = null;
+
+                                //Figure out whether the top level schema is being referenced by the left or right of the condition.
+                                if (condition?.Left?.Prefix == topLevel.Key)
+                                {
+                                    if (!jContentTopLevel.TryGetValue((condition.Left?.Value ?? ""), StringComparison.CurrentCultureIgnoreCase, out conditionToken))
+                                    {
+                                        throw new KbParserException($"Join clause field not found in document [{topLevel.Key}].");
+                                    }
+                                    keyValuePairs.Add(condition.Left?.Value ?? "", new AmbidextrousConditionValue(AmbidextrousConditionValue.Side.Left, conditionToken?.ToString() ?? ""));
+                                }
+                                else if (condition?.Right?.Prefix == topLevel.Key)
+                                {
+                                    if (!jContentTopLevel.TryGetValue((condition.Right?.Value ?? ""), StringComparison.CurrentCultureIgnoreCase, out conditionToken))
+                                    {
+                                        throw new KbParserException($"Join clause field not found in document [{topLevel.Key}].");
+                                    }
+                                    keyValuePairs.Add(condition.Right?.Value ?? "", new AmbidextrousConditionValue(AmbidextrousConditionValue.Side.Right, conditionToken?.ToString() ?? ""));
+                                }
+                                else
+                                {
+                                    throw new KbParserException($"Schema prefix could not be found for join clause [{topLevel.Key}].");
+                                }
+                            }
+
+                            //Match on values from the document.
+                            var documentIds = param.Core.Indexes.MatchDocuments(param.PT, indexPageCatalog, subset.IndexSelection, subset, keyValuePairs);
+
+                            limitedDocumentCatalogItems.AddRange(nextLevelMap.DocuemntCatalog.Collection.Where(o => documentIds.Contains(o.Id)).ToList());
+                        }
+                    }
+                    else
+                    {
+                        #region Why no indexing? Find out here!
+                        //   * One or more of the conditon subsets lacks an index.
+                        //   *
+                        //   *   Since indexing requires that we can ensure document elimination we will have
+                        //   *      to ensure that we have a covering index on EACH-and-EVERY conditon group.
+                        //   *
+                        //   *   Then we can search the indexes for each condition group to obtain a list of all possible
+                        //   *       document IDs, then use those document IDs to early eliminate documents from the main lookup loop.
+                        //   *
+                        //   *   If any one conditon group does not have an index, then no indexing will be used at all since all
+                        //   *      documents will need to be scaned anyway. To prevent unindexed scans, reduce the number of
+                        //   *      condition groups (nested in parentheses).
+                        //   *
+                        //   * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we cant use an index.
+                        //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
+                        //*
+                        #endregion
+                    }
+
+                    #endregion
+
+                    foreach (var nextLevelDocument in limitedDocumentCatalogItems)
                     {
                         var persistDocumentDiskPathNextLevel = Path.Combine(nextLevelMap.SchemaMeta.DiskPath, nextLevelDocument.FileName);
 
@@ -163,7 +242,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             }
         }
 
-                /// <summary>
+        /// <summary>
         /// Gets the json content values for the specified conditions.
         /// </summary>
         /// <param name="expression"></param>

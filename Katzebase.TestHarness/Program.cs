@@ -30,8 +30,10 @@ namespace Katzebase.TestHarness
             //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)");
             //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299 AND productid = 366");
             //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299");
-            client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Missing, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)");
+            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Missing, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)");
             //client.Query.ExecuteQuery("SELECT TOP 10 a.ProductID FROM AdventureWorks2012:Production:ProductInventory as a");
+
+            //TestIndexCreationProductInventory();
 
             //Console.WriteLine(client.Query.ExplainQuery(query)?.Explanation);
             //client.Query.ExecuteQuery("SET TraceWaitTimes ON");
@@ -69,16 +71,14 @@ namespace Katzebase.TestHarness
 
             client.Transaction.Begin();
 
-            Console.WriteLine("Creating index: IX_ProductInventory_Location");
+            Console.WriteLine("Creating index: IX_ProductInventory_LocationID");
             var index = new KbIndex()
             {
-                Name = "IX_ProductInventory_LastName_FirstName",
+                Name = "IX_ProductInventory_LocationID",
                 IsUnique = false
             };
-            //TODO: Also try these in the other order...
+
             index.AddAttribute("LocationID");
-            index.AddAttribute("Shelf");
-            index.AddAttribute("Bin");
             client.Schema.Indexes.Create(schemaPath, index);
 
             Console.WriteLine("Comitting transaction.");

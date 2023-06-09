@@ -23,9 +23,21 @@ namespace Katzebase.Engine.Query.Constraints
             LogicalQualifier = logicalQualifier;
         }
 
+        public Condition(string subsetKey, string conditionKey, LogicalConnector logicalConnector, LogicalQualifier logicalQualifier)
+        {
+            SubsetKey = subsetKey;
+            ConditionKey = conditionKey;
+            LogicalConnector = logicalConnector;
+            LogicalQualifier = logicalQualifier;
+        }
+
         public Condition Clone()
         {
-            var clone = new Condition(SubsetKey, ConditionKey, LogicalConnector, Left.Value ?? string.Empty, LogicalQualifier, Right.Value ?? string.Empty);
+            var clone = new Condition(SubsetKey, ConditionKey, LogicalConnector, LogicalQualifier)
+            {
+                Left = Left.Clone(),
+                Right = Right.Clone()
+            };
 
             return clone;
         }
