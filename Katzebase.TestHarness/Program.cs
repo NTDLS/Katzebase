@@ -33,7 +33,7 @@ namespace Katzebase.TestHarness
             //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Missing, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)");
             //client.Query.ExecuteQuery("SELECT TOP 10 a.ProductID FROM AdventureWorks2012:Production:ProductInventory as a");
 
-            //TestIndexCreationProductInventory();
+            TestIndexCreationProductInventory();
 
             //Console.WriteLine(client.Query.ExplainQuery(query)?.Explanation);
             //client.Query.ExecuteQuery("SET TraceWaitTimes ON");
@@ -65,23 +65,21 @@ namespace Katzebase.TestHarness
         private static void TestIndexCreationProductInventory()
         {
             var client = new KatzebaseClient("http://localhost:6858/");
-            Console.WriteLine("Session Started: {0}", client.SessionId);
 
-            string? schemaPath = "AdventureWorks2012:Production:ProductInventory";
+            string? schemaPath = "AdventureWorks2012:Production:TransactionHistory";
 
             client.Transaction.Begin();
 
-            Console.WriteLine("Creating index: IX_ProductInventory_LocationID");
             var index = new KbIndex()
             {
-                Name = "IX_ProductInventory_LocationID",
+                Name = "IX_TransactionHistory_ProductID_ActualCost",
                 IsUnique = false
             };
 
-            index.AddAttribute("LocationID");
+            index.AddAttribute("ProductID");
+            index.AddAttribute("ActualCost");
             client.Schema.Indexes.Create(schemaPath, index);
 
-            Console.WriteLine("Comitting transaction.");
             client.Transaction.Commit();
 
             Console.WriteLine("Session Completed: {0}", client.SessionId);

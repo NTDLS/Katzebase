@@ -1,0 +1,12 @@
+SELECT TOP 100
+	P.Name,
+	P.ProductNumber
+FROM
+	AdventureWorks2012:Production:Product as p
+INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
+	ON p.ProductID = th.ProductID
+    AND p.ListPrice = th.ActualCost
+    /*
+    Looks like the optimizer is only picking up the ProductID
+    for this join, shoud be quicker than 800ms for 55k rows.
+    */

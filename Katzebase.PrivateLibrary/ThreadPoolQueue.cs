@@ -1,5 +1,4 @@
 ﻿using Katzebase.PublicLibrary;
-using System.Reflection.PortableExecutable;
 
 namespace Katzebase.PrivateLibrary
 {
