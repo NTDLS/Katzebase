@@ -90,6 +90,8 @@ namespace Katzebase.PrivateLibrary
                 var thread = new Thread(PassThroughThreadProc);
                 _threads.Add(thread);
 
+                thread.Name = $"ThreadPoolQueue-{i}";
+
                 IncrementRunningThreadCount();
 
                 thread.Start(this);

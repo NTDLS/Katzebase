@@ -244,6 +244,10 @@ namespace Katzebase.Engine.Query
                         query.SkipNextToken();
                         subSchemaAlias = query.GetNextToken();
                     }
+                    else
+                    {
+                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected AS (schema alias).");
+                    }
 
                     token = query.GetNextToken();
                     if (token.ToLower() != "on")
@@ -255,7 +259,7 @@ namespace Katzebase.Engine.Query
 
                     while (true)
                     {
-                        if (query.IsNextToken(new string[] { "where", "" }))
+                        if (query.IsNextToken(new string[] { "where", "inner", "" }))
                         {
                             break;
                         }
@@ -289,7 +293,7 @@ namespace Katzebase.Engine.Query
                     }
 
                     var joinConditionsText = query.Text.Substring(joinCoOnditionsStartPosition, query.Position - joinCoOnditionsStartPosition).Trim();
-                    var joinConditions = Conditions.Create(joinConditionsText, query.LiteralStrings);
+                    var joinConditions = Conditions.Create(joinConditionsText, query.LiteralStrings, subSchemaAlias);
 
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLower(), subSchemaAlias.ToLower(), joinConditions));
                 }

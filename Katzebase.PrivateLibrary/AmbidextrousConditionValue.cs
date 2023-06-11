@@ -2,18 +2,19 @@
 {
     public class AmbidextrousConditionValue
     {
-        public enum Side
+        public enum WhichSide
         {
+            None,
             Left,
             Right
         }
 
         public string Value { get; set; }
-        public Side WhichSide { get; set; }
+        public WhichSide Side { get; set; }
 
-        public AmbidextrousConditionValue(Side whichSide, string value)
+        public AmbidextrousConditionValue(WhichSide side, string value)
         {
-            WhichSide = whichSide;
+            Side = side;
             Value = value;
         }
     }

@@ -66,18 +66,17 @@ namespace Katzebase.TestHarness
         {
             var client = new KatzebaseClient("http://localhost:6858/");
 
-            string? schemaPath = "AdventureWorks2012:Production:TransactionHistory";
+            string? schemaPath = "AdventureWorks2012:Production:ProductSubcategory";
 
             client.Transaction.Begin();
 
             var index = new KbIndex()
             {
-                Name = "IX_TransactionHistory_ProductID_ActualCost",
+                Name = "IX_ProductSubcategory_ProductSubcategoryID",
                 IsUnique = false
             };
 
-            index.AddAttribute("ProductID");
-            index.AddAttribute("ActualCost");
+            index.AddAttribute("ProductSubcategoryID");
             client.Schema.Indexes.Create(schemaPath, index);
 
             client.Transaction.Commit();

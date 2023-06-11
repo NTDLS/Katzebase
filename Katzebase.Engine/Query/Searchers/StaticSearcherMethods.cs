@@ -92,17 +92,12 @@ namespace Katzebase.Engine.Query.Searchers
                     schemaMap.Add(querySchema.Alias, schemaMeta, documentCatalog, querySchema.Conditions);
                 }
 
-                //Figure out which indexes could assist us in retrieving the desired documents (if any).
-                var ptOptimization = pt?.BeginTrace(PerformanceTraceType.Optimization);
-                var lookupOptimization = ConditionLookupOptimization.Build(core, transaction, schemaMap.First().Value.SchemaMeta, query.Conditions);
-                ptOptimization?.EndTrace();
-
                 /*
                  *  We need to build a generic key/value dataset which is the combined fieldset from each inner joined document.
                  *  Then we use the conditions that were supplied to eliminate results from that dataset.
                 */
 
-                var schemaMapResults = MSQStaticSchemaJoiner.IntersetSchemas(core, pt, transaction, schemaMap, query, lookupOptimization);
+                var schemaMapResults = MSQStaticSchemaJoiner.IntersetSchemas(core, pt, transaction, schemaMap, query);
 
                 HashSet<string> strings = new HashSet<string>();
             }

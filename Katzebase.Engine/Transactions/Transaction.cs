@@ -17,6 +17,12 @@ namespace Katzebase.Engine.Transactions
         public List<ObjectLockKey>? HeldLockKeys { get; set; }
 
         /// <summary>
+        /// We keep a hashset of locks granted to this transaction by the LockIntention.Key so that we
+        ///     do not have to perform blocking or deadlock checks again for the life of this transaction.
+        /// </summary>
+        public HashSet<string> GrantedLockCache { get; set; } = new HashSet<string>();
+
+        /// <summary>
         /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
         /// </summary>
         public bool IsUserCreated { get; set; } 
