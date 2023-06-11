@@ -94,9 +94,11 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
         private static void FindDocumentsOfSchemas(LookupThreadParam param, PersistDocumentCatalogItem workingDocument)
         {
+            var jThreadScopedContentCache = new Dictionary<string, JObject>();
+
             var cumulativeResults = new MSQSchemaIntersectionDocumentCollection();
 
-            var jContentByAlias = new Dictionary<string, JObject>();
+            var jJoinScopedContentCache = new Dictionary<string, JObject>();
             var topLevel = param.SchemaMap.First();
 
             Utility.EnsureNotNull(topLevel.Value.SchemaMeta.DiskPath);
@@ -108,7 +110,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             Utility.EnsureNotNull(persistDocumentWorkingLevel.Content);
 
             //Get the document content and add it to a collection so it can be referenced by schema alias on all subsequent joins.
-            jContentByAlias.Add(topLevel.Key, JObject.Parse(persistDocumentWorkingLevel.Content));
+
+            var jToBeCachedContent = JObject.Parse(persistDocumentWorkingLevel.Content);
+            jJoinScopedContentCache.Add(topLevel.Key, jToBeCachedContent);
+            jThreadScopedContentCache.Add($"{topLevel.Key}:{persistDocumentWorkingLevel.Id}", jToBeCachedContent);
 
             if (cumulativeResults.MatchedDocumentIDsPerSchema.TryGetValue(topLevel.Key, out HashSet<Guid>? documentIDs))
             {
@@ -119,7 +124,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 cumulativeResults.MatchedDocumentIDsPerSchema.Add(topLevel.Key, new HashSet<Guid> { workingDocument.Id });
             }
 
-            FindDocumentsOfSchemasRecursive(param, workingDocument, topLevel, 1, ref cumulativeResults, jContentByAlias);
+            FindDocumentsOfSchemasRecursive(param, workingDocument, topLevel, 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
 
             //Take all of the found schama/document IDs and acculumate the doucment values here.
             if (cumulativeResults.MatchedDocumentIDsPerSchema.Count == param.SchemaMap.Count)
@@ -139,7 +144,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     var schemaResultValues = new MSQDocumentLookupResult(documentID, param.Query.SelectFields.Count);
 
                     //Add the values from the top level schema.
-                    FillInSchemaResultDocumentValues(param, firstSchemaMap, firstSchemaResult.Key, documentID, ref schemaResultValues);
+                    FillInSchemaResultDocumentValues(param, firstSchemaMap, firstSchemaResult.Key, documentID, ref schemaResultValues, jThreadScopedContentCache);
 
                     //Fill in the values from all of the other schemas.
                     foreach (var nextResult in allSchemasResults.Skip(1))
@@ -149,7 +154,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
                         foreach (var nextLevelDocumentID in nextLevelDocumentIDs)
                         {
-                            FillInSchemaResultDocumentValues(param, nextLevelAccumulationMap, nextResult.Key, nextLevelDocumentID, ref schemaResultValues);
+                            FillInSchemaResultDocumentValues(param, nextLevelAccumulationMap, nextResult.Key, nextLevelDocumentID, ref schemaResultValues, jThreadScopedContentCache);
                         }
                     }
 
@@ -164,7 +169,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         }
 
         private static void FillInSchemaResultDocumentValues(LookupThreadParam param, MSQQuerySchemaMapItem accumulationMap,
-            string schemaKey, Guid documentID, ref MSQDocumentLookupResult schemaResultValues)
+            string schemaKey, Guid documentID, ref MSQDocumentLookupResult schemaResultValues, Dictionary<string, JObject> jThreadScopedContentCache)
         {
             Utility.EnsureNotNull(accumulationMap?.SchemaMeta?.DiskPath);
             var documentFileName = Helpers.GetDocumentModFilePath(documentID);
@@ -174,8 +179,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             Utility.EnsureNotNull(persistDocument);
             Utility.EnsureNotNull(persistDocument.Content);
 
-            //Since these are discarded per thread when we are looking up, maybe we save them so we dont have to re-parse?
-            var jIndexContent = JObject.Parse(persistDocument.Content);
+            var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{documentID}"];
 
             foreach (var selectField in param.Query.SelectFields.Where(o => o.SchemaAlias == schemaKey))
             {
@@ -190,7 +194,8 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         }
 
         private static void FindDocumentsOfSchemasRecursive(LookupThreadParam param, PersistDocumentCatalogItem workingDocument, KeyValuePair<string,
-            MSQQuerySchemaMapItem> workingLevel, int skipCount, ref MSQSchemaIntersectionDocumentCollection cumulativeResults, Dictionary<string, JObject> jContentByAlias)
+            MSQQuerySchemaMapItem> workingLevel, int skipCount, ref MSQSchemaIntersectionDocumentCollection cumulativeResults,
+            Dictionary<string, JObject> jJoinScopedContentCache, Dictionary<string, JObject> jThreadScopedContentCache)
         {
             var thisThreadResults = new Dictionary<Guid, MSQSchemaIntersectionDocumentCollection>();
 
@@ -203,7 +208,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             Utility.EnsureNotNull(nextLevelMap?.SchemaMeta?.DiskPath);
             Utility.EnsureNotNull(workingLevelMap?.SchemaMeta?.DiskPath);
 
-            var jWorkingContent = jContentByAlias[workingLevel.Key];
+            var jWorkingContent = jJoinScopedContentCache[workingLevel.Key];
 
             var expression = new NCalc.Expression(nextLevelMap.Conditions.HighLevelExpressionTree);
 
@@ -231,7 +236,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
                     foreach (var condition in subset.Conditions)
                     {
-                        var jIndexContent = jContentByAlias[condition.Right?.Prefix ?? ""];
+                        var jIndexContent = jJoinScopedContentCache[condition.Right?.Prefix ?? ""];
 
                         if (!jIndexContent.TryGetValue((condition.Right?.Value ?? ""), StringComparison.CurrentCultureIgnoreCase, out JToken? conditionToken))
                         {
@@ -273,16 +278,27 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
             foreach (var nextLevelDocument in limitedDocumentCatalogItems)
             {
-                var persistDocumentDiskPathNextLevel = Path.Combine(nextLevelMap.SchemaMeta.DiskPath, nextLevelDocument.FileName);
+                string threadScopedDocuemntCacheKey = $"{nextLevel.Key}:{nextLevelDocument.Id}";
 
-                var persistDocumentNextLevel = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPathNextLevel, LockOperation.Read);
-                Utility.EnsureNotNull(persistDocumentNextLevel?.Content);
+                JObject? jContentNextLevel = null;
 
-                var jContentNextLevel = JObject.Parse(persistDocumentNextLevel.Content);
+                if (jThreadScopedContentCache.ContainsKey(threadScopedDocuemntCacheKey))
+                {
+                    jContentNextLevel = jThreadScopedContentCache[threadScopedDocuemntCacheKey];
+                }
+                else
+                {
+                    var persistDocumentDiskPathNextLevel = Path.Combine(nextLevelMap.SchemaMeta.DiskPath, nextLevelDocument.FileName);
+                    var persistDocumentNextLevel = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPathNextLevel, LockOperation.Read);
+                    Utility.EnsureNotNull(persistDocumentNextLevel?.Content);
 
-                jContentByAlias.Add(nextLevel.Key, jContentNextLevel);
+                    jContentNextLevel = JObject.Parse(persistDocumentNextLevel.Content);
+                    jThreadScopedContentCache.Add(threadScopedDocuemntCacheKey, jContentNextLevel);
+                }
 
-                SetExpressionParameters(ref expression, nextLevelMap.Conditions, jContentByAlias);
+                jJoinScopedContentCache.Add(nextLevel.Key, jContentNextLevel);
+
+                SetExpressionParameters(ref expression, nextLevelMap.Conditions, jJoinScopedContentCache);
 
                 var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
@@ -313,7 +329,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     if (skipCount < param.SchemaMap.Count - 1)
                     {
                         //This is wholly untested.
-                        FindDocumentsOfSchemasRecursive(param, nextLevelDocument, nextLevel, skipCount + 1, ref cumulativeResults, jContentByAlias);
+                        FindDocumentsOfSchemasRecursive(param, nextLevelDocument, nextLevel, skipCount + 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
                     }
 
                     if (thisThreadResults.TryGetValue(workingDocument.Id, out MSQSchemaIntersectionDocumentCollection? docuemntCollection) == false)
@@ -326,10 +342,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     docuemntCollection.Documents.Add(new MSQSchemaIntersectionDocumentItem(nextLevel.Key, nextLevelDocument.Id));
                 }
 
-                jContentByAlias.Remove(nextLevel.Key);//We are no longer working with the document at this level.
+                jJoinScopedContentCache.Remove(nextLevel.Key);//We are no longer working with the document at this level.
             }
 
-            jContentByAlias.Remove(workingLevel.Key);//We are no longer working with the document at this level.
+            jJoinScopedContentCache.Remove(workingLevel.Key);//We are no longer working with the document at this level.
         }
 
         /// <summary>
@@ -338,23 +354,23 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         /// <param name="expression"></param>
         /// <param name="conditions"></param>
         /// <param name="jContent"></param>
-        private static void SetExpressionParameters(ref NCalc.Expression expression, Conditions conditions, Dictionary<string, JObject> jContentByAlias)
+        private static void SetExpressionParameters(ref NCalc.Expression expression, Conditions conditions, Dictionary<string, JObject> jJoinScopedContentCache)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditions.Root.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetExpressionParametersRecursive(ref expression, conditions, subExpression, jContentByAlias);
+                SetExpressionParametersRecursive(ref expression, conditions, subExpression, jJoinScopedContentCache);
             }
         }
 
-        private static void SetExpressionParametersRecursive(ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, JObject> jContentByAlias)
+        private static void SetExpressionParametersRecursive(ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, JObject> jJoinScopedContentCache)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetExpressionParametersRecursive(ref expression, conditions, subExpression, jContentByAlias);
+                SetExpressionParametersRecursive(ref expression, conditions, subExpression, jJoinScopedContentCache);
             }
 
             foreach (var condition in conditionSubset.Conditions)
@@ -362,7 +378,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 Utility.EnsureNotNull(condition.Left.Value);
                 Utility.EnsureNotNull(condition.Right.Value);
 
-                var jContent = jContentByAlias[condition.Left.Prefix];
+                var jContent = jJoinScopedContentCache[condition.Left.Prefix];
 
                 //Get the value of the condition:
                 if (!jContent.TryGetValue(condition.Left.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jLeftToken))
@@ -370,7 +386,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     throw new KbParserException($"Field not found in document [{condition.Left.Value}].");
                 }
 
-                jContent = jContentByAlias[condition.Right.Prefix];
+                jContent = jJoinScopedContentCache[condition.Right.Prefix];
 
                 //Get the value of the condition:
                 if (!jContent.TryGetValue(condition.Right.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jRightToken))
