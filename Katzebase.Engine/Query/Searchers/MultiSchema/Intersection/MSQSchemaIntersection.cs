@@ -1,6 +1,4 @@
-﻿using System.Runtime.CompilerServices;
-
-namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
+﻿namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 {
     public class MSQSchemaIntersection
     {

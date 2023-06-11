@@ -92,7 +92,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, pt, transaction, schemaMeta, query, lookupOptimization);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(documentCatalog.Collection.Count);
-            var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
+            var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(GetDocumentsByConditionsThreadProc, threadParam, threadCount);
             ptThreadCreation?.EndTrace();
 
             foreach (var documentCatalogItem in documentCatalog.Collection)
@@ -123,6 +123,8 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             return threadParam.Results;
         }
 
+        #region Threading.
+
         private class LookupThreadParam
         {
             public SSQDocumentLookupResults Results = new();
@@ -145,10 +147,11 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             }
         }
 
-        private static void LookupThreadProc(ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam> pool, LookupThreadParam? param)
+        #endregion
+
+        private static void GetDocumentsByConditionsThreadProc(ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam> pool, LookupThreadParam? param)
         {
             Utility.EnsureNotNull(param);
-
             Utility.EnsureNotNull(param.SchemaMeta);
             Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
 

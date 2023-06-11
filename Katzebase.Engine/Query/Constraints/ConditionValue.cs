@@ -25,6 +25,8 @@ namespace Katzebase.Engine.Query.Constraints
 
         public string Prefix { get; set; } = string.Empty;
 
+        public string Key => $"{Prefix}.{_value}";
+
         public ConditionValue Clone()
         {
             return new ConditionValue()

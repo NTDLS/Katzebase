@@ -1,10 +1,10 @@
 ﻿using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Schemas;
-using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
-using Katzebase.Engine.Transactions;
 
 namespace Katzebase.Engine.Query.Constraints
 {

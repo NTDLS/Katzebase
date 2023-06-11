@@ -25,7 +25,7 @@ namespace Katzebase.Engine.Transactions
         /// <summary>
         /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
         /// </summary>
-        public bool IsUserCreated { get; set; } 
+        public bool IsUserCreated { get; set; }
         public DeferredDiskIO? DeferredIOs { get; set; }
 
         private Core core;
