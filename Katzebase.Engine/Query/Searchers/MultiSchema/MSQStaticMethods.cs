@@ -138,7 +138,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
                 foreach (var documentID in topLevelDocumentIDs)
                 {
-                    var rowValues = new MSQDocumentLookupResult(documentID);
+                    var rowValues = new MSQDocumentLookupResult(documentID, param.Query.SelectFields.Count);
 
                     FillInSchemaResultDocumentValues(param, topLevelAccumulationMap, schemaResult.Key, documentID, ref rowValues);
 
@@ -183,10 +183,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
                 }
 
-                rowValues.Values.Add(token?.ToString() ?? "");
+                rowValues.InsertValue(selectField.Ordinal, token?.ToString() ?? "");
+                //rowValues.Values.Insert(selectField.Ordinal, token?.ToString() ?? "");
             }
         }
-
 
         private static void FindDocumentsOfSchemasRecursive(LookupThreadParam param, PersistDocumentCatalogItem workingDocument, KeyValuePair<string,
             MSQQuerySchemaMapItem> workingLevel, int skipCount, ref MSQSchemaIntersectionDocumentCollection cumulativeResults, Dictionary<string, JObject> jContentByAlias)

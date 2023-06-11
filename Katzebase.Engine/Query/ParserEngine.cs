@@ -186,7 +186,7 @@ namespace Katzebase.Engine.Query
 
                     query.SwapFieldLiteral(ref fieldAlias);
 
-                    result.SelectFields.Add(new QueryField(fieldName, fieldSchemaAlias, fieldAlias));
+                    result.AddSelectField(fieldName, fieldSchemaAlias, fieldAlias);
 
                     if (query.IsCurrentChar(','))
                     {
