@@ -107,20 +107,16 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             Utility.EnsureNotNull(persistDocumentWorkingLevel);
             Utility.EnsureNotNull(persistDocumentWorkingLevel.Content);
 
-            var jWorkingContent = JObject.Parse(persistDocumentWorkingLevel.Content);
-            jContentByAlias.Add(topLevel.Key, jWorkingContent);
+            //Get the document content and add it to a collection so it can be referenced by schema alias on all subsequent joins.
+            jContentByAlias.Add(topLevel.Key, JObject.Parse(persistDocumentWorkingLevel.Content));
 
-            lock (cumulativeResults)
+            if (cumulativeResults.MatchedDocumentIDsPerSchema.TryGetValue(topLevel.Key, out HashSet<Guid>? documentIDs))
             {
-                if (cumulativeResults.MatchedDocumentIDsPerSchema.TryGetValue(topLevel.Key, out HashSet<Guid>? documentIDs))
-                {
-                    documentIDs.Add(workingDocument.Id);
-                }
-                else
-                {
-                    documentIDs = new HashSet<Guid> { workingDocument.Id };
-                    cumulativeResults.MatchedDocumentIDsPerSchema.Add(topLevel.Key, documentIDs);
-                }
+                documentIDs.Add(workingDocument.Id);
+            }
+            else
+            {
+                cumulativeResults.MatchedDocumentIDsPerSchema.Add(topLevel.Key, new HashSet<Guid> { workingDocument.Id });
             }
 
             FindDocumentsOfSchemasRecursive(param, workingDocument, topLevel, 1, ref cumulativeResults, jContentByAlias);
@@ -128,43 +124,47 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             //Take all of the found schama/document IDs and acculumate the doucment values here.
             if (cumulativeResults.MatchedDocumentIDsPerSchema.Count == param.SchemaMap.Count)
             {
-                var schemaResults = cumulativeResults.MatchedDocumentIDsPerSchema.OrderByDescending(o => o.Value.Count);
-                var schemaResult = schemaResults.First();
+                //This is an inner join that may include one-to-many, many-to-one, one-to-one or many-to-many joins.
+                //Lets grab the schema results with the most rows and consider that the number of resutls we are expecting.
+                //TODO: Think this though, does this work for one-to-many, many-to-one, one-to-one AND many-to-many joins.
+                var allSchemasResults = cumulativeResults.MatchedDocumentIDsPerSchema.OrderByDescending(o => o.Value.Count);
 
-                var topLevelAccumulationMap = param.SchemaMap[schemaResult.Key];
-                var topLevelDocumentIDs = cumulativeResults.MatchedDocumentIDsPerSchema[schemaResult.Key];
+                var firstSchemaResult = allSchemasResults.First();
+                var firstSchemaMap = param.SchemaMap[firstSchemaResult.Key];
 
-                var resultRows = new MSQDocumentLookupResults();
+                var schemaResultRows = new MSQDocumentLookupResults();
 
-                foreach (var documentID in topLevelDocumentIDs)
+                foreach (var documentID in cumulativeResults.MatchedDocumentIDsPerSchema[firstSchemaResult.Key])
                 {
-                    var rowValues = new MSQDocumentLookupResult(documentID, param.Query.SelectFields.Count);
+                    var schemaResultValues = new MSQDocumentLookupResult(documentID, param.Query.SelectFields.Count);
 
-                    FillInSchemaResultDocumentValues(param, topLevelAccumulationMap, schemaResult.Key, documentID, ref rowValues);
+                    //Add the values from the top level schema.
+                    FillInSchemaResultDocumentValues(param, firstSchemaMap, firstSchemaResult.Key, documentID, ref schemaResultValues);
 
-                    foreach (var nextResult in schemaResults.Skip(1))
+                    //Fill in the values from all of the other schemas.
+                    foreach (var nextResult in allSchemasResults.Skip(1))
                     {
                         var nextLevelAccumulationMap = param.SchemaMap[nextResult.Key];
                         var nextLevelDocumentIDs = cumulativeResults.MatchedDocumentIDsPerSchema[nextResult.Key];
 
                         foreach (var nextLevelDocumentID in nextLevelDocumentIDs)
                         {
-                            FillInSchemaResultDocumentValues(param, nextLevelAccumulationMap, nextResult.Key, nextLevelDocumentID, ref rowValues);
+                            FillInSchemaResultDocumentValues(param, nextLevelAccumulationMap, nextResult.Key, nextLevelDocumentID, ref schemaResultValues);
                         }
                     }
 
-                    resultRows.Add(rowValues);
+                    schemaResultRows.Add(schemaResultValues);
                 }
 
                 lock (param.Results)
                 {
-                    param.Results.AddRange(resultRows);
+                    param.Results.AddRange(schemaResultRows);
                 }
             }
         }
 
         private static void FillInSchemaResultDocumentValues(LookupThreadParam param, MSQQuerySchemaMapItem accumulationMap,
-            string schemaKey, Guid documentID, ref MSQDocumentLookupResult rowValues)
+            string schemaKey, Guid documentID, ref MSQDocumentLookupResult schemaResultValues)
         {
             Utility.EnsureNotNull(accumulationMap?.SchemaMeta?.DiskPath);
             var documentFileName = Helpers.GetDocumentModFilePath(documentID);
@@ -174,6 +174,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             Utility.EnsureNotNull(persistDocument);
             Utility.EnsureNotNull(persistDocument.Content);
 
+            //Since these are discarded per thread when we are looking up, maybe we save them so we dont have to re-parse?
             var jIndexContent = JObject.Parse(persistDocument.Content);
 
             foreach (var selectField in param.Query.SelectFields.Where(o => o.SchemaAlias == schemaKey))
@@ -183,7 +184,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
                 }
 
-                rowValues.InsertValue(selectField.Ordinal, token?.ToString() ?? "");
+                schemaResultValues.InsertValue(selectField.Ordinal, token?.ToString() ?? "");
                 //rowValues.Values.Insert(selectField.Ordinal, token?.ToString() ?? "");
             }
         }
