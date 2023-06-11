@@ -1,6 +1,8 @@
 SELECT TOP 100
 	P.Name,
-	P.ProductNumber
+	TH.TransactionId,
+	P.ProductNumber,
+	PSC.Name as Category
 FROM
 	AdventureWorks2012:Production:Product as p
 INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
@@ -8,6 +10,7 @@ INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
     AND p.ListPrice = th.ActualCost
 INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
 	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
+
 
 /*
 	Average completed in 1,300ms.

@@ -18,7 +18,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         /// <summary>
         /// Gets all documents by a subset of conditions.
         /// </summary>
-        public static SSQDocumentLookupResults GetSingleSchemaDocumentsByConditions(Core core,
+        internal static SSQDocumentLookupResults GetDocumentsByConditions(Core core,
             PerformanceTrace? pt, Transaction transaction, string schemaName, PreparedQuery query)
         {
             //Lock the schema:

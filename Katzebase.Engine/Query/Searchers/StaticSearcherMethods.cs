@@ -1,5 +1,6 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query.Constraints;
+using Katzebase.Engine.Query.Searchers.MultiSchema;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Intersection;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
 using Katzebase.Engine.Query.Searchers.SingleSchema;
@@ -51,7 +52,7 @@ namespace Katzebase.Engine.Query.Searchers
                 //-------------------------------------------------------------------------------------------------------------
                 var singleSchema = query.Schemas.First();
 
-                var subsetResults = SSQStaticMethods.GetSingleSchemaDocumentsByConditions(core, pt, transaction, singleSchema.Name, query);
+                var subsetResults = SSQStaticMethods.GetDocumentsByConditions(core, pt, transaction, singleSchema.Name, query);
 
                 foreach (var field in query.SelectFields)
                 {
@@ -97,7 +98,17 @@ namespace Katzebase.Engine.Query.Searchers
                  *  Then we use the conditions that were supplied to eliminate results from that dataset.
                 */
 
-                var schemaMapResults = MSQStaticSchemaJoiner.IntersetSchemas(core, pt, transaction, schemaMap, query);
+                var subsetResults = MSQStaticMethods.GetDocumentsByConditions(core, pt, transaction, schemaMap, query);
+
+                foreach (var field in query.SelectFields)
+                {
+                    result.Fields.Add(new KbQueryField(field.Alias));
+                }
+
+                foreach (var subsetResult in subsetResults.Collection)
+                {
+                    result.Rows.Add(new KbQueryRow(subsetResult.Values));
+                }
 
                 HashSet<string> strings = new HashSet<string>();
             }
