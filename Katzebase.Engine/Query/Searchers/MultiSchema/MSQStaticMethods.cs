@@ -46,12 +46,23 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     break;
                 }
 
+                if (query.RowLimit != 0 && threadParam.Results.Collection.Count >= query.RowLimit)
+                {
+                    break;
+                }
+
                 threadPool.EnqueueWorkItem(toplevelDocument);
             }
 
             var ptThreadCompletion = pt?.BeginTrace(PerformanceTraceType.ThreadCompletion);
             threadPool.WaitForCompletion();
             ptThreadCompletion?.EndTrace();
+
+            if (query.RowLimit > 0)
+            {
+                //Multithreading can yeild a few more rows than we need if we have a limiter.
+                threadParam.Results.Collection = threadParam.Results.Collection.Take(query.RowLimit).ToList();
+            }
 
             return threadParam.Results;
         }
@@ -321,14 +332,12 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                         }
                         else
                         {
-                            documentIDs = new HashSet<Guid> { nextLevelDocument.Id };
-                            cumulativeResults.MatchedDocumentIDsPerSchema.Add(nextLevel.Key, documentIDs);
+                            cumulativeResults.MatchedDocumentIDsPerSchema.Add(nextLevel.Key, new HashSet<Guid> { nextLevelDocument.Id });
                         }
                     }
 
                     if (skipCount < param.SchemaMap.Count - 1)
                     {
-                        //This is wholly untested.
                         FindDocumentsOfSchemasRecursive(param, nextLevelDocument, nextLevel, skipCount + 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
                     }
 
