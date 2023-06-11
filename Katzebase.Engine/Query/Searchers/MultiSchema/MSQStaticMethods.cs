@@ -125,8 +125,8 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
             FindDocumentsOfSchemasRecursive(param, workingDocument, topLevel, 1, ref cumulativeResults, jContentByAlias);
 
-            //Acculumate the doucment values here?
-            if (cumulativeResults.MatchedDocumentIDsPerSchema.Count == 3)
+            //Take all of the found schama/document IDs and acculumate the doucment values here.
+            if (cumulativeResults.MatchedDocumentIDsPerSchema.Count == param.SchemaMap.Count)
             {
                 var schemaResults = cumulativeResults.MatchedDocumentIDsPerSchema.OrderByDescending(o => o.Value.Count);
                 var schemaResult = schemaResults.First();
