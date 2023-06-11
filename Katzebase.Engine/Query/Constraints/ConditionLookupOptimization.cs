@@ -20,11 +20,6 @@ namespace Katzebase.Engine.Query.Constraints
         /// </summary>
         public Conditions Conditions { get; private set; }
 
-        /// <summary>
-        /// Dictionary<IndexId, PersistIndexPageCatalog>
-        /// </summary>
-        public Dictionary<Guid, PersistIndexPageCatalog> IndexPageCache = new Dictionary<Guid, PersistIndexPageCatalog>();
-
         public ConditionLookupOptimization(Conditions conditions)
         {
             Conditions = conditions.Clone();

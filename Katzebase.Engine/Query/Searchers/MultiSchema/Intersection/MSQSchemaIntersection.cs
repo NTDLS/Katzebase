@@ -4,6 +4,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 {
     public class MSQSchemaIntersection
     {
-        public Dictionary<Guid, MSQSchemaIntersectionDocumentCollection> Documents { get; set; } = new();
+        //public List<string> DebugIDs = new List<string>();
+        //public List<MSQSchemaIntersectionDocumentCollection> Documents { get; set; } = new();
+
+        public List<string[]> RowValues = new List<string[]>();
+
     }
 }

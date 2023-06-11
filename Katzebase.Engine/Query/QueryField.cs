@@ -8,9 +8,9 @@
 
         public QueryField(string key, string schemaAlias, string alias)
         {
-            Key = key;
-            SchemaAlias = schemaAlias;
-            Alias = alias;
+            Key = key.ToLower();
+            SchemaAlias = schemaAlias.ToLower();
+            Alias = alias; //User Friendly, do not ToLower().
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
+using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
 using Katzebase.Engine.Trace;
@@ -10,7 +11,6 @@ using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
-using static Katzebase.PrivateLibrary.AmbidextrousConditionValue;
 
 namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 {
@@ -54,9 +54,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             threadPool.WaitForCompletion();
             ptThreadCompletion?.EndTrace();
 
-            int totalDocuments = threadParam.Results.Documents.Sum(o => o.Value.Documents.Count);
-
-            Console.WriteLine($"Total: {totalDocuments:n0}, should be 49,740. (Difference of ({totalDocuments - 49740})");
+            //Console.WriteLine($"Total: {totalDocuments:n0}, should be 49,740. (Difference of ({totalDocuments - 49740})");
 
             //Looking for: 49,740
 
@@ -99,9 +97,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
                 FindDocumentsOfSubSchemas(param, toplevelDocument);
             }
         }
-        static void FindDocumentsOfSubSchemas(LookupThreadParam param, PersistDocumentCatalogItem workingDocument)
+
+        private static void FindDocumentsOfSubSchemas(LookupThreadParam param, PersistDocumentCatalogItem workingDocument)
         {
-            //var thisThreadResults = new Dictionary<Guid, MSQSchemaIntersectionDocumentCollection>();
+            var cumulativeResults = new MSQSchemaIntersectionDocumentCollection();
 
             var jContentByAlias = new Dictionary<string, JObject>();
             var topLevel = param.SchemaMap.First();
@@ -115,16 +114,87 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             Utility.EnsureNotNull(persistDocumentWorkingLevel.Content);
 
             var jWorkingContent = JObject.Parse(persistDocumentWorkingLevel.Content);
-
             jContentByAlias.Add(topLevel.Key, jWorkingContent);
 
-            FindDocumentsOfSubSchemas(param, workingDocument, topLevel, 1, jContentByAlias);
+            //RESULTS: I think we add this document (jContentByAlias) to the results (cumulativeResults) and remove it if we dont get any matches.
+
+            lock (cumulativeResults)
+            {
+                if (cumulativeResults.MatchedDocumentIDsPerSchema.TryGetValue(topLevel.Key, out HashSet<Guid>? documentIDs))
+                {
+                    documentIDs.Add(workingDocument.Id);
+                }
+                else
+                {
+                    documentIDs = new HashSet<Guid> { workingDocument.Id };
+                    cumulativeResults.MatchedDocumentIDsPerSchema.Add(topLevel.Key, documentIDs);
+                }
+            }
+
+            FindDocumentsOfSubSchemas(param, workingDocument, topLevel, 1, ref cumulativeResults, jContentByAlias);
+
+            //Acculumate the doucment values here?
+            if (cumulativeResults.MatchedDocumentIDsPerSchema.Count == 3)
+            {
+                var schemaResults = cumulativeResults.MatchedDocumentIDsPerSchema.OrderByDescending(o => o.Value.Count);
+
+                foreach (var schemaResult in schemaResults.Take(1)) //DEBUG
+                {
+                    var topLevelAccumulationMap = param.SchemaMap[schemaResult.Key];
+                    var topLevelDocumentIDs = cumulativeResults.MatchedDocumentIDsPerSchema[schemaResult.Key];
+
+                    foreach (var documentID in topLevelDocumentIDs)
+                    {
+                        List<string> rowValues = new List<string>();
+
+                        FillInSchemaResultDocumentValues(param, topLevelAccumulationMap, schemaResult.Key, documentID, ref rowValues);
+
+                        foreach (var nextResult in schemaResults.Skip(1)) //DEBUG
+                        {
+                            var nextLevelAccumulationMap = param.SchemaMap[nextResult.Key];
+                            var nextLevelDocumentIDs = cumulativeResults.MatchedDocumentIDsPerSchema[nextResult.Key];
+
+                            foreach (var nextLevelDocumentID in nextLevelDocumentIDs)
+                            {
+                                FillInSchemaResultDocumentValues(param, nextLevelAccumulationMap, nextResult.Key, nextLevelDocumentID, ref rowValues);
+                            }
+                        }
+
+                        lock (param.Results)
+                        {
+                            param.Results.RowValues.Add(rowValues.ToArray());
+                        }
+                    }
+                }
+            }
         }
 
-        static void FindDocumentsOfSubSchemas(LookupThreadParam param,
-            PersistDocumentCatalogItem workingDocument,
-            KeyValuePair<string, MSQQuerySchemaMapItem> workingLevel,
-            int skipCount, Dictionary<string, JObject> jContentByAlias)
+        private static void FillInSchemaResultDocumentValues(LookupThreadParam param, MSQQuerySchemaMapItem accumulationMap, string schemaKey, Guid documentID, ref List<string> rowValues)
+        {
+            Utility.EnsureNotNull(accumulationMap?.SchemaMeta?.DiskPath);
+            var documentFileName = Helpers.GetDocumentModFilePath(documentID);
+            var persistDocumentDiskPath = Path.Combine(accumulationMap.SchemaMeta.DiskPath, documentFileName);
+
+            var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
+            Utility.EnsureNotNull(persistDocument);
+            Utility.EnsureNotNull(persistDocument.Content);
+
+            var jIndexContent = JObject.Parse(persistDocument.Content);
+
+            foreach (var selectField in param.Query.SelectFields.Where(o => o.SchemaAlias == schemaKey))
+            {
+                if (!jIndexContent.TryGetValue(selectField.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                {
+                    throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
+                }
+
+                rowValues.Add(token?.ToString() ?? "");
+            }
+        }
+
+
+        private static void FindDocumentsOfSubSchemas(LookupThreadParam param, PersistDocumentCatalogItem workingDocument, KeyValuePair<string,
+            MSQQuerySchemaMapItem> workingLevel, int skipCount, ref MSQSchemaIntersectionDocumentCollection cumulativeResults, Dictionary<string, JObject> jContentByAlias)
         {
             var thisThreadResults = new Dictionary<Guid, MSQSchemaIntersectionDocumentCollection>();
 
@@ -133,11 +203,9 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             var nextLevel = param.SchemaMap.Skip(skipCount).First();
             var nextLevelMap = nextLevel.Value;
 
-            Utility.EnsureNotNull(nextLevelMap.Conditions);
-            Utility.EnsureNotNull(nextLevelMap.SchemaMeta);
-            Utility.EnsureNotNull(nextLevelMap.SchemaMeta.DiskPath);
-            Utility.EnsureNotNull(workingLevelMap.SchemaMeta);
-            Utility.EnsureNotNull(workingLevelMap.SchemaMeta.DiskPath);
+            Utility.EnsureNotNull(nextLevelMap?.Conditions);
+            Utility.EnsureNotNull(nextLevelMap?.SchemaMeta?.DiskPath);
+            Utility.EnsureNotNull(workingLevelMap?.SchemaMeta?.DiskPath);
 
             var jWorkingContent = jContentByAlias[workingLevel.Key];
 
@@ -156,24 +224,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
                 //All condition subsets have a selected index. Start building a list of possible document IDs.
                 foreach (var subset in nextLevelMap.Optimization.Conditions.NonRootSubsets)
                 {
-                    Utility.EnsureNotNull(subset.IndexSelection);
-                    Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
-                    Utility.EnsureNotNull(subset.IndexSelection.Index.Id);
+                    Utility.EnsureNotNull(subset.IndexSelection?.Index?.DiskPath);
+                    Utility.EnsureNotNull(subset.IndexSelection?.Index?.Id);
 
-                    //We are going to "cache" the index page catalog so we dont keep re-locking the file.
-                    if (nextLevelMap.Optimization.IndexPageCache.TryGetValue((Guid)subset.IndexSelection.Index.Id, out PersistIndexPageCatalog? indexPageCatalog) == false)
-                    {
-                        indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.PT, param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-                        lock (nextLevelMap.Optimization.IndexPageCache)
-                        {
-                            if (nextLevelMap.Optimization.IndexPageCache.ContainsKey((Guid)subset.IndexSelection.Index.Id) == false) //Seperate check for threading race-condition purposes.
-                            {
-                                Utility.EnsureNotNull(indexPageCatalog);
-                                nextLevelMap.Optimization.IndexPageCache.Add((Guid)subset.IndexSelection.Index.Id, indexPageCatalog);
-                            }
-                        }
-                    }
-
+                    var indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.PT, param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(indexPageCatalog);
 
                     var keyValuePairs = new Dictionary<string, string>();
@@ -219,13 +273,14 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 
             #endregion
 
+            int thisSchemaMatchCount = 0;
+
             foreach (var nextLevelDocument in limitedDocumentCatalogItems)
             {
                 var persistDocumentDiskPathNextLevel = Path.Combine(nextLevelMap.SchemaMeta.DiskPath, nextLevelDocument.FileName);
 
                 var persistDocumentNextLevel = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPathNextLevel, LockOperation.Read);
-                Utility.EnsureNotNull(persistDocumentNextLevel);
-                Utility.EnsureNotNull(persistDocumentNextLevel.Content);
+                Utility.EnsureNotNull(persistDocumentNextLevel?.Content);
 
                 var jContentNextLevel = JObject.Parse(persistDocumentNextLevel.Content);
 
@@ -239,6 +294,27 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 
                 if (evaluation)
                 {
+                    thisSchemaMatchCount++;
+
+                    if (thisSchemaMatchCount > 1) //Clearly a 1-to-many join.
+                    {
+                    }
+
+                    //RESULTS: I think we add this document (jContentByAlias) to the results (cumulativeResults) and remove it if we dont match all lower schemas.
+
+                    lock (cumulativeResults)
+                    {
+                        if (cumulativeResults.MatchedDocumentIDsPerSchema.TryGetValue(nextLevel.Key, out HashSet<Guid>? documentIDs))
+                        {
+                            documentIDs.Add(nextLevelDocument.Id);
+                        }
+                        else
+                        {
+                            documentIDs = new HashSet<Guid> { nextLevelDocument.Id };
+                            cumulativeResults.MatchedDocumentIDsPerSchema.Add(nextLevel.Key, documentIDs);
+                        }
+                    }
+
                     if (skipCount < param.SchemaMap.Count - 1)
                     {
                         if (skipCount > 1)
@@ -246,7 +322,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
                         }
 
                         //This is wholly untested.
-                        FindDocumentsOfSubSchemas(param, nextLevelDocument, nextLevel, skipCount + 1, jContentByAlias);
+                        FindDocumentsOfSubSchemas(param, nextLevelDocument, nextLevel, skipCount + 1, ref cumulativeResults, jContentByAlias);
                     }
 
                     if (thisThreadResults.TryGetValue(workingDocument.Id, out MSQSchemaIntersectionDocumentCollection? docuemntCollection) == false)
@@ -264,6 +340,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 
             jContentByAlias.Remove(workingLevel.Key);//We are no longer working with the document at this level.
 
+            /*
             if (thisThreadResults.Count > 0)
             {
                 if (thisThreadResults.Any(o => o.Key.ToString().ToLower() == "cb36447a-7d81-48c5-95a1-a809cd2785eb"))
@@ -276,6 +353,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
                     param.Results.Documents.Add(result.Key, result.Value);
                 }
             }
+            */
         }
 
         /// <summary>
