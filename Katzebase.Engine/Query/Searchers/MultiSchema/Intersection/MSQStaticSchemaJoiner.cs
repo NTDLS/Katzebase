@@ -8,9 +8,9 @@ using Katzebase.PrivateLibrary;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
-using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
+using static Katzebase.PrivateLibrary.AmbidextrousConditionValue;
 
 namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 {
@@ -20,7 +20,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
         /// Build a generic key/value dataset which is the combined fieldset from each inner joined document.
         /// </summary>
         public static MSQSchemaIntersection IntersetSchemas(Core core, PerformanceTrace? pt, Transaction transaction,
-            MSQQuerySchemaMap schemaMap, PreparedQuery query, ConditionLookupOptimization lookupOptimization)
+            MSQQuerySchemaMap schemaMap, PreparedQuery query)
         {
             //Here we should evaluate the join conditions (and probably the supplied actual conditions)
             //  to see if we can do some early document elimination. We should also evaluate the indexes
@@ -34,8 +34,9 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
 
             //TODO: We should put some intelligence behind the thread count.
             var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
-            var threadParam = new LookupThreadParam(core, pt, transaction, schemaMap, query, lookupOptimization);
+            var threadParam = new LookupThreadParam(core, pt, transaction, schemaMap, query);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(topLevelMap.DocuemntCatalog.Collection.Count);
+            //int threadCount = 1;
             var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
             ptThreadCreation?.EndTrace();
 
@@ -53,6 +54,12 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             threadPool.WaitForCompletion();
             ptThreadCompletion?.EndTrace();
 
+            int totalDocuments = threadParam.Results.Documents.Sum(o => o.Value.Documents.Count);
+
+            Console.WriteLine($"Total: {totalDocuments:n0}, should be 49,740. (Difference of ({totalDocuments - 49740})");
+
+            //Looking for: 49,740
+
             return threadParam.Results;
         }
 
@@ -64,17 +71,15 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             public PerformanceTrace? PT { get; private set; }
             public Transaction Transaction { get; private set; }
             public PreparedQuery Query { get; private set; }
-            public ConditionLookupOptimization? LookupOptimization { get; private set; }
 
             public LookupThreadParam(Core core, PerformanceTrace? pt, Transaction transaction,
-                MSQQuerySchemaMap schemaMap, PreparedQuery query, ConditionLookupOptimization? lookupOptimization)
+                MSQQuerySchemaMap schemaMap, PreparedQuery query)
             {
                 Core = core;
                 PT = pt;
                 Transaction = transaction;
                 SchemaMap = schemaMap;
                 Query = query;
-                LookupOptimization = lookupOptimization;
             }
         }
 
@@ -82,12 +87,6 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
         {
             Utility.EnsureNotNull(param);
 
-            var topLevel = param.SchemaMap.First();
-            var topLevelMap = topLevel.Value;
-
-            Utility.EnsureNotNull(topLevelMap.SchemaMeta);
-            Utility.EnsureNotNull(topLevelMap.SchemaMeta.DiskPath);
-            Utility.EnsureNotNull(param.LookupOptimization);
 
             while (pool.ContinueToProcessQueue)
             {
@@ -97,146 +96,176 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
                     continue;
                 }
 
-                var persistDocumentDiskPathTopLevel = Path.Combine(topLevelMap.SchemaMeta.DiskPath, toplevelDocument.FileName);
+                FindDocumentsOfSubSchemas(param, toplevelDocument);
+            }
+        }
+        static void FindDocumentsOfSubSchemas(LookupThreadParam param, PersistDocumentCatalogItem workingDocument)
+        {
+            //var thisThreadResults = new Dictionary<Guid, MSQSchemaIntersectionDocumentCollection>();
 
-                var persistDocumentTopLevel = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPathTopLevel, LockOperation.Read);
-                Utility.EnsureNotNull(persistDocumentTopLevel);
-                Utility.EnsureNotNull(persistDocumentTopLevel.Content);
+            var jContentByAlias = new Dictionary<string, JObject>();
+            var topLevel = param.SchemaMap.First();
 
-                var jContentTopLevel = JObject.Parse(persistDocumentTopLevel.Content);
+            Utility.EnsureNotNull(topLevel.Value.SchemaMeta.DiskPath);
 
-                var jContentByAlias = new Dictionary<string, JObject>
+            var persistDocumentDiskPathWorkingLevel = Path.Combine(topLevel.Value.SchemaMeta.DiskPath, workingDocument.FileName);
+
+            var persistDocumentWorkingLevel = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPathWorkingLevel, LockOperation.Read);
+            Utility.EnsureNotNull(persistDocumentWorkingLevel);
+            Utility.EnsureNotNull(persistDocumentWorkingLevel.Content);
+
+            var jWorkingContent = JObject.Parse(persistDocumentWorkingLevel.Content);
+
+            jContentByAlias.Add(topLevel.Key, jWorkingContent);
+
+            FindDocumentsOfSubSchemas(param, workingDocument, topLevel, 1, jContentByAlias);
+        }
+
+
+        class IndexCacheItem
+        {
+            PersistIndexPageCatalog IndexPages { get; set; }
+        }
+
+        static void FindDocumentsOfSubSchemas(LookupThreadParam param,
+            PersistDocumentCatalogItem workingDocument,
+            KeyValuePair<string, MSQQuerySchemaMapItem> workingLevel,
+            int skipCount, Dictionary<string, JObject> jContentByAlias)
+        {
+            var thisThreadResults = new Dictionary<Guid, MSQSchemaIntersectionDocumentCollection>();
+
+            var workingLevelMap = workingLevel.Value;
+
+            var nextLevel = param.SchemaMap.Skip(skipCount).First();
+            var nextLevelMap = nextLevel.Value;
+
+            Utility.EnsureNotNull(nextLevelMap.Conditions);
+            Utility.EnsureNotNull(nextLevelMap.SchemaMeta);
+            Utility.EnsureNotNull(nextLevelMap.SchemaMeta.DiskPath);
+            Utility.EnsureNotNull(workingLevelMap.SchemaMeta);
+            Utility.EnsureNotNull(workingLevelMap.SchemaMeta.DiskPath);
+
+            var jWorkingContent = jContentByAlias[workingLevel.Key];
+
+            var expression = new NCalc.Expression(nextLevelMap.Conditions.HighLevelExpressionTree);
+
+            #region New indexing stuff..
+
+            //Create a reference to the entire document catalog.
+            var limitedDocumentCatalogItems = nextLevelMap.DocuemntCatalog.Collection;
+
+            if (nextLevelMap.Optimization?.CanApplyIndexing() == true)
+            {
+                //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
+                limitedDocumentCatalogItems = new List<PersistDocumentCatalogItem>();
+
+                //All condition subsets have a selected index. Start building a list of possible document IDs.
+                foreach (var subset in nextLevelMap.Optimization.Conditions.NonRootSubsets)
                 {
-                    { topLevel.Key, jContentTopLevel } //Start with the docuemnt from the top level.
-                };
+                    Utility.EnsureNotNull(subset.IndexSelection);
+                    Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
 
-                foreach (var nextLevel in param.SchemaMap.Skip(1))
+                    var indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.PT, param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                    Utility.EnsureNotNull(indexPageCatalog);
+
+                    var keyValuePairs = new Dictionary<string, string>();
+
+                    //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
+                    foreach (var condition in subset.Conditions)
+                    {
+                        var jIndexContent = jContentByAlias[condition.Right?.Prefix ?? ""];
+
+                        if (!jIndexContent.TryGetValue((condition.Right?.Value ?? ""), StringComparison.CurrentCultureIgnoreCase, out JToken? conditionToken))
+                        {
+                            throw new KbParserException($"Join clause field not found in document [{workingLevel.Key}].");
+                        }
+                        keyValuePairs.Add(condition.Left?.Value ?? "", conditionToken?.ToString() ?? "");
+                    }
+
+                    //Match on values from the document.
+                    var documentIds = param.Core.Indexes.MatchDocuments(param.PT, indexPageCatalog, subset.IndexSelection, subset, keyValuePairs);
+
+                    limitedDocumentCatalogItems.AddRange(nextLevelMap.DocuemntCatalog.Collection.Where(o => documentIds.Contains(o.Id)).ToList());
+                }
+            }
+            else
+            {
+                #region Why no indexing? Find out here!
+                //   * One or more of the conditon subsets lacks an index.
+                //   *
+                //   *   Since indexing requires that we can ensure document elimination we will have
+                //   *      to ensure that we have a covering index on EACH-and-EVERY conditon group.
+                //   *
+                //   *   Then we can search the indexes for each condition group to obtain a list of all possible
+                //   *       document IDs, then use those document IDs to early eliminate documents from the main lookup loop.
+                //   *
+                //   *   If any one conditon group does not have an index, then no indexing will be used at all since all
+                //   *      documents will need to be scaned anyway. To prevent unindexed scans, reduce the number of
+                //   *      condition groups (nested in parentheses).
+                //   *
+                //   * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we cant use an index.
+                //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
+                //*
+                #endregion
+            }
+
+            #endregion
+
+            foreach (var nextLevelDocument in limitedDocumentCatalogItems)
+            {
+                var persistDocumentDiskPathNextLevel = Path.Combine(nextLevelMap.SchemaMeta.DiskPath, nextLevelDocument.FileName);
+
+                var persistDocumentNextLevel = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPathNextLevel, LockOperation.Read);
+                Utility.EnsureNotNull(persistDocumentNextLevel);
+                Utility.EnsureNotNull(persistDocumentNextLevel.Content);
+
+                var jContentNextLevel = JObject.Parse(persistDocumentNextLevel.Content);
+
+                jContentByAlias.Add(nextLevel.Key, jContentNextLevel);
+
+                SetExpressionParameters(ref expression, nextLevelMap.Conditions, jContentByAlias);
+
+                var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
+                bool evaluation = (bool)expression.Evaluate();
+                ptEvaluate?.EndTrace();
+
+                if (evaluation)
                 {
-                    var nextLevelMap = nextLevel.Value;
-
-                    Utility.EnsureNotNull(nextLevelMap.Conditions);
-                    Utility.EnsureNotNull(nextLevelMap.SchemaMeta);
-                    Utility.EnsureNotNull(nextLevelMap.SchemaMeta.DiskPath);
-
-                    var expression = new NCalc.Expression(nextLevelMap.Conditions.HighLevelExpressionTree);
-
-                    #region New indexing stuff..
-
-                    //Create a reference to the entire document catalog.
-                    var limitedDocumentCatalogItems = nextLevelMap.DocuemntCatalog.Collection;
-
-                    if (nextLevelMap.Optimization?.CanApplyIndexing() == true)
+                    if (skipCount < param.SchemaMap.Count - 1)
                     {
-                        //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                        limitedDocumentCatalogItems = new List<PersistDocumentCatalogItem>();
-
-                        //All condition subsets have a selected index. Start building a list of possible document IDs.
-                        foreach (var subset in nextLevelMap.Optimization.Conditions.NonRootSubsets)
+                        if (skipCount > 1)
                         {
-                            Utility.EnsureNotNull(subset.IndexSelection);
-                            Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
-
-                            var indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.PT, param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-                            Utility.EnsureNotNull(indexPageCatalog);
-
-                            var keyValuePairs = new Dictionary<string, string>();
-
-                            foreach (var condition in subset.Conditions)
-                            {
-                                JToken? conditionToken = null;
-
-                                //Figure out whether the top level schema is being referenced by the left or right of the condition.
-                                if (condition?.Left?.Prefix == topLevel.Key)
-                                {
-                                    if (!jContentTopLevel.TryGetValue((condition.Left?.Value ?? ""), StringComparison.CurrentCultureIgnoreCase, out conditionToken))
-                                    {
-                                        throw new KbParserException($"Join clause field not found in document [{topLevel.Key}].");
-                                    }
-                                    keyValuePairs.Add(condition.Left?.Value ?? "", conditionToken?.ToString() ?? "");
-                                }
-                                else if (condition?.Right?.Prefix == topLevel.Key)
-                                {
-                                    if (!jContentTopLevel.TryGetValue((condition.Right?.Value ?? ""), StringComparison.CurrentCultureIgnoreCase, out conditionToken))
-                                    {
-                                        throw new KbParserException($"Join clause field not found in document [{topLevel.Key}].");
-                                    }
-                                    keyValuePairs.Add(condition.Right?.Value ?? "", conditionToken?.ToString() ?? "");
-                                }
-                                else
-                                {
-                                    throw new KbParserException($"Schema prefix could not be found for join clause [{topLevel.Key}].");
-                                }
-                            }
-
-                            //Match on values from the document.
-                            var documentIds = param.Core.Indexes.MatchDocuments(param.PT, indexPageCatalog, subset.IndexSelection, subset, keyValuePairs);
-
-                            limitedDocumentCatalogItems.AddRange(nextLevelMap.DocuemntCatalog.Collection.Where(o => documentIds.Contains(o.Id)).ToList());
-                        }
-                    }
-                    else
-                    {
-                        #region Why no indexing? Find out here!
-                        //   * One or more of the conditon subsets lacks an index.
-                        //   *
-                        //   *   Since indexing requires that we can ensure document elimination we will have
-                        //   *      to ensure that we have a covering index on EACH-and-EVERY conditon group.
-                        //   *
-                        //   *   Then we can search the indexes for each condition group to obtain a list of all possible
-                        //   *       document IDs, then use those document IDs to early eliminate documents from the main lookup loop.
-                        //   *
-                        //   *   If any one conditon group does not have an index, then no indexing will be used at all since all
-                        //   *      documents will need to be scaned anyway. To prevent unindexed scans, reduce the number of
-                        //   *      condition groups (nested in parentheses).
-                        //   *
-                        //   * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we cant use an index.
-                        //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
-                        //*
-                        #endregion
-                    }
-
-                    #endregion
-
-                    foreach (var nextLevelDocument in limitedDocumentCatalogItems)
-                    {
-                        var persistDocumentDiskPathNextLevel = Path.Combine(nextLevelMap.SchemaMeta.DiskPath, nextLevelDocument.FileName);
-
-                        var persistDocumentNextLevel = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPathNextLevel, LockOperation.Read);
-                        Utility.EnsureNotNull(persistDocumentNextLevel);
-                        Utility.EnsureNotNull(persistDocumentNextLevel.Content);
-
-                        var jContentNextLevel = JObject.Parse(persistDocumentNextLevel.Content);
-
-                        jContentByAlias.Add(nextLevel.Key, jContentNextLevel);
-
-                        SetExpressionParameters(ref expression, nextLevelMap.Conditions, jContentByAlias);
-
-                        var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
-                        bool evaluation = (bool)expression.Evaluate();
-                        ptEvaluate?.EndTrace();
-
-                        if (evaluation)
-                        {
-                            lock (param.Results)
-                            {
-                                if (param.Results.SchemaRIDs.ContainsKey(topLevel.Key) == false)
-                                {
-                                    param.Results.SchemaRIDs.Add(topLevel.Key, new HashSet<Guid>());
-                                }
-                                param.Results.SchemaRIDs[topLevel.Key].Add(toplevelDocument.Id);
-
-                                if (param.Results.SchemaRIDs.ContainsKey(nextLevel.Key) == false)
-                                {
-                                    param.Results.SchemaRIDs.Add(nextLevel.Key, new HashSet<Guid>());
-                                }
-                                param.Results.SchemaRIDs[nextLevel.Key].Add(nextLevelDocument.Id);
-
-                                param.Results.Add(new MSQSchemaIntersectionItem()); //TODO: add values.
-                            }
                         }
 
-                        jContentByAlias.Remove(nextLevel.Key);//We are no longer working with the document at this level.
+                        //This is wholly untested.
+                        FindDocumentsOfSubSchemas(param, nextLevelDocument, nextLevel, skipCount + 1, jContentByAlias);
                     }
+
+                    if (thisThreadResults.TryGetValue(workingDocument.Id, out MSQSchemaIntersectionDocumentCollection? docuemntCollection) == false)
+                    {
+                        docuemntCollection = new MSQSchemaIntersectionDocumentCollection();
+                        thisThreadResults.Add(workingDocument.Id, docuemntCollection);
+                        docuemntCollection.Documents.Add(new MSQSchemaIntersectionDocumentItem(workingLevel.Key, workingDocument.Id));
+                    }
+
+                    docuemntCollection.Documents.Add(new MSQSchemaIntersectionDocumentItem(nextLevel.Key, nextLevelDocument.Id));
+                }
+
+                jContentByAlias.Remove(nextLevel.Key);//We are no longer working with the document at this level.
+            }
+
+            jContentByAlias.Remove(workingLevel.Key);//We are no longer working with the document at this level.
+
+            if (thisThreadResults.Count > 0)
+            {
+                if (thisThreadResults.Any(o => o.Key.ToString().ToLower() == "cb36447a-7d81-48c5-95a1-a809cd2785eb"))
+                {
+                    //This is product ID: 877 (Bike Wash - Dissolver, "CL-9009")
+                }
+
+                foreach (var result in thisThreadResults.Where(o => o.Value.DistinctSchemaCount == 3))
+                {
+                    param.Results.Documents.Add(result.Key, result.Value);
                 }
             }
         }

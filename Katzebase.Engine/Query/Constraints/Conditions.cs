@@ -73,16 +73,16 @@ namespace Katzebase.Engine.Query.Constraints
             return _lastLetter;
         }
 
-        public static Conditions Create(string conditionsText, Dictionary<string, string> literalStrings)
+        public static Conditions Create(string conditionsText, Dictionary<string, string> literalStrings, string leftHandAlias = "")
         {
             var conditions = new Conditions();
             conditionsText = conditionsText.ToLowerInvariant();
-            conditions.Parse(conditionsText, literalStrings);
+            conditions.Parse(conditionsText, literalStrings, leftHandAlias);
 
             return conditions;
         }
 
-        private void Parse(string conditionsText, Dictionary<string, string> literalStrings)
+        private void Parse(string conditionsText, Dictionary<string, string> literalStrings, string leftHandAlias)
         {
             //We parse by parentheses so wrap the expression in them if it is not already.
             if (conditionsText.StartsWith('(') == false || conditionsText.StartsWith(')') == false)
@@ -108,7 +108,7 @@ namespace Katzebase.Engine.Query.Constraints
                         string subsetText = conditionsText.Substring(startPos, endPos - startPos + 1).Trim();
                         string parenTrimmedSubsetText = subsetText.Substring(1, subsetText.Length - 2).Trim();
                         var subset = new ConditionSubset(subsetVariable, parenTrimmedSubsetText);
-                        AddSubset(literalStrings, subset);
+                        AddSubset(literalStrings, subset, leftHandAlias);
                         conditionsText = conditionsText.Replace(subsetText, VariableToKey(subsetVariable));
                     }
                 }
@@ -206,7 +206,7 @@ namespace Katzebase.Engine.Query.Constraints
             return clone;
         }
 
-        public void AddSubset(Dictionary<string, string> literalStrings, ConditionSubset subset)
+        public void AddSubset(Dictionary<string, string> literalStrings, ConditionSubset subset, string leftHandAlias)
         {
             int position = 0;
 
@@ -264,6 +264,14 @@ namespace Katzebase.Engine.Query.Constraints
                     }
 
                     int endPosition = position;
+
+                    if (right.StartsWith($"{leftHandAlias}."))
+                    {//Swap the left and right.
+                        string temp = left;
+                        left = right;
+                        right = temp;
+                    }
+
                     var condition = new Condition(subset.SubsetKey, conditionKey, logicalConnector, left, logicalQualifier, right);
 
                     position = 0;
