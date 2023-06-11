@@ -109,8 +109,6 @@ namespace Katzebase.Engine.Query.Searchers
                 {
                     result.Rows.Add(new KbQueryRow(subsetResult.Values));
                 }
-
-                HashSet<string> strings = new HashSet<string>();
             }
 
             return result;

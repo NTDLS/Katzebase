@@ -53,10 +53,6 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             threadPool.WaitForCompletion();
             ptThreadCompletion?.EndTrace();
 
-            //Console.WriteLine($"Total: {totalDocuments:n0}, should be 49,740. (Difference of ({totalDocuments - 49740})");
-
-            //Looking for: 49,740
-
             return threadParam.Results;
         }
 
@@ -84,7 +80,6 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         {
             Utility.EnsureNotNull(param);
 
-
             while (pool.ContinueToProcessQueue)
             {
                 var toplevelDocument = pool.DequeueWorkItem();
@@ -93,11 +88,11 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     continue;
                 }
 
-                FindDocumentsOfSubSchemas(param, toplevelDocument);
+                FindDocumentsOfSchemas(param, toplevelDocument);
             }
         }
 
-        private static void FindDocumentsOfSubSchemas(LookupThreadParam param, PersistDocumentCatalogItem workingDocument)
+        private static void FindDocumentsOfSchemas(LookupThreadParam param, PersistDocumentCatalogItem workingDocument)
         {
             var cumulativeResults = new MSQSchemaIntersectionDocumentCollection();
 
@@ -115,8 +110,6 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             var jWorkingContent = JObject.Parse(persistDocumentWorkingLevel.Content);
             jContentByAlias.Add(topLevel.Key, jWorkingContent);
 
-            //RESULTS: I think we add this document (jContentByAlias) to the results (cumulativeResults) and remove it if we dont get any matches.
-
             lock (cumulativeResults)
             {
                 if (cumulativeResults.MatchedDocumentIDsPerSchema.TryGetValue(topLevel.Key, out HashSet<Guid>? documentIDs))
@@ -130,7 +123,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 }
             }
 
-            FindDocumentsOfSubSchemas(param, workingDocument, topLevel, 1, ref cumulativeResults, jContentByAlias);
+            FindDocumentsOfSchemasRecursive(param, workingDocument, topLevel, 1, ref cumulativeResults, jContentByAlias);
 
             //Acculumate the doucment values here?
             if (cumulativeResults.MatchedDocumentIDsPerSchema.Count == 3)
@@ -195,7 +188,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         }
 
 
-        private static void FindDocumentsOfSubSchemas(LookupThreadParam param, PersistDocumentCatalogItem workingDocument, KeyValuePair<string,
+        private static void FindDocumentsOfSchemasRecursive(LookupThreadParam param, PersistDocumentCatalogItem workingDocument, KeyValuePair<string,
             MSQQuerySchemaMapItem> workingLevel, int skipCount, ref MSQSchemaIntersectionDocumentCollection cumulativeResults, Dictionary<string, JObject> jContentByAlias)
         {
             var thisThreadResults = new Dictionary<Guid, MSQSchemaIntersectionDocumentCollection>();
@@ -300,9 +293,8 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
                     if (thisSchemaMatchCount > 1) //Clearly a 1-to-many join.
                     {
+                        //And, maybe we show this in the "plan"?
                     }
-
-                    //RESULTS: I think we add this document (jContentByAlias) to the results (cumulativeResults) and remove it if we dont match all lower schemas.
 
                     lock (cumulativeResults)
                     {
@@ -319,12 +311,8 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
                     if (skipCount < param.SchemaMap.Count - 1)
                     {
-                        if (skipCount > 1)
-                        {
-                        }
-
                         //This is wholly untested.
-                        FindDocumentsOfSubSchemas(param, nextLevelDocument, nextLevel, skipCount + 1, ref cumulativeResults, jContentByAlias);
+                        FindDocumentsOfSchemasRecursive(param, nextLevelDocument, nextLevel, skipCount + 1, ref cumulativeResults, jContentByAlias);
                     }
 
                     if (thisThreadResults.TryGetValue(workingDocument.Id, out MSQSchemaIntersectionDocumentCollection? docuemntCollection) == false)
@@ -341,21 +329,6 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             }
 
             jContentByAlias.Remove(workingLevel.Key);//We are no longer working with the document at this level.
-
-            /*
-            if (thisThreadResults.Count > 0)
-            {
-                if (thisThreadResults.Any(o => o.Key.ToString().ToLower() == "cb36447a-7d81-48c5-95a1-a809cd2785eb"))
-                {
-                    //This is product ID: 877 (Bike Wash - Dissolver, "CL-9009")
-                }
-
-                foreach (var result in thisThreadResults.Where(o => o.Value.DistinctSchemaCount == 3))
-                {
-                    param.Results.Documents.Add(result.Key, result.Value);
-                }
-            }
-            */
         }
 
         /// <summary>
