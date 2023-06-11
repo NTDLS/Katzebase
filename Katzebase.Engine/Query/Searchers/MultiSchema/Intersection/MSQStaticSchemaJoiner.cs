@@ -121,12 +121,6 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
             FindDocumentsOfSubSchemas(param, workingDocument, topLevel, 1, jContentByAlias);
         }
 
-
-        class IndexCacheItem
-        {
-            PersistIndexPageCatalog IndexPages { get; set; }
-        }
-
         static void FindDocumentsOfSubSchemas(LookupThreadParam param,
             PersistDocumentCatalogItem workingDocument,
             KeyValuePair<string, MSQQuerySchemaMapItem> workingLevel,
@@ -164,8 +158,22 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
                 {
                     Utility.EnsureNotNull(subset.IndexSelection);
                     Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
+                    Utility.EnsureNotNull(subset.IndexSelection.Index.Id);
 
-                    var indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.PT, param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                    //We are going to "cache" the index page catalog so we dont keep re-locking the file.
+                    if (nextLevelMap.Optimization.IndexPageCache.TryGetValue((Guid)subset.IndexSelection.Index.Id, out PersistIndexPageCatalog? indexPageCatalog) == false)
+                    {
+                        indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.PT, param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                        lock (nextLevelMap.Optimization.IndexPageCache)
+                        {
+                            if (nextLevelMap.Optimization.IndexPageCache.ContainsKey((Guid)subset.IndexSelection.Index.Id) == false) //Seperate check for threading race-condition purposes.
+                            {
+                                Utility.EnsureNotNull(indexPageCatalog);
+                                nextLevelMap.Optimization.IndexPageCache.Add((Guid)subset.IndexSelection.Index.Id, indexPageCatalog);
+                            }
+                        }
+                    }
+
                     Utility.EnsureNotNull(indexPageCatalog);
 
                     var keyValuePairs = new Dictionary<string, string>();

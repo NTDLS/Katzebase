@@ -20,6 +20,11 @@ namespace Katzebase.Engine.Query.Constraints
         /// </summary>
         public Conditions Conditions { get; private set; }
 
+        /// <summary>
+        /// Dictionary<IndexId, PersistIndexPageCatalog>
+        /// </summary>
+        public Dictionary<Guid, PersistIndexPageCatalog> IndexPageCache = new Dictionary<Guid, PersistIndexPageCatalog>();
+
         public ConditionLookupOptimization(Conditions conditions)
         {
             Conditions = conditions.Clone();
@@ -145,8 +150,15 @@ namespace Katzebase.Engine.Query.Constraints
             return true;
         }
 
+        private bool? _canApplyIndexingResultCached = null;
+
         public bool CanApplyIndexing()
         {
+            if (_canApplyIndexingResultCached != null)
+            {
+                return (bool)_canApplyIndexingResultCached;
+            }
+
             if (Conditions.NonRootSubsets.Any(o => o.IndexSelection == null) == false)
             {
                 //All condition subsets have a selected index. Start building a list of possible document IDs.
@@ -154,13 +166,16 @@ namespace Katzebase.Engine.Query.Constraints
                 {
                     if (CanApplyIndexing(subset) == false)
                     {
+                        _canApplyIndexingResultCached = false;
                         return false;
                     }
 
                 }
+                _canApplyIndexingResultCached = true;
                 return true;
             }
 
+            _canApplyIndexingResultCached = false;
             return false;
         }
 

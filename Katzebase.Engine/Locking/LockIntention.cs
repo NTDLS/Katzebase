@@ -8,6 +8,8 @@ namespace Katzebase.Engine.Locking
         public LockOperation Operation { get; private set; }
         public string DiskPath { get; private set; }
 
+        public string Key => $"{LockType}:{Operation}:{DiskPath}";
+
         public LockIntention(string diskPath, LockType lockType, LockOperation operation)
         {
             DiskPath = diskPath;

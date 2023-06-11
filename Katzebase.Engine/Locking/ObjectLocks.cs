@@ -33,7 +33,45 @@ namespace Katzebase.Engine.Locking
             }
         }
 
+        public List<ObjectLock> GloballyHeldLocks(string diskPath, LockType lockType)
+        {
+            lock (CriticalSections.AcquireLock)
+            {
+                var lockedObjects = new List<ObjectLock>();
+
+                if (lockType == LockType.File)
+                {
+                    //See if there are any other locks on this file:
+                    lockedObjects.AddRange(collection.Where(o => o.LockType == LockType.File && o.DiskPath == diskPath));
+                }
+
+                //See if there are any other locks on the directory containig this file (or directory) or any of its parents.
+                //When we lock a directory, we intend all lower directories to be locked too.
+                lockedObjects.AddRange(collection.Where(o => o.LockType == LockType.Directory && diskPath.StartsWith(o.DiskPath)));
+
+                return lockedObjects;
+            }
+        }
+
         public void Acquire(Transaction transaction, LockIntention intention)
+        {
+            lock (transaction.GrantedLockCache)
+            {
+                if (transaction.GrantedLockCache.Contains(intention.Key))
+                {
+                    return;
+                }
+            }
+
+            AcquireInternal(transaction, intention);
+
+            lock (transaction.GrantedLockCache)
+            {
+                transaction.GrantedLockCache.Add(intention.Key);
+            }
+        }
+
+        private void AcquireInternal(Transaction transaction, LockIntention intention)
         {
             try
             {
@@ -57,20 +95,9 @@ namespace Katzebase.Engine.Locking
                             throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.");
                         }
 
-                        //Find any existing locks:
-                        List<ObjectLock> lockedObjects = new List<ObjectLock>();
+                        var lockedObjects = GloballyHeldLocks(intention.DiskPath, intention.LockType); //Find any existing locks:
 
-                        if (intention.LockType == LockType.File)
-                        {
-                            //See if there are any other locks on this file:
-                            lockedObjects.AddRange(collection.Where(o => o.LockType == LockType.File && o.DiskPath == intention.DiskPath));
-                        }
-
-                        //See if there are any other locks on the directory containig this file (or directory) or any of its parents.
-                        //When we lock a directory, we intend all lower directories to be locked too.
-                        lockedObjects.AddRange(collection.Where(o => o.LockType == LockType.Directory && intention.DiskPath.StartsWith(o.DiskPath)));
-
-                        if (lockedObjects.Count() == 0)
+                        if (lockedObjects.Count == 0)
                         {
                             //No locks on the object exist - so add one to the local and class collections.
                             var lockedObject = new ObjectLock(core, intention);
