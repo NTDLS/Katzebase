@@ -1,7 +1,5 @@
 ﻿using Katzebase.Engine.Documents;
-using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers.MultiSchema;
-using Katzebase.Engine.Query.Searchers.MultiSchema.Intersection;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
 using Katzebase.Engine.Query.Searchers.SingleSchema;
 using Katzebase.Engine.Schemas;

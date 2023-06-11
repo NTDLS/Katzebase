@@ -190,7 +190,7 @@ namespace Katzebase.Engine.Locking
 
                                 if (blockedByMe.Any())
                                 {
-                                    var blockingMe = (blockedByMe.Where(o=>  waiter.BlockedBy.Contains(o.ProcessId)));
+                                    var blockingMe = (blockedByMe.Where(o => waiter.BlockedBy.Contains(o.ProcessId)));
                                     if (blockingMe.Any())
                                     {
                                         transaction.IsDeadlocked = true;

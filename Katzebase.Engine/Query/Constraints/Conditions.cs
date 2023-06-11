@@ -8,7 +8,6 @@ namespace Katzebase.Engine.Query.Constraints
 {
     internal class Conditions
     {
-
         private string _lastLetter = string.Empty;
 
         public List<ConditionSubset> Subsets = new();
@@ -31,16 +30,7 @@ namespace Katzebase.Engine.Query.Constraints
             }
         }
 
-        private string? _hash = null;
-
-        public string Hash
-        {
-            get
-            {
-                _hash ??= BuildConditionHash();
-                return _hash;
-            }
-        }
+        public string? Hash { get; private set; }
 
         public IEnumerable<ConditionSubset> NonRootSubsets => Subsets.Where(o => !o.IsRoot);
 
@@ -78,6 +68,8 @@ namespace Katzebase.Engine.Query.Constraints
             var conditions = new Conditions();
             conditionsText = conditionsText.ToLowerInvariant();
             conditions.Parse(conditionsText, literalStrings, leftHandAlias);
+
+            conditions.Hash = conditions.BuildConditionHash();
 
             return conditions;
         }
@@ -126,7 +118,6 @@ namespace Katzebase.Engine.Query.Constraints
             Subsets.Where(o => o.SubsetKey == RootSubsetKey).Single().IsRoot = true;
 
             HighLevelExpressionTree = BuildHighlevelExpressionTree();
-
 
             Utility.Assert(Root.Conditions.Any(), "The root expression cannot contain conditions.");
         }
@@ -183,8 +174,10 @@ namespace Katzebase.Engine.Query.Constraints
             var clone = new Conditions()
             {
                 RootSubsetKey = this.RootSubsetKey,
-                HighLevelExpressionTree = this.HighLevelExpressionTree,
+                HighLevelExpressionTree = this.HighLevelExpressionTree
             };
+
+            clone.AllFields.AddRange(this.AllFields);
 
             foreach (var subset in Subsets)
             {
@@ -202,6 +195,8 @@ namespace Katzebase.Engine.Query.Constraints
 
                 clone.Subsets.Add(subsetClone);
             }
+
+            clone.Hash = clone.BuildConditionHash();
 
             return clone;
         }
@@ -339,6 +334,8 @@ namespace Katzebase.Engine.Query.Constraints
 
         #endregion
 
+        public List<PrefixedField> AllFields { get; private set; } = new();
+
         /// <summary>
         /// This function is used to build a logical expression at the subset level, it also demonstrates how we process the recursive logic.
         /// </summary>
@@ -402,6 +399,14 @@ namespace Katzebase.Engine.Query.Constraints
                     result.Append('(');
                     foreach (var condition in subset.Conditions)
                     {
+                        if (condition.Left?.IsConstant == false)
+                        {
+                            AllFields.Add(new PrefixedField(condition.Left.Prefix, condition.Left?.Value ?? ""));
+                        }
+                        if (condition.Right?.IsConstant == false)
+                        {
+                            AllFields.Add(new PrefixedField(condition.Right.Prefix, condition.Right?.Value ?? ""));
+                        }
                         result.Append($"{condition.ConditionKey}: {condition.Left} {condition.LogicalQualifier}");
                     }
                     result.Append(')');
@@ -420,6 +425,14 @@ namespace Katzebase.Engine.Query.Constraints
                 result.Append('(');
                 foreach (var condition in conditionSubset.Conditions)
                 {
+                    if (condition.Left?.IsConstant == false)
+                    {
+                        AllFields.Add(new PrefixedField(condition.Left.Prefix, condition.Left?.Value ?? ""));
+                    }
+                    if (condition.Right?.IsConstant == false)
+                    {
+                        AllFields.Add(new PrefixedField(condition.Right.Prefix, condition.Right?.Value ?? ""));
+                    }
                     result.Append($"{condition.ConditionKey}: {condition.Left} {condition.LogicalQualifier}");
                 }
                 result.Append(')');

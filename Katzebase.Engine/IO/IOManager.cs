@@ -279,7 +279,7 @@ namespace Katzebase.Engine.IO
 
                 Utility.EnsureNotNull(transaction.DeferredIOs);
 
-                if(transaction.DeferredIOs.Collection.Values.Any(o => o.DiskPath == lowerFilePath))
+                if (transaction.DeferredIOs.Collection.Values.Any(o => o.DiskPath == lowerFilePath))
                 {
                     return true; //The file might not yet exist, but its in the cache.
                 }

@@ -23,7 +23,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         internal static MSQDocumentLookupResults GetDocumentsByConditions(Core core, PerformanceTrace? pt, Transaction transaction,
             MSQQuerySchemaMap schemaMap, PreparedQuery query)
         {
-            //Here we should evaluate the join conditions (and probably the supplied actual conditions).
+            //TODO: Here we should evaluate whatever conditions we can to early emilinate the top level document scans.
 
             var topLevel = schemaMap.First();
             var topLevelMap = topLevel.Value;
@@ -67,6 +67,8 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             return threadParam.Results;
         }
 
+        #region Threading.
+
         private class LookupThreadParam
         {
             public MSQDocumentLookupResults Results = new();
@@ -99,11 +101,18 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     continue;
                 }
 
-                FindDocumentsOfSchemas(param, toplevelDocument);
+                IntersectAllSchemas(param, toplevelDocument);
             }
         }
 
-        private static void FindDocumentsOfSchemas(LookupThreadParam param, PersistDocumentCatalogItem workingDocument)
+        #endregion
+
+        #region Schema inersection.
+
+        /// <summary>
+        /// INNER joins all scheams specified in LookupThreadParam.SchemaMap, returns results in LookupThreadParam.Results
+        /// </summary>
+        private static void IntersectAllSchemas(LookupThreadParam param, PersistDocumentCatalogItem workingDocument)
         {
             var jThreadScopedContentCache = new Dictionary<string, JObject>();
 
@@ -135,7 +144,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 cumulativeResults.MatchedDocumentIDsPerSchema.Add(topLevel.Key, new HashSet<Guid> { workingDocument.Id });
             }
 
-            FindDocumentsOfSchemasRecursive(param, workingDocument, topLevel, 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
+            IntersectAllSchemasRecursive(param, workingDocument, topLevel, 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
 
             //Take all of the found schama/document IDs and acculumate the doucment values here.
             if (cumulativeResults.MatchedDocumentIDsPerSchema.Count == param.SchemaMap.Count)
@@ -172,39 +181,17 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     schemaResultRows.Add(schemaResultValues);
                 }
 
+                //Limit the results by the query where clause.
+                var constrainedResults = ApplyQueryGlobalConditions(param, schemaResultRows);
+
                 lock (param.Results)
                 {
-                    param.Results.AddRange(schemaResultRows);
+                    param.Results.AddRange(constrainedResults);
                 }
             }
         }
 
-        private static void FillInSchemaResultDocumentValues(LookupThreadParam param, MSQQuerySchemaMapItem accumulationMap,
-            string schemaKey, Guid documentID, ref MSQDocumentLookupResult schemaResultValues, Dictionary<string, JObject> jThreadScopedContentCache)
-        {
-            Utility.EnsureNotNull(accumulationMap?.SchemaMeta?.DiskPath);
-            var documentFileName = Helpers.GetDocumentModFilePath(documentID);
-            var persistDocumentDiskPath = Path.Combine(accumulationMap.SchemaMeta.DiskPath, documentFileName);
-
-            var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
-            Utility.EnsureNotNull(persistDocument);
-            Utility.EnsureNotNull(persistDocument.Content);
-
-            var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{documentID}"];
-
-            foreach (var selectField in param.Query.SelectFields.Where(o => o.SchemaAlias == schemaKey))
-            {
-                if (!jIndexContent.TryGetValue(selectField.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
-                {
-                    throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
-                }
-
-                schemaResultValues.InsertValue(selectField.Ordinal, token?.ToString() ?? "");
-                //rowValues.Values.Insert(selectField.Ordinal, token?.ToString() ?? "");
-            }
-        }
-
-        private static void FindDocumentsOfSchemasRecursive(LookupThreadParam param, PersistDocumentCatalogItem workingDocument, KeyValuePair<string,
+        private static void IntersectAllSchemasRecursive(LookupThreadParam param, PersistDocumentCatalogItem workingDocument, KeyValuePair<string,
             MSQQuerySchemaMapItem> workingLevel, int skipCount, ref MSQSchemaIntersectionDocumentCollection cumulativeResults,
             Dictionary<string, JObject> jJoinScopedContentCache, Dictionary<string, JObject> jThreadScopedContentCache)
         {
@@ -309,7 +296,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
                 jJoinScopedContentCache.Add(nextLevel.Key, jContentNextLevel);
 
-                SetExpressionParameters(ref expression, nextLevelMap.Conditions, jJoinScopedContentCache);
+                SetSchemaIntersectionExpressionParameters(ref expression, nextLevelMap.Conditions, jJoinScopedContentCache);
 
                 var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
@@ -338,7 +325,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
                     if (skipCount < param.SchemaMap.Count - 1)
                     {
-                        FindDocumentsOfSchemasRecursive(param, nextLevelDocument, nextLevel, skipCount + 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
+                        IntersectAllSchemasRecursive(param, nextLevelDocument, nextLevel, skipCount + 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
                     }
 
                     if (thisThreadResults.TryGetValue(workingDocument.Id, out MSQSchemaIntersectionDocumentCollection? docuemntCollection) == false)
@@ -363,23 +350,23 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         /// <param name="expression"></param>
         /// <param name="conditions"></param>
         /// <param name="jContent"></param>
-        private static void SetExpressionParameters(ref NCalc.Expression expression, Conditions conditions, Dictionary<string, JObject> jJoinScopedContentCache)
+        private static void SetSchemaIntersectionExpressionParameters(ref NCalc.Expression expression, Conditions conditions, Dictionary<string, JObject> jJoinScopedContentCache)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditions.Root.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetExpressionParametersRecursive(ref expression, conditions, subExpression, jJoinScopedContentCache);
+                SetSchemaIntersectionExpressionParametersRecursive(ref expression, conditions, subExpression, jJoinScopedContentCache);
             }
         }
 
-        private static void SetExpressionParametersRecursive(ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, JObject> jJoinScopedContentCache)
+        private static void SetSchemaIntersectionExpressionParametersRecursive(ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, JObject> jJoinScopedContentCache)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetExpressionParametersRecursive(ref expression, conditions, subExpression, jJoinScopedContentCache);
+                SetSchemaIntersectionExpressionParametersRecursive(ref expression, conditions, subExpression, jJoinScopedContentCache);
             }
 
             foreach (var condition in conditionSubset.Conditions)
@@ -409,5 +396,114 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             }
         }
 
+        /// <summary>
+        /// Gets the values of all selected fields from document.
+        /// </summary>
+        private static void FillInSchemaResultDocumentValues(LookupThreadParam param, MSQQuerySchemaMapItem accumulationMap,
+            string schemaKey, Guid documentID, ref MSQDocumentLookupResult schemaResultValues, Dictionary<string, JObject> jThreadScopedContentCache)
+        {
+            Utility.EnsureNotNull(accumulationMap?.SchemaMeta?.DiskPath);
+            var documentFileName = Helpers.GetDocumentModFilePath(documentID);
+            var persistDocumentDiskPath = Path.Combine(accumulationMap.SchemaMeta.DiskPath, documentFileName);
+
+            var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
+            Utility.EnsureNotNull(persistDocument);
+            Utility.EnsureNotNull(persistDocument.Content);
+
+            var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{documentID}"];
+
+            //Grab all of the selected fields from the document.
+            foreach (var selectField in param.Query.SelectFields.Where(o => o.SchemaAlias == schemaKey))
+            {
+                if (!jIndexContent.TryGetValue(selectField.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                {
+                    throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
+                }
+
+                schemaResultValues.InsertValue(selectField.Ordinal, token?.ToString() ?? "");
+            }
+
+            //We have to make sure that we have all of the condition fields too so we can filter on them.
+            //TODO: We could grab some of these from the field selector above to cut down on redundant json scanning.
+            foreach (var conditionField in param.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey))
+            {
+                if (!jIndexContent.TryGetValue(conditionField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                {
+                    throw new KbParserException($"Condition field not found: {conditionField.Key}.");
+                }
+                schemaResultValues.ConditionFields.Add(conditionField.Key, token?.ToString() ?? "");
+            }
+        }
+
+        #endregion
+
+        #region WHERE clasue.
+
+        /// <summary>
+        /// This is where we filter the results by the WHERE clause.
+        /// </summary>
+        private static List<MSQDocumentLookupResult> ApplyQueryGlobalConditions(LookupThreadParam param, MSQDocumentLookupResults inputResults)
+        {
+            var outputResults = new List<MSQDocumentLookupResult>();
+            var expression = new NCalc.Expression(param.Query.Conditions.HighLevelExpressionTree);
+
+            foreach (var inputResult in inputResults.Collection)
+            {
+                SetQueryGlobalConditionsExpressionParameters(ref expression, param.Query.Conditions, inputResult.ConditionFields);
+
+                var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
+                bool evaluation = (bool)expression.Evaluate();
+                ptEvaluate?.EndTrace();
+
+                if (evaluation)
+                {
+                    outputResults.Add(inputResult);
+                }
+            }
+
+            return outputResults;
+        }
+
+        /// <summary>
+        /// Sets the parameters for the WHERE clasue expression evaluation from the condition field values saved from the MSQ lookup.
+        /// </summary>
+        private static void SetQueryGlobalConditionsExpressionParameters(ref NCalc.Expression expression, Conditions conditions, Dictionary<string, string> conditionField)
+        {
+            //If we have subsets, then we need to satisify those in order to complete the equation.
+            foreach (var subsetKey in conditions.Root.SubsetKeys)
+            {
+                var subExpression = conditions.SubsetByKey(subsetKey);
+                SetQueryGlobalConditionsExpressionParameters(ref expression, conditions, subExpression, conditionField);
+            }
+        }
+
+        /// <summary>
+        /// Sets the parameters for the WHERE clasue expression evaluation from the condition field values saved from the MSQ lookup.
+        /// </summary>
+        private static void SetQueryGlobalConditionsExpressionParameters(ref NCalc.Expression expression,
+            Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, string> conditionField)
+        {
+            //If we have subsets, then we need to satisify those in order to complete the equation.
+            foreach (var subsetKey in conditionSubset.SubsetKeys)
+            {
+                var subExpression = conditions.SubsetByKey(subsetKey);
+                SetQueryGlobalConditionsExpressionParameters(ref expression, conditions, subExpression, conditionField);
+            }
+
+            foreach (var condition in conditionSubset.Conditions)
+            {
+                Utility.EnsureNotNull(condition.Left.Value);
+
+                //Get the value of the condition:
+                if (!conditionField.TryGetValue(condition.Left.Key, out string? value))
+                {
+                    throw new KbParserException($"Field not found in document [{condition.Left.Key}].");
+                }
+
+                expression.Parameters[condition.ConditionKey] = condition.IsMatch(value.ToLower());
+            }
+        }
+
+        #endregion
     }
 }
