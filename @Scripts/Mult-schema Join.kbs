@@ -1,4 +1,4 @@
-SELECT TOP 100
+SELECT /*TOP 100*/
 	P.Name,
 	TH.TransactionId,
 	P.ProductNumber,

@@ -1,17 +1,19 @@
-SELECT TOP 100
-/*
+SELECT /*TOP 5*/
 	P.Name,
+	TH.TransactionId,
 	P.ProductNumber,
-*/
-	Inv.ProductID,
-	Inv.LocationID,
-	Inv.Shelf,
-	Inv.'Bin' as Box,
-	Inv.Quantity
+	PSC.Name as Category
 FROM
-	AdventureWorks2012:Production:ProductInventory as Inv
-INNER JOIN AdventureWorks2012:Production:Product as P
-	ON P.ProductID = Inv.ProductID
+	AdventureWorks2012:Production:Product as p
+INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
+	ON p.ProductID = th.ProductID
+    AND p.ListPrice = th.ActualCost
+INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
+	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
 WHERE
-	Shelf = 'R'
-	--Class = 'M'
+	PSC.Name = 'Road Bikes'
+	and TH.TransactionId > 200000
+
+/*
+	Average completed in 1,800ms.
+*/
