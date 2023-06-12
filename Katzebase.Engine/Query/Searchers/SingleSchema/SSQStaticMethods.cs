@@ -214,7 +214,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
                     foreach (var field in param.Query.SelectFields)
                     {
-                        jContent.TryGetValue(field.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                        jContent.TryGetValue(field.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
                         result.Values.Add(jToken?.ToString() ?? string.Empty);
                     }
 

@@ -38,41 +38,49 @@ namespace Katzebase.Engine.Query.Searchers
             var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
-            Random random = new Random();
-
-            for (int i = 0; i < rowLimit; i++)
+            if (documentCatalog.Collection.Count > 0)
             {
-                int documentIndex = random.Next(0, documentCatalog.Collection.Count - 1);
-                var persistDocumentCatalogItem = documentCatalog.Collection[documentIndex];
+                Random random = new Random(Environment.TickCount);
 
-                var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, persistDocumentCatalogItem.FileName);
-                var persistDocument = core.IO.GetJson<PersistDocument>(pt, transaction, persistDocumentDiskPath, LockOperation.Read);
-                Utility.EnsureNotNull(persistDocument);
-                Utility.EnsureNotNull(persistDocument.Content);
-
-                var jContent = JObject.Parse(persistDocument.Content);
-
-                if (i == 0)
+                for (int i = 0; i < rowLimit || rowLimit == 0; i++)
                 {
-                    result.Fields.Add(new KbQueryField("$RID"));
-                    foreach (var jToken in jContent)
+                    int documentIndex = random.Next(0, documentCatalog.Collection.Count - 1);
+                    var persistDocumentCatalogItem = documentCatalog.Collection[documentIndex];
+
+                    var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, persistDocumentCatalogItem.FileName);
+                    var persistDocument = core.IO.GetJson<PersistDocument>(pt, transaction, persistDocumentDiskPath, LockOperation.Read);
+                    Utility.EnsureNotNull(persistDocument);
+                    Utility.EnsureNotNull(persistDocument.Content);
+
+                    var jContent = JObject.Parse(persistDocument.Content);
+
+                    if (i == 0)
                     {
-                        result.Fields.Add(new KbQueryField(jToken.Key));
+                        result.Fields.Add(new KbQueryField("$RID"));
+                        foreach (var jToken in jContent)
+                        {
+                            result.Fields.Add(new KbQueryField(jToken.Key));
+                        }
                     }
+
+                    if (rowLimit == 0) //We just want a field list.
+                    {
+                        break;
+                    }
+
+                    Utility.EnsureNotNull(persistDocumentCatalogItem.Id);
+
+                    var resultRow = new KbQueryRow();
+                    resultRow.AddValue(persistDocumentCatalogItem.Id.ToString());
+
+                    foreach (var field in result.Fields.Skip(1))
+                    {
+                        jContent.TryGetValue(field.Name, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                        resultRow.AddValue(jToken?.ToString() ?? string.Empty);
+                    }
+
+                    result.Rows.Add(resultRow);
                 }
-
-                Utility.EnsureNotNull(persistDocumentCatalogItem.Id);
-
-                var resultRow = new KbQueryRow();
-                resultRow.AddValue(persistDocumentCatalogItem.Id.ToString());
-
-                foreach (var field in result.Fields.Skip(1))
-                {
-                    jContent.TryGetValue(field.Name, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
-                    resultRow.AddValue(jToken?.ToString() ?? string.Empty);
-                }
-
-                result.Rows.Add(resultRow);
             }
 
             return result;
@@ -113,7 +121,6 @@ namespace Katzebase.Engine.Query.Searchers
 
                 if (i == 0)
                 {
-                    result.Fields.Add(new KbQueryField("$ID"));
                     foreach (var jToken in jContent)
                     {
                         result.Fields.Add(new KbQueryField(jToken.Key));
@@ -123,9 +130,7 @@ namespace Katzebase.Engine.Query.Searchers
                 Utility.EnsureNotNull(persistDocumentCatalogItem.Id);
 
                 var resultRow = new KbQueryRow();
-                resultRow.AddValue(persistDocumentCatalogItem.Id.ToString());
-
-                foreach (var field in result.Fields.Skip(1))
+                foreach (var field in result.Fields)
                 {
                     jContent.TryGetValue(field.Name, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
                     resultRow.AddValue(jToken?.ToString() ?? string.Empty);
@@ -144,10 +149,28 @@ namespace Katzebase.Engine.Query.Searchers
         {
             var result = new KbQueryResult();
 
-            if (query.SelectFields.Count == 1 && query.SelectFields[0].Key == "*")
+            if (query.SelectFields.Count == 1 && query.SelectFields[0].Field == "*")
             {
                 query.SelectFields.Clear();
-                throw new KbNotImplementedException("Select * is not implemented. This will require schema sampling.");
+
+                var ptSample = pt?.BeginTrace(PerformanceTraceType.Sample);
+                foreach (var schema in query.Schemas)
+                {
+                    var sample = SampleSchemaDocuments(core, pt, transaction, schema.Name, 0);
+
+                    foreach (var field in sample.Fields)
+                    {
+                        if (schema.Alias != string.Empty)
+                        {
+                            query.SelectFields.Add($"{schema.Alias}.{field.Name}");
+                        }
+                        else
+                        {
+                            query.SelectFields.Add($"{field.Name}");
+                        }
+                    }
+                }
+                ptSample?.EndTrace();
             }
             else if (query.SelectFields.Count == 0)
             {

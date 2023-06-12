@@ -123,7 +123,6 @@ namespace Katzebase.Engine.Schemas
             Utility.EnsureNotNull(schemaCatalog);
             Utility.EnsureNotNull(schemaCatalog.Collection);
 
-            result.Fields.Add(new KbQueryField("$ID"));
             result.Fields.Add(new KbQueryField("Name"));
             result.Fields.Add(new KbQueryField("Path"));
 
@@ -135,7 +134,6 @@ namespace Katzebase.Engine.Schemas
                 }
                 var resultRow = new KbQueryRow();
 
-                resultRow.AddValue(item.Id.ToString());
                 resultRow.AddValue(item.Name);
                 resultRow.AddValue($"{schemaMeta.VirtualPath}:{item.Name}");
 

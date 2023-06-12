@@ -11,6 +11,7 @@
             AcquireTransaction,
             Optimization,
             Lock,
+            Sample,
             CacheRead,
             CacheWrite,
             IORead,
