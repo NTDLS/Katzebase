@@ -9,6 +9,8 @@
             Schema,
             Index,
             IndexFolder,
+            FieldFolder,
+            Field,
             TreeNotLoaded
         }
     }

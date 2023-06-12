@@ -5,7 +5,22 @@ namespace Katzebase.UI.Classes
 {
     internal class TabFilePage : TabPage
     {
-        public bool IsSaved { get; set; } = true;
+        private bool _isSaved = false;
+
+        public bool IsSaved
+        {
+            get => _isSaved;
+
+            set
+            {
+                _isSaved = value;
+                if (_isSaved == true)
+                {
+                    this.Text = Text.TrimEnd('*');
+                }
+            }
+        }
+
         public TextEditor Editor { get; private set; }
         public FormFindText FindTextForm { get; private set; }
         public FormReplaceText ReplaceTextForm { get; private set; }
@@ -46,9 +61,17 @@ namespace Katzebase.UI.Classes
                 IsSaved = true;
             }
 
-            this.FilePath = FilePath;
+            this.FilePath = filePath;
 
             IsFileOpen = true;
+        }
+
+        public bool Save(string fileName)
+        {
+            File.WriteAllText(fileName, Editor.Text);
+            IsSaved = true;
+            this.OpenFile(fileName);
+            return true;
         }
 
         public bool Save()

@@ -44,6 +44,14 @@ namespace Katzebase.UI.Classes
             }
             nodeToPopulate.Nodes.Add(schemaIndexesNode);
 
+            var schemaFields = client.Document.List(schema, 1);
+            var schemaFieldNode = CreateFieldFolderNode();
+            foreach (var field in schemaFields.Fields)
+            {
+                schemaFieldNode.Nodes.Add(CreateFieldNode(field.Name));
+            }
+            nodeToPopulate.Nodes.Add(schemaFieldNode);
+
             var schemas = client.Schema.List(schema);
             foreach (var item in schemas.List)
             {
@@ -61,11 +69,12 @@ namespace Katzebase.UI.Classes
                 return;
             }
 
-            node.Nodes.Clear();
-
             var rootNode = GetRootNode(node);
             var client = new KatzebaseClient(rootNode.ServerAddress);
             string schema = CalculateFullSchema(node);
+
+            node.Nodes.Clear(); //Dont clear the node until we hear back from the server.
+
             PopulateSchemaNode(node, client, schema);
         }
 
@@ -120,6 +129,18 @@ namespace Katzebase.UI.Classes
             return node;
         }
 
+        public static ServerTreeNode CreateFieldFolderNode()
+        {
+            var node = new ServerTreeNode("Fields")
+            {
+                NodeType = Constants.ServerNodeType.FieldFolder,
+                ImageKey = "FieldFolder",
+                SelectedImageKey = "FieldFolder"
+            };
+
+            return node;
+        }
+
         public static ServerTreeNode CreateIndexNode(string name)
         {
             var node = new ServerTreeNode(name)
@@ -127,6 +148,18 @@ namespace Katzebase.UI.Classes
                 NodeType = Constants.ServerNodeType.Index,
                 ImageKey = "Index",
                 SelectedImageKey = "Index"
+            };
+
+            return node;
+        }
+
+        public static ServerTreeNode CreateFieldNode(string name)
+        {
+            var node = new ServerTreeNode(name)
+            {
+                NodeType = Constants.ServerNodeType.Field,
+                ImageKey = "Field",
+                SelectedImageKey = "Field"
             };
 
             return node;

@@ -56,6 +56,8 @@ namespace Katzebase.UI
             _treeImages.Images.Add("Server", Resources.TreeServer);
             _treeImages.Images.Add("Schema", Resources.TreeSchema);
             _treeImages.Images.Add("Index", Resources.TreeIndex);
+            _treeImages.Images.Add("FieldFolder", Resources.TreeDocument);
+            _treeImages.Images.Add("Field", Resources.TreeField);
             _treeImages.Images.Add("IndexFolder", Resources.TreeIndexFolder);
             _treeImages.Images.Add("TreeNotLoaded", Resources.TreeNotLoaded);
             treeViewProject.ImageList = _treeImages;
@@ -271,7 +273,6 @@ namespace Katzebase.UI
             {
                 MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
         }
 
         #endregion
@@ -280,9 +281,16 @@ namespace Katzebase.UI
 
         private void TreeViewProject_BeforeExpand(object? sender, TreeViewCancelEventArgs e)
         {
-            if (e.Node != null && (e.Node as ServerTreeNode)?.NodeType == Classes.Constants.ServerNodeType.Schema)
+            try
             {
-                TreeManagement.PopulateSchemaNodeOnExpand(treeViewProject, (ServerTreeNode)e.Node);
+                if (e.Node != null && (e.Node as ServerTreeNode)?.NodeType == Classes.Constants.ServerNodeType.Schema)
+                {
+                    TreeManagement.PopulateSchemaNodeOnExpand(treeViewProject, (ServerTreeNode)e.Node);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -520,10 +528,11 @@ namespace Katzebase.UI
                 {
                     _lastusedServerAddress = form.ServerAddressURL;
 
-                    var tabFilePage = CreateNewTab("Debug Tab");
-                    tabFilePage.Editor.Text = "SELECT TOP 100\r\n/*\r\n\tP.Name,\r\n\tP.ProductNumber,\r\n*/\r\n\tInv.ProductID,\r\n\tInv.LocationID,\r\n\tInv.Shelf,\r\n\tInv.'Bin' as Box,\r\n\tInv.Quantity\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory as Inv\r\nINNER JOIN AdventureWorks2012:Production:Product as P\r\n\tON P.ProductID = Inv.ProductID\r\nWHERE\r\n\tShelf = 'R'\r\n\t--Class = 'M'\r\n";
-                    //tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\tAdventureWorks2012:Production:ProductInventory\r\n";
                     TreeManagement.PopulateServer(treeViewProject, _lastusedServerAddress);
+
+                    var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName());
+                    tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\n";
+                    tabFilePage.IsSaved = true;
 
                     foreach (TreeNode node in treeViewProject.Nodes)
                     {
@@ -661,8 +670,7 @@ namespace Katzebase.UI
                     sfd.FileName = tab.FilePath;
                     if (sfd.ShowDialog() == DialogResult.OK)
                     {
-                        tab.FilePath = sfd.FileName;
-                        return tab.Save();
+                        return tab.Save(sfd.FileName);
                     }
                     else
                     {
@@ -980,6 +988,11 @@ namespace Katzebase.UI
                 dataGridViewResults.Columns.Clear();
 
                 string scriptText = tabFilePage.Editor.Text;
+
+                if (tabFilePage.Editor.SelectionLength > 0)
+                {
+                    scriptText = tabFilePage.Editor.SelectedText;
+                }
 
                 Task.Run(() =>
                 {

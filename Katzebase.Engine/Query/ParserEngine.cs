@@ -20,7 +20,7 @@ namespace Katzebase.Engine.Query
 
             token = query.GetNextToken().ToLower();
 
-            if (Enum.TryParse<QueryType>(token, true, out QueryType queryType) == false)
+            if (Enum.TryParse<QueryType>(token, true, out QueryType queryType) == false || Enum.IsDefined(typeof(QueryType), queryType) == false)
             {
                 throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
             }

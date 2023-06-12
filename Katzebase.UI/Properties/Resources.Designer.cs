@@ -573,6 +573,26 @@ namespace Katzebase.UI.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap TreeDocument {
+            get {
+                object obj = ResourceManager.GetObject("TreeDocument", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap TreeField {
+            get {
+                object obj = ResourceManager.GetObject("TreeField", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap TreeFolder {
             get {
                 object obj = ResourceManager.GetObject("TreeFolder", resourceCulture);
