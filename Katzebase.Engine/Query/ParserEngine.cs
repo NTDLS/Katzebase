@@ -156,14 +156,14 @@ namespace Katzebase.Engine.Query
                         throw new KbParserException("Invalid token. Found whitespace expected identifer.");
                     }
 
-                    string fieldSchemaAlias = string.Empty;
+                    string fieldPrefix = string.Empty;
                     string fieldAlias;
 
 
                     if (fieldName.Contains('.'))
                     {
                         var splitTok = fieldName.Split('.');
-                        fieldSchemaAlias = splitTok[0];
+                        fieldPrefix = splitTok[0];
                         fieldName = splitTok[1];
                     }
 
@@ -186,7 +186,7 @@ namespace Katzebase.Engine.Query
 
                     query.SwapFieldLiteral(ref fieldAlias);
 
-                    result.AddSelectField(fieldName, fieldSchemaAlias, fieldAlias);
+                    result.SelectFields.Add(fieldPrefix, fieldName, fieldAlias);
 
                     if (query.IsCurrentChar(','))
                     {
@@ -255,7 +255,7 @@ namespace Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found [" + token + "], expected ON.");
                     }
 
-                    int joinCoOnditionsStartPosition = query.Position;
+                    int joinConditionsStartPosition = query.Position;
 
                     while (true)
                     {
@@ -277,13 +277,13 @@ namespace Katzebase.Engine.Query
 
                         int logicalQualifierPos = query.Position;
 
-                        token = ConditionTokenizer.GetNextClauseToken(query.Text, ref logicalQualifierPos);
+                        token = ConditionTokenizer.GetNextToken(query.Text, ref logicalQualifierPos);
                         if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
                         {
                             throw new KbParserException("Invalid query. Found [" + token + "], logical qualifier.");
                         }
 
-                        query.SkipTo(logicalQualifierPos);
+                        query.SetPosition(logicalQualifierPos);
 
                         var joinRightCondition = query.GetNextToken();
                         if (joinRightCondition == string.Empty || TokenHelpers.IsValidIdentifier(joinRightCondition, ".") == false)
@@ -292,7 +292,7 @@ namespace Katzebase.Engine.Query
                         }
                     }
 
-                    var joinConditionsText = query.Text.Substring(joinCoOnditionsStartPosition, query.Position - joinCoOnditionsStartPosition).Trim();
+                    var joinConditionsText = query.Text.Substring(joinConditionsStartPosition, query.Position - joinConditionsStartPosition).Trim();
                     var joinConditions = Conditions.Create(joinConditionsText, query.LiteralStrings, subSchemaAlias);
 
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLower(), subSchemaAlias.ToLower(), joinConditions));
@@ -306,7 +306,24 @@ namespace Katzebase.Engine.Query
 
                 if (token.ToLower() == "where")
                 {
-                    string conditionText = query.Remainder();
+                    var conditionTokenizer = new ConditionTokenizer(query.Text, query.Position);
+
+                    while (true)
+                    {
+                        int previousTokenPosition = conditionTokenizer.Position;
+                        var conditonToken = conditionTokenizer.GetNextToken();
+
+                        if (((new string[] { "order", "group", "" }).Contains(conditonToken) && conditionTokenizer.IsNextToken("by"))
+                            || conditonToken == string.Empty)
+                        {
+                            //Set both the conditition and query position to the begining of the "ORDER BY" or "GROUP BY".
+                            conditionTokenizer.SetPosition(previousTokenPosition);
+                            query.SetPosition(previousTokenPosition);
+                            break;
+                        }
+                    }
+
+                    string conditionText = query.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
                     if (conditionText == string.Empty)
                     {
                         throw new KbParserException("Invalid query. Found [" + token + "], expected list of conditions.");
@@ -314,10 +331,61 @@ namespace Katzebase.Engine.Query
 
                     result.Conditions = Conditions.Create(conditionText, query.LiteralStrings);
                 }
-                else if (token != string.Empty)
+
+                if (query.IsNextToken("group"))
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected end of statement.");
+                    query.SkipNextToken();
+
+                    if (query.IsNextToken("by") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected 'by'.");
+                    }
+                    query.SkipNextToken();
+
+                    while (true)
+                    {
+                        int previousTokenPosition = query.Position;
+                        var fieldToken = query.GetNextToken();
+
+                        if (((new string[] { "order", "" }).Contains(fieldToken) && query.IsNextToken("by")) || fieldToken == string.Empty)
+                        {
+                            //Set query position to the begining of the "ORDER BY"..
+                            query.SetPosition(previousTokenPosition);
+                            break;
+                        }
+
+                        result.GroupBy.Add(fieldToken);
+                    }
                 }
+
+                if (query.IsNextToken("order"))
+                {
+                    query.SkipNextToken();
+
+                    if (query.IsNextToken("by") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected 'by'.");
+                    }
+                    query.SkipNextToken();
+
+                    var fields = new List<string>();
+
+                    while (true)
+                    {
+                        int previousTokenPosition = query.Position;
+                        var fieldToken = query.GetNextToken();
+
+                        if (query.IsNextToken("") || fieldToken == string.Empty)
+                        {
+                            query.SetPosition(previousTokenPosition);
+                            break;
+                        }
+
+                        result.OrderBy.Add(fieldToken);
+                    }
+                }
+
+
             }
             #endregion
             #region Set.
@@ -415,7 +483,7 @@ namespace Katzebase.Engine.Query
 
             while (true)
             {
-                if ((token = ConditionTokenizer.GetNextClauseToken(conditionsText, ref position)) == string.Empty)
+                if ((token = ConditionTokenizer.GetNextToken(conditionsText, ref position)) == string.Empty)
                 {
                     break;
                 }

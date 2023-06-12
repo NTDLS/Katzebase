@@ -7,13 +7,29 @@ namespace Katzebase.Engine.Query.Tokenizers
     {
         static char[] DefaultTokenDelimiters = new char[] { ',' };
 
-        public string _text;
-        public string Text => _text;
+        private string _text;
         private int _position = 0;
+        private int _startPosition = 0;
 
+        public string Text => _text;
         public int Position => _position;
-
+        public int Length => _text.Length;
+        public int StartPosition => _startPosition;
         public Dictionary<string, string> LiteralStrings { get; private set; }
+
+        public QueryTokenizer(string text)
+        {
+            _text = text;
+            LiteralStrings = CleanQueryText(ref _text);
+        }
+
+        public QueryTokenizer(string text, int startPosition)
+        {
+            _text = text;
+            _position = startPosition;
+            _startPosition = startPosition;
+            LiteralStrings = CleanQueryText(ref _text);
+        }
 
         public void SwapFieldLiteral(ref string value)
         {
@@ -28,19 +44,13 @@ namespace Katzebase.Engine.Query.Tokenizers
             }
         }
 
-        public void SkipTo(int position)
+        public void SetPosition(int position)
         {
             _position = position;
-            if (_position >= _text.Length)
+            if (_position > _text.Length)
             {
                 throw new KbParserException("Skip position is greater than query length.");
             }
-        }
-
-        public QueryTokenizer(string text)
-        {
-            _text = text;
-            LiteralStrings = CleanQueryText(ref _text);
         }
 
         public bool IsCurrentChar(char ch)

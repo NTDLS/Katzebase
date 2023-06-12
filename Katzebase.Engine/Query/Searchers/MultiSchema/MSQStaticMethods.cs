@@ -413,9 +413,9 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{documentID}"];
 
             //Grab all of the selected fields from the document.
-            foreach (var selectField in param.Query.SelectFields.Where(o => o.SchemaAlias == schemaKey))
+            foreach (var selectField in param.Query.SelectFields.Where(o => o.Prefix == schemaKey))
             {
-                if (!jIndexContent.TryGetValue(selectField.Key, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                if (!jIndexContent.TryGetValue(selectField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
                 {
                     throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
                 }

@@ -1,10 +1,32 @@
-﻿using static Katzebase.Engine.KbLib.EngineConstants;
+﻿using Katzebase.PublicLibrary.Exceptions;
+using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Query.Tokenizers
 {
-    public static class ConditionTokenizer
+    public class ConditionTokenizer
     {
         static char[] DefaultTokenDelimiters = new char[] { ',' };
+
+        private string _text;
+        private int _position = 0;
+        private int _startPosition = 0;
+
+        public string Text => _text;
+        public int Position => _position;
+        public int Length => _text.Length;
+        public int StartPosition => _startPosition;
+
+        public ConditionTokenizer(string text)
+        {
+            _text = text;
+        }
+
+        public ConditionTokenizer(string text, int startPosition)
+        {
+            _text = text;
+            _position = startPosition;
+            _startPosition = startPosition;
+        }
 
         static public LogicalQualifier ParseLogicalQualifier(string text)
         {
@@ -69,25 +91,99 @@ namespace Katzebase.Engine.Query.Tokenizers
             return string.Empty;
         }
 
-        public static void SkipDelimiters(string query, ref int position)
+        public void SetText(string text, int position)
         {
-            SkipDelimiters(query, DefaultTokenDelimiters, ref position);
+            _text = text;
+            _position = position;
+            if (_position >= _text.Length)
+            {
+                throw new KbParserException("Skip position is greater than query length.");
+            }
         }
 
-        public static void SkipWhiteSpace(string query, ref int position)
+        public void SetText(string text)
         {
-            while (position < query.Length && char.IsWhiteSpace(query[position]))
+            _text = text;
+            if (_position >= _text.Length)
+            {
+                throw new KbParserException("Skip position is greater than query length.");
+            }
+        }
+
+        public void SetPosition(int position)
+        {
+            _position = position;
+            if (_position >= _text.Length)
+            {
+                throw new KbParserException("Skip position is greater than query length.");
+            }
+        }
+
+        public void SkipDelimiters()
+        {
+            SkipDelimiters(DefaultTokenDelimiters);
+        }
+
+        public static void SkipDelimiters(string text, ref int position)
+        {
+            SkipDelimiters(text, ref position, DefaultTokenDelimiters);
+        }
+
+        public void SkipWhiteSpace()
+        {
+            SkipWhiteSpace(_text, ref _position);
+        }
+
+        public static void SkipWhiteSpace(string text, ref int position)
+        {
+            while (position < text.Length && char.IsWhiteSpace(text[position]))
             {
                 position++;
             }
         }
 
-        public static void SkipDelimiters(string query, char[] delimiters, ref int position)
+        public void SkipDelimiters(char[] delimiters)
         {
-            while (position < query.Length && (char.IsWhiteSpace(query[position]) || delimiters.Contains(query[position]) == true))
+            SkipDelimiters(_text, ref _position, delimiters);
+        }
+
+        public static void SkipDelimiters(string text, ref int position, char[] delimiters)
+        {
+            while (position < text.Length && (char.IsWhiteSpace(text[position]) || delimiters.Contains(text[position]) == true))
             {
                 position++;
             }
+        }
+
+        public string PeekNextToken()
+        {
+            int originalPosition = _position;
+            var result = GetNextToken();
+            _position = originalPosition;
+            return result;
+        }
+
+        public void SkipNextToken()
+        {
+            _ = GetNextToken();
+        }
+
+        public bool IsNextToken(string[] tokens)
+        {
+            var token = PeekNextToken().ToLower();
+            foreach (var given in tokens)
+            {
+                if (token == given.ToLower())
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool IsNextToken(string token)
+        {
+            return PeekNextToken().ToLower() == token.ToLower();
         }
 
         /// <summary>
@@ -96,35 +192,40 @@ namespace Katzebase.Engine.Query.Tokenizers
         /// <param name="query"></param>
         /// <param name="position"></param>
         /// <returns></returns>
-        public static string GetNextClauseToken(string query, ref int position)
+        public string GetNextToken()
+        {
+            return GetNextToken(_text, ref _position);
+        }
+
+        public static string GetNextToken(string text, ref int position)
         {
             var token = string.Empty;
 
-            if (position == query.Length)
+            if (position == text.Length)
             {
                 return string.Empty;
             }
 
-            if (new char[] { '(', ')' }.Contains(query[position]))
+            if (new char[] { '(', ')' }.Contains(text[position]))
             {
-                token += query[position];
+                token += text[position];
                 position++;
-                SkipWhiteSpace(query, ref position);
+                SkipWhiteSpace(text, ref position);
                 return token;
             }
 
-            for (; position < query.Length; position++)
+            for (; position < text.Length; position++)
             {
-                if (char.IsWhiteSpace(query[position]) || new char[] { '(', ')' }.Contains(query[position]))
+                if (char.IsWhiteSpace(text[position]) || new char[] { '(', ')' }.Contains(text[position]))
                 {
                     break;
                 }
 
-                token += query[position];
+                token += text[position];
             }
 
-            SkipWhiteSpace(query, ref position);
-            SkipDelimiters(query, ref position);
+            SkipWhiteSpace(text, ref position);
+            SkipDelimiters(text, ref position);
 
             return token.Trim().ToLowerInvariant();
         }

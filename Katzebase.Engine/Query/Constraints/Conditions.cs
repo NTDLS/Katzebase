@@ -203,15 +203,15 @@ namespace Katzebase.Engine.Query.Constraints
 
         public void AddSubset(Dictionary<string, string> literalStrings, ConditionSubset subset, string leftHandAlias)
         {
-            int position = 0;
-
             var logicalConnector = LogicalConnector.None;
+
+            var conditionTokenizer = new ConditionTokenizer(subset.Expression);
 
             while (true)
             {
-                int startPosition = position;
+                int startPosition = conditionTokenizer.Position;
 
-                string token = ConditionTokenizer.GetNextClauseToken(subset.Expression, ref position).ToLower();
+                string token = conditionTokenizer.GetNextToken().ToLower();
 
                 if (token == string.Empty)
                 {
@@ -247,18 +247,18 @@ namespace Katzebase.Engine.Query.Constraints
                     string left = token;
 
                     //Logical Qualifier
-                    token = ConditionTokenizer.GetNextClauseToken(subset.Expression, ref position).ToLower();
+                    token = conditionTokenizer.GetNextToken().ToLower();
                     LogicalQualifier logicalQualifier = ConditionTokenizer.ParseLogicalQualifier(token);
 
                     //Righthand value:
-                    string right = ConditionTokenizer.GetNextClauseToken(subset.Expression, ref position).ToLower();
+                    string right = conditionTokenizer.GetNextToken().ToLower();
 
                     if (literalStrings.ContainsKey(right))
                     {
                         right = literalStrings[right].ToLowerInvariant();
                     }
 
-                    int endPosition = position;
+                    int endPosition = conditionTokenizer.Position;
 
                     if (right.StartsWith($"{leftHandAlias}."))
                     {//Swap the left and right.
@@ -269,8 +269,11 @@ namespace Katzebase.Engine.Query.Constraints
 
                     var condition = new Condition(subset.SubsetKey, conditionKey, logicalConnector, left, logicalQualifier, right);
 
-                    position = 0;
-                    subset.Expression = subset.Expression.Remove(startPosition, endPosition - startPosition).Insert(startPosition, VariableToKey(conditionKey) + " ");
+                    subset.Expression = subset.Expression.Remove(startPosition, endPosition - startPosition);
+                    subset.Expression = subset.Expression.Insert(startPosition, VariableToKey(conditionKey) + " ");
+
+                    conditionTokenizer.SetText(subset.Expression, 0);
+
                     subset.Conditions.Add(condition);
                     logicalConnector = LogicalConnector.None;
                 }

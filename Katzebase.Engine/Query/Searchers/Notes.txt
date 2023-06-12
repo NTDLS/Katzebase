@@ -1,3 +1,2 @@
-Objects that are for Single Schema Queries should start with SSQ, these are for queures that do not join other schemas.
-
-Objects that are for Multi Schema Queries should start with MSQ, these are queries that join other schemas.
+SSQ: Objects that are for Single Schema Queries should start with SSQ, these are for queures that do not join other schemas.
+MSQ: Objects that are for Multi Schema Queries should start with MSQ, these are queries that join other schemas.

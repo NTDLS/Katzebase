@@ -7,7 +7,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
 {
     /// <summary>
     /// This class maps the schema and documents to a query supplied schema alias.
-    /// The key to the dictonary is the schema alias.
+    /// The key to the dictonary is the schema alias (typically referenced by Condition.Prefix).
     /// </summary>
     internal class MSQQuerySchemaMap : Dictionary<string, MSQQuerySchemaMapItem>
     {
