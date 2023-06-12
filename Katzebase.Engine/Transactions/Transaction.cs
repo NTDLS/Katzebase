@@ -1,5 +1,7 @@
-﻿using Katzebase.Engine.KbLib;
+﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Locking;
+using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json;

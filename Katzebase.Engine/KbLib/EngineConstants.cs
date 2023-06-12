@@ -54,11 +54,22 @@
 
         public enum QueryType
         {
+            None,
             Select,
+            Sample,
+            List,
+            Alter,
             Insert,
             Update,
             Delete,
             Set
+        }
+
+        public enum SubQueryType
+        {
+            None,
+            Schemas,
+            Documents
         }
 
         public enum LogicalConnector

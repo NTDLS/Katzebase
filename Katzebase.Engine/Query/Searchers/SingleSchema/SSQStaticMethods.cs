@@ -1,6 +1,7 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query.Constraints;
+using Katzebase.Engine.Query.Sorting;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
@@ -10,6 +11,7 @@ using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
+using static Katzebase.PublicLibrary.Constants;
 
 namespace Katzebase.Engine.Query.Searchers.SingleSchema
 {
@@ -97,7 +99,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             foreach (var documentCatalogItem in documentCatalog.Collection)
             {
-                if (query.RowLimit != 0 && threadParam.Results.Collection.Count >= query.RowLimit)
+                if ((query.RowLimit != 0 && query.SortFields.Any() == false) && threadParam.Results.Collection.Count >= query.RowLimit)
                 {
                     break;
                 }
@@ -114,9 +116,26 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             threadPool.WaitForCompletion();
             ptThreadCompletion?.EndTrace();
 
+            //Get a list of all the fields we need to sory by.
+            if (query.SortFields.Any())
+            {
+                var sortingColumns = new List<(int fieldIndex, KbSortDirection sortDirection)>();
+                foreach (var sortField in query.SortFields.OfType<SortField>())
+                {
+                    var field = query.SelectFields.Where(o => o.Key == sortField.Key).FirstOrDefault();
+                    Utility.EnsureNotNull(field);
+                    sortingColumns.Add(new(field.Ordinal, sortField.SortDirection));
+                }
+
+                //Sort the results:
+                var ptSorting = pt?.BeginTrace(PerformanceTraceType.Sorting);
+                threadParam.Results.Collection = threadParam.Results.Collection.OrderBy(row => row.Values, new ResultValueComparer(sortingColumns)).ToList();
+                ptSorting?.EndTrace();
+            }
+
+            //Enforce row limits.
             if (query.RowLimit > 0)
             {
-                //Multithreading can yeild a few more rows than we need if we have a limiter.
                 threadParam.Results.Collection = threadParam.Results.Collection.Take(query.RowLimit).ToList();
             }
 
@@ -171,7 +190,6 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 }
 
                 var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
-
                 var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
                 Utility.EnsureNotNull(persistDocument);
                 Utility.EnsureNotNull(persistDocument.Content);

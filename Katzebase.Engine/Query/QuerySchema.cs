@@ -5,7 +5,7 @@ namespace Katzebase.Engine.Query
     internal class QuerySchema
     {
         public string Name { get; set; }
-        public string Alias { get; set; }
+        public string Alias { get; set; } = string.Empty;
         public Conditions? Conditions { get; set; }
 
         public QuerySchema(string name, string alias, Conditions conditions)
@@ -18,6 +18,10 @@ namespace Katzebase.Engine.Query
         {
             Name = name;
             Alias = alias;
+        }
+        public QuerySchema(string name)
+        {
+            Name = name;
         }
     }
 }

@@ -1,0 +1,5 @@
+Sample Documents AdventureWorks2012:Production:Product 100;
+
+List Documents AdventureWorks2012:Production:Product 100;
+
+list schemas AdventureWorks2012:Production 10;

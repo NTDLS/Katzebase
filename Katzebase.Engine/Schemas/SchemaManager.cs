@@ -1,11 +1,14 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
+using Katzebase.Engine.Query;
+using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Schemas
 {
@@ -49,6 +52,97 @@ namespace Katzebase.Engine.Schemas
                 core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, DocumentCatalogFile), new PersistDocumentCatalog());
                 core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, IndexCatalogFile), new PersistIndexCatalog());
             }
+        }
+
+        internal KbQueryResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                var result = new KbQueryResult();
+                PerformanceTrace? pt = null;
+
+                var session = core.Sessions.ByProcessId(processId);
+                if (session.TraceWaitTimesEnabled)
+                {
+                    pt = new PerformanceTrace();
+                }
+
+                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    ptAcquireTransaction?.EndTrace();
+                    if (preparedQuery.SubQueryType == SubQueryType.Schemas)
+                    {
+                        result = GetListByPreparedQuery(pt, txRef.Transaction, preparedQuery);
+                    }
+                    else
+                    {
+                        throw new KbParserException("Invalid list query subtype.");
+                    }
+
+                    txRef.Commit();
+                }
+
+                if (session.TraceWaitTimesEnabled && pt != null)
+                {
+                    foreach (var wt in pt.Aggregations)
+                    {
+                        result.WaitTimes.Add(new KbNameValue<double>(wt.Key, wt.Value));
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+        }
+
+        internal KbQueryResult GetListByPreparedQuery(PerformanceTrace? pt, Transaction transaction, PreparedQuery preparedQuery)
+        {
+            var result = new KbQueryResult();
+
+            var schema = preparedQuery.Schemas.First();
+
+            //Lock the schema:
+            var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
+            var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schema.Name, LockOperation.Read);
+            if (schemaMeta == null || schemaMeta.Exists == false)
+            {
+                throw new KbInvalidSchemaException(schema.Name);
+            }
+            ptLockSchema?.EndTrace();
+            Utility.EnsureNotNull(schemaMeta.DiskPath);
+
+            //Lock the schema catalog:
+            var filePath = Path.Combine(schemaMeta.DiskPath, SchemaCatalogFile);
+            var schemaCatalog = core.IO.GetJson<PersistSchemaCatalog>(transaction, filePath, LockOperation.Read);
+
+            Utility.EnsureNotNull(schemaCatalog);
+            Utility.EnsureNotNull(schemaCatalog.Collection);
+
+            result.Fields.Add(new KbQueryField("$ID"));
+            result.Fields.Add(new KbQueryField("Name"));
+            result.Fields.Add(new KbQueryField("Path"));
+
+            foreach (var item in schemaCatalog.Collection)
+            {
+                if (preparedQuery.RowLimit > 0 && result.Rows.Count >= preparedQuery.RowLimit)
+                {
+                    break;
+                }
+                var resultRow = new KbQueryRow();
+
+                resultRow.AddValue(item.Id.ToString());
+                resultRow.AddValue(item.Name);
+                resultRow.AddValue($"{schemaMeta.VirtualPath}:{item.Name}");
+
+                result.Rows.Add(resultRow);
+            }
+
+            return result;
         }
 
         internal List<PersistSchema> GetChildrenMeta(Transaction transaction, PersistSchema node, LockOperation intendedOperation)

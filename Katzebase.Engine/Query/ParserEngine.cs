@@ -4,6 +4,7 @@ using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.PublicLibrary.Constants;
 
 namespace Katzebase.Engine.Query
 {
@@ -19,17 +20,15 @@ namespace Katzebase.Engine.Query
 
             token = query.GetNextToken().ToLower();
 
-            var queryType = QueryType.Select;
-
-            if (Enum.TryParse<QueryType>(token, true, out queryType) == false)
+            if (Enum.TryParse<QueryType>(token, true, out QueryType queryType) == false)
             {
                 throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
             }
 
             result.QueryType = queryType;
 
-            #region Delete.
             //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region Delete.
             if (queryType == QueryType.Delete)
             {
                 /*
@@ -74,6 +73,7 @@ namespace Katzebase.Engine.Query
                 */
             }
             #endregion
+            //--------------------------------------------------------------------------------------------------------------------------------------------
             #region Update.
             //--------------------------------------------------------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Update)
@@ -133,8 +133,88 @@ namespace Katzebase.Engine.Query
                 */
             }
             #endregion
-            #region Select.
             //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region Sample.
+            else if (queryType == QueryType.Sample)
+            {
+                if (query.IsNextToken("documents") == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected [documents].");
+                }
+
+                token = query.GetNextToken();
+                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
+                }
+                result.SubQueryType = subQueryType;
+
+                token = query.GetNextToken();
+                if (token == string.Empty)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                }
+
+                result.Schemas.Add(new QuerySchema(token));
+
+                token = query.GetNextToken();
+                if (token != string.Empty)
+                {
+                    if (int.TryParse(token, out int topCount) == false)
+                    {
+                        throw new KbParserException("Invalid query. Found [" + token + "], expected top count.");
+                    }
+                    result.RowLimit = topCount;
+                }
+
+                if (query.IsEnd() == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                }
+            }
+            #endregion
+            //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region List.
+            else if (queryType == QueryType.List)
+            {
+                if (query.IsNextToken(new string[] { "documents", "schemas" }) == false )
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected [documents, schemas].");
+                }
+
+                token = query.GetNextToken();
+                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
+                }
+                result.SubQueryType = subQueryType;
+
+                token = query.GetNextToken();
+                if (token == string.Empty)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                }
+
+                result.Schemas.Add(new QuerySchema(token));
+
+                token = query.GetNextToken();
+                if (token != string.Empty)
+                {
+                    if (int.TryParse(token, out int topCount) == false)
+                    {
+                        throw new KbParserException("Invalid query. Found [" + token + "], expected top count.");
+                    }
+                    result.RowLimit = topCount;
+                }
+
+                if (query.IsEnd() == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                }
+            }
+            #endregion
+            //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region Select.
             else if (queryType == QueryType.Select)
             {
                 if (query.IsNextToken("top"))
@@ -347,6 +427,19 @@ namespace Katzebase.Engine.Query
                         int previousTokenPosition = query.Position;
                         var fieldToken = query.GetNextToken();
 
+                        if (result.SortFields.Count > 0)
+                        {
+                            if (query.NextCharacter == ',')
+                            {
+                                query.SkipDelimiters();
+                                fieldToken = query.GetNextToken();
+                            }
+                            else if (!(query.Position < query.Length || query.IsNextToken("order") == false)) //We should have consumed the entire GROUP BY at this point.
+                            {
+                                throw new KbParserException("Invalid query. Found [" + fieldToken + "], expected ','.");
+                            }
+                        }
+
                         if (((new string[] { "order", "" }).Contains(fieldToken) && query.IsNextToken("by")) || fieldToken == string.Empty)
                         {
                             //Set query position to the begining of the "ORDER BY"..
@@ -354,7 +447,12 @@ namespace Katzebase.Engine.Query
                             break;
                         }
 
-                        result.GroupBy.Add(fieldToken);
+                        result.GroupFields.Add(fieldToken);
+
+                        if (query.NextCharacter == ',')
+                        {
+                            query.SkipDelimiters();
+                        }
                     }
                 }
 
@@ -375,21 +473,47 @@ namespace Katzebase.Engine.Query
                         int previousTokenPosition = query.Position;
                         var fieldToken = query.GetNextToken();
 
-                        if (query.IsNextToken("") || fieldToken == string.Empty)
+                        if (result.SortFields.Count > 0)
                         {
+                            if (query.NextCharacter == ',')
+                            {
+                                query.SkipDelimiters();
+                                fieldToken = query.GetNextToken();
+                            }
+                            else if (query.Position < query.Length) //We should have consumed the entire query at this point.
+                            {
+                                throw new KbParserException("Invalid query. Found [" + fieldToken + "], expected ','.");
+                            }
+                        }
+
+                        if (fieldToken == string.Empty)
+                        {
+                            if (query.Position < query.Length)
+                            {
+                                throw new KbParserException("Invalid query. Found [" + query.Remainder() + "], expected 'end of statement'.");
+                            }
+
                             query.SetPosition(previousTokenPosition);
                             break;
                         }
 
-                        result.OrderBy.Add(fieldToken);
+                        var sortDirection = KbSortDirection.Ascending;
+                        if (query.IsNextToken(new string[] { "asc", "desc" }))
+                        {
+                            var directionString = query.GetNextToken();
+                            if (directionString.StartsWith("desc"))
+                            {
+                                sortDirection = KbSortDirection.Descending;
+                            }
+                        }
+
+                        result.SortFields.Add(fieldToken, sortDirection);
                     }
                 }
-
-
             }
             #endregion
-            #region Set.
             //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region Set.
             else if (queryType == QueryType.Set)
             {
                 //Variable 
@@ -398,6 +522,8 @@ namespace Katzebase.Engine.Query
                 result.VariableValues.Add(new KbNameValuePair(variableName, variableValue));
             }
             #endregion
+
+            #region Cleanup and ValidartiValidation.
 
             if (result.UpsertKeyValuePairs != null)
             {
@@ -412,6 +538,16 @@ namespace Katzebase.Engine.Query
                     }
                 }
             }
+
+            foreach (var sortField in result.SortFields)
+            {
+                if (result.SelectFields.Where(o => o.Key == sortField.Key).Any() == false)
+                {
+                    throw new KbParserException($"Sorting field {sortField.Key} must be contained in the select list.");
+                }
+            }
+
+            #endregion
 
             return result;
         }

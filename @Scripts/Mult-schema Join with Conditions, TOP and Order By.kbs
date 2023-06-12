@@ -1,0 +1,20 @@
+SET TraceWaitTimes ON;
+
+SELECT TOP 5
+	P.Name,
+	TH.TransactionId,
+	P.ProductNumber,
+	PSC.Name as Category
+FROM
+	AdventureWorks2012:Production:Product as p
+INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
+	ON p.ProductID = th.ProductID
+    AND p.ListPrice = th.ActualCost
+INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
+	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
+WHERE
+	PSC.Name = 'Road Bikes'
+	and TH.TransactionId > 200000
+ORDER BY
+	P.ProductNumber asc,
+	TH.TransactionId desc

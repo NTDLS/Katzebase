@@ -22,6 +22,7 @@
             ThreadQueue,
             ThreadReady,
             ThreadCompletion,
+            Sorting,
             Evaluate
         }
 

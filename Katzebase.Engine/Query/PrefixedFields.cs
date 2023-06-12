@@ -2,7 +2,7 @@
 {
     public class PrefixedFields : List<PrefixedField>
     {
-        public void Add(string key)
+        public PrefixedField Add(string key)
         {
             string prefix = string.Empty;
             string field = key;
@@ -19,9 +19,11 @@
                 Ordinal = this.Count
             };
             this.Add(newField);
+
+            return newField;
         }
 
-        public void Add(string prefix, string field)
+        public PrefixedField Add(string prefix, string field)
         {
             var newField = new PrefixedField(prefix, field)
             {
@@ -29,8 +31,10 @@
             };
 
             this.Add(newField);
+            return newField;
         }
-        public void Add(string prefix, string field, string alias)
+
+        public PrefixedField Add(string prefix, string field, string alias)
         {
             var newField = new PrefixedField(prefix, field, alias)
             {
@@ -38,6 +42,7 @@
             };
 
             this.Add(newField);
+            return newField;
         }
     }
 }

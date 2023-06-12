@@ -109,6 +109,93 @@ namespace Katzebase.Engine.Documents
             }
         }
 
+        internal KbQueryResult ExecuteSample(ulong processId, PreparedQuery preparedQuery)
+        {
+            return ExecuteSample(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
+        }
+
+        public KbQueryResult ExecuteSample(ulong processId, string schemaName, int rowLimit)
+        {
+            try
+            {
+                var result = new KbQueryResult();
+                PerformanceTrace? pt = null;
+
+                var session = core.Sessions.ByProcessId(processId);
+                if (session.TraceWaitTimesEnabled)
+                {
+                    pt = new PerformanceTrace();
+                }
+
+                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    ptAcquireTransaction?.EndTrace();
+                    result = StaticSearcherMethods.SampleSchemaDocuments(core, pt, txRef.Transaction, schemaName, rowLimit);
+                    txRef.Commit();
+                }
+
+                if (session.TraceWaitTimesEnabled && pt != null)
+                {
+                    foreach (var wt in pt.Aggregations)
+                    {
+                        result.WaitTimes.Add(new KbNameValue<double>(wt.Key, wt.Value));
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+        }
+
+        internal KbQueryResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
+        {
+            return ExecuteList(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
+        }
+
+        public KbQueryResult ExecuteList(ulong processId, string schemaName, int rowLimit = -1)
+        {
+            try
+            {
+                var result = new KbQueryResult();
+                PerformanceTrace? pt = null;
+
+                var session = core.Sessions.ByProcessId(processId);
+                if (session.TraceWaitTimesEnabled)
+                {
+                    pt = new PerformanceTrace();
+                }
+
+                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    ptAcquireTransaction?.EndTrace();
+                    result = StaticSearcherMethods.ListSchemaDocuments(core, pt, txRef.Transaction, schemaName, rowLimit);
+
+                    txRef.Commit();
+                }
+
+                if (session.TraceWaitTimesEnabled && pt != null)
+                {
+                    foreach (var wt in pt.Aggregations)
+                    {
+                        result.WaitTimes.Add(new KbNameValue<double>(wt.Key, wt.Value));
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+        }
+
         internal KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
         {
             //TODO: This is a stub, this does NOT work.

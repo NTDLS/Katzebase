@@ -8,6 +8,7 @@ using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
@@ -16,12 +17,129 @@ namespace Katzebase.Engine.Query.Searchers
     internal class StaticSearcherMethods
     {
         /// <summary>
-        /// Finds all document using a prepared query.
+        /// Returns a random sample of all docuemnt fields from a schema.
         /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="query"></param>
-        /// <returns></returns>
-        /// <exception cref="KbInvalidSchemaException"></exception>
+        internal static KbQueryResult SampleSchemaDocuments(Core core, PerformanceTrace? pt, Transaction transaction, string schemaName, int rowLimit = -1)
+        {
+            var result = new KbQueryResult();
+
+            //Lock the schema:
+            var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
+            var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schemaName, LockOperation.Read);
+            if (schemaMeta == null || schemaMeta.Exists == false)
+            {
+                throw new KbInvalidSchemaException(schemaName);
+            }
+            ptLockSchema?.EndTrace();
+            Utility.EnsureNotNull(schemaMeta.DiskPath);
+
+            //Lock the document catalog:
+            var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
+            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
+            Utility.EnsureNotNull(documentCatalog);
+
+            Random random = new Random();
+
+            for (int i = 0; i < rowLimit; i++)
+            {
+                int documentIndex = random.Next(0, documentCatalog.Collection.Count - 1);
+                var persistDocumentCatalogItem = documentCatalog.Collection[documentIndex];
+
+                var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, persistDocumentCatalogItem.FileName);
+                var persistDocument = core.IO.GetJson<PersistDocument>(pt, transaction, persistDocumentDiskPath, LockOperation.Read);
+                Utility.EnsureNotNull(persistDocument);
+                Utility.EnsureNotNull(persistDocument.Content);
+
+                var jContent = JObject.Parse(persistDocument.Content);
+
+                if (i == 0)
+                {
+                    result.Fields.Add(new KbQueryField("$RID"));
+                    foreach (var jToken in jContent)
+                    {
+                        result.Fields.Add(new KbQueryField(jToken.Key));
+                    }
+                }
+
+                Utility.EnsureNotNull(persistDocumentCatalogItem.Id);
+
+                var resultRow = new KbQueryRow();
+                resultRow.AddValue(persistDocumentCatalogItem.Id.ToString());
+
+                foreach (var field in result.Fields.Skip(1))
+                {
+                    jContent.TryGetValue(field.Name, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                    resultRow.AddValue(jToken?.ToString() ?? string.Empty);
+                }
+
+                result.Rows.Add(resultRow);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Returns a top list of all docuemnt fields from a schema.
+        /// </summary>
+        internal static KbQueryResult ListSchemaDocuments(Core core, PerformanceTrace? pt, Transaction transaction, string schemaName, int topCount)
+        {
+            var result = new KbQueryResult();
+
+            //Lock the schema:
+            var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
+            var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schemaName, LockOperation.Read);
+            if (schemaMeta == null || schemaMeta.Exists == false)
+            {
+                throw new KbInvalidSchemaException(schemaName);
+            }
+            ptLockSchema?.EndTrace();
+            Utility.EnsureNotNull(schemaMeta.DiskPath);
+
+            //Lock the document catalog:
+            var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
+            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
+            Utility.EnsureNotNull(documentCatalog);
+
+            for (int i = 0; i < documentCatalog.Collection.Count && (i < topCount || topCount < 0); i++)
+            {
+                var persistDocumentCatalogItem = documentCatalog.Collection[i];
+
+                var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, persistDocumentCatalogItem.FileName);
+                var persistDocument = core.IO.GetJson<PersistDocument>(pt, transaction, persistDocumentDiskPath, LockOperation.Read);
+                Utility.EnsureNotNull(persistDocument);
+                Utility.EnsureNotNull(persistDocument.Content);
+
+                var jContent = JObject.Parse(persistDocument.Content);
+
+                if (i == 0)
+                {
+                    result.Fields.Add(new KbQueryField("$ID"));
+                    foreach (var jToken in jContent)
+                    {
+                        result.Fields.Add(new KbQueryField(jToken.Key));
+                    }
+                }
+
+                Utility.EnsureNotNull(persistDocumentCatalogItem.Id);
+
+                var resultRow = new KbQueryRow();
+                resultRow.AddValue(persistDocumentCatalogItem.Id.ToString());
+
+                foreach (var field in result.Fields.Skip(1))
+                {
+                    jContent.TryGetValue(field.Name, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                    resultRow.AddValue(jToken?.ToString() ?? string.Empty);
+                }
+
+                result.Rows.Add(resultRow);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Finds all documents using a prepared query.
+        /// </summary>
         internal static KbQueryResult FindDocumentsByPreparedQuery(Core core, PerformanceTrace? pt, Transaction transaction, PreparedQuery query)
         {
             var result = new KbQueryResult();

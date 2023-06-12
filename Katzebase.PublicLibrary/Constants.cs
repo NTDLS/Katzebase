@@ -11,5 +11,11 @@
             Warning = 2, //Something the user might want to be aware of.
             Exception = 3 //An actual exception has been thrown.
         }
+
+        public enum KbSortDirection
+        {
+            Ascending,
+            Descending
+        }
     }
 }

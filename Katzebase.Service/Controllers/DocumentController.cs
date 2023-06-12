@@ -10,6 +10,37 @@ namespace Katzebase.Service.Controllers
     public class DocumentController
     {
         /// <summary>
+        /// Lists the documents within a given schema with their values.
+        /// </summary>
+        /// <param name="schema"></param>
+        [HttpGet]
+        [Route("{sessionId}/{schema}/List/{count}")]
+        public KbQueryResult List(Guid sessionId, string schema, int count)
+        {
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+            Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
+            return Program.Core.Documents.ExecuteList(processId, schema, count);
+        }
+
+        /// <summary>
+        /// Samples the documents within a given schema with their values.
+        /// </summary>
+        /// <param name="schema"></param>
+        [HttpGet]
+        [Route("{sessionId}/{schema}/Sample/{count}")]
+        public KbQueryResult Sample(Guid sessionId, string schema, int count)
+        {
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+            Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
+            return Program.Core.Documents.ExecuteSample(processId, schema, count);
+        }
+
+
+        /// <summary>
         /// Lists the documents within a given schema.
         /// </summary>
         /// <param name="schema"></param>

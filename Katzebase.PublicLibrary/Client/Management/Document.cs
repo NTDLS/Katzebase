@@ -64,5 +64,31 @@ namespace Katzebase.PublicLibrary.Client.Management
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             return JsonConvert.DeserializeObject<List<KbDocumentCatalogItem>>(resultText) ?? new List<KbDocumentCatalogItem>();
         }
+
+        /// <summary>
+        /// Lists the documents within a given schema with their values.
+        /// </summary>
+        /// <param name="schema"></param>
+        public KbQueryResult List(string schema, int count = -1)
+        {
+            string url = $"api/Document/{client.SessionId}/{schema}/List/{count}";
+
+            using var response = client.Connection.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            return JsonConvert.DeserializeObject<KbQueryResult>(resultText) ?? new KbQueryResult();
+        }
+
+        /// <summary>
+        /// Samples the documents within a given schema with their values.
+        /// </summary>
+        /// <param name="schema"></param>
+        public KbQueryResult Sample(string schema, int count)
+        {
+            string url = $"api/Document/{client.SessionId}/{schema}/Sample/{count}";
+
+            using var response = client.Connection.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            return JsonConvert.DeserializeObject<KbQueryResult>(resultText) ?? new KbQueryResult();
+        }
     }
 }

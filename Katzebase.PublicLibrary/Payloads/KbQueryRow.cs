@@ -14,9 +14,9 @@
             Values = new List<string>();
         }
 
-        public void Add(string value)
+        public void AddValue(string? value)
         {
-            Values.Add(value);
+            Values.Add(value ?? string.Empty);
         }
     }
 }
