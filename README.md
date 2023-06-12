@@ -1,5 +1,5 @@
 # Katzebase
-![Catzebase](https://user-images.githubusercontent.com/11428567/226699701-9111e5d9-9555-43d3-a55e-4f5d287cadf3.png)
+![Catzebase](https://github.com/NTDLS/Katzebase/assets/11428567/99a11cfb-bbd7-468a-b9d6-7f5fe772aacd)
 
 Katzebase is a fully ACID compliant document-based data storage engine that mimics a relational database. The engine is wrapped by MVC controllers and allows access via APIs, a SQL like syntax or by using the bundled management UI.
 
@@ -18,10 +18,7 @@ You can download the [sample Katzebase database](https://networkdls.com/DirectDo
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first
-to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. If you want to join the project, just email me (its on my profile).
 
 ## License
 
