@@ -7,6 +7,7 @@ using Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
 using System.Text;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Katzebase.UI
 {
@@ -465,40 +466,6 @@ namespace Katzebase.UI
             return tabFilePage;
         }
 
-        private void Editor_Drop(object sender, System.Windows.DragEventArgs e)
-        {
-            try
-            {
-                var files = e.Data?.GetData(DataFormats.FileDrop, false) as string[];
-                if (files != null)
-                {
-                    foreach (var file in files)
-                    {
-                        var alreadyOpenTab = FindTabByFileName(file);
-                        if (alreadyOpenTab == null)
-                        {
-                            CreateNewTab(Path.GetFileName(file)).OpenFile(file);
-                        }
-                        else
-                        {
-                            tabControlBody.SelectedTab = alreadyOpenTab;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void Editor_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
-        {
-            if (e.Key == System.Windows.Input.Key.F5)
-            {
-                CurrentTabFilePage()?.ExecuteCurrentScriptAsync(false);
-            }
-        }
 
         /// <summary>
         /// Removes a tab, saved or not - no prompting.
@@ -625,6 +592,34 @@ namespace Katzebase.UI
 
         #region Toolbar Clicks.
 
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenTab();
+        }
+
+        private void saveToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var selection = CurrentTabFilePage();
+            if (selection != null)
+            {
+                SaveTab(selection);
+            }
+        }
+
+        private void saveAsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var selection = CurrentTabFilePage();
+            if (selection != null)
+            {
+                SaveTabAs(selection);
+            }
+        }
+
+        private void toolStripButtonOpen_Click(object sender, EventArgs e)
+        {
+            OpenTab();
+        }
+
         private void toolStripButtonExecuteScript_Click(object sender, EventArgs e)
         {
             CurrentTabFilePage()?.ExecuteCurrentScriptAsync(false);
@@ -671,6 +666,50 @@ namespace Katzebase.UI
 
             return tab.Save();
         }
+
+        bool SaveTabAs(TabFilePage tab)
+        {
+            using (var sfd = new SaveFileDialog())
+            {
+                sfd.Filter = "Katzebase Script (*.kbs)|*.kbs|All files (*.*)|*.*";
+                sfd.FileName = tab.FilePath;
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    return tab.Save(sfd.FileName);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
+        private bool OpenTab()
+        {
+            using (var ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "Katzebase Script (*.kbs)|*.kbs|All files (*.*)|*.*";
+
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    var alreadyOpenTab = FindTabByFileName(ofd.FileName);
+                    if (alreadyOpenTab == null)
+                    {
+                        CreateNewTab(Path.GetFileName(ofd.FileName)).OpenFile(ofd.FileName);
+                    }
+                    else
+                    {
+                        tabControlBody.SelectedTab = alreadyOpenTab;
+                    }
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
+
 
         private void toolStripButtonSaveAll_Click(object sender, EventArgs e)
         {
@@ -910,6 +949,7 @@ namespace Katzebase.UI
                 }
             }
         }
+
 
         private void FormStudio_DragEnter(object sender, DragEventArgs e)
         {

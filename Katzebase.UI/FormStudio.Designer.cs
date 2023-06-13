@@ -78,6 +78,10 @@
             closeAllToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
+            toolStripButtonOpen = new ToolStripButton();
+            saveAsToolStripMenuItem = new ToolStripMenuItem();
+            openToolStripMenuItem = new ToolStripMenuItem();
+            saveToolStripMenuItem1 = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)splitContainerProject).BeginInit();
             splitContainerProject.Panel1.SuspendLayout();
             splitContainerProject.Panel2.SuspendLayout();
@@ -120,11 +124,11 @@
             // 
             // statusStripDocument
             // 
+            statusStripDocument.GripStyle = ToolStripGripStyle.Visible;
             statusStripDocument.Items.AddRange(new ToolStripItem[] { toolStripStatusLabelServerName, toolStripStatusLabelProcessId });
             statusStripDocument.Location = new Point(0, 575);
             statusStripDocument.Name = "statusStripDocument";
             statusStripDocument.Size = new Size(708, 22);
-            statusStripDocument.SizingGrip = false;
             statusStripDocument.TabIndex = 2;
             statusStripDocument.Text = "statusStripDocument";
             // 
@@ -174,7 +178,7 @@
             // 
             // toolStrip1
             // 
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonNewFile, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonRedo, toolStripButtonUndo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonNewFile, toolStripButtonOpen, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonUndo, toolStripButtonRedo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
             toolStrip1.Location = new Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(1032, 25);
@@ -404,6 +408,7 @@
             toolStripButtonSnippets.Name = "toolStripButtonSnippets";
             toolStripButtonSnippets.Size = new Size(23, 22);
             toolStripButtonSnippets.Text = "Snippets";
+            toolStripButtonSnippets.Visible = false;
             toolStripButtonSnippets.Click += toolStripButtonSnippets_Click;
             // 
             // menuStrip1
@@ -417,7 +422,7 @@
             // 
             // fileToolStripMenuItem
             // 
-            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectToolStripMenuItem, closeProjectToolStripMenuItem, toolStripMenuItem2, saveAllToolStripMenuItem, toolStripMenuItem1, exitToolStripMenuItem });
+            fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { connectToolStripMenuItem, closeProjectToolStripMenuItem, toolStripMenuItem2, openToolStripMenuItem, saveToolStripMenuItem1, saveAsToolStripMenuItem, saveAllToolStripMenuItem, toolStripMenuItem1, exitToolStripMenuItem });
             fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             fileToolStripMenuItem.Size = new Size(37, 20);
             fileToolStripMenuItem.Text = "File";
@@ -501,6 +506,37 @@
             aboutToolStripMenuItem.Size = new Size(107, 22);
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
+            // 
+            // toolStripButtonOpen
+            // 
+            toolStripButtonOpen.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonOpen.Image = Properties.Resources.ToolOpenFile;
+            toolStripButtonOpen.ImageTransparentColor = Color.Magenta;
+            toolStripButtonOpen.Name = "toolStripButtonOpen";
+            toolStripButtonOpen.Size = new Size(23, 22);
+            toolStripButtonOpen.Text = "Open";
+            toolStripButtonOpen.Click += toolStripButtonOpen_Click;
+            // 
+            // saveAsToolStripMenuItem
+            // 
+            saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
+            saveAsToolStripMenuItem.Size = new Size(133, 22);
+            saveAsToolStripMenuItem.Text = "Save As";
+            saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
+            // 
+            // openToolStripMenuItem
+            // 
+            openToolStripMenuItem.Name = "openToolStripMenuItem";
+            openToolStripMenuItem.Size = new Size(133, 22);
+            openToolStripMenuItem.Text = "Open";
+            openToolStripMenuItem.Click += openToolStripMenuItem_Click;
+            // 
+            // saveToolStripMenuItem1
+            // 
+            saveToolStripMenuItem1.Name = "saveToolStripMenuItem1";
+            saveToolStripMenuItem1.Size = new Size(133, 22);
+            saveToolStripMenuItem1.Text = "Save";
+            saveToolStripMenuItem1.Click += saveToolStripMenuItem1_Click;
             // 
             // FormStudio
             // 
@@ -588,5 +624,9 @@
         private StatusStrip statusStripDocument;
         private ToolStripStatusLabel toolStripStatusLabelServerName;
         private ToolStripStatusLabel toolStripStatusLabelProcessId;
+        private ToolStripButton toolStripButtonOpen;
+        private ToolStripMenuItem openToolStripMenuItem;
+        private ToolStripMenuItem saveToolStripMenuItem1;
+        private ToolStripMenuItem saveAsToolStripMenuItem;
     }
 }

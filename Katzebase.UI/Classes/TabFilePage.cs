@@ -8,11 +8,16 @@ namespace Katzebase.UI.Classes
 {
     internal class TabFilePage : TabPage
     {
+        #region Properties.
+
         public int ExecutionExceptionCount { get; private set; } = 0;
         public bool IsScriptExecuting { get; private set; } = false;
+        public string ServerAddressURL { get; set; }
+        public KatzebaseClient? Client { get; private set; }
+        public bool IsFileOpen { get; private set; } = false;
+
 
         private bool _isSaved = false;
-
         public bool IsSaved
         {
             get => _isSaved;
@@ -22,25 +27,41 @@ namespace Katzebase.UI.Classes
                 _isSaved = value;
                 if (_isSaved == true)
                 {
-                    this.Text = Text.TrimEnd('*');
+                    Text = Text.TrimEnd('*');
                 }
             }
         }
 
-        public SplitContainer ThisSplitContainer = new()
+        public SplitContainer TabSplitContainer = new()
         {
             Orientation = Orientation.Horizontal,
             Dock = DockStyle.Fill,
+            Panel2Collapsed = true
         };
 
         public bool CollapseSplitter
         {
-            get => ThisSplitContainer.Panel2Collapsed;
+            get => TabSplitContainer.Panel2Collapsed;
             set
             {
-                ThisSplitContainer.Panel2Collapsed = value;
+                TabSplitContainer.Panel2Collapsed = value;
             }
         }
+
+        private string _filePath = string.Empty;
+        public string FilePath
+        {
+            get => _filePath;
+            set
+            {
+                Text = Path.GetFileName(value);
+                _filePath = value;
+            }
+        }
+
+        #endregion
+
+        #region Controls.
 
         public TabPage OutputTab { get; private set; } = new("Output");
         public TabPage ResultsTab { get; private set; } = new("Results");
@@ -51,20 +72,8 @@ namespace Katzebase.UI.Classes
         public TextEditor Editor { get; private set; }
         public FormFindText FindTextForm { get; private set; }
         public FormReplaceText ReplaceTextForm { get; private set; }
-        public string ServerAddressURL { get; set; }
-        public KatzebaseClient? Client { get; private set; }
-        public bool IsFileOpen { get; private set; } = false;
 
-        private string _filePath = string.Empty;
-        public string FilePath
-        {
-            get => _filePath;
-            set
-            {
-                this.Text = Path.GetFileName(value);
-                _filePath = value;
-            }
-        }
+        #endregion
 
         public TabFilePage(string serverAddressURL, string tabText, TextEditor editor) :
              base(tabText)
@@ -79,39 +88,6 @@ namespace Katzebase.UI.Classes
             }
         }
 
-        public void OpenFile(string filePath)
-        {
-            if (File.Exists(filePath))
-            {
-                Editor.Document.FileName = filePath;
-                Editor.Text = File.ReadAllText(Editor.Document.FileName);
-                IsSaved = true;
-            }
-
-            this.FilePath = filePath;
-
-            IsFileOpen = true;
-        }
-
-        public bool Save(string fileName)
-        {
-            File.WriteAllText(fileName, Editor.Text);
-            IsSaved = true;
-            this.OpenFile(fileName);
-            return true;
-        }
-
-        public bool Save()
-        {
-            if (IsFileOpen)
-            {
-                File.WriteAllText(FilePath, Editor.Text);
-                IsSaved = true;
-                return true;
-            }
-            return false;
-        }
-
         public static TabFilePage Create(EditorFactory editorFactory, string tabText = "", string serverAddress = "")
         {
             if (string.IsNullOrWhiteSpace(tabText))
@@ -121,18 +97,17 @@ namespace Katzebase.UI.Classes
 
             var tabFilePage = editorFactory.Create(serverAddress, tabText);
 
-            //tabFilePage.Editor.KeyUp += Editor_KeyUp;
-            //tabFilePage.Editor.Drop += Editor_Drop;
+            tabFilePage.Editor.KeyUp += tabFilePage.Editor_KeyUp;
 
-            tabFilePage.Controls.Add(tabFilePage.ThisSplitContainer);
+            tabFilePage.Controls.Add(tabFilePage.TabSplitContainer);
 
-            tabFilePage.ThisSplitContainer.Panel1.Controls.Add(new System.Windows.Forms.Integration.ElementHost
+            tabFilePage.TabSplitContainer.Panel1.Controls.Add(new System.Windows.Forms.Integration.ElementHost
             {
                 Dock = DockStyle.Fill,
                 Child = tabFilePage.Editor
             });
 
-            tabFilePage.ThisSplitContainer.Panel2.Controls.Add(tabFilePage.BottomTabControl);
+            tabFilePage.TabSplitContainer.Panel2.Controls.Add(tabFilePage.BottomTabControl);
 
             tabFilePage.BottomTabControl.TabPages.Add(tabFilePage.OutputTab); //Add output tab to bottom.
             tabFilePage.OutputTab.Controls.Add(tabFilePage.OutputTextbox);
@@ -147,7 +122,49 @@ namespace Katzebase.UI.Classes
             return tabFilePage;
         }
 
-        #region Execute Current Script.
+
+        public void OpenFile(string filePath)
+        {
+            if (File.Exists(filePath))
+            {
+                Editor.Document.FileName = filePath;
+                Editor.Text = File.ReadAllText(Editor.Document.FileName);
+                IsSaved = true;
+            }
+
+            FilePath = filePath;
+
+            IsFileOpen = true;
+        }
+
+        public bool Save(string fileName)
+        {
+            File.WriteAllText(fileName, Editor.Text);
+            IsSaved = true;
+            OpenFile(fileName);
+            return true;
+        }
+
+        public bool Save()
+        {
+            if (IsFileOpen)
+            {
+                File.WriteAllText(FilePath, Editor.Text);
+                IsSaved = true;
+                return true;
+            }
+            return false;
+        }
+
+        private void Editor_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.F5)
+            {
+                ExecuteCurrentScriptAsync(false);
+            }
+        }
+
+        #region Execute.
 
         /// <summary>
         /// This is for actually executing the script against a live database.
@@ -167,6 +184,8 @@ namespace Katzebase.UI.Classes
                     IsScriptExecuting = false;
                     return;
                 }
+
+                Client.Server.Ping();
 
                 PreExecuteEvent(this);
 
@@ -207,7 +226,7 @@ namespace Katzebase.UI.Classes
                 OutputTextbox.Text = "";
                 ExecutionExceptionCount = 0;
 
-                ThisSplitContainer.Panel2Collapsed = false;
+                TabSplitContainer.Panel2Collapsed = false;
             }
             catch (Exception ex)
             {
@@ -225,7 +244,7 @@ namespace Katzebase.UI.Classes
                     return;
                 }
 
-                ThisSplitContainer.Panel2Collapsed = false;
+                TabSplitContainer.Panel2Collapsed = false;
 
                 if (OutputGrid.RowCount > 0)
                 {
@@ -373,9 +392,6 @@ namespace Katzebase.UI.Classes
             }
         }
 
-        #endregion
-
-
         private void Group_OnStatus(WorkloadGroup sender, string text, Color color)
         {
             if (InvokeRequired)
@@ -416,9 +432,11 @@ namespace Katzebase.UI.Classes
 
             ExecutionExceptionCount++;
 
-            ThisSplitContainer.Panel2Collapsed = false;
+            TabSplitContainer.Panel2Collapsed = false;
 
             AppendToOutput($"Exception: {ex.Message}\r\n", Color.DarkRed);
         }
+
+        #endregion
     }
 }
