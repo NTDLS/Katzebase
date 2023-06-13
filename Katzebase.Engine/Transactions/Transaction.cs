@@ -17,6 +17,11 @@ namespace Katzebase.Engine.Transactions
         public bool IsDeadlocked { get; set; }
         public List<ObjectLockKey>? HeldLockKeys { get; set; }
         public PerformanceTrace? PT { get; private set; } = null;
+        
+        /// <summary>
+        /// Used for general locking, if any.
+        /// </summary>
+        public object SyncObject { get; private set; } = new object();
 
         /// <summary>
         /// We keep a hashset of locks granted to this transaction by the LockIntention.Key so that we

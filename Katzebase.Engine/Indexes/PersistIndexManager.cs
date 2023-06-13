@@ -5,6 +5,7 @@ using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
+using Katzebase.PrivateLibrary;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
@@ -258,7 +259,7 @@ namespace Katzebase.Engine.Indexes
                         throw new KbInvalidSchemaException(schema);
                     }
 
-                    var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
+                    var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Read);
                     if (indexCatalog != null)
                     {
                         foreach (var index in indexCatalog.Collection)
@@ -293,7 +294,7 @@ namespace Katzebase.Engine.Indexes
                         throw new KbInvalidSchemaException(schema);
                     }
 
-                    var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
+                    var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Read);
                     if (indexCatalog != null)
                     {
                         result = indexCatalog.GetByName(indexName) != null;
@@ -447,11 +448,8 @@ namespace Katzebase.Engine.Indexes
         }
 
         /// <summary>
-        /// Finds the appropriate index page for a set of key values in the given index file.
+        /// Finds the appropriate index page for a set of key values in the given index file. Locks the index page catalog for write.
         /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="indexMeta"></param>
-        /// <param name="searchTokens"></param>
         /// <returns></returns>
         private FindKeyPageResult LocateExtentInGivenIndexFile(Transaction transaction, List<string> searchTokens, PersistIndex indexMeta)
         {
@@ -634,10 +632,7 @@ namespace Katzebase.Engine.Indexes
                 {
                     Utility.EnsureNotNull(findResult.Leaf);
 
-                    if (findResult.Leaf.DocumentIDs == null)
-                    {
-                        findResult.Leaf.DocumentIDs = new HashSet<Guid>();
-                    }
+                    findResult.Leaf.DocumentIDs ??= new HashSet<Guid>();
 
                     if (indexMeta.IsUnique && findResult.Leaf.DocumentIDs.Count > 1)
                     {
@@ -661,23 +656,20 @@ namespace Katzebase.Engine.Indexes
                     Utility.EnsureNotNull(indexPageCatalog);
                     Utility.EnsureNotNull(findResult.Leaves);
 
-                    lock (indexPageCatalog)
+                    for (int i = findResult.ExtentLevel; i < searchTokens.Count; i++)
                     {
-                        for (int i = findResult.ExtentLevel; i < searchTokens.Count; i++)
-                        {
-                            findResult.Leaf = findResult.Leaves.AddNewleaf(searchTokens[i]);
-                            findResult.Leaves = findResult.Leaf.Leaves;
-                        }
-
-                        Utility.EnsureNotNull(findResult.Leaf);
-
-                        if (findResult.Leaf.DocumentIDs == null)
-                        {
-                            findResult.Leaf.DocumentIDs = new HashSet<Guid>();
-                        }
-
-                        findResult.Leaf.DocumentIDs.Add((Guid)document.Id);
+                        findResult.Leaf = findResult.Leaves.AddNewleaf(searchTokens[i]);
+                        findResult.Leaves = findResult.Leaf.Leaves;
                     }
+
+                    Utility.EnsureNotNull(findResult.Leaf);
+
+                    if (findResult.Leaf.DocumentIDs == null)
+                    {
+                        findResult.Leaf.DocumentIDs = new HashSet<Guid>();
+                    }
+
+                    findResult.Leaf.DocumentIDs.Add((Guid)document.Id);
 
                     //Utility.AssertIfDebug(findResult.Catalog.Leaves.Entries.GroupBy(o => o.Key).Where(o => o.Count() > 1).Any(), "Duplicate root index entry.");
 
@@ -694,94 +686,60 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        internal class RebuildIndexItemThreadProc_ParallelState
-        {
-            public int ThreadsCompleted { get; set; }
-            public int ThreadsStarted { get; set; }
-            public int TargetThreadCount { get; set; }
+        #region Threading.
 
-            public bool IsComplete
+        private class RebuildIndexThreadParam
+        {
+            public Transaction Transaction { get; set; }
+            public PersistSchema SchemaMeta { get; set; }
+            public PersistIndex IndexMeta { get; set; }
+            public PersistDocumentCatalog DocumentCatalog { get; set; }
+            public PersistIndexPageCatalog IndexPageCatalog { get; set; }
+            public object SyncObject { get; private set; } = new object();
+
+            public RebuildIndexThreadParam(Transaction transaction, PersistSchema schemaMeta,
+                PersistIndexPageCatalog indexPageCatalog, PersistIndex indexMeta, PersistDocumentCatalog documentCatalog)
             {
-                get
-                {
-                    lock (this)
-                    {
-                        return (ThreadsStarted - ThreadsCompleted) == 0;
-                    }
-                }
+                Transaction = transaction;
+                SchemaMeta = schemaMeta;
+                IndexMeta = indexMeta;
+                DocumentCatalog = documentCatalog;
+                IndexPageCatalog = indexPageCatalog;
             }
         }
 
-        internal class RebuildIndexItemThreadProc_Params
+        #endregion
+
+        private void RebuildIndexThreadProc(ThreadPoolQueue<PersistDocumentCatalogItem, RebuildIndexThreadParam> pool, RebuildIndexThreadParam? param)
         {
-            public RebuildIndexItemThreadProc_ParallelState? State { get; set; }
-            public Transaction? Transaction { get; set; }
-            public PersistSchema? SchemaMeta { get; set; }
-            public PersistIndex? IndexMeta { get; set; }
-            public PersistDocumentCatalog? DocumentCatalog { get; set; }
-            public PersistIndexPageCatalog? IndexPageCatalog { get; set; }
-            public AutoResetEvent Initialized { get; set; }
-            public object SyncObject { get; set; } = new object();
+            Utility.EnsureNotNull(param);
 
-            public RebuildIndexItemThreadProc_Params()
+            while (pool.ContinueToProcessQueue)
             {
-                Initialized = new AutoResetEvent(false);
-            }
-        }
-
-        internal void RebuildIndexItemThreadProc(object? oParam)
-        {
-            int threadMod = 0;
-
-            Utility.EnsureNotNull(oParam);
-
-            var param = (RebuildIndexItemThreadProc_Params)oParam;
-
-            Utility.EnsureNotNull(param.State);
-            Utility.EnsureNotNull(param.DocumentCatalog);
-            Utility.EnsureNotNull(param.SchemaMeta);
-            Utility.EnsureNotNull(param.Transaction);
-            Utility.EnsureNotNull(param.IndexMeta);
-            Utility.EnsureNotNull(param.IndexPageCatalog);
-
-            lock (param.State)
-            {
-                threadMod = param.State.ThreadsStarted;
-                param.State.ThreadsStarted++;
-                Thread.CurrentThread.Name = "RebuildIndexItemThreadProc_" + param.State.ThreadsStarted;
-                param.Initialized.Set();
-            }
-
-            for (int i = 0; i < param.DocumentCatalog.Collection.Count; i++)
-            {
-                if ((i % param.State.TargetThreadCount) == threadMod)
+                var documentCatalogItem = pool.DequeueWorkItem();
+                if (documentCatalogItem == null)
                 {
-                    var documentCatalogItem = param.DocumentCatalog.Collection[i];
-
-                    if (param.SchemaMeta.DiskPath == null)
-                    {
-                        throw new KbNullException($"Value should not be null {nameof(param.SchemaMeta.DiskPath)}.");
-                    }
-
-                    string documentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
-                    var persistDocument = core.IO.GetJson<PersistDocument>(param.Transaction, documentDiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(persistDocument);
-
-                    lock (param.SyncObject)
-                    {
-                        InsertDocumentIntoIndex(param.Transaction, param.SchemaMeta, param.IndexMeta, persistDocument, param.IndexPageCatalog, false);
-                    }
+                    continue;
                 }
-            }
 
-            lock (param.State)
-            {
-                param.State.ThreadsCompleted++;
+                if (param.SchemaMeta.DiskPath == null)
+                {
+                    throw new KbNullException($"Value should not be null {nameof(param.SchemaMeta.DiskPath)}.");
+                }
+
+                string documentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
+                var persistDocument = core.IO.GetJson<PersistDocument>(param.Transaction, documentDiskPath, LockOperation.Read);
+                Utility.EnsureNotNull(persistDocument);
+
+                lock (param.SyncObject)
+                {
+                    InsertDocumentIntoIndex(param.Transaction, param.SchemaMeta, param.IndexMeta, persistDocument, param.IndexPageCatalog, false);
+                }
             }
         }
 
         /// <summary>
-        /// Inserts all documents in a schema into a single index in the schema.
+        /// Inserts all documents in a schema into a single index in the schema. Locks the index page catalog for write.
         /// </summary>
         /// <param name="transaction"></param>
         /// <param name="schemaMeta"></param>
@@ -795,39 +753,35 @@ namespace Katzebase.Engine.Indexes
 
                 var filePath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
                 var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, filePath, LockOperation.Read);
+                Utility.EnsureNotNull(documentCatalog);
 
                 //Clear out the existing index pages.
                 core.IO.PutPBuf(transaction, indexMeta.DiskPath, new PersistIndexPageCatalog());
 
                 var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, indexMeta.DiskPath, LockOperation.Write);
-
-                var state = new RebuildIndexItemThreadProc_ParallelState()
-                {
-                    TargetThreadCount = Environment.ProcessorCount * 2
-                };
-
-                var param = new RebuildIndexItemThreadProc_Params()
-                {
-                    DocumentCatalog = documentCatalog,
-                    State = state,
-                    IndexMeta = indexMeta,
-                    IndexPageCatalog = indexPageCatalog,
-                    SchemaMeta = schemaMeta,
-                    Transaction = transaction
-                };
-
-                for (int i = 0; i < state.TargetThreadCount; i++)
-                {
-                    new Thread(RebuildIndexItemThreadProc).Start(param);
-                    param.Initialized.WaitOne(Timeout.Infinite);
-                }
-
-                while (state.IsComplete == false)
-                {
-                    Thread.Sleep(1);
-                }
-
                 Utility.EnsureNotNull(indexPageCatalog);
+
+                var ptThreadCreation = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCreation);
+                var threadParam = new RebuildIndexThreadParam(transaction, schemaMeta, indexPageCatalog, indexMeta, documentCatalog);
+
+                int threadCount = ThreadPoolHelper.CalculateThreadCount(documentCatalog.Collection.Count, 0.25);
+                var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, RebuildIndexThreadParam>
+                    .CreateAndStart(RebuildIndexThreadProc, threadParam, threadCount);
+                ptThreadCreation?.EndTrace();
+
+                foreach (var documentCatalogItem in documentCatalog.Collection)
+                {
+                    if (threadPool.HasException || threadPool.ContinueToProcessQueue == false)
+                    {
+                        break;
+                    }
+
+                    threadPool.EnqueueWorkItem(documentCatalogItem);
+                }
+
+                var ptThreadCompletion = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCompletion);
+                threadPool.WaitForCompletion();
+                ptThreadCompletion?.EndTrace();
 
                 core.IO.PutPBuf(transaction, indexMeta.DiskPath, indexPageCatalog);
             }
@@ -882,12 +836,8 @@ namespace Katzebase.Engine.Indexes
         }
 
         /// <summary>
-        /// Removes a document from an index.
+        /// Removes a document from an index. Locks the index page catalog for write.
         /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="schemaMeta"></param>
-        /// <param name="indexMeta"></param>
-        /// <param name="document"></param>
         private void DeleteDocumentFromIndex(Transaction transaction, PersistSchema schemaMeta, PersistIndex indexMeta, Guid documentId)
         {
             try
