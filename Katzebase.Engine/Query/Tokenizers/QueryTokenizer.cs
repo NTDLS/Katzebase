@@ -163,6 +163,11 @@ namespace Katzebase.Engine.Query.Tokenizers
             }
         }
 
+        public void SkipDelimiters(char delimiter)
+        {
+            SkipDelimiters(new char[] { delimiter });
+        }
+
         public void SkipDelimiters(char[] delimiters)
         {
             while (_position < _text.Length && (char.IsWhiteSpace(_text[_position]) || delimiters.Contains(_text[_position]) == true))

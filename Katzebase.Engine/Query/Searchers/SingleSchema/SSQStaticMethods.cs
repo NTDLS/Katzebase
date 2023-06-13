@@ -23,13 +23,13 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         internal static SSQDocumentLookupResults GetDocumentsByConditions(Core core, Transaction transaction, string schemaName, PreparedQuery query)
         {
             //Lock the schema:
-            var ptLockSchema = transaction.PT?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
+            var ptLockSchema = transaction.PT?.CreateDurationTracker<PersistSchema>(PerformanceTraceCumulativeMetricType.Lock);
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schemaName, LockOperation.Read);
             if (schemaMeta == null || schemaMeta.Exists == false)
             {
-                throw new KbInvalidSchemaException(schemaName);
+                throw new KbObjectNotFoundException(schemaName);
             }
-            ptLockSchema?.EndTrace();
+            ptLockSchema?.StopAndAccumulate();
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
             //Lock the document catalog:
@@ -90,11 +90,12 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-            var ptThreadCreation = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCreation);
+            var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, schemaMeta, query, lookupOptimization);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(documentCatalog.Collection.Count);
+            transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(GetDocumentsByConditionsThreadProc, threadParam, threadCount);
-            ptThreadCreation?.EndTrace();
+            ptThreadCreation?.StopAndAccumulate();
 
             foreach (var documentCatalogItem in documentCatalog.Collection)
             {
@@ -111,9 +112,9 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 threadPool.EnqueueWorkItem(documentCatalogItem);
             }
 
-            var ptThreadCompletion = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCompletion);
+            var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
             threadPool.WaitForCompletion();
-            ptThreadCompletion?.EndTrace();
+            ptThreadCompletion?.StopAndAccumulate();
 
             //Get a list of all the fields we need to sory by.
             if (query.SortFields.Any())
@@ -127,9 +128,9 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 }
 
                 //Sort the results:
-                var ptSorting = transaction.PT?.BeginTrace(PerformanceTraceType.Sorting);
+                var ptSorting = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Sorting);
                 threadParam.Results.Collection = threadParam.Results.Collection.OrderBy(row => row.Values, new ResultValueComparer(sortingColumns)).ToList();
-                ptSorting?.EndTrace();
+                ptSorting?.StopAndAccumulate();
             }
 
             //Enforce row limits.
@@ -199,9 +200,9 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     SetExpressionParameters(ref expression, param.LookupOptimization.Conditions, jContent);
                 }
 
-                var ptEvaluate = param.Transaction.PT?.BeginTrace(PerformanceTraceType.Evaluate);
+                var ptEvaluate = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
                 bool evaluation = (expression == null) || (bool)expression.Evaluate();
-                ptEvaluate?.EndTrace();
+                ptEvaluate?.StopAndAccumulate();
 
                 if (evaluation)
                 {

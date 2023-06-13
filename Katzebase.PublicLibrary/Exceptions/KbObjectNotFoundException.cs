@@ -2,15 +2,15 @@
 
 namespace Katzebase.PublicLibrary.Exceptions
 {
-    public class KbInvalidSchemaException : KbExceptionBase
+    public class KbObjectNotFoundException : KbExceptionBase
     {
-        public KbInvalidSchemaException()
+        public KbObjectNotFoundException()
         {
             Severity = LogSeverity.Warning;
         }
 
-        public KbInvalidSchemaException(string? message)
-            : base($"Invalid schema exception: {message}.")
+        public KbObjectNotFoundException(string? message)
+            : base($"Object not found exception: {message}.")
 
         {
             Severity = LogSeverity.Exception;

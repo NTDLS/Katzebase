@@ -70,10 +70,10 @@ namespace Katzebase.Engine.Schemas
                     pt = new PerformanceTrace();
                 }
 
-                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
+                var ptAcquireTransaction = pt?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.EndTrace();
+                    ptAcquireTransaction?.StopAndAccumulate();
                     if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                     {
                         result = GetListByPreparedQuery(txRef.Transaction, preparedQuery);
@@ -85,7 +85,7 @@ namespace Katzebase.Engine.Schemas
 
                     txRef.Commit();
 
-                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -104,13 +104,13 @@ namespace Katzebase.Engine.Schemas
             var schema = preparedQuery.Schemas.First();
 
             //Lock the schema:
-            var ptLockSchema = transaction.PT?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
+            var ptLockSchema = transaction.PT?.CreateDurationTracker<PersistSchema>(PerformanceTraceCumulativeMetricType.Lock);
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schema.Name, LockOperation.Read);
             if (schemaMeta == null || schemaMeta.Exists == false)
             {
-                throw new KbInvalidSchemaException(schema.Name);
+                throw new KbObjectNotFoundException(schema.Name);
             }
-            ptLockSchema?.EndTrace();
+            ptLockSchema?.StopAndAccumulate();
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
             //Lock the schema catalog:
@@ -224,7 +224,7 @@ namespace Katzebase.Engine.Schemas
 
                     if (core.IO.FileExists(transaction, parentCatalogDiskPath, intendedOperation) == false)
                     {
-                        throw new KbInvalidSchemaException($"The schema [{schemaPath}] does not exist.");
+                        throw new KbObjectNotFoundException($"The schema [{schemaPath}] does not exist.");
                     }
 
                     var parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(transaction,
@@ -272,7 +272,7 @@ namespace Katzebase.Engine.Schemas
                     PersistSchema schemaMeta = VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(schema);
+                        throw new KbObjectNotFoundException(schema);
                     }
 
                     var result = new KbActionResponseSchemaCollection();
@@ -295,7 +295,7 @@ namespace Katzebase.Engine.Schemas
 
                     txRef.Commit();
 
-                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
 
                     return result;
                 }
@@ -328,7 +328,7 @@ namespace Katzebase.Engine.Schemas
 
                     if (parentSchemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException("The parent schema does not exists. Use CreateLineage() instead of CreateSingle().");
+                        throw new KbObjectNotFoundException("The parent schema does not exists. Use CreateLineage() instead of CreateSingle().");
                     }
 
                     if (parentSchemaMeta.DiskPath == null || schemaMeta.DiskPath == null)
@@ -470,7 +470,7 @@ namespace Katzebase.Engine.Schemas
                     var schemaMeta = VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(schema);
+                        throw new KbObjectNotFoundException(schema);
                     }
 
                     var parentSchemaMeta = GetParentMeta(txRef.Transaction, schemaMeta, LockOperation.Write);

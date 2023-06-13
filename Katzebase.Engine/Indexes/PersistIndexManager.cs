@@ -26,6 +26,49 @@ namespace Katzebase.Engine.Indexes
             this.core = core;
         }
 
+        internal KbActionResponse ExecuteDrop(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                var result = new KbActionResponse();
+
+                PerformanceTrace? pt = null;
+
+                var session = core.Sessions.ByProcessId(processId);
+                if (session.TraceWaitTimesEnabled)
+                {
+                    pt = new PerformanceTrace();
+                }
+
+                var ptAcquireTransaction = pt?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    ptAcquireTransaction?.StopAndAccumulate();
+
+                    string schema = preparedQuery.Schemas.First().Name;
+
+                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
+                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    {
+                        throw new KbObjectNotFoundException(preparedQuery.Schemas[0].Prefix);
+                    }
+
+                    Drop(txRef.Transaction, schemaMeta, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+
+                    txRef.Commit();
+
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+        }
+
         internal KbActionResponse ExecuteRebuild(ulong processId, PreparedQuery preparedQuery)
         {
             try
@@ -40,24 +83,78 @@ namespace Katzebase.Engine.Indexes
                     pt = new PerformanceTrace();
                 }
 
-                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
+                var ptAcquireTransaction = pt?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.EndTrace();
+                    ptAcquireTransaction?.StopAndAccumulate();
 
                     string schema = preparedQuery.Schemas.First().Name;
 
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(preparedQuery.Schemas[0].Prefix);
+                        throw new KbObjectNotFoundException(preparedQuery.Schemas[0].Prefix);
                     }
 
-                    Rebuild(txRef.Transaction, schemaMeta, preparedQuery.SubQueryObject);
+                    Rebuild(txRef.Transaction, schemaMeta, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
 
                     txRef.Commit();
 
-                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+        }
+
+        internal KbActionResponse ExecuteCreate(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                var result = new KbActionResponse();
+
+                PerformanceTrace? pt = null;
+
+                var session = core.Sessions.ByProcessId(processId);
+                if (session.TraceWaitTimesEnabled)
+                {
+                    pt = new PerformanceTrace();
+                }
+
+                var ptAcquireTransaction = pt?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    ptAcquireTransaction?.StopAndAccumulate();
+
+                    string schema = preparedQuery.Schemas.First().Name;
+
+                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
+                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    {
+                        throw new KbObjectNotFoundException(preparedQuery.Schemas[0].Prefix);
+                    }
+
+                    var index = new KbIndex
+                    {
+                        Name = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName),
+                        IsUnique = preparedQuery.Attribute<bool>(PreparedQuery.QueryAttribute.IsUnique)
+                    };
+
+                    foreach (var field in preparedQuery.SelectFields)
+                    {
+                        index.Attributes.Add(new KbIndexAttribute() { Field = field.Field });
+                    }
+
+                    Create(txRef.Transaction, schemaMeta, index, out Guid indexId);
+
+                    txRef.Commit();
+
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -92,15 +189,15 @@ namespace Katzebase.Engine.Indexes
                     //TODO: Indexing only supports AND connectors, thats a performance problem.
 
                     //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
-                    var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                    var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.IndexDistillation);
                     var resultintDocuments = DistillIndexLeaves(indexEntires);
-                    ptIndexDistillation?.EndTrace();
+                    ptIndexDistillation?.StopAndAccumulate();
                     return resultintDocuments.ToHashSet();
                 }
 
                 List<PersistIndexLeaf>? nextIndexEntires = null;
 
-                var ptIndexSeek = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexSeek);
+                var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.IndexSeek);
 
                 var conditionValue = conditionValues[attribute.Field.ToLower()];
 
@@ -110,7 +207,7 @@ namespace Katzebase.Engine.Indexes
                     nextIndexEntires = indexEntires.Where(o => o.Value != conditionValue)?.ToList();
                 else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
 
-                ptIndexSeek?.EndTrace();
+                ptIndexSeek?.StopAndAccumulate();
 
                 if (nextIndexEntires == null)
                 {
@@ -134,17 +231,17 @@ namespace Katzebase.Engine.Indexes
 
             if (fullMatch == true)
             {
-                var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.IndexDistillation);
                 var resultintDocuments = indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
                 //If we got here then we got a full match on the entire index. This is the best scenario.
-                ptIndexDistillation?.EndTrace();
+                ptIndexDistillation?.StopAndAccumulate();
                 return resultintDocuments.ToHashSet();
             }
             else
             {
-                var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.IndexDistillation);
                 var resultintDocuments = DistillIndexLeaves(indexEntires);
-                ptIndexDistillation?.EndTrace();
+                ptIndexDistillation?.StopAndAccumulate();
                 //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
                 return resultintDocuments.ToHashSet();
             }
@@ -175,15 +272,15 @@ namespace Katzebase.Engine.Indexes
                     //TODO: Indexing only supports AND connectors, thats a performance problem.
 
                     //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
-                    var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                    var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.IndexDistillation);
                     var resultintDocuments = DistillIndexLeaves(indexEntires);
-                    ptIndexDistillation?.EndTrace();
+                    ptIndexDistillation?.StopAndAccumulate();
                     return resultintDocuments.ToHashSet();
                 }
 
                 List<PersistIndexLeaf>? nextIndexEntires = null;
 
-                var ptIndexSeek = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexSeek);
+                var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.IndexSeek);
 
                 if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
                     nextIndexEntires = indexEntires.Where(o => o.Value == conditionField.Right.Value)?.ToList();
@@ -191,7 +288,7 @@ namespace Katzebase.Engine.Indexes
                     nextIndexEntires = indexEntires.Where(o => o.Value != conditionField.Right.Value)?.ToList();
                 else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
 
-                ptIndexSeek?.EndTrace();
+                ptIndexSeek?.StopAndAccumulate();
 
                 if (nextIndexEntires == null)
                 {
@@ -215,17 +312,17 @@ namespace Katzebase.Engine.Indexes
 
             if (fullMatch == true)
             {
-                var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.IndexDistillation);
                 var resultintDocuments = indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
                 //If we got here then we got a full match on the entire index. This is the best scenario.
-                ptIndexDistillation?.EndTrace();
+                ptIndexDistillation?.StopAndAccumulate();
                 return resultintDocuments.ToHashSet();
             }
             else
             {
-                var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.IndexDistillation);
                 var resultintDocuments = DistillIndexLeaves(indexEntires);
-                ptIndexDistillation?.EndTrace();
+                ptIndexDistillation?.StopAndAccumulate();
                 //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
                 return resultintDocuments.ToHashSet();
             }
@@ -256,7 +353,7 @@ namespace Katzebase.Engine.Indexes
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(schema);
+                        throw new KbObjectNotFoundException(schema);
                     }
 
                     var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Read);
@@ -291,7 +388,7 @@ namespace Katzebase.Engine.Indexes
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(schema);
+                        throw new KbObjectNotFoundException(schema);
                     }
 
                     var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Read);
@@ -312,6 +409,47 @@ namespace Katzebase.Engine.Indexes
             return result;
         }
 
+        private void Create(Transaction transaction, PersistSchema schemaMeta, KbIndex index, out Guid newId)
+        {
+            var persistIndex = PersistIndex.FromPayload(index);
+            Utility.EnsureNotNull(persistIndex);
+
+            if (persistIndex.Id == null || persistIndex.Id == Guid.Empty)
+            {
+                persistIndex.Id = Guid.NewGuid();
+            }
+            if (persistIndex.Created == DateTime.MinValue)
+            {
+                persistIndex.Created = DateTime.UtcNow;
+            }
+            if (persistIndex.Modfied == DateTime.MinValue)
+            {
+                persistIndex.Modfied = DateTime.UtcNow;
+            }
+
+            var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Write);
+
+            if (indexCatalog.GetByName(index.Name) != null)
+            {
+                throw new KbObjectAlreadysExistsException(index.Name);
+            }
+
+            indexCatalog.Add(persistIndex);
+
+            if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
+            {
+                throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
+            }
+
+            core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
+            persistIndex.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(index.Name));
+            core.IO.PutPBuf(transaction, persistIndex.DiskPath, new PersistIndexPageCatalog());
+
+            RebuildIndex(transaction, schemaMeta, persistIndex);
+
+            newId = (Guid)persistIndex.Id;
+        }
+
         public void Create(ulong processId, string schema, KbIndex index, out Guid newId)
         {
             try
@@ -319,44 +457,15 @@ namespace Katzebase.Engine.Indexes
                 var persistIndex = PersistIndex.FromPayload(index);
                 Utility.EnsureNotNull(persistIndex);
 
-                if (persistIndex.Id == null || persistIndex.Id == Guid.Empty)
-                {
-                    persistIndex.Id = Guid.NewGuid();
-                }
-                if (persistIndex.Created == DateTime.MinValue)
-                {
-                    persistIndex.Created = DateTime.UtcNow;
-                }
-                if (persistIndex.Modfied == DateTime.MinValue)
-                {
-                    persistIndex.Modfied = DateTime.UtcNow;
-                }
-
                 using (var txRef = core.Transactions.Begin(processId))
                 {
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(schema);
+                        throw new KbObjectNotFoundException(schema);
                     }
 
-                    var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
-                    indexCatalog.Add(persistIndex);
-
-                    if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
-                    {
-                        throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
-                    }
-
-                    core.IO.PutJson(txRef.Transaction, indexCatalog.DiskPath, indexCatalog);
-                    persistIndex.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(index.Name));
-                    core.IO.PutPBuf(txRef.Transaction, persistIndex.DiskPath, new PersistIndexPageCatalog());
-
-                    RebuildIndex(txRef.Transaction, schemaMeta, persistIndex);
-
-                    newId = (Guid)persistIndex.Id;
-
-                    txRef.Commit();
+                    Create(txRef.Transaction, schemaMeta, index, out newId);
                 }
             }
             catch (Exception ex)
@@ -366,7 +475,51 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        internal void Rebuild(Transaction transaction, PersistSchema schemaMeta, string indexName)
+        public void Rebuild(ulong processId, string schema, string indexName)
+        {
+            try
+            {
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
+                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    {
+                        throw new KbObjectNotFoundException(schema);
+                    }
+
+                    Rebuild(txRef.Transaction, schemaMeta, indexName);
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to create index for process {processId}.", ex);
+                throw;
+            }
+        }
+
+        private void Drop(Transaction transaction, PersistSchema schemaMeta, string indexName)
+        {
+            var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Write);
+            if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
+            {
+                throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
+            }
+
+            var indexMeta = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
+            var index = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
+            indexCatalog.Remove(index);
+
+            indexMeta.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(indexMeta.Name));
+
+            if (File.Exists(indexMeta.DiskPath))
+            {
+                core.IO.DeleteFile(transaction, indexMeta.DiskPath);
+            }
+
+            core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
+        }
+
+        private void Rebuild(Transaction transaction, PersistSchema schemaMeta, string indexName)
         {
             var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Write);
 
@@ -375,18 +528,13 @@ namespace Katzebase.Engine.Indexes
                 throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
             }
 
-            var indexMeta = indexCatalog.GetByName(indexName);
-            if (indexMeta == null)
-            {
-                throw new KbIndexDoesNotExistException(indexName);
-            }
-
+            var indexMeta = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
             indexMeta.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(indexMeta.Name));
 
             RebuildIndex(transaction, schemaMeta, indexMeta);
         }
 
-        internal PersistIndexCatalog GetIndexCatalog(Transaction transaction, string schema, LockOperation intendedOperation)
+        private PersistIndexCatalog GetIndexCatalog(Transaction transaction, string schema, LockOperation intendedOperation)
         {
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schema, intendedOperation);
             return GetIndexCatalog(transaction, schemaMeta, intendedOperation);
@@ -540,7 +688,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void UpdateDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
+        private void UpdateDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
         {
             try
             {
@@ -761,13 +909,13 @@ namespace Katzebase.Engine.Indexes
                 var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, indexMeta.DiskPath, LockOperation.Write);
                 Utility.EnsureNotNull(indexPageCatalog);
 
-                var ptThreadCreation = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCreation);
+                var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
                 var threadParam = new RebuildIndexThreadParam(transaction, schemaMeta, indexPageCatalog, indexMeta, documentCatalog);
-
-                int threadCount = ThreadPoolHelper.CalculateThreadCount(documentCatalog.Collection.Count, 0.25);
+                int threadCount = ThreadPoolHelper.CalculateThreadCount(documentCatalog.Collection.Count);
+                transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                 var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, RebuildIndexThreadParam>
                     .CreateAndStart(RebuildIndexThreadProc, threadParam, threadCount);
-                ptThreadCreation?.EndTrace();
+                ptThreadCreation?.StopAndAccumulate();
 
                 foreach (var documentCatalogItem in documentCatalog.Collection)
                 {
@@ -779,9 +927,9 @@ namespace Katzebase.Engine.Indexes
                     threadPool.EnqueueWorkItem(documentCatalogItem);
                 }
 
-                var ptThreadCompletion = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCompletion);
+                var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
                 threadPool.WaitForCompletion();
-                ptThreadCompletion?.EndTrace();
+                ptThreadCompletion?.StopAndAccumulate();
 
                 core.IO.PutPBuf(transaction, indexMeta.DiskPath, indexPageCatalog);
             }

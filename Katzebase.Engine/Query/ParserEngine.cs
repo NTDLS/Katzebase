@@ -28,12 +28,12 @@ namespace Katzebase.Engine.Query
             result.QueryType = queryType;
 
             //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Rebuild.
-            if (queryType == QueryType.Rebuild)
+            #region Create.
+            if (queryType == QueryType.Create)
             {
-                if (query.IsNextToken("index") == false)
+                if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [index].");
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected [index] or [uniquekey].");
                 }
 
                 token = query.GetNextToken();
@@ -43,11 +43,128 @@ namespace Katzebase.Engine.Query
                 }
                 result.SubQueryType = subQueryType;
 
-                result.SubQueryObject = query.GetNextToken();
+                result.AddAttribute(PreparedQuery.QueryAttribute.IsUnique, (subQueryType == SubQueryType.UniqueKey));
+
+                token = query.GetNextToken();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + result.SubQueryObject + "], expected index name.");
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected index name.");
                 }
+                result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
+
+                if (query.NextCharacter != '(')
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.NextCharacter + "], expected [,].");
+                }
+                query.SkipDelimiters('(');
+
+                while (true) //Get fields
+                {
+                    token = query.GetNextToken().ToLower();
+                    if (token == string.Empty)
+                    {
+                        throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected [, or )].");
+                    }
+
+                    result.SelectFields.Add(token);
+
+                    if (query.NextCharacter == ',')
+                    {
+                        query.SkipDelimiters(',');
+                    }
+                    if (query.NextCharacter == ')')
+                    {
+                        query.SkipDelimiters(')');
+                        break;
+                    }
+                }
+
+
+                token = query.GetNextToken().ToLower();
+                if (token != "on")
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected index [on].");
+                }
+
+                token = query.GetNextToken();
+                if (token == string.Empty)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                }
+
+                result.Schemas.Add(new QuerySchema(token));
+
+                if (query.IsEnd() == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                }
+            }
+            #endregion
+            //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region Drop.
+            else if (queryType == QueryType.Drop)
+            {
+                if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected [index] or [uniquekey].");
+                }
+
+                token = query.GetNextToken();
+                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
+                }
+                result.SubQueryType = subQueryType;
+
+                token = query.GetNextToken();
+                if (token == string.Empty)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected index name.");
+                }
+                result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
+
+                token = query.GetNextToken().ToLower();
+                if (token != "on")
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected index [on].");
+                }
+
+                token = query.GetNextToken();
+                if (token == string.Empty)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                }
+
+                result.Schemas.Add(new QuerySchema(token));
+
+                if (query.IsEnd() == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                }
+            }
+            #endregion
+            //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region Rebuild.
+            else if (queryType == QueryType.Rebuild)
+            {
+                if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected [index] or [uniquekey].");
+                }
+
+                token = query.GetNextToken();
+                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
+                }
+                result.SubQueryType = subQueryType;
+
+                token = query.GetNextToken();
+                if (token == string.Empty)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected index name.");
+                }
+                result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
 
                 token = query.GetNextToken().ToLower();
                 if (token != "on")
@@ -219,7 +336,7 @@ namespace Katzebase.Engine.Query
             #region List.
             else if (queryType == QueryType.List)
             {
-                if (query.IsNextToken(new string[] { "documents", "schemas" }) == false )
+                if (query.IsNextToken(new string[] { "documents", "schemas" }) == false)
                 {
                     throw new KbParserException("Invalid query. Found [" + token + "], expected [documents, schemas].");
                 }

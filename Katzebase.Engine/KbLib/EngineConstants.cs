@@ -61,7 +61,9 @@
             Alter,
             Insert,
             Update,
+            Create,
             Delete,
+            Drop,
             Rebuild,
             Set
         }
@@ -71,7 +73,8 @@
             None,
             Schemas,
             Documents,
-            Index
+            Index,
+            UniqueKey
         }
 
         public enum LogicalConnector

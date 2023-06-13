@@ -33,13 +33,12 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             Utility.EnsureNotNull(topLevelMap.SchemaMeta);
             Utility.EnsureNotNull(topLevelMap.SchemaMeta.DiskPath);
 
-            //TODO: We should put some intelligence behind the thread count.
-            var ptThreadCreation = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCreation);
+            var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(topLevelMap.DocuemntCatalog.Collection.Count);
-            //int threadCount = 1;
+            transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
-            ptThreadCreation?.EndTrace();
+            ptThreadCreation?.StopAndAccumulate();
 
             foreach (var toplevelDocument in topLevelMap.DocuemntCatalog.Collection)
             {
@@ -56,9 +55,9 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 threadPool.EnqueueWorkItem(toplevelDocument);
             }
 
-            var ptThreadCompletion = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCompletion);
+            var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
             threadPool.WaitForCompletion();
-            ptThreadCompletion?.EndTrace();
+            ptThreadCompletion?.StopAndAccumulate();
 
             //Get a list of all the fields we need to sory by.
             if (query.SortFields.Any())
@@ -72,9 +71,9 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 }
 
                 //Sort the results:
-                var ptSorting = transaction.PT?.BeginTrace(PerformanceTraceType.Sorting);
+                var ptSorting = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Sorting);
                 threadParam.Results.Collection = threadParam.Results.Collection.OrderBy(row => row.Values, new ResultValueComparer(sortingColumns)).ToList();
-                ptSorting?.EndTrace();
+                ptSorting?.StopAndAccumulate();
             }
 
             //Enforce row limits.
@@ -325,9 +324,9 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
                 SetSchemaIntersectionExpressionParameters(ref expression, nextLevelMap.Conditions, jJoinScopedContentCache);
 
-                var ptEvaluate = param.Transaction.PT?.BeginTrace(PerformanceTraceType.Evaluate);
+                var ptEvaluate = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
-                ptEvaluate?.EndTrace();
+                ptEvaluate?.StopAndAccumulate();
 
                 if (evaluation)
                 {
@@ -478,9 +477,9 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             {
                 SetQueryGlobalConditionsExpressionParameters(ref expression, param.Query.Conditions, inputResult.ConditionFields);
 
-                var ptEvaluate = param.Transaction.PT?.BeginTrace(PerformanceTraceType.Evaluate);
+                var ptEvaluate = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
-                ptEvaluate?.EndTrace();
+                ptEvaluate?.StopAndAccumulate();
 
                 if (evaluation)
                 {

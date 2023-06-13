@@ -1,0 +1,8 @@
+SET TraceWaitTimes ON;
+
+CREATE INDEX IX_Address_City_PostalCode
+(
+	City,
+	PostalCode
+)
+ON AdventureWorks2012:Person:Address

@@ -27,7 +27,7 @@ namespace Katzebase.Engine.Query.Searchers
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schemaName, LockOperation.Read);
             if (schemaMeta == null || schemaMeta.Exists == false)
             {
-                throw new KbInvalidSchemaException(schemaName);
+                throw new KbObjectNotFoundException(schemaName);
             }
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
@@ -94,7 +94,7 @@ namespace Katzebase.Engine.Query.Searchers
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schemaName, LockOperation.Read);
             if (schemaMeta == null || schemaMeta.Exists == false)
             {
-                throw new KbInvalidSchemaException(schemaName);
+                throw new KbObjectNotFoundException(schemaName);
             }
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
@@ -148,7 +148,7 @@ namespace Katzebase.Engine.Query.Searchers
             {
                 query.SelectFields.Clear();
 
-                var ptSample = transaction.PT?.BeginTrace(PerformanceTraceType.Sampling);
+                var ptSample = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Sampling);
                 foreach (var schema in query.Schemas)
                 {
                     var sample = SampleSchemaDocuments(core, transaction, schema.Name, 0);
@@ -165,7 +165,7 @@ namespace Katzebase.Engine.Query.Searchers
                         }
                     }
                 }
-                ptSample?.EndTrace();
+                ptSample?.StopAndAccumulate();
             }
             else if (query.SelectFields.Count == 0)
             {
@@ -213,7 +213,7 @@ namespace Katzebase.Engine.Query.Searchers
                     var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, querySchema.Name, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(querySchema.Name);
+                        throw new KbObjectNotFoundException(querySchema.Name);
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 

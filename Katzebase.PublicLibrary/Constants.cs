@@ -17,5 +17,11 @@
             Ascending,
             Descending
         }
+
+        public enum KbMetricType
+        {
+            Descrete,
+            Cumulative
+        }
     }
 }

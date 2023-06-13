@@ -76,7 +76,9 @@ namespace Katzebase.Engine.Query
                 return KbQueryResult.FromActionResponse(ExecuteNonQuery(processId, preparedQuery));
             }
             else if (preparedQuery.QueryType == QueryType.Delete
-                || preparedQuery.QueryType == QueryType.Rebuild)
+                || preparedQuery.QueryType == QueryType.Rebuild
+                || preparedQuery.QueryType == QueryType.Create
+                || preparedQuery.QueryType == QueryType.Drop)
             {
                 //Reroute to non-query as appropriate:
                 return KbQueryResult.FromActionResponse(ExecuteNonQuery(processId, preparedQuery));
@@ -105,7 +107,27 @@ namespace Katzebase.Engine.Query
             }
             else if (preparedQuery.QueryType == QueryType.Rebuild)
             {
-                return core.Indexes.ExecuteRebuild(processId, preparedQuery);
+                if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                {
+                    return core.Indexes.ExecuteRebuild(processId, preparedQuery);
+                }
+                throw new NotImplementedException();
+            }
+            else if (preparedQuery.QueryType == QueryType.Create)
+            {
+                if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                {
+                    return core.Indexes.ExecuteCreate(processId, preparedQuery);
+                }
+                throw new NotImplementedException();
+            }
+            else if (preparedQuery.QueryType == QueryType.Drop)
+            {
+                if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                {
+                    return core.Indexes.ExecuteDrop(processId, preparedQuery);
+                }
+                throw new NotImplementedException();
             }
             else
             {

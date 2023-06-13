@@ -75,7 +75,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
-                var ptLock = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Lock, $"File:{lockOperation}");
+                var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"File:{lockOperation}");
 
                 diskpath = diskpath.ToLower();
 
@@ -86,7 +86,7 @@ namespace Katzebase.Engine.Transactions
                     var lockIntention = new LockIntention(diskpath, LockType.File, lockOperation);
                     core.Locking.Locks.Acquire(this, lockIntention);
                 }
-                ptLock?.EndTrace();
+                ptLock?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -99,7 +99,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
-                var ptLock = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Lock, $"Directory:{lockOperation}");
+                var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
 
                 diskpath = diskpath.ToLower();
 
@@ -111,7 +111,7 @@ namespace Katzebase.Engine.Transactions
                     core.Locking.Locks.Acquire(this, lockIntention);
                 }
 
-                ptLock?.EndTrace();
+                ptLock?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -183,7 +183,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
-                var ptRecording = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Recording);
+                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
                 lock (ReversibleActions)
                 {
                     if (IsFileAlreadyRecorded(filePath))
@@ -203,7 +203,7 @@ namespace Katzebase.Engine.Transactions
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
 
-                ptRecording?.EndTrace();
+                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -216,7 +216,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
-                var ptRecording = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Recording);
+                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
                 lock (ReversibleActions)
                 {
                     if (IsFileAlreadyRecorded(path))
@@ -235,7 +235,7 @@ namespace Katzebase.Engine.Transactions
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
-                ptRecording?.EndTrace();
+                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -248,7 +248,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
-                var ptRecording = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Recording);
+                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
                 lock (ReversibleActions)
                 {
@@ -273,7 +273,7 @@ namespace Katzebase.Engine.Transactions
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
-                ptRecording?.EndTrace();
+                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -286,7 +286,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
-                var ptRecording = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Recording);
+                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
                 lock (ReversibleActions)
                 {
@@ -310,7 +310,7 @@ namespace Katzebase.Engine.Transactions
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
-                ptRecording?.EndTrace();
+                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -323,7 +323,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
-                var ptRecording = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Recording);
+                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
                 lock (ReversibleActions)
                 {
@@ -347,7 +347,7 @@ namespace Katzebase.Engine.Transactions
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
-                ptRecording?.EndTrace();
+                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -370,7 +370,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
-                var ptRollback = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Rollback);
+                var ptRollback = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Rollback);
                 try
                 {
                     var rollbackActions = ReversibleActions.OrderByDescending(o => o.Sequence);
@@ -436,7 +436,8 @@ namespace Katzebase.Engine.Transactions
                     ReleaseLocks();
                 }
 
-                ptRollback?.EndTrace();
+                ptRollback?.StopAndAccumulate();
+                PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - this.StartTime).TotalMilliseconds);
             }
             catch (Exception ex)
             {
@@ -449,7 +450,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
-                var ptCommit = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Commit);
+                var ptCommit = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Commit);
                 lock (this)
                 {
                     referenceCount--;
@@ -478,7 +479,9 @@ namespace Katzebase.Engine.Transactions
                     }
                 }
 
-                ptCommit?.EndTrace();
+                ptCommit?.StopAndAccumulate();
+
+                PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - this.StartTime).TotalMilliseconds);
             }
             catch (Exception ex)
             {

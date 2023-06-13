@@ -1,13 +1,14 @@
-﻿using Katzebase.PublicLibrary.Exceptions;
-using Katzebase.PublicLibrary.Payloads;
+﻿using Katzebase.PublicLibrary.Payloads;
+using Newtonsoft.Json.Linq;
+using static Katzebase.PublicLibrary.Constants;
 
 namespace Katzebase.Engine.Trace
 {
     internal class PerformanceTrace
     {
-        internal Dictionary<string, double> Aggregations { get; private set; } = new();
+        internal Dictionary<string, KbMetric> Metrics { get; private set; } = new();
 
-        internal enum PerformanceTraceType
+        internal enum PerformanceTraceCumulativeMetricType
         {
             IndexSeek,
             IndexDistillation,
@@ -34,47 +35,75 @@ namespace Katzebase.Engine.Trace
             Recording
         }
 
-        internal TraceItem BeginTrace(PerformanceTraceType type)
+        internal enum PerformanceTraceDescreteMetricType
         {
-            return new TraceItem(this, type, $"{type}");
+            ThreadCount,
+            TransactionDuration
         }
 
-        internal TraceItem BeginTrace(PerformanceTraceType type, string supplementalType)
+        internal PerformanceTraceDurationTracker CreateDurationTracker(PerformanceTraceCumulativeMetricType type)
         {
-            return new TraceItem(this, type, $"{type}:{supplementalType}");
+            return new PerformanceTraceDurationTracker(this, type, $"{type}");
         }
 
-        internal TraceItem BeginTrace<T>(PerformanceTraceType type)
+        internal PerformanceTraceDurationTracker CreateDurationTracker(PerformanceTraceCumulativeMetricType type, string supplementalType)
         {
-            return new TraceItem(this, type, $"{type}:{typeof(T).Name}");
+            return new PerformanceTraceDurationTracker(this, type, $"{type}:{supplementalType}");
         }
 
-        public void Aggregate(TraceItem item)
+        internal PerformanceTraceDurationTracker CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType type)
         {
-            lock (Aggregations)
+            return new PerformanceTraceDurationTracker(this, type, $"{type}:{typeof(T).Name}");
+        }
+
+        public void AccumulateDuration(PerformanceTraceDurationTracker item)
+        {
+
+            lock (Metrics)
             {
-                if (Aggregations.ContainsKey(item.Key))
+                if (Metrics.ContainsKey(item.Key))
                 {
-                    Aggregations[item.Key] += item.Duration;
+                    var lookup = Metrics[item.Key];
+                    lookup.Value += item.Duration;
+                    lookup.Count++;
                 }
                 else
                 {
-                    Aggregations.Add(item.Key, item.Duration);
+                    var lookup = new KbMetric(KbMetricType.Cumulative, item.Key, item.Duration);
+                    lookup.Count++;
+                    Metrics.Add(item.Key, lookup);
                 }
             }
         }
 
-        internal List<KbNameValue<double>> ToWaitTimes()
+        public void AddDescreteMetric(PerformanceTraceDescreteMetricType type, double value)
         {
-            var result = new List<KbNameValue<double>>();
-
-            foreach (var wt in Aggregations)
+            lock (Metrics)
             {
-                result.Add(new KbNameValue<double>(wt.Key, wt.Value));
+                var key = $"{type}";
+
+                if (Metrics.ContainsKey(key))
+                {
+                    var lookup = Metrics[key];
+                    lookup.Value = value;
+                    lookup.Count++;
+                }
+                else
+                {
+                    var lookup = new KbMetric(KbMetricType.Descrete, key, value);
+                    lookup.Count++;
+                    Metrics.Add(key, lookup);
+                }
             }
+        }
+
+        internal KbMetricCollection ToCollection()
+        {
+            var result = new KbMetricCollection();
+
+            result.AddRange(Metrics.Select(o => o.Value));
 
             return result;
         }
-
     }
 }

@@ -57,10 +57,10 @@ namespace Katzebase.Engine.Sessions
                 var result = new KbActionResponse();
                 var pt = new PerformanceTrace();
 
-                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
+                var ptAcquireTransaction = pt?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
                 using (var transaction = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.EndTrace();
+                    ptAcquireTransaction?.StopAndAccumulate();
 
                     var session = ByProcessId(processId);
 

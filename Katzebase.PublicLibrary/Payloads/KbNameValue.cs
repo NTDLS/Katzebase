@@ -1,12 +1,31 @@
-﻿namespace Katzebase.PublicLibrary.Payloads
+﻿using static Katzebase.PublicLibrary.Constants;
+
+namespace Katzebase.PublicLibrary.Payloads
 {
-    public class KbNameValue<T>
+    public class KbMetric
     {
         public string Name { get; set; }
-        public T Value { get; set; }
+        public double Value { get; set; } = 0;
+        /// <summary>
+        /// The number of times that a KbMetricType.Cumulative value was set.
+        /// </summary>
+        public double Count { get; set; } = 0;
+        public KbMetricType MetricType { get; set; }
 
-        public KbNameValue(string name, T value)
+        public KbMetric()
         {
+            Name = string.Empty;
+        }
+
+        public KbMetric(KbMetricType metricType, string name)
+        {
+            MetricType = metricType;
+            Name = name;
+        }
+
+        public KbMetric(KbMetricType metricType, string name, double value)
+        {
+            MetricType = metricType;
             Name = name;
             Value = value;
         }

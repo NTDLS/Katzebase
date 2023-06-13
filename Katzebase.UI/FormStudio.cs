@@ -1102,19 +1102,26 @@ namespace Katzebase.UI
                         AppendToOutput(result.Explanation, Color.DarkGreen);
                     }
 
-                    if (result.WaitTimes?.Count > 0)
+                    if (result.Metrics?.Count > 0)
                     {
-                        var waitTimeTotal = result.WaitTimes.Sum(o => o.Value);
+                        var stringBuilder = new StringBuilder();
+                        stringBuilder.AppendLine("Metrics {");
 
-                        var waitTimes = new StringBuilder();
-                        waitTimes.AppendLine("Trace wait times {");
-                        foreach (var wt in result.WaitTimes.Where(o => o.Value > 0.5).OrderBy(o => o.Value))
+                        foreach (var wt in result.Metrics.Where(o => o.Value >= 0.5).OrderBy(o => o.Value))
                         {
-                            waitTimes.AppendLine($"\t{wt.Name}: {wt.Value:n0}");
-                        }
-                        waitTimes.AppendLine($"}} = {waitTimeTotal:n0}ms");
+                            stringBuilder.Append($"\t{wt.MetricType} {wt.Name}: {wt.Value:n0}");
+                            if (wt.MetricType == PublicLibrary.Constants.KbMetricType.Cumulative)
+                            {
+                                stringBuilder.Append($" (count: {wt.Count:n0})");
+                            }
 
-                        AppendToOutput(waitTimes.ToString(), Color.DarkBlue);
+                            stringBuilder.AppendLine();
+                        }
+
+                        stringBuilder.AppendLine($"}}");
+
+                        AppendToOutput(stringBuilder.ToString(), Color.DarkBlue);
+
                     }
 
                     PopulateResultsGrid(result);

@@ -1,0 +1,4 @@
+SET TraceWaitTimes ON;
+
+REBUILD INDEX IX_TransactionHistory_ProductID_ActualCost
+ON AdventureWorks2012:Production:transactionhistory

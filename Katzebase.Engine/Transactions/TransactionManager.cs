@@ -112,7 +112,7 @@ namespace Katzebase.Engine.Transactions
             {
                 lock (Collection)
                 {
-                    TraceItem? ptAcquireTransaction = null;
+                    PerformanceTraceDurationTracker? ptAcquireTransaction = null;
                     var transaction = GetByProcessId(processId);
                     if (transaction == null)
                     {
@@ -121,7 +121,7 @@ namespace Katzebase.Engine.Transactions
                             IsUserCreated = isUserCreated
                         };
 
-                        ptAcquireTransaction = transaction.PT?.BeginTrace(PerformanceTraceType.AcquireTransaction);
+                        ptAcquireTransaction = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
 
                         Collection.Add(transaction);
                     }
@@ -129,7 +129,7 @@ namespace Katzebase.Engine.Transactions
                     transaction.AddReference();
 
                     var result = new TransactionReference(transaction);
-                    ptAcquireTransaction?.EndTrace((DateTime.UtcNow - startTime).TotalMilliseconds);
+                    ptAcquireTransaction?.StopAndAccumulate((DateTime.UtcNow - startTime).TotalMilliseconds);
                     return result;
                 }
             }

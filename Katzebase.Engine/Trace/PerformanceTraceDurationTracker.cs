@@ -2,11 +2,11 @@
 
 namespace Katzebase.Engine.Trace
 {
-    internal class TraceItem
+    internal class PerformanceTraceDurationTracker
     {
         public string Key { get; set; }
         public PerformanceTrace Owner { get; private set; }
-        public PerformanceTraceType Type { get; private set; }
+        public PerformanceTraceCumulativeMetricType Type { get; private set; }
         public DateTime BeginTime { get; private set; }
         public DateTime FinishTime { get; private set; }
 
@@ -15,7 +15,7 @@ namespace Katzebase.Engine.Trace
         /// </summary>
         public double Duration { get; private set; }
 
-        public TraceItem(PerformanceTrace owner, PerformanceTraceType type, string key)
+        public PerformanceTraceDurationTracker(PerformanceTrace owner, PerformanceTraceCumulativeMetricType type, string key)
         {
             Key = key;
             Owner = owner;
@@ -23,17 +23,18 @@ namespace Katzebase.Engine.Trace
             BeginTime = DateTime.UtcNow;
         }
 
-        public void EndTrace()
+        public void StopAndAccumulate()
         {
             FinishTime = DateTime.UtcNow;
             Duration = (FinishTime - BeginTime).TotalMilliseconds;
-            Owner.Aggregate(this);
+            Owner.AccumulateDuration(this);
         }
-        public void EndTrace(double extraTimeMilliseconds)
+
+        public void StopAndAccumulate(double extraTimeMilliseconds)
         {
             FinishTime = DateTime.UtcNow;
             Duration = (FinishTime - BeginTime).TotalMilliseconds + extraTimeMilliseconds;
-            Owner.Aggregate(this);
+            Owner.AccumulateDuration(this);
         }
     }
 }

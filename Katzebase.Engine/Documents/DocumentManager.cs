@@ -34,7 +34,7 @@ namespace Katzebase.Engine.Documents
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schemas[0].Prefix, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(preparedQuery.Schemas[0].Prefix);
+                        throw new KbObjectNotFoundException(preparedQuery.Schemas[0].Prefix);
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
@@ -43,7 +43,7 @@ namespace Katzebase.Engine.Documents
 
                     txRef.Commit();
 
-                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -65,7 +65,7 @@ namespace Katzebase.Engine.Documents
                 {
                     result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
                     txRef.Commit();
-                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -93,8 +93,7 @@ namespace Katzebase.Engine.Documents
                     result = StaticSearcherMethods.SampleSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
                     txRef.Commit();
 
-                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
-
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -121,7 +120,7 @@ namespace Katzebase.Engine.Documents
                 {
                     result = StaticSearcherMethods.ListSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
                     txRef.Commit();
-                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -166,7 +165,7 @@ namespace Katzebase.Engine.Documents
 
                     txRef.Commit();
 
-                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -185,7 +184,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="schema"></param>
         /// <param name="document"></param>
         /// <param name="newId"></param>
-        /// <exception cref="KbInvalidSchemaException"></exception>
+        /// <exception cref="KbObjectNotFoundException"></exception>
         public KbActionResponse Store(ulong processId, string schema, KbDocument document, out Guid? newId)
         {
             try
@@ -212,7 +211,7 @@ namespace Katzebase.Engine.Documents
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(schema);
+                        throw new KbObjectNotFoundException(schema);
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
@@ -234,7 +233,7 @@ namespace Katzebase.Engine.Documents
 
                     txRef.Commit();
 
-                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -252,7 +251,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="processId"></param>
         /// <param name="schema"></param>
         /// <param name="newId"></param>
-        /// <exception cref="KbInvalidSchemaException"></exception>
+        /// <exception cref="KbObjectNotFoundException"></exception>
         public KbActionResponse DeleteById(ulong processId, string schema, Guid newId)
         {
             try
@@ -265,7 +264,7 @@ namespace Katzebase.Engine.Documents
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(schema);
+                        throw new KbObjectNotFoundException(schema);
                     }
 
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
@@ -292,7 +291,7 @@ namespace Katzebase.Engine.Documents
 
                     txRef.Commit();
 
-                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -310,7 +309,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="processId"></param>
         /// <param name="schema"></param>
         /// <returns></returns>
-        /// <exception cref="KbInvalidSchemaException"></exception>
+        /// <exception cref="KbObjectNotFoundException"></exception>
         public KbDocumentCatalogCollection EnumerateCatalog(ulong processId, string schema)
         {
             try
@@ -320,7 +319,7 @@ namespace Katzebase.Engine.Documents
                     PersistSchema schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(schema);
+                        throw new KbObjectNotFoundException(schema);
                     }
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
@@ -335,7 +334,7 @@ namespace Katzebase.Engine.Documents
                     }
                     txRef.Commit();
 
-                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
 
                     return result;
                 }

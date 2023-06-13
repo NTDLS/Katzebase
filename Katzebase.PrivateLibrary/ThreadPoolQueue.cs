@@ -8,7 +8,7 @@ namespace Katzebase.PrivateLibrary
         {
             int maxThreads = (int)Math.Ceiling(Environment.ProcessorCount * 16.0 * multiplier);
 
-            int threads = (int)Math.Ceiling(maxThreads * (expectedItemCount / 10000.0));
+            int threads = (int)Math.Ceiling((expectedItemCount / 10000.0));
             if (threads < 1)
             {
                 return 1;
@@ -38,7 +38,8 @@ namespace Katzebase.PrivateLibrary
         public delegate void UserThreadThread(ThreadPoolQueue<T, P> pool, P? obj);
         public Exception? Exception { get; set; } = null;
         public bool HasException => Exception != null;
-        public bool ContinueToProcessQueue { get; private set; } = true;
+        public bool ContinueToProcessQueue { get; set; } = true;
+
         public int ThreadCount { get; private set; }
         public int QueueSize { get; private set; }
 
@@ -110,6 +111,8 @@ namespace Katzebase.PrivateLibrary
             catch (Exception ex)
             {
                 pool.Exception = ex;
+                pool.ContinueToProcessQueue = false;
+                pool.Queue.Stop();
             }
             finally
             {
