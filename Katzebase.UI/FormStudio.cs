@@ -12,13 +12,11 @@ namespace Katzebase.UI
 {
     public partial class FormStudio : Form
     {
-        private int _executionExceptionCount = 0;
         private bool _timerTicking = false;
         private bool _firstShown = true;
         private readonly EditorFactory? _editorFactory = null;
         private readonly ImageList _treeImages = new ImageList();
         private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
-        private bool _scriptExecuting = false;
         public string _lastusedServerAddress = string.Empty;
         private string _firstLoadFilename = string.Empty;
 
@@ -67,7 +65,6 @@ namespace Katzebase.UI
 
             tabControlBody.MouseUp += TabControlBody_MouseUp;
 
-            splitContainerOutput.Panel2Collapsed = true; //For now, we just hide the bottom panel since we dont really do debugging.
             splitContainerMacros.Panel2Collapsed = true;
 
             _toolbarSyncTimer.Tick += _toolbarSyncTimer_Tick;
@@ -112,8 +109,8 @@ namespace Katzebase.UI
             toolStripButtonPaste.Enabled = isTabOpen;
             toolStripButtonRedo.Enabled = isTabOpen;
             toolStripButtonReplace.Enabled = isTabOpen;
-            toolStripButtonExecuteScript.Enabled = isTabOpen && !_scriptExecuting;
-            toolStripButtonExplainPlan.Enabled = isTabOpen && !_scriptExecuting;
+            toolStripButtonExecuteScript.Enabled = isTabOpen && (tabFilePage?.IsScriptExecuting == false);
+            toolStripButtonExplainPlan.Enabled = isTabOpen && (tabFilePage?.IsScriptExecuting == false);
             toolStripButtonUndo.Enabled = isTabOpen;
 
             toolStripButtonDecreaseIndent.Enabled = isTextSelected;
@@ -458,25 +455,10 @@ namespace Katzebase.UI
                 serverAddress = _lastusedServerAddress;
             }
 
-            if (string.IsNullOrWhiteSpace(tabText))
-            {
-                tabText = FormUtility.GetNextNewFileName();
-            }
+            var tabFilePage = TabFilePage.Create(_editorFactory, tabText, serverAddress);
 
-            var tabFilePage = _editorFactory.Create(serverAddress, tabText);
-
-            tabFilePage.Editor.KeyUp += Editor_KeyUp;
-            tabFilePage.Editor.Drop += Editor_Drop;
-
-            tabFilePage.Controls.Add(new System.Windows.Forms.Integration.ElementHost
-            {
-                Dock = DockStyle.Fill,
-                Child = tabFilePage.Editor
-            });
             tabControlBody.TabPages.Add(tabFilePage);
             tabControlBody.SelectedTab = tabFilePage;
-
-            tabFilePage.Client?.Server.Ping();
 
             tabFilePage.Editor.Focus();
 
@@ -514,7 +496,7 @@ namespace Katzebase.UI
         {
             if (e.Key == System.Windows.Input.Key.F5)
             {
-                ExecuteCurrentScriptAsync(false);
+                CurrentTabFilePage()?.ExecuteCurrentScriptAsync(false);
             }
         }
 
@@ -645,12 +627,12 @@ namespace Katzebase.UI
 
         private void toolStripButtonExecuteScript_Click(object sender, EventArgs e)
         {
-            ExecuteCurrentScriptAsync(false);
+            CurrentTabFilePage()?.ExecuteCurrentScriptAsync(false);
         }
 
         private void toolStripButtonExplainPlan_Click(object sender, EventArgs e)
         {
-            ExecuteCurrentScriptAsync(true);
+            CurrentTabFilePage()?.ExecuteCurrentScriptAsync(false);
         }
 
         private void toolStripButtonCloseCurrentTab_Click(object sender, EventArgs e)
@@ -809,73 +791,13 @@ namespace Katzebase.UI
             }
         }
 
-        private void Group_OnStatus(WorkloadGroup sender, string text, Color color)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action<WorkloadGroup, string, Color>(Group_OnStatus), sender, text, color);
-                return;
-            }
-
-            AppendToOutput(text, color);
-        }
-
-        private void AppendToExplain(string text, Color color)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action<string, Color>(AppendToOutput), text, color);
-                return;
-            }
-
-            richTextBoxExplain.SelectionStart = richTextBoxExplain.TextLength;
-            richTextBoxExplain.SelectionLength = 0;
-
-            richTextBoxExplain.SelectionColor = color;
-            richTextBoxExplain.AppendText($"{text}\r\n");
-            richTextBoxExplain.SelectionColor = richTextBoxExplain.ForeColor;
-
-            richTextBoxExplain.SelectionStart = richTextBoxExplain.Text.Length;
-            richTextBoxExplain.ScrollToCaret();
-        }
-
-        private void AppendToOutput(string text, Color color)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action<string, Color>(AppendToOutput), text, color);
-                return;
-            }
-
-            richTextBoxOutput.SelectionStart = richTextBoxOutput.TextLength;
-            richTextBoxOutput.SelectionLength = 0;
-
-            richTextBoxOutput.SelectionColor = color;
-            richTextBoxOutput.AppendText($"{text}\r\n");
-            richTextBoxOutput.SelectionColor = richTextBoxOutput.ForeColor;
-
-            richTextBoxOutput.SelectionStart = richTextBoxOutput.Text.Length;
-            richTextBoxOutput.ScrollToCaret();
-        }
-
-        private void Group_OnException(WorkloadGroup sender, KbExceptionBase ex)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action<WorkloadGroup, KbExceptionBase>(Group_OnException), sender, ex);
-                return;
-            }
-
-            _executionExceptionCount++;
-
-            splitContainerOutput.Panel2Collapsed = false;
-
-            AppendToOutput($"Exception: {ex.Message}\r\n", Color.DarkRed);
-        }
-
         private void toolStripButtonOutput_Click(object sender, EventArgs e)
         {
-            splitContainerOutput.Panel2Collapsed = !splitContainerOutput.Panel2Collapsed;
+            var tab = CurrentTabFilePage();
+            if (tab != null)
+            {
+                tab.CollapseSplitter = !tab.CollapseSplitter;
+            }
         }
 
         private void toolStripButtonSnippets_Click(object sender, EventArgs e)
@@ -968,235 +890,6 @@ namespace Katzebase.UI
 
         #endregion
 
-        #region Execute Current Script.
-
-        /// <summary>
-        /// This is for actually executing the script against a live database.
-        /// </summary>
-        private void ExecuteCurrentScriptAsync(bool justExplain)
-        {
-            try
-            {
-                if (_scriptExecuting)
-                {
-                    return;
-                }
-                _scriptExecuting = true;
-
-                var tabFilePage = CurrentTabFilePage();
-                if (tabFilePage == null || tabFilePage.Client == null)
-                {
-                    _scriptExecuting = false;
-                    return;
-                }
-
-                PreExecuteEvent(tabFilePage);
-
-                dataGridViewResults.Rows.Clear();
-                dataGridViewResults.Columns.Clear();
-
-                string scriptText = tabFilePage.Editor.Text;
-
-                if (tabFilePage.Editor.SelectionLength > 0)
-                {
-                    scriptText = tabFilePage.Editor.SelectedText;
-                }
-
-                Task.Run(() =>
-                {
-                    ExecuteCurrentScriptSync(tabFilePage.Client, scriptText, justExplain);
-                }).ContinueWith((t) =>
-                {
-                    PostExecuteEvent(tabFilePage);
-                });
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void PreExecuteEvent(TabFilePage tabFilePage)
-        {
-            try
-            {
-                if (InvokeRequired)
-                {
-                    Invoke(new Action<TabFilePage>(PreExecuteEvent), tabFilePage);
-                    return;
-                }
-
-                richTextBoxOutput.Text = "";
-                richTextBoxExplain.Text = "";
-                _executionExceptionCount = 0;
-
-                splitContainerOutput.Panel2Collapsed = false;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void PostExecuteEvent(TabFilePage tabFilePage)
-        {
-            try
-            {
-                if (InvokeRequired)
-                {
-                    Invoke(new Action<TabFilePage>(PostExecuteEvent), tabFilePage);
-                    return;
-                }
-
-                splitContainerOutput.Panel2Collapsed = false;
-
-                if (dataGridViewResults.RowCount > 0)
-                {
-                    tabControlOutput.SelectedTab = tabPageResults;
-                }
-                else
-                {
-                    tabControlOutput.SelectedTab = tabPageOutput;
-                }
-
-                _scriptExecuting = false;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void ExecuteCurrentScriptSync(KatzebaseClient client, string scriptText, bool justExplain)
-        {
-            WorkloadGroup group = new WorkloadGroup();
-
-            try
-            {
-                group.OnException += Group_OnException;
-                group.OnStatus += Group_OnStatus;
-
-                //TODO: This needs to be MUCH more intelligent! What about ';' in strings? ... :/
-                var scripts = scriptText.Split(";").Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
-
-                int batchNumber = 1;
-
-                foreach (var script in scripts)
-                {
-                    DateTime startTime = DateTime.UtcNow;
-
-                    KbQueryResult result;
-
-                    if (justExplain)
-                    {
-                        result = client.Query.ExplainQuery(script);
-                    }
-                    else
-                    {
-                        result = client.Query.ExecuteQuery(script);
-                    }
-
-                    var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                    AppendToOutput($"Batch {batchNumber:n0} of {scripts.Count} completed in {duration:N0}ms.", Color.Black);
-
-                    if (justExplain && string.IsNullOrWhiteSpace(result.Explanation) == false)
-                    {
-                        AppendToOutput(result.Explanation, Color.DarkGreen);
-                    }
-
-                    if (result.Metrics?.Count > 0)
-                    {
-                        var stringBuilder = new StringBuilder();
-                        stringBuilder.AppendLine("Metrics {");
-
-                        foreach (var wt in result.Metrics.Where(o => o.Value >= 0.5).OrderBy(o => o.Value))
-                        {
-                            stringBuilder.Append($"\t{wt.MetricType} {wt.Name}: {wt.Value:n0}");
-                            if (wt.MetricType == PublicLibrary.Constants.KbMetricType.Cumulative)
-                            {
-                                stringBuilder.Append($" (count: {wt.Count:n0})");
-                            }
-
-                            stringBuilder.AppendLine();
-                        }
-
-                        stringBuilder.AppendLine($"}}");
-
-                        AppendToOutput(stringBuilder.ToString(), Color.DarkBlue);
-
-                    }
-
-                    PopulateResultsGrid(result);
-
-                    if (string.IsNullOrWhiteSpace(result.Message) == false)
-                    {
-                        AppendToOutput($"{result.Message}", Color.Black);
-                    }
-
-                    batchNumber++;
-                }
-            }
-            catch (KbExceptionBase ex)
-            {
-                Group_OnException(group, ex);
-            }
-            catch (Exception ex)
-            {
-                Group_OnException(group, new KbExceptionBase(ex.Message));
-            }
-        }
-
-        private void PopulateResultsGrid(KbQueryResult result)
-        {
-            try
-            {
-                if (result.Rows.Count == 0)
-                {
-                    return;
-                }
-
-                if (InvokeRequired)
-                {
-                    Invoke(new Action<KbQueryResult>(PopulateResultsGrid), result);
-                    return;
-                }
-
-                dataGridViewResults.SuspendLayout();
-
-                foreach (var field in result.Fields)
-                {
-                    dataGridViewResults.Columns.Add(field.Name, field.Name);
-                }
-
-                int maxRowsToLoad = 100;
-                foreach (var row in result.Rows)
-                {
-                    var rowValues = new List<string>();
-
-                    for (int fieldIndex = 0; fieldIndex < result.Fields.Count; fieldIndex++)
-                    {
-                        var fieldValue = row.Values[fieldIndex];
-                        rowValues.Add(fieldValue ?? string.Empty);
-                    }
-
-                    dataGridViewResults.Rows.Add(rowValues.ToArray());
-
-                    maxRowsToLoad--;
-                    if (maxRowsToLoad <= 0)
-                    {
-                        break;
-                    }
-                }
-
-                dataGridViewResults.ResumeLayout();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        #endregion
 
         private void FormStudio_DragDrop(object sender, DragEventArgs e)
         {

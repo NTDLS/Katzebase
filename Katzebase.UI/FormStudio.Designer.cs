@@ -78,14 +78,6 @@
             closeAllToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
-            splitContainerOutput = new SplitContainer();
-            tabControlOutput = new TabControl();
-            tabPagePreview = new TabPage();
-            richTextBoxExplain = new RichTextBox();
-            tabPageOutput = new TabPage();
-            richTextBoxOutput = new RichTextBox();
-            tabPageResults = new TabPage();
-            dataGridViewResults = new DataGridView();
             ((System.ComponentModel.ISupportInitialize)splitContainerProject).BeginInit();
             splitContainerProject.Panel1.SuspendLayout();
             splitContainerProject.Panel2.SuspendLayout();
@@ -97,21 +89,13 @@
             splitContainerMacros.SuspendLayout();
             toolStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)splitContainerOutput).BeginInit();
-            splitContainerOutput.Panel1.SuspendLayout();
-            splitContainerOutput.Panel2.SuspendLayout();
-            splitContainerOutput.SuspendLayout();
-            tabControlOutput.SuspendLayout();
-            tabPagePreview.SuspendLayout();
-            tabPageOutput.SuspendLayout();
-            tabPageResults.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)dataGridViewResults).BeginInit();
             SuspendLayout();
             // 
             // splitContainerProject
             // 
+            splitContainerProject.Dock = DockStyle.Fill;
             splitContainerProject.FixedPanel = FixedPanel.Panel1;
-            splitContainerProject.Location = new Point(54, 30);
+            splitContainerProject.Location = new Point(0, 49);
             splitContainerProject.Name = "splitContainerProject";
             // 
             // splitContainerProject.Panel1
@@ -122,7 +106,7 @@
             // 
             splitContainerProject.Panel2.Controls.Add(statusStripDocument);
             splitContainerProject.Panel2.Controls.Add(splitContainerMacros);
-            splitContainerProject.Size = new Size(921, 349);
+            splitContainerProject.Size = new Size(1032, 597);
             splitContainerProject.SplitterDistance = 320;
             splitContainerProject.TabIndex = 0;
             // 
@@ -137,9 +121,9 @@
             // statusStripDocument
             // 
             statusStripDocument.Items.AddRange(new ToolStripItem[] { toolStripStatusLabelServerName, toolStripStatusLabelProcessId });
-            statusStripDocument.Location = new Point(0, 327);
+            statusStripDocument.Location = new Point(0, 575);
             statusStripDocument.Name = "statusStripDocument";
-            statusStripDocument.Size = new Size(597, 22);
+            statusStripDocument.Size = new Size(708, 22);
             statusStripDocument.SizingGrip = false;
             statusStripDocument.TabIndex = 2;
             statusStripDocument.Text = "statusStripDocument";
@@ -518,106 +502,13 @@
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
-            // splitContainerOutput
-            // 
-            splitContainerOutput.Dock = DockStyle.Fill;
-            splitContainerOutput.FixedPanel = FixedPanel.Panel2;
-            splitContainerOutput.Location = new Point(0, 49);
-            splitContainerOutput.Name = "splitContainerOutput";
-            splitContainerOutput.Orientation = Orientation.Horizontal;
-            // 
-            // splitContainerOutput.Panel1
-            // 
-            splitContainerOutput.Panel1.Controls.Add(splitContainerProject);
-            // 
-            // splitContainerOutput.Panel2
-            // 
-            splitContainerOutput.Panel2.Controls.Add(tabControlOutput);
-            splitContainerOutput.Size = new Size(1032, 597);
-            splitContainerOutput.SplitterDistance = 403;
-            splitContainerOutput.TabIndex = 3;
-            // 
-            // tabControlOutput
-            // 
-            tabControlOutput.Controls.Add(tabPagePreview);
-            tabControlOutput.Controls.Add(tabPageOutput);
-            tabControlOutput.Controls.Add(tabPageResults);
-            tabControlOutput.Dock = DockStyle.Fill;
-            tabControlOutput.Location = new Point(0, 0);
-            tabControlOutput.Name = "tabControlOutput";
-            tabControlOutput.SelectedIndex = 0;
-            tabControlOutput.Size = new Size(1032, 190);
-            tabControlOutput.TabIndex = 0;
-            // 
-            // tabPagePreview
-            // 
-            tabPagePreview.Controls.Add(richTextBoxExplain);
-            tabPagePreview.Location = new Point(4, 24);
-            tabPagePreview.Name = "tabPagePreview";
-            tabPagePreview.Size = new Size(1024, 162);
-            tabPagePreview.TabIndex = 0;
-            tabPagePreview.Text = "Preview";
-            tabPagePreview.UseVisualStyleBackColor = true;
-            // 
-            // richTextBoxExplain
-            // 
-            richTextBoxExplain.Dock = DockStyle.Fill;
-            richTextBoxExplain.Location = new Point(0, 0);
-            richTextBoxExplain.Name = "richTextBoxExplain";
-            richTextBoxExplain.Size = new Size(1024, 162);
-            richTextBoxExplain.TabIndex = 1;
-            richTextBoxExplain.Text = "";
-            // 
-            // tabPageOutput
-            // 
-            tabPageOutput.Controls.Add(richTextBoxOutput);
-            tabPageOutput.Location = new Point(4, 24);
-            tabPageOutput.Name = "tabPageOutput";
-            tabPageOutput.Size = new Size(1024, 162);
-            tabPageOutput.TabIndex = 1;
-            tabPageOutput.Text = "Output";
-            tabPageOutput.UseVisualStyleBackColor = true;
-            // 
-            // richTextBoxOutput
-            // 
-            richTextBoxOutput.Dock = DockStyle.Fill;
-            richTextBoxOutput.Location = new Point(0, 0);
-            richTextBoxOutput.Name = "richTextBoxOutput";
-            richTextBoxOutput.Size = new Size(1024, 162);
-            richTextBoxOutput.TabIndex = 0;
-            richTextBoxOutput.Text = "";
-            // 
-            // tabPageResults
-            // 
-            tabPageResults.Controls.Add(dataGridViewResults);
-            tabPageResults.Location = new Point(4, 24);
-            tabPageResults.Name = "tabPageResults";
-            tabPageResults.Size = new Size(1024, 162);
-            tabPageResults.TabIndex = 2;
-            tabPageResults.Text = "Results";
-            tabPageResults.UseVisualStyleBackColor = true;
-            // 
-            // dataGridViewResults
-            // 
-            dataGridViewResults.AllowUserToAddRows = false;
-            dataGridViewResults.AllowUserToDeleteRows = false;
-            dataGridViewResults.AllowUserToOrderColumns = true;
-            dataGridViewResults.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewResults.Dock = DockStyle.Fill;
-            dataGridViewResults.Location = new Point(0, 0);
-            dataGridViewResults.Name = "dataGridViewResults";
-            dataGridViewResults.ReadOnly = true;
-            dataGridViewResults.RowTemplate.Height = 25;
-            dataGridViewResults.Size = new Size(1024, 162);
-            dataGridViewResults.TabIndex = 1;
-            // 
             // FormStudio
             // 
             AllowDrop = true;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1032, 646);
-            Controls.Add(splitContainerOutput);
+            Controls.Add(splitContainerProject);
             Controls.Add(toolStrip1);
             Controls.Add(menuStrip1);
             Icon = (Icon)resources.GetObject("$this.Icon");
@@ -642,15 +533,6 @@
             toolStrip1.PerformLayout();
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
-            splitContainerOutput.Panel1.ResumeLayout(false);
-            splitContainerOutput.Panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)splitContainerOutput).EndInit();
-            splitContainerOutput.ResumeLayout(false);
-            tabControlOutput.ResumeLayout(false);
-            tabPagePreview.ResumeLayout(false);
-            tabPageOutput.ResumeLayout(false);
-            tabPageResults.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)dataGridViewResults).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -676,8 +558,6 @@
         private ToolStripMenuItem documentToolStripMenuItem;
         private ToolStripMenuItem saveToolStripMenuItem;
         private ToolStripMenuItem closeToolStripMenuItem;
-        private SplitContainer splitContainerOutput;
-        private TabControl tabControlOutput;
         private ToolStripMenuItem closeAllToolStripMenuItem;
         private ToolStripButton toolStripButtonFind;
         private ToolStripButton toolStripButtonReplace;
@@ -702,14 +582,8 @@
         private ToolStripButton toolStripButtonProject;
         private ToolStripButton toolStripButtonOutput;
         private ToolStripSeparator toolStripSeparator7;
-        private TabPage tabPagePreview;
-        private TabPage tabPageOutput;
-        private RichTextBox richTextBoxOutput;
         private ToolStripButton toolStripButtonExecuteScript;
-        private TabPage tabPageResults;
-        private DataGridView dataGridViewResults;
         private ToolStripButton toolStripButtonExplainPlan;
-        private RichTextBox richTextBoxExplain;
         private ToolStripMenuItem connectToolStripMenuItem;
         private StatusStrip statusStripDocument;
         private ToolStripStatusLabel toolStripStatusLabelServerName;
