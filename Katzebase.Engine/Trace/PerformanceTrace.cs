@@ -1,4 +1,6 @@
-﻿namespace Katzebase.Engine.Trace
+﻿using Katzebase.PublicLibrary.Exceptions;
+
+namespace Katzebase.Engine.Trace
 {
     public class PerformanceTrace
     {
@@ -11,7 +13,7 @@
             AcquireTransaction,
             Optimization,
             Lock,
-            Sample,
+            Sampling,
             CacheRead,
             CacheWrite,
             IORead,
@@ -29,6 +31,11 @@
 
         public TraceItem BeginTrace(PerformanceTraceType type)
         {
+            if (type == PerformanceTraceType.Lock)
+            {
+                throw new KbFatalException("Lock trace requires sub type. Use BeginTrace<T>().");
+            }
+
             return new TraceItem(this, type, $"{type}");
         }
 

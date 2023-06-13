@@ -56,7 +56,6 @@ namespace Katzebase.Engine.Query.Searchers
 
                     if (i == 0)
                     {
-                        result.Fields.Add(new KbQueryField("$RID"));
                         foreach (var jToken in jContent)
                         {
                             result.Fields.Add(new KbQueryField(jToken.Key));
@@ -153,16 +152,16 @@ namespace Katzebase.Engine.Query.Searchers
             {
                 query.SelectFields.Clear();
 
-                var ptSample = pt?.BeginTrace(PerformanceTraceType.Sample);
+                var ptSample = pt?.BeginTrace(PerformanceTraceType.Sampling);
                 foreach (var schema in query.Schemas)
                 {
                     var sample = SampleSchemaDocuments(core, pt, transaction, schema.Name, 0);
 
                     foreach (var field in sample.Fields)
                     {
-                        if (schema.Alias != string.Empty)
+                        if (schema.Prefix != string.Empty)
                         {
-                            query.SelectFields.Add($"{schema.Alias}.{field.Name}");
+                            query.SelectFields.Add(schema.Prefix, field.Name, $"{schema.Prefix}.{field.Name}");
                         }
                         else
                         {
@@ -229,7 +228,7 @@ namespace Katzebase.Engine.Query.Searchers
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(documentCatalog);
 
-                    schemaMap.Add(querySchema.Alias, schemaMeta, documentCatalog, querySchema.Conditions);
+                    schemaMap.Add(querySchema.Prefix, schemaMeta, documentCatalog, querySchema.Conditions);
                 }
 
                 /*

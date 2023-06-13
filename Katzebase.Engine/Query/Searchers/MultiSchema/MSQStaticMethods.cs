@@ -202,12 +202,21 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     schemaResultRows.Add(schemaResultValues);
                 }
 
-                //Limit the results by the query where clause.
-                var constrainedResults = ApplyQueryGlobalConditions(param, schemaResultRows);
-
-                lock (param.Results)
+                if (param.Query.Conditions.AllFields.Any())
                 {
-                    param.Results.AddRange(constrainedResults);
+                    //Limit the results by the query where clause.
+                    var constrainedResults = ApplyQueryGlobalConditions(param, schemaResultRows);
+                    lock (param.Results)
+                    {
+                        param.Results.AddRange(constrainedResults);
+                    }
+                }
+                else
+                {
+                    lock (param.Results)
+                    {
+                        param.Results.AddRange(schemaResultRows);
+                    }
                 }
             }
         }

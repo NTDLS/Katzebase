@@ -113,7 +113,7 @@ namespace Katzebase.Engine.Query.Tokenizers
         public void SetPosition(int position)
         {
             _position = position;
-            if (_position >= _text.Length)
+            if (_position > _text.Length)
             {
                 throw new KbParserException("Skip position is greater than query length.");
             }

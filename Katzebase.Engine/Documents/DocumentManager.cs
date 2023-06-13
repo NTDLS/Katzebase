@@ -40,10 +40,10 @@ namespace Katzebase.Engine.Documents
                     ptAcquireTransaction?.EndTrace();
 
                     var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schemas[0].Alias, LockOperation.Read);
+                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schemas[0].Prefix, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        throw new KbInvalidSchemaException(preparedQuery.Schemas[0].Alias);
+                        throw new KbInvalidSchemaException(preparedQuery.Schemas[0].Prefix);
                     }
                     ptLockSchema?.EndTrace();
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
