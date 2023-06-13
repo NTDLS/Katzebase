@@ -3,7 +3,7 @@
 
 Katzebase is a fully ACID compliant document-based data storage engine that mimics a relational database. The engine is wrapped by MVC controllers and allows access via APIs, a SQL like syntax or by using the bundled management UI.
 
-![image](https://github.com/NTDLS/Katzebase/assets/11428567/6978adf6-bae6-4ca1-94ba-65e0e4b1b63f)
+![image](https://github.com/NTDLS/Katzebase/assets/11428567/02899c13-1eab-4b86-8e3d-601efc2a419d)
 
 ## Features:
 - Abortable transactions.
