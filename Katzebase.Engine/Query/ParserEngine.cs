@@ -28,8 +28,50 @@ namespace Katzebase.Engine.Query
             result.QueryType = queryType;
 
             //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region Rebuild.
+            if (queryType == QueryType.Rebuild)
+            {
+                if (query.IsNextToken("index") == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected [index].");
+                }
+
+                token = query.GetNextToken();
+                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
+                }
+                result.SubQueryType = subQueryType;
+
+                result.SubQueryObject = query.GetNextToken();
+                if (token == string.Empty)
+                {
+                    throw new KbParserException("Invalid query. Found [" + result.SubQueryObject + "], expected index name.");
+                }
+
+                token = query.GetNextToken().ToLower();
+                if (token != "on")
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected index [on].");
+                }
+
+                token = query.GetNextToken();
+                if (token == string.Empty)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                }
+
+                result.Schemas.Add(new QuerySchema(token));
+
+                if (query.IsEnd() == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                }
+            }
+            #endregion
+            //--------------------------------------------------------------------------------------------------------------------------------------------
             #region Delete.
-            if (queryType == QueryType.Delete)
+            else if (queryType == QueryType.Delete)
             {
                 /*
                 token = query.GetNextToken();
@@ -522,6 +564,7 @@ namespace Katzebase.Engine.Query
                 result.VariableValues.Add(new KbNameValuePair(variableName, variableValue));
             }
             #endregion
+            //--------------------------------------------------------------------------------------------------------------------------------------------
 
             #region Cleanup and ValidartiValidation.
 

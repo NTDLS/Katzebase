@@ -6,6 +6,9 @@ using static Katzebase.PublicLibrary.Constants;
 
 namespace Katzebase.Engine.Logging
 {
+    /// <summary>
+    /// This is the class that all API controllers should interface with for log access.
+    /// </summary>
     public class LogManager
     {
         private Core core;

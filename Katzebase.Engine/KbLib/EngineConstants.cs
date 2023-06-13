@@ -62,6 +62,7 @@
             Insert,
             Update,
             Delete,
+            Rebuild,
             Set
         }
 
@@ -69,7 +70,8 @@
         {
             None,
             Schemas,
-            Documents
+            Documents,
+            Index
         }
 
         public enum LogicalConnector

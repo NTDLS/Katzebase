@@ -19,23 +19,21 @@ namespace Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Returns a random sample of all docuemnt fields from a schema.
         /// </summary>
-        internal static KbQueryResult SampleSchemaDocuments(Core core, PerformanceTrace? pt, Transaction transaction, string schemaName, int rowLimit = -1)
+        internal static KbQueryResult SampleSchemaDocuments(Core core, Transaction transaction, string schemaName, int rowLimit = -1)
         {
             var result = new KbQueryResult();
 
             //Lock the schema:
-            var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schemaName, LockOperation.Read);
             if (schemaMeta == null || schemaMeta.Exists == false)
             {
                 throw new KbInvalidSchemaException(schemaName);
             }
-            ptLockSchema?.EndTrace();
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
             //Lock the document catalog:
             var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
-            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
+            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
             if (documentCatalog.Collection.Count > 0)
@@ -48,7 +46,7 @@ namespace Katzebase.Engine.Query.Searchers
                     var persistDocumentCatalogItem = documentCatalog.Collection[documentIndex];
 
                     var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, persistDocumentCatalogItem.FileName);
-                    var persistDocument = core.IO.GetJson<PersistDocument>(pt, transaction, persistDocumentDiskPath, LockOperation.Read);
+                    var persistDocument = core.IO.GetJson<PersistDocument>(transaction, persistDocumentDiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(persistDocument);
                     Utility.EnsureNotNull(persistDocument.Content);
 
@@ -88,23 +86,21 @@ namespace Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Returns a top list of all docuemnt fields from a schema.
         /// </summary>
-        internal static KbQueryResult ListSchemaDocuments(Core core, PerformanceTrace? pt, Transaction transaction, string schemaName, int topCount)
+        internal static KbQueryResult ListSchemaDocuments(Core core, Transaction transaction, string schemaName, int topCount)
         {
             var result = new KbQueryResult();
 
             //Lock the schema:
-            var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schemaName, LockOperation.Read);
             if (schemaMeta == null || schemaMeta.Exists == false)
             {
                 throw new KbInvalidSchemaException(schemaName);
             }
-            ptLockSchema?.EndTrace();
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
             //Lock the document catalog:
             var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
-            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
+            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
             for (int i = 0; i < documentCatalog.Collection.Count && (i < topCount || topCount < 0); i++)
@@ -112,7 +108,7 @@ namespace Katzebase.Engine.Query.Searchers
                 var persistDocumentCatalogItem = documentCatalog.Collection[i];
 
                 var persistDocumentDiskPath = Path.Combine(schemaMeta.DiskPath, persistDocumentCatalogItem.FileName);
-                var persistDocument = core.IO.GetJson<PersistDocument>(pt, transaction, persistDocumentDiskPath, LockOperation.Read);
+                var persistDocument = core.IO.GetJson<PersistDocument>(transaction, persistDocumentDiskPath, LockOperation.Read);
                 Utility.EnsureNotNull(persistDocument);
                 Utility.EnsureNotNull(persistDocument.Content);
 
@@ -144,7 +140,7 @@ namespace Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Finds all documents using a prepared query.
         /// </summary>
-        internal static KbQueryResult FindDocumentsByPreparedQuery(Core core, PerformanceTrace? pt, Transaction transaction, PreparedQuery query)
+        internal static KbQueryResult FindDocumentsByPreparedQuery(Core core, Transaction transaction, PreparedQuery query)
         {
             var result = new KbQueryResult();
 
@@ -152,10 +148,10 @@ namespace Katzebase.Engine.Query.Searchers
             {
                 query.SelectFields.Clear();
 
-                var ptSample = pt?.BeginTrace(PerformanceTraceType.Sampling);
+                var ptSample = transaction.PT?.BeginTrace(PerformanceTraceType.Sampling);
                 foreach (var schema in query.Schemas)
                 {
-                    var sample = SampleSchemaDocuments(core, pt, transaction, schema.Name, 0);
+                    var sample = SampleSchemaDocuments(core, transaction, schema.Name, 0);
 
                     foreach (var field in sample.Fields)
                     {
@@ -190,7 +186,7 @@ namespace Katzebase.Engine.Query.Searchers
                 //-------------------------------------------------------------------------------------------------------------
                 var singleSchema = query.Schemas.First();
 
-                var subsetResults = SSQStaticMethods.GetDocumentsByConditions(core, pt, transaction, singleSchema.Name, query);
+                var subsetResults = SSQStaticMethods.GetDocumentsByConditions(core, transaction, singleSchema.Name, query);
 
                 foreach (var field in query.SelectFields)
                 {
@@ -214,18 +210,16 @@ namespace Katzebase.Engine.Query.Searchers
                 foreach (var querySchema in query.Schemas)
                 {
                     //Lock the schema:
-                    var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
                     var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, querySchema.Name, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
                         throw new KbInvalidSchemaException(querySchema.Name);
                     }
-                    ptLockSchema?.EndTrace();
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
                     //Lock the document catalog:
                     var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
+                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, documentCatalogDiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(documentCatalog);
 
                     schemaMap.Add(querySchema.Prefix, schemaMeta, documentCatalog, querySchema.Conditions);
@@ -236,7 +230,7 @@ namespace Katzebase.Engine.Query.Searchers
                  *  Then we use the conditions that were supplied to eliminate results from that dataset.
                 */
 
-                var subsetResults = MSQStaticMethods.GetDocumentsByConditions(core, pt, transaction, schemaMap, query);
+                var subsetResults = MSQStaticMethods.GetDocumentsByConditions(core, transaction, schemaMap, query);
 
                 foreach (var field in query.SelectFields)
                 {

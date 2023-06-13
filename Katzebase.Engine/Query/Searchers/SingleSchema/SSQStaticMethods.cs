@@ -20,11 +20,10 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         /// <summary>
         /// Gets all documents by a subset of conditions.
         /// </summary>
-        internal static SSQDocumentLookupResults GetDocumentsByConditions(Core core,
-            PerformanceTrace? pt, Transaction transaction, string schemaName, PreparedQuery query)
+        internal static SSQDocumentLookupResults GetDocumentsByConditions(Core core, Transaction transaction, string schemaName, PreparedQuery query)
         {
             //Lock the schema:
-            var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
+            var ptLockSchema = transaction.PT?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schemaName, LockOperation.Read);
             if (schemaMeta == null || schemaMeta.Exists == false)
             {
@@ -35,7 +34,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             //Lock the document catalog:
             var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
-            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(pt, transaction, documentCatalogDiskPath, LockOperation.Read);
+            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, documentCatalogDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(documentCatalog);
 
             ConditionLookupOptimization? lookupOptimization = null;
@@ -59,10 +58,10 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                         Utility.EnsureNotNull(subset.IndexSelection);
                         Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
 
-                        var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(pt, transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                        var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
                         Utility.EnsureNotNull(indexPageCatalog);
 
-                        var documentIds = core.Indexes.MatchDocuments(pt, indexPageCatalog, subset.IndexSelection, subset);
+                        var documentIds = core.Indexes.MatchDocuments(transaction, indexPageCatalog, subset.IndexSelection, subset);
 
                         limitedDocumentCatalogItems.AddRange(documentCatalog.Collection.Where(o => documentIds.Contains(o.Id)).ToList());
                     }
@@ -91,8 +90,8 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             Utility.EnsureNotNull(schemaMeta.DiskPath);
 
-            var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
-            var threadParam = new LookupThreadParam(core, pt, transaction, schemaMeta, query, lookupOptimization);
+            var ptThreadCreation = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCreation);
+            var threadParam = new LookupThreadParam(core, transaction, schemaMeta, query, lookupOptimization);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(documentCatalog.Collection.Count);
             var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(GetDocumentsByConditionsThreadProc, threadParam, threadCount);
             ptThreadCreation?.EndTrace();
@@ -112,7 +111,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 threadPool.EnqueueWorkItem(documentCatalogItem);
             }
 
-            var ptThreadCompletion = pt?.BeginTrace(PerformanceTraceType.ThreadCompletion);
+            var ptThreadCompletion = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCompletion);
             threadPool.WaitForCompletion();
             ptThreadCompletion?.EndTrace();
 
@@ -128,7 +127,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 }
 
                 //Sort the results:
-                var ptSorting = pt?.BeginTrace(PerformanceTraceType.Sorting);
+                var ptSorting = transaction.PT?.BeginTrace(PerformanceTraceType.Sorting);
                 threadParam.Results.Collection = threadParam.Results.Collection.OrderBy(row => row.Values, new ResultValueComparer(sortingColumns)).ToList();
                 ptSorting?.EndTrace();
             }
@@ -149,16 +148,13 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             public SSQDocumentLookupResults Results = new();
             public PersistSchema SchemaMeta { get; private set; }
             public Core Core { get; private set; }
-            public PerformanceTrace? PT { get; private set; }
             public Transaction Transaction { get; private set; }
             public PreparedQuery Query { get; private set; }
             public ConditionLookupOptimization? LookupOptimization { get; private set; }
 
-            public LookupThreadParam(Core core, PerformanceTrace? pt, Transaction transaction,
-                PersistSchema schemaMeta, PreparedQuery query, ConditionLookupOptimization? lookupOptimization)
+            public LookupThreadParam(Core core, Transaction transaction, PersistSchema schemaMeta, PreparedQuery query, ConditionLookupOptimization? lookupOptimization)
             {
                 this.Core = core;
-                this.PT = pt;
                 this.Transaction = transaction;
                 this.SchemaMeta = schemaMeta;
                 this.Query = query;
@@ -190,7 +186,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 }
 
                 var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
-                var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
+                var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPath, LockOperation.Read);
                 Utility.EnsureNotNull(persistDocument);
                 Utility.EnsureNotNull(persistDocument.Content);
 
@@ -203,7 +199,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     SetExpressionParameters(ref expression, param.LookupOptimization.Conditions, jContent);
                 }
 
-                var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
+                var ptEvaluate = param.Transaction.PT?.BeginTrace(PerformanceTraceType.Evaluate);
                 bool evaluation = (expression == null) || (bool)expression.Evaluate();
                 ptEvaluate?.EndTrace();
 

@@ -1,12 +1,13 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
 
 namespace Katzebase.Engine.Trace
 {
-    public class PerformanceTrace
+    internal class PerformanceTrace
     {
-        public Dictionary<string, double> Aggregations { get; private set; } = new();
+        internal Dictionary<string, double> Aggregations { get; private set; } = new();
 
-        public enum PerformanceTraceType
+        internal enum PerformanceTraceType
         {
             IndexSeek,
             IndexDistillation,
@@ -15,6 +16,7 @@ namespace Katzebase.Engine.Trace
             Lock,
             Sampling,
             CacheRead,
+            DeferredWrite,
             CacheWrite,
             IORead,
             IOWrite,
@@ -26,20 +28,23 @@ namespace Katzebase.Engine.Trace
             ThreadReady,
             ThreadCompletion,
             Sorting,
-            Evaluate
+            Evaluate,
+            Rollback,
+            Commit,
+            Recording
         }
 
-        public TraceItem BeginTrace(PerformanceTraceType type)
+        internal TraceItem BeginTrace(PerformanceTraceType type)
         {
-            if (type == PerformanceTraceType.Lock)
-            {
-                throw new KbFatalException("Lock trace requires sub type. Use BeginTrace<T>().");
-            }
-
             return new TraceItem(this, type, $"{type}");
         }
 
-        public TraceItem BeginTrace<T>(PerformanceTraceType type)
+        internal TraceItem BeginTrace(PerformanceTraceType type, string supplementalType)
+        {
+            return new TraceItem(this, type, $"{type}:{supplementalType}");
+        }
+
+        internal TraceItem BeginTrace<T>(PerformanceTraceType type)
         {
             return new TraceItem(this, type, $"{type}:{typeof(T).Name}");
         }
@@ -58,5 +63,18 @@ namespace Katzebase.Engine.Trace
                 }
             }
         }
+
+        internal List<KbNameValue<double>> ToWaitTimes()
+        {
+            var result = new List<KbNameValue<double>>();
+
+            foreach (var wt in Aggregations)
+            {
+                result.Add(new KbNameValue<double>(wt.Key, wt.Value));
+            }
+
+            return result;
+        }
+
     }
 }

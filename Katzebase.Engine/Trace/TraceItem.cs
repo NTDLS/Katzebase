@@ -2,7 +2,7 @@
 
 namespace Katzebase.Engine.Trace
 {
-    public class TraceItem
+    internal class TraceItem
     {
         public string Key { get; set; }
         public PerformanceTrace Owner { get; private set; }
@@ -27,6 +27,12 @@ namespace Katzebase.Engine.Trace
         {
             FinishTime = DateTime.UtcNow;
             Duration = (FinishTime - BeginTime).TotalMilliseconds;
+            Owner.Aggregate(this);
+        }
+        public void EndTrace(double extraTimeMilliseconds)
+        {
+            FinishTime = DateTime.UtcNow;
+            Duration = (FinishTime - BeginTime).TotalMilliseconds + extraTimeMilliseconds;
             Owner.Aggregate(this);
         }
     }

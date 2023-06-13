@@ -1,5 +1,6 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Trace;
@@ -9,9 +10,13 @@ using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Indexes
 {
+    /// <summary>
+    /// This is the class that all API controllers should interface with for index access.
+    /// </summary>
     public class PersistIndexManager
     {
         private Core core;
@@ -20,7 +25,50 @@ namespace Katzebase.Engine.Indexes
             this.core = core;
         }
 
-        internal HashSet<Guid> MatchDocuments(PerformanceTrace? pt, PersistIndexPageCatalog indexPageCatalog,
+        internal KbActionResponse ExecuteRebuild(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                var result = new KbActionResponse();
+
+                PerformanceTrace? pt = null;
+
+                var session = core.Sessions.ByProcessId(processId);
+                if (session.TraceWaitTimesEnabled)
+                {
+                    pt = new PerformanceTrace();
+                }
+
+                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    ptAcquireTransaction?.EndTrace();
+
+                    string schema = preparedQuery.Schemas.First().Name;
+
+                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
+                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    {
+                        throw new KbInvalidSchemaException(preparedQuery.Schemas[0].Prefix);
+                    }
+
+                    Rebuild(txRef.Transaction, schemaMeta, preparedQuery.SubQueryObject);
+
+                    txRef.Commit();
+
+                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+        }
+
+        internal HashSet<Guid> MatchDocuments(Transaction transaction, PersistIndexPageCatalog indexPageCatalog,
             IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
         {
             var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
@@ -43,7 +91,7 @@ namespace Katzebase.Engine.Indexes
                     //TODO: Indexing only supports AND connectors, thats a performance problem.
 
                     //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
-                    var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                    var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
                     var resultintDocuments = DistillIndexLeaves(indexEntires);
                     ptIndexDistillation?.EndTrace();
                     return resultintDocuments.ToHashSet();
@@ -51,7 +99,7 @@ namespace Katzebase.Engine.Indexes
 
                 List<PersistIndexLeaf>? nextIndexEntires = null;
 
-                var ptIndexSeek = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexSeek);
+                var ptIndexSeek = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexSeek);
 
                 var conditionValue = conditionValues[attribute.Field.ToLower()];
 
@@ -85,7 +133,7 @@ namespace Katzebase.Engine.Indexes
 
             if (fullMatch == true)
             {
-                var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
                 var resultintDocuments = indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
                 //If we got here then we got a full match on the entire index. This is the best scenario.
                 ptIndexDistillation?.EndTrace();
@@ -93,7 +141,7 @@ namespace Katzebase.Engine.Indexes
             }
             else
             {
-                var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
                 var resultintDocuments = DistillIndexLeaves(indexEntires);
                 ptIndexDistillation?.EndTrace();
                 //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
@@ -104,7 +152,7 @@ namespace Katzebase.Engine.Indexes
         /// <summary>
         /// Finds document IDs given a set of conditions.
         /// </summary>
-        internal HashSet<Guid> MatchDocuments(PerformanceTrace? pt, PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
+        internal HashSet<Guid> MatchDocuments(Transaction transaction, PersistIndexPageCatalog indexPageCatalog, IndexSelection indexSelection, ConditionSubset conditionSubset)
         {
             var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
 
@@ -126,7 +174,7 @@ namespace Katzebase.Engine.Indexes
                     //TODO: Indexing only supports AND connectors, thats a performance problem.
 
                     //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
-                    var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                    var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
                     var resultintDocuments = DistillIndexLeaves(indexEntires);
                     ptIndexDistillation?.EndTrace();
                     return resultintDocuments.ToHashSet();
@@ -134,7 +182,7 @@ namespace Katzebase.Engine.Indexes
 
                 List<PersistIndexLeaf>? nextIndexEntires = null;
 
-                var ptIndexSeek = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexSeek);
+                var ptIndexSeek = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexSeek);
 
                 if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
                     nextIndexEntires = indexEntires.Where(o => o.Value == conditionField.Right.Value)?.ToList();
@@ -166,7 +214,7 @@ namespace Katzebase.Engine.Indexes
 
             if (fullMatch == true)
             {
-                var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
                 var resultintDocuments = indexEntires.SelectMany(o => o.DocumentIDs ?? new HashSet<Guid>()).ToList();
                 //If we got here then we got a full match on the entire index. This is the best scenario.
                 ptIndexDistillation?.EndTrace();
@@ -174,7 +222,7 @@ namespace Katzebase.Engine.Indexes
             }
             else
             {
-                var ptIndexDistillation = pt?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
+                var ptIndexDistillation = transaction.PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.IndexDistillation);
                 var resultintDocuments = DistillIndexLeaves(indexEntires);
                 ptIndexDistillation?.EndTrace();
                 //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
@@ -205,17 +253,20 @@ namespace Katzebase.Engine.Indexes
                 using (var txRef = core.Transactions.Begin(processId))
                 {
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta != null && schemaMeta.Exists)
+                    if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
-                        if (indexCatalog != null)
+                        throw new KbInvalidSchemaException(schema);
+                    }
+
+                    var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
+                    if (indexCatalog != null)
+                    {
+                        foreach (var index in indexCatalog.Collection)
                         {
-                            foreach (var index in indexCatalog.Collection)
-                            {
-                                result.Add(PersistIndex.ToPayload(index));
-                            }
+                            result.Add(PersistIndex.ToPayload(index));
                         }
                     }
+
 
                     txRef.Commit();
                 }
@@ -237,13 +288,15 @@ namespace Katzebase.Engine.Indexes
                 using (var txRef = core.Transactions.Begin(processId))
                 {
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta != null && schemaMeta.Exists)
+                    if (schemaMeta == null || schemaMeta.Exists == false)
                     {
-                        var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
-                        if (indexCatalog != null)
-                        {
-                            result = indexCatalog.GetByName(indexName) != null;
-                        }
+                        throw new KbInvalidSchemaException(schema);
+                    }
+
+                    var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
+                    if (indexCatalog != null)
+                    {
+                        result = indexCatalog.GetByName(indexName) != null;
                     }
 
                     txRef.Commit();
@@ -312,43 +365,24 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        public void Rebuild(ulong processId, string schema, string indexName)
+        internal void Rebuild(Transaction transaction, PersistSchema schemaMeta, string indexName)
         {
-            try
+            var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Write);
+
+            if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
             {
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
-                    {
-                        throw new KbInvalidSchemaException(schema);
-                    }
-
-                    var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Write);
-
-                    if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
-                    {
-                        throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
-                    }
-
-                    var indexMeta = indexCatalog.GetByName(indexName);
-                    if (indexMeta == null)
-                    {
-                        throw new KbIndexDoesNotExistException(schema);
-                    }
-
-                    indexMeta.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(indexMeta.Name));
-
-                    RebuildIndex(txRef.Transaction, schemaMeta, indexMeta);
-
-                    txRef.Commit();
-                }
+                throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
             }
-            catch (Exception ex)
+
+            var indexMeta = indexCatalog.GetByName(indexName);
+            if (indexMeta == null)
             {
-                core.Log.Write($"Failed to rebuild index for process {processId}.", ex);
-                throw;
+                throw new KbIndexDoesNotExistException(indexName);
             }
+
+            indexMeta.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(indexMeta.Name));
+
+            RebuildIndex(transaction, schemaMeta, indexMeta);
         }
 
         internal PersistIndexCatalog GetIndexCatalog(Transaction transaction, string schema, LockOperation intendedOperation)

@@ -1,7 +1,6 @@
-﻿using Katzebase.Engine.Documents;
-using Katzebase.Engine.KbLib;
+﻿using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Locking;
-using Katzebase.Engine.Schemas;
+using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json;
@@ -17,6 +16,7 @@ namespace Katzebase.Engine.Transactions
         public List<ulong> BlockedBy { get; set; }
         public bool IsDeadlocked { get; set; }
         public List<ObjectLockKey>? HeldLockKeys { get; set; }
+        public PerformanceTrace? PT { get; private set; } = null;
 
         /// <summary>
         /// We keep a hashset of locks granted to this transaction by the LockIntention.Key so that we
@@ -70,6 +70,8 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
+                var ptLock = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Lock, $"File:{lockOperation}");
+
                 diskpath = diskpath.ToLower();
 
                 Utility.EnsureNotNull(HeldLockKeys);
@@ -79,6 +81,7 @@ namespace Katzebase.Engine.Transactions
                     var lockIntention = new LockIntention(diskpath, LockType.File, lockOperation);
                     core.Locking.Locks.Acquire(this, lockIntention);
                 }
+                ptLock?.EndTrace();
             }
             catch (Exception ex)
             {
@@ -91,6 +94,8 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
+                var ptLock = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Lock, $"Directory:{lockOperation}");
+
                 diskpath = diskpath.ToLower();
 
                 Utility.EnsureNotNull(HeldLockKeys);
@@ -100,6 +105,8 @@ namespace Katzebase.Engine.Transactions
                     var lockIntention = new LockIntention(diskpath, LockType.Directory, lockOperation);
                     core.Locking.Locks.Acquire(this, lockIntention);
                 }
+
+                ptLock?.EndTrace();
             }
             catch (Exception ex)
             {
@@ -141,6 +148,12 @@ namespace Katzebase.Engine.Transactions
 
             if (isRecovery == false)
             {
+                var session = core.Sessions.ByProcessId(processId);
+                if (session.TraceWaitTimesEnabled)
+                {
+                    PT = new PerformanceTrace();
+                }
+
                 this.HeldLockKeys = new List<ObjectLockKey>();
                 this.DeferredIOs = new DeferredDiskIO(core);
 
@@ -158,7 +171,6 @@ namespace Katzebase.Engine.Transactions
         private bool IsFileAlreadyRecorded(string filePath)
         {
             filePath = Helpers.RemoveModFileName(filePath.ToLower());
-
             return ReversibleActions.Exists(o => o.OriginalPath == filePath);
         }
 
@@ -166,6 +178,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
+                var ptRecording = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Recording);
                 lock (ReversibleActions)
                 {
                     if (IsFileAlreadyRecorded(filePath))
@@ -184,6 +197,8 @@ namespace Katzebase.Engine.Transactions
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
+
+                ptRecording?.EndTrace();
             }
             catch (Exception ex)
             {
@@ -196,6 +211,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
+                var ptRecording = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Recording);
                 lock (ReversibleActions)
                 {
                     if (IsFileAlreadyRecorded(path))
@@ -214,6 +230,7 @@ namespace Katzebase.Engine.Transactions
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
+                ptRecording?.EndTrace();
             }
             catch (Exception ex)
             {
@@ -226,6 +243,8 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
+                var ptRecording = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Recording);
+
                 lock (ReversibleActions)
                 {
                     if (IsFileAlreadyRecorded(diskPath))
@@ -249,6 +268,7 @@ namespace Katzebase.Engine.Transactions
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
+                ptRecording?.EndTrace();
             }
             catch (Exception ex)
             {
@@ -261,6 +281,8 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
+                var ptRecording = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Recording);
+
                 lock (ReversibleActions)
                 {
                     if (IsFileAlreadyRecorded(filePath))
@@ -283,6 +305,7 @@ namespace Katzebase.Engine.Transactions
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
+                ptRecording?.EndTrace();
             }
             catch (Exception ex)
             {
@@ -295,6 +318,8 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
+                var ptRecording = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Recording);
+
                 lock (ReversibleActions)
                 {
                     if (IsFileAlreadyRecorded(filePath))
@@ -317,6 +342,7 @@ namespace Katzebase.Engine.Transactions
 
                     this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
+                ptRecording?.EndTrace();
             }
             catch (Exception ex)
             {
@@ -339,6 +365,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
+                var ptRollback = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Rollback);
                 try
                 {
                     var rollbackActions = ReversibleActions.OrderByDescending(o => o.Sequence);
@@ -403,6 +430,8 @@ namespace Katzebase.Engine.Transactions
                 {
                     ReleaseLocks();
                 }
+
+                ptRollback?.EndTrace();
             }
             catch (Exception ex)
             {
@@ -415,6 +444,7 @@ namespace Katzebase.Engine.Transactions
         {
             try
             {
+                var ptCommit = PT?.BeginTrace(PerformanceTrace.PerformanceTraceType.Commit);
                 lock (this)
                 {
                     referenceCount--;
@@ -442,6 +472,8 @@ namespace Katzebase.Engine.Transactions
                         throw new KbGenericException("Transaction reference count fell below zero.");
                     }
                 }
+
+                ptCommit?.EndTrace();
             }
             catch (Exception ex)
             {

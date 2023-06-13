@@ -6,6 +6,9 @@ using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Sessions
 {
+    /// <summary>
+    /// This is the class that all API controllers should interface with for session access.
+    /// </summary>
     public class SessionManager
     {
         private Core core;

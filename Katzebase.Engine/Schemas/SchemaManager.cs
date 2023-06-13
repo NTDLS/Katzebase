@@ -12,6 +12,9 @@ using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Schemas
 {
+    /// <summary>
+    /// This is the class that all API controllers should interface with for schema access.
+    /// </summary>
     public class SchemaManager
     {
         private Core core;
@@ -73,7 +76,7 @@ namespace Katzebase.Engine.Schemas
                     ptAcquireTransaction?.EndTrace();
                     if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                     {
-                        result = GetListByPreparedQuery(pt, txRef.Transaction, preparedQuery);
+                        result = GetListByPreparedQuery(txRef.Transaction, preparedQuery);
                     }
                     else
                     {
@@ -81,14 +84,8 @@ namespace Katzebase.Engine.Schemas
                     }
 
                     txRef.Commit();
-                }
 
-                if (session.TraceWaitTimesEnabled && pt != null)
-                {
-                    foreach (var wt in pt.Aggregations)
-                    {
-                        result.WaitTimes.Add(new KbNameValue<double>(wt.Key, wt.Value));
-                    }
+                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
                 }
 
                 return result;
@@ -100,14 +97,14 @@ namespace Katzebase.Engine.Schemas
             }
         }
 
-        internal KbQueryResult GetListByPreparedQuery(PerformanceTrace? pt, Transaction transaction, PreparedQuery preparedQuery)
+        internal KbQueryResult GetListByPreparedQuery(Transaction transaction, PreparedQuery preparedQuery)
         {
             var result = new KbQueryResult();
 
             var schema = preparedQuery.Schemas.First();
 
             //Lock the schema:
-            var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
+            var ptLockSchema = transaction.PT?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
             var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schema.Name, LockOperation.Read);
             if (schemaMeta == null || schemaMeta.Exists == false)
             {
@@ -266,7 +263,7 @@ namespace Katzebase.Engine.Schemas
             }
         }
 
-        public List<KbSchema> GetList(ulong processId, string schema)
+        public KbActionResponseSchemaCollection GetList(ulong processId, string schema)
         {
             try
             {
@@ -278,7 +275,7 @@ namespace Katzebase.Engine.Schemas
                         throw new KbInvalidSchemaException(schema);
                     }
 
-                    var result = new List<KbSchema>();
+                    var result = new KbActionResponseSchemaCollection();
 
                     if (schemaMeta.DiskPath == null)
                     {
@@ -297,6 +294,8 @@ namespace Katzebase.Engine.Schemas
                     }
 
                     txRef.Commit();
+
+                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
 
                     return result;
                 }

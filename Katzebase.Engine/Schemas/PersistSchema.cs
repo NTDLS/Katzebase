@@ -15,9 +15,9 @@ namespace Katzebase.Engine.Schemas
         [JsonIgnore]
         public bool Exists { get; set; }
 
-        static public KbSchema ToPayload(PersistSchema schema)
+        static public KbSchemaItem ToPayload(PersistSchema schema)
         {
-            return new KbSchema()
+            return new KbSchemaItem()
             {
                 Id = schema.Id,
                 Name = schema.Name

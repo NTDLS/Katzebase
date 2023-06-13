@@ -22,7 +22,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         /// <summary>
         /// Build a generic key/value dataset which is the combined fieldset from each inner joined document.
         /// </summary>
-        internal static MSQDocumentLookupResults GetDocumentsByConditions(Core core, PerformanceTrace? pt, Transaction transaction,
+        internal static MSQDocumentLookupResults GetDocumentsByConditions(Core core, Transaction transaction,
             MSQQuerySchemaMap schemaMap, PreparedQuery query)
         {
             //TODO: Here we should evaluate whatever conditions we can to early emilinate the top level document scans.
@@ -34,8 +34,8 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             Utility.EnsureNotNull(topLevelMap.SchemaMeta.DiskPath);
 
             //TODO: We should put some intelligence behind the thread count.
-            var ptThreadCreation = pt?.BeginTrace(PerformanceTraceType.ThreadCreation);
-            var threadParam = new LookupThreadParam(core, pt, transaction, schemaMap, query);
+            var ptThreadCreation = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCreation);
+            var threadParam = new LookupThreadParam(core, transaction, schemaMap, query);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(topLevelMap.DocuemntCatalog.Collection.Count);
             //int threadCount = 1;
             var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
@@ -56,7 +56,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 threadPool.EnqueueWorkItem(toplevelDocument);
             }
 
-            var ptThreadCompletion = pt?.BeginTrace(PerformanceTraceType.ThreadCompletion);
+            var ptThreadCompletion = transaction.PT?.BeginTrace(PerformanceTraceType.ThreadCompletion);
             threadPool.WaitForCompletion();
             ptThreadCompletion?.EndTrace();
 
@@ -72,7 +72,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 }
 
                 //Sort the results:
-                var ptSorting = pt?.BeginTrace(PerformanceTraceType.Sorting);
+                var ptSorting = transaction.PT?.BeginTrace(PerformanceTraceType.Sorting);
                 threadParam.Results.Collection = threadParam.Results.Collection.OrderBy(row => row.Values, new ResultValueComparer(sortingColumns)).ToList();
                 ptSorting?.EndTrace();
             }
@@ -93,15 +93,12 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             public MSQDocumentLookupResults Results = new();
             public MSQQuerySchemaMap SchemaMap { get; private set; }
             public Core Core { get; private set; }
-            public PerformanceTrace? PT { get; private set; }
             public Transaction Transaction { get; private set; }
             public PreparedQuery Query { get; private set; }
 
-            public LookupThreadParam(Core core, PerformanceTrace? pt, Transaction transaction,
-                MSQQuerySchemaMap schemaMap, PreparedQuery query)
+            public LookupThreadParam(Core core, Transaction transaction, MSQQuerySchemaMap schemaMap, PreparedQuery query)
             {
                 Core = core;
-                PT = pt;
                 Transaction = transaction;
                 SchemaMap = schemaMap;
                 Query = query;
@@ -144,7 +141,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
             var persistDocumentDiskPathWorkingLevel = Path.Combine(topLevel.Value.SchemaMeta.DiskPath, workingDocument.FileName);
 
-            var persistDocumentWorkingLevel = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPathWorkingLevel, LockOperation.Read);
+            var persistDocumentWorkingLevel = param.Core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPathWorkingLevel, LockOperation.Read);
             Utility.EnsureNotNull(persistDocumentWorkingLevel);
             Utility.EnsureNotNull(persistDocumentWorkingLevel.Content);
 
@@ -256,7 +253,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     Utility.EnsureNotNull(subset.IndexSelection?.Index?.DiskPath);
                     Utility.EnsureNotNull(subset.IndexSelection?.Index?.Id);
 
-                    var indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.PT, param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                    var indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(indexPageCatalog);
 
                     var keyValuePairs = new Dictionary<string, string>();
@@ -274,7 +271,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     }
 
                     //Match on values from the document.
-                    var documentIds = param.Core.Indexes.MatchDocuments(param.PT, indexPageCatalog, subset.IndexSelection, subset, keyValuePairs);
+                    var documentIds = param.Core.Indexes.MatchDocuments(param.Transaction, indexPageCatalog, subset.IndexSelection, subset, keyValuePairs);
 
                     limitedDocumentCatalogItems.AddRange(nextLevelMap.DocuemntCatalog.Collection.Where(o => documentIds.Contains(o.Id)).ToList());
                 }
@@ -317,7 +314,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 else
                 {
                     var persistDocumentDiskPathNextLevel = Path.Combine(nextLevelMap.SchemaMeta.DiskPath, nextLevelDocument.FileName);
-                    var persistDocumentNextLevel = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPathNextLevel, LockOperation.Read);
+                    var persistDocumentNextLevel = param.Core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPathNextLevel, LockOperation.Read);
                     Utility.EnsureNotNull(persistDocumentNextLevel?.Content);
 
                     jContentNextLevel = JObject.Parse(persistDocumentNextLevel.Content);
@@ -328,7 +325,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
                 SetSchemaIntersectionExpressionParameters(ref expression, nextLevelMap.Conditions, jJoinScopedContentCache);
 
-                var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
+                var ptEvaluate = param.Transaction.PT?.BeginTrace(PerformanceTraceType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
                 ptEvaluate?.EndTrace();
 
@@ -436,7 +433,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             var documentFileName = Helpers.GetDocumentModFilePath(documentID);
             var persistDocumentDiskPath = Path.Combine(accumulationMap.SchemaMeta.DiskPath, documentFileName);
 
-            var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.PT, param.Transaction, persistDocumentDiskPath, LockOperation.Read);
+            var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPath, LockOperation.Read);
             Utility.EnsureNotNull(persistDocument);
             Utility.EnsureNotNull(persistDocument.Content);
 
@@ -481,7 +478,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             {
                 SetQueryGlobalConditionsExpressionParameters(ref expression, param.Query.Conditions, inputResult.ConditionFields);
 
-                var ptEvaluate = param.PT?.BeginTrace(PerformanceTraceType.Evaluate);
+                var ptEvaluate = param.Transaction.PT?.BeginTrace(PerformanceTraceType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
                 ptEvaluate?.EndTrace();
 

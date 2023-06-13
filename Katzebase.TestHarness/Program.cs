@@ -427,7 +427,7 @@ namespace Katzebase.TestHarness
                     #region Enum. Schemas.
                     //Console.WriteLine("Sales:People:");
                     var schemas = client.Schema.List("Sales:People");
-                    foreach (var schema in schemas.List)
+                    foreach (var schema in schemas)
                     {
                         //Console.WriteLine("\tNS: " + schema.Name);
                     }

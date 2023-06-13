@@ -1,7 +1,8 @@
 {
   "profiles": {
     "Katzebase.UI": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\NTDLS\\Katzebase\\@Scripts\\Current Debug.kbs\""
     }
   }
 }

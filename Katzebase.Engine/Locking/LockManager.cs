@@ -4,16 +4,16 @@ namespace Katzebase.Engine.Locking
 {
     internal class LockManager
     {
-        public ObjectLocks Locks { get; set; }
+        internal ObjectLocks Locks { get; set; }
         private Core core;
 
-        public LockManager(Core core)
+        internal LockManager(Core core)
         {
             this.core = core;
             Locks = new ObjectLocks(core);
         }
 
-        public void Remove(ObjectLock objectLock)
+        internal void Remove(ObjectLock objectLock)
         {
             lock (CriticalSections.AcquireLock)
             {

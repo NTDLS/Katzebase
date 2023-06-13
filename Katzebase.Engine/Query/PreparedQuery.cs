@@ -11,6 +11,7 @@ namespace Katzebase.Engine.Query
         public int RowLimit { get; set; }
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }
+        public string SubQueryObject { get; set; } = string.Empty;
         public Conditions Conditions { get; set; } = new();
         public PrefixedFields SelectFields { get; set; } = new();
         public PrefixedFields GroupFields { get; set; } = new();

@@ -1,15 +1,15 @@
 ﻿using Katzebase.Engine.KbLib;
-using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
 using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.IO
 {
     internal class IOManager
     {
-        private Core core;
+        private readonly Core core;
         public IOManager(Core core)
         {
             this.core = core;
@@ -30,39 +30,27 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        internal T? GetJson<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation)
-        {
-            return InternalTrackedGet<T>(pt, transaction, filePath, intendedOperation, IOFormat.JSON);
-        }
-
         internal T? GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
-            return InternalTrackedGet<T>(null, transaction, filePath, intendedOperation, IOFormat.JSON);
-        }
-
-        internal T? GetPBuf<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation)
-        {
-            return InternalTrackedGet<T>(pt, transaction, filePath, intendedOperation, IOFormat.PBuf);
+            return InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON);
         }
 
         internal T? GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
-            return InternalTrackedGet<T>(null, transaction, filePath, intendedOperation, IOFormat.PBuf);
+            return InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf);
         }
 
-        internal T? InternalTrackedGet<T>(PerformanceTrace? pt, Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
+        internal T? InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
         {
             try
             {
                 string cacheKey = Helpers.RemoveModFileName(filePath.ToLower());
 
-                var ptLock = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.Lock);
                 transaction.LockFile(intendedOperation, cacheKey);
-                ptLock?.EndTrace();
 
                 if (core.settings.CacheEnabled)
                 {
-                    var ptCacheRead = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.CacheRead);
+                    var ptCacheRead = transaction.PT?.BeginTrace<T>(PerformanceTraceType.CacheRead);
                     var cachedObject = core.Cache.Get(cacheKey);
                     ptCacheRead?.EndTrace();
 
@@ -84,21 +72,21 @@ namespace Katzebase.Engine.IO
 
                 if (format == IOFormat.JSON)
                 {
-                    var ptIORead = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.IORead);
+                    var ptIORead = transaction.PT?.BeginTrace<T>(PerformanceTraceType.IORead);
                     string text = File.ReadAllText(filePath);
                     ptIORead?.EndTrace();
 
-                    var ptDeserialize = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.Deserialize);
+                    var ptDeserialize = transaction.PT?.BeginTrace<T>(PerformanceTraceType.Deserialize);
                     deserializedObject = JsonConvert.DeserializeObject<T?>(text);
                     ptDeserialize?.EndTrace();
                 }
                 else if (format == IOFormat.PBuf)
                 {
-                    var ptIORead = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.IORead);
+                    var ptIORead = transaction.PT?.BeginTrace<T>(PerformanceTraceType.IORead);
                     using (var file = File.OpenRead(filePath))
                     {
                         ptIORead?.EndTrace();
-                        var ptDeserialize = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.Deserialize);
+                        var ptDeserialize = transaction.PT?.BeginTrace<T>(PerformanceTraceType.Deserialize);
                         deserializedObject = ProtoBuf.Serializer.Deserialize<T>(file);
                         ptDeserialize?.EndTrace();
                         file.Close();
@@ -111,7 +99,7 @@ namespace Katzebase.Engine.IO
 
                 if (core.settings.CacheEnabled && deserializedObject != null)
                 {
-                    var ptCacheWrite = pt?.BeginTrace<T>(PerformanceTrace.PerformanceTraceType.CacheWrite);
+                    var ptCacheWrite = transaction.PT?.BeginTrace<T>(PerformanceTraceType.CacheWrite);
                     core.Cache.Upsert(cacheKey, deserializedObject);
                     ptCacheWrite?.EndTrace();
                     core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
@@ -178,7 +166,9 @@ namespace Katzebase.Engine.IO
                     if (core.settings.DeferredIOEnabled && transaction.IsUserCreated)
                     {
                         Utility.EnsureNotNull(transaction.DeferredIOs);
+                        var ptDeferredWrite = transaction.PT?.BeginTrace(PerformanceTraceType.DeferredWrite);
                         deferDiskWrite = transaction.DeferredIOs.RecordDeferredDiskIO(cacheKey, filePath, deserializedObject, format);
+                        ptDeferredWrite?.EndTrace();
                     }
                 }
 
@@ -188,14 +178,18 @@ namespace Katzebase.Engine.IO
 
                     if (format == IOFormat.JSON)
                     {
+                        var ptSerialize = transaction?.PT?.BeginTrace(PerformanceTraceType.Serialize);
                         string text = JsonConvert.SerializeObject(deserializedObject);
+                        ptSerialize?.EndTrace();
                         File.WriteAllText(filePath, text);
                     }
                     else if (format == IOFormat.PBuf)
                     {
                         using (var file = File.Create(filePath))
                         {
+                            var ptSerialize = transaction?.PT?.BeginTrace(PerformanceTraceType.Serialize);
                             ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                            ptSerialize?.EndTrace();
                             file.Close();
                         }
                     }
@@ -211,7 +205,9 @@ namespace Katzebase.Engine.IO
 
                 if (core.settings.CacheEnabled)
                 {
+                    var ptCacheWrite = transaction?.PT?.BeginTrace(PerformanceTraceType.CacheWrite);
                     core.Cache.Upsert(cacheKey, deserializedObject);
+                    ptCacheWrite?.EndTrace();
                     core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
                 }
             }
@@ -307,7 +303,9 @@ namespace Katzebase.Engine.IO
 
                 if (core.settings.CacheEnabled)
                 {
+                    var ptCacheWrite = transaction.PT?.BeginTrace(PerformanceTraceType.CacheWrite);
                     core.Cache.Remove(cacheKey);
+                    ptCacheWrite?.EndTrace();
                 }
 
                 transaction.RecordFileDelete(filePath);
@@ -333,7 +331,9 @@ namespace Katzebase.Engine.IO
 
                 if (core.settings.CacheEnabled)
                 {
+                    var ptCacheWrite = transaction.PT?.BeginTrace(PerformanceTraceType.CacheWrite);
                     core.Cache.RemoveItemsWithPrefix(cacheKey);
+                    ptCacheWrite?.EndTrace();
                 }
 
                 transaction.RecordPathDelete(diskPath);

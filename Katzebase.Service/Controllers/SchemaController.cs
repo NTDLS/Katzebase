@@ -14,17 +14,17 @@ namespace Katzebase.Service.Controllers
         /// <param name="schema"></param>
         [HttpGet]
         [Route("{sessionId}/{schema}/List")]
-        public KbActionResponseSchemas List(Guid sessionId, string schema)
+        public KbActionResponseSchemaCollection List(Guid sessionId, string schema)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            KbActionResponseSchemas result = new KbActionResponseSchemas();
+            var result = new KbActionResponseSchemaCollection();
 
             try
             {
-                result.List = Program.Core.Schemas.GetList(processId, schema);
+                result.AddRange(Program.Core.Schemas.GetList(processId, schema));
                 result.Success = true;
             }
             catch (Exception ex)

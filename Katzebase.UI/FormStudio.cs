@@ -20,6 +20,7 @@ namespace Katzebase.UI
         private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
         private bool _scriptExecuting = false;
         public string _lastusedServerAddress = string.Empty;
+        private string _firstLoadFilename = string.Empty;
 
         public FormStudio()
         {
@@ -27,20 +28,11 @@ namespace Katzebase.UI
             _editorFactory = new EditorFactory(this, this.tabControlBody);
         }
 
-        public FormStudio(string filePath)
+        public FormStudio(string firstLoadFilename)
         {
             InitializeComponent();
             _editorFactory = new EditorFactory(this, this.tabControlBody);
-
-            try
-            {
-                CreateNewTab(Path.GetFileName(filePath)).OpenFile(filePath);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
+            _firstLoadFilename = firstLoadFilename;
         }
 
         private void FormStudio_Load(object sender, EventArgs e)
@@ -151,9 +143,27 @@ namespace Katzebase.UI
 
             if (_firstShown)
             {
-                _firstShown = false;
+                try
+                {
+                    _firstShown = false;
 
-                Connect();
+                    Connect();
+
+                    if (string.IsNullOrEmpty(_firstLoadFilename))
+                    {
+                        var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName());
+                        tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\n";
+                        tabFilePage.IsSaved = true;
+                    }
+                    else
+                    {
+                        CreateNewTab(Path.GetFileName(_firstLoadFilename)).OpenFile(_firstLoadFilename);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
 
             SyncToolbarAndMenuStates();
@@ -468,6 +478,8 @@ namespace Katzebase.UI
 
             tabFilePage.Client?.Server.Ping();
 
+            tabFilePage.Editor.Focus();
+
             return tabFilePage;
         }
 
@@ -529,10 +541,6 @@ namespace Katzebase.UI
                     _lastusedServerAddress = form.ServerAddressURL;
 
                     TreeManagement.PopulateServer(treeViewProject, _lastusedServerAddress);
-
-                    var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName());
-                    tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\n";
-                    tabFilePage.IsSaved = true;
 
                     foreach (TreeNode node in treeViewProject.Nodes)
                     {
@@ -1094,7 +1102,7 @@ namespace Katzebase.UI
                         AppendToOutput(result.Explanation, Color.DarkGreen);
                     }
 
-                    if (result.WaitTimes.Count > 0)
+                    if (result.WaitTimes?.Count > 0)
                     {
                         var waitTimeTotal = result.WaitTimes.Sum(o => o.Value);
 

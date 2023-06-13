@@ -55,7 +55,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Indexes.Rebuild(processId, schema, name);
+                //Program.Core.Indexes.Rebuild(processId, schema, name);
                 result.Success = true;
             }
             catch (Exception ex)

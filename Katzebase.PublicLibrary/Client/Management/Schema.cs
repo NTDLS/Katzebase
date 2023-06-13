@@ -73,26 +73,26 @@ namespace Katzebase.PublicLibrary.Client.Management
         /// Lists the existing schemas within a given schema.
         /// </summary>
         /// <param name="schema"></param>
-        public KbActionResponseSchemas List(string schema)
+        public KbActionResponseSchemaCollection List(string schema)
         {
             string url = $"api/Schema/{client.SessionId}/{schema}/List";
 
             using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
-            return JsonConvert.DeserializeObject<KbActionResponseSchemas>(resultText) ?? new KbActionResponseSchemas();
+            return JsonConvert.DeserializeObject<KbActionResponseSchemaCollection>(resultText) ?? new KbActionResponseSchemaCollection();
         }
 
         /// <summary>
         /// Lists the existing root schemas.
         /// </summary>
         /// <param name="schema"></param>
-        public KbActionResponseSchemas List()
+        public KbActionResponseSchemaCollection List()
         {
             string url = $"api/Schema/{client.SessionId}/:/List";
 
             using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
-            return JsonConvert.DeserializeObject<KbActionResponseSchemas>(resultText) ?? new KbActionResponseSchemas();
+            return JsonConvert.DeserializeObject<KbActionResponseSchemaCollection>(resultText) ?? new KbActionResponseSchemaCollection();
         }
     }
 }

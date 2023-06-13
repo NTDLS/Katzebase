@@ -3,15 +3,16 @@ using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers;
 using Katzebase.Engine.Schemas;
-using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.KbLib.EngineConstants;
-using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Documents
 {
+    /// <summary>
+    /// This is the class that all API controllers should interface with for document access.
+    /// </summary>
     public class DocumentManager
     {
         private Core core;
@@ -21,45 +22,28 @@ namespace Katzebase.Engine.Documents
             this.core = core;
         }
 
+        //TODO: This needs to be rebuilt entirely.
         internal KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
                 var result = new KbQueryResult();
-                PerformanceTrace? pt = null;
 
-                var session = core.Sessions.ByProcessId(processId);
-                if (session.TraceWaitTimesEnabled)
-                {
-                    pt = new PerformanceTrace();
-                }
-
-                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.EndTrace();
-
-                    var ptLockSchema = pt?.BeginTrace<PersistSchema>(PerformanceTraceType.Lock);
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schemas[0].Prefix, LockOperation.Read);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
                         throw new KbInvalidSchemaException(preparedQuery.Schemas[0].Prefix);
                     }
-                    ptLockSchema?.EndTrace();
                     Utility.EnsureNotNull(schemaMeta.DiskPath);
 
                     var lookupOptimization = ConditionLookupOptimization.Build(core, txRef.Transaction, schemaMeta, preparedQuery.Conditions);
                     result.Explanation = lookupOptimization.BuildFullVirtualExpression();
 
-                    txRef.Commit(); //Not that we did any work.
-                }
+                    txRef.Commit();
 
-                if (session.TraceWaitTimesEnabled && pt != null)
-                {
-                    foreach (var wt in pt.Aggregations)
-                    {
-                        result.WaitTimes.Add(new KbNameValue<double>(wt.Key, wt.Value));
-                    }
+                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
                 }
 
                 return result;
@@ -76,28 +60,12 @@ namespace Katzebase.Engine.Documents
             try
             {
                 var result = new KbQueryResult();
-                PerformanceTrace? pt = null;
 
-                var session = core.Sessions.ByProcessId(processId);
-                if (session.TraceWaitTimesEnabled)
-                {
-                    pt = new PerformanceTrace();
-                }
-
-                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.EndTrace();
-                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, pt, txRef.Transaction, preparedQuery);
+                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
                     txRef.Commit();
-                }
-
-                if (session.TraceWaitTimesEnabled && pt != null)
-                {
-                    foreach (var wt in pt.Aggregations)
-                    {
-                        result.WaitTimes.Add(new KbNameValue<double>(wt.Key, wt.Value));
-                    }
+                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
                 }
 
                 return result;
@@ -119,28 +87,14 @@ namespace Katzebase.Engine.Documents
             try
             {
                 var result = new KbQueryResult();
-                PerformanceTrace? pt = null;
 
-                var session = core.Sessions.ByProcessId(processId);
-                if (session.TraceWaitTimesEnabled)
-                {
-                    pt = new PerformanceTrace();
-                }
-
-                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.EndTrace();
-                    result = StaticSearcherMethods.SampleSchemaDocuments(core, pt, txRef.Transaction, schemaName, rowLimit);
+                    result = StaticSearcherMethods.SampleSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
                     txRef.Commit();
-                }
 
-                if (session.TraceWaitTimesEnabled && pt != null)
-                {
-                    foreach (var wt in pt.Aggregations)
-                    {
-                        result.WaitTimes.Add(new KbNameValue<double>(wt.Key, wt.Value));
-                    }
+                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+
                 }
 
                 return result;
@@ -162,29 +116,12 @@ namespace Katzebase.Engine.Documents
             try
             {
                 var result = new KbQueryResult();
-                PerformanceTrace? pt = null;
 
-                var session = core.Sessions.ByProcessId(processId);
-                if (session.TraceWaitTimesEnabled)
-                {
-                    pt = new PerformanceTrace();
-                }
-
-                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.EndTrace();
-                    result = StaticSearcherMethods.ListSchemaDocuments(core, pt, txRef.Transaction, schemaName, rowLimit);
-
+                    result = StaticSearcherMethods.ListSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
                     txRef.Commit();
-                }
-
-                if (session.TraceWaitTimesEnabled && pt != null)
-                {
-                    foreach (var wt in pt.Aggregations)
-                    {
-                        result.WaitTimes.Add(new KbNameValue<double>(wt.Key, wt.Value));
-                    }
+                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
                 }
 
                 return result;
@@ -202,14 +139,10 @@ namespace Katzebase.Engine.Documents
             try
             {
                 var result = new KbActionResponse();
-                var pt = new PerformanceTrace();
 
-                var ptAcquireTransaction = pt?.BeginTrace(PerformanceTraceType.AcquireTransaction);
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.EndTrace();
-
-                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, pt, txRef.Transaction, preparedQuery);
+                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
 
                     //TODO: Delete the documents.
 
@@ -232,6 +165,8 @@ namespace Katzebase.Engine.Documents
                     */
 
                     txRef.Commit();
+
+                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
                 }
 
                 return result;
@@ -251,10 +186,12 @@ namespace Katzebase.Engine.Documents
         /// <param name="document"></param>
         /// <param name="newId"></param>
         /// <exception cref="KbInvalidSchemaException"></exception>
-        public void Store(ulong processId, string schema, KbDocument document, out Guid? newId)
+        public KbActionResponse Store(ulong processId, string schema, KbDocument document, out Guid? newId)
         {
             try
             {
+                var result = new KbActionResponse();
+
                 var persistDocument = PersistDocument.FromPayload(document);
 
                 if (persistDocument.Id == null || persistDocument.Id == Guid.Empty)
@@ -296,7 +233,11 @@ namespace Katzebase.Engine.Documents
                     newId = persistDocument.Id;
 
                     txRef.Commit();
+
+                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
                 }
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -312,12 +253,15 @@ namespace Katzebase.Engine.Documents
         /// <param name="schema"></param>
         /// <param name="newId"></param>
         /// <exception cref="KbInvalidSchemaException"></exception>
-        public void DeleteById(ulong processId, string schema, Guid newId)
+        public KbActionResponse DeleteById(ulong processId, string schema, Guid newId)
         {
             try
             {
+                var result = new KbActionResponse();
+
                 using (var txRef = core.Transactions.Begin(processId))
                 {
+                   
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
                     if (schemaMeta == null || schemaMeta.Exists == false)
                     {
@@ -347,7 +291,11 @@ namespace Katzebase.Engine.Documents
                     }
 
                     txRef.Commit();
+
+                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
                 }
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -363,7 +311,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="schema"></param>
         /// <returns></returns>
         /// <exception cref="KbInvalidSchemaException"></exception>
-        public List<PersistDocumentCatalogItem> EnumerateCatalog(ulong processId, string schema)
+        public KbDocumentCatalogCollection EnumerateCatalog(ulong processId, string schema)
         {
             try
             {
@@ -380,14 +328,16 @@ namespace Katzebase.Engine.Documents
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
                     Utility.EnsureNotNull(documentCatalog);
 
-                    var list = new List<PersistDocumentCatalogItem>();
+                    var result = new KbDocumentCatalogCollection();
                     foreach (var item in documentCatalog.Collection)
                     {
-                        list.Add(item);
+                        result.Add(item.ToPayload());
                     }
                     txRef.Commit();
 
-                    return list;
+                    result.WaitTimes = txRef.Transaction.PT?.ToWaitTimes();
+
+                    return result;
                 }
             }
             catch (Exception ex)

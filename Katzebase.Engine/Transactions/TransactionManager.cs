@@ -1,10 +1,15 @@
-﻿using Katzebase.PublicLibrary;
+﻿using Katzebase.Engine.Trace;
+using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
 using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Trace.PerformanceTrace;
 using static Katzebase.PublicLibrary.Constants;
 
 namespace Katzebase.Engine.Transactions
 {
+    /// <summary>
+    /// This is the class that all API controllers should interface with for transaction access.
+    /// </summary>
     public class TransactionManager
     {
         internal List<Transaction> Collection = new List<Transaction>();
@@ -101,10 +106,13 @@ namespace Katzebase.Engine.Transactions
         /// <returns></returns>
         public TransactionReference Begin(ulong processId, bool isUserCreated)
         {
+            var startTime = DateTime.UtcNow;
+
             try
             {
                 lock (Collection)
                 {
+                    TraceItem? ptAcquireTransaction = null;
                     var transaction = GetByProcessId(processId);
                     if (transaction == null)
                     {
@@ -113,12 +121,16 @@ namespace Katzebase.Engine.Transactions
                             IsUserCreated = isUserCreated
                         };
 
+                        ptAcquireTransaction = transaction.PT?.BeginTrace(PerformanceTraceType.AcquireTransaction);
+
                         Collection.Add(transaction);
                     }
 
                     transaction.AddReference();
 
-                    return new TransactionReference(transaction);
+                    var result = new TransactionReference(transaction);
+                    ptAcquireTransaction?.EndTrace((DateTime.UtcNow - startTime).TotalMilliseconds);
+                    return result;
                 }
             }
             catch (Exception ex)

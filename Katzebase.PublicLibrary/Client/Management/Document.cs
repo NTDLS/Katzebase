@@ -56,13 +56,13 @@ namespace Katzebase.PublicLibrary.Client.Management
         /// Lists the documents within a given schema.
         /// </summary>
         /// <param name="schema"></param>
-        public List<KbDocumentCatalogItem> Catalog(string schema)
+        public KbDocumentCatalogCollection Catalog(string schema)
         {
             string url = $"api/Document/{client.SessionId}/{schema}/Catalog";
 
             using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
-            return JsonConvert.DeserializeObject<List<KbDocumentCatalogItem>>(resultText) ?? new List<KbDocumentCatalogItem>();
+            return JsonConvert.DeserializeObject<KbDocumentCatalogCollection>(resultText) ?? new KbDocumentCatalogCollection();
         }
 
         /// <summary>

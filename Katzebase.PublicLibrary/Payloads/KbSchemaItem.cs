@@ -1,13 +1,13 @@
 ﻿namespace Katzebase.PublicLibrary.Payloads
 {
-    public class KbSchema
+    public class KbSchemaItem
     {
         public string? Name { get; set; }
         public Guid? Id { get; set; }
 
-        public KbSchema Clone()
+        public KbSchemaItem Clone()
         {
-            return new KbSchema
+            return new KbSchemaItem
             {
                 Id = this.Id,
                 Name = this.Name

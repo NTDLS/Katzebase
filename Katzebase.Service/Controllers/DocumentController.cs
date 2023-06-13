@@ -46,22 +46,13 @@ namespace Katzebase.Service.Controllers
         /// <param name="schema"></param>
         [HttpGet]
         [Route("{sessionId}/{schema}/Catalog")]
-        public List<KbDocumentCatalogItem> Catalog(Guid sessionId, string schema)
+        public KbDocumentCatalogCollection Catalog(Guid sessionId, string schema)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            var persistCatalog = Program.Core.Documents.EnumerateCatalog(processId, schema);
-
-            List<KbDocumentCatalogItem> documents = new List<KbDocumentCatalogItem>();
-
-            foreach (var catalogItem in persistCatalog)
-            {
-                documents.Add(catalogItem.ToPayload());
-            }
-
-            return documents;
+            return Program.Core.Documents.EnumerateCatalog(processId, schema);
         }
 
         [HttpPost]
