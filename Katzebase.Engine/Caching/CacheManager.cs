@@ -63,14 +63,21 @@ namespace Katzebase.Engine.Caching
             }
         }
 
-        public void Remove(string key)
+        public int Remove(string key)
         {
             int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
 
+            int itemsEjected = 0;
+
             lock (partitions[partitionIndex])
             {
-                partitions[partitionIndex].Remove(key);
+                if (partitions[partitionIndex].Remove(key) != null)
+                {
+                    itemsEjected++;
+                }
             }
+
+            return itemsEjected;
         }
 
         public void RemoveItemsWithPrefix(string prefix)

@@ -62,18 +62,9 @@ namespace Katzebase.Engine.Schemas
             try
             {
                 var result = new KbQueryResult();
-                PerformanceTrace? pt = null;
 
-                var session = core.Sessions.ByProcessId(processId);
-                if (session.TraceWaitTimesEnabled)
-                {
-                    pt = new PerformanceTrace();
-                }
-
-                var ptAcquireTransaction = pt?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.StopAndAccumulate();
                     if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                     {
                         result = GetListByPreparedQuery(txRef.Transaction, preparedQuery);

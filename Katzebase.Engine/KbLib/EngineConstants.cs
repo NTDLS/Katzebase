@@ -63,6 +63,9 @@
             Update,
             Create,
             Delete,
+            Begin,
+            Rollback,
+            Commit,
             Drop,
             Rebuild,
             Set
@@ -73,6 +76,7 @@
             None,
             Schemas,
             Documents,
+            Transaction,
             Index,
             UniqueKey
         }

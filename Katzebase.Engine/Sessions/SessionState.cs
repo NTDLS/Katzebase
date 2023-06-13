@@ -4,7 +4,18 @@ namespace Katzebase.Engine.Sessions
 {
     public class SessionState
     {
-        public bool TraceWaitTimesEnabled { get; set; } = false;
+        public enum KbSystemVariable
+        {
+            TraceWaitTimes,
+            MinQueryThreads,
+            MaxQueryThreads,
+            QueryThreadWeight
+
+        }
+        public bool? TraceWaitTimesEnabled { get; set; }
+        public int? MinQueryThreads { get; set; } = null;
+        public int? MaxQueryThreads { get; set; } = null;
+        public double? QueryThreadWeight { get; set; } = null;
 
         /// <summary>
         /// ProcessId is produced by the server.

@@ -3,13 +3,14 @@ using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
+using Katzebase.Engine.Threading;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
-using Katzebase.PrivateLibrary;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
+using System.Diagnostics;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
@@ -31,20 +32,10 @@ namespace Katzebase.Engine.Indexes
             try
             {
                 var result = new KbActionResponse();
-
-                PerformanceTrace? pt = null;
-
                 var session = core.Sessions.ByProcessId(processId);
-                if (session.TraceWaitTimesEnabled)
-                {
-                    pt = new PerformanceTrace();
-                }
 
-                var ptAcquireTransaction = pt?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.StopAndAccumulate();
-
                     string schema = preparedQuery.Schemas.First().Name;
 
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
@@ -74,20 +65,10 @@ namespace Katzebase.Engine.Indexes
             try
             {
                 var result = new KbActionResponse();
-
-                PerformanceTrace? pt = null;
-
                 var session = core.Sessions.ByProcessId(processId);
-                if (session.TraceWaitTimesEnabled)
-                {
-                    pt = new PerformanceTrace();
-                }
 
-                var ptAcquireTransaction = pt?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.StopAndAccumulate();
-
                     string schema = preparedQuery.Schemas.First().Name;
 
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
@@ -118,19 +99,8 @@ namespace Katzebase.Engine.Indexes
             {
                 var result = new KbActionResponse();
 
-                PerformanceTrace? pt = null;
-
-                var session = core.Sessions.ByProcessId(processId);
-                if (session.TraceWaitTimesEnabled)
-                {
-                    pt = new PerformanceTrace();
-                }
-
-                var ptAcquireTransaction = pt?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    ptAcquireTransaction?.StopAndAccumulate();
-
                     string schema = preparedQuery.Schemas.First().Name;
 
                     var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
@@ -511,10 +481,7 @@ namespace Katzebase.Engine.Indexes
 
             indexMeta.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(indexMeta.Name));
 
-            if (File.Exists(indexMeta.DiskPath))
-            {
-                core.IO.DeleteFile(transaction, indexMeta.DiskPath);
-            }
+            core.IO.DeleteFile(transaction, indexMeta.DiskPath);
 
             core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
         }
@@ -911,7 +878,7 @@ namespace Katzebase.Engine.Indexes
 
                 var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
                 var threadParam = new RebuildIndexThreadParam(transaction, schemaMeta, indexPageCatalog, indexMeta, documentCatalog);
-                int threadCount = ThreadPoolHelper.CalculateThreadCount(documentCatalog.Collection.Count);
+                int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentCatalog.Collection.Count);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                 var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, RebuildIndexThreadParam>
                     .CreateAndStart(RebuildIndexThreadProc, threadParam, threadCount);

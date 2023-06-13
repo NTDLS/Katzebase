@@ -2,6 +2,8 @@
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Sessions.SessionState;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Sessions
@@ -85,14 +87,29 @@ namespace Katzebase.Engine.Sessions
                         }
                         else //System variable:
                         {
-                            string systemVariableName = variable.Name.ToLower();
-                            if (systemVariableName == "tracewaittimes")
-                            {
-                                session.TraceWaitTimesEnabled = VariableOnOff(variable.Value.ToLower());
-                            }
-                            else
+                            if (Enum.TryParse(variable.Name, true, out KbSystemVariable systemVariable) == false
+                                || Enum.IsDefined(typeof(KbSystemVariable), systemVariable) == false)
                             {
                                 throw new KbGenericException($"Unknown system variable: {variable.Name}.");
+                            }
+
+                            switch (systemVariable)
+                            {
+                                case KbSystemVariable.TraceWaitTimes:
+                                    session.TraceWaitTimesEnabled = VariableOnOff(variable.Value.ToLower());
+                                    break;
+                                case KbSystemVariable.MinQueryThreads:
+                                    session.MinQueryThreads = int.Parse(variable.Value);
+                                    break;
+                                case KbSystemVariable.MaxQueryThreads:
+                                    session.MaxQueryThreads = int.Parse(variable.Value);
+                                    break;
+                                case KbSystemVariable.QueryThreadWeight:
+                                    session.QueryThreadWeight = int.Parse(variable.Value);
+                                    break;
+
+                                default:
+                                    throw new KbNotImplementedException();
                             }
                         }
                     }

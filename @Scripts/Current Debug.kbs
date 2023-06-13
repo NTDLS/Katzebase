@@ -1,4 +1,12 @@
 SET TraceWaitTimes ON;
 
-DROP INDEX IX_Address_City_PostalCode
-ON AdventureWorks2012:Person:Address
+Begin Transaction;
+
+CREATE INDEX IX_Address_City_PostalCode
+(
+	City,
+	PostalCode
+)
+ON AdventureWorks2012:Person:Address;
+
+Rollback Transaction;

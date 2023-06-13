@@ -78,7 +78,10 @@ namespace Katzebase.Engine.Query
             else if (preparedQuery.QueryType == QueryType.Delete
                 || preparedQuery.QueryType == QueryType.Rebuild
                 || preparedQuery.QueryType == QueryType.Create
-                || preparedQuery.QueryType == QueryType.Drop)
+                || preparedQuery.QueryType == QueryType.Drop
+                || preparedQuery.QueryType == QueryType.Begin
+                || preparedQuery.QueryType == QueryType.Commit
+                || preparedQuery.QueryType == QueryType.Rollback)
             {
                 //Reroute to non-query as appropriate:
                 return KbQueryResult.FromActionResponse(ExecuteNonQuery(processId, preparedQuery));
@@ -126,6 +129,33 @@ namespace Katzebase.Engine.Query
                 if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
                     return core.Indexes.ExecuteDrop(processId, preparedQuery);
+                }
+                throw new NotImplementedException();
+            }
+            else if (preparedQuery.QueryType == QueryType.Begin)
+            {
+                if (preparedQuery.SubQueryType == SubQueryType.Transaction)
+                {
+                    core.Transactions.Begin(processId, true);
+                    return new KbActionResponse { Success = true };
+                }
+                throw new NotImplementedException();
+            }
+            else if (preparedQuery.QueryType == QueryType.Rollback)
+            {
+                if (preparedQuery.SubQueryType == SubQueryType.Transaction)
+                {
+                    core.Transactions.Rollback(processId);
+                    return new KbActionResponse { Success = true };
+                }
+                throw new NotImplementedException();
+            }
+            else if (preparedQuery.QueryType == QueryType.Commit)
+            {
+                if (preparedQuery.SubQueryType == SubQueryType.Transaction)
+                {
+                    core.Transactions.Commit(processId);
+                    return new KbActionResponse { Success = true };
                 }
                 throw new NotImplementedException();
             }

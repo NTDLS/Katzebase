@@ -1079,6 +1079,8 @@ namespace Katzebase.UI
                 //TODO: This needs to be MUCH more intelligent! What about ';' in strings? ... :/
                 var scripts = scriptText.Split(";").Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
 
+                int batchNumber = 1;
+
                 foreach (var script in scripts)
                 {
                     DateTime startTime = DateTime.UtcNow;
@@ -1095,7 +1097,7 @@ namespace Katzebase.UI
                     }
 
                     var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                    AppendToOutput($"Execution completed in {duration:N0}ms.", Color.Black);
+                    AppendToOutput($"Batch {batchNumber:n0} of {scripts.Count} completed in {duration:N0}ms.", Color.Black);
 
                     if (justExplain && string.IsNullOrWhiteSpace(result.Explanation) == false)
                     {
@@ -1130,6 +1132,8 @@ namespace Katzebase.UI
                     {
                         AppendToOutput($"{result.Message}", Color.Black);
                     }
+
+                    batchNumber++;
                 }
             }
             catch (KbExceptionBase ex)

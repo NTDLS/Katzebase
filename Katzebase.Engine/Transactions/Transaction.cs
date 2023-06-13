@@ -154,7 +154,7 @@ namespace Katzebase.Engine.Transactions
             if (isRecovery == false)
             {
                 var session = core.Sessions.ByProcessId(processId);
-                if (session.TraceWaitTimesEnabled)
+                if (session.TraceWaitTimesEnabled == true)
                 {
                     PT = new PerformanceTrace();
                 }
@@ -377,6 +377,9 @@ namespace Katzebase.Engine.Transactions
 
                     foreach (var record in rollbackActions)
                     {
+                        //We need to eject the rolled back item from the cache since its last known state has changed.
+                        core.Cache.Remove(record.OriginalPath);
+
                         if (record.Action == ActionType.FileCreate)
                         {
                             try

@@ -28,8 +28,74 @@ namespace Katzebase.Engine.Query
             result.QueryType = queryType;
 
             //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region Begin.
+            if (queryType == QueryType.Begin)
+            {
+                if (query.IsNextToken(new string[] { "transaction" }) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected [transaction].");
+                }
+
+                token = query.GetNextToken();
+                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
+                }
+                result.SubQueryType = subQueryType;
+
+                if (query.IsEnd() == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                }
+            }
+            #endregion
+            //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region Begin.
+            else if (queryType == QueryType.Commit)
+            {
+                if (query.IsNextToken(new string[] { "transaction" }) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected [transaction].");
+                }
+
+                token = query.GetNextToken();
+                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
+                }
+                result.SubQueryType = subQueryType;
+
+                if (query.IsEnd() == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                }
+            }
+            #endregion
+            //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region Begin.
+            else if (queryType == QueryType.Rollback)
+            {
+                if (query.IsNextToken(new string[] { "transaction" }) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected [transaction].");
+                }
+
+                token = query.GetNextToken();
+                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
+                }
+                result.SubQueryType = subQueryType;
+
+                if (query.IsEnd() == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                }
+            }
+            #endregion
+            //--------------------------------------------------------------------------------------------------------------------------------------------
             #region Create.
-            if (queryType == QueryType.Create)
+            else if (queryType == QueryType.Create)
             {
                 if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
                 {

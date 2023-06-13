@@ -1,21 +1,37 @@
-﻿using Katzebase.PublicLibrary;
+﻿using Katzebase.Engine.Sessions;
+using Katzebase.PublicLibrary;
 
-namespace Katzebase.PrivateLibrary
+namespace Katzebase.Engine.Threading
 {
     public static class ThreadPoolHelper
     {
-        public static int CalculateThreadCount(int expectedItemCount, double multiplier = 1)
+        public static int CalculateThreadCount(SessionState session, int expectedItemCount, double multiplier = 1)
         {
+            if (session.QueryThreadWeight != null)
+            {
+                multiplier = (double)session.QueryThreadWeight;
+            }
+
             int maxThreads = (int)Math.Ceiling(Environment.ProcessorCount * 16.0 * multiplier);
+            if (session.MaxQueryThreads != null)
+            {
+                maxThreads = (int)session.MaxQueryThreads;
+            }
+
+            int minThreads = 1;
+            if (session.MinQueryThreads != null)
+            {
+                maxThreads = (int)session.MinQueryThreads;
+            }
 
             int threads = (int)Math.Ceiling((expectedItemCount / 10000.0));
-            if (threads < 1)
+            if (threads < minThreads)
             {
-                return 1;
+                threads = minThreads;
             }
             else if (threads > maxThreads)
             {
-                return maxThreads;
+                threads = maxThreads;
             }
 
             return threads;

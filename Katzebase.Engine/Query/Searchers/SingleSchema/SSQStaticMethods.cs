@@ -3,9 +3,8 @@ using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Sorting;
 using Katzebase.Engine.Schemas;
-using Katzebase.Engine.Trace;
+using Katzebase.Engine.Threading;
 using Katzebase.Engine.Transactions;
-using Katzebase.PrivateLibrary;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
@@ -92,7 +91,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, schemaMeta, query, lookupOptimization);
-            int threadCount = ThreadPoolHelper.CalculateThreadCount(documentCatalog.Collection.Count);
+            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentCatalog.Collection.Count);
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(GetDocumentsByConditionsThreadProc, threadParam, threadCount);
             ptThreadCreation?.StopAndAccumulate();

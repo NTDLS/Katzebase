@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace Katzebase.PrivateLibrary
+namespace Katzebase.Engine.Threading
 {
     public class FixedSizeWaitQueue<T>
     {
