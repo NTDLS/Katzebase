@@ -1,4 +1,5 @@
-﻿using Katzebase.PublicLibrary.Exceptions;
+﻿using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Exceptions;
 using System.Text.RegularExpressions;
 
 namespace Katzebase.Engine.Query.Tokenizers
@@ -184,6 +185,8 @@ namespace Katzebase.Engine.Query.Tokenizers
         /// <returns></returns>
         public static Dictionary<string, string> CleanQueryText(ref string query, bool swapLiteralsBackIn = false)
         {
+            query = Utility.RemoveComments(query);
+
             var literalStrings = SwapOutLiteralStrings(ref query);
             query = query.Trim();
 

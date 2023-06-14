@@ -1,3 +1,10 @@
+
+select * from AdventureWorks2012:Person:Address
+--where City = 'old clause'
+where City = 'This/*is/*not a comment'; --Also is a comment
+
+
+/*
 SET TraceWaitTimes ON;
 
 Begin Transaction;
@@ -10,3 +17,4 @@ CREATE INDEX IX_Address_City_PostalCode
 ON AdventureWorks2012:Person:Address;
 
 Rollback Transaction;
+*/

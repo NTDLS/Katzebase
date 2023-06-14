@@ -1,8 +1,12 @@
 ﻿using ICSharpCode.AvalonEdit;
+using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using Microsoft.Identity.Client;
+using Microsoft.VisualBasic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Katzebase.UI.Classes
 {
@@ -272,8 +276,7 @@ namespace Katzebase.UI.Classes
                 group.OnException += Group_OnException;
                 group.OnStatus += Group_OnStatus;
 
-                //TODO: This needs to be MUCH more intelligent! What about ';' in strings? ... :/
-                var scripts = scriptText.Split(";").Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
+                var scripts = Utility.SplitQueryTextIntoBatches(scriptText);
 
                 int batchNumber = 1;
 
