@@ -37,10 +37,10 @@ namespace Katzebase.Engine.Documents
             return null;
         }
 
-        public PhysicalDocumentPageCatalogItem? GetPageWithRoomForNewDocument()
+        public PhysicalDocumentPageCatalogItem? GetPageWithRoomForNewDocument(int pageSize)
         {
             //TODO: Make the page size configurable.
-            return Collection.Where(o => o.DocumentIDs.Count < 128).FirstOrDefault();
+            return Collection.Where(o => o.DocumentIDs.Count < pageSize).FirstOrDefault();
         }
     }
 }

@@ -421,7 +421,7 @@ namespace Katzebase.Engine.Documents
             if (physicalDocumentPageCatalogItem == null)
             {
                 //The document doesnt exist in any pages, see if we can find one with some room:
-                physicalDocumentPageCatalogItem = documentPageCatalog.GetPageWithRoomForNewDocument();
+                physicalDocumentPageCatalogItem = documentPageCatalog.GetPageWithRoomForNewDocument(core.settings.DocumentPageSize);
 
                 if (physicalDocumentPageCatalogItem == null)
                 {
