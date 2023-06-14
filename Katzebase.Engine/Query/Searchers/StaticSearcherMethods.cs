@@ -34,7 +34,7 @@ namespace Katzebase.Engine.Query.Searchers
             Utility.EnsureNotNull(physicalSchema.DiskPath);
 
             //Open the document page catalog:
-            var documentPageCatalog = core.IO.GetJson<PersistDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
+            var documentPageCatalog = core.Documents.GetDocumentPageCatalog(transaction, physicalSchema, LockOperation.Write);
             Utility.EnsureNotNull(documentPageCatalog);
 
             if (documentPageCatalog.Collection.Count > 0)

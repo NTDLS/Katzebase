@@ -26,6 +26,8 @@ namespace Katzebase.Engine.Documents
         //TODO: This needs to be rebuilt entirely.
         internal KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
         {
+            throw new KbNotImplementedException();
+            /*
             try
             {
                 var result = new KbQueryResult();
@@ -54,6 +56,7 @@ namespace Katzebase.Engine.Documents
                 core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
                 throw;
             }
+            */
         }
 
         internal KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
@@ -108,11 +111,14 @@ namespace Katzebase.Engine.Documents
 
         internal KbQueryResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
         {
-            return ExecuteList(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
+            throw new KbNotImplementedException();
+            //return ExecuteList(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
         }
 
         public KbQueryResult ExecuteList(ulong processId, string schemaName, int rowLimit = -1)
         {
+            throw new KbNotImplementedException();
+            /*
             try
             {
                 var result = new KbQueryResult();
@@ -131,11 +137,14 @@ namespace Katzebase.Engine.Documents
                 core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
                 throw;
             }
+            */
         }
 
         internal KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
         {
-            //TODO: This is a stub, this does NOT work.
+            throw new KbNotImplementedException();
+
+            /*
             try
             {
                 var result = new KbActionResponse();
@@ -146,7 +155,6 @@ namespace Katzebase.Engine.Documents
 
                     //TODO: Delete the documents.
 
-                    /*
                     var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
 
                     var physicalDocument = documentCatalog.GetById(newId);
@@ -162,7 +170,6 @@ namespace Katzebase.Engine.Documents
 
                         core.IO.PutJson(txRef.Transaction, documentCatalogDiskPath, documentCatalog);
                     }
-                    */
 
                     txRef.Commit();
 
@@ -176,6 +183,7 @@ namespace Katzebase.Engine.Documents
                 core.Log.Write($"Failed to ExecuteDelete for process {processId}.", ex);
                 throw;
             }
+            */
         }
 
         /// <summary>
@@ -243,10 +251,12 @@ namespace Katzebase.Engine.Documents
         /// <exception cref="KbObjectNotFoundException"></exception>
         public KbActionResponse DeleteById(ulong processId, string schema, Guid newId)
         {
+            throw new KbNotImplementedException();
+
+            /*
             try
             {
                 var result = new KbActionResponse();
-                /*
                 using (var txRef = core.Transactions.Begin(processId))
                 {
 
@@ -282,7 +292,6 @@ namespace Katzebase.Engine.Documents
 
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
-                */
                 return result;
             }
             catch (Exception ex)
@@ -290,6 +299,7 @@ namespace Katzebase.Engine.Documents
                 core.Log.Write($"Failed to delete document by ID for process {processId}.", ex);
                 throw;
             }
+            */
         }
 
         /// <summary>
@@ -302,6 +312,7 @@ namespace Katzebase.Engine.Documents
         public KbDocumentCatalogCollection EnumerateCatalog(ulong processId, string schema)
         {
             throw new KbNotImplementedException();
+
             /*
             try
             {
@@ -338,9 +349,7 @@ namespace Katzebase.Engine.Documents
             */
         }
 
-
         #region Core put/get methods.
-
 
         /// <summary>
         /// When we want to read a document we do it here - no exceptions.
