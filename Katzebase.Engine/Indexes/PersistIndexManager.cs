@@ -38,13 +38,13 @@ namespace Katzebase.Engine.Indexes
                 {
                     string schema = preparedQuery.Schemas.First().Name;
 
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Read);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(preparedQuery.Schemas[0].Prefix);
                     }
 
-                    Drop(txRef.Transaction, schemaMeta, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+                    Drop(txRef.Transaction, physicalSchema, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
 
                     txRef.Commit();
 
@@ -71,13 +71,13 @@ namespace Katzebase.Engine.Indexes
                 {
                     string schema = preparedQuery.Schemas.First().Name;
 
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Read);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(preparedQuery.Schemas[0].Prefix);
                     }
 
-                    Rebuild(txRef.Transaction, schemaMeta, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+                    Rebuild(txRef.Transaction, physicalSchema, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
 
                     txRef.Commit();
 
@@ -103,8 +103,8 @@ namespace Katzebase.Engine.Indexes
                 {
                     string schema = preparedQuery.Schemas.First().Name;
 
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Read);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(preparedQuery.Schemas[0].Prefix);
                     }
@@ -120,7 +120,7 @@ namespace Katzebase.Engine.Indexes
                         index.Attributes.Add(new KbIndexAttribute() { Field = field.Field });
                     }
 
-                    Create(txRef.Transaction, schemaMeta, index, out Guid indexId);
+                    Create(txRef.Transaction, physicalSchema, index, out Guid indexId);
 
                     txRef.Commit();
 
@@ -136,10 +136,10 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        internal HashSet<Guid> MatchDocuments(Transaction transaction, PersistIndexPageCatalog indexPageCatalog,
+        internal HashSet<Guid> MatchDocuments(Transaction transaction, PersistIndexPageCatalog physicalIndexPageCatalog,
             IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
         {
-            var indexEntires = indexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
+            var indexEntires = physicalIndexPageCatalog.Leaves.Entries; //Start at the top of the index tree.
 
             bool? fullMatch = null;
 
@@ -165,21 +165,21 @@ namespace Katzebase.Engine.Indexes
                     return resultintDocuments.ToHashSet();
                 }
 
-                List<PersistIndexLeaf>? nextIndexEntires = null;
+                List<PersistIndexLeaf>? nextPhysicalIndexEntires = null;
 
                 var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.IndexSeek);
 
                 var conditionValue = conditionValues[attribute.Field.ToLower()];
 
                 if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
-                    nextIndexEntires = indexEntires.Where(o => o.Value == conditionValue)?.ToList();
+                    nextPhysicalIndexEntires = indexEntires.Where(o => o.Value == conditionValue)?.ToList();
                 else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
-                    nextIndexEntires = indexEntires.Where(o => o.Value != conditionValue)?.ToList();
+                    nextPhysicalIndexEntires = indexEntires.Where(o => o.Value != conditionValue)?.ToList();
                 else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
 
                 ptIndexSeek?.StopAndAccumulate();
 
-                if (nextIndexEntires == null)
+                if (nextPhysicalIndexEntires == null)
                 {
                     fullMatch = false; //No match, bail out!
                     break;
@@ -189,13 +189,13 @@ namespace Katzebase.Engine.Indexes
                     fullMatch ??= true; //Set this as a FULL INDEX match on the first match. This is true until we fail to match on a subsequent condition.
                 }
 
-                if (nextIndexEntires.Any(o => o.Leaves.Count > 0)) //If we are at the base of the tree then there is no need to go further down.
+                if (nextPhysicalIndexEntires.Any(o => o.Leaves.Count > 0)) //If we are at the base of the tree then there is no need to go further down.
                 {
-                    indexEntires = nextIndexEntires.Select(o => o.Leaves).SelectMany(o => o.Entries).ToList(); //Traverse down the tree.
+                    indexEntires = nextPhysicalIndexEntires.Select(o => o.Leaves).SelectMany(o => o.Entries).ToList(); //Traverse down the tree.
                 }
                 else
                 {
-                    indexEntires = nextIndexEntires;
+                    indexEntires = nextPhysicalIndexEntires;
                 }
             }
 
@@ -248,19 +248,19 @@ namespace Katzebase.Engine.Indexes
                     return resultintDocuments.ToHashSet();
                 }
 
-                List<PersistIndexLeaf>? nextIndexEntires = null;
+                List<PersistIndexLeaf>? nextPhysicalIndexEntires = null;
 
                 var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.IndexSeek);
 
                 if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
-                    nextIndexEntires = indexEntires.Where(o => o.Value == conditionField.Right.Value)?.ToList();
+                    nextPhysicalIndexEntires = indexEntires.Where(o => o.Value == conditionField.Right.Value)?.ToList();
                 else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
-                    nextIndexEntires = indexEntires.Where(o => o.Value != conditionField.Right.Value)?.ToList();
+                    nextPhysicalIndexEntires = indexEntires.Where(o => o.Value != conditionField.Right.Value)?.ToList();
                 else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
 
                 ptIndexSeek?.StopAndAccumulate();
 
-                if (nextIndexEntires == null)
+                if (nextPhysicalIndexEntires == null)
                 {
                     fullMatch = false; //No match, bail out!
                     break;
@@ -272,11 +272,11 @@ namespace Katzebase.Engine.Indexes
 
                 if (indexEntires.Any(o => o.Leaves.Count > 0)) //If we are at the base of the tree then there is no need to go further down.
                 {
-                    indexEntires = nextIndexEntires.Select(o => o.Leaves).SelectMany(o => o.Entries).ToList(); //Traverse down the tree.
+                    indexEntires = nextPhysicalIndexEntires.Select(o => o.Leaves).SelectMany(o => o.Entries).ToList(); //Traverse down the tree.
                 }
                 else
                 {
-                    indexEntires = nextIndexEntires;
+                    indexEntires = nextPhysicalIndexEntires;
                 }
             }
 
@@ -320,13 +320,13 @@ namespace Katzebase.Engine.Indexes
             {
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Read);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(schema);
                     }
 
-                    var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Read);
+                    var indexCatalog = GetIndexCatalog(txRef.Transaction, physicalSchema, LockOperation.Read);
                     if (indexCatalog != null)
                     {
                         foreach (var index in indexCatalog.Collection)
@@ -355,13 +355,13 @@ namespace Katzebase.Engine.Indexes
             {
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Read);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(schema);
                     }
 
-                    var indexCatalog = GetIndexCatalog(txRef.Transaction, schemaMeta, LockOperation.Read);
+                    var indexCatalog = GetIndexCatalog(txRef.Transaction, physicalSchema, LockOperation.Read);
                     if (indexCatalog != null)
                     {
                         result = indexCatalog.GetByName(indexName) != null;
@@ -379,63 +379,63 @@ namespace Katzebase.Engine.Indexes
             return result;
         }
 
-        private void Create(Transaction transaction, PersistSchema schemaMeta, KbIndex index, out Guid newId)
+        private void Create(Transaction transaction, PersistSchema physicalSchema, KbIndex index, out Guid newId)
         {
-            var persistIndex = PersistIndex.FromPayload(index);
-            Utility.EnsureNotNull(persistIndex);
+            var physicalIndex = PersistIndex.FromPayload(index);
+            Utility.EnsureNotNull(physicalIndex);
 
-            if (persistIndex.Id == null || persistIndex.Id == Guid.Empty)
+            if (physicalIndex.Id == null || physicalIndex.Id == Guid.Empty)
             {
-                persistIndex.Id = Guid.NewGuid();
+                physicalIndex.Id = Guid.NewGuid();
             }
-            if (persistIndex.Created == DateTime.MinValue)
+            if (physicalIndex.Created == DateTime.MinValue)
             {
-                persistIndex.Created = DateTime.UtcNow;
+                physicalIndex.Created = DateTime.UtcNow;
             }
-            if (persistIndex.Modfied == DateTime.MinValue)
+            if (physicalIndex.Modfied == DateTime.MinValue)
             {
-                persistIndex.Modfied = DateTime.UtcNow;
+                physicalIndex.Modfied = DateTime.UtcNow;
             }
 
-            var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Write);
+            var indexCatalog = GetIndexCatalog(transaction, physicalSchema, LockOperation.Write);
 
             if (indexCatalog.GetByName(index.Name) != null)
             {
                 throw new KbObjectAlreadysExistsException(index.Name);
             }
 
-            indexCatalog.Add(persistIndex);
+            indexCatalog.Add(physicalIndex);
 
-            if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
+            if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
             {
-                throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
+                throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
             }
 
             core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
-            persistIndex.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(index.Name));
-            core.IO.PutPBuf(transaction, persistIndex.DiskPath, new PersistIndexPageCatalog());
+            physicalIndex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(index.Name));
+            core.IO.PutPBuf(transaction, physicalIndex.DiskPath, new PersistIndexPageCatalog());
 
-            RebuildIndex(transaction, schemaMeta, persistIndex);
+            RebuildIndex(transaction, physicalSchema, physicalIndex);
 
-            newId = (Guid)persistIndex.Id;
+            newId = (Guid)physicalIndex.Id;
         }
 
         public void Create(ulong processId, string schema, KbIndex index, out Guid newId)
         {
             try
             {
-                var persistIndex = PersistIndex.FromPayload(index);
-                Utility.EnsureNotNull(persistIndex);
+                var physicalIndex = PersistIndex.FromPayload(index);
+                Utility.EnsureNotNull(physicalIndex);
 
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Read);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(schema);
                     }
 
-                    Create(txRef.Transaction, schemaMeta, index, out newId);
+                    Create(txRef.Transaction, physicalSchema, index, out newId);
                 }
             }
             catch (Exception ex)
@@ -451,13 +451,13 @@ namespace Katzebase.Engine.Indexes
             {
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Read);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(schema);
                     }
 
-                    Rebuild(txRef.Transaction, schemaMeta, indexName);
+                    Rebuild(txRef.Transaction, physicalSchema, indexName);
                 }
             }
             catch (Exception ex)
@@ -467,44 +467,43 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        private void Drop(Transaction transaction, PersistSchema schemaMeta, string indexName)
+        private void Drop(Transaction transaction, PersistSchema physicalSchema, string indexName)
         {
-            var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Write);
-            if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
+            var indexCatalog = GetIndexCatalog(transaction, physicalSchema, LockOperation.Write);
+            if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
             {
-                throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
+                throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
             }
 
-            var indexMeta = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
-            var index = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
-            indexCatalog.Remove(index);
+            var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
+            indexCatalog.Remove(physicalIindex);
 
-            indexMeta.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(indexMeta.Name));
+            physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
 
-            core.IO.DeleteFile(transaction, indexMeta.DiskPath);
+            core.IO.DeleteFile(transaction, physicalIindex.DiskPath);
 
             core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
         }
 
-        private void Rebuild(Transaction transaction, PersistSchema schemaMeta, string indexName)
+        private void Rebuild(Transaction transaction, PersistSchema physicalSchema, string indexName)
         {
-            var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Write);
+            var indexCatalog = GetIndexCatalog(transaction, physicalSchema, LockOperation.Write);
 
-            if (indexCatalog.DiskPath == null || schemaMeta.DiskPath == null)
+            if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
             {
-                throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
+                throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
             }
 
-            var indexMeta = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
-            indexMeta.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(indexMeta.Name));
+            var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
+            physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
 
-            RebuildIndex(transaction, schemaMeta, indexMeta);
+            RebuildIndex(transaction, physicalSchema, physicalIindex);
         }
 
         private PersistIndexCatalog GetIndexCatalog(Transaction transaction, string schema, LockOperation intendedOperation)
         {
-            var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schema, intendedOperation);
-            return GetIndexCatalog(transaction, schemaMeta, intendedOperation);
+            var physicalSchema = core.Schemas.Acquire(transaction, schema, intendedOperation);
+            return GetIndexCatalog(transaction, physicalSchema, intendedOperation);
         }
 
         public string MakeIndexFileName(string indexName)
@@ -512,14 +511,14 @@ namespace Katzebase.Engine.Indexes
             return $"@Index_{0}_Pages_{Helpers.MakeSafeFileName(indexName)}.PBuf";
         }
 
-        internal PersistIndexCatalog GetIndexCatalog(Transaction transaction, PersistSchema schemaMeta, LockOperation intendedOperation)
+        internal PersistIndexCatalog GetIndexCatalog(Transaction transaction, PersistSchema physicalSchema, LockOperation intendedOperation)
         {
-            if (schemaMeta.DiskPath == null)
+            if (physicalSchema.DiskPath == null)
             {
-                throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
+                throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
             }
 
-            string indexCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, IndexCatalogFile);
+            string indexCatalogDiskPath = Path.Combine(physicalSchema.DiskPath, IndexCatalogFile);
 
             var indexCatalog = core.IO.GetJson<PersistIndexCatalog>(transaction, indexCatalogDiskPath, intendedOperation);
             Utility.EnsureNotNull(indexCatalog);
@@ -528,13 +527,13 @@ namespace Katzebase.Engine.Indexes
 
             foreach (var index in indexCatalog.Collection)
             {
-                index.DiskPath = Path.Combine(schemaMeta.DiskPath, MakeIndexFileName(index.Name));
+                index.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(index.Name));
             }
 
             return indexCatalog;
         }
 
-        private List<string> GetIndexSearchTokens(Transaction transaction, PersistIndex indexMeta, PersistDocument document)
+        private List<string> GetIndexSearchTokens(Transaction transaction, PersistIndex physicalIindex, PersistDocument document)
         {
             try
             {
@@ -542,7 +541,7 @@ namespace Katzebase.Engine.Indexes
 
                 Utility.EnsureNotNull(document.Content);
 
-                foreach (var indexAttribute in indexMeta.Attributes)
+                foreach (var indexAttribute in physicalIindex.Attributes)
                 {
                     Utility.EnsureNotNull(indexAttribute.Field);
 
@@ -566,10 +565,10 @@ namespace Katzebase.Engine.Indexes
         /// Finds the appropriate index page for a set of key values in the given index file. Locks the index page catalog for write.
         /// </summary>
         /// <returns></returns>
-        private FindKeyPageResult LocateExtentInGivenIndexFile(Transaction transaction, List<string> searchTokens, PersistIndex indexMeta)
+        private FindKeyPageResult LocateExtentInGivenIndexFile(Transaction transaction, List<string> searchTokens, PersistIndex physicalIindex)
         {
-            Utility.EnsureNotNull(indexMeta.DiskPath);
-            var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, indexMeta.DiskPath, LockOperation.Write);
+            Utility.EnsureNotNull(physicalIindex.DiskPath);
+            var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, physicalIindex.DiskPath, LockOperation.Write);
             Utility.EnsureNotNull(indexPageCatalog);
             return LocateExtentInGivenIndexPageCatalog(transaction, searchTokens, indexPageCatalog);
         }
@@ -578,7 +577,7 @@ namespace Katzebase.Engine.Indexes
         /// Finds the appropriate index page for a set of key values in the given index page catalog.
         /// </summary>
         /// <param name="transaction"></param>
-        /// <param name="indexMeta"></param>
+        /// <param name="physicalIindex"></param>
         /// <param name="searchTokens"></param>
         /// <param name="indexPageCatalog"></param>
         /// <returns>A reference to a node in the suppliedIndexPageCatalog</returns>
@@ -655,19 +654,19 @@ namespace Katzebase.Engine.Indexes
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        private void UpdateDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
+        private void UpdateDocumentIntoIndexes(Transaction transaction, PersistSchema physicalSchema, PersistDocument document)
         {
             try
             {
                 Utility.EnsureNotNull(document.Id);
 
-                var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
+                var indexCatalog = GetIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
                 //Loop though each index in the schema.
-                foreach (var indexMeta in indexCatalog.Collection)
+                foreach (var physicalIindex in indexCatalog.Collection)
                 {
-                    DeleteDocumentFromIndex(transaction, schemaMeta, indexMeta, (Guid)document.Id);
-                    InsertDocumentIntoIndex(transaction, schemaMeta, indexMeta, document);
+                    DeleteDocumentFromIndex(transaction, physicalSchema, physicalIindex, (Guid)document.Id);
+                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document);
                 }
             }
             catch (Exception ex)
@@ -683,16 +682,16 @@ namespace Katzebase.Engine.Indexes
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void InsertDocumentIntoIndexes(Transaction transaction, PersistSchema schemaMeta, PersistDocument document)
+        internal void InsertDocumentIntoIndexes(Transaction transaction, PersistSchema physicalSchema, PersistDocument document)
         {
             try
             {
-                var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
+                var indexCatalog = GetIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
                 //Loop though each index in the schema.
-                foreach (var indexMeta in indexCatalog.Collection)
+                foreach (var physicalIindex in indexCatalog.Collection)
                 {
-                    InsertDocumentIntoIndex(transaction, schemaMeta, indexMeta, document);
+                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document);
                 }
             }
             catch (Exception ex)
@@ -706,35 +705,35 @@ namespace Katzebase.Engine.Indexes
         /// Inserts an index entry for a single document into a single index.
         /// </summary>
         /// <param name="transaction"></param>
-        /// <param name="schemaMeta"></param>
-        /// <param name="indexMeta"></param>
+        /// <param name="physicalSchema"></param>
+        /// <param name="physicalIindex"></param>
         /// <param name="document"></param>
-        private void InsertDocumentIntoIndex(Transaction transaction, PersistSchema schemaMeta, PersistIndex indexMeta, PersistDocument document)
+        private void InsertDocumentIntoIndex(Transaction transaction, PersistSchema physicalSchema, PersistIndex physicalIindex, PersistDocument document)
         {
-            InsertDocumentIntoIndex(transaction, schemaMeta, indexMeta, document, null, true);
+            InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document, null, true);
         }
 
         /// <summary>
         /// Inserts an index entry for a single document into a single index using a long lived index page catalog.
         /// </summary>
         /// <param name="transaction"></param>
-        /// <param name="schemaMeta"></param>
-        /// <param name="indexMeta"></param>
+        /// <param name="physicalSchema"></param>
+        /// <param name="physicalIindex"></param>
         /// <param name="document"></param>
-        private void InsertDocumentIntoIndex(Transaction transaction, PersistSchema schemaMeta, PersistIndex indexMeta, PersistDocument document, PersistIndexPageCatalog? indexPageCatalog, bool flushPageCatalog)
+        private void InsertDocumentIntoIndex(Transaction transaction, PersistSchema physicalSchema, PersistIndex physicalIindex, PersistDocument document, PersistIndexPageCatalog? indexPageCatalog, bool flushPageCatalog)
         {
             try
             {
                 Utility.EnsureNotNullOrEmpty(document.Id);
-                Utility.EnsureNotNull(indexMeta.DiskPath);
+                Utility.EnsureNotNull(physicalIindex.DiskPath);
 
-                var searchTokens = GetIndexSearchTokens(transaction, indexMeta, document);
+                var searchTokens = GetIndexSearchTokens(transaction, physicalIindex, document);
 
                 FindKeyPageResult findResult;
 
                 if (indexPageCatalog == null)
                 {
-                    findResult = LocateExtentInGivenIndexFile(transaction, searchTokens, indexMeta);
+                    findResult = LocateExtentInGivenIndexFile(transaction, searchTokens, physicalIindex);
                 }
                 else
                 {
@@ -749,16 +748,16 @@ namespace Katzebase.Engine.Indexes
 
                     findResult.Leaf.DocumentIDs ??= new HashSet<Guid>();
 
-                    if (indexMeta.IsUnique && findResult.Leaf.DocumentIDs.Count > 1)
+                    if (physicalIindex.IsUnique && findResult.Leaf.DocumentIDs.Count > 1)
                     {
-                        string exceptionText = $"Duplicate key violation occurred for index [{schemaMeta.VirtualPath}]/[{indexMeta.Name}]. Values: {{{string.Join(",", searchTokens)}}}";
+                        string exceptionText = $"Duplicate key violation occurred for index [{physicalSchema.VirtualPath}]/[{physicalIindex.Name}]. Values: {{{string.Join(",", searchTokens)}}}";
                         throw new KbDuplicateKeyViolationException(exceptionText);
                     }
 
                     findResult.Leaf.DocumentIDs.Add((Guid)document.Id);
                     if (flushPageCatalog)
                     {
-                        core.IO.PutPBuf(transaction, indexMeta.DiskPath, findResult.Catalog);
+                        core.IO.PutPBuf(transaction, physicalIindex.DiskPath, findResult.Catalog);
                     }
                 }
                 else
@@ -790,7 +789,7 @@ namespace Katzebase.Engine.Indexes
 
                     if (flushPageCatalog)
                     {
-                        core.IO.PutPBuf(transaction, indexMeta.DiskPath, findResult.Catalog);
+                        core.IO.PutPBuf(transaction, physicalIindex.DiskPath, findResult.Catalog);
                     }
                 }
             }
@@ -806,49 +805,46 @@ namespace Katzebase.Engine.Indexes
         private class RebuildIndexThreadParam
         {
             public Transaction Transaction { get; set; }
-            public PersistSchema SchemaMeta { get; set; }
-            public PersistIndex IndexMeta { get; set; }
-            public PersistDocumentCatalog DocumentCatalog { get; set; }
+            public PersistSchema PhysicalSchema { get; set; }
+            public PersistIndex PhysicalIindex { get; set; }
             public PersistIndexPageCatalog IndexPageCatalog { get; set; }
             public object SyncObject { get; private set; } = new object();
 
-            public RebuildIndexThreadParam(Transaction transaction, PersistSchema schemaMeta,
-                PersistIndexPageCatalog indexPageCatalog, PersistIndex indexMeta, PersistDocumentCatalog documentCatalog)
+            public RebuildIndexThreadParam(Transaction transaction, PersistSchema physicalSchema,
+                PersistIndexPageCatalog indexPageCatalog, PersistIndex physicalIindex)
             {
                 Transaction = transaction;
-                SchemaMeta = schemaMeta;
-                IndexMeta = indexMeta;
-                DocumentCatalog = documentCatalog;
+                PhysicalSchema = physicalSchema;
+                PhysicalIindex = physicalIindex;
                 IndexPageCatalog = indexPageCatalog;
             }
         }
 
         #endregion
 
-        private void RebuildIndexThreadProc(ThreadPoolQueue<PersistDocumentCatalogItem, RebuildIndexThreadParam> pool, RebuildIndexThreadParam? param)
+        private void RebuildIndexThreadProc(ThreadPoolQueue<PageDocument, RebuildIndexThreadParam> pool, RebuildIndexThreadParam? param)
         {
             Utility.EnsureNotNull(param);
 
             while (pool.ContinueToProcessQueue)
             {
-                var documentCatalogItem = pool.DequeueWorkItem();
-                if (documentCatalogItem == null)
+                var pageDocument = pool.DequeueWorkItem();
+                if (pageDocument == null)
                 {
                     continue;
                 }
 
-                if (param.SchemaMeta.DiskPath == null)
+                if (param.PhysicalSchema.DiskPath == null)
                 {
-                    throw new KbNullException($"Value should not be null {nameof(param.SchemaMeta.DiskPath)}.");
+                    throw new KbNullException($"Value should not be null {nameof(param.PhysicalSchema.DiskPath)}.");
                 }
 
-                string documentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
-                var persistDocument = core.IO.GetJson<PersistDocument>(param.Transaction, documentDiskPath, LockOperation.Read);
+                var persistDocument = core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, pageDocument.Id, LockOperation.Read);
                 Utility.EnsureNotNull(persistDocument);
 
                 lock (param.SyncObject)
                 {
-                    InsertDocumentIntoIndex(param.Transaction, param.SchemaMeta, param.IndexMeta, persistDocument, param.IndexPageCatalog, false);
+                    InsertDocumentIntoIndex(param.Transaction, param.PhysicalSchema, param.PhysicalIindex, persistDocument, param.IndexPageCatalog, false);
                 }
             }
         }
@@ -857,48 +853,47 @@ namespace Katzebase.Engine.Indexes
         /// Inserts all documents in a schema into a single index in the schema. Locks the index page catalog for write.
         /// </summary>
         /// <param name="transaction"></param>
-        /// <param name="schemaMeta"></param>
-        /// <param name="indexMeta"></param>
-        private void RebuildIndex(Transaction transaction, PersistSchema schemaMeta, PersistIndex indexMeta)
+        /// <param name="physicalSchema"></param>
+        /// <param name="physicalIindex"></param>
+        private void RebuildIndex(Transaction transaction, PersistSchema physicalSchema, PersistIndex physicalIindex)
         {
             try
             {
-                Utility.EnsureNotNull(indexMeta.DiskPath);
-                Utility.EnsureNotNull(schemaMeta.DiskPath);
+                Utility.EnsureNotNull(physicalIindex.DiskPath);
+                Utility.EnsureNotNull(physicalSchema.DiskPath);
 
-                var filePath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
-                var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, filePath, LockOperation.Read);
+                var documentCatalog = core.Documents.GetPageDocuments(transaction, physicalSchema, LockOperation.Read).ToList();
                 Utility.EnsureNotNull(documentCatalog);
 
                 //Clear out the existing index pages.
-                core.IO.PutPBuf(transaction, indexMeta.DiskPath, new PersistIndexPageCatalog());
+                core.IO.PutPBuf(transaction, physicalIindex.DiskPath, new PersistIndexPageCatalog());
 
-                var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, indexMeta.DiskPath, LockOperation.Write);
+                var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, physicalIindex.DiskPath, LockOperation.Write);
                 Utility.EnsureNotNull(indexPageCatalog);
 
                 var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
-                var threadParam = new RebuildIndexThreadParam(transaction, schemaMeta, indexPageCatalog, indexMeta, documentCatalog);
-                int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentCatalog.Collection.Count);
+                var threadParam = new RebuildIndexThreadParam(transaction, physicalSchema, indexPageCatalog, physicalIindex);
+                int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentCatalog.Count);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
-                var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, RebuildIndexThreadParam>
+                var threadPool = ThreadPoolQueue<PageDocument, RebuildIndexThreadParam>
                     .CreateAndStart(RebuildIndexThreadProc, threadParam, threadCount);
                 ptThreadCreation?.StopAndAccumulate();
 
-                foreach (var documentCatalogItem in documentCatalog.Collection)
+                foreach (var pageDocument in documentCatalog)
                 {
                     if (threadPool.HasException || threadPool.ContinueToProcessQueue == false)
                     {
                         break;
                     }
 
-                    threadPool.EnqueueWorkItem(documentCatalogItem);
+                    threadPool.EnqueueWorkItem(pageDocument);
                 }
 
                 var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
                 threadPool.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
-                core.IO.PutPBuf(transaction, indexMeta.DiskPath, indexPageCatalog);
+                core.IO.PutPBuf(transaction, physicalIindex.DiskPath, indexPageCatalog);
             }
             catch (Exception ex)
             {
@@ -907,16 +902,16 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        internal void DeleteDocumentFromIndexes(Transaction transaction, PersistSchema schemaMeta, Guid documentId)
+        internal void DeleteDocumentFromIndexes(Transaction transaction, PersistSchema physicalSchema, Guid documentId)
         {
             try
             {
-                var indexCatalog = GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
+                var indexCatalog = GetIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
                 //Loop though each index in the schema.
-                foreach (var indexMeta in indexCatalog.Collection)
+                foreach (var physicalIindex in indexCatalog.Collection)
                 {
-                    DeleteDocumentFromIndex(transaction, schemaMeta, indexMeta, documentId);
+                    DeleteDocumentFromIndex(transaction, physicalSchema, physicalIindex, documentId);
                 }
             }
             catch (Exception ex)
@@ -953,19 +948,19 @@ namespace Katzebase.Engine.Indexes
         /// <summary>
         /// Removes a document from an index. Locks the index page catalog for write.
         /// </summary>
-        private void DeleteDocumentFromIndex(Transaction transaction, PersistSchema schemaMeta, PersistIndex indexMeta, Guid documentId)
+        private void DeleteDocumentFromIndex(Transaction transaction, PersistSchema physicalSchema, PersistIndex physicalIindex, Guid documentId)
         {
             try
             {
-                Utility.EnsureNotNull(indexMeta.DiskPath);
+                Utility.EnsureNotNull(physicalIindex.DiskPath);
 
-                var persistIndexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, indexMeta.DiskPath, LockOperation.Write);
+                var persistIndexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, physicalIindex.DiskPath, LockOperation.Write);
 
                 Utility.EnsureNotNull(persistIndexPageCatalog);
 
                 if (RemoveDocumentFromLeaves(ref persistIndexPageCatalog.Leaves, documentId))
                 {
-                    core.IO.PutPBuf(transaction, indexMeta.DiskPath, persistIndexPageCatalog);
+                    core.IO.PutPBuf(transaction, physicalIindex.DiskPath, persistIndexPageCatalog);
                 }
             }
             catch (Exception ex)

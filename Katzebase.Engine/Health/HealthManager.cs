@@ -16,15 +16,15 @@ namespace Katzebase.Engine.Health
             string healthCounterDiskPath = Path.Combine(core.settings.LogDirectory, HealthStatsFile);
             if (File.Exists(healthCounterDiskPath))
             {
-                var persistCounters = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath);
+                var physicalCounters = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath);
 
-                if (persistCounters == null || persistCounters.Count == 0)
+                if (physicalCounters == null || physicalCounters.Count == 0)
                 {
                     Counters = new Dictionary<string, HealthCounter>();
                 }
                 else
                 {
-                    Counters = persistCounters.ToDictionary(o => o.Instance);
+                    Counters = physicalCounters.ToDictionary(o => o.Instance);
                 }
             }
             else
@@ -43,27 +43,27 @@ namespace Katzebase.Engine.Health
             lock (Counters)
             {
                 lastCheckpoint = DateTime.UtcNow;
-                var persistCounters = Counters.Values.Where(o => o.Value > 0).ToList();
+                var physicalCounters = Counters.Values.Where(o => o.Value > 0).ToList();
 
                 //All counters have a non-null instance because we use it for a key, but the ones that are really per-instance
                 //  will have an instance different than the type. Here we want to find the most recent instance counter and
                 //  remove any other instance counters that are n-seconds older than it is. Otherwise this grows forever.
                 //  As for the non-instance counters, we leave those forever. The user can clear them as they see fit.
-                var instanceCounters = persistCounters.Where(o => o.Instance == o.Type.ToString());
+                var instanceCounters = physicalCounters.Where(o => o.Instance == o.Type.ToString());
                 if (instanceCounters.Any())
                 {
                     var mostRecentCounter = instanceCounters.Max(o => o.WaitDateTimeUtc);
-                    var itemsToRemove = persistCounters.Where(o => o.Instance == o.Type.ToString()
+                    var itemsToRemove = physicalCounters.Where(o => o.Instance == o.Type.ToString()
                                     && (mostRecentCounter - o.WaitDateTimeUtc).TotalSeconds > core.settings.HealthMonitoringInstanceLevelTimeToLiveSeconds).ToList();
 
                     foreach (var itemToRemove in itemsToRemove)
                     {
-                        persistCounters.Remove(itemToRemove);
+                        physicalCounters.Remove(itemToRemove);
                         Counters.Remove(itemToRemove.Instance);
                     }
                 }
 
-                core.IO.PutJsonNonTracked(Path.Combine(core.settings.LogDirectory, HealthStatsFile), persistCounters);
+                core.IO.PutJsonNonTracked(Path.Combine(core.settings.LogDirectory, HealthStatsFile), physicalCounters);
             }
         }
 

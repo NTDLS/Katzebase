@@ -2,9 +2,9 @@
 {
     public static class EngineConstants
     {
-        public const string DocumentExtension = ".json";
+        public const string DocumentPageExtension = ".page.json";
         public const string SchemaCatalogFile = "@SchemaCatalog.json";
-        public const string DocumentCatalogFile = "@DocumentCatalog.json";
+        public const string DocumentPageCatalogFile = "@DocumentPageCatalog.json";
         public const string IndexCatalogFile = "@IndexCatalog.json";
         public const string LoginCatalogFile = "@LoginCatalog.json";
         public const string TransactionActionsFile = "@Transaction.log";

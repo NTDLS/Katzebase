@@ -1,5 +1,6 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
+using Katzebase.Engine.Locking;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Sorting;
 using Katzebase.Engine.Schemas;
@@ -23,17 +24,17 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         {
             //Lock the schema:
             var ptLockSchema = transaction.PT?.CreateDurationTracker<PersistSchema>(PerformanceTraceCumulativeMetricType.Lock);
-            var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schemaName, LockOperation.Read);
-            if (schemaMeta == null || schemaMeta.Exists == false)
+            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+            if (physicalSchema?.Exists != true)
             {
                 throw new KbObjectNotFoundException(schemaName);
             }
             ptLockSchema?.StopAndAccumulate();
-            Utility.EnsureNotNull(schemaMeta.DiskPath);
+            Utility.EnsureNotNull(physicalSchema.DiskPath);
 
             //Lock the document catalog:
-            var documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
-            var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(transaction, documentCatalogDiskPath, LockOperation.Read);
+            var documentCatalog = core.Documents.GetPageDocuments(transaction, physicalSchema, LockOperation.Read).ToList();
+
             Utility.EnsureNotNull(documentCatalog);
 
             ConditionLookupOptimization? lookupOptimization = null;
@@ -41,15 +42,15 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             //If we dont have any conditions then we just need to return all rows from the schema.
             if (query.Conditions.Subsets.Count > 0)
             {
-                lookupOptimization = ConditionLookupOptimization.Build(core, transaction, schemaMeta, query.Conditions);
+                lookupOptimization = ConditionLookupOptimization.Build(core, transaction, physicalSchema, query.Conditions);
 
                 //Create a reference to the entire document catalog.
-                var limitedDocumentCatalogItems = documentCatalog.Collection;
+                var limitedPageDocuments = documentCatalog;
 
                 if (lookupOptimization.CanApplyIndexing())
                 {
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                    limitedDocumentCatalogItems = new List<PersistDocumentCatalogItem>();
+                    documentCatalog = new List<PageDocument>();
 
                     //All condition subsets have a selected index. Start building a list of possible document IDs.
                     foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
@@ -62,7 +63,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
                         var documentIds = core.Indexes.MatchDocuments(transaction, indexPageCatalog, subset.IndexSelection, subset);
 
-                        limitedDocumentCatalogItems.AddRange(documentCatalog.Collection.Where(o => documentIds.Contains(o.Id)).ToList());
+                        documentCatalog.AddRange(documentCatalog.Where(o => documentIds.Contains(o.Id)).ToList());
                     }
                 }
                 else
@@ -87,16 +88,16 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 }
             }
 
-            Utility.EnsureNotNull(schemaMeta.DiskPath);
+            Utility.EnsureNotNull(physicalSchema.DiskPath);
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
-            var threadParam = new LookupThreadParam(core, transaction, schemaMeta, query, lookupOptimization);
-            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentCatalog.Collection.Count);
+            var threadParam = new LookupThreadParam(core, transaction, physicalSchema, query, lookupOptimization);
+            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentCatalog.Count);
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
-            var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(GetDocumentsByConditionsThreadProc, threadParam, threadCount);
+            var threadPool = ThreadPoolQueue<PageDocument, LookupThreadParam>.CreateAndStart(GetDocumentsByConditionsThreadProc, threadParam, threadCount);
             ptThreadCreation?.StopAndAccumulate();
 
-            foreach (var documentCatalogItem in documentCatalog.Collection)
+            foreach (var pageDocument in documentCatalog)
             {
                 if ((query.RowLimit != 0 && query.SortFields.Any() == false) && threadParam.Results.Collection.Count >= query.RowLimit)
                 {
@@ -108,7 +109,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     break;
                 }
 
-                threadPool.EnqueueWorkItem(documentCatalogItem);
+                threadPool.EnqueueWorkItem(pageDocument);
             }
 
             var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
@@ -146,17 +147,17 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         private class LookupThreadParam
         {
             public SSQDocumentLookupResults Results = new();
-            public PersistSchema SchemaMeta { get; private set; }
+            public PersistSchema PhysicalSchema { get; private set; }
             public Core Core { get; private set; }
             public Transaction Transaction { get; private set; }
             public PreparedQuery Query { get; private set; }
             public ConditionLookupOptimization? LookupOptimization { get; private set; }
 
-            public LookupThreadParam(Core core, Transaction transaction, PersistSchema schemaMeta, PreparedQuery query, ConditionLookupOptimization? lookupOptimization)
+            public LookupThreadParam(Core core, Transaction transaction, PersistSchema physicalSchema, PreparedQuery query, ConditionLookupOptimization? lookupOptimization)
             {
                 this.Core = core;
                 this.Transaction = transaction;
-                this.SchemaMeta = schemaMeta;
+                this.PhysicalSchema = physicalSchema;
                 this.Query = query;
                 this.LookupOptimization = lookupOptimization;
             }
@@ -164,11 +165,11 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
         #endregion
 
-        private static void GetDocumentsByConditionsThreadProc(ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam> pool, LookupThreadParam? param)
+        private static void GetDocumentsByConditionsThreadProc(ThreadPoolQueue<PageDocument, LookupThreadParam> pool, LookupThreadParam? param)
         {
             Utility.EnsureNotNull(param);
-            Utility.EnsureNotNull(param.SchemaMeta);
-            Utility.EnsureNotNull(param.SchemaMeta.DiskPath);
+            Utility.EnsureNotNull(param.PhysicalSchema);
+            Utility.EnsureNotNull(param.PhysicalSchema.DiskPath);
 
             NCalc.Expression? expression = null;
 
@@ -179,20 +180,18 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             while (pool.ContinueToProcessQueue)
             {
-                var documentCatalogItem = pool.DequeueWorkItem();
-                if (documentCatalogItem == null)
+                var pageDocument = pool.DequeueWorkItem();
+                if (pageDocument == null)
                 {
                     continue;
                 }
 
-                var persistDocumentDiskPath = Path.Combine(param.SchemaMeta.DiskPath, documentCatalogItem.FileName);
-                var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPath, LockOperation.Read);
-                Utility.EnsureNotNull(persistDocument);
+                var persistDocument = param.Core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, pageDocument.Id, LockOperation.Read);
                 Utility.EnsureNotNull(persistDocument.Content);
 
                 var jContent = JObject.Parse(persistDocument.Content);
 
-                Utility.EnsureNotNull(documentCatalogItem.Id);
+                Utility.EnsureNotNull(pageDocument.Id);
 
                 if (expression != null && param.LookupOptimization != null)
                 {

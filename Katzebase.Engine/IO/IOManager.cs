@@ -1,4 +1,6 @@
-﻿using Katzebase.Engine.KbLib;
+﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;

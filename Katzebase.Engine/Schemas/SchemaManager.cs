@@ -1,7 +1,6 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query;
-using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
@@ -19,15 +18,15 @@ namespace Katzebase.Engine.Schemas
     {
         private Core core;
         private string rootCatalogFile;
-        private PersistSchema? rootSchemaMeta = null;
+        private PersistSchema? rootPhysicalSchema = null;
 
-        public PersistSchema RootSchemaMeta
+        public PersistSchema RootPhysicalSchema
         {
             get
             {
-                if (rootSchemaMeta == null)
+                if (rootPhysicalSchema == null)
                 {
-                    rootSchemaMeta = new PersistSchema()
+                    rootPhysicalSchema = new PersistSchema()
                     {
                         Id = RootSchemaGUID,
                         DiskPath = core.settings.DataRootPath,
@@ -36,7 +35,7 @@ namespace Katzebase.Engine.Schemas
                         Name = string.Empty,
                     };
                 }
-                return rootSchemaMeta;
+                return rootPhysicalSchema;
             }
         }
 
@@ -52,7 +51,7 @@ namespace Katzebase.Engine.Schemas
                 Directory.CreateDirectory(core.settings.DataRootPath);
 
                 core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, SchemaCatalogFile), new PersistSchemaCatalog());
-                core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, DocumentCatalogFile), new PersistDocumentCatalog());
+                core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, DocumentPageCatalogFile), new PersistDocumentPageCatalog());
                 core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, IndexCatalogFile), new PersistIndexCatalog());
             }
         }
@@ -96,16 +95,16 @@ namespace Katzebase.Engine.Schemas
 
             //Lock the schema:
             var ptLockSchema = transaction.PT?.CreateDurationTracker<PersistSchema>(PerformanceTraceCumulativeMetricType.Lock);
-            var schemaMeta = core.Schemas.VirtualPathToMeta(transaction, schema.Name, LockOperation.Read);
-            if (schemaMeta == null || schemaMeta.Exists == false)
+            var physicalSchema = core.Schemas.Acquire(transaction, schema.Name, LockOperation.Read);
+            if (physicalSchema?.Exists != true)
             {
                 throw new KbObjectNotFoundException(schema.Name);
             }
             ptLockSchema?.StopAndAccumulate();
-            Utility.EnsureNotNull(schemaMeta.DiskPath);
+            Utility.EnsureNotNull(physicalSchema.DiskPath);
 
             //Lock the schema catalog:
-            var filePath = Path.Combine(schemaMeta.DiskPath, SchemaCatalogFile);
+            var filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
             var schemaCatalog = core.IO.GetJson<PersistSchemaCatalog>(transaction, filePath, LockOperation.Read);
 
             Utility.EnsureNotNull(schemaCatalog);
@@ -123,7 +122,7 @@ namespace Katzebase.Engine.Schemas
                 var resultRow = new KbQueryRow();
 
                 resultRow.AddValue(item.Name);
-                resultRow.AddValue($"{schemaMeta.VirtualPath}:{item.Name}");
+                resultRow.AddValue($"{physicalSchema.VirtualPath}:{item.Name}");
 
                 result.Rows.Add(resultRow);
             }
@@ -169,7 +168,7 @@ namespace Katzebase.Engine.Schemas
         {
             try
             {
-                if (child == RootSchemaMeta)
+                if (child == RootPhysicalSchema)
                 {
                     return null;
                 }
@@ -182,7 +181,7 @@ namespace Katzebase.Engine.Schemas
                 var segments = child.VirtualPath.Split(':').ToList();
                 segments.RemoveAt(segments.Count - 1);
                 string parentNs = string.Join(":", segments);
-                return VirtualPathToMeta(transaction, parentNs, intendedOperation);
+                return Acquire(transaction, parentNs, intendedOperation);
             }
             catch (Exception ex)
             {
@@ -191,7 +190,12 @@ namespace Katzebase.Engine.Schemas
             }
         }
 
-        internal PersistSchema VirtualPathToMeta(Transaction transaction, string schemaPath, LockOperation intendedOperation)
+        /// <summary>
+        /// Opens a schema for a desired access. Takes a virtual schema path (schema:schema2:scheams3) and converts to to a physical location
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="KbObjectNotFoundException"></exception>
+        internal PersistSchema Acquire(Transaction transaction, string schemaPath, LockOperation intendedOperation)
         {
             try
             {
@@ -199,7 +203,7 @@ namespace Katzebase.Engine.Schemas
 
                 if (schemaPath == string.Empty)
                 {
-                    return RootSchemaMeta;
+                    return RootPhysicalSchema;
                 }
                 else
                 {
@@ -223,17 +227,17 @@ namespace Katzebase.Engine.Schemas
 
                     Utility.EnsureNotNull(parentCatalog);
 
-                    var schemaMeta = parentCatalog.GetByName(schemaName);
-                    if (schemaMeta != null)
+                    var physicalSchema = parentCatalog.GetByName(schemaName);
+                    if (physicalSchema != null)
                     {
-                        schemaMeta.Name = schemaName;
-                        schemaMeta.DiskPath = schemaDiskPath;
-                        schemaMeta.VirtualPath = schemaPath;
-                        schemaMeta.Exists = true;
+                        physicalSchema.Name = schemaName;
+                        physicalSchema.DiskPath = schemaDiskPath;
+                        physicalSchema.VirtualPath = schemaPath;
+                        physicalSchema.Exists = true;
                     }
                     else
                     {
-                        schemaMeta = new PersistSchema()
+                        physicalSchema = new PersistSchema()
                         {
                             Name = schemaName,
                             DiskPath = core.settings.DataRootPath + "\\" + schemaPath.Replace(':', '\\'),
@@ -242,9 +246,9 @@ namespace Katzebase.Engine.Schemas
                         };
                     }
 
-                    transaction.LockDirectory(intendedOperation, schemaMeta.DiskPath);
+                    transaction.LockDirectory(intendedOperation, physicalSchema.DiskPath);
 
-                    return schemaMeta;
+                    return physicalSchema;
                 }
             }
             catch (Exception ex)
@@ -260,20 +264,20 @@ namespace Katzebase.Engine.Schemas
             {
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    PersistSchema schemaMeta = VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    PersistSchema physicalSchema = Acquire(txRef.Transaction, schema, LockOperation.Read);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(schema);
                     }
 
                     var result = new KbActionResponseSchemaCollection();
 
-                    if (schemaMeta.DiskPath == null)
+                    if (physicalSchema.DiskPath == null)
                     {
-                        throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
+                        throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
                     }
 
-                    var filePath = Path.Combine(schemaMeta.DiskPath, SchemaCatalogFile);
+                    var filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
                     var schemaCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, filePath, LockOperation.Read);
 
                     Utility.EnsureNotNull(schemaCatalog);
@@ -306,51 +310,51 @@ namespace Katzebase.Engine.Schemas
                 {
                     Guid newSchemaId = Guid.NewGuid();
 
-                    var schemaMeta = VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
-                    if (schemaMeta.Exists)
+                    var physicalSchema = Acquire(txRef.Transaction, schema, LockOperation.Write);
+                    if (physicalSchema.Exists)
                     {
                         txRef.Commit();
                         //The schema already exists.
                         return;
                     }
 
-                    var parentSchemaMeta = GetParentMeta(txRef.Transaction, schemaMeta, LockOperation.Write);
-                    Utility.EnsureNotNull(parentSchemaMeta);
+                    var parentPhysicalSchema = GetParentMeta(txRef.Transaction, physicalSchema, LockOperation.Write);
+                    Utility.EnsureNotNull(parentPhysicalSchema);
 
-                    if (parentSchemaMeta.Exists == false)
+                    if (parentPhysicalSchema.Exists == false)
                     {
                         throw new KbObjectNotFoundException("The parent schema does not exists. Use CreateLineage() instead of CreateSingle().");
                     }
 
-                    if (parentSchemaMeta.DiskPath == null || schemaMeta.DiskPath == null)
+                    if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
                     {
-                        throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
+                        throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
                     }
 
-                    string parentSchemaCatalogFile = Path.Combine(parentSchemaMeta.DiskPath, SchemaCatalogFile);
+                    string parentSchemaCatalogFile = Path.Combine(parentPhysicalSchema.DiskPath, SchemaCatalogFile);
                     PersistSchemaCatalog? parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
                     Utility.EnsureNotNull(parentCatalog);
 
                     string filePath = string.Empty;
 
-                    core.IO.CreateDirectory(txRef.Transaction, schemaMeta.DiskPath);
+                    core.IO.CreateDirectory(txRef.Transaction, physicalSchema.DiskPath);
 
                     //Create default schema catalog file.
-                    filePath = Path.Combine(schemaMeta.DiskPath, SchemaCatalogFile);
+                    filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
                     if (core.IO.FileExists(txRef.Transaction, filePath, LockOperation.Write) == false)
                     {
                         core.IO.PutJson(txRef.Transaction, filePath, new PersistSchemaCatalog());
                     }
 
-                    //Create default document catalog file.
-                    filePath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
+                    //Create default document page catalog file.
+                    filePath = Path.Combine(physicalSchema.DiskPath, DocumentPageCatalogFile);
                     if (core.IO.FileExists(txRef.Transaction, filePath, LockOperation.Write) == false)
                     {
-                        core.IO.PutJson(txRef.Transaction, filePath, new PersistDocumentCatalog());
+                        core.IO.PutJson(txRef.Transaction, filePath, new PersistDocumentPageCatalog());
                     }
 
                     //Create default index catalog file.
-                    filePath = Path.Combine(schemaMeta.DiskPath, IndexCatalogFile);
+                    filePath = Path.Combine(physicalSchema.DiskPath, IndexCatalogFile);
                     if (core.IO.FileExists(txRef.Transaction, filePath, LockOperation.Write) == false)
                     {
                         core.IO.PutJson(txRef.Transaction, filePath, new PersistIndexCatalog());
@@ -361,7 +365,7 @@ namespace Katzebase.Engine.Schemas
                         parentCatalog.Add(new PersistSchema
                         {
                             Id = newSchemaId,
-                            Name = schemaMeta.Name
+                            Name = physicalSchema.Name
                         });
 
                         core.IO.PutJson(txRef.Transaction, parentSchemaCatalogFile, parentCatalog);
@@ -422,7 +426,7 @@ namespace Katzebase.Engine.Schemas
                     foreach (string name in segments)
                     {
                         pathBuilder.Append(name);
-                        var schema = VirtualPathToMeta(txRef.Transaction, pathBuilder.ToString(), LockOperation.Read);
+                        var schema = Acquire(txRef.Transaction, pathBuilder.ToString(), LockOperation.Read);
 
                         result = (schema != null && schema.Exists);
 
@@ -458,19 +462,19 @@ namespace Katzebase.Engine.Schemas
                     var segments = schema.Split(':');
                     string schemaName = segments[segments.Count() - 1];
 
-                    var schemaMeta = VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    var physicalSchema = Acquire(txRef.Transaction, schema, LockOperation.Write);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(schema);
                     }
 
-                    var parentSchemaMeta = GetParentMeta(txRef.Transaction, schemaMeta, LockOperation.Write);
-                    Utility.EnsureNotNull(parentSchemaMeta);
+                    var parentPhysicalSchema = GetParentMeta(txRef.Transaction, physicalSchema, LockOperation.Write);
+                    Utility.EnsureNotNull(parentPhysicalSchema);
 
-                    if (parentSchemaMeta.DiskPath == null || schemaMeta.DiskPath == null)
-                        throw new KbNullException($"Value should not be null {nameof(schemaMeta.DiskPath)}.");
+                    if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
+                        throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
 
-                    string parentSchemaCatalogFile = Path.Combine(parentSchemaMeta.DiskPath, SchemaCatalogFile);
+                    string parentSchemaCatalogFile = Path.Combine(parentPhysicalSchema.DiskPath, SchemaCatalogFile);
                     var parentCatalog = core.IO.GetJson<PersistSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
                     Utility.EnsureNotNull(parentCatalog);
 
@@ -479,7 +483,7 @@ namespace Katzebase.Engine.Schemas
                     {
                         parentCatalog.Collection.Remove(nsItem);
 
-                        core.IO.DeletePath(txRef.Transaction, schemaMeta.DiskPath);
+                        core.IO.DeletePath(txRef.Transaction, physicalSchema.DiskPath);
 
                         core.IO.PutJson(txRef.Transaction, parentSchemaCatalogFile, parentCatalog);
                     }
