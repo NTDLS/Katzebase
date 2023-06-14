@@ -3,9 +3,9 @@
 namespace Katzebase.Engine.Documents
 {
     [Serializable]
-    public class PersistDocumentPageCatalog
+    public class PhysicalDocumentPageCatalog
     {
-        public List<PersistDocumentPageCatalogItem> Collection { get; private set; } = new();
+        public List<PhysicalDocumentPageCatalogItem> Collection { get; private set; } = new();
 
         public int NextPageNumber() => Collection.Count;
 
@@ -24,7 +24,7 @@ namespace Katzebase.Engine.Documents
             return Collection.SelectMany(o => o.DocumentIDs.Where(g => documentIds.Contains(g)).Select(h => new PageDocument(h, o.PageNumber)));
         }
 
-        public PersistDocumentPageCatalogItem? GetDocumentPageByDocumentId(Guid documentId)
+        public PhysicalDocumentPageCatalogItem? GetDocumentPageByDocumentId(Guid documentId)
         {
             foreach (var documentPage in Collection)
             {
@@ -37,7 +37,7 @@ namespace Katzebase.Engine.Documents
             return null;
         }
 
-        public PersistDocumentPageCatalogItem? GetPageWithRoomForNewDocument()
+        public PhysicalDocumentPageCatalogItem? GetPageWithRoomForNewDocument()
         {
             //TODO: Make the page size configurable.
             return Collection.Where(o => o.DocumentIDs.Count < 128).FirstOrDefault();

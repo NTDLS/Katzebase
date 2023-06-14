@@ -3,9 +3,9 @@
 namespace Katzebase.Engine.Indexes
 {
     [Serializable]
-    public class PersistIndex
+    public class PhysicalIndex
     {
-        public List<PersistIndexAttribute> Attributes { get; set; } = new List<PersistIndexAttribute>();
+        public List<PhysicalIndexAttribute> Attributes { get; set; } = new List<PhysicalIndexAttribute>();
         public string Name { get; set; } = string.Empty;
         public Guid? Id { get; set; }
         public DateTime? Created { get; set; }
@@ -15,13 +15,13 @@ namespace Katzebase.Engine.Indexes
         [JsonIgnore]
         public string? DiskPath { get; set; }
 
-        public PersistIndex()
+        public PhysicalIndex()
         {
         }
 
-        public PersistIndex Clone()
+        public PhysicalIndex Clone()
         {
-            return new PersistIndex
+            return new PhysicalIndex
             {
                 Id = Id,
                 Name = Name,
@@ -33,19 +33,19 @@ namespace Katzebase.Engine.Indexes
 
         public void AddAttribute(string name)
         {
-            AddAttribute(new PersistIndexAttribute()
+            AddAttribute(new PhysicalIndexAttribute()
             {
                 Field = name
             });
         }
-        public void AddAttribute(PersistIndexAttribute attribute)
+        public void AddAttribute(PhysicalIndexAttribute attribute)
         {
             Attributes.Add(attribute);
         }
 
-        static public PersistIndex FromPayload(PublicLibrary.Payloads.KbIndex index)
+        static public PhysicalIndex FromPayload(PublicLibrary.Payloads.KbIndex index)
         {
-            var persistIndex = new PersistIndex()
+            var persistIndex = new PhysicalIndex()
             {
                 Id = index.Id,
                 Name = index.Name,
@@ -56,13 +56,13 @@ namespace Katzebase.Engine.Indexes
 
             foreach (var indexAttribute in index.Attributes)
             {
-                persistIndex.AddAttribute(PersistIndexAttribute.FromPayload(indexAttribute));
+                persistIndex.AddAttribute(PhysicalIndexAttribute.FromPayload(indexAttribute));
             }
 
             return persistIndex;
         }
 
-        static public PublicLibrary.Payloads.KbIndex ToPayload(PersistIndex index)
+        static public PublicLibrary.Payloads.KbIndex ToPayload(PhysicalIndex index)
         {
             var persistIndex = new PublicLibrary.Payloads.KbIndex()
             {
@@ -75,7 +75,7 @@ namespace Katzebase.Engine.Indexes
 
             foreach (var indexAttribute in index.Attributes)
             {
-                persistIndex.AddAttribute(PersistIndexAttribute.ToPayload(indexAttribute));
+                persistIndex.AddAttribute(PhysicalIndexAttribute.ToPayload(indexAttribute));
             }
 
             return persistIndex;

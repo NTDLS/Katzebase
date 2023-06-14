@@ -23,7 +23,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         internal static SSQDocumentLookupResults GetDocumentsByConditions(Core core, Transaction transaction, string schemaName, PreparedQuery query)
         {
             //Lock the schema:
-            var ptLockSchema = transaction.PT?.CreateDurationTracker<PersistSchema>(PerformanceTraceCumulativeMetricType.Lock);
+            var ptLockSchema = transaction.PT?.CreateDurationTracker<PhysicalSchema>(PerformanceTraceCumulativeMetricType.Lock);
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
             if (physicalSchema?.Exists != true)
             {
@@ -58,7 +58,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                         Utility.EnsureNotNull(subset.IndexSelection);
                         Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
 
-                        var indexPageCatalog = core.IO.GetPBuf<PersistIndexPageCatalog>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                        var indexPageCatalog = core.IO.GetPBuf<PhysicalIndexPageCatalog>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
                         Utility.EnsureNotNull(indexPageCatalog);
 
                         var documentIds = core.Indexes.MatchDocuments(transaction, indexPageCatalog, subset.IndexSelection, subset);
@@ -147,13 +147,13 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         private class LookupThreadParam
         {
             public SSQDocumentLookupResults Results = new();
-            public PersistSchema PhysicalSchema { get; private set; }
+            public PhysicalSchema PhysicalSchema { get; private set; }
             public Core Core { get; private set; }
             public Transaction Transaction { get; private set; }
             public PreparedQuery Query { get; private set; }
             public ConditionLookupOptimization? LookupOptimization { get; private set; }
 
-            public LookupThreadParam(Core core, Transaction transaction, PersistSchema physicalSchema, PreparedQuery query, ConditionLookupOptimization? lookupOptimization)
+            public LookupThreadParam(Core core, Transaction transaction, PhysicalSchema physicalSchema, PreparedQuery query, ConditionLookupOptimization? lookupOptimization)
             {
                 this.Core = core;
                 this.Transaction = transaction;
@@ -186,10 +186,10 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     continue;
                 }
 
-                var persistDocument = param.Core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, pageDocument.Id, LockOperation.Read);
-                Utility.EnsureNotNull(persistDocument.Content);
+                var physicalDocument = param.Core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, pageDocument.Id, LockOperation.Read);
+                Utility.EnsureNotNull(physicalDocument.Content);
 
-                var jContent = JObject.Parse(persistDocument.Content);
+                var jContent = JObject.Parse(physicalDocument.Content);
 
                 Utility.EnsureNotNull(pageDocument.Id);
 
@@ -204,8 +204,8 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
                 if (evaluation)
                 {
-                    Utility.EnsureNotNull(persistDocument.Id);
-                    var result = new SSQDocumentLookupResult((Guid)persistDocument.Id);
+                    Utility.EnsureNotNull(physicalDocument.Id);
+                    var result = new SSQDocumentLookupResult((Guid)physicalDocument.Id);
 
                     foreach (var field in param.Query.SelectFields)
                     {

@@ -4,10 +4,10 @@ using ProtoBuf;
 namespace Katzebase.Engine.Indexes
 {
     [ProtoContract]
-    public class PersistIndexLeaves
+    public class PhysicalIndexLeaves
     {
         [ProtoMember(1)]
-        public List<PersistIndexLeaf> Entries = new List<PersistIndexLeaf>();
+        public List<PhysicalIndexLeaf> Entries = new List<PhysicalIndexLeaf>();
 
         [JsonIgnore]
         public int Count
@@ -18,14 +18,14 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        public PersistIndexLeaf AddNewleaf(string key)
+        public PhysicalIndexLeaf AddNewleaf(string key)
         {
-            var leaf = new PersistIndexLeaf(key);
+            var leaf = new PhysicalIndexLeaf(key);
             Entries.Add(leaf);
             return leaf;
         }
 
-        public IEnumerator<PersistIndexLeaf> GetEnumerator()
+        public IEnumerator<PhysicalIndexLeaf> GetEnumerator()
         {
             int position = 0;
             while (position < Entries.Count)
@@ -34,7 +34,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        public PersistIndexLeaf this[int index]
+        public PhysicalIndexLeaf this[int index]
         {
             get
             {

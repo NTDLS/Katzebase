@@ -1,12 +1,12 @@
 ﻿namespace Katzebase.Engine.Documents
 {
     [Serializable]
-    public class PersistDocumentPageCatalogItem
+    public class PhysicalDocumentPageCatalogItem
     {
         public int PageNumber { get; set; }
         public HashSet<Guid> DocumentIDs { get; set; } = new();
 
-        public PersistDocumentPageCatalogItem(int pageNumber)
+        public PhysicalDocumentPageCatalogItem(int pageNumber)
         {
             PageNumber = pageNumber;
         }

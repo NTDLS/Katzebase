@@ -248,7 +248,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     Utility.EnsureNotNull(subset.IndexSelection?.Index?.DiskPath);
                     Utility.EnsureNotNull(subset.IndexSelection?.Index?.Id);
 
-                    var indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                    var indexPageCatalog = param.Core.IO.GetPBuf<PhysicalIndexPageCatalog>(param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(indexPageCatalog);
 
                     var keyValuePairs = new Dictionary<string, string>();

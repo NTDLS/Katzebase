@@ -1,6 +1,4 @@
-﻿using Katzebase.Engine.KbLib;
-using Katzebase.Engine.Query;
-using Katzebase.Engine.Query.Constraints;
+﻿using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Searchers;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
@@ -23,7 +21,42 @@ namespace Katzebase.Engine.Documents
             this.core = core;
         }
 
-        //TODO: This needs to be rebuilt entirely.
+        #region Query Handlers.
+
+        internal KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                var result = new KbQueryResult();
+
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
+                    txRef.Commit();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+        }
+
+        internal KbQueryResult ExecuteSample(ulong processId, PreparedQuery preparedQuery)
+        {
+            return ExecuteSample(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
+        }
+
+        internal KbQueryResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
+        {
+            throw new KbNotImplementedException();
+            //return ExecuteList(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
+        }
+
+
         internal KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
         {
             throw new KbNotImplementedException();
@@ -59,87 +92,6 @@ namespace Katzebase.Engine.Documents
             */
         }
 
-        internal KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
-        {
-            try
-            {
-                var result = new KbQueryResult();
-
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        internal KbQueryResult ExecuteSample(ulong processId, PreparedQuery preparedQuery)
-        {
-            return ExecuteSample(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
-        }
-
-        public KbQueryResult ExecuteSample(ulong processId, string schemaName, int rowLimit)
-        {
-            try
-            {
-                var result = new KbQueryResult();
-
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    result = StaticSearcherMethods.SampleSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
-                    txRef.Commit();
-
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        internal KbQueryResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
-        {
-            throw new KbNotImplementedException();
-            //return ExecuteList(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
-        }
-
-        public KbQueryResult ExecuteList(ulong processId, string schemaName, int rowLimit = -1)
-        {
-            throw new KbNotImplementedException();
-            /*
-            try
-            {
-                var result = new KbQueryResult();
-
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    result = StaticSearcherMethods.ListSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
-                throw;
-            }
-            */
-        }
-
         internal KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
         {
             throw new KbNotImplementedException();
@@ -155,7 +107,7 @@ namespace Katzebase.Engine.Documents
 
                     //TODO: Delete the documents.
 
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
+                    var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
 
                     var physicalDocument = documentCatalog.GetById(newId);
                     if (physicalDocument != null)
@@ -186,6 +138,58 @@ namespace Katzebase.Engine.Documents
             */
         }
 
+        #endregion
+
+        #region API Handlers.
+
+        public KbQueryResult ExecuteSample(ulong processId, string schemaName, int rowLimit)
+        {
+            try
+            {
+                var result = new KbQueryResult();
+
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    result = StaticSearcherMethods.SampleSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
+                    txRef.Commit();
+
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+        }
+
+        public KbQueryResult ExecuteList(ulong processId, string schemaName, int rowLimit = -1)
+        {
+            throw new KbNotImplementedException();
+            /*
+            try
+            {
+                var result = new KbQueryResult();
+
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    result = StaticSearcherMethods.ListSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
+                    txRef.Commit();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+            */
+        }
+
         /// <summary>
         /// Saves a new document, this is used for inserts.
         /// </summary>
@@ -200,7 +204,7 @@ namespace Katzebase.Engine.Documents
             {
                 var result = new KbActionResponse();
 
-                var physicalDocument = PersistDocument.FromPayload(document);
+                var physicalDocument = PhysicalDocument.FromPayload(document);
 
                 if (physicalDocument.Id == null || physicalDocument.Id == Guid.Empty)
                 {
@@ -270,7 +274,7 @@ namespace Katzebase.Engine.Documents
 
                     string documentCatalogDiskPath = Path.Combine(physicalSchema.DiskPath, DocumentCatalogFile);
 
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
+                    var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
 
                     Utility.EnsureNotNull(documentCatalog);
 
@@ -326,7 +330,7 @@ namespace Katzebase.Engine.Documents
                     Utility.EnsureNotNull(physicalSchema.DiskPath);
 
                     var filePath = Path.Combine(physicalSchema.DiskPath, DocumentCatalogFile);
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
+                    var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
                     Utility.EnsureNotNull(documentCatalog);
 
                     var result = new KbDocumentCatalogCollection();
@@ -349,6 +353,8 @@ namespace Katzebase.Engine.Documents
             */
         }
 
+        #endregion
+
         #region Core put/get methods.
 
         /// <summary>
@@ -357,36 +363,36 @@ namespace Katzebase.Engine.Documents
         /// <param name="transaction"></param>
         /// <param name="physicalSchema"></param>
         /// <param name="documentId"></param>
-        internal PersistDocument GetDocument(Transaction transaction, PersistSchema physicalSchema, Guid documentId, LockOperation lockIntention)
+        internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, Guid documentId, LockOperation lockIntention)
         {
             //Open the document page catalog:
-            var documentPageCatalog = core.IO.GetJson<PersistDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
+            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
             Utility.EnsureNotNull(documentPageCatalog);
 
             //Get the page that the document current exists in if any.
-            var physicalPersistDocumentPageCatalogItem = documentPageCatalog.GetDocumentPageByDocumentId(documentId);
-            Utility.EnsureNotNull(physicalPersistDocumentPageCatalogItem);
+            var physicalDocumentPageCatalogItem = documentPageCatalog.GetDocumentPageByDocumentId(documentId);
+            Utility.EnsureNotNull(physicalDocumentPageCatalogItem);
 
             //We found a page that contains the document, we need to open the page and modify the document with the given document id.
-            var documentPage = core.IO.GetJson<PersistDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPersistDocumentPageCatalogItem), LockOperation.Write);
+            var documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalDocumentPageCatalogItem), LockOperation.Write);
             Utility.EnsureNotNull(documentPage);
 
             return documentPage.Documents.First(o => o.Key == documentId).Value;
         }
 
-        internal IEnumerable<PageDocument> GetPageDocuments(Transaction transaction, PersistSchema physicalSchema, LockOperation lockIntention)
+        internal IEnumerable<PageDocument> GetPageDocuments(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
         {
             //Open the document page catalog:
-            var documentPageCatalog = core.IO.GetJson<PersistDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
+            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
             Utility.EnsureNotNull(documentPageCatalog);
 
             return documentPageCatalog.ConsolidatedPageDocuments();
         }
 
-        internal PersistDocumentPageCatalog GetDocumentPageCatalog(Transaction transaction, PersistSchema physicalSchema, LockOperation lockIntention)
+        internal PhysicalDocumentPageCatalog GetDocumentPageCatalog(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
         {
             //Open the document page catalog:
-            var documentPageCatalog = core.IO.GetJson<PersistDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
+            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
             Utility.EnsureNotNull(documentPageCatalog);
             return documentPageCatalog;
         }
@@ -397,38 +403,38 @@ namespace Katzebase.Engine.Documents
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void PutDocument(Transaction transaction, PersistSchema physicalSchema, PersistDocument physicalDocument)
+        internal void PutDocument(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument)
         {
             Utility.EnsureNotNull(physicalSchema?.DiskPath);
             Utility.EnsureNotNull(physicalDocument?.Id);
 
             Guid documentId = (Guid)physicalDocument.Id;
 
-            PersistDocumentPage? documentPage = null;
+            PhysicalDocumentPage? documentPage = null;
 
             //Open the document page catalog:
-            var documentPageCatalog = core.IO.GetJson<PersistDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
+            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
             Utility.EnsureNotNull(documentPageCatalog);
 
             //Get the page that the document current exists in, if any.
-            var physicalPersistDocumentPageCatalogItem = documentPageCatalog.GetDocumentPageByDocumentId(documentId);
-            if (physicalPersistDocumentPageCatalogItem == null)
+            var physicalDocumentPageCatalogItem = documentPageCatalog.GetDocumentPageByDocumentId(documentId);
+            if (physicalDocumentPageCatalogItem == null)
             {
                 //The document doesnt exist in any pages, see if we can find one with some room:
-                physicalPersistDocumentPageCatalogItem = documentPageCatalog.GetPageWithRoomForNewDocument();
+                physicalDocumentPageCatalogItem = documentPageCatalog.GetPageWithRoomForNewDocument();
 
-                if (physicalPersistDocumentPageCatalogItem == null)
+                if (physicalDocumentPageCatalogItem == null)
                 {
                     //Still didnt find a page with room, we're going to have to create a new "page catalog item",
                     // add the given document ID to it and add that catalog item to the catalog collection:
-                    physicalPersistDocumentPageCatalogItem = new PersistDocumentPageCatalogItem(documentPageCatalog.NextPageNumber());
-                    physicalPersistDocumentPageCatalogItem.DocumentIDs.Add(documentId);
+                    physicalDocumentPageCatalogItem = new PhysicalDocumentPageCatalogItem(documentPageCatalog.NextPageNumber());
+                    physicalDocumentPageCatalogItem.DocumentIDs.Add(documentId);
 
                     //We created a new page item, add it to the catalog:
-                    documentPageCatalog.Collection.Add(physicalPersistDocumentPageCatalogItem);
+                    documentPageCatalog.Collection.Add(physicalDocumentPageCatalogItem);
 
                     //Create the new page, this will store the actual document contents.
-                    documentPage = new PersistDocumentPage(physicalPersistDocumentPageCatalogItem.PageNumber);
+                    documentPage = new PhysicalDocumentPage(physicalDocumentPageCatalogItem.PageNumber);
 
                     //Add the given document to the page document.
                     documentPage.Documents.Add(documentId, physicalDocument);
@@ -436,10 +442,10 @@ namespace Katzebase.Engine.Documents
                 else
                 {
                     //We found a page with space, just add the document ID to the page catalog item.
-                    physicalPersistDocumentPageCatalogItem.DocumentIDs.Add(documentId);
+                    physicalDocumentPageCatalogItem.DocumentIDs.Add(documentId);
 
                     //Open the page and add the document to it.
-                    documentPage = core.IO.GetJson<PersistDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPersistDocumentPageCatalogItem), LockOperation.Write);
+                    documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalDocumentPageCatalogItem), LockOperation.Write);
 
                     Utility.EnsureNotNull(documentPage);
 
@@ -450,7 +456,7 @@ namespace Katzebase.Engine.Documents
             else
             {
                 //We found a page that contains the document, we need to open the page and modify the document with the given document id.
-                documentPage = core.IO.GetJson<PersistDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPersistDocumentPageCatalogItem), LockOperation.Write);
+                documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalDocumentPageCatalogItem), LockOperation.Write);
 
                 Utility.EnsureNotNull(documentPage);
 
@@ -460,7 +466,7 @@ namespace Katzebase.Engine.Documents
             Utility.EnsureNotNull(documentPage);
 
             //Save the document page:
-            core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPersistDocumentPageCatalogItem), documentPage);
+            core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalDocumentPageCatalogItem), documentPage);
 
             //Save the docuemnt page catalog:
             core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);

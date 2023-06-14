@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 namespace Katzebase.Engine.Schemas
 {
-    public class PersistSchema
+    public class PhysicalSchema
     {
         public string? Name { get; set; }
         public Guid Id { get; set; }
@@ -25,13 +25,13 @@ namespace Katzebase.Engine.Schemas
             return Path.Combine(DiskPath, EngineConstants.DocumentPageCatalogFile);
         }
 
-        public string DocumentPageCatalogItemDiskPath(PersistDocumentPageCatalogItem documentPageCatalogItem)
+        public string DocumentPageCatalogItemDiskPath(PhysicalDocumentPageCatalogItem documentPageCatalogItem)
         {
             Utility.EnsureNotNull(DiskPath);
             return Path.Combine(DiskPath, $"{documentPageCatalogItem.PageNumber}{EngineConstants.DocumentPageExtension}");
         }
 
-        static public KbSchemaItem ToPayload(PersistSchema schema)
+        static public KbSchemaItem ToPayload(PhysicalSchema schema)
         {
             return new KbSchemaItem()
             {
@@ -40,9 +40,9 @@ namespace Katzebase.Engine.Schemas
             };
         }
 
-        public PersistSchema Clone()
+        public PhysicalSchema Clone()
         {
-            return new PersistSchema
+            return new PhysicalSchema
             {
                 DiskPath = DiskPath,
                 Exists = Exists,

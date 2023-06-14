@@ -29,7 +29,7 @@ namespace Katzebase.Engine
         public LogManager Log;
         public HealthManager Health;
         public SessionManager Sessions;
-        public PersistIndexManager Indexes;
+        public IndexManager Indexes;
         public QueryManager Query;
 
         public MemoryCache LookupOptimizationCache { get; set; } = new MemoryCache("ConditionLookupOptimization");
@@ -54,7 +54,7 @@ namespace Katzebase.Engine
             Health = new HealthManager(this);
 
             Log.Write("Initializing index manager.");
-            Indexes = new PersistIndexManager(this);
+            Indexes = new IndexManager(this);
 
             Log.Write("Initializing session manager.");
             Sessions = new SessionManager(this);

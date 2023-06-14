@@ -39,7 +39,6 @@ namespace Katzebase.Service.Controllers
             return Program.Core.Documents.ExecuteSample(processId, schema, count);
         }
 
-
         /// <summary>
         /// Lists the documents within a given schema.
         /// </summary>

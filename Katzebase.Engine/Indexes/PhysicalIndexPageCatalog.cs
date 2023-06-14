@@ -3,10 +3,10 @@
 namespace Katzebase.Engine.Indexes
 {
     [ProtoContract]
-    public class PersistIndexPageCatalog
+    public class PhysicalIndexPageCatalog
     {
         [ProtoMember(1)]
-        public PersistIndexLeaves Leaves = new PersistIndexLeaves();
+        public PhysicalIndexLeaves Leaves = new PhysicalIndexLeaves();
     }
 
 }

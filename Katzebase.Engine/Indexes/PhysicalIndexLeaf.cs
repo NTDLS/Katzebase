@@ -3,7 +3,7 @@
 namespace Katzebase.Engine.Indexes
 {
     [ProtoContract]
-    public class PersistIndexLeaf
+    public class PhysicalIndexLeaf
     {
         [ProtoMember(1)]
         public string? Value { get; set; } = null;
@@ -12,14 +12,14 @@ namespace Katzebase.Engine.Indexes
         public HashSet<Guid>? DocumentIDs = null;
 
         [ProtoMember(3)]
-        public PersistIndexLeaves Leaves = new();
+        public PhysicalIndexLeaves Leaves = new();
 
-        public PersistIndexLeaf()
+        public PhysicalIndexLeaf()
         {
 
         }
 
-        public PersistIndexLeaf(string value)
+        public PhysicalIndexLeaf(string value)
         {
             Value = value;
         }

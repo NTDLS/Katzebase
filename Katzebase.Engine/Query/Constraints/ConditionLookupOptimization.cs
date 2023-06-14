@@ -30,7 +30,7 @@ namespace Katzebase.Engine.Query.Constraints
         /// Takes a nested set of conditions and returns a selection of indexes as well as a clone of the conditions with associated indexes.
         /// </summary>
         /// <returns>A selection of indexes as well as a clone of the conditions with associated indexes</returns>
-        public static ConditionLookupOptimization Build(Core core, Transaction transaction, PersistSchema physicalSchema, Conditions conditions)
+        public static ConditionLookupOptimization Build(Core core, Transaction transaction, PhysicalSchema physicalSchema, Conditions conditions)
         {
             //TODO: This does not support multi-schma conditions. Perhaps we make different builders for SSQ and MSQ queries?
             //TODO: This does not support intra-schema join caluses. Perhaps we make different builders for intra-schema join clauses?
