@@ -9,6 +9,14 @@ namespace Katzebase.TestHarness
     {
         static void Main(string[] args)
         {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+            Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
+
+            //Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/");
+
+            #region Misc. Tests & stuff.
+
             //Handled:
             //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R' AND (a = 1)";
             //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R' AND (A = 10 AND B = 50)";
@@ -18,13 +26,6 @@ namespace Katzebase.TestHarness
             //var preparedQuery = ParserEngine.ParseQuery(stmt);
             //return;
 
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
-            Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
-
-            Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/");
-
-            //Exporter.ExportAll(); // This method just exports the entire AdventureWorks2012 database into the no SQL database.
 
             //TestIndexCreationProductInventory();
 
@@ -50,6 +51,8 @@ namespace Katzebase.TestHarness
             //TestAddDocumentsCreateIndex();
             //TestIndexDocumentDeletion();
 
+            #endregion
+
             Console.WriteLine("Press any key to continue.");
             Console.ReadLine();
         }
@@ -63,7 +66,6 @@ namespace Katzebase.TestHarness
         }
 
         #endregion
-
 
         #region Test Index Creation (Person)
 

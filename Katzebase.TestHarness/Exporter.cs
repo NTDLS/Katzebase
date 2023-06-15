@@ -7,14 +7,24 @@ namespace Katzebase.TestHarness
 {
     public static partial class Exporter
     {
-        public static void ExportSQLServerDatabaseToKatzebase(string sqlServer, string sqlServerDatabase, string katzeBaseServerAdddress)
+        public static void ExportSQLServerDatabaseToKatzebase(string sqlServer, string sqlServerDatabase, string katzeBaseServerAdddress, bool omitSQLSchemaName)
         {
             using (SqlConnection connection = new SqlConnection($"Server={sqlServer};Database={sqlServerDatabase};Trusted_Connection=True;"))
             {
                 connection.Open();
 
-                var schemaSelectionScript = "select OBJECT_SCHEMA_NAME(object_id) + '.' + name as ObjectName from sys.tables where type = 'u' order by OBJECT_SCHEMA_NAME(object_id) + '.' + name";
-                using (var command = new SqlCommand(schemaSelectionScript, connection))
+                string tSQL = string.Empty;
+
+                if (omitSQLSchemaName)
+                {
+                    tSQL = "select name as ObjectName from sys.tables where type = 'u' order by OBJECT_SCHEMA_NAME(object_id) + '.' + name";
+                }
+                else
+                {
+                    tSQL = "select OBJECT_SCHEMA_NAME(object_id) + '.' + name as ObjectName from sys.tables where type = 'u' order by OBJECT_SCHEMA_NAME(object_id) + '.' + name";
+                }
+
+                using (var command = new SqlCommand(tSQL, connection))
                 {
                     using (var dataReader = command.ExecuteReader(System.Data.CommandBehavior.CloseConnection))
                     {
@@ -28,7 +38,6 @@ namespace Katzebase.TestHarness
                 connection.Close();
             }
         }
-
 
         public static void ExportSQLServerTableToKatzebase(string sqlServer, string sqlServerDatabase, string sqlServerTable, string katzeBaseServerAdddress)
         {
