@@ -3,7 +3,7 @@ CREATE INDEX IX_TransactionHistory_ProductID_ActualCost
 (
 	ProductID,
 	ActualCost
-) ON AdventureWorks2012:Production:TransactionHistory
+) ON AdventureWorks2012:Production:TransactionHistory;
 
 CREATE INDEX IX_ProductSubcategory_ProductSubcategoryID
 (

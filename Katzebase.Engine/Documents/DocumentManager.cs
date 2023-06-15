@@ -167,8 +167,6 @@ namespace Katzebase.Engine.Documents
 
         public KbQueryResult ExecuteList(ulong processId, string schemaName, int rowLimit = -1)
         {
-            throw new KbNotImplementedException();
-            /*
             try
             {
                 var result = new KbQueryResult();
@@ -187,7 +185,6 @@ namespace Katzebase.Engine.Documents
                 core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
                 throw;
             }
-            */
         }
 
         /// <summary>
