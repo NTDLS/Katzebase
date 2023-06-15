@@ -13,10 +13,10 @@ namespace Katzebase.Engine.Health
         {
             this.core = core;
 
-            string healthCounterDiskPath = Path.Combine(core.settings.LogDirectory, HealthStatsFile);
+            string healthCounterDiskPath = Path.Combine(core.Settings.LogDirectory, HealthStatsFile);
             if (File.Exists(healthCounterDiskPath))
             {
-                var physicalCounters = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath);
+                var physicalCounters = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath, true);
 
                 if (physicalCounters == null || physicalCounters.Count == 0)
                 {
@@ -54,7 +54,7 @@ namespace Katzebase.Engine.Health
                 {
                     var mostRecentCounter = instanceCounters.Max(o => o.WaitDateTimeUtc);
                     var itemsToRemove = physicalCounters.Where(o => o.Instance == o.Type.ToString()
-                                    && (mostRecentCounter - o.WaitDateTimeUtc).TotalSeconds > core.settings.HealthMonitoringInstanceLevelTimeToLiveSeconds).ToList();
+                                    && (mostRecentCounter - o.WaitDateTimeUtc).TotalSeconds > core.Settings.HealthMonitoringInstanceLevelTimeToLiveSeconds).ToList();
 
                     foreach (var itemToRemove in itemsToRemove)
                     {
@@ -63,7 +63,7 @@ namespace Katzebase.Engine.Health
                     }
                 }
 
-                core.IO.PutJsonNonTracked(Path.Combine(core.settings.LogDirectory, HealthStatsFile), physicalCounters);
+                core.IO.PutJsonNonTracked(Path.Combine(core.Settings.LogDirectory, HealthStatsFile), physicalCounters, true);
             }
         }
 
@@ -74,7 +74,7 @@ namespace Katzebase.Engine.Health
         /// <param name="value"></param>
         public void Increment(HealthCounterType type, double value)
         {
-            if (value == 0 || core.settings.HealthMonitoringEnabled == false)
+            if (value == 0 || core.Settings.HealthMonitoringEnabled == false)
             {
                 return;
             }
@@ -100,7 +100,7 @@ namespace Katzebase.Engine.Health
                     });
                 }
 
-                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= core.settings.HealthMonitoringChekpointSeconds)
+                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= core.Settings.HealthMonitoringChekpointSeconds)
                 {
                     Checkpoint();
                 }
@@ -114,7 +114,7 @@ namespace Katzebase.Engine.Health
         /// <param name="value"></param>
         public void Increment(HealthCounterType type, string instance, double value)
         {
-            if (value == 0 || core.settings.HealthMonitoringEnabled == false || core.settings.HealthMonitoringInstanceLevelEnabled == false)
+            if (value == 0 || core.Settings.HealthMonitoringEnabled == false || core.Settings.HealthMonitoringInstanceLevelEnabled == false)
             {
                 return;
             }
@@ -140,7 +140,7 @@ namespace Katzebase.Engine.Health
                     });
                 }
 
-                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.settings.HealthMonitoringChekpointSeconds)
+                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
                 {
                     Checkpoint();
                 }
@@ -172,7 +172,7 @@ namespace Katzebase.Engine.Health
         /// <param name="value"></param>
         public void Set(HealthCounterType type, Int64 value)
         {
-            if (core.settings.HealthMonitoringEnabled == false)
+            if (core.Settings.HealthMonitoringEnabled == false)
             {
                 return;
             }
@@ -198,7 +198,7 @@ namespace Katzebase.Engine.Health
                     });
                 }
 
-                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.settings.HealthMonitoringChekpointSeconds)
+                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
                 {
                     Checkpoint();
                 }
@@ -212,7 +212,7 @@ namespace Katzebase.Engine.Health
         /// <param name="value"></param>
         public void Set(HealthCounterType type, string instance, double value)
         {
-            if (value == 0 || core.settings.HealthMonitoringEnabled == false || core.settings.HealthMonitoringInstanceLevelEnabled == false)
+            if (value == 0 || core.Settings.HealthMonitoringEnabled == false || core.Settings.HealthMonitoringInstanceLevelEnabled == false)
             {
                 return;
             }
@@ -238,7 +238,7 @@ namespace Katzebase.Engine.Health
                     });
                 }
 
-                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.settings.HealthMonitoringChekpointSeconds)
+                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
                 {
                     Checkpoint();
                 }

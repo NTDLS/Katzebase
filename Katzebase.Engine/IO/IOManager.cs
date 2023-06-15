@@ -20,9 +20,9 @@ namespace Katzebase.Engine.IO
 
         #region Getters.
 
-        public T? GetJsonNonTracked<T>(string filePath)
+        public T? GetJsonNonTracked<T>(string filePath, bool skipCompression = false)
         {
-            if (core.Settings.UseCompression)
+            if (core.Settings.UseCompression && skipCompression == false)
             {
                 return JsonConvert.DeserializeObject<T>(Compression.DecompressString(File.ReadAllBytes(filePath)));
             }
@@ -134,13 +134,16 @@ namespace Katzebase.Engine.IO
 
         #region Putters.
 
-        internal void PutJsonNonTracked(string filePath, object deserializedObject)
+        internal void PutJsonNonTracked(string filePath, object deserializedObject, bool skipCompression = false)
         {
-            if (core.Settings.UseCompression)
+            if (core.Settings.UseCompression && skipCompression == false)
             {
                 File.WriteAllBytes(filePath, Compression.Compress(JsonConvert.SerializeObject(deserializedObject)));
             }
-            File.WriteAllText(filePath, JsonConvert.SerializeObject(deserializedObject));
+            else
+            {
+                File.WriteAllText(filePath, JsonConvert.SerializeObject(deserializedObject));
+            }
         }
 
         internal void PutPBufNonTracked(string filePath, object deserializedObject)

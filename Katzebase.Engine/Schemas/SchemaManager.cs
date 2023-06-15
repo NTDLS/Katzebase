@@ -27,7 +27,7 @@ namespace Katzebase.Engine.Schemas
                 rootPhysicalSchema ??= new PhysicalSchema()
                     {
                         Id = RootSchemaGUID,
-                        DiskPath = core.settings.DataRootPath,
+                        DiskPath = core.Settings.DataRootPath,
                         VirtualPath = string.Empty,
                         Exists = true,
                         Name = string.Empty,
@@ -40,16 +40,16 @@ namespace Katzebase.Engine.Schemas
         {
             this.core = core;
 
-            rootCatalogFile = Path.Combine(core.settings.DataRootPath, SchemaCatalogFile);
+            rootCatalogFile = Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile);
 
             //If the catalog doesnt exist, create a new empty one.
             if (File.Exists(rootCatalogFile) == false)
             {
-                Directory.CreateDirectory(core.settings.DataRootPath);
+                Directory.CreateDirectory(core.Settings.DataRootPath);
 
-                core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
-                core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
-                core.IO.PutJsonNonTracked(Path.Combine(core.settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
+                core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
+                core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
+                core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
             }
         }
 
@@ -457,7 +457,7 @@ namespace Katzebase.Engine.Schemas
                     var segments = schemaPath.Split(':');
                     string schemaName = segments[segments.Count() - 1];
 
-                    string schemaDiskPath = Path.Combine(core.settings.DataRootPath, string.Join("\\", segments));
+                    string schemaDiskPath = Path.Combine(core.Settings.DataRootPath, string.Join("\\", segments));
                     string? parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
 
                     Utility.EnsureNotNull(parentSchemaDiskPath);
@@ -487,7 +487,7 @@ namespace Katzebase.Engine.Schemas
                         physicalSchema = new PhysicalSchema()
                         {
                             Name = schemaName,
-                            DiskPath = core.settings.DataRootPath + "\\" + schemaPath.Replace(':', '\\'),
+                            DiskPath = core.Settings.DataRootPath + "\\" + schemaPath.Replace(':', '\\'),
                             VirtualPath = schemaPath,
                             Exists = false
                         };

@@ -51,7 +51,7 @@ namespace Katzebase.Engine.Logging
 
         public void Write(LogEntry entry)
         {
-            if (entry.Severity == LogSeverity.Trace && core.settings.WriteTraceData == false)
+            if (entry.Severity == LogSeverity.Trace && core.Settings.WriteTraceData == false)
             {
                 return;
             }
@@ -138,7 +138,7 @@ namespace Katzebase.Engine.Logging
 
                 fileHandle.WriteLine(message.ToString());
 
-                if (core.settings.FlushLog)
+                if (core.Settings.FlushLog)
                 {
                     fileHandle.Flush();
                 }
@@ -196,8 +196,8 @@ namespace Katzebase.Engine.Logging
                     Close();
 
                     recycledTime = DateTime.Now;
-                    string fileName = core.settings.LogDirectory + "\\" + $"{recycledTime.Year}_{recycledTime.Month}_{recycledTime.Day}.txt";
-                    Directory.CreateDirectory(core.settings.LogDirectory);
+                    string fileName = core.Settings.LogDirectory + "\\" + $"{recycledTime.Year}_{recycledTime.Month:00}_{recycledTime.Day:00}.txt";
+                    Directory.CreateDirectory(core.Settings.LogDirectory);
                     fileHandle = new StreamWriter(fileName, true);
                 }
             }
