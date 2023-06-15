@@ -25,7 +25,13 @@ namespace Katzebase.Engine.Schemas
             return Path.Combine(DiskPath, EngineConstants.DocumentPageCatalogFile);
         }
 
-        public string DocumentPageCatalogItemDiskPath(PhysicalDocumentPageCatalogItem documentPageCatalogItem)
+        public string DocumentPageCatalogItemDiskPath(PageDocument pageDocument)
+        {
+            Utility.EnsureNotNull(DiskPath);
+            return Path.Combine(DiskPath, $"{pageDocument.PageNumber}{EngineConstants.DocumentPageExtension}");
+        }
+
+        public string DocumentPageCatalogItemDiskPath(PhysicalDocumentPageMap documentPageCatalogItem)
         {
             Utility.EnsureNotNull(DiskPath);
             return Path.Combine(DiskPath, $"{documentPageCatalogItem.PageNumber}{EngineConstants.DocumentPageExtension}");

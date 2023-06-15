@@ -108,7 +108,8 @@ namespace Katzebase.Engine.Query
             }
             else if (preparedQuery.QueryType == QueryType.Rebuild)
             {
-                if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                if (preparedQuery.SubQueryType == SubQueryType.Index
+                    || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
                     return core.Indexes.ExecuteRebuild(processId, preparedQuery);
                 }
@@ -116,7 +117,8 @@ namespace Katzebase.Engine.Query
             }
             else if (preparedQuery.QueryType == QueryType.Create)
             {
-                if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                if (preparedQuery.SubQueryType == SubQueryType.Index
+                    || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
                     return core.Indexes.ExecuteCreate(processId, preparedQuery);
                 }
@@ -124,7 +126,8 @@ namespace Katzebase.Engine.Query
             }
             else if (preparedQuery.QueryType == QueryType.Drop)
             {
-                if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                if (preparedQuery.SubQueryType == SubQueryType.Index
+                    || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
                     return core.Indexes.ExecuteDrop(processId, preparedQuery);
                 }
@@ -162,6 +165,5 @@ namespace Katzebase.Engine.Query
                 throw new NotImplementedException();
             }
         }
-
     }
 }

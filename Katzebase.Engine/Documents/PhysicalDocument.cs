@@ -2,6 +2,10 @@
 
 namespace Katzebase.Engine.Documents
 {
+    /// <summary>
+    /// This is the page document that is physically written to the disk by
+    ///     virture of being contained in the collection in PhysicalDocumentPage
+    /// </summary>
     [Serializable]
     public class PhysicalDocument
     {

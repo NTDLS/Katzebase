@@ -28,6 +28,11 @@
         public int DocumentPageSize { get; set; }
 
         /// <summary>
+        /// Whether documents, pages and indexes will be stored compressed. Don't worry, you can open them in 7-Zip.
+        /// </summary>
+        public bool UseCompression { get; set; }
+
+        /// <summary>
         /// Whether the engine will keep health metrics.
         /// </summary>
         public bool HealthMonitoringEnabled { get; set; }

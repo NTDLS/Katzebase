@@ -367,14 +367,27 @@ namespace Katzebase.Engine.Documents
             Utility.EnsureNotNull(documentPageCatalog);
 
             //Get the page that the document current exists in if any.
-            var physicalDocumentPageCatalogItem = documentPageCatalog.GetDocumentPageByDocumentId(documentId);
-            Utility.EnsureNotNull(physicalDocumentPageCatalogItem);
+            var physicalPageMap = documentPageCatalog.GetDocumentPageMap(documentId);
+            Utility.EnsureNotNull(physicalPageMap);
 
             //We found a page that contains the document, we need to open the page and modify the document with the given document id.
-            var documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalDocumentPageCatalogItem), LockOperation.Write);
-            Utility.EnsureNotNull(documentPage);
+            var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), lockIntention);
+            Utility.EnsureNotNull(physicalDocumentPage);
 
-            return documentPage.Documents.First(o => o.Key == documentId).Value;
+            return physicalDocumentPage.Documents.First(o => o.Key == documentId).Value;
+        }
+
+        /// <summary>
+        /// When we want to read a document we do it here. If we already have the page number, we can take a shortcut/
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="physicalSchema"></param>
+        /// <param name="documentId"></param>
+        internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, PageDocument pageDocument, LockOperation lockIntention)
+        {
+            var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(pageDocument), lockIntention);
+            Utility.EnsureNotNull(physicalDocumentPage);
+            return physicalDocumentPage.Documents.First(o => o.Key == pageDocument.Id).Value;
         }
 
         internal IEnumerable<PageDocument> GetPageDocuments(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
@@ -414,24 +427,24 @@ namespace Katzebase.Engine.Documents
             Utility.EnsureNotNull(documentPageCatalog);
 
             //Get the page that the document current exists in, if any.
-            var physicalDocumentPageCatalogItem = documentPageCatalog.GetDocumentPageByDocumentId(documentId);
-            if (physicalDocumentPageCatalogItem == null)
+            var physicalPageMap = documentPageCatalog.GetDocumentPageMap(documentId);
+            if (physicalPageMap == null)
             {
                 //The document doesnt exist in any pages, see if we can find one with some room:
-                physicalDocumentPageCatalogItem = documentPageCatalog.GetPageWithRoomForNewDocument(core.settings.DocumentPageSize);
+                physicalPageMap = documentPageCatalog.GetPageWithRoomForNewDocument(core.Settings.DocumentPageSize);
 
-                if (physicalDocumentPageCatalogItem == null)
+                if (physicalPageMap == null)
                 {
                     //Still didnt find a page with room, we're going to have to create a new "page catalog item",
                     // add the given document ID to it and add that catalog item to the catalog collection:
-                    physicalDocumentPageCatalogItem = new PhysicalDocumentPageCatalogItem(documentPageCatalog.NextPageNumber());
-                    physicalDocumentPageCatalogItem.DocumentIDs.Add(documentId);
+                    physicalPageMap = new PhysicalDocumentPageMap(documentPageCatalog.NextPageNumber());
+                    physicalPageMap.DocumentIDs.Add(documentId);
 
                     //We created a new page item, add it to the catalog:
-                    documentPageCatalog.Collection.Add(physicalDocumentPageCatalogItem);
+                    documentPageCatalog.PageMappings.Add(physicalPageMap);
 
                     //Create the new page, this will store the actual document contents.
-                    documentPage = new PhysicalDocumentPage(physicalDocumentPageCatalogItem.PageNumber);
+                    documentPage = new PhysicalDocumentPage(physicalPageMap.PageNumber);
 
                     //Add the given document to the page document.
                     documentPage.Documents.Add(documentId, physicalDocument);
@@ -439,10 +452,10 @@ namespace Katzebase.Engine.Documents
                 else
                 {
                     //We found a page with space, just add the document ID to the page catalog item.
-                    physicalDocumentPageCatalogItem.DocumentIDs.Add(documentId);
+                    physicalPageMap.DocumentIDs.Add(documentId);
 
                     //Open the page and add the document to it.
-                    documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalDocumentPageCatalogItem), LockOperation.Write);
+                    documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), LockOperation.Write);
 
                     Utility.EnsureNotNull(documentPage);
 
@@ -453,7 +466,7 @@ namespace Katzebase.Engine.Documents
             else
             {
                 //We found a page that contains the document, we need to open the page and modify the document with the given document id.
-                documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalDocumentPageCatalogItem), LockOperation.Write);
+                documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), LockOperation.Write);
 
                 Utility.EnsureNotNull(documentPage);
 
@@ -463,7 +476,7 @@ namespace Katzebase.Engine.Documents
             Utility.EnsureNotNull(documentPage);
 
             //Save the document page:
-            core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalDocumentPageCatalogItem), documentPage);
+            core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), documentPage);
 
             //Save the docuemnt page catalog:
             core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);

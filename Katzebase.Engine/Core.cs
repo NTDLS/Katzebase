@@ -21,7 +21,7 @@ namespace Katzebase.Engine
         internal IOManager IO;
         internal LockManager Locking;
         internal CacheManager Cache;
-        internal KatzebaseSettings settings;
+        internal KatzebaseSettings Settings;
 
         public SchemaManager Schemas;
         public DocumentManager Documents;
@@ -36,7 +36,7 @@ namespace Katzebase.Engine
 
         public Core(KatzebaseSettings settings)
         {
-            this.settings = settings;
+            this.Settings = settings;
 
             Log = new LogManager(this);
 

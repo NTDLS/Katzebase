@@ -11,15 +11,15 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
     internal class MSQQuerySchemaMapItem
     {
         public PhysicalSchema PhysicalSchema { get; set; }
-        public PhysicalDocumentPageCatalog DocuemntCatalog { get; set; }
+        public PhysicalDocumentPageCatalog DocumentPageCatalog { get; set; }
         public Conditions? Conditions { get; set; }
 
         public ConditionLookupOptimization? Optimization { get; set; }
 
-        public MSQQuerySchemaMapItem(Core core, Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog docuemntCatalog, Conditions? conditions)
+        public MSQQuerySchemaMapItem(Core core, Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog documentPageCatalog, Conditions? conditions)
         {
             PhysicalSchema = physicalSchema;
-            DocuemntCatalog = docuemntCatalog;
+            DocumentPageCatalog = documentPageCatalog;
             Conditions = conditions;
 
             if (conditions != null)

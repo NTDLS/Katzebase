@@ -37,17 +37,17 @@ namespace Katzebase.Engine.Query.Searchers
             var documentPageCatalog = core.Documents.GetDocumentPageCatalog(transaction, physicalSchema, LockOperation.Write);
             Utility.EnsureNotNull(documentPageCatalog);
 
-            if (documentPageCatalog.Collection.Count > 0)
+            if (documentPageCatalog.PageMappings.Count > 0)
             {
                 Random random = new Random(Environment.TickCount);
 
                 for (int i = 0; i < rowLimit || rowLimit == 0; i++)
                 {
-                    int pageNumber = random.Next(0, documentPageCatalog.Collection.Count - 1);
-                    var pageCatalogItem = documentPageCatalog.Collection[pageNumber];
+                    int pageNumber = random.Next(0, documentPageCatalog.PageMappings.Count - 1);
+                    var pageMap = documentPageCatalog.PageMappings[pageNumber];
 
-                    int documentIndex = random.Next(0, pageCatalogItem.DocumentIDs.Count - 1);
-                    var documentId = pageCatalogItem.DocumentIDs.ToArray()[documentIndex];
+                    int documentIndex = random.Next(0, pageMap.DocumentIDs.Count - 1);
+                    var documentId = pageMap.DocumentIDs.ToArray()[documentIndex];
                     var physicalDocument = core.Documents.GetDocument(transaction, physicalSchema, documentId, LockOperation.Read);
 
                     Utility.EnsureNotNull(physicalDocument);

@@ -34,12 +34,14 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query);
-            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), topLevelMap.DocuemntCatalog.Collection.Count);
+
+            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), topLevelMap.DocumentPageCatalog.TotalPageCount());
+
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<PageDocument, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
             ptThreadCreation?.StopAndAccumulate();
 
-            foreach (var pageDocument in topLevelMap.DocuemntCatalog.ConsolidatedPageDocuments())
+            foreach (var pageDocument in topLevelMap.DocumentPageCatalog.ConsolidatedPageDocuments())
             {
                 if (threadPool.HasException || threadPool.ContinueToProcessQueue == false)
                 {
@@ -235,7 +237,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             #region New indexing stuff..
 
             //Create a reference to the entire document catalog.
-            var limitedDocumentCatalogItems = nextLevelMap.DocuemntCatalog.ConsolidatedPageDocuments();
+            var limitedDocumentCatalogItems = nextLevelMap.DocumentPageCatalog.ConsolidatedPageDocuments();
 
             if (nextLevelMap.Optimization?.CanApplyIndexing() == true)
             {
@@ -268,7 +270,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     //Match on values from the document.
                     var documentIds = param.Core.Indexes.MatchDocuments(param.Transaction, indexPageCatalog, subset.IndexSelection, subset, keyValuePairs);
 
-                    newLimitedSetOfDocuments.AddRange(nextLevelMap.DocuemntCatalog.Where(documentIds).ToList());
+                    newLimitedSetOfDocuments.AddRange(nextLevelMap.DocumentPageCatalog.Where(documentIds).ToList());
                 }
 
                 limitedDocumentCatalogItems = newLimitedSetOfDocuments;
