@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Indexes
+﻿namespace Katzebase.Engine.Indexes.Matching
 {
     public class IndexKeyMatches : List<IndexKeyMatch>
     {

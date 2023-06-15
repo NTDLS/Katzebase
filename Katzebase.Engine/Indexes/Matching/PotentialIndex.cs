@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Indexes
+﻿namespace Katzebase.Engine.Indexes.Matching
 {
     public class PotentialIndex
     {
@@ -10,8 +10,8 @@
 
         public PotentialIndex(PhysicalIndex index, List<string> coveredFields)
         {
-            this.Index = index;
-            this.CoveredFields = coveredFields;
+            Index = index;
+            CoveredFields = coveredFields;
         }
     }
 }

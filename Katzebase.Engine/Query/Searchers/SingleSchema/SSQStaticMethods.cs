@@ -9,6 +9,7 @@ using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
+using System.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 using static Katzebase.PublicLibrary.Constants;
@@ -58,12 +59,12 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                         Utility.EnsureNotNull(subset.IndexSelection);
                         Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
 
-                        var indexPageCatalog = core.IO.GetPBuf<PhysicalIndexPageCatalog>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-                        Utility.EnsureNotNull(indexPageCatalog);
+                        var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                        Utility.EnsureNotNull(physicalIndexPages);
 
-                        var documentIds = core.Indexes.MatchDocuments(transaction, indexPageCatalog, subset.IndexSelection, subset);
+                        var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, physicalIndexPages, subset.IndexSelection, subset);
 
-                        pageDocuments.AddRange(pageDocuments.Where(o => documentIds.Contains(o.Id)).ToList());
+                        pageDocuments.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
                 }
                 else

@@ -1,6 +1,6 @@
 ﻿using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Indexes
+namespace Katzebase.Engine.Indexes.Matching
 {
     public class IndexKeyMatch
     {
@@ -11,9 +11,9 @@ namespace Katzebase.Engine.Indexes
 
         public IndexKeyMatch(string key, LogicalQualifier logicalQualifier, string value)
         {
-            this.Field = key.ToLower();
-            this.Value = value.ToLower();
-            this.LogicalQualifier = logicalQualifier;
+            Field = key.ToLower();
+            Value = value.ToLower();
+            LogicalQualifier = logicalQualifier;
         }
     }
 }

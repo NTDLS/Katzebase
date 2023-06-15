@@ -1,3 +1,31 @@
+SELECT /*TOP 5*/ --Should yeild 457 records
+	P.Name,
+	TH.TransactionId,
+	P.ProductNumber,
+	PSC.Name as Category
+FROM
+	AdventureWorks2012:Production:Product as p
+INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
+	ON p.ProductID = th.ProductID
+    AND p.ListPrice = th.ActualCost
+INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
+	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
+WHERE
+	PSC.Name = 'Road Bikes'
+	and TH.TransactionId > 200000
+ORDER BY
+	P.ProductNumber asc,
+	TH.TransactionId desc
+	
+/*
+select * from AdventureWorks2012:Production:TransactionHistory as TH
+WHERE TH.ProductID = 820
+*/
+
+/*
+drop index IX_TransactionHistory_ProductID_ActualCost
+on AdventureWorks2012:Production:TransactionHistory
+*/
 /*
 CREATE INDEX IX_TransactionHistory_ProductID_ActualCost
 (
@@ -5,6 +33,10 @@ CREATE INDEX IX_TransactionHistory_ProductID_ActualCost
 	ActualCost
 ) ON AdventureWorks2012:Production:TransactionHistory;
 
+Rollback Transaction;
+*/
+
+/*
 CREATE INDEX IX_ProductSubcategory_ProductSubcategoryID
 (
 	ProductSubcategoryID
@@ -12,11 +44,13 @@ CREATE INDEX IX_ProductSubcategory_ProductSubcategoryID
 
 */
 
-
+/*
+--This is the one that was taking forver!!
 CREATE INDEX IX_TransactionHistory_TransactionId
 (
 	TransactionId
 ) ON AdventureWorks2012:Production:TransactionHistory
+*/
 
 
 /*

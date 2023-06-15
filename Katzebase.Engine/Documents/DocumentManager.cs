@@ -482,7 +482,7 @@ namespace Katzebase.Engine.Documents
             core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);
 
             //Update all of the indexes that referecne the document.
-            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument);
+            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new PageDocument(documentId, documentPage.PageNumber));
         }
 
         #endregion

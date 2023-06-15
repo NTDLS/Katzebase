@@ -1,27 +1,26 @@
 ﻿using ProtoBuf;
+using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Indexes
 {
     [ProtoContract]
-    public class PhysicalIndexLeaf
+    internal class PhysicalIndexLeaf
     {
         [ProtoMember(1)]
-        public string? Value { get; set; } = null;
+        public Dictionary<string, PhysicalIndexLeaf> Children { get; set; } = new();
 
         [ProtoMember(2)]
-        public HashSet<Guid>? DocumentIDs = null;
+        public List<PhysicalIndexEntry>? Documents { get; set; } = null;
 
-        [ProtoMember(3)]
-        public PhysicalIndexLeaves Leaves = new();
+        public PhysicalIndexLeaf AddNewLeaf(string value)
+        {
+            var newLeaf = new PhysicalIndexLeaf();
+            Children.Add(value, newLeaf);
+            return newLeaf;
+        }
 
         public PhysicalIndexLeaf()
         {
-
-        }
-
-        public PhysicalIndexLeaf(string value)
-        {
-            Value = value;
         }
     }
 }

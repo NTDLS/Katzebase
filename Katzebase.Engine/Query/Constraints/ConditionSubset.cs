@@ -1,4 +1,4 @@
-﻿using Katzebase.Engine.Indexes;
+﻿using Katzebase.Engine.Indexes.Matching;
 
 namespace Katzebase.Engine.Query.Constraints
 {

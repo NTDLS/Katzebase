@@ -10,7 +10,7 @@ namespace Katzebase.Engine.Trace
 
         internal enum PerformanceTraceCumulativeMetricType
         {
-            IndexSeek,
+            IndexSearch,
             IndexDistillation,
             AcquireTransaction,
             Optimization,

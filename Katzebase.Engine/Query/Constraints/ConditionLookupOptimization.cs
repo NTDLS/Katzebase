@@ -1,4 +1,4 @@
-﻿using Katzebase.Engine.Indexes;
+﻿using Katzebase.Engine.Indexes.Matching;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;

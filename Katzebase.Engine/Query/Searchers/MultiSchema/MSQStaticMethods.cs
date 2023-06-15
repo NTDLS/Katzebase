@@ -249,8 +249,8 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     Utility.EnsureNotNull(subset.IndexSelection?.Index?.DiskPath);
                     Utility.EnsureNotNull(subset.IndexSelection?.Index?.Id);
 
-                    var indexPageCatalog = param.Core.IO.GetPBuf<PhysicalIndexPageCatalog>(param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(indexPageCatalog);
+                    var physicalIndexPages = param.Core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                    Utility.EnsureNotNull(physicalIndexPages);
 
                     var keyValuePairs = new Dictionary<string, string>();
 
@@ -266,10 +266,19 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                         keyValuePairs.Add(condition.Left?.Value ?? "", conditionToken?.ToString() ?? "");
                     }
 
-                    //Match on values from the document.
-                    var documentIds = param.Core.Indexes.MatchDocuments(param.Transaction, indexPageCatalog, subset.IndexSelection, subset, keyValuePairs);
+                    foreach (var ff in keyValuePairs)
+                    {
+                        if (ff.Value == "732")
+                        {
+                        }
+                    }
 
-                    furtherLimitedPageDocuments.AddRange(nextLevelMap.DocumentPageCatalog.FindPageDocuments(documentIds).ToList());
+                    //Match on values from the document.
+                    var documentIds = param.Core.Indexes.MatchDocuments(param.Transaction, physicalIndexPages, subset.IndexSelection, subset, keyValuePairs);
+
+                    //var doWeStillNeedThis? = nextLevelMap.DocumentPageCatalog.FindPageDocuments(documentIds).ToList();
+
+                    furtherLimitedPageDocuments.AddRange(documentIds.Values);
                 }
 
                 limitedPageDocuments = furtherLimitedPageDocuments;
