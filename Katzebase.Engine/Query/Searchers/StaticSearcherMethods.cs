@@ -27,15 +27,9 @@ namespace Katzebase.Engine.Query.Searchers
 
             //Lock the schema:
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            if (physicalSchema?.Exists != true)
-            {
-                throw new KbObjectNotFoundException(schemaName);
-            }
-            Utility.EnsureNotNull(physicalSchema.DiskPath);
 
             //Open the document page catalog:
             var documentPageCatalog = core.Documents.GetDocumentPageCatalog(transaction, physicalSchema, LockOperation.Write);
-            Utility.EnsureNotNull(documentPageCatalog);
 
             if (documentPageCatalog.PageMappings.Count > 0)
             {
@@ -49,9 +43,6 @@ namespace Katzebase.Engine.Query.Searchers
                     int documentIndex = random.Next(0, pageMap.DocumentIDs.Count - 1);
                     var documentId = pageMap.DocumentIDs.ToArray()[documentIndex];
                     var physicalDocument = core.Documents.GetDocument(transaction, physicalSchema, documentId, LockOperation.Read);
-
-                    Utility.EnsureNotNull(physicalDocument);
-                    Utility.EnsureNotNull(physicalDocument.Content);
 
                     var jContent = JObject.Parse(physicalDocument.Content);
 
@@ -67,8 +58,6 @@ namespace Katzebase.Engine.Query.Searchers
                     {
                         break;
                     }
-
-                    Utility.EnsureNotNull(physicalDocument.Id);
 
                     var resultRow = new KbQueryRow();
                     resultRow.AddValue(physicalDocument.Id.ToString());
@@ -95,22 +84,15 @@ namespace Katzebase.Engine.Query.Searchers
 
             //Lock the schema:
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            if (physicalSchema?.Exists != true)
-            {
-                throw new KbObjectNotFoundException(schemaName);
-            }
-            Utility.EnsureNotNull(physicalSchema.DiskPath);
 
             //Lock the document catalog:
             var documentCatalog = core.Documents.GetPageDocuments(transaction, physicalSchema, LockOperation.Read).ToList();
-            Utility.EnsureNotNull(documentCatalog);
 
             for (int i = 0; i < documentCatalog.Count && (i < topCount || topCount < 0); i++)
             {
                 var pageDocuent = documentCatalog[i];
 
                 var persistDocument = core.Documents.GetDocument(transaction, physicalSchema, pageDocuent.Id, LockOperation.Read);
-                Utility.EnsureNotNull(persistDocument.Content);
 
                 var jContent = JObject.Parse(persistDocument.Content);
 
@@ -121,8 +103,6 @@ namespace Katzebase.Engine.Query.Searchers
                         result.Fields.Add(new KbQueryField(jToken.Key));
                     }
                 }
-
-                Utility.EnsureNotNull(pageDocuent.Id);
 
                 var resultRow = new KbQueryRow();
                 foreach (var field in result.Fields)
@@ -211,15 +191,9 @@ namespace Katzebase.Engine.Query.Searchers
                 {
                     //Lock the schema:
                     var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
-                    if (physicalSchema?.Exists != true)
-                    {
-                        throw new KbObjectNotFoundException(querySchema.Name);
-                    }
-                    Utility.EnsureNotNull(physicalSchema.DiskPath);
 
                     //Lock the document catalog:
                     var physicalDocumentPageCatalog = core.Documents.GetDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
-                    Utility.EnsureNotNull(physicalDocumentPageCatalog);
 
                     schemaMap.Add(querySchema.Prefix, physicalSchema, physicalDocumentPageCatalog, querySchema.Conditions);
                 }

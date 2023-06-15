@@ -68,11 +68,6 @@ namespace Katzebase.Engine.Documents
                 using (var txRef = core.Transactions.Begin(processId))
                 {
                     var physicalSchema = core.Schemas.Acquire(txRef.Transaction, preparedQuery.Schemas[0].Prefix, LockOperation.Read);
-                    if (physicalSchema?.Exists != true)
-                    {
-                        throw new KbObjectNotFoundException(preparedQuery.Schemas[0].Prefix);
-                    }
-                    Utility.EnsureNotNull(physicalSchema.DiskPath);
 
                     var lookupOptimization = ConditionLookupOptimization.Build(core, txRef.Transaction, physicalSchema, preparedQuery.Conditions);
                     result.Explanation = lookupOptimization.BuildFullVirtualExpression();
@@ -202,28 +197,13 @@ namespace Katzebase.Engine.Documents
                 var result = new KbActionResponse();
 
                 var physicalDocument = PhysicalDocument.FromPayload(document);
-
-                if (physicalDocument.Id == null || physicalDocument.Id == Guid.Empty)
-                {
-                    physicalDocument.Id = Guid.NewGuid();
-                }
-                if (physicalDocument.Created == null || physicalDocument.Created == DateTime.MinValue)
-                {
-                    physicalDocument.Created = DateTime.UtcNow;
-                }
-                if (physicalDocument.Modfied == null || physicalDocument.Modfied == DateTime.MinValue)
-                {
-                    physicalDocument.Modfied = DateTime.UtcNow;
-                }
+                physicalDocument.Id = Guid.NewGuid();
+                physicalDocument.Created = DateTime.UtcNow;
+                physicalDocument.Modfied = DateTime.UtcNow;
 
                 using (var txRef = core.Transactions.Begin(processId))
                 {
                     var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Write);
-                    if (physicalSchema?.Exists != true)
-                    {
-                        throw new KbObjectNotFoundException(schema);
-                    }
-                    Utility.EnsureNotNull(physicalSchema.DiskPath);
 
                     PutDocument(txRef.Transaction, physicalSchema, physicalDocument);
 
@@ -262,18 +242,11 @@ namespace Katzebase.Engine.Documents
                 {
 
                     var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Write);
-                    if (physicalSchema?.Exists != true)
-                    {
-                        throw new KbObjectNotFoundException(schema);
-                    }
-
-                    Utility.EnsureNotNull(physicalSchema.DiskPath);
 
                     string documentCatalogDiskPath = Path.Combine(physicalSchema.DiskPath, DocumentCatalogFile);
 
                     var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
 
-                    Utility.EnsureNotNull(documentCatalog);
 
                     var physicalDocument = documentCatalog.GetById(newId);
                     if (physicalDocument != null)
@@ -320,15 +293,9 @@ namespace Katzebase.Engine.Documents
                 using (var txRef = core.Transactions.Begin(processId))
                 {
                     var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Read);
-                    if (physicalSchema?.Exists != true)
-                    {
-                        throw new KbObjectNotFoundException(schema);
-                    }
-                    Utility.EnsureNotNull(physicalSchema.DiskPath);
 
                     var filePath = Path.Combine(physicalSchema.DiskPath, DocumentCatalogFile);
                     var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
-                    Utility.EnsureNotNull(documentCatalog);
 
                     var result = new KbDocumentCatalogCollection();
                     foreach (var item in documentCatalog.Collection)
@@ -364,7 +331,6 @@ namespace Katzebase.Engine.Documents
         {
             //Open the document page catalog:
             var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
-            Utility.EnsureNotNull(documentPageCatalog);
 
             //Get the page that the document current exists in if any.
             var physicalPageMap = documentPageCatalog.GetDocumentPageMap(documentId);
@@ -372,7 +338,6 @@ namespace Katzebase.Engine.Documents
 
             //We found a page that contains the document, we need to open the page and modify the document with the given document id.
             var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), lockIntention);
-            Utility.EnsureNotNull(physicalDocumentPage);
 
             return physicalDocumentPage.Documents.First(o => o.Key == documentId).Value;
         }
@@ -386,7 +351,6 @@ namespace Katzebase.Engine.Documents
         internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, PageDocument pageDocument, LockOperation lockIntention)
         {
             var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(pageDocument), lockIntention);
-            Utility.EnsureNotNull(physicalDocumentPage);
             return physicalDocumentPage.Documents.First(o => o.Key == pageDocument.Id).Value;
         }
 
@@ -394,8 +358,6 @@ namespace Katzebase.Engine.Documents
         {
             //Open the document page catalog:
             var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
-            Utility.EnsureNotNull(documentPageCatalog);
-
             return documentPageCatalog.ConsolidatedPageDocuments();
         }
 
@@ -403,7 +365,6 @@ namespace Katzebase.Engine.Documents
         {
             //Open the document page catalog:
             var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
-            Utility.EnsureNotNull(documentPageCatalog);
             return documentPageCatalog;
         }
 
@@ -415,19 +376,14 @@ namespace Katzebase.Engine.Documents
         /// <param name="document"></param>
         internal void PutDocument(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument)
         {
-            Utility.EnsureNotNull(physicalSchema?.DiskPath);
-            Utility.EnsureNotNull(physicalDocument?.Id);
-
-            Guid documentId = (Guid)physicalDocument.Id;
-
-            PhysicalDocumentPage? documentPage = null;
+            PhysicalDocumentPage documentPage;
 
             //Open the document page catalog:
             var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
             Utility.EnsureNotNull(documentPageCatalog);
 
             //Get the page that the document current exists in, if any.
-            var physicalPageMap = documentPageCatalog.GetDocumentPageMap(documentId);
+            var physicalPageMap = documentPageCatalog.GetDocumentPageMap(physicalDocument.Id);
             if (physicalPageMap == null)
             {
                 //The document doesnt exist in any pages, see if we can find one with some room:
@@ -438,7 +394,7 @@ namespace Katzebase.Engine.Documents
                     //Still didnt find a page with room, we're going to have to create a new "page catalog item",
                     // add the given document ID to it and add that catalog item to the catalog collection:
                     physicalPageMap = new PhysicalDocumentPageMap(documentPageCatalog.NextPageNumber());
-                    physicalPageMap.DocumentIDs.Add(documentId);
+                    physicalPageMap.DocumentIDs.Add(physicalDocument.Id);
 
                     //We created a new page item, add it to the catalog:
                     documentPageCatalog.PageMappings.Add(physicalPageMap);
@@ -447,33 +403,26 @@ namespace Katzebase.Engine.Documents
                     documentPage = new PhysicalDocumentPage(physicalPageMap.PageNumber);
 
                     //Add the given document to the page document.
-                    documentPage.Documents.Add(documentId, physicalDocument);
+                    documentPage.Documents.Add(physicalDocument.Id, physicalDocument);
                 }
                 else
                 {
                     //We found a page with space, just add the document ID to the page catalog item.
-                    physicalPageMap.DocumentIDs.Add(documentId);
+                    physicalPageMap.DocumentIDs.Add(physicalDocument.Id);
 
                     //Open the page and add the document to it.
                     documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), LockOperation.Write);
 
-                    Utility.EnsureNotNull(documentPage);
-
                     //Add the given document to the page document.
-                    documentPage.Documents.Add(documentId, physicalDocument);
+                    documentPage.Documents.Add(physicalDocument.Id, physicalDocument);
                 }
             }
             else
             {
                 //We found a page that contains the document, we need to open the page and modify the document with the given document id.
                 documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), LockOperation.Write);
-
-                Utility.EnsureNotNull(documentPage);
-
-                documentPage.Documents[documentId] = physicalDocument;
+                documentPage.Documents[physicalDocument.Id] = physicalDocument;
             }
-
-            Utility.EnsureNotNull(documentPage);
 
             //Save the document page:
             core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), documentPage);
@@ -482,7 +431,7 @@ namespace Katzebase.Engine.Documents
             core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);
 
             //Update all of the indexes that referecne the document.
-            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new PageDocument(documentId, documentPage.PageNumber));
+            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new PageDocument(physicalDocument.Id, documentPage.PageNumber));
         }
 
         #endregion

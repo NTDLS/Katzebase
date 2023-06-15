@@ -7,13 +7,13 @@ namespace Katzebase.Engine.Indexes
     {
         public List<PhysicalIndexAttribute> Attributes { get; set; } = new List<PhysicalIndexAttribute>();
         public string Name { get; set; } = string.Empty;
-        public Guid? Id { get; set; }
-        public DateTime? Created { get; set; }
-        public DateTime? Modfied { get; set; }
+        public Guid Id { get; set; }
+        public DateTime Created { get; set; }
+        public DateTime Modfied { get; set; }
         public bool IsUnique { get; set; } = false;
 
         [JsonIgnore]
-        public string? DiskPath { get; set; }
+        public string DiskPath { get; set; } = string.Empty;
 
         public PhysicalIndex()
         {

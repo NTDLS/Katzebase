@@ -26,17 +26,10 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             //Lock the schema:
             var ptLockSchema = transaction.PT?.CreateDurationTracker<PhysicalSchema>(PerformanceTraceCumulativeMetricType.Lock);
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            if (physicalSchema?.Exists != true)
-            {
-                throw new KbObjectNotFoundException(schemaName);
-            }
             ptLockSchema?.StopAndAccumulate();
-            Utility.EnsureNotNull(physicalSchema.DiskPath);
 
             //Lock the document catalog:
             var pageDocuments = core.Documents.GetPageDocuments(transaction, physicalSchema, LockOperation.Read).ToList();
-
-            Utility.EnsureNotNull(pageDocuments);
 
             ConditionLookupOptimization? lookupOptimization = null;
 
@@ -57,11 +50,8 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
                     {
                         Utility.EnsureNotNull(subset.IndexSelection);
-                        Utility.EnsureNotNull(subset.IndexSelection.Index.DiskPath);
 
                         var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-                        Utility.EnsureNotNull(physicalIndexPages);
-
                         var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, physicalIndexPages, subset.IndexSelection, subset);
 
                         pageDocuments.AddRange(indexMatchedDocuments.Select(o => o.Value));
@@ -88,8 +78,6 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     #endregion
                 }
             }
-
-            Utility.EnsureNotNull(physicalSchema.DiskPath);
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, physicalSchema, query, lookupOptimization);
@@ -169,8 +157,6 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         private static void GetDocumentsByConditionsThreadProc(ThreadPoolQueue<PageDocument, LookupThreadParam> pool, LookupThreadParam? param)
         {
             Utility.EnsureNotNull(param);
-            Utility.EnsureNotNull(param.PhysicalSchema);
-            Utility.EnsureNotNull(param.PhysicalSchema.DiskPath);
 
             NCalc.Expression? expression = null;
 
@@ -188,11 +174,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 }
 
                 var physicalDocument = param.Core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, pageDocument.Id, LockOperation.Read);
-                Utility.EnsureNotNull(physicalDocument.Content);
-
                 var jContent = JObject.Parse(physicalDocument.Content);
-
-                Utility.EnsureNotNull(pageDocument.Id);
 
                 if (expression != null && param.LookupOptimization != null)
                 {
@@ -205,8 +187,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
                 if (evaluation)
                 {
-                    Utility.EnsureNotNull(physicalDocument.Id);
-                    var result = new SSQDocumentLookupResult((Guid)physicalDocument.Id);
+                    var result = new SSQDocumentLookupResult(physicalDocument.Id);
 
                     foreach (var field in param.Query.SelectFields)
                     {

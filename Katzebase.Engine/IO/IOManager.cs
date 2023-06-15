@@ -20,16 +20,23 @@ namespace Katzebase.Engine.IO
 
         #region Getters.
 
-        public T? GetJsonNonTracked<T>(string filePath, bool skipCompression = false)
+        public T GetJsonNonTracked<T>(string filePath, bool skipCompression = false)
         {
+            T? result;
+
             if (core.Settings.UseCompression && skipCompression == false)
             {
-                return JsonConvert.DeserializeObject<T>(Compression.DecompressString(File.ReadAllBytes(filePath)));
+                result = JsonConvert.DeserializeObject<T>(Compression.DecompressString(File.ReadAllBytes(filePath)));
             }
-            return JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath));
+            else
+            {
+                result = JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath));
+            }
+            Utility.EnsureNotNull(result);
+            return result;
         }
 
-        public T? GetPBufNonTracked<T>(string filePath)
+        public T GetPBufNonTracked<T>(string filePath)
         {
             using (var file = File.OpenRead(filePath))
             {
@@ -37,17 +44,17 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        internal T? GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
+        internal T GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
             return InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON);
         }
 
-        internal T? GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
+        internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
             return InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf);
         }
 
-        internal T? InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
+        internal T InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
         {
             try
             {
@@ -67,7 +74,7 @@ namespace Katzebase.Engine.IO
 
                         core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
-                        return (T?)cachedObject;
+                        return (T)cachedObject;
                     }
                 }
 
@@ -93,7 +100,7 @@ namespace Katzebase.Engine.IO
                     ptIORead?.StopAndAccumulate();
 
                     var ptDeserialize = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.Deserialize);
-                    deserializedObject = JsonConvert.DeserializeObject<T?>(text);
+                    deserializedObject = JsonConvert.DeserializeObject<T>(text);
                     ptDeserialize?.StopAndAccumulate();
                 }
                 else if (format == IOFormat.PBuf)
@@ -120,6 +127,8 @@ namespace Katzebase.Engine.IO
                     ptCacheWrite?.StopAndAccumulate();
                     core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
                 }
+
+                Utility.EnsureNotNull(deserializedObject);
 
                 return deserializedObject;
             }

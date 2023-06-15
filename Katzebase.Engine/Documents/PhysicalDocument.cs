@@ -9,10 +9,11 @@ namespace Katzebase.Engine.Documents
     [Serializable]
     public class PhysicalDocument
     {
-        public string? Content { get; set; }
-        public Guid? Id { get; set; }
-        public DateTime? Created { get; set; }
-        public DateTime? Modfied { get; set; }
+        public string Content { get; set; } = string.Empty;
+        public Guid Id { get; set; }
+        public DateTime Created { get; set; }
+        public DateTime Modfied { get; set; }
+
         public PhysicalDocument Clone()
         {
             return new PhysicalDocument

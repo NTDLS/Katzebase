@@ -28,9 +28,6 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             var topLevel = schemaMap.First();
             var topLevelMap = topLevel.Value;
 
-            Utility.EnsureNotNull(topLevelMap.PhysicalSchema);
-            Utility.EnsureNotNull(topLevelMap.PhysicalSchema.DiskPath);
-
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query);
 
@@ -135,11 +132,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
             var jJoinScopedContentCache = new Dictionary<string, JObject>();
             var topLevel = param.SchemaMap.First();
-
-            Utility.EnsureNotNull(topLevel.Value.PhysicalSchema.DiskPath);
-
             var physicalDocumentWorkingLevel = param.Core.Documents.GetDocument(param.Transaction, topLevel.Value.PhysicalSchema, workingDocument.Id, LockOperation.Read);
-            Utility.EnsureNotNull(physicalDocumentWorkingLevel.Content);
 
             //Get the document content and add it to a collection so it can be referenced by schema alias on all subsequent joins.
 
@@ -219,17 +212,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             Dictionary<string, JObject> jJoinScopedContentCache, Dictionary<string, JObject> jThreadScopedContentCache)
         {
             var thisThreadResults = new Dictionary<Guid, MSQSchemaIntersectionDocumentCollection>();
-
-            var workingLevelMap = workingLevel.Value;
-
             var nextLevel = param.SchemaMap.Skip(skipCount).First();
             var nextLevelMap = nextLevel.Value;
 
             Utility.EnsureNotNull(nextLevelMap?.Conditions);
-            Utility.EnsureNotNull(nextLevelMap?.PhysicalSchema?.DiskPath);
-            Utility.EnsureNotNull(workingLevelMap?.PhysicalSchema?.DiskPath);
-
-            var jWorkingContent = jJoinScopedContentCache[workingLevel.Key];
 
             var expression = new NCalc.Expression(nextLevelMap.Conditions.HighLevelExpressionTree);
 
@@ -246,11 +232,9 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 //All condition subsets have a selected index. Start building a list of possible document IDs.
                 foreach (var subset in nextLevelMap.Optimization.Conditions.NonRootSubsets)
                 {
-                    Utility.EnsureNotNull(subset.IndexSelection?.Index?.DiskPath);
-                    Utility.EnsureNotNull(subset.IndexSelection?.Index?.Id);
+                    Utility.EnsureNotNull(subset.IndexSelection);
 
                     var physicalIndexPages = param.Core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-                    Utility.EnsureNotNull(physicalIndexPages);
 
                     var keyValuePairs = new Dictionary<string, string>();
 
@@ -321,8 +305,6 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 else
                 {
                     var physicalDocumentNextLevel = param.Core.Documents.GetDocument(param.Transaction, nextLevelMap.PhysicalSchema, pageDocument.Id, LockOperation.Read);
-                    Utility.EnsureNotNull(physicalDocumentNextLevel?.Content);
-
                     jContentNextLevel = JObject.Parse(physicalDocumentNextLevel.Content);
                     jThreadScopedContentCache.Add(threadScopedDocuemntCacheKey, jContentNextLevel);
                 }
@@ -435,11 +417,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         private static void FillInSchemaResultDocumentValues(LookupThreadParam param, MSQQuerySchemaMapItem accumulationMap,
             string schemaKey, PageDocument pageDocuments, ref MSQDocumentLookupResult schemaResultValues, Dictionary<string, JObject> jThreadScopedContentCache)
         {
-            Utility.EnsureNotNull(accumulationMap?.PhysicalSchema?.DiskPath);
-
             var persistDocument = param.Core.Documents.GetDocument(param.Transaction, accumulationMap.PhysicalSchema, pageDocuments, LockOperation.Read);
-            Utility.EnsureNotNull(persistDocument);
-            Utility.EnsureNotNull(persistDocument.Content);
 
             var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{pageDocuments.Id}"];
 
