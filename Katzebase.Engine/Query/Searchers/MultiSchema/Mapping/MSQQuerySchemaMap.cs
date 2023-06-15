@@ -21,15 +21,15 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
         }
 
         /// <summary>
-        /// Adds a mapping to the schema mapping collection/
+        /// Adds a mapping to the schema mapping collection.
         /// </summary>
         /// <param name="key">The alias of the schema</param>
-        /// <param name="schemaMeta">The associated schema meta-data.</param>
+        /// <param name="physicalSchema">The associated schema meta-data.</param>
         /// <param name="docuemntCatalog">The document catalog contained in the associated schema.</param>
         /// <param name="conditions">The conditons used to join this schema mapping to the one before it.</param>
-        public void Add(string key, PersistSchema schemaMeta, PersistDocumentCatalog docuemntCatalog, Conditions? conditions)
+        public void Add(string key, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog docuemntCatalog, Conditions? conditions)
         {
-            Add(key, new MSQQuerySchemaMapItem(core, Transaction, schemaMeta, docuemntCatalog, conditions));
+            Add(key, new MSQQuerySchemaMapItem(core, Transaction, physicalSchema, docuemntCatalog, conditions));
         }
     }
 }

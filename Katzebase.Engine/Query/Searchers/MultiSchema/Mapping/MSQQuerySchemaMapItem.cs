@@ -10,21 +10,21 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
     /// </summary>
     internal class MSQQuerySchemaMapItem
     {
-        public PersistSchema SchemaMeta { get; set; }
-        public PersistDocumentCatalog DocuemntCatalog { get; set; }
+        public PhysicalSchema PhysicalSchema { get; set; }
+        public PhysicalDocumentPageCatalog DocumentPageCatalog { get; set; }
         public Conditions? Conditions { get; set; }
 
         public ConditionLookupOptimization? Optimization { get; set; }
 
-        public MSQQuerySchemaMapItem(Core core, Transaction transaction, PersistSchema schemaMeta, PersistDocumentCatalog docuemntCatalog, Conditions? conditions)
+        public MSQQuerySchemaMapItem(Core core, Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog documentPageCatalog, Conditions? conditions)
         {
-            SchemaMeta = schemaMeta;
-            DocuemntCatalog = docuemntCatalog;
+            PhysicalSchema = physicalSchema;
+            DocumentPageCatalog = documentPageCatalog;
             Conditions = conditions;
 
             if (conditions != null)
             {
-                Optimization = ConditionLookupOptimization.Build(core, transaction, schemaMeta, conditions);
+                Optimization = ConditionLookupOptimization.Build(core, transaction, physicalSchema, conditions);
             }
         }
     }

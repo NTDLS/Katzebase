@@ -1,8 +1,7 @@
-﻿using Katzebase.Engine.KbLib;
-using Katzebase.Engine.Query;
-using Katzebase.Engine.Query.Constraints;
+﻿using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Searchers;
 using Katzebase.Engine.Schemas;
+using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
@@ -22,38 +21,7 @@ namespace Katzebase.Engine.Documents
             this.core = core;
         }
 
-        //TODO: This needs to be rebuilt entirely.
-        internal KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
-        {
-            try
-            {
-                var result = new KbQueryResult();
-
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, preparedQuery.Schemas[0].Prefix, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
-                    {
-                        throw new KbObjectNotFoundException(preparedQuery.Schemas[0].Prefix);
-                    }
-                    Utility.EnsureNotNull(schemaMeta.DiskPath);
-
-                    var lookupOptimization = ConditionLookupOptimization.Build(core, txRef.Transaction, schemaMeta, preparedQuery.Conditions);
-                    result.Explanation = lookupOptimization.BuildFullVirtualExpression();
-
-                    txRef.Commit();
-
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
-                throw;
-            }
-        }
+        #region Query Handlers.
 
         internal KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
         {
@@ -82,6 +50,98 @@ namespace Katzebase.Engine.Documents
             return ExecuteSample(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
         }
 
+        internal KbQueryResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
+        {
+            throw new KbNotImplementedException();
+            //return ExecuteList(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
+        }
+
+
+        internal KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
+        {
+            throw new KbNotImplementedException();
+            /*
+            try
+            {
+                var result = new KbQueryResult();
+
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, preparedQuery.Schemas[0].Prefix, LockOperation.Read);
+                    if (physicalSchema?.Exists != true)
+                    {
+                        throw new KbObjectNotFoundException(preparedQuery.Schemas[0].Prefix);
+                    }
+                    Utility.EnsureNotNull(physicalSchema.DiskPath);
+
+                    var lookupOptimization = ConditionLookupOptimization.Build(core, txRef.Transaction, physicalSchema, preparedQuery.Conditions);
+                    result.Explanation = lookupOptimization.BuildFullVirtualExpression();
+
+                    txRef.Commit();
+
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+            */
+        }
+
+        internal KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
+        {
+            throw new KbNotImplementedException();
+
+            /*
+            try
+            {
+                var result = new KbActionResponse();
+
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
+
+                    //TODO: Delete the documents.
+
+                    var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
+
+                    var physicalDocument = documentCatalog.GetById(newId);
+                    if (physicalDocument != null)
+                    {
+                        string documentDiskPath = Path.Combine(physicalSchema.DiskPath, Helpers.GetDocumentModFilePath(physicalDocument.Id));
+
+                        core.IO.DeleteFile(txRef.Transaction, documentDiskPath);
+
+                        documentCatalog.Remove(physicalDocument);
+
+                        core.Indexes.DeleteDocumentFromIndexes(txRef.Transaction, physicalSchema, physicalDocument.Id);
+
+                        core.IO.PutJson(txRef.Transaction, documentCatalogDiskPath, documentCatalog);
+                    }
+
+                    txRef.Commit();
+
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteDelete for process {processId}.", ex);
+                throw;
+            }
+            */
+        }
+
+        #endregion
+
+        #region API Handlers.
+
         public KbQueryResult ExecuteSample(ulong processId, string schemaName, int rowLimit)
         {
             try
@@ -103,11 +163,6 @@ namespace Katzebase.Engine.Documents
                 core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
                 throw;
             }
-        }
-
-        internal KbQueryResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
-        {
-            return ExecuteList(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
         }
 
         public KbQueryResult ExecuteList(ulong processId, string schemaName, int rowLimit = -1)
@@ -132,51 +187,6 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-        internal KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
-        {
-            //TODO: This is a stub, this does NOT work.
-            try
-            {
-                var result = new KbActionResponse();
-
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
-
-                    //TODO: Delete the documents.
-
-                    /*
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
-
-                    var persistDocument = documentCatalog.GetById(newId);
-                    if (persistDocument != null)
-                    {
-                        string documentDiskPath = Path.Combine(schemaMeta.DiskPath, Helpers.GetDocumentModFilePath(persistDocument.Id));
-
-                        core.IO.DeleteFile(txRef.Transaction, documentDiskPath);
-
-                        documentCatalog.Remove(persistDocument);
-
-                        core.Indexes.DeleteDocumentFromIndexes(txRef.Transaction, schemaMeta, persistDocument.Id);
-
-                        core.IO.PutJson(txRef.Transaction, documentCatalogDiskPath, documentCatalog);
-                    }
-                    */
-
-                    txRef.Commit();
-
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to ExecuteDelete for process {processId}.", ex);
-                throw;
-            }
-        }
-
         /// <summary>
         /// Saves a new document, this is used for inserts.
         /// </summary>
@@ -191,45 +201,33 @@ namespace Katzebase.Engine.Documents
             {
                 var result = new KbActionResponse();
 
-                var persistDocument = PersistDocument.FromPayload(document);
+                var physicalDocument = PhysicalDocument.FromPayload(document);
 
-                if (persistDocument.Id == null || persistDocument.Id == Guid.Empty)
+                if (physicalDocument.Id == null || physicalDocument.Id == Guid.Empty)
                 {
-                    persistDocument.Id = Guid.NewGuid();
+                    physicalDocument.Id = Guid.NewGuid();
                 }
-                if (persistDocument.Created == null || persistDocument.Created == DateTime.MinValue)
+                if (physicalDocument.Created == null || physicalDocument.Created == DateTime.MinValue)
                 {
-                    persistDocument.Created = DateTime.UtcNow;
+                    physicalDocument.Created = DateTime.UtcNow;
                 }
-                if (persistDocument.Modfied == null || persistDocument.Modfied == DateTime.MinValue)
+                if (physicalDocument.Modfied == null || physicalDocument.Modfied == DateTime.MinValue)
                 {
-                    persistDocument.Modfied = DateTime.UtcNow;
+                    physicalDocument.Modfied = DateTime.UtcNow;
                 }
 
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Write);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(schema);
                     }
-                    Utility.EnsureNotNull(schemaMeta.DiskPath);
+                    Utility.EnsureNotNull(physicalSchema.DiskPath);
 
-                    string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
+                    PutDocument(txRef.Transaction, physicalSchema, physicalDocument);
 
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
-                    Utility.EnsureNotNull(documentCatalog);
-
-                    documentCatalog.Add(persistDocument);
-                    core.IO.PutJson(txRef.Transaction, documentCatalogDiskPath, documentCatalog);
-
-                    string documentDiskPath = Path.Combine(schemaMeta.DiskPath, Helpers.GetDocumentModFilePath((Guid)persistDocument.Id));
-                    core.IO.CreateDirectory(txRef.Transaction, Path.GetDirectoryName(documentDiskPath));
-                    core.IO.PutJson(txRef.Transaction, documentDiskPath, persistDocument);
-
-                    core.Indexes.InsertDocumentIntoIndexes(txRef.Transaction, schemaMeta, persistDocument);
-
-                    newId = persistDocument.Id;
+                    newId = physicalDocument.Id;
 
                     txRef.Commit();
 
@@ -254,37 +252,39 @@ namespace Katzebase.Engine.Documents
         /// <exception cref="KbObjectNotFoundException"></exception>
         public KbActionResponse DeleteById(ulong processId, string schema, Guid newId)
         {
+            throw new KbNotImplementedException();
+
+            /*
             try
             {
                 var result = new KbActionResponse();
-
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                   
-                    var schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Write);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Write);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(schema);
                     }
 
-                    Utility.EnsureNotNull(schemaMeta.DiskPath);
+                    Utility.EnsureNotNull(physicalSchema.DiskPath);
 
-                    string documentCatalogDiskPath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
+                    string documentCatalogDiskPath = Path.Combine(physicalSchema.DiskPath, DocumentCatalogFile);
 
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
+                    var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
 
                     Utility.EnsureNotNull(documentCatalog);
 
-                    var persistDocument = documentCatalog.GetById(newId);
-                    if (persistDocument != null)
+                    var physicalDocument = documentCatalog.GetById(newId);
+                    if (physicalDocument != null)
                     {
-                        string documentDiskPath = Path.Combine(schemaMeta.DiskPath, Helpers.GetDocumentModFilePath(persistDocument.Id));
+                        string documentDiskPath = Path.Combine(physicalSchema.DiskPath, Helpers.GetDocumentModFilePath(physicalDocument.Id));
 
                         core.IO.DeleteFile(txRef.Transaction, documentDiskPath);
 
-                        documentCatalog.Remove(persistDocument);
+                        documentCatalog.Remove(physicalDocument);
 
-                        core.Indexes.DeleteDocumentFromIndexes(txRef.Transaction, schemaMeta, persistDocument.Id);
+                        core.Indexes.DeleteDocumentFromIndexes(txRef.Transaction, physicalSchema, physicalDocument.Id);
 
                         core.IO.PutJson(txRef.Transaction, documentCatalogDiskPath, documentCatalog);
                     }
@@ -293,7 +293,6 @@ namespace Katzebase.Engine.Documents
 
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
-
                 return result;
             }
             catch (Exception ex)
@@ -301,6 +300,7 @@ namespace Katzebase.Engine.Documents
                 core.Log.Write($"Failed to delete document by ID for process {processId}.", ex);
                 throw;
             }
+            */
         }
 
         /// <summary>
@@ -312,19 +312,22 @@ namespace Katzebase.Engine.Documents
         /// <exception cref="KbObjectNotFoundException"></exception>
         public KbDocumentCatalogCollection EnumerateCatalog(ulong processId, string schema)
         {
+            throw new KbNotImplementedException();
+
+            /*
             try
             {
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    PersistSchema schemaMeta = core.Schemas.VirtualPathToMeta(txRef.Transaction, schema, LockOperation.Read);
-                    if (schemaMeta == null || schemaMeta.Exists == false)
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Read);
+                    if (physicalSchema?.Exists != true)
                     {
                         throw new KbObjectNotFoundException(schema);
                     }
-                    Utility.EnsureNotNull(schemaMeta.DiskPath);
+                    Utility.EnsureNotNull(physicalSchema.DiskPath);
 
-                    var filePath = Path.Combine(schemaMeta.DiskPath, DocumentCatalogFile);
-                    var documentCatalog = core.IO.GetJson<PersistDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
+                    var filePath = Path.Combine(physicalSchema.DiskPath, DocumentCatalogFile);
+                    var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
                     Utility.EnsureNotNull(documentCatalog);
 
                     var result = new KbDocumentCatalogCollection();
@@ -344,6 +347,144 @@ namespace Katzebase.Engine.Documents
                 core.Log.Write($"Failed to get catalog for process {processId}.", ex);
                 throw;
             }
+            */
         }
+
+        #endregion
+
+        #region Core put/get methods.
+
+        /// <summary>
+        /// When we want to read a document we do it here - no exceptions.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="physicalSchema"></param>
+        /// <param name="documentId"></param>
+        internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, Guid documentId, LockOperation lockIntention)
+        {
+            //Open the document page catalog:
+            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
+            Utility.EnsureNotNull(documentPageCatalog);
+
+            //Get the page that the document current exists in if any.
+            var physicalPageMap = documentPageCatalog.GetDocumentPageMap(documentId);
+            Utility.EnsureNotNull(physicalPageMap);
+
+            //We found a page that contains the document, we need to open the page and modify the document with the given document id.
+            var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), lockIntention);
+            Utility.EnsureNotNull(physicalDocumentPage);
+
+            return physicalDocumentPage.Documents.First(o => o.Key == documentId).Value;
+        }
+
+        /// <summary>
+        /// When we want to read a document we do it here. If we already have the page number, we can take a shortcut/
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="physicalSchema"></param>
+        /// <param name="documentId"></param>
+        internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, PageDocument pageDocument, LockOperation lockIntention)
+        {
+            var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(pageDocument), lockIntention);
+            Utility.EnsureNotNull(physicalDocumentPage);
+            return physicalDocumentPage.Documents.First(o => o.Key == pageDocument.Id).Value;
+        }
+
+        internal IEnumerable<PageDocument> GetPageDocuments(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
+        {
+            //Open the document page catalog:
+            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
+            Utility.EnsureNotNull(documentPageCatalog);
+
+            return documentPageCatalog.ConsolidatedPageDocuments();
+        }
+
+        internal PhysicalDocumentPageCatalog GetDocumentPageCatalog(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
+        {
+            //Open the document page catalog:
+            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
+            Utility.EnsureNotNull(documentPageCatalog);
+            return documentPageCatalog;
+        }
+
+        /// <summary>
+        /// When we want to write a document to the disk, this is where we do it - no exceptions.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="schema"></param>
+        /// <param name="document"></param>
+        internal void PutDocument(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument)
+        {
+            Utility.EnsureNotNull(physicalSchema?.DiskPath);
+            Utility.EnsureNotNull(physicalDocument?.Id);
+
+            Guid documentId = (Guid)physicalDocument.Id;
+
+            PhysicalDocumentPage? documentPage = null;
+
+            //Open the document page catalog:
+            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
+            Utility.EnsureNotNull(documentPageCatalog);
+
+            //Get the page that the document current exists in, if any.
+            var physicalPageMap = documentPageCatalog.GetDocumentPageMap(documentId);
+            if (physicalPageMap == null)
+            {
+                //The document doesnt exist in any pages, see if we can find one with some room:
+                physicalPageMap = documentPageCatalog.GetPageWithRoomForNewDocument(core.Settings.DocumentPageSize);
+
+                if (physicalPageMap == null)
+                {
+                    //Still didnt find a page with room, we're going to have to create a new "page catalog item",
+                    // add the given document ID to it and add that catalog item to the catalog collection:
+                    physicalPageMap = new PhysicalDocumentPageMap(documentPageCatalog.NextPageNumber());
+                    physicalPageMap.DocumentIDs.Add(documentId);
+
+                    //We created a new page item, add it to the catalog:
+                    documentPageCatalog.PageMappings.Add(physicalPageMap);
+
+                    //Create the new page, this will store the actual document contents.
+                    documentPage = new PhysicalDocumentPage(physicalPageMap.PageNumber);
+
+                    //Add the given document to the page document.
+                    documentPage.Documents.Add(documentId, physicalDocument);
+                }
+                else
+                {
+                    //We found a page with space, just add the document ID to the page catalog item.
+                    physicalPageMap.DocumentIDs.Add(documentId);
+
+                    //Open the page and add the document to it.
+                    documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), LockOperation.Write);
+
+                    Utility.EnsureNotNull(documentPage);
+
+                    //Add the given document to the page document.
+                    documentPage.Documents.Add(documentId, physicalDocument);
+                }
+            }
+            else
+            {
+                //We found a page that contains the document, we need to open the page and modify the document with the given document id.
+                documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), LockOperation.Write);
+
+                Utility.EnsureNotNull(documentPage);
+
+                documentPage.Documents[documentId] = physicalDocument;
+            }
+
+            Utility.EnsureNotNull(documentPage);
+
+            //Save the document page:
+            core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), documentPage);
+
+            //Save the docuemnt page catalog:
+            core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);
+
+            //Update all of the indexes that referecne the document.
+            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument);
+        }
+
+        #endregion
     }
 }

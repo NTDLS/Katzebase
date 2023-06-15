@@ -22,6 +22,17 @@
         public int CacheSeconds { get; set; }
 
         /// <summary>
+        /// The number of documents to be stored per file in the schema. When documents are needed from the disk, the entire page will be read.
+        /// The right number strikes the balance between disk trashing and optimal disk reads. This is also the minimum locking granularity.
+        /// </summary>
+        public int DocumentPageSize { get; set; }
+
+        /// <summary>
+        /// Whether documents, pages and indexes will be stored compressed. Don't worry, you can open them in 7-Zip.
+        /// </summary>
+        public bool UseCompression { get; set; }
+
+        /// <summary>
         /// Whether the engine will keep health metrics.
         /// </summary>
         public bool HealthMonitoringEnabled { get; set; }

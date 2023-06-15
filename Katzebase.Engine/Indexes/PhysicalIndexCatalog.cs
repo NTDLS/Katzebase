@@ -3,29 +3,29 @@
 namespace Katzebase.Engine.Indexes
 {
     [Serializable]
-    public class PersistIndexCatalog
+    public class PhysicalIndexCatalog
     {
-        public List<PersistIndex> Collection = new List<PersistIndex>();
+        public List<PhysicalIndex> Collection = new List<PhysicalIndex>();
 
         [JsonIgnore]
         public string? DiskPath { get; set; }
 
-        public void Remove(PersistIndex item)
+        public void Remove(PhysicalIndex item)
         {
             Collection.Remove(item);
         }
 
-        public void Add(PersistIndex item)
+        public void Add(PhysicalIndex item)
         {
             Collection.Add(item);
         }
 
-        public PersistIndex? GetById(Guid id)
+        public PhysicalIndex? GetById(Guid id)
         {
             return (from o in Collection where o.Id == id select o).FirstOrDefault();
         }
 
-        public PersistIndex? GetByName(string name)
+        public PhysicalIndex? GetByName(string name)
         {
             foreach (var item in Collection)
             {
@@ -37,9 +37,9 @@ namespace Katzebase.Engine.Indexes
             return null;
         }
 
-        public PersistIndexCatalog Clone()
+        public PhysicalIndexCatalog Clone()
         {
-            var catalog = new PersistIndexCatalog();
+            var catalog = new PhysicalIndexCatalog();
 
             lock (this)
             {

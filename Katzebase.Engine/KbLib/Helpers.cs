@@ -27,25 +27,6 @@ namespace Katzebase.Engine.KbLib
                 File.Copy(newPath, newPath.Replace(sourcePath, destinationPath), true);
         }
 
-        public static string GetDocumentModFilePath(Guid id)
-        {
-            string idString = id.ToString();
-            int checksum = Checksum(idString);
-            return $"{{{checksum % 1000}}}\\{idString}{EngineConstants.DocumentExtension}";
-        }
-
-        /*
-        public static long EstimateObjectSize(object o)
-        {
-            using (Stream s = new MemoryStream())
-            {
-                BinaryFormatter formatter = new BinaryFormatter();
-                formatter.Serialize(s, o);
-                return s.Length;
-            }
-        }
-        */
-
         public static string MakeSafeFileName(string filename)
         {
             Array.ForEach(Path.GetInvalidFileNameChars(),

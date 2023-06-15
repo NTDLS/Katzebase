@@ -1,9 +1,12 @@
-﻿using Katzebase.Engine.KbLib;
+﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Katzebase.Engine.IO
 {
@@ -17,8 +20,12 @@ namespace Katzebase.Engine.IO
 
         #region Getters.
 
-        public T? GetJsonNonTracked<T>(string filePath)
+        public T? GetJsonNonTracked<T>(string filePath, bool skipCompression = false)
         {
+            if (core.Settings.UseCompression && skipCompression == false)
+            {
+                return JsonConvert.DeserializeObject<T>(Compression.DecompressString(File.ReadAllBytes(filePath)));
+            }
             return JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath));
         }
 
@@ -48,7 +55,7 @@ namespace Katzebase.Engine.IO
 
                 transaction.LockFile(intendedOperation, cacheKey);
 
-                if (core.settings.CacheEnabled)
+                if (core.Settings.CacheEnabled)
                 {
                     var ptCacheRead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheRead);
                     var cachedObject = core.Cache.Get(cacheKey);
@@ -72,8 +79,17 @@ namespace Katzebase.Engine.IO
 
                 if (format == IOFormat.JSON)
                 {
+                    string text = string.Empty;
+
                     var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
-                    string text = File.ReadAllText(filePath);
+                    if (core.Settings.UseCompression)
+                    {
+                        text = Compression.DecompressString(File.ReadAllBytes(filePath));
+                    }
+                    else
+                    {
+                        text = File.ReadAllText(filePath);
+                    }
                     ptIORead?.StopAndAccumulate();
 
                     var ptDeserialize = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.Deserialize);
@@ -97,7 +113,7 @@ namespace Katzebase.Engine.IO
                     throw new NotImplementedException();
                 }
 
-                if (core.settings.CacheEnabled && deserializedObject != null)
+                if (core.Settings.CacheEnabled && deserializedObject != null)
                 {
                     var ptCacheWrite = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheWrite);
                     core.Cache.Upsert(cacheKey, deserializedObject);
@@ -118,9 +134,16 @@ namespace Katzebase.Engine.IO
 
         #region Putters.
 
-        internal void PutJsonNonTracked(string filePath, object deserializedObject)
+        internal void PutJsonNonTracked(string filePath, object deserializedObject, bool skipCompression = false)
         {
-            File.WriteAllText(filePath, JsonConvert.SerializeObject(deserializedObject));
+            if (core.Settings.UseCompression && skipCompression == false)
+            {
+                File.WriteAllBytes(filePath, Compression.Compress(JsonConvert.SerializeObject(deserializedObject)));
+            }
+            else
+            {
+                File.WriteAllText(filePath, JsonConvert.SerializeObject(deserializedObject));
+            }
         }
 
         internal void PutPBufNonTracked(string filePath, object deserializedObject)
@@ -163,7 +186,7 @@ namespace Katzebase.Engine.IO
                         transaction.RecordFileAlter(filePath);
                     }
 
-                    if (core.settings.DeferredIOEnabled && transaction.IsUserCreated)
+                    if (core.Settings.DeferredIOEnabled && transaction.IsUserCreated)
                     {
                         Utility.EnsureNotNull(transaction.DeferredIOs);
                         var ptDeferredWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredWrite);
@@ -181,7 +204,15 @@ namespace Katzebase.Engine.IO
                         var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
                         string text = JsonConvert.SerializeObject(deserializedObject);
                         ptSerialize?.StopAndAccumulate();
-                        File.WriteAllText(filePath, text);
+
+                        if (core.Settings.UseCompression)
+                        {
+                            File.WriteAllBytes(filePath, Compression.Compress(text));
+                        }
+                        else
+                        {
+                            File.WriteAllText(filePath, text);
+                        }
                     }
                     else if (format == IOFormat.PBuf)
                     {
@@ -203,7 +234,7 @@ namespace Katzebase.Engine.IO
                     core.Log.Trace($"IO:Write-Deferred:{filePath}");
                 }
 
-                if (core.settings.CacheEnabled)
+                if (core.Settings.CacheEnabled)
                 {
                     var ptCacheWrite = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
                     core.Cache.Upsert(cacheKey, deserializedObject);
@@ -301,7 +332,7 @@ namespace Katzebase.Engine.IO
                 string cacheKey = Helpers.RemoveModFileName(filePath.ToLower());
                 transaction.LockFile(LockOperation.Write, cacheKey);
 
-                if (core.settings.CacheEnabled)
+                if (core.Settings.CacheEnabled)
                 {
                     var ptCacheWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
                     core.Cache.Remove(cacheKey);
@@ -329,7 +360,7 @@ namespace Katzebase.Engine.IO
                 string cacheKey = Helpers.RemoveModFileName(diskPath.ToLower());
                 transaction.LockDirectory(LockOperation.Write, cacheKey);
 
-                if (core.settings.CacheEnabled)
+                if (core.Settings.CacheEnabled)
                 {
                     var ptCacheWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
                     core.Cache.RemoveItemsWithPrefix(cacheKey);

@@ -131,7 +131,7 @@ namespace Katzebase.Engine.Transactions
         {
             get
             {
-                return Path.Combine(core.settings.TransactionDataPath, ProcessId.ToString());
+                return Path.Combine(core.Settings.TransactionDataPath, ProcessId.ToString());
             }
         }
 

@@ -145,7 +145,6 @@ namespace Katzebase.Engine.Query
                     }
                 }
 
-
                 token = query.GetNextToken().ToLower();
                 if (token != "on")
                 {

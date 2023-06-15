@@ -1,10 +1,10 @@
 ﻿namespace Katzebase.Engine.Schemas
 {
-    public class PersistSchemaCatalog
+    public class PhysicalSchemaCatalog
     {
-        public List<PersistSchema> Collection = new List<PersistSchema>();
+        public List<PhysicalSchema> Collection = new List<PhysicalSchema>();
 
-        public void Add(PersistSchema schema)
+        public void Add(PhysicalSchema schema)
         {
             this.Collection.Add(schema);
         }
@@ -21,7 +21,7 @@
             return false;
         }
 
-        public PersistSchema? GetByName(string name)
+        public PhysicalSchema? GetByName(string name)
         {
             foreach (var item in Collection)
             {
@@ -33,14 +33,14 @@
             return null;
         }
 
-        public PersistSchema? GetById(Guid id)
+        public PhysicalSchema? GetById(Guid id)
         {
             return (from o in Collection where o.Id == id select o).FirstOrDefault();
         }
 
-        public PersistSchemaCatalog Clone()
+        public PhysicalSchemaCatalog Clone()
         {
-            var catalog = new PersistSchemaCatalog();
+            var catalog = new PhysicalSchemaCatalog();
 
             lock (this)
             {

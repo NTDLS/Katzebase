@@ -2,19 +2,19 @@
 
 namespace Katzebase.Engine.Indexes
 {
-    public class PersistIndexAttribute
+    public class PhysicalIndexAttribute
     {
         public string? Field { get; set; }
 
-        public static PersistIndexAttribute FromPayload(KbIndexAttribute indexAttribute)
+        public static PhysicalIndexAttribute FromPayload(KbIndexAttribute indexAttribute)
         {
-            return new PersistIndexAttribute()
+            return new PhysicalIndexAttribute()
             {
                 Field = indexAttribute.Field
             };
         }
 
-        public static KbIndexAttribute ToPayload(PersistIndexAttribute indexAttribute)
+        public static KbIndexAttribute ToPayload(PhysicalIndexAttribute indexAttribute)
         {
             return new KbIndexAttribute()
             {
@@ -22,9 +22,9 @@ namespace Katzebase.Engine.Indexes
             };
         }
 
-        public PersistIndexAttribute Clone()
+        public PhysicalIndexAttribute Clone()
         {
-            return new PersistIndexAttribute()
+            return new PhysicalIndexAttribute()
             {
                 Field = Field
             };

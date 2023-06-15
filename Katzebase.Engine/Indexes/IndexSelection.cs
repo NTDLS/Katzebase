@@ -2,7 +2,7 @@
 {
     public class IndexSelection
     {
-        public PersistIndex Index;
+        public PhysicalIndex Index;
         /// <summary>
         /// The names of the document fileds that are covered by the index.
         /// </summary>
@@ -10,7 +10,7 @@
 
         public string CoveredHash => string.Join(":", CoveredFields.OrderBy(o => o)).ToLowerInvariant();
 
-        public IndexSelection(PersistIndex index, List<string> coveredFields)
+        public IndexSelection(PhysicalIndex index, List<string> coveredFields)
         {
             CoveredFields = coveredFields;
             Index = index;

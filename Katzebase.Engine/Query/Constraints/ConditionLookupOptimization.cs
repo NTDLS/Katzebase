@@ -30,7 +30,7 @@ namespace Katzebase.Engine.Query.Constraints
         /// Takes a nested set of conditions and returns a selection of indexes as well as a clone of the conditions with associated indexes.
         /// </summary>
         /// <returns>A selection of indexes as well as a clone of the conditions with associated indexes</returns>
-        public static ConditionLookupOptimization Build(Core core, Transaction transaction, PersistSchema schemaMeta, Conditions conditions)
+        public static ConditionLookupOptimization Build(Core core, Transaction transaction, PhysicalSchema physicalSchema, Conditions conditions)
         {
             //TODO: This does not support multi-schma conditions. Perhaps we make different builders for SSQ and MSQ queries?
             //TODO: This does not support intra-schema join caluses. Perhaps we make different builders for intra-schema join clauses?
@@ -45,7 +45,7 @@ namespace Katzebase.Engine.Query.Constraints
                 }
                 */
 
-                var indexCatalog = core.Indexes.GetIndexCatalog(transaction, schemaMeta, LockOperation.Read);
+                var indexCatalog = core.Indexes.GetIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
                 var lookupOptimization = new ConditionLookupOptimization(conditions);
 
@@ -54,18 +54,18 @@ namespace Katzebase.Engine.Query.Constraints
                     var potentialIndexs = new List<PotentialIndex>();
 
                     //Loop though each index in the schema.
-                    foreach (var indexMeta in indexCatalog.Collection)
+                    foreach (var physicalIindex in indexCatalog.Collection)
                     {
                         var handledKeyNames = new List<string>();
 
-                        for (int i = 0; i < indexMeta.Attributes.Count; i++)
+                        for (int i = 0; i < physicalIindex.Attributes.Count; i++)
                         {
-                            if (indexMeta.Attributes == null || indexMeta.Attributes[i] == null)
+                            if (physicalIindex.Attributes == null || physicalIindex.Attributes[i] == null)
                             {
-                                throw new KbNullException($"Value should not be null {nameof(indexMeta.Attributes)}.");
+                                throw new KbNullException($"Value should not be null {nameof(physicalIindex.Attributes)}.");
                             }
 
-                            var keyName = indexMeta.Attributes[i].Field?.ToLower();
+                            var keyName = physicalIindex.Attributes[i].Field?.ToLower();
                             if (keyName == null)
                             {
                                 throw new KbNullException($"Value should not be null {nameof(keyName)}.");
@@ -83,7 +83,7 @@ namespace Katzebase.Engine.Query.Constraints
 
                         if (handledKeyNames.Count > 0)
                         {
-                            var potentialIndex = new PotentialIndex(indexMeta, handledKeyNames);
+                            var potentialIndex = new PotentialIndex(physicalIindex, handledKeyNames);
                             potentialIndexs.Add(potentialIndex);
                         }
                     }

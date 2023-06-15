@@ -47,9 +47,9 @@ namespace Katzebase.Engine.Transactions
             {
                 core.Log.Write("Starting recovery.");
 
-                Directory.CreateDirectory(core.settings.TransactionDataPath);
+                Directory.CreateDirectory(core.Settings.TransactionDataPath);
 
-                var transactionFiles = Directory.EnumerateFiles(core.settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories);
+                var transactionFiles = Directory.EnumerateFiles(core.Settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories);
 
                 if (transactionFiles.Count() > 0)
                 {

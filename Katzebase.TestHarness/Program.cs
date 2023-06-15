@@ -22,10 +22,11 @@ namespace Katzebase.TestHarness
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
             Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
 
-            //Exporter.ExportAll(); // This method just exports the entire AdventureWorks2012 database into the no SQL database.
+            Exporter.ExportAll(); // This method just exports the entire AdventureWorks2012 database into the no SQL database.
+
             //TestIndexCreationProductInventory();
 
-            KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
+            //KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
             //client.Query.ExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)");
             //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)");
             //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299 AND productid = 366");
@@ -33,7 +34,7 @@ namespace Katzebase.TestHarness
             //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Missing, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)");
             //client.Query.ExecuteQuery("SELECT TOP 10 a.ProductID FROM AdventureWorks2012:Production:ProductInventory as a");
 
-            var result = client.Document.Sample("AdventureWorks2012:Production:Product", 10);
+            //var result = client.Document.Sample("AdventureWorks2012:Production:Product", 10);
 
             //TestIndexCreationProductInventory();
 

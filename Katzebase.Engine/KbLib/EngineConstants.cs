@@ -2,15 +2,14 @@
 {
     public static class EngineConstants
     {
-        public const string DocumentExtension = ".json";
-        public const string SchemaCatalogFile = "@SchemaCatalog.json";
-        public const string DocumentCatalogFile = "@DocumentCatalog.json";
-        public const string IndexCatalogFile = "@IndexCatalog.json";
-        public const string LoginCatalogFile = "@LoginCatalog.json";
-        public const string TransactionActionsFile = "@Transaction.log";
-        public const string HealthStatsFile = "@Health.json";
+        public const string DocumentPageExtension = ".kbpage";
+        public const string SchemaCatalogFile = "@schemas.kbcat";
+        public const string DocumentPageCatalogFile = "@pages.kbcat";
+        public const string IndexCatalogFile = "@indexes.kbcat";
+        public const string LoginCatalogFile = "@logins.kbcat";
+        public const string TransactionActionsFile = "@transaction.kblog";
+        public const string HealthStatsFile = "@health.json";
         public static Guid RootSchemaGUID = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
-        public static int MaxSizeForInferredIODeferment = 1024;
 
         public enum IOFormat
         {

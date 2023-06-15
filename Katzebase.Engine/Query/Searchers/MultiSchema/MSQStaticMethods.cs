@@ -29,17 +29,19 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             var topLevel = schemaMap.First();
             var topLevelMap = topLevel.Value;
 
-            Utility.EnsureNotNull(topLevelMap.SchemaMeta);
-            Utility.EnsureNotNull(topLevelMap.SchemaMeta.DiskPath);
+            Utility.EnsureNotNull(topLevelMap.PhysicalSchema);
+            Utility.EnsureNotNull(topLevelMap.PhysicalSchema.DiskPath);
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query);
-            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), topLevelMap.DocuemntCatalog.Collection.Count);
+
+            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), topLevelMap.DocumentPageCatalog.TotalPageCount());
+
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
-            var threadPool = ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
+            var threadPool = ThreadPoolQueue<PageDocument, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
             ptThreadCreation?.StopAndAccumulate();
 
-            foreach (var toplevelDocument in topLevelMap.DocuemntCatalog.Collection)
+            foreach (var pageDocument in topLevelMap.DocumentPageCatalog.ConsolidatedPageDocuments())
             {
                 if (threadPool.HasException || threadPool.ContinueToProcessQueue == false)
                 {
@@ -51,7 +53,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     break;
                 }
 
-                threadPool.EnqueueWorkItem(toplevelDocument);
+                threadPool.EnqueueWorkItem(pageDocument);
             }
 
             var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
@@ -103,7 +105,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             }
         }
 
-        private static void LookupThreadProc(ThreadPoolQueue<PersistDocumentCatalogItem, LookupThreadParam> pool, LookupThreadParam? param)
+        private static void LookupThreadProc(ThreadPoolQueue<PageDocument, LookupThreadParam> pool, LookupThreadParam? param)
         {
             Utility.EnsureNotNull(param);
 
@@ -126,7 +128,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         /// <summary>
         /// INNER joins all scheams specified in LookupThreadParam.SchemaMap, returns results in LookupThreadParam.Results
         /// </summary>
-        private static void IntersectAllSchemas(LookupThreadParam param, PersistDocumentCatalogItem workingDocument)
+        private static void IntersectAllSchemas(LookupThreadParam param, PageDocument workingDocument)
         {
             var jThreadScopedContentCache = new Dictionary<string, JObject>();
 
@@ -135,19 +137,16 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             var jJoinScopedContentCache = new Dictionary<string, JObject>();
             var topLevel = param.SchemaMap.First();
 
-            Utility.EnsureNotNull(topLevel.Value.SchemaMeta.DiskPath);
+            Utility.EnsureNotNull(topLevel.Value.PhysicalSchema.DiskPath);
 
-            var persistDocumentDiskPathWorkingLevel = Path.Combine(topLevel.Value.SchemaMeta.DiskPath, workingDocument.FileName);
-
-            var persistDocumentWorkingLevel = param.Core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPathWorkingLevel, LockOperation.Read);
-            Utility.EnsureNotNull(persistDocumentWorkingLevel);
-            Utility.EnsureNotNull(persistDocumentWorkingLevel.Content);
+            var physicalDocumentWorkingLevel = param.Core.Documents.GetDocument(param.Transaction, topLevel.Value.PhysicalSchema, workingDocument.Id, LockOperation.Read);
+            Utility.EnsureNotNull(physicalDocumentWorkingLevel.Content);
 
             //Get the document content and add it to a collection so it can be referenced by schema alias on all subsequent joins.
 
-            var jToBeCachedContent = JObject.Parse(persistDocumentWorkingLevel.Content);
+            var jToBeCachedContent = JObject.Parse(physicalDocumentWorkingLevel.Content);
             jJoinScopedContentCache.Add(topLevel.Key, jToBeCachedContent);
-            jThreadScopedContentCache.Add($"{topLevel.Key}:{persistDocumentWorkingLevel.Id}", jToBeCachedContent);
+            jThreadScopedContentCache.Add($"{topLevel.Key}:{physicalDocumentWorkingLevel.Id}", jToBeCachedContent);
 
             if (cumulativeResults.MatchedDocumentIDsPerSchema.TryGetValue(topLevel.Key, out HashSet<Guid>? documentIDs))
             {
@@ -216,7 +215,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             }
         }
 
-        private static void IntersectAllSchemasRecursive(LookupThreadParam param, PersistDocumentCatalogItem workingDocument, KeyValuePair<string,
+        private static void IntersectAllSchemasRecursive(LookupThreadParam param, PageDocument workingDocument, KeyValuePair<string,
             MSQQuerySchemaMapItem> workingLevel, int skipCount, ref MSQSchemaIntersectionDocumentCollection cumulativeResults,
             Dictionary<string, JObject> jJoinScopedContentCache, Dictionary<string, JObject> jThreadScopedContentCache)
         {
@@ -228,8 +227,8 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             var nextLevelMap = nextLevel.Value;
 
             Utility.EnsureNotNull(nextLevelMap?.Conditions);
-            Utility.EnsureNotNull(nextLevelMap?.SchemaMeta?.DiskPath);
-            Utility.EnsureNotNull(workingLevelMap?.SchemaMeta?.DiskPath);
+            Utility.EnsureNotNull(nextLevelMap?.PhysicalSchema?.DiskPath);
+            Utility.EnsureNotNull(workingLevelMap?.PhysicalSchema?.DiskPath);
 
             var jWorkingContent = jJoinScopedContentCache[workingLevel.Key];
 
@@ -238,12 +237,12 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             #region New indexing stuff..
 
             //Create a reference to the entire document catalog.
-            var limitedDocumentCatalogItems = nextLevelMap.DocuemntCatalog.Collection;
+            var limitedDocumentCatalogItems = nextLevelMap.DocumentPageCatalog.ConsolidatedPageDocuments();
 
             if (nextLevelMap.Optimization?.CanApplyIndexing() == true)
             {
                 //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                limitedDocumentCatalogItems = new List<PersistDocumentCatalogItem>();
+                var newLimitedSetOfDocuments = new List<PageDocument>();
 
                 //All condition subsets have a selected index. Start building a list of possible document IDs.
                 foreach (var subset in nextLevelMap.Optimization.Conditions.NonRootSubsets)
@@ -251,7 +250,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     Utility.EnsureNotNull(subset.IndexSelection?.Index?.DiskPath);
                     Utility.EnsureNotNull(subset.IndexSelection?.Index?.Id);
 
-                    var indexPageCatalog = param.Core.IO.GetPBuf<PersistIndexPageCatalog>(param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                    var indexPageCatalog = param.Core.IO.GetPBuf<PhysicalIndexPageCatalog>(param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
                     Utility.EnsureNotNull(indexPageCatalog);
 
                     var keyValuePairs = new Dictionary<string, string>();
@@ -271,8 +270,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     //Match on values from the document.
                     var documentIds = param.Core.Indexes.MatchDocuments(param.Transaction, indexPageCatalog, subset.IndexSelection, subset, keyValuePairs);
 
-                    limitedDocumentCatalogItems.AddRange(nextLevelMap.DocuemntCatalog.Collection.Where(o => documentIds.Contains(o.Id)).ToList());
+                    newLimitedSetOfDocuments.AddRange(nextLevelMap.DocumentPageCatalog.Where(documentIds).ToList());
                 }
+
+                limitedDocumentCatalogItems = newLimitedSetOfDocuments;
             }
             else
             {
@@ -311,11 +312,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 }
                 else
                 {
-                    var persistDocumentDiskPathNextLevel = Path.Combine(nextLevelMap.SchemaMeta.DiskPath, nextLevelDocument.FileName);
-                    var persistDocumentNextLevel = param.Core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPathNextLevel, LockOperation.Read);
-                    Utility.EnsureNotNull(persistDocumentNextLevel?.Content);
+                    var physicalDocumentNextLevel = param.Core.Documents.GetDocument(param.Transaction, nextLevelMap.PhysicalSchema, nextLevelDocument.Id, LockOperation.Read);
+                    Utility.EnsureNotNull(physicalDocumentNextLevel?.Content);
 
-                    jContentNextLevel = JObject.Parse(persistDocumentNextLevel.Content);
+                    jContentNextLevel = JObject.Parse(physicalDocumentNextLevel.Content);
                     jThreadScopedContentCache.Add(threadScopedDocuemntCacheKey, jContentNextLevel);
                 }
 
@@ -427,11 +427,9 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         private static void FillInSchemaResultDocumentValues(LookupThreadParam param, MSQQuerySchemaMapItem accumulationMap,
             string schemaKey, Guid documentID, ref MSQDocumentLookupResult schemaResultValues, Dictionary<string, JObject> jThreadScopedContentCache)
         {
-            Utility.EnsureNotNull(accumulationMap?.SchemaMeta?.DiskPath);
-            var documentFileName = Helpers.GetDocumentModFilePath(documentID);
-            var persistDocumentDiskPath = Path.Combine(accumulationMap.SchemaMeta.DiskPath, documentFileName);
-
-            var persistDocument = param.Core.IO.GetJson<PersistDocument>(param.Transaction, persistDocumentDiskPath, LockOperation.Read);
+            Utility.EnsureNotNull(accumulationMap?.PhysicalSchema?.DiskPath);
+            
+            var persistDocument = param.Core.Documents.GetDocument(param.Transaction, accumulationMap.PhysicalSchema, documentID, LockOperation.Read);
             Utility.EnsureNotNull(persistDocument);
             Utility.EnsureNotNull(persistDocument.Content);
 

@@ -13,16 +13,16 @@ namespace Katzebase.Engine.Caching
 
         public CacheManager(Core core)
         {
-            PartitionCount = core.settings.CachePartitions > 0 ? core.settings.CachePartitions : Environment.ProcessorCount;
+            PartitionCount = core.Settings.CachePartitions > 0 ? core.Settings.CachePartitions : Environment.ProcessorCount;
 
             partitions = new MemoryCache[PartitionCount];
 
-            int maxMemoryPerPartition = (int)((double)core.settings.CacheMaxMemory / (double)PartitionCount);
+            int maxMemoryPerPartition = (int)((double)core.Settings.CacheMaxMemory / (double)PartitionCount);
             maxMemoryPerPartition = maxMemoryPerPartition < 5 ? 5 : maxMemoryPerPartition;
 
             cachePolicy = new CacheItemPolicy()
             {
-                SlidingExpiration = TimeSpan.FromSeconds(core.settings.CacheSeconds)
+                SlidingExpiration = TimeSpan.FromSeconds(core.Settings.CacheSeconds)
             };
 
             var config = new NameValueCollection

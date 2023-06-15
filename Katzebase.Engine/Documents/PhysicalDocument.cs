@@ -2,16 +2,20 @@
 
 namespace Katzebase.Engine.Documents
 {
+    /// <summary>
+    /// This is the page document that is physically written to the disk by
+    ///     virture of being contained in the collection in PhysicalDocumentPage
+    /// </summary>
     [Serializable]
-    public class PersistDocument
+    public class PhysicalDocument
     {
         public string? Content { get; set; }
         public Guid? Id { get; set; }
         public DateTime? Created { get; set; }
         public DateTime? Modfied { get; set; }
-        public PersistDocument Clone()
+        public PhysicalDocument Clone()
         {
-            return new PersistDocument
+            return new PhysicalDocument
             {
                 Id = Id,
                 Content = Content,
@@ -20,9 +24,9 @@ namespace Katzebase.Engine.Documents
             };
         }
 
-        static public PersistDocument FromPayload(KbDocument document)
+        static public PhysicalDocument FromPayload(KbDocument document)
         {
-            return new PersistDocument()
+            return new PhysicalDocument()
             {
                 Id = document.Id,
                 Created = document.Created,
