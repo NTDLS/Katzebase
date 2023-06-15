@@ -22,7 +22,9 @@ namespace Katzebase.TestHarness
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
             Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
 
-            Exporter.ExportAll(); // This method just exports the entire AdventureWorks2012 database into the no SQL database.
+            Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/");
+
+            //Exporter.ExportAll(); // This method just exports the entire AdventureWorks2012 database into the no SQL database.
 
             //TestIndexCreationProductInventory();
 
