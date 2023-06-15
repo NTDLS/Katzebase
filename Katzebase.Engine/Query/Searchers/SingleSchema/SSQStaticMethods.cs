@@ -33,9 +33,9 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             Utility.EnsureNotNull(physicalSchema.DiskPath);
 
             //Lock the document catalog:
-            var documentCatalog = core.Documents.GetPageDocuments(transaction, physicalSchema, LockOperation.Read).ToList();
+            var pageDocuments = core.Documents.GetPageDocuments(transaction, physicalSchema, LockOperation.Read).ToList();
 
-            Utility.EnsureNotNull(documentCatalog);
+            Utility.EnsureNotNull(pageDocuments);
 
             ConditionLookupOptimization? lookupOptimization = null;
 
@@ -45,12 +45,12 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 lookupOptimization = ConditionLookupOptimization.Build(core, transaction, physicalSchema, query.Conditions);
 
                 //Create a reference to the entire document catalog.
-                var limitedPageDocuments = documentCatalog;
+                var limitedPageDocuments = pageDocuments;
 
                 if (lookupOptimization.CanApplyIndexing())
                 {
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                    documentCatalog = new List<PageDocument>();
+                    pageDocuments = new List<PageDocument>();
 
                     //All condition subsets have a selected index. Start building a list of possible document IDs.
                     foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
@@ -63,7 +63,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
                         var documentIds = core.Indexes.MatchDocuments(transaction, indexPageCatalog, subset.IndexSelection, subset);
 
-                        documentCatalog.AddRange(documentCatalog.Where(o => documentIds.Contains(o.Id)).ToList());
+                        pageDocuments.AddRange(pageDocuments.Where(o => documentIds.Contains(o.Id)).ToList());
                     }
                 }
                 else
@@ -92,12 +92,12 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, physicalSchema, query, lookupOptimization);
-            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentCatalog.Count);
+            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), pageDocuments.Count);
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<PageDocument, LookupThreadParam>.CreateAndStart(GetDocumentsByConditionsThreadProc, threadParam, threadCount);
             ptThreadCreation?.StopAndAccumulate();
 
-            foreach (var pageDocument in documentCatalog)
+            foreach (var pageDocument in pageDocuments)
             {
                 if ((query.RowLimit != 0 && query.SortFields.Any() == false) && threadParam.Results.Collection.Count >= query.RowLimit)
                 {

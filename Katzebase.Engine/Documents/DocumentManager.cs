@@ -378,7 +378,7 @@ namespace Katzebase.Engine.Documents
         }
 
         /// <summary>
-        /// When we want to read a document we do it here. If we already have the page number, we can take a shortcut/
+        /// When we want to read a document we do it here. If we already have the page number, we can take a shortcut.
         /// </summary>
         /// <param name="transaction"></param>
         /// <param name="physicalSchema"></param>

@@ -1,6 +1,5 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
-using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Intersection;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
@@ -148,13 +147,13 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             jJoinScopedContentCache.Add(topLevel.Key, jToBeCachedContent);
             jThreadScopedContentCache.Add($"{topLevel.Key}:{physicalDocumentWorkingLevel.Id}", jToBeCachedContent);
 
-            if (cumulativeResults.MatchedDocumentIDsPerSchema.TryGetValue(topLevel.Key, out HashSet<Guid>? documentIDs))
+            if (cumulativeResults.MatchedDocumentIDsPerSchema.TryGetValue(topLevel.Key, out var pageDocuments))
             {
-                documentIDs.Add(workingDocument.Id);
+                pageDocuments.Upsert(workingDocument);
             }
             else
             {
-                cumulativeResults.MatchedDocumentIDsPerSchema.Add(topLevel.Key, new HashSet<Guid> { workingDocument.Id });
+                cumulativeResults.MatchedDocumentIDsPerSchema.Add(topLevel.Key, new PageDocumentMatch(workingDocument));
             }
 
             IntersectAllSchemasRecursive(param, workingDocument, topLevel, 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
@@ -171,25 +170,25 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 var firstSchemaMap = param.SchemaMap[firstSchemaResult.Key];
 
                 var schemaResultRows = new MSQDocumentLookupResults();
-                var firstSchemaResultDocumentIDs = cumulativeResults.MatchedDocumentIDsPerSchema[firstSchemaResult.Key];
+                var firstSchemaResultPageDocuments = cumulativeResults.MatchedDocumentIDsPerSchema[firstSchemaResult.Key];
 
-                foreach (var documentID in firstSchemaResultDocumentIDs)
+                foreach (var pageDocument in firstSchemaResultPageDocuments)
                 {
-                    var schemaResultValues = new MSQDocumentLookupResult(documentID, param.Query.SelectFields.Count);
+                    var schemaResultValues = new MSQDocumentLookupResult(pageDocument.Value, param.Query.SelectFields.Count);
 
                     //Add the values from the top level schema.
-                    FillInSchemaResultDocumentValues(param, firstSchemaMap, firstSchemaResult.Key, documentID, ref schemaResultValues, jThreadScopedContentCache);
+                    FillInSchemaResultDocumentValues(param, firstSchemaMap, firstSchemaResult.Key, pageDocument.Value, ref schemaResultValues, jThreadScopedContentCache);
 
                     //Fill in the values from all of the other schemas.
                     var remainingSchemas = allSchemasResults.Skip(1);
                     foreach (var nextResult in remainingSchemas)
                     {
                         var nextLevelAccumulationMap = param.SchemaMap[nextResult.Key];
-                        var nextLevelDocumentIDs = cumulativeResults.MatchedDocumentIDsPerSchema[nextResult.Key];
+                        var nextLevelPageDocuments = cumulativeResults.MatchedDocumentIDsPerSchema[nextResult.Key];
 
-                        foreach (var nextLevelDocumentID in nextLevelDocumentIDs)
+                        foreach (var nextLevelPageDocument in nextLevelPageDocuments)
                         {
-                            FillInSchemaResultDocumentValues(param, nextLevelAccumulationMap, nextResult.Key, nextLevelDocumentID, ref schemaResultValues, jThreadScopedContentCache);
+                            FillInSchemaResultDocumentValues(param, nextLevelAccumulationMap, nextResult.Key, nextLevelPageDocument.Value, ref schemaResultValues, jThreadScopedContentCache);
                         }
                     }
 
@@ -237,12 +236,12 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             #region New indexing stuff..
 
             //Create a reference to the entire document catalog.
-            var limitedDocumentCatalogItems = nextLevelMap.DocumentPageCatalog.ConsolidatedPageDocuments();
+            var limitedPageDocuments = nextLevelMap.DocumentPageCatalog.ConsolidatedPageDocuments();
 
             if (nextLevelMap.Optimization?.CanApplyIndexing() == true)
             {
                 //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                var newLimitedSetOfDocuments = new List<PageDocument>();
+                var furtherLimitedPageDocuments = new List<PageDocument>();
 
                 //All condition subsets have a selected index. Start building a list of possible document IDs.
                 foreach (var subset in nextLevelMap.Optimization.Conditions.NonRootSubsets)
@@ -270,10 +269,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     //Match on values from the document.
                     var documentIds = param.Core.Indexes.MatchDocuments(param.Transaction, indexPageCatalog, subset.IndexSelection, subset, keyValuePairs);
 
-                    newLimitedSetOfDocuments.AddRange(nextLevelMap.DocumentPageCatalog.Where(documentIds).ToList());
+                    furtherLimitedPageDocuments.AddRange(nextLevelMap.DocumentPageCatalog.FindPageDocuments(documentIds).ToList());
                 }
 
-                limitedDocumentCatalogItems = newLimitedSetOfDocuments;
+                limitedPageDocuments = furtherLimitedPageDocuments;
             }
             else
             {
@@ -300,9 +299,9 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
             int thisSchemaMatchCount = 0;
 
-            foreach (var nextLevelDocument in limitedDocumentCatalogItems)
+            foreach (var pageDocument in limitedPageDocuments)
             {
-                string threadScopedDocuemntCacheKey = $"{nextLevel.Key}:{nextLevelDocument.Id}";
+                string threadScopedDocuemntCacheKey = $"{nextLevel.Key}:{pageDocument.Id}";
 
                 JObject? jContentNextLevel = null;
 
@@ -312,7 +311,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 }
                 else
                 {
-                    var physicalDocumentNextLevel = param.Core.Documents.GetDocument(param.Transaction, nextLevelMap.PhysicalSchema, nextLevelDocument.Id, LockOperation.Read);
+                    var physicalDocumentNextLevel = param.Core.Documents.GetDocument(param.Transaction, nextLevelMap.PhysicalSchema, pageDocument.Id, LockOperation.Read);
                     Utility.EnsureNotNull(physicalDocumentNextLevel?.Content);
 
                     jContentNextLevel = JObject.Parse(physicalDocumentNextLevel.Content);
@@ -338,19 +337,19 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
                     lock (cumulativeResults)
                     {
-                        if (cumulativeResults.MatchedDocumentIDsPerSchema.TryGetValue(nextLevel.Key, out HashSet<Guid>? documentIDs))
+                        if (cumulativeResults.MatchedDocumentIDsPerSchema.TryGetValue(nextLevel.Key, out var pageDocuments))
                         {
-                            documentIDs.Add(nextLevelDocument.Id);
+                            pageDocuments.Upsert(pageDocument);
                         }
                         else
                         {
-                            cumulativeResults.MatchedDocumentIDsPerSchema.Add(nextLevel.Key, new HashSet<Guid> { nextLevelDocument.Id });
+                            cumulativeResults.MatchedDocumentIDsPerSchema.Add(nextLevel.Key, new PageDocumentMatch(pageDocument));
                         }
                     }
 
                     if (skipCount < param.SchemaMap.Count - 1)
                     {
-                        IntersectAllSchemasRecursive(param, nextLevelDocument, nextLevel, skipCount + 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
+                        IntersectAllSchemasRecursive(param, pageDocument, nextLevel, skipCount + 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
                     }
 
                     if (thisThreadResults.TryGetValue(workingDocument.Id, out MSQSchemaIntersectionDocumentCollection? docuemntCollection) == false)
@@ -360,7 +359,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                         docuemntCollection.Documents.Add(new MSQSchemaIntersectionDocumentItem(workingLevel.Key, workingDocument.Id));
                     }
 
-                    docuemntCollection.Documents.Add(new MSQSchemaIntersectionDocumentItem(nextLevel.Key, nextLevelDocument.Id));
+                    docuemntCollection.Documents.Add(new MSQSchemaIntersectionDocumentItem(nextLevel.Key, pageDocument.Id));
                 }
 
                 jJoinScopedContentCache.Remove(nextLevel.Key);//We are no longer working with the document at this level.
@@ -425,15 +424,15 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         /// Gets the values of all selected fields from document.
         /// </summary>
         private static void FillInSchemaResultDocumentValues(LookupThreadParam param, MSQQuerySchemaMapItem accumulationMap,
-            string schemaKey, Guid documentID, ref MSQDocumentLookupResult schemaResultValues, Dictionary<string, JObject> jThreadScopedContentCache)
+            string schemaKey, PageDocument pageDocuments, ref MSQDocumentLookupResult schemaResultValues, Dictionary<string, JObject> jThreadScopedContentCache)
         {
             Utility.EnsureNotNull(accumulationMap?.PhysicalSchema?.DiskPath);
-            
-            var persistDocument = param.Core.Documents.GetDocument(param.Transaction, accumulationMap.PhysicalSchema, documentID, LockOperation.Read);
+
+            var persistDocument = param.Core.Documents.GetDocument(param.Transaction, accumulationMap.PhysicalSchema, pageDocuments, LockOperation.Read);
             Utility.EnsureNotNull(persistDocument);
             Utility.EnsureNotNull(persistDocument.Content);
 
-            var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{documentID}"];
+            var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{pageDocuments.Id}"];
 
             //Grab all of the selected fields from the document.
             foreach (var selectField in param.Query.SelectFields.Where(o => o.Prefix == schemaKey))

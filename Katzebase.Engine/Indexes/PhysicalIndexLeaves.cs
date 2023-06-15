@@ -1,13 +1,14 @@
 ﻿using Newtonsoft.Json;
 using ProtoBuf;
+using System.Collections;
 
 namespace Katzebase.Engine.Indexes
 {
     [ProtoContract]
-    public class PhysicalIndexLeaves
+    public class PhysicalIndexLeaves : IEnumerable<PhysicalIndexLeaf>
     {
         [ProtoMember(1)]
-        public List<PhysicalIndexLeaf> Entries = new List<PhysicalIndexLeaf>();
+        public List<PhysicalIndexLeaf> Entries = new();
 
         [JsonIgnore]
         public int Count
@@ -32,6 +33,11 @@ namespace Katzebase.Engine.Indexes
             {
                 yield return this[position++];
             }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            throw new NotImplementedException();
         }
 
         public PhysicalIndexLeaf this[int index]

@@ -1,8 +1,10 @@
-﻿namespace Katzebase.Engine.Query.Searchers.MultiSchema
+﻿using Katzebase.Engine.Documents;
+
+namespace Katzebase.Engine.Query.Searchers.MultiSchema
 {
     public class MSQDocumentLookupResult
     {
-        public Guid RID { get; set; }
+        public PageDocument PageDocument { get; set; }
         public List<string> Values { get; set; } = new();
         public Dictionary<string, string> ConditionFields = new();
 
@@ -12,9 +14,9 @@
             Values[ordinal] = value;
         }
 
-        public MSQDocumentLookupResult(Guid rid, int fieldCount)
+        public MSQDocumentLookupResult(PageDocument pageDocument, int fieldCount)
         {
-            RID = rid;
+            PageDocument = pageDocument;
             Values.AddRange(new string[fieldCount]);
         }
     }

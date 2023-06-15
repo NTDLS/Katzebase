@@ -620,24 +620,22 @@ namespace Katzebase.Engine.Indexes
                     {
                         bool locatedExtent = false;
 
-                        foreach (var leaf in result.Leaves)
+                        var matchingLeaf = result.Leaves.FirstOrDefault(o => o.Value == token);
+                        if (matchingLeaf != null)
                         {
-                            if (leaf.Value == token)
+                            locatedExtent = true;
+                            foundExtentCount++;
+                            result.Leaf = matchingLeaf;
+                            result.Leaves = matchingLeaf.Leaves; //Move one level lower in the extent tree.
+
+                            result.IsPartialMatch = true;
+                            result.ExtentLevel = foundExtentCount;
+
+                            if (foundExtentCount == searchTokens.Count)
                             {
-                                locatedExtent = true;
-                                foundExtentCount++;
-                                result.Leaf = leaf;
-                                result.Leaves = leaf.Leaves; //Move one level lower in the extent tree.
-
-                                result.IsPartialMatch = true;
-                                result.ExtentLevel = foundExtentCount;
-
-                                if (foundExtentCount == searchTokens.Count)
-                                {
-                                    result.IsPartialMatch = false;
-                                    result.IsFullMatch = true;
-                                    return result;
-                                }
+                                result.IsPartialMatch = false;
+                                result.IsFullMatch = true;
+                                return result;
                             }
                         }
 

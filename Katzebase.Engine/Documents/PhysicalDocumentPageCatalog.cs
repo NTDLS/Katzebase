@@ -22,12 +22,12 @@
             return PageMappings.SelectMany(o => o.DocumentIDs.Select(h => new PageDocument(h, o.PageNumber)));
         }
 
-        public IEnumerable<PageDocument> Where(Guid documentId)
+        public IEnumerable<PageDocument> FindPageDocument(Guid documentId)
         {
             return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => g == documentId).Select(h => new PageDocument(h, o.PageNumber)));
         }
 
-        public IEnumerable<PageDocument> Where(HashSet<Guid> documentIds)
+        public IEnumerable<PageDocument> FindPageDocuments(HashSet<Guid> documentIds)
         {
             return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => documentIds.Contains(g)).Select(h => new PageDocument(h, o.PageNumber)));
         }

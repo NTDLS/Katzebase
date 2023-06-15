@@ -9,8 +9,17 @@ CREATE INDEX IX_ProductSubcategory_ProductSubcategoryID
 (
 	ProductSubcategoryID
 ) ON AdventureWorks2012:Production:ProductSubcategory
+
 */
 
+
+CREATE INDEX IX_TransactionHistory_TransactionId
+(
+	TransactionId
+) ON AdventureWorks2012:Production:TransactionHistory
+
+
+/*
 --SET TraceWaitTimes ON;
 
 SELECT TOP 5
@@ -31,3 +40,4 @@ WHERE
 ORDER BY
 	P.ProductNumber asc,
 	TH.TransactionId desc
+*/
