@@ -1,4 +1,6 @@
-﻿namespace Katzebase.Engine.Indexes.Matching
+﻿using Katzebase.Engine.Query;
+
+namespace Katzebase.Engine.Indexes.Matching
 {
     public class IndexSelection
     {
@@ -6,11 +8,11 @@
         /// <summary>
         /// The names of the document fileds that are covered by the index.
         /// </summary>
-        public List<string> CoveredFields { get; set; }
+        public List<PrefixedField> CoveredFields { get; set; }
 
         public string CoveredHash => string.Join(":", CoveredFields.OrderBy(o => o)).ToLowerInvariant();
 
-        public IndexSelection(PhysicalIndex index, List<string> coveredFields)
+        public IndexSelection(PhysicalIndex index, List<PrefixedField> coveredFields)
         {
             CoveredFields = coveredFields;
             Index = index;

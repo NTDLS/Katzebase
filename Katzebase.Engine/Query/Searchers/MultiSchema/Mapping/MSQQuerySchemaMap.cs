@@ -11,7 +11,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
     /// </summary>
     internal class MSQQuerySchemaMap : Dictionary<string, MSQQuerySchemaMapItem>
     {
-        private Core core;
+        private readonly Core core;
         public Transaction Transaction { get; private set; }
 
         public MSQQuerySchemaMap(Core core, Transaction transaction)
@@ -27,15 +27,14 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
         /// <param name="physicalSchema">The associated schema meta-data.</param>
         /// <param name="docuemntCatalog">The document catalog contained in the associated schema.</param>
         /// <param name="conditions">The conditons used to join this schema mapping to the one before it.</param>
-        public void Add(string key, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog docuemntCatalog, Conditions? conditions)
+        public void Add(string prefix, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog docuemntCatalog, Conditions? conditions)
         {
-            Add(key, new MSQQuerySchemaMapItem(core, Transaction, physicalSchema, docuemntCatalog, conditions));
+            Add(prefix, new MSQQuerySchemaMapItem(core, Transaction, this, physicalSchema, docuemntCatalog, conditions, prefix));
         }
 
         public int TotalDocumentCount()
         {
             return this.Sum(o => o.Value.DocumentPageCatalog.TotalDocumentCount());
         }
-
     }
 }

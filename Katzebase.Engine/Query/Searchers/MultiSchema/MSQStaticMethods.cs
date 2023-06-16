@@ -34,7 +34,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             //If we dont have any conditions then we just need to return all rows from the schema.
             if (query.Conditions.Subsets.Count > 0)
             {
-                lookupOptimization = ConditionLookupOptimization.Build(core, transaction, topLevelMap.PhysicalSchema, query.Conditions);
+                lookupOptimization = ConditionLookupOptimization.Build(core, transaction, topLevelMap.PhysicalSchema, query.Conditions, topLevelMap.Prefix);
 
                 var limitedPageDocuments = new List<PageDocument>();
 
@@ -49,7 +49,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                         Utility.EnsureNotNull(subset.IndexSelection);
 
                         var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-                        var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, physicalIndexPages, subset.IndexSelection, subset);
+                        var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, physicalIndexPages, subset.IndexSelection, subset, topLevelMap.Prefix);
 
                         limitedPageDocuments.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
@@ -73,10 +73,10 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                     //   *
                     //   * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we cant use an index.
                     //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
-                    //*
                     #endregion
                 }
             }
+
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query);

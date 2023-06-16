@@ -160,7 +160,7 @@ namespace Katzebase.Engine.Query.Searchers
                 //-------------------------------------------------------------------------------------------------------------
                 var singleSchema = query.Schemas.First();
 
-                var subsetResults = SSQStaticMethods.GetDocumentsByConditions(core, transaction, singleSchema.Name, query);
+                var subsetResults = SSQStaticMethods.GetDocumentsByConditions(core, transaction, singleSchema, query);
 
                 foreach (var field in query.SelectFields)
                 {

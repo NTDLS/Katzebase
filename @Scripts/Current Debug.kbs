@@ -1,3 +1,5 @@
+--Possible iterations: 2,115,485,064
+
 SELECT /*TOP 5*/ --Should yeild 457 records
 	P.Name,
 	TH.TransactionId,
@@ -40,11 +42,11 @@ CREATE INDEX IX_TransactionHistory_ProductID_ActualCost
 	ProductID,
 	ActualCost
 ) ON AdventureWorks2012:Production:TransactionHistory;
-CREATE INDEX IX_ProductSubcategory_ProductSubcategoryID
+CREATE UNIQUEKEY IX_ProductSubcategory_ProductSubcategoryID
 (
 	ProductSubcategoryID
 ) ON AdventureWorks2012:Production:ProductSubcategory;
-CREATE INDEX IX_TransactionHistory_TransactionId
+CREATE UNIQUEKEY IX_TransactionHistory_TransactionId
 (
 	TransactionId
 ) ON AdventureWorks2012:Production:TransactionHistory

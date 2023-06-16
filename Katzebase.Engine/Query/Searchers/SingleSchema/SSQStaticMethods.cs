@@ -1,6 +1,7 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query.Constraints;
+using Katzebase.Engine.Query.Searchers.MultiSchema;
 using Katzebase.Engine.Query.Sorting;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Threading;
@@ -19,12 +20,9 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         /// <summary>
         /// Gets all documents by a subset of conditions.
         /// </summary>
-        internal static SSQDocumentLookupResults GetDocumentsByConditions(Core core, Transaction transaction, string schemaName, PreparedQuery query)
+        internal static SSQDocumentLookupResults GetDocumentsByConditions(Core core, Transaction transaction, QuerySchema querySchema, PreparedQuery query)
         {
-            //Lock the schema:
-            var ptLockSchema = transaction.PT?.CreateDurationTracker<PhysicalSchema>(PerformanceTraceCumulativeMetricType.Lock);
-            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            ptLockSchema?.StopAndAccumulate();
+            var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
 
             //Lock the document catalog:
             var pageDocuments = core.Documents.GetPageDocuments(transaction, physicalSchema, LockOperation.Read).ToList();
@@ -34,7 +32,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             //If we dont have any conditions then we just need to return all rows from the schema.
             if (query.Conditions.Subsets.Count > 0)
             {
-                lookupOptimization = ConditionLookupOptimization.Build(core, transaction, physicalSchema, query.Conditions);
+                lookupOptimization = ConditionLookupOptimization.Build(core, transaction, physicalSchema, query.Conditions, querySchema.Prefix);
 
                 //Create a reference to the entire document catalog.
                 var limitedPageDocuments = pageDocuments;
@@ -50,7 +48,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                         Utility.EnsureNotNull(subset.IndexSelection);
 
                         var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-                        var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, physicalIndexPages, subset.IndexSelection, subset);
+                        var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, physicalIndexPages, subset.IndexSelection, subset, querySchema.Prefix);
 
                         pageDocuments.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
@@ -142,11 +140,11 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             public LookupThreadParam(Core core, Transaction transaction, PhysicalSchema physicalSchema, PreparedQuery query, ConditionLookupOptimization? lookupOptimization)
             {
-                this.Core = core;
-                this.Transaction = transaction;
-                this.PhysicalSchema = physicalSchema;
-                this.Query = query;
-                this.LookupOptimization = lookupOptimization;
+                Core = core;
+                Transaction = transaction;
+                PhysicalSchema = physicalSchema;
+                Query = query;
+                LookupOptimization = lookupOptimization;
             }
         }
 

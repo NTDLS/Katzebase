@@ -94,10 +94,7 @@ namespace Katzebase.Engine.Schemas
 
             var schema = preparedQuery.Schemas.First();
 
-            //Lock the schema:
-            var ptLockSchema = transaction.PT?.CreateDurationTracker<PhysicalSchema>(PerformanceTraceCumulativeMetricType.Lock);
             var physicalSchema = core.Schemas.Acquire(transaction, schema.Name, LockOperation.Read);
-            ptLockSchema?.StopAndAccumulate();
 
             //Lock the schema catalog:
             var filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);

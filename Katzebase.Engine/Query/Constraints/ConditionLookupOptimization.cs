@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Indexes.Matching;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
@@ -6,7 +7,7 @@ using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Query.Constraints
+namespace Katzebase.Engine.Query.Searchers.MultiSchema
 {
     internal class ConditionLookupOptimization
     {
@@ -24,21 +25,20 @@ namespace Katzebase.Engine.Query.Constraints
         {
             Conditions = conditions.Clone();
         }
+
         #region Builder.
 
         /// <summary>
         /// Takes a nested set of conditions and returns a selection of indexes as well as a clone of the conditions with associated indexes.
         /// </summary>
         /// <returns>A selection of indexes as well as a clone of the conditions with associated indexes</returns>
-        public static ConditionLookupOptimization Build(Core core, Transaction transaction, PhysicalSchema physicalSchema, Conditions conditions)
+        public static ConditionLookupOptimization Build(Core core,
+            Transaction transaction, PhysicalSchema physicalSchema, Conditions conditions, string workingSchemaPrefix)
         {
-            //TODO: This does not support multi-schma conditions. Perhaps we make different builders for SSQ and MSQ queries?
-            //TODO: This does not support intra-schema join caluses. Perhaps we make different builders for intra-schema join clauses?
-
             try
             {
                 /* This still has condition values in it, that wont work. *Face palm*
-                var cacheItem = core.LookupOptimizationCache.Get(conditions.Hash) as ConditionLookupOptimization;
+                var cacheItem = core.LookupOptimizationCache.Get(conditions.Hash) as MSQConditionLookupOptimization;
                 if (cacheItem != null)
                 {
                     return cacheItem;
@@ -51,12 +51,23 @@ namespace Katzebase.Engine.Query.Constraints
 
                 foreach (var subset in conditions.Subsets)
                 {
+                    if (subset.Conditions.Where(o => o.Left.Prefix != workingSchemaPrefix).Any())
+                    {
+                        if ((subset.Conditions.Where(o => o.LogicalConnector != LogicalConnector.And).Any() == false))
+                        {
+                            //We can't yet figure out how to eliminate documents if the conditions are for more
+                            //..    than one schema and all of the logical connectors are not AND. This can be done however.
+                            //  We just genrally have alot of optimization trouble with ORs.
+                            continue;
+                        }
+                    }
+
                     var potentialIndexs = new List<PotentialIndex>();
 
                     //Loop though each index in the schema.
                     foreach (var physicalIindex in indexCatalog.Collection)
                     {
-                        var handledKeyNames = new List<string>();
+                        var handledKeyNames = new List<PrefixedField>();
 
                         for (int i = 0; i < physicalIindex.Attributes.Count; i++)
                         {
@@ -71,11 +82,16 @@ namespace Katzebase.Engine.Query.Constraints
                                 throw new KbNullException($"Value should not be null {nameof(keyName)}.");
                             }
 
-                            if (subset.Conditions.Any(o => o.Left.Value == keyName && !o.CoveredByIndex))
+                            var matchedNonCovertedConditions =
+                                subset.Conditions.Where(o => o.CoveredByIndex == false
+                                    && o.Left.Value == keyName && o.Left.Prefix == workingSchemaPrefix);
+
+                            foreach (var matchedCondition in matchedNonCovertedConditions)
                             {
-                                handledKeyNames.Add(keyName);
+                                handledKeyNames.Add(new PrefixedField(matchedCondition.Left.Key));
                             }
-                            else
+
+                            if (matchedNonCovertedConditions.Any() == false)
                             {
                                 break;
                             }
@@ -88,13 +104,36 @@ namespace Katzebase.Engine.Query.Constraints
                         }
                     }
 
+                    List<Condition> GetCovertedConditions(List<Condition> conditions, List<PrefixedField> coveredFields)
+                    {
+                        var result = new List<Condition>();
+
+                        foreach (var coveredField in coveredFields)
+                        {
+                            foreach (var condition in conditions)
+                            {
+                                if (condition.Left.Key == coveredField.Key)
+                                {
+
+                                    result.Add(condition);
+                                }
+                            }
+                        }
+
+                        return result;
+                    }
+
                     //Grab the index that matches the most of our supplied keys but also has the least attributes.
                     var firstIndex = (from o in potentialIndexs where o.Tried == false select o)
                         .OrderByDescending(s => s.CoveredFields.Count)
                         .ThenBy(t => t.Index.Attributes.Count).FirstOrDefault();
                     if (firstIndex != null)
                     {
-                        var handledKeys = (from o in subset.Conditions where firstIndex.CoveredFields.Contains(o.Left.Value ?? string.Empty) select o).ToList();
+                        var handledKeys = GetCovertedConditions(subset.Conditions, firstIndex.CoveredFields);
+
+                        //Where the left value is in the covered fields:
+
+                        //var handledKeys = (from o in subset.Conditions where firstIndex.CoveredFields.Contains(o.Left.Value ?? string.Empty) select o).ToList();
                         foreach (var handledKey in handledKeys)
                         {
                             handledKey.CoveredByIndex = true;
@@ -113,7 +152,7 @@ namespace Katzebase.Engine.Query.Constraints
 
                         foreach (var conditon in sourceSubset.Conditions)
                         {
-                            if (indexSelection.CoveredFields.Any(o => o == conditon.Left.Value))
+                            if (indexSelection.CoveredFields.Any(o => o.Key == conditon.Left.Key))
                             {
                                 conditon.CoveredByIndex = true;
                             }
@@ -122,6 +161,8 @@ namespace Katzebase.Engine.Query.Constraints
                 }
 
                 //core.LookupOptimizationCache.Add(conditions.Hash, lookupOptimization, DateTime.Now.AddMinutes(10));
+
+                //When we get here, we have one index that seems to want to cover multiple tables - no cool man. Not cool.
 
                 return lookupOptimization;
             }

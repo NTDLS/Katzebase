@@ -25,7 +25,6 @@ namespace Katzebase.Engine.Query
         public UpsertKeyValues UpsertKeyValuePairs { get; set; } = new();
         public List<KbNameValuePair> VariableValues { get; set; } = new();
 
-
         public T Attribute<T>(QueryAttribute attribute)
         {
             return (T)Attributes[attribute];

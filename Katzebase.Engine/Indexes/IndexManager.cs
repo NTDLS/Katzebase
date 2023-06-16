@@ -362,7 +362,8 @@ namespace Katzebase.Engine.Indexes
         /// <summary>
         /// Finds document IDs given a set of conditions.
         /// </summary>
-        internal Dictionary<uint, PageDocument> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection, ConditionSubset conditionSubset)
+        internal Dictionary<uint, PageDocument> MatchDocuments(Transaction transaction,
+            PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
         {
             var workingPhysicalIndexLeaf = physicalIndexPages.Root;
             var lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf;
@@ -372,7 +373,8 @@ namespace Katzebase.Engine.Indexes
             foreach (var attribute in indexSelection.Index.Attributes)
             {
                 Utility.EnsureNotNull(attribute.Field);
-                var conditionField = conditionSubset.Conditions.Where(o => o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
+                var conditionField = conditionSubset.Conditions
+                    .Where(o => o.Left.Prefix == workingSchemaPrefix && o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
                 if (conditionField == null)
                 {
                     //This happends when there is no condition on this index, this will be a partial match.
@@ -464,7 +466,7 @@ namespace Katzebase.Engine.Indexes
                 }
             }
 
-            return result.ToDictionary(o => o.DocumentId, o => new PageDocument(o.PageNumber, o.DocumentId));
+            return result.ToDictionary(o => o.DocumentId, o => o);
         }
 
         private PhysicalIndexCatalog GetIndexCatalog(Transaction transaction, string schema, LockOperation intendedOperation)
