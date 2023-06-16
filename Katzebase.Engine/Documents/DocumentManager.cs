@@ -5,6 +5,7 @@ using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using Newtonsoft.Json;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Documents
@@ -32,6 +33,37 @@ namespace Katzebase.Engine.Documents
                 using (var txRef = core.Transactions.Begin(processId))
                 {
                     result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
+                    txRef.Commit();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                throw;
+            }
+        }
+
+        internal KbQueryResult ExecuteInsert(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                var result = new KbQueryResult();
+
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    var physicalDocument = new PhysicalDocument();
+
+                    var keyValuePairs = preparedQuery.UpsertKeyValuePairs.ToDictionary(o => o.Field.Field, o => o.Value.Value);
+
+                    physicalDocument.Content = JsonConvert.SerializeObject(keyValuePairs);
+
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
+
+                    InsertDocument(txRef.Transaction, physicalSchema, physicalDocument);
+
                     txRef.Commit();
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
@@ -204,7 +236,7 @@ namespace Katzebase.Engine.Documents
                 {
                     var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Write);
 
-                    PutDocument(txRef.Transaction, physicalSchema, physicalDocument);
+                    InsertDocument(txRef.Transaction, physicalSchema, physicalDocument);
 
                     txRef.Commit();
 
@@ -366,12 +398,70 @@ namespace Katzebase.Engine.Documents
         }
 
         /// <summary>
-        /// When we want to write a document to the disk, this is where we do it - no exceptions.
+        /// When we want to create a document, this is where we do it - no exceptions.
         /// </summary>
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void PutDocument(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument)
+        internal void InsertDocument(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument)
+        {
+            PhysicalDocumentPage documentPage;
+
+            //Open the document page catalog:
+            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
+            Utility.EnsureNotNull(documentPageCatalog);
+
+            physicalDocument.Id = documentPageCatalog.ConsumeNextDocumentId();
+
+            //Find a page with some empty room:
+            var physicalPageMap = documentPageCatalog.GetPageWithRoomForNewDocument(core.Settings.DocumentPageSize);
+
+            if (physicalPageMap == null)
+            {
+                //Still didnt find a page with room, we're going to have to create a new "page catalog item",
+                // add the given document ID to it and add that catalog item to the catalog collection:
+                physicalPageMap = new PhysicalDocumentPageMap(documentPageCatalog.NextPageNumber());
+                physicalPageMap.DocumentIDs.Add(physicalDocument.Id);
+
+                //We created a new page item, add it to the catalog:
+                documentPageCatalog.PageMappings.Add(physicalPageMap);
+
+                //Create the new page, this will store the actual document contents.
+                documentPage = new PhysicalDocumentPage(physicalPageMap.PageNumber);
+
+                //Add the given document to the page document.
+                documentPage.Documents.Add(physicalDocument.Id, physicalDocument);
+            }
+            else
+            {
+                //We found a page with space, just add the document ID to the page catalog item.
+                physicalPageMap.DocumentIDs.Add(physicalDocument.Id);
+
+                //Open the page and add the document to it.
+                documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), LockOperation.Write);
+
+                //Add the given document to the page document.
+                documentPage.Documents.Add(physicalDocument.Id, physicalDocument);
+            }
+
+
+            //Save the document page:
+            core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), documentPage);
+
+            //Save the docuemnt page catalog:
+            core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);
+
+            //Update all of the indexes that referecne the document.
+            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new PageDocument(documentPage.PageNumber, physicalDocument.Id));
+        }
+
+        /// <summary>
+        /// When we want to update a document, this is where we do it - no exceptions.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="schema"></param>
+        /// <param name="document"></param>
+        internal void UpdateDocument(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument)
         {
             PhysicalDocumentPage documentPage;
 
@@ -432,6 +522,7 @@ namespace Katzebase.Engine.Documents
             //Update all of the indexes that referecne the document.
             core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new PageDocument(documentPage.PageNumber, physicalDocument.Id));
         }
+
 
         #endregion
     }

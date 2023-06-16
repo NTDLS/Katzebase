@@ -1,8 +1,17 @@
 --SET TraceWaitTimes on;
 
-sample documents AdventureWorks2012:Production:Product 
+select * from AdventureWorks2012:Production:Product
+where Name = 'Test-Name'
 
-
+/*
+INSERT INTO AdventureWorks2012:Production:Product
+(
+	ProductId = 'Test-ProductId',
+	Name = 'Test-Name',
+	ProductNumber = 'Test-ProductNumber',
+	Color = 'Test-Color'
+)
+*/
 
 /*
 --Possible iterations: 2,115,485,064

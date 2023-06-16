@@ -8,8 +8,8 @@ namespace Katzebase.Engine.Query.Constraints
         public bool CoveredByIndex { get; set; } = false;
         public string SubsetKey { get; set; }
         public string ConditionKey { get; set; }
-        public ConditionValue Left { get; set; } = new();
-        public ConditionValue Right { get; set; } = new();
+        public SmartValue Left { get; set; } = new();
+        public SmartValue Right { get; set; } = new();
         public LogicalConnector LogicalConnector { get; set; } = LogicalConnector.None;
         public LogicalQualifier LogicalQualifier { get; set; } = LogicalQualifier.None;
 

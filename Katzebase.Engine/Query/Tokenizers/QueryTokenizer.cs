@@ -17,6 +17,8 @@ namespace Katzebase.Engine.Query.Tokenizers
         public int Length => _text.Length;
         public int StartPosition => _startPosition;
         public Dictionary<string, string> LiteralStrings { get; private set; }
+        public List<string> Breadcrumbs { get; private set; } = new();
+
         public char? NextCharacter => _position < _text.Length ? _text[_position] : null;
         public bool IsEnd() => _position == _text.Length;
 
@@ -82,6 +84,19 @@ namespace Katzebase.Engine.Query.Tokenizers
             return GetNextToken(DefaultTokenDelimiters);
         }
 
+        public bool IsNextTokenConsume(string[] tokens)
+        {
+            var token = GetNextToken().ToLower();
+            foreach (var given in tokens)
+            {
+                if (token == given.ToLower())
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public bool IsNextToken(string[] tokens)
         {
             var token = PeekNextToken().ToLower();
@@ -95,6 +110,10 @@ namespace Katzebase.Engine.Query.Tokenizers
             return false;
         }
 
+        public bool IsNextTokenConsume(string token)
+        {
+            return GetNextToken().ToLower() == token.ToLower();
+        }
 
         public bool IsNextToken(string token)
         {
@@ -133,6 +152,7 @@ namespace Katzebase.Engine.Query.Tokenizers
 
             if (_position == _text.Length)
             {
+                Breadcrumbs.Add(string.Empty);
                 return string.Empty;
             }
 
@@ -148,12 +168,31 @@ namespace Katzebase.Engine.Query.Tokenizers
 
             SkipWhiteSpace();
 
-            return token.Trim();
+            token = token.Trim();
+
+            Breadcrumbs.Add(token);
+            return token;
         }
 
         public void SkipDelimiters()
         {
             SkipDelimiters(DefaultTokenDelimiters);
+        }
+
+        public void SkipWhile(char[] chs)
+        {
+            while (_position < _text.Length && (chs.Contains(_text[_position]) || char.IsWhiteSpace(_text[_position])))
+            {
+                _position++;
+            }
+        }
+
+        public void SkipWhile(char ch)
+        {
+            while (_position < _text.Length && (_text[_position] == ch || char.IsWhiteSpace(_text[_position])))
+            {
+                _position++;
+            }
         }
 
         public void SkipWhiteSpace()

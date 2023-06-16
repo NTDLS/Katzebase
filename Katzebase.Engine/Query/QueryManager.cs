@@ -49,6 +49,10 @@ namespace Katzebase.Engine.Query
             {
                 return core.Documents.ExecuteSelect(processId, preparedQuery);
             }
+            else if (preparedQuery.QueryType == QueryType.Insert)
+            {
+                return core.Documents.ExecuteInsert(processId, preparedQuery);
+            }
             else if (preparedQuery.QueryType == QueryType.Sample)
             {
                 return core.Documents.ExecuteSample(processId, preparedQuery);

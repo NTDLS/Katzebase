@@ -9,7 +9,7 @@
     {
         public List<PhysicalDocumentPageMap> PageMappings { get; private set; } = new();
 
-        public uint NextDocumentId { get; private set; } = 0;
+        public uint NextDocumentId { get; set; } = 0;
 
         public uint ConsumeNextDocumentId()
         {

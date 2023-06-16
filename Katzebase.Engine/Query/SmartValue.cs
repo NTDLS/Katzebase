@@ -1,8 +1,8 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
 
-namespace Katzebase.Engine.Query.Constraints
+namespace Katzebase.Engine.Query
 {
-    public class ConditionValue
+    public class SmartValue
     {
         /// <summary>
         /// This value is a constant string.
@@ -27,9 +27,18 @@ namespace Katzebase.Engine.Query.Constraints
 
         public string Key => $"{Prefix}.{_value}";
 
-        public ConditionValue Clone()
+        public SmartValue()
         {
-            return new ConditionValue()
+        }
+
+        public SmartValue(string value)
+        {
+            Value = value;
+        }
+
+        public SmartValue Clone()
+        {
+            return new SmartValue()
             {
                 IsConstant = IsConstant,
                 IsNumeric = IsNumeric,
@@ -45,6 +54,7 @@ namespace Katzebase.Engine.Query.Constraints
             return _value?.ToString() ?? string.Empty;
         }
 
+        /*
         public void SetString(string value)
         {
             Value = value;
@@ -84,6 +94,7 @@ namespace Katzebase.Engine.Query.Constraints
                 throw new KbInvalidArgumentException("The value must be numeric.");
             }
         }
+        */
 
         public string? Value
         {
@@ -103,7 +114,7 @@ namespace Katzebase.Engine.Query.Constraints
                         //Handle escape sequences:
                         _value = _value.Replace("\\'", "\'");
 
-                        _value = _value.Substring(1, _value.Length - 2);
+                        _value = value?.Substring(1, _value.Length - 2); //Revert the ToLoeer for strings.
                         IsString = true;
                         IsConstant = true;
                     }
@@ -122,7 +133,7 @@ namespace Katzebase.Engine.Query.Constraints
                         }
                     }
 
-                    if (_value.All(char.IsDigit))
+                    if (_value != null && _value.All(char.IsDigit))
                     {
                         IsConstant = true;
                         IsNumeric = true;

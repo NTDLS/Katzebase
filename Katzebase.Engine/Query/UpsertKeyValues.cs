@@ -1,7 +1,12 @@
 ﻿namespace Katzebase.Engine.Query
 {
-    public class UpsertKeyValues
+    public class UpsertKeyValues : List<UpsertKeyValue>
     {
-        public List<UpsertKeyValue> Collection { get; set; } = new();
+        public UpsertKeyValue Add(PrefixedField field, SmartValue value)
+        {
+            var newValue = new UpsertKeyValue(field, value);
+            base.Add(newValue);
+            return newValue;
+        }
     }
 }
