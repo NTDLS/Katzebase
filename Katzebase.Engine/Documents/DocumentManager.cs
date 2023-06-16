@@ -356,9 +356,8 @@ namespace Katzebase.Engine.Documents
         /// <param name="transaction"></param>
         /// <param name="physicalSchema"></param>
         /// <param name="documentId"></param>
-        internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, uint documentId, LockOperation lockIntention)
+        internal PhysicalDocument AcquireDocument(Transaction transaction, PhysicalSchema physicalSchema, uint documentId, LockOperation lockIntention)
         {
-            //Open the document page catalog:
             var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
 
             //Get the page that the document current exists in if any.
@@ -377,24 +376,21 @@ namespace Katzebase.Engine.Documents
         /// <param name="transaction"></param>
         /// <param name="physicalSchema"></param>
         /// <param name="documentId"></param>
-        internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, DocumentPointer documentPointer, LockOperation lockIntention)
+        internal PhysicalDocument AcquireDocument(Transaction transaction, PhysicalSchema physicalSchema, DocumentPointer documentPointer, LockOperation lockIntention)
         {
             var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(documentPointer), lockIntention);
             return physicalDocumentPage.Documents.First(o => o.Key == documentPointer.DocumentId).Value;
         }
 
-        internal IEnumerable<DocumentPointer> GetDocumentPointers(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
+        internal IEnumerable<DocumentPointer> AcquireDocumentPointers(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
         {
-            //Open the document page catalog:
-            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
-            return documentPageCatalog.ConsolidatedDocumentPointers();
+            var physicalDocumentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
+            return physicalDocumentPageCatalog.ConsolidatedDocumentPointers();
         }
 
-        internal PhysicalDocumentPageCatalog GetDocumentPageCatalog(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
+        internal PhysicalDocumentPageCatalog AcquireDocumentPageCatalog(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
         {
-            //Open the document page catalog:
-            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
-            return documentPageCatalog;
+            return core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
         }
 
         /// <summary>

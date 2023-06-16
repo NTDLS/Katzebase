@@ -347,7 +347,7 @@ namespace Katzebase.Engine.Schemas
 
         #region Core methods.
 
-        internal List<PhysicalSchema> GetChildrenMeta(Transaction transaction, PhysicalSchema node, LockOperation intendedOperation)
+        internal List<PhysicalSchema> AcquireChildren(Transaction transaction, PhysicalSchema node, LockOperation intendedOperation)
         {
             List<PhysicalSchema> metaList = new List<PhysicalSchema>();
 

@@ -180,7 +180,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
             var jJoinScopedContentCache = new Dictionary<string, JObject>();
             var topLevel = param.SchemaMap.First();
-            var physicalDocumentWorkingLevel = param.Core.Documents.GetDocument(param.Transaction, topLevel.Value.PhysicalSchema, workingDocument.DocumentId, LockOperation.Read);
+            var physicalDocumentWorkingLevel = param.Core.Documents.AcquireDocument(param.Transaction, topLevel.Value.PhysicalSchema, workingDocument.DocumentId, LockOperation.Read);
 
             //Get the document content and add it to a collection so it can be referenced by schema alias on all subsequent joins.
 
@@ -352,7 +352,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 }
                 else
                 {
-                    var physicalDocumentNextLevel = param.Core.Documents.GetDocument(param.Transaction, nextLevelMap.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
+                    var physicalDocumentNextLevel = param.Core.Documents.AcquireDocument(param.Transaction, nextLevelMap.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
                     jContentNextLevel = JObject.Parse(physicalDocumentNextLevel.Content);
                     jThreadScopedContentCache.Add(threadScopedDocuemntCacheKey, jContentNextLevel);
                 }
@@ -465,7 +465,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         private static void FillInSchemaResultDocumentValues(LookupThreadParam param, MSQQuerySchemaMapItem accumulationMap,
             string schemaKey, DocumentPointer documentPointers, ref MSQDocumentLookupResult schemaResultValues, Dictionary<string, JObject> jThreadScopedContentCache)
         {
-            var persistDocument = param.Core.Documents.GetDocument(param.Transaction, accumulationMap.PhysicalSchema, documentPointers, LockOperation.Read);
+            var persistDocument = param.Core.Documents.AcquireDocument(param.Transaction, accumulationMap.PhysicalSchema, documentPointers, LockOperation.Read);
 
             var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{documentPointers.DocumentId}"];
 

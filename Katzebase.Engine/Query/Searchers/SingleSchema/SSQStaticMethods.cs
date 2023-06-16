@@ -25,7 +25,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
 
             //Lock the document catalog:
-            var documentPointers = core.Documents.GetDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
+            var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
 
             ConditionLookupOptimization? lookupOptimization = null;
 
@@ -169,7 +169,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     continue;
                 }
 
-                var physicalDocument = param.Core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
+                var physicalDocument = param.Core.Documents.AcquireDocument(param.Transaction, param.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
                 var jContent = JObject.Parse(physicalDocument.Content);
 
                 if (expression != null && param.LookupOptimization != null)

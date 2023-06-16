@@ -17,11 +17,8 @@ namespace Katzebase.Engine.Query.Searchers
         {
             var result = new KbQueryResult();
 
-            //Lock the schema:
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-
-            //Open the document page catalog:
-            var documentPageCatalog = core.Documents.GetDocumentPageCatalog(transaction, physicalSchema, LockOperation.Write);
+            var documentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Write);
 
             if (documentPageCatalog.PageMappings.Count > 0)
             {
@@ -34,7 +31,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                     int documentIndex = random.Next(0, pageMap.DocumentIDs.Count - 1);
                     var documentId = pageMap.DocumentIDs.ToArray()[documentIndex];
-                    var physicalDocument = core.Documents.GetDocument(transaction, physicalSchema, documentId, LockOperation.Read);
+                    var physicalDocument = core.Documents.AcquireDocument(transaction, physicalSchema, documentId, LockOperation.Read);
 
                     var jContent = JObject.Parse(physicalDocument.Content);
 
@@ -69,17 +66,14 @@ namespace Katzebase.Engine.Query.Searchers
         {
             var result = new KbQueryResult();
 
-            //Lock the schema:
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-
-            //Lock the document catalog:
-            var documentPointers = core.Documents.GetDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
+            var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
 
             for (int i = 0; i < documentPointers.Count && (i < topCount || topCount < 0); i++)
             {
                 var pageDocuent = documentPointers[i];
 
-                var persistDocument = core.Documents.GetDocument(transaction, physicalSchema, pageDocuent.DocumentId, LockOperation.Read);
+                var persistDocument = core.Documents.AcquireDocument(transaction, physicalSchema, pageDocuent.DocumentId, LockOperation.Read);
 
                 var jContent = JObject.Parse(persistDocument.Content);
 
@@ -142,11 +136,8 @@ namespace Katzebase.Engine.Query.Searchers
 
                 foreach (var querySchema in query.Schemas)
                 {
-                    //Lock the schema:
                     var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
-
-                    //Lock the document catalog:
-                    var physicalDocumentPageCatalog = core.Documents.GetDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
+                    var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
                     schemaMap.Add(querySchema.Prefix, physicalSchema, physicalDocumentPageCatalog, querySchema.Conditions);
                 }

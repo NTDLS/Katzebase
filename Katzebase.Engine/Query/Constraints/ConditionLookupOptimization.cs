@@ -45,7 +45,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 }
                 */
 
-                var indexCatalog = core.Indexes.GetIndexCatalog(transaction, physicalSchema, LockOperation.Read);
+                var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
                 var lookupOptimization = new ConditionLookupOptimization(conditions);
 
