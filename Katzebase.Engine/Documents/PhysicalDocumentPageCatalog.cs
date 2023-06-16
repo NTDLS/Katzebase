@@ -9,6 +9,15 @@
     {
         public List<PhysicalDocumentPageMap> PageMappings { get; private set; } = new();
 
+        public uint NextDocumentId { get; private set; } = 0;
+
+        public uint ConsumeNextDocumentId()
+        {
+            NextDocumentId++;
+            return NextDocumentId;
+        }
+
+
         public int NextPageNumber() => PageMappings.Count;
 
         public int TotalDocumentCount()
@@ -16,23 +25,22 @@
             return PageMappings.SelectMany(o => o.DocumentIDs).Count();
         }
 
-
         public IEnumerable<PageDocument> ConsolidatedPageDocuments()
         {
-            return PageMappings.SelectMany(o => o.DocumentIDs.Select(h => new PageDocument(h, o.PageNumber)));
+            return PageMappings.SelectMany(o => o.DocumentIDs.Select(h => new PageDocument(o.PageNumber, h)));
         }
 
-        public IEnumerable<PageDocument> FindPageDocument(Guid documentId)
+        public IEnumerable<PageDocument> FindPageDocument(uint documentId)
         {
-            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => g == documentId).Select(h => new PageDocument(h, o.PageNumber)));
+            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => g == documentId).Select(h => new PageDocument(o.PageNumber, h)));
         }
 
-        public IEnumerable<PageDocument> FindPageDocuments(HashSet<Guid> documentIds)
+        public IEnumerable<PageDocument> FindPageDocuments(HashSet<uint> documentIds)
         {
-            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => documentIds.Contains(g)).Select(h => new PageDocument(h, o.PageNumber)));
+            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => documentIds.Contains(g)).Select(h => new PageDocument(o.PageNumber, h)));
         }
 
-        public PhysicalDocumentPageMap? GetDocumentPageMap(Guid documentId)
+        public PhysicalDocumentPageMap? GetDocumentPageMap(uint documentId)
         {
             foreach (var map in PageMappings)
             {

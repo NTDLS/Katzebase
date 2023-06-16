@@ -4,7 +4,6 @@ using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Intersection;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
 using Katzebase.Engine.Query.Sorting;
-using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Threading;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
@@ -181,7 +180,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
             var jJoinScopedContentCache = new Dictionary<string, JObject>();
             var topLevel = param.SchemaMap.First();
-            var physicalDocumentWorkingLevel = param.Core.Documents.GetDocument(param.Transaction, topLevel.Value.PhysicalSchema, workingDocument.Id, LockOperation.Read);
+            var physicalDocumentWorkingLevel = param.Core.Documents.GetDocument(param.Transaction, topLevel.Value.PhysicalSchema, workingDocument.DocumentId, LockOperation.Read);
 
             //Get the document content and add it to a collection so it can be referenced by schema alias on all subsequent joins.
 
@@ -260,7 +259,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             MSQQuerySchemaMapItem> workingLevel, int skipCount, ref MSQSchemaIntersectionDocumentCollection cumulativeResults,
             Dictionary<string, JObject> jJoinScopedContentCache, Dictionary<string, JObject> jThreadScopedContentCache)
         {
-            var thisThreadResults = new Dictionary<Guid, MSQSchemaIntersectionDocumentCollection>();
+            var thisThreadResults = new Dictionary<uint, MSQSchemaIntersectionDocumentCollection>();
             var nextLevel = param.SchemaMap.Skip(skipCount).First();
             var nextLevelMap = nextLevel.Value;
 
@@ -343,7 +342,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
             foreach (var pageDocument in limitedPageDocuments)
             {
-                string threadScopedDocuemntCacheKey = $"{nextLevel.Key}:{pageDocument.Id}";
+                string threadScopedDocuemntCacheKey = $"{nextLevel.Key}:{pageDocument.DocumentId}";
 
                 JObject? jContentNextLevel = null;
 
@@ -353,7 +352,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 }
                 else
                 {
-                    var physicalDocumentNextLevel = param.Core.Documents.GetDocument(param.Transaction, nextLevelMap.PhysicalSchema, pageDocument.Id, LockOperation.Read);
+                    var physicalDocumentNextLevel = param.Core.Documents.GetDocument(param.Transaction, nextLevelMap.PhysicalSchema, pageDocument.DocumentId, LockOperation.Read);
                     jContentNextLevel = JObject.Parse(physicalDocumentNextLevel.Content);
                     jThreadScopedContentCache.Add(threadScopedDocuemntCacheKey, jContentNextLevel);
                 }
@@ -392,14 +391,14 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                         IntersectAllSchemasRecursive(param, pageDocument, nextLevel, skipCount + 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
                     }
 
-                    if (thisThreadResults.TryGetValue(workingDocument.Id, out MSQSchemaIntersectionDocumentCollection? docuemntCollection) == false)
+                    if (thisThreadResults.TryGetValue(workingDocument.DocumentId, out MSQSchemaIntersectionDocumentCollection? docuemntCollection) == false)
                     {
                         docuemntCollection = new MSQSchemaIntersectionDocumentCollection();
-                        thisThreadResults.Add(workingDocument.Id, docuemntCollection);
-                        docuemntCollection.Documents.Add(new MSQSchemaIntersectionDocumentItem(workingLevel.Key, workingDocument.Id));
+                        thisThreadResults.Add(workingDocument.DocumentId, docuemntCollection);
+                        docuemntCollection.Documents.Add(new MSQSchemaIntersectionDocumentItem(workingLevel.Key, workingDocument.DocumentId));
                     }
 
-                    docuemntCollection.Documents.Add(new MSQSchemaIntersectionDocumentItem(nextLevel.Key, pageDocument.Id));
+                    docuemntCollection.Documents.Add(new MSQSchemaIntersectionDocumentItem(nextLevel.Key, pageDocument.DocumentId));
                 }
 
                 jJoinScopedContentCache.Remove(nextLevel.Key);//We are no longer working with the document at this level.
@@ -468,7 +467,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         {
             var persistDocument = param.Core.Documents.GetDocument(param.Transaction, accumulationMap.PhysicalSchema, pageDocuments, LockOperation.Read);
 
-            var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{pageDocuments.Id}"];
+            var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{pageDocuments.DocumentId}"];
 
             //Grab all of the selected fields from the document.
             foreach (var selectField in param.Query.SelectFields.Where(o => o.Prefix == schemaKey))

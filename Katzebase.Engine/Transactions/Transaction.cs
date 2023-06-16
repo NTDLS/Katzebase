@@ -17,7 +17,7 @@ namespace Katzebase.Engine.Transactions
         public bool IsDeadlocked { get; set; }
         public List<ObjectLockKey>? HeldLockKeys { get; set; }
         public PerformanceTrace? PT { get; private set; } = null;
-        
+
         /// <summary>
         /// Used for general locking, if any.
         /// </summary>

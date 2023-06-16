@@ -9,7 +9,7 @@
     {
         public int PageNumber { get; private set; }
 
-        public Dictionary<Guid, PhysicalDocument> Documents { get; set; } = new();
+        public Dictionary<uint, PhysicalDocument> Documents { get; set; } = new();
 
         public PhysicalDocumentPage(int pageNumber)
         {

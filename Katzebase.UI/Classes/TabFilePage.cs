@@ -3,10 +3,7 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using Microsoft.Identity.Client;
-using Microsoft.VisualBasic;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace Katzebase.UI.Classes
 {

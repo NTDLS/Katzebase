@@ -1,6 +1,5 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
-using Katzebase.Engine.Locking;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Sorting;
 using Katzebase.Engine.Schemas;
@@ -9,7 +8,6 @@ using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
-using System.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 using static Katzebase.PublicLibrary.Constants;
@@ -173,7 +171,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     continue;
                 }
 
-                var physicalDocument = param.Core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, pageDocument.Id, LockOperation.Read);
+                var physicalDocument = param.Core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, pageDocument.DocumentId, LockOperation.Read);
                 var jContent = JObject.Parse(physicalDocument.Content);
 
                 if (expression != null && param.LookupOptimization != null)

@@ -5,7 +5,6 @@ using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Threading;
-using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
@@ -22,7 +21,7 @@ namespace Katzebase.Engine.Indexes
     /// </summary>
     public class IndexManager
     {
-        private Core core;
+        private readonly Core core;
         public IndexManager(Core core)
         {
             this.core = core;
@@ -291,7 +290,7 @@ namespace Katzebase.Engine.Indexes
 
         #region Core methods.
 
-        internal Dictionary<Guid, PageDocument> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
+        internal Dictionary<uint, PageDocument> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
             IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
         {
             var workingPhysicalIndexLeaf = physicalIndexPages.Root;
@@ -337,7 +336,7 @@ namespace Katzebase.Engine.Indexes
 
                 if (lastFoundPhysicalIndexLeaf?.Documents?.Any() == true) //If we are at the base of the tree then there is no need to go further down.
                 {
-                    return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.Id, o => new PageDocument(o.Id, o.PageNumber));
+                    return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new PageDocument(o.PageNumber, o.DocumentId));
                 }
                 else
                 {
@@ -347,7 +346,7 @@ namespace Katzebase.Engine.Indexes
 
             if (foundAnything == false)
             {
-                return new Dictionary<Guid, PageDocument>();
+                return new Dictionary<uint, PageDocument>();
             }
 
             Utility.EnsureNotNull(workingPhysicalIndexLeaf);
@@ -363,7 +362,7 @@ namespace Katzebase.Engine.Indexes
         /// <summary>
         /// Finds document IDs given a set of conditions.
         /// </summary>
-        internal Dictionary<Guid, PageDocument> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection, ConditionSubset conditionSubset)
+        internal Dictionary<uint, PageDocument> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection, ConditionSubset conditionSubset)
         {
             var workingPhysicalIndexLeaf = physicalIndexPages.Root;
             var lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf;
@@ -407,7 +406,7 @@ namespace Katzebase.Engine.Indexes
 
                 if (lastFoundPhysicalIndexLeaf?.Documents?.Any() == true) //If we are at the base of the tree then there is no need to go further down.
                 {
-                    return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.Id, o => new PageDocument(o.Id, o.PageNumber));
+                    return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new PageDocument(o.PageNumber, o.DocumentId));
                 }
                 else
                 {
@@ -417,7 +416,7 @@ namespace Katzebase.Engine.Indexes
 
             if (foundAnything == false)
             {
-                return new Dictionary<Guid, PageDocument>();
+                return new Dictionary<uint, PageDocument>();
             }
 
             Utility.EnsureNotNull(workingPhysicalIndexLeaf);
@@ -436,7 +435,7 @@ namespace Katzebase.Engine.Indexes
         /// </summary>
         /// <param name="indexEntires"></param>
         /// <returns></returns>
-        private Dictionary<Guid, PageDocument> DistillIndexLeaves(PhysicalIndexLeaf physicalIndexLeaf)
+        private Dictionary<uint, PageDocument> DistillIndexLeaves(PhysicalIndexLeaf physicalIndexLeaf)
         {
             var result = new List<PageDocument>();
 
@@ -449,13 +448,13 @@ namespace Katzebase.Engine.Indexes
 
                 if (physicalIndexLeaf?.Documents?.Any() == true)
                 {
-                    result.AddRange(physicalIndexLeaf.Documents.Select(o => new PageDocument(o.Id, o.PageNumber)));
+                    result.AddRange(physicalIndexLeaf.Documents.Select(o => new PageDocument(o.PageNumber, o.DocumentId)));
                 }
             }
 
             if (physicalIndexLeaf?.Documents?.Any() == true)
             {
-                result.AddRange(physicalIndexLeaf.Documents.Select(o => new PageDocument(o.Id, o.PageNumber)));
+                result.AddRange(physicalIndexLeaf.Documents.Select(o => new PageDocument(o.PageNumber, o.DocumentId)));
             }
             else if (physicalIndexLeaf?.Children != null)
             {
@@ -465,7 +464,7 @@ namespace Katzebase.Engine.Indexes
                 }
             }
 
-            return result.ToDictionary(o => o.Id, o => new PageDocument(o.Id, o.PageNumber));
+            return result.ToDictionary(o => o.DocumentId, o => new PageDocument(o.PageNumber, o.DocumentId));
         }
 
         private PhysicalIndexCatalog GetIndexCatalog(Transaction transaction, string schema, LockOperation intendedOperation)
@@ -682,7 +681,7 @@ namespace Katzebase.Engine.Indexes
                 }
 
                 //Add the document to the lowest index extent.
-                indexScanResult.Leaf.Documents.Add(new PhysicalIndexEntry(pageDocument.Id, pageDocument.PageNumber));
+                indexScanResult.Leaf.Documents.Add(new PhysicalIndexEntry(pageDocument.DocumentId, pageDocument.PageNumber));
 
                 if (flushPageCatalog)
                 {
@@ -735,7 +734,7 @@ namespace Katzebase.Engine.Indexes
                     throw new KbNullException($"Value should not be null {nameof(param.PhysicalSchema.DiskPath)}.");
                 }
 
-                var PhysicalDocument = core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, pageDocument.Id, LockOperation.Read);
+                var PhysicalDocument = core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, pageDocument.DocumentId, LockOperation.Read);
 
                 lock (param.SyncObject)
                 {
@@ -811,11 +810,11 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        private bool RemoveDocumentFromLeaves(PhysicalIndexLeaf leaves, Guid documentId)
+        private bool RemoveDocumentFromLeaves(PhysicalIndexLeaf leaves, uint documentId)
         {
             if (leaves.Documents?.Count > 0)
             {
-                if (leaves.Documents.RemoveAll(o => o.Id == documentId) > 0)
+                if (leaves.Documents.RemoveAll(o => o.DocumentId == documentId) > 0)
                 {
                     return true; //We found the document and removed it.
                 }
@@ -845,7 +844,7 @@ namespace Katzebase.Engine.Indexes
                 var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
 
                 //TODO: We migth be able to work the page number into this:
-                if (RemoveDocumentFromLeaves(physicalIndexPages.Root, pageDocument.Id))
+                if (RemoveDocumentFromLeaves(physicalIndexPages.Root, pageDocument.DocumentId))
                 {
                     core.IO.PutPBuf(transaction, physicalIindex.DiskPath, physicalIndexPages);
                 }
