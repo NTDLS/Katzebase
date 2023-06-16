@@ -1,6 +1,15 @@
---Possible iterations: 2,115,485,064
-
 SELECT /*TOP 5*/ --Should yeild 457 records
+	Name,
+	ProductNumber,
+FROM
+	AdventureWorks2012:Production:Product as g
+WHERE
+	P.Name = 'Road-750 Black, 52'
+
+
+/*
+--Possible iterations: 2,115,485,064
+SELECT --Should yeild 457 records
 	P.Name,
 	TH.TransactionId,
 	P.ProductNumber,
@@ -19,7 +28,7 @@ WHERE
 ORDER BY
 	P.ProductNumber asc,
 	TH.TransactionId desc
-
+*/
 
 
 /*

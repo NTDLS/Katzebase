@@ -748,7 +748,7 @@ namespace Katzebase.Engine.Query
             #endregion
             //--------------------------------------------------------------------------------------------------------------------------------------------
 
-            #region Cleanup and ValidartiValidation.
+            #region Cleanup and Validation.
 
             if (result.UpsertKeyValuePairs != null)
             {
@@ -764,13 +764,43 @@ namespace Katzebase.Engine.Query
                 }
             }
 
-            foreach (var sortField in result.SortFields)
+            foreach (var field in result.SortFields)
             {
-                if (result.SelectFields.Where(o => o.Key == sortField.Key).Any() == false)
+                if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
                 {
-                    throw new KbParserException($"Sorting field {sortField.Key} must be contained in the select list.");
+                    throw new KbParserException($"The order-by schema alias {field.Prefix} was not found in the query.");
+                }
+
+                if (result.SelectFields.Where(o => o.Key == field.Key).Any() == false)
+                {
+                    throw new KbParserException($"The sort-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
                 }
             }
+
+            foreach (var field in result.GroupFields)
+            {
+                if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
+                {
+                    throw new KbParserException($"The group-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
+                }
+            }
+
+            foreach (var field in result.SelectFields)
+            {
+                if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
+                {
+                    throw new KbParserException($"The select schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
+                }
+            }
+
+            foreach (var field in result.Conditions.AllFields)
+            {
+                if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
+                {
+                    throw new KbParserException($"The condition schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
+                }
+            }
+
 
             #endregion
 
