@@ -67,7 +67,21 @@ namespace Katzebase.UI.Classes
         public TabPage OutputTab { get; private set; } = new("Output");
         public TabPage ResultsTab { get; private set; } = new("Results");
         public RichTextBox OutputTextbox { get; private set; } = new() { Dock = DockStyle.Fill };
-        public DataGridView OutputGrid { get; private set; } = new() { Dock = DockStyle.Fill };
+        public DataGridView OutputGrid { get; private set; } = new()
+        {
+            Dock = DockStyle.Fill,
+            AllowUserToAddRows = false,
+            AllowDrop = false,
+            AllowUserToDeleteRows = false,
+            ShowEditingIcon = false,
+            ShowCellErrors = false,
+            ShowCellToolTips = false,
+            ReadOnly = true,
+            AllowUserToOrderColumns = true,
+            AllowUserToResizeRows = true,
+            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells
+
+        };
         public TabControl BottomTabControl { get; private set; } = new() { Dock = DockStyle.Fill };
 
         public TextEditor Editor { get; private set; }
@@ -307,12 +321,11 @@ namespace Katzebase.UI.Classes
 
                         foreach (var wt in result.Metrics.Where(o => o.Value >= 0.5).OrderBy(o => o.Value))
                         {
-                            stringBuilder.Append($"\t{wt.MetricType} {wt.Name}: {wt.Value:n0}");
+                            stringBuilder.Append($"\t{wt.Name} -> Total: {wt.Value:n0}");
                             if (wt.MetricType == PublicLibrary.Constants.KbMetricType.Cumulative)
                             {
-                                stringBuilder.Append($" (count: {wt.Count:n0})");
+                                stringBuilder.Append($"    Count: {wt.Count:n0}    Average: {(wt.Value/ wt.Count):n2}");
                             }
-
                             stringBuilder.AppendLine();
                         }
 

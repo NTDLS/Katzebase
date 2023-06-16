@@ -1,10 +1,13 @@
+--SET TraceWaitTimes on;
+
+
 SELECT /*TOP 5*/ --Should yeild 457 records
-	Name,
-	ProductNumber,
+	g.Name,
+	g.ProductNumber,
 FROM
 	AdventureWorks2012:Production:Product as g
-WHERE
-	P.Name = 'Road-750 Black, 52'
+--WHERE
+	--g.Name = 'Road-750 Black, 52'
 
 
 /*

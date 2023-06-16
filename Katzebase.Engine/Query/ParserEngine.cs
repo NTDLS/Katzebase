@@ -774,7 +774,7 @@ namespace Katzebase.Engine.Query
 
             foreach (var field in result.SelectFields)
             {
-                if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
+                if (field.Field != "*" && result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
                 {
                     throw new KbParserException($"The select schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
                 }
@@ -787,7 +787,6 @@ namespace Katzebase.Engine.Query
                     throw new KbParserException($"The condition schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
                 }
             }
-
 
             #endregion
 

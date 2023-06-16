@@ -31,14 +31,15 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormStudio));
             splitContainerProject = new SplitContainer();
             treeViewProject = new TreeView();
-            statusStripDocument = new StatusStrip();
-            toolStripStatusLabelServerName = new ToolStripStatusLabel();
-            toolStripStatusLabelProcessId = new ToolStripStatusLabel();
             splitContainerMacros = new SplitContainer();
             tabControlBody = new TabControl();
             treeViewMacros = new TreeView();
+            statusStripDocument = new StatusStrip();
+            toolStripStatusLabelServerName = new ToolStripStatusLabel();
+            toolStripStatusLabelProcessId = new ToolStripStatusLabel();
             toolStrip1 = new ToolStrip();
             toolStripButtonNewFile = new ToolStripButton();
+            toolStripButtonOpen = new ToolStripButton();
             toolStripButtonSave = new ToolStripButton();
             toolStripButtonSaveAll = new ToolStripButton();
             toolStripButtonCloseCurrentTab = new ToolStripButton();
@@ -49,8 +50,8 @@
             toolStripButtonFind = new ToolStripButton();
             toolStripButtonReplace = new ToolStripButton();
             toolStripSeparator3 = new ToolStripSeparator();
-            toolStripButtonRedo = new ToolStripButton();
             toolStripButtonUndo = new ToolStripButton();
+            toolStripButtonRedo = new ToolStripButton();
             toolStripSeparator4 = new ToolStripSeparator();
             toolStripButtonCut = new ToolStripButton();
             toolStripButtonCopy = new ToolStripButton();
@@ -69,6 +70,9 @@
             connectToolStripMenuItem = new ToolStripMenuItem();
             closeProjectToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem2 = new ToolStripSeparator();
+            openToolStripMenuItem = new ToolStripMenuItem();
+            saveToolStripMenuItem1 = new ToolStripMenuItem();
+            saveAsToolStripMenuItem = new ToolStripMenuItem();
             saveAllToolStripMenuItem = new ToolStripMenuItem();
             toolStripMenuItem1 = new ToolStripSeparator();
             exitToolStripMenuItem = new ToolStripMenuItem();
@@ -78,19 +82,15 @@
             closeAllToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
-            toolStripButtonOpen = new ToolStripButton();
-            saveAsToolStripMenuItem = new ToolStripMenuItem();
-            openToolStripMenuItem = new ToolStripMenuItem();
-            saveToolStripMenuItem1 = new ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)splitContainerProject).BeginInit();
             splitContainerProject.Panel1.SuspendLayout();
             splitContainerProject.Panel2.SuspendLayout();
             splitContainerProject.SuspendLayout();
-            statusStripDocument.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainerMacros).BeginInit();
             splitContainerMacros.Panel1.SuspendLayout();
             splitContainerMacros.Panel2.SuspendLayout();
             splitContainerMacros.SuspendLayout();
+            statusStripDocument.SuspendLayout();
             toolStrip1.SuspendLayout();
             menuStrip1.SuspendLayout();
             SuspendLayout();
@@ -108,8 +108,8 @@
             // 
             // splitContainerProject.Panel2
             // 
-            splitContainerProject.Panel2.Controls.Add(statusStripDocument);
             splitContainerProject.Panel2.Controls.Add(splitContainerMacros);
+            splitContainerProject.Panel2.Controls.Add(statusStripDocument);
             splitContainerProject.Size = new Size(1032, 597);
             splitContainerProject.SplitterDistance = 320;
             splitContainerProject.TabIndex = 0;
@@ -121,28 +121,6 @@
             treeViewProject.Size = new Size(256, 292);
             treeViewProject.TabIndex = 0;
             treeViewProject.DragDrop += FormStudio_DragDrop;
-            // 
-            // statusStripDocument
-            // 
-            statusStripDocument.GripStyle = ToolStripGripStyle.Visible;
-            statusStripDocument.Items.AddRange(new ToolStripItem[] { toolStripStatusLabelServerName, toolStripStatusLabelProcessId });
-            statusStripDocument.Location = new Point(0, 575);
-            statusStripDocument.Name = "statusStripDocument";
-            statusStripDocument.Size = new Size(708, 22);
-            statusStripDocument.TabIndex = 2;
-            statusStripDocument.Text = "statusStripDocument";
-            // 
-            // toolStripStatusLabelServerName
-            // 
-            toolStripStatusLabelServerName.Name = "toolStripStatusLabelServerName";
-            toolStripStatusLabelServerName.Size = new Size(39, 17);
-            toolStripStatusLabelServerName.Text = "Server";
-            // 
-            // toolStripStatusLabelProcessId
-            // 
-            toolStripStatusLabelProcessId.Name = "toolStripStatusLabelProcessId";
-            toolStripStatusLabelProcessId.Size = new Size(47, 17);
-            toolStripStatusLabelProcessId.Text = "Process";
             // 
             // splitContainerMacros
             // 
@@ -176,6 +154,28 @@
             treeViewMacros.Size = new Size(168, 189);
             treeViewMacros.TabIndex = 0;
             // 
+            // statusStripDocument
+            // 
+            statusStripDocument.GripStyle = ToolStripGripStyle.Visible;
+            statusStripDocument.Items.AddRange(new ToolStripItem[] { toolStripStatusLabelServerName, toolStripStatusLabelProcessId });
+            statusStripDocument.Location = new Point(0, 575);
+            statusStripDocument.Name = "statusStripDocument";
+            statusStripDocument.Size = new Size(708, 22);
+            statusStripDocument.TabIndex = 2;
+            statusStripDocument.Text = "statusStripDocument";
+            // 
+            // toolStripStatusLabelServerName
+            // 
+            toolStripStatusLabelServerName.Name = "toolStripStatusLabelServerName";
+            toolStripStatusLabelServerName.Size = new Size(39, 17);
+            toolStripStatusLabelServerName.Text = "Server";
+            // 
+            // toolStripStatusLabelProcessId
+            // 
+            toolStripStatusLabelProcessId.Name = "toolStripStatusLabelProcessId";
+            toolStripStatusLabelProcessId.Size = new Size(47, 17);
+            toolStripStatusLabelProcessId.Text = "Process";
+            // 
             // toolStrip1
             // 
             toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonNewFile, toolStripButtonOpen, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonUndo, toolStripButtonRedo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
@@ -194,6 +194,16 @@
             toolStripButtonNewFile.Size = new Size(23, 22);
             toolStripButtonNewFile.Text = "New File";
             toolStripButtonNewFile.Click += toolStripButtonNewFile_Click;
+            // 
+            // toolStripButtonOpen
+            // 
+            toolStripButtonOpen.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonOpen.Image = Properties.Resources.ToolOpenFile;
+            toolStripButtonOpen.ImageTransparentColor = Color.Magenta;
+            toolStripButtonOpen.Name = "toolStripButtonOpen";
+            toolStripButtonOpen.Size = new Size(23, 22);
+            toolStripButtonOpen.Text = "Open";
+            toolStripButtonOpen.Click += toolStripButtonOpen_Click;
             // 
             // toolStripButtonSave
             // 
@@ -280,16 +290,6 @@
             toolStripSeparator3.Name = "toolStripSeparator3";
             toolStripSeparator3.Size = new Size(6, 25);
             // 
-            // toolStripButtonRedo
-            // 
-            toolStripButtonRedo.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonRedo.Image = Properties.Resources.ToolRedo;
-            toolStripButtonRedo.ImageTransparentColor = Color.Magenta;
-            toolStripButtonRedo.Name = "toolStripButtonRedo";
-            toolStripButtonRedo.Size = new Size(23, 22);
-            toolStripButtonRedo.Text = "Redo";
-            toolStripButtonRedo.Click += toolStripButtonRedo_Click;
-            // 
             // toolStripButtonUndo
             // 
             toolStripButtonUndo.DisplayStyle = ToolStripItemDisplayStyle.Image;
@@ -299,6 +299,16 @@
             toolStripButtonUndo.Size = new Size(23, 22);
             toolStripButtonUndo.Text = "Undo";
             toolStripButtonUndo.Click += toolStripButtonUndo_Click;
+            // 
+            // toolStripButtonRedo
+            // 
+            toolStripButtonRedo.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonRedo.Image = Properties.Resources.ToolRedo;
+            toolStripButtonRedo.ImageTransparentColor = Color.Magenta;
+            toolStripButtonRedo.Name = "toolStripButtonRedo";
+            toolStripButtonRedo.Size = new Size(23, 22);
+            toolStripButtonRedo.Text = "Redo";
+            toolStripButtonRedo.Click += toolStripButtonRedo_Click;
             // 
             // toolStripSeparator4
             // 
@@ -393,6 +403,7 @@
             toolStripButtonMacros.Name = "toolStripButtonMacros";
             toolStripButtonMacros.Size = new Size(23, 22);
             toolStripButtonMacros.Text = "Toggle Macros";
+            toolStripButtonMacros.Visible = false;
             toolStripButtonMacros.Click += toolStripButtonMacros_Click;
             // 
             // toolStripSeparator7
@@ -445,6 +456,27 @@
             // 
             toolStripMenuItem2.Name = "toolStripMenuItem2";
             toolStripMenuItem2.Size = new Size(130, 6);
+            // 
+            // openToolStripMenuItem
+            // 
+            openToolStripMenuItem.Name = "openToolStripMenuItem";
+            openToolStripMenuItem.Size = new Size(133, 22);
+            openToolStripMenuItem.Text = "Open";
+            openToolStripMenuItem.Click += openToolStripMenuItem_Click;
+            // 
+            // saveToolStripMenuItem1
+            // 
+            saveToolStripMenuItem1.Name = "saveToolStripMenuItem1";
+            saveToolStripMenuItem1.Size = new Size(133, 22);
+            saveToolStripMenuItem1.Text = "Save";
+            saveToolStripMenuItem1.Click += saveToolStripMenuItem1_Click;
+            // 
+            // saveAsToolStripMenuItem
+            // 
+            saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
+            saveAsToolStripMenuItem.Size = new Size(133, 22);
+            saveAsToolStripMenuItem.Text = "Save As";
+            saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
             // 
             // saveAllToolStripMenuItem
             // 
@@ -507,37 +539,6 @@
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
-            // toolStripButtonOpen
-            // 
-            toolStripButtonOpen.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonOpen.Image = Properties.Resources.ToolOpenFile;
-            toolStripButtonOpen.ImageTransparentColor = Color.Magenta;
-            toolStripButtonOpen.Name = "toolStripButtonOpen";
-            toolStripButtonOpen.Size = new Size(23, 22);
-            toolStripButtonOpen.Text = "Open";
-            toolStripButtonOpen.Click += toolStripButtonOpen_Click;
-            // 
-            // saveAsToolStripMenuItem
-            // 
-            saveAsToolStripMenuItem.Name = "saveAsToolStripMenuItem";
-            saveAsToolStripMenuItem.Size = new Size(133, 22);
-            saveAsToolStripMenuItem.Text = "Save As";
-            saveAsToolStripMenuItem.Click += saveAsToolStripMenuItem_Click;
-            // 
-            // openToolStripMenuItem
-            // 
-            openToolStripMenuItem.Name = "openToolStripMenuItem";
-            openToolStripMenuItem.Size = new Size(133, 22);
-            openToolStripMenuItem.Text = "Open";
-            openToolStripMenuItem.Click += openToolStripMenuItem_Click;
-            // 
-            // saveToolStripMenuItem1
-            // 
-            saveToolStripMenuItem1.Name = "saveToolStripMenuItem1";
-            saveToolStripMenuItem1.Size = new Size(133, 22);
-            saveToolStripMenuItem1.Text = "Save";
-            saveToolStripMenuItem1.Click += saveToolStripMenuItem1_Click;
-            // 
             // FormStudio
             // 
             AllowDrop = true;
@@ -559,12 +560,12 @@
             splitContainerProject.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainerProject).EndInit();
             splitContainerProject.ResumeLayout(false);
-            statusStripDocument.ResumeLayout(false);
-            statusStripDocument.PerformLayout();
             splitContainerMacros.Panel1.ResumeLayout(false);
             splitContainerMacros.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainerMacros).EndInit();
             splitContainerMacros.ResumeLayout(false);
+            statusStripDocument.ResumeLayout(false);
+            statusStripDocument.PerformLayout();
             toolStrip1.ResumeLayout(false);
             toolStrip1.PerformLayout();
             menuStrip1.ResumeLayout(false);
