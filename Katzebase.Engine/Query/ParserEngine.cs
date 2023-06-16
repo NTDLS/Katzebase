@@ -16,19 +16,18 @@ namespace Katzebase.Engine.Query
 
             var query = new QueryTokenizer(queryText);
 
-            string token = string.Empty;
+            string token = query.GetNextToken().ToLower();
 
-            token = query.GetNextToken().ToLower();
-
-            if (Enum.TryParse<QueryType>(token, true, out QueryType queryType) == false || Enum.IsDefined(typeof(QueryType), queryType) == false)
+            if (Enum.TryParse(token, true, out QueryType queryType) == false || Enum.IsDefined(typeof(QueryType), queryType) == false)
             {
                 throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
             }
 
             result.QueryType = queryType;
 
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Begin.
+            //Parser insanity. Keep these region tags at 100 characters! :D
+
+            #region Begin ----------------------------------------------------------------------------------------------
             if (queryType == QueryType.Begin)
             {
                 if (query.IsNextToken(new string[] { "transaction" }) == false)
@@ -49,8 +48,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Begin.
+            #region Commit ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Commit)
             {
                 if (query.IsNextToken(new string[] { "transaction" }) == false)
@@ -71,8 +69,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Begin.
+            #region Rollback -------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Rollback)
             {
                 if (query.IsNextToken(new string[] { "transaction" }) == false)
@@ -93,8 +90,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Create.
+            #region Create ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Create)
             {
                 if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
@@ -165,8 +161,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Drop.
+            #region Drop -----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Drop)
             {
                 if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
@@ -208,8 +203,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Rebuild.
+            #region Rebuild --------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Rebuild)
             {
                 if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
@@ -251,8 +245,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Delete.
+            #region Delete ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Delete)
             {
                 /*
@@ -297,9 +290,7 @@ namespace Katzebase.Engine.Query
                 */
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Update.
-            //--------------------------------------------------------------------------------------------------------------------------------------------
+            #region Update ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Update)
             {
                 /*
@@ -357,8 +348,7 @@ namespace Katzebase.Engine.Query
                 */
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Sample.
+            #region Sample ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Sample)
             {
                 if (query.IsNextToken("documents") == false)
@@ -397,8 +387,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region List.
+            #region List -----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.List)
             {
                 if (query.IsNextToken(new string[] { "documents", "schemas" }) == false)
@@ -437,8 +426,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Select.
+            #region Select ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Select)
             {
                 if (query.IsNextToken("top"))
@@ -736,8 +724,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
-            #region Set.
+            #region Set ------------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Set)
             {
                 //Variable 
@@ -746,7 +733,7 @@ namespace Katzebase.Engine.Query
                 result.VariableValues.Add(new KbNameValuePair(variableName, variableValue));
             }
             #endregion
-            //--------------------------------------------------------------------------------------------------------------------------------------------
+
 
             #region Cleanup and Validation.
 
@@ -858,51 +845,5 @@ namespace Katzebase.Engine.Query
             return keyValuePairs;
         }
         */
-
-        /// <summary>
-        /// Extraxts the condition text between parentheses.
-        /// </summary>
-        /// <param name="conditionsText"></param>
-        /// <param name="endPosition"></param>
-        /// <returns></returns>
-        private static string GetConditionGroupExpression(string conditionsText, out int endPosition)
-        {
-            string resultingExpression = string.Empty;
-            int position = 0;
-            int nestLevel = 0;
-            string token;
-
-            while (true)
-            {
-                if ((token = ConditionTokenizer.GetNextToken(conditionsText, ref position)) == string.Empty)
-                {
-                    break;
-                }
-
-                if (token == "(")
-                {
-                    nestLevel++;
-                }
-                else if (token == ")")
-                {
-                    nestLevel--;
-
-                    if (nestLevel <= 0)
-                    {
-                        resultingExpression += $"{token} ";
-                        break;
-                    }
-                }
-
-                resultingExpression += $"{token} ";
-            }
-
-            resultingExpression = resultingExpression.Replace("( ", "(").Replace(" (", "(").Replace(") ", ")").Replace(" )", ")").Trim();
-
-            endPosition = position;
-
-            return resultingExpression;
-
-        }
     }
 }
