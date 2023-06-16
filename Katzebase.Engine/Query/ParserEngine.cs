@@ -1,7 +1,6 @@
 ﻿using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Tokenizers;
-using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.PublicLibrary.Constants;

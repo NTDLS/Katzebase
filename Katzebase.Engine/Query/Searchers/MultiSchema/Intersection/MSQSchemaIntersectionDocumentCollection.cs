@@ -2,7 +2,7 @@
 {
     internal class MSQSchemaIntersectionDocumentCollection
     {
-        public Dictionary<string, PageDocumentMatch> MatchedDocumentIDsPerSchema = new();
+        public Dictionary<string, DocumentPointerMatch> MatchedDocumentPointsPerSchema = new();
         public List<MSQSchemaIntersectionDocumentItem> Documents { get; set; } = new();
         public int DistinctSchemaCount => Documents.Select(o => o.SchemaAlias).Distinct().Count();
     }

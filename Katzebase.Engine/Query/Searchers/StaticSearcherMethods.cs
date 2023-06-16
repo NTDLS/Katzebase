@@ -2,11 +2,9 @@
 using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
 using Katzebase.Engine.Query.Searchers.SingleSchema;
 using Katzebase.Engine.Transactions;
-using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;
-using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Query.Searchers
 {
@@ -75,11 +73,11 @@ namespace Katzebase.Engine.Query.Searchers
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
 
             //Lock the document catalog:
-            var documentCatalog = core.Documents.GetPageDocuments(transaction, physicalSchema, LockOperation.Read).ToList();
+            var documentPointers = core.Documents.GetDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
 
-            for (int i = 0; i < documentCatalog.Count && (i < topCount || topCount < 0); i++)
+            for (int i = 0; i < documentPointers.Count && (i < topCount || topCount < 0); i++)
             {
-                var pageDocuent = documentCatalog[i];
+                var pageDocuent = documentPointers[i];
 
                 var persistDocument = core.Documents.GetDocument(transaction, physicalSchema, pageDocuent.DocumentId, LockOperation.Read);
 

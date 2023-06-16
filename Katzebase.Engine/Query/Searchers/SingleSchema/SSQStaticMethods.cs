@@ -8,7 +8,6 @@ using Katzebase.Engine.Threading;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
-using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
@@ -26,7 +25,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
 
             //Lock the document catalog:
-            var pageDocuments = core.Documents.GetPageDocuments(transaction, physicalSchema, LockOperation.Read).ToList();
+            var documentPointers = core.Documents.GetDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
 
             ConditionLookupOptimization? lookupOptimization = null;
 
@@ -35,13 +34,10 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             {
                 lookupOptimization = ConditionLookupOptimization.Build(core, transaction, physicalSchema, query.Conditions, querySchema.Prefix);
 
-                //Create a reference to the entire document catalog.
-                var limitedPageDocuments = pageDocuments;
-
                 if (lookupOptimization.CanApplyIndexing())
                 {
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                    pageDocuments = new List<PageDocument>();
+                    documentPointers = new List<DocumentPointer>();
 
                     //All condition subsets have a selected index. Start building a list of possible document IDs.
                     foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
@@ -51,7 +47,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                         var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
                         var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, physicalIndexPages, subset.IndexSelection, subset, querySchema.Prefix);
 
-                        pageDocuments.AddRange(indexMatchedDocuments.Select(o => o.Value));
+                        documentPointers.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
                 }
                 else
@@ -78,12 +74,12 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, physicalSchema, query, lookupOptimization, querySchema);
-            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), pageDocuments.Count);
+            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentPointers.Count);
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
-            var threadPool = ThreadPoolQueue<PageDocument, LookupThreadParam>.CreateAndStart(GetDocumentsByConditionsThreadProc, threadParam, threadCount);
+            var threadPool = ThreadPoolQueue<DocumentPointer, LookupThreadParam>.CreateAndStart(GetDocumentsByConditionsThreadProc, threadParam, threadCount);
             ptThreadCreation?.StopAndAccumulate();
 
-            foreach (var pageDocument in pageDocuments)
+            foreach (var documentPointer in documentPointers)
             {
                 if ((query.RowLimit != 0 && query.SortFields.Any() == false) && threadParam.Results.Collection.Count >= query.RowLimit)
                 {
@@ -95,7 +91,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                     break;
                 }
 
-                threadPool.EnqueueWorkItem(pageDocument);
+                threadPool.EnqueueWorkItem(documentPointer);
             }
 
             var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
@@ -154,7 +150,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
         #endregion
 
-        private static void GetDocumentsByConditionsThreadProc(ThreadPoolQueue<PageDocument, LookupThreadParam> pool, LookupThreadParam? param)
+        private static void GetDocumentsByConditionsThreadProc(ThreadPoolQueue<DocumentPointer, LookupThreadParam> pool, LookupThreadParam? param)
         {
             Utility.EnsureNotNull(param);
 
@@ -167,13 +163,13 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
             while (pool.ContinueToProcessQueue)
             {
-                var pageDocument = pool.DequeueWorkItem();
-                if (pageDocument == null)
+                var documentPointer = pool.DequeueWorkItem();
+                if (documentPointer == null)
                 {
                     continue;
                 }
 
-                var physicalDocument = param.Core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, pageDocument.DocumentId, LockOperation.Read);
+                var physicalDocument = param.Core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
                 var jContent = JObject.Parse(physicalDocument.Content);
 
                 if (expression != null && param.LookupOptimization != null)

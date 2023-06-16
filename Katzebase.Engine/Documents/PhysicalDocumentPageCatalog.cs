@@ -25,19 +25,19 @@
             return PageMappings.SelectMany(o => o.DocumentIDs).Count();
         }
 
-        public IEnumerable<PageDocument> ConsolidatedPageDocuments()
+        public IEnumerable<DocumentPointer> ConsolidatedDocumentPointers()
         {
-            return PageMappings.SelectMany(o => o.DocumentIDs.Select(h => new PageDocument(o.PageNumber, h)));
+            return PageMappings.SelectMany(o => o.DocumentIDs.Select(h => new DocumentPointer(o.PageNumber, h)));
         }
 
-        public IEnumerable<PageDocument> FindPageDocument(uint documentId)
+        public IEnumerable<DocumentPointer> FindDocumentPointer(uint documentId)
         {
-            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => g == documentId).Select(h => new PageDocument(o.PageNumber, h)));
+            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => g == documentId).Select(h => new DocumentPointer(o.PageNumber, h)));
         }
 
-        public IEnumerable<PageDocument> FindPageDocuments(HashSet<uint> documentIds)
+        public IEnumerable<DocumentPointer> FindDocumentPointers(HashSet<uint> documentIds)
         {
-            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => documentIds.Contains(g)).Select(h => new PageDocument(o.PageNumber, h)));
+            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => documentIds.Contains(g)).Select(h => new DocumentPointer(o.PageNumber, h)));
         }
 
         public PhysicalDocumentPageMap? GetDocumentPageMap(uint documentId)

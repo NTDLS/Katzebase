@@ -290,7 +290,7 @@ namespace Katzebase.Engine.Indexes
 
         #region Core methods.
 
-        internal Dictionary<uint, PageDocument> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
+        internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
             IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
         {
             var workingPhysicalIndexLeaf = physicalIndexPages.Root;
@@ -336,7 +336,7 @@ namespace Katzebase.Engine.Indexes
 
                 if (lastFoundPhysicalIndexLeaf?.Documents?.Any() == true) //If we are at the base of the tree then there is no need to go further down.
                 {
-                    return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new PageDocument(o.PageNumber, o.DocumentId));
+                    return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
                 }
                 else
                 {
@@ -346,7 +346,7 @@ namespace Katzebase.Engine.Indexes
 
             if (foundAnything == false)
             {
-                return new Dictionary<uint, PageDocument>();
+                return new Dictionary<uint, DocumentPointer>();
             }
 
             Utility.EnsureNotNull(workingPhysicalIndexLeaf);
@@ -362,7 +362,7 @@ namespace Katzebase.Engine.Indexes
         /// <summary>
         /// Finds document IDs given a set of conditions.
         /// </summary>
-        internal Dictionary<uint, PageDocument> MatchDocuments(Transaction transaction,
+        internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction,
             PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
         {
             var workingPhysicalIndexLeaf = physicalIndexPages.Root;
@@ -408,7 +408,7 @@ namespace Katzebase.Engine.Indexes
 
                 if (lastFoundPhysicalIndexLeaf?.Documents?.Any() == true) //If we are at the base of the tree then there is no need to go further down.
                 {
-                    return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new PageDocument(o.PageNumber, o.DocumentId));
+                    return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
                 }
                 else
                 {
@@ -418,7 +418,7 @@ namespace Katzebase.Engine.Indexes
 
             if (foundAnything == false)
             {
-                return new Dictionary<uint, PageDocument>();
+                return new Dictionary<uint, DocumentPointer>();
             }
 
             Utility.EnsureNotNull(workingPhysicalIndexLeaf);
@@ -437,9 +437,9 @@ namespace Katzebase.Engine.Indexes
         /// </summary>
         /// <param name="indexEntires"></param>
         /// <returns></returns>
-        private Dictionary<uint, PageDocument> DistillIndexLeaves(PhysicalIndexLeaf physicalIndexLeaf)
+        private Dictionary<uint, DocumentPointer> DistillIndexLeaves(PhysicalIndexLeaf physicalIndexLeaf)
         {
-            var result = new List<PageDocument>();
+            var result = new List<DocumentPointer>();
 
             void DistillIndexLeavesRecursive(PhysicalIndexLeaf physicalIndexLeaf)
             {
@@ -450,13 +450,13 @@ namespace Katzebase.Engine.Indexes
 
                 if (physicalIndexLeaf?.Documents?.Any() == true)
                 {
-                    result.AddRange(physicalIndexLeaf.Documents.Select(o => new PageDocument(o.PageNumber, o.DocumentId)));
+                    result.AddRange(physicalIndexLeaf.Documents.Select(o => new DocumentPointer(o.PageNumber, o.DocumentId)));
                 }
             }
 
             if (physicalIndexLeaf?.Documents?.Any() == true)
             {
-                result.AddRange(physicalIndexLeaf.Documents.Select(o => new PageDocument(o.PageNumber, o.DocumentId)));
+                result.AddRange(physicalIndexLeaf.Documents.Select(o => new DocumentPointer(o.PageNumber, o.DocumentId)));
             }
             else if (physicalIndexLeaf?.Children != null)
             {
@@ -586,7 +586,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        private void UpdateDocumentIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument, PageDocument pageDocument)
+        private void UpdateDocumentIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument, DocumentPointer documentPointer)
         {
             try
             {
@@ -595,8 +595,8 @@ namespace Katzebase.Engine.Indexes
                 //Loop though each index in the schema.
                 foreach (var physicalIindex in indexCatalog.Collection)
                 {
-                    DeleteDocumentFromIndex(transaction, physicalSchema, physicalIindex, pageDocument);
-                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, physicalDocument, pageDocument);
+                    DeleteDocumentFromIndex(transaction, physicalSchema, physicalIindex, documentPointer);
+                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, physicalDocument, documentPointer);
                 }
             }
             catch (Exception ex)
@@ -612,7 +612,7 @@ namespace Katzebase.Engine.Indexes
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void InsertDocumentIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument, PageDocument pageDocument)
+        internal void InsertDocumentIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument, DocumentPointer documentPointer)
         {
             try
             {
@@ -621,7 +621,7 @@ namespace Katzebase.Engine.Indexes
                 //Loop though each index in the schema.
                 foreach (var physicalIindex in indexCatalog.Collection)
                 {
-                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, physicalDocument, pageDocument);
+                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, physicalDocument, documentPointer);
                 }
             }
             catch (Exception ex)
@@ -635,17 +635,17 @@ namespace Katzebase.Engine.Indexes
         /// Inserts an index entry for a single document into a single index using the file name from the index object.
         /// </summary>
         private void InsertDocumentIntoIndex(Transaction transaction, PhysicalSchema physicalSchema,
-            PhysicalIndex physicalIindex, PhysicalDocument document, PageDocument pageDocument)
+            PhysicalIndex physicalIindex, PhysicalDocument document, DocumentPointer documentPointer)
         {
             var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
-            InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document, pageDocument, physicalIndexPages, true);
+            InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document, documentPointer, physicalIndexPages, true);
         }
 
         /// <summary>
         /// Inserts an index entry for a single document into a single index using a long lived index page catalog.
         /// </summary>
         private void InsertDocumentIntoIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIindex,
-            PhysicalDocument document, PageDocument pageDocument, PhysicalIndexPages physicalIndexPages, bool flushPageCatalog)
+            PhysicalDocument document, DocumentPointer documentPointer, PhysicalIndexPages physicalIndexPages, bool flushPageCatalog)
         {
             try
             {
@@ -683,7 +683,7 @@ namespace Katzebase.Engine.Indexes
                 }
 
                 //Add the document to the lowest index extent.
-                indexScanResult.Leaf.Documents.Add(new PhysicalIndexEntry(pageDocument.DocumentId, pageDocument.PageNumber));
+                indexScanResult.Leaf.Documents.Add(new PhysicalIndexEntry(documentPointer.DocumentId, documentPointer.PageNumber));
 
                 if (flushPageCatalog)
                 {
@@ -719,14 +719,14 @@ namespace Katzebase.Engine.Indexes
 
         #endregion
 
-        private void RebuildIndexThreadProc(ThreadPoolQueue<PageDocument, RebuildIndexThreadParam> pool, RebuildIndexThreadParam? param)
+        private void RebuildIndexThreadProc(ThreadPoolQueue<DocumentPointer, RebuildIndexThreadParam> pool, RebuildIndexThreadParam? param)
         {
             Utility.EnsureNotNull(param);
 
             while (pool.ContinueToProcessQueue)
             {
-                var pageDocument = pool.DequeueWorkItem();
-                if (pageDocument == null)
+                var documentPointer = pool.DequeueWorkItem();
+                if (documentPointer == null)
                 {
                     continue;
                 }
@@ -736,11 +736,11 @@ namespace Katzebase.Engine.Indexes
                     throw new KbNullException($"Value should not be null {nameof(param.PhysicalSchema.DiskPath)}.");
                 }
 
-                var PhysicalDocument = core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, pageDocument.DocumentId, LockOperation.Read);
+                var PhysicalDocument = core.Documents.GetDocument(param.Transaction, param.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
 
                 lock (param.SyncObject)
                 {
-                    InsertDocumentIntoIndex(param.Transaction, param.PhysicalSchema, param.PhysicalIindex, PhysicalDocument, pageDocument, param.PhysicalIndexPages, false);
+                    InsertDocumentIntoIndex(param.Transaction, param.PhysicalSchema, param.PhysicalIindex, PhysicalDocument, documentPointer, param.PhysicalIndexPages, false);
                 }
             }
         }
@@ -755,7 +755,7 @@ namespace Katzebase.Engine.Indexes
         {
             try
             {
-                var documentCatalog = core.Documents.GetPageDocuments(transaction, physicalSchema, LockOperation.Read).ToList();
+                var documentPointers = core.Documents.GetDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
 
                 //Clear out the existing index pages.
                 core.IO.PutPBuf(transaction, physicalIindex.DiskPath, new PhysicalIndexPages());
@@ -764,20 +764,20 @@ namespace Katzebase.Engine.Indexes
 
                 var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
                 var threadParam = new RebuildIndexThreadParam(transaction, physicalSchema, physicalIndexPages, physicalIindex);
-                int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentCatalog.Count);
+                int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentPointers.Count);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
-                var threadPool = ThreadPoolQueue<PageDocument, RebuildIndexThreadParam>
+                var threadPool = ThreadPoolQueue<DocumentPointer, RebuildIndexThreadParam>
                     .CreateAndStart(RebuildIndexThreadProc, threadParam, threadCount);
                 ptThreadCreation?.StopAndAccumulate();
 
-                foreach (var pageDocument in documentCatalog)
+                foreach (var documentPointer in documentPointers)
                 {
                     if (threadPool.HasException || threadPool.ContinueToProcessQueue == false)
                     {
                         break;
                     }
 
-                    threadPool.EnqueueWorkItem(pageDocument);
+                    threadPool.EnqueueWorkItem(documentPointer);
                 }
 
                 var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
@@ -793,7 +793,7 @@ namespace Katzebase.Engine.Indexes
             }
         }
 
-        internal void DeleteDocumentFromIndexes(Transaction transaction, PhysicalSchema physicalSchema, PageDocument pageDocument)
+        internal void DeleteDocumentFromIndexes(Transaction transaction, PhysicalSchema physicalSchema, DocumentPointer documentPointer)
         {
             try
             {
@@ -802,7 +802,7 @@ namespace Katzebase.Engine.Indexes
                 //Loop though each index in the schema.
                 foreach (var physicalIindex in indexCatalog.Collection)
                 {
-                    DeleteDocumentFromIndex(transaction, physicalSchema, physicalIindex, pageDocument);
+                    DeleteDocumentFromIndex(transaction, physicalSchema, physicalIindex, documentPointer);
                 }
             }
             catch (Exception ex)
@@ -839,14 +839,14 @@ namespace Katzebase.Engine.Indexes
         /// <summary>
         /// Removes a document from an index. Locks the index page catalog for write.
         /// </summary>
-        private void DeleteDocumentFromIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIindex, PageDocument pageDocument)
+        private void DeleteDocumentFromIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIindex, DocumentPointer documentPointer)
         {
             try
             {
                 var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
 
                 //TODO: We migth be able to work the page number into this:
-                if (RemoveDocumentFromLeaves(physicalIndexPages.Root, pageDocument.DocumentId))
+                if (RemoveDocumentFromLeaves(physicalIndexPages.Root, documentPointer.DocumentId))
                 {
                     core.IO.PutPBuf(transaction, physicalIindex.DiskPath, physicalIndexPages);
                 }

@@ -4,7 +4,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 {
     public class MSQDocumentLookupResult
     {
-        public PageDocument PageDocument { get; set; }
+        public DocumentPointer DocumentPointer { get; set; }
         public List<string> Values { get; set; } = new();
         public Dictionary<string, string> ConditionFields = new();
 
@@ -14,9 +14,9 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             Values[ordinal] = value;
         }
 
-        public MSQDocumentLookupResult(PageDocument pageDocument, int fieldCount)
+        public MSQDocumentLookupResult(DocumentPointer documentPointer, int fieldCount)
         {
-            PageDocument = pageDocument;
+            DocumentPointer = documentPointer;
             Values.AddRange(new string[fieldCount]);
         }
     }

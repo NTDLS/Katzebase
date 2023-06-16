@@ -324,7 +324,7 @@ namespace Katzebase.UI.Classes
                             stringBuilder.Append($"\t{wt.Name} -> Total: {wt.Value:n0}");
                             if (wt.MetricType == PublicLibrary.Constants.KbMetricType.Cumulative)
                             {
-                                stringBuilder.Append($"    Count: {wt.Count:n0}    Average: {(wt.Value/ wt.Count):n2}");
+                                stringBuilder.Append($"    Count: {wt.Count:n0}    Average: {(wt.Value / wt.Count):n2}");
                             }
                             stringBuilder.AppendLine();
                         }

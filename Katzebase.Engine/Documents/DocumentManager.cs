@@ -377,17 +377,17 @@ namespace Katzebase.Engine.Documents
         /// <param name="transaction"></param>
         /// <param name="physicalSchema"></param>
         /// <param name="documentId"></param>
-        internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, PageDocument pageDocument, LockOperation lockIntention)
+        internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, DocumentPointer documentPointer, LockOperation lockIntention)
         {
-            var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(pageDocument), lockIntention);
-            return physicalDocumentPage.Documents.First(o => o.Key == pageDocument.DocumentId).Value;
+            var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(documentPointer), lockIntention);
+            return physicalDocumentPage.Documents.First(o => o.Key == documentPointer.DocumentId).Value;
         }
 
-        internal IEnumerable<PageDocument> GetPageDocuments(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
+        internal IEnumerable<DocumentPointer> GetDocumentPointers(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
         {
             //Open the document page catalog:
             var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
-            return documentPageCatalog.ConsolidatedPageDocuments();
+            return documentPageCatalog.ConsolidatedDocumentPointers();
         }
 
         internal PhysicalDocumentPageCatalog GetDocumentPageCatalog(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
@@ -452,7 +452,7 @@ namespace Katzebase.Engine.Documents
             core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);
 
             //Update all of the indexes that referecne the document.
-            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new PageDocument(documentPage.PageNumber, physicalDocument.Id));
+            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new DocumentPointer(documentPage.PageNumber, physicalDocument.Id));
         }
 
         /// <summary>
@@ -461,57 +461,31 @@ namespace Katzebase.Engine.Documents
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void UpdateDocument(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument)
+        internal void UpdateDocument(Transaction transaction, PhysicalSchema physicalSchema, uint documentId, string content)
         {
-            PhysicalDocumentPage documentPage;
-
             //Open the document page catalog:
             var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
             Utility.EnsureNotNull(documentPageCatalog);
 
-            physicalDocument.Id = documentPageCatalog.ConsumeNextDocumentId();
-
             //Get the page that the document current exists in, if any.
-            var physicalPageMap = documentPageCatalog.GetDocumentPageMap(physicalDocument.Id);
+            var physicalPageMap = documentPageCatalog.GetDocumentPageMap(documentId);
             if (physicalPageMap == null)
             {
-                //The document doesnt exist in any pages, see if we can find one with some room:
-                physicalPageMap = documentPageCatalog.GetPageWithRoomForNewDocument(core.Settings.DocumentPageSize);
-
-                if (physicalPageMap == null)
-                {
-                    //Still didnt find a page with room, we're going to have to create a new "page catalog item",
-                    // add the given document ID to it and add that catalog item to the catalog collection:
-                    physicalPageMap = new PhysicalDocumentPageMap(documentPageCatalog.NextPageNumber());
-                    physicalPageMap.DocumentIDs.Add(physicalDocument.Id);
-
-                    //We created a new page item, add it to the catalog:
-                    documentPageCatalog.PageMappings.Add(physicalPageMap);
-
-                    //Create the new page, this will store the actual document contents.
-                    documentPage = new PhysicalDocumentPage(physicalPageMap.PageNumber);
-
-                    //Add the given document to the page document.
-                    documentPage.Documents.Add(physicalDocument.Id, physicalDocument);
-                }
-                else
-                {
-                    //We found a page with space, just add the document ID to the page catalog item.
-                    physicalPageMap.DocumentIDs.Add(physicalDocument.Id);
-
-                    //Open the page and add the document to it.
-                    documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), LockOperation.Write);
-
-                    //Add the given document to the page document.
-                    documentPage.Documents.Add(physicalDocument.Id, physicalDocument);
-                }
+                throw new KbObjectNotFoundException($"The document with the ID [{documentId}] was not found.");
             }
-            else
+
+            //We found a page that contains the document, we need to open the page and modify the document with the given document id.
+            var documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), LockOperation.Write);
+
+            var newPhysicalDocument = new PhysicalDocument()
             {
-                //We found a page that contains the document, we need to open the page and modify the document with the given document id.
-                documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), LockOperation.Write);
-                documentPage.Documents[physicalDocument.Id] = physicalDocument;
-            }
+                Id = documentId,
+                Content = content,
+                Created = documentPage.Documents[documentId].Created,
+                Modfied = DateTime.UtcNow
+            };
+
+            documentPage.Documents[documentId] = newPhysicalDocument;
 
             //Save the document page:
             core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), documentPage);
@@ -520,7 +494,7 @@ namespace Katzebase.Engine.Documents
             core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);
 
             //Update all of the indexes that referecne the document.
-            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new PageDocument(documentPage.PageNumber, physicalDocument.Id));
+            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, newPhysicalDocument, new DocumentPointer(documentPage.PageNumber, newPhysicalDocument.Id));
         }
 
 
