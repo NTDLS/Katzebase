@@ -88,7 +88,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
                             foreach (var matchedCondition in matchedNonCovertedConditions)
                             {
-                                handledKeyNames.Add(new PrefixedField(matchedCondition.Left.Key));
+                                handledKeyNames.Add(PrefixedField.Parse(matchedCondition.Left.Key));
                             }
 
                             if (matchedNonCovertedConditions.Any() == false)

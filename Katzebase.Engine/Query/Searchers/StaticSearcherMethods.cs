@@ -27,9 +27,9 @@ namespace Katzebase.Engine.Query.Searchers
 
             if (documentPageCatalog.PageMappings.Count > 0)
             {
-                Random random = new Random(Environment.TickCount);
+                var random = new Random(Environment.TickCount);
 
-                for (int i = 0; i < rowLimit || rowLimit == 0; i++)
+                for (int i = 0; i < rowLimit; i++)
                 {
                     int pageNumber = random.Next(0, documentPageCatalog.PageMappings.Count - 1);
                     var pageMap = documentPageCatalog.PageMappings[pageNumber];
@@ -46,11 +46,6 @@ namespace Katzebase.Engine.Query.Searchers
                         {
                             result.Fields.Add(new KbQueryField(jToken.Key));
                         }
-                    }
-
-                    if (rowLimit == 0) //We just want a field list.
-                    {
-                        break;
                     }
 
                     var resultRow = new KbQueryRow();
@@ -118,42 +113,8 @@ namespace Katzebase.Engine.Query.Searchers
         {
             var result = new KbQueryResult();
 
-            if (query.SelectFields.Count == 1 && query.SelectFields[0].Field == "*")
-            {
-                query.SelectFields.Clear();
-
-                var ptSample = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Sampling);
-                foreach (var schema in query.Schemas)
-                {
-                    var sample = SampleSchemaDocuments(core, transaction, schema.Name, 0);
-
-                    foreach (var field in sample.Fields)
-                    {
-                        if (schema.Prefix != string.Empty)
-                        {
-                            query.SelectFields.Add(schema.Prefix, field.Name, $"{schema.Prefix}.{field.Name}");
-                        }
-                        else
-                        {
-                            query.SelectFields.Add($"{field.Name}");
-                        }
-                    }
-                }
-                ptSample?.StopAndAccumulate();
-            }
-            else if (query.SelectFields.Count == 0)
-            {
-                query.SelectFields.Clear();
-                throw new KbGenericException("No fields were selected.");
-            }
-
-            if (query.Schemas.Count == 0)
-            {
-                //I'm not even sure we can get here. Thats an exception, right?
-                throw new KbGenericException("No schemas were selected.");
-            }
             //If we are querying a single schema, then we just have to apply the conditions in a few threads. Hand off the request and make it so.
-            else if (query.Schemas.Count == 1)
+            if (query.Schemas.Count == 1)
             {
                 //-------------------------------------------------------------------------------------------------------------
                 //This is where we do SSQ stuff (Single Schema Query), e.g. queried with NO joins.

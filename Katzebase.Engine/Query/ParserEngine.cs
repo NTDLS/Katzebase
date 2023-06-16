@@ -372,14 +372,11 @@ namespace Katzebase.Engine.Query
                 result.Schemas.Add(new QuerySchema(token));
 
                 token = query.GetNextToken();
-                if (token != string.Empty)
+                if (int.TryParse(token, out int topCount) == false)
                 {
-                    if (int.TryParse(token, out int topCount) == false)
-                    {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected top count.");
-                    }
-                    result.RowLimit = topCount;
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected top count.");
                 }
+                result.RowLimit = topCount;
 
                 if (query.IsEnd() == false)
                 {
@@ -478,7 +475,14 @@ namespace Katzebase.Engine.Query
 
                     query.SwapFieldLiteral(ref fieldAlias);
 
-                    result.SelectFields.Add(fieldPrefix, fieldName, fieldAlias);
+                    if (fieldName == "*")
+                    {
+                        result.DynamicallyBuildSelectList = true;
+                    }
+                    else
+                    {
+                        result.SelectFields.Add(fieldPrefix, fieldName, fieldAlias);
+                    }
 
                     if (query.IsCurrentChar(','))
                     {
@@ -758,7 +762,7 @@ namespace Katzebase.Engine.Query
                     throw new KbParserException($"The order-by schema alias {field.Prefix} was not found in the query.");
                 }
 
-                if (result.SelectFields.Where(o => o.Key == field.Key).Any() == false)
+                if (result.SelectFields.Where(o => o.Key == field.Key).Any() == false && result.DynamicallyBuildSelectList == false)
                 {
                     throw new KbParserException($"The sort-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
                 }
@@ -774,7 +778,7 @@ namespace Katzebase.Engine.Query
 
             foreach (var field in result.SelectFields)
             {
-                if (field.Field != "*" && result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
+                if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
                 {
                     throw new KbParserException($"The select schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
                 }
@@ -785,6 +789,29 @@ namespace Katzebase.Engine.Query
                 if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
                 {
                     throw new KbParserException($"The condition schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
+                }
+            }
+
+            if (result.QueryType == QueryType.Select)
+            {
+                if (result.DynamicallyBuildSelectList == false && result.SelectFields.Count == 0)
+                {
+                    throw new KbParserException("No fields were selected.");
+                }
+
+                if (result.DynamicallyBuildSelectList == true && result.Schemas.Count > 1)
+                {
+                    throw new KbParserException("Multi-schema queries do not support dynamic field-sets.");
+                }
+
+                if (result.Schemas.Count == 0)
+                {
+                    throw new KbParserException("No schemas were selected.");
+                }
+
+                if (result.DynamicallyBuildSelectList == true && result.SelectFields.Count > 0)
+                {
+                    throw new KbParserException("Queries with dynamic field-sets cannot also contain explicit fields.");
                 }
             }
 

@@ -2,24 +2,19 @@
 {
     public class PrefixedFields : List<PrefixedField>
     {
+
+        public new PrefixedField Add(PrefixedField field)
+        {
+            field.Ordinal = this.Count;
+            base.Add(field);
+            return field;
+        }
+
         public PrefixedField Add(string key)
         {
-            string prefix = string.Empty;
-            string field = key;
-
-            if (key.Contains('.'))
-            {
-                var parts = key.Split('.');
-                prefix = parts[0];
-                field = parts[1];
-            }
-
-            var newField = new PrefixedField(prefix, field)
-            {
-                Ordinal = this.Count
-            };
+            var newField = PrefixedField.Parse(key);
+            newField.Ordinal = this.Count;
             this.Add(newField);
-
             return newField;
         }
 

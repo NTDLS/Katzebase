@@ -8,6 +8,7 @@ using Katzebase.Engine.Threading;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
@@ -76,7 +77,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             }
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
-            var threadParam = new LookupThreadParam(core, transaction, physicalSchema, query, lookupOptimization);
+            var threadParam = new LookupThreadParam(core, transaction, physicalSchema, query, lookupOptimization, querySchema);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), pageDocuments.Count);
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<PageDocument, LookupThreadParam>.CreateAndStart(GetDocumentsByConditionsThreadProc, threadParam, threadCount);
@@ -137,14 +138,17 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             public Transaction Transaction { get; private set; }
             public PreparedQuery Query { get; private set; }
             public ConditionLookupOptimization? LookupOptimization { get; private set; }
+            public QuerySchema QuerySchema { get; set; }
 
-            public LookupThreadParam(Core core, Transaction transaction, PhysicalSchema physicalSchema, PreparedQuery query, ConditionLookupOptimization? lookupOptimization)
+            public LookupThreadParam(Core core, Transaction transaction,
+                PhysicalSchema physicalSchema, PreparedQuery query, ConditionLookupOptimization? lookupOptimization, QuerySchema querySchema)
             {
                 Core = core;
                 Transaction = transaction;
                 PhysicalSchema = physicalSchema;
                 Query = query;
                 LookupOptimization = lookupOptimization;
+                QuerySchema = querySchema;
             }
         }
 
@@ -184,6 +188,26 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
                 if (evaluation)
                 {
                     var result = new SSQDocumentLookupResult(physicalDocument.Id);
+
+                    if (param.Query.DynamicallyBuildSelectList)
+                    {
+                        var dynamicFields = new List<PrefixedField>();
+                        foreach (var jToken in jContent)
+                        {
+                            dynamicFields.Add(new PrefixedField(param.QuerySchema.Prefix, jToken.Key));
+                        }
+
+                        lock (param.Query.SelectFields)
+                        {
+                            foreach (var dynamicField in dynamicFields)
+                            {
+                                if (param.Query.SelectFields.Any(o => o.Key == dynamicField.Key) == false)
+                                {
+                                    param.Query.SelectFields.Add(dynamicField);
+                                }
+                            }
+                        }
+                    }
 
                     foreach (var field in param.Query.SelectFields)
                     {

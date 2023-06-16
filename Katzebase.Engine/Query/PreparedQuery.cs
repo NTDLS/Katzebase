@@ -13,6 +13,8 @@ namespace Katzebase.Engine.Query
             IsUnique
         }
 
+        public bool DynamicallyBuildSelectList { get; set; } = false;
+
         public Dictionary<QueryAttribute, object> Attributes { get; set; } = new();
         public List<QuerySchema> Schemas { get; set; } = new();
         public int RowLimit { get; set; }

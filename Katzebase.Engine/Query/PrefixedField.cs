@@ -8,11 +8,17 @@
         public int Ordinal { get; internal set; } = -1;
         public string Key => (Prefix == string.Empty) ? Field : $"{Prefix}.{Field}";
 
-        public PrefixedField(string field)
+        public static PrefixedField Parse(string fieldText)
         {
-            Field = field.ToLower();
-            Alias = field;
-            Prefix = string.Empty;
+            if (fieldText.Contains('.'))
+            {
+                var parts = fieldText.Split('.');
+                return new PrefixedField(parts[0], parts[1]);
+            }
+            else
+            {
+                return new PrefixedField(string.Empty, fieldText);
+            }
         }
 
         public PrefixedField(string prefix, string field)

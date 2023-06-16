@@ -1,13 +1,7 @@
 --SET TraceWaitTimes on;
 
+sample documents AdventureWorks2012:Production:Product 
 
-SELECT /*TOP 5*/ --Should yeild 457 records
-	g.Name,
-	g.ProductNumber,
-FROM
-	AdventureWorks2012:Production:Product as g
---WHERE
-	--g.Name = 'Road-750 Black, 52'
 
 
 /*
