@@ -1,13 +1,8 @@
 using Katzebase.PublicLibrary;
-using Katzebase.PublicLibrary.Client;
-using Katzebase.PublicLibrary.Exceptions;
-using Katzebase.PublicLibrary.Payloads;
 using Katzebase.UI.Classes;
 using Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
-using System.Text;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Katzebase.UI
 {

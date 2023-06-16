@@ -2,12 +2,12 @@
 {
     public class SSQDocumentLookupResult
     {
-        public Guid RID { get; set; }
+        public uint DocumentId { get; set; }
         public List<string> Values { get; set; } = new List<string>();
 
-        public SSQDocumentLookupResult(Guid rid)
+        public SSQDocumentLookupResult(uint documentId)
         {
-            RID = rid;
+            DocumentId = documentId;
         }
     }
 }

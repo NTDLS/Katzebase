@@ -6,12 +6,12 @@
     public class PageDocument
     {
         public int PageNumber { get; private set; }
-        public Guid Id { get; set; }
+        public uint DocumentId { get; set; }
 
-        public PageDocument(Guid id, int pageNumber)
+        public PageDocument(int pageNumber, uint documentId)
         {
-            Id = id;
             PageNumber = pageNumber;
+            DocumentId = documentId;
         }
     }
 }

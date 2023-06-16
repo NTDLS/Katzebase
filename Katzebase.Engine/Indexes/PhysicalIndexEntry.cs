@@ -9,11 +9,11 @@ namespace Katzebase.Engine.Indexes
         public int PageNumber { get; private set; }
 
         [ProtoMember(2)]
-        public Guid Id { get; set; }
+        public uint DocumentId { get; set; }
 
-        public PhysicalIndexEntry(Guid id, int pageNumber)
+        public PhysicalIndexEntry(uint documentId, int pageNumber)
         {
-            Id = id;
+            DocumentId = documentId;
             PageNumber = pageNumber;
         }
 

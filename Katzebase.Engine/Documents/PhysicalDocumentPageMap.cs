@@ -8,7 +8,7 @@
     public class PhysicalDocumentPageMap
     {
         public int PageNumber { get; set; }
-        public HashSet<Guid> DocumentIDs { get; set; } = new();
+        public HashSet<uint> DocumentIDs { get; set; } = new();
 
         public PhysicalDocumentPageMap(int pageNumber)
         {

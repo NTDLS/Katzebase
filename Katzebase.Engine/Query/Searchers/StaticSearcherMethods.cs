@@ -1,16 +1,10 @@
-﻿using Katzebase.Engine.Documents;
-using Katzebase.Engine.Query.Searchers.MultiSchema;
+﻿using Katzebase.Engine.Query.Searchers.MultiSchema;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
 using Katzebase.Engine.Query.Searchers.SingleSchema;
-using Katzebase.Engine.Schemas;
-using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
-using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
-using System.Collections.Generic;
-using System;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
@@ -92,7 +86,7 @@ namespace Katzebase.Engine.Query.Searchers
             {
                 var pageDocuent = documentCatalog[i];
 
-                var persistDocument = core.Documents.GetDocument(transaction, physicalSchema, pageDocuent.Id, LockOperation.Read);
+                var persistDocument = core.Documents.GetDocument(transaction, physicalSchema, pageDocuent.DocumentId, LockOperation.Read);
 
                 var jContent = JObject.Parse(persistDocument.Content);
 

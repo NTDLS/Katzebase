@@ -190,14 +190,13 @@ namespace Katzebase.Engine.Documents
         /// <param name="document"></param>
         /// <param name="newId"></param>
         /// <exception cref="KbObjectNotFoundException"></exception>
-        public KbActionResponse Store(ulong processId, string schema, KbDocument document, out Guid? newId)
+        public KbActionResponse Store(ulong processId, string schema, KbDocument document)
         {
             try
             {
                 var result = new KbActionResponse();
 
                 var physicalDocument = PhysicalDocument.FromPayload(document);
-                physicalDocument.Id = Guid.NewGuid();
                 physicalDocument.Created = DateTime.UtcNow;
                 physicalDocument.Modfied = DateTime.UtcNow;
 
@@ -206,8 +205,6 @@ namespace Katzebase.Engine.Documents
                     var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Write);
 
                     PutDocument(txRef.Transaction, physicalSchema, physicalDocument);
-
-                    newId = physicalDocument.Id;
 
                     txRef.Commit();
 
@@ -327,7 +324,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="transaction"></param>
         /// <param name="physicalSchema"></param>
         /// <param name="documentId"></param>
-        internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, Guid documentId, LockOperation lockIntention)
+        internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, uint documentId, LockOperation lockIntention)
         {
             //Open the document page catalog:
             var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
@@ -351,7 +348,7 @@ namespace Katzebase.Engine.Documents
         internal PhysicalDocument GetDocument(Transaction transaction, PhysicalSchema physicalSchema, PageDocument pageDocument, LockOperation lockIntention)
         {
             var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(pageDocument), lockIntention);
-            return physicalDocumentPage.Documents.First(o => o.Key == pageDocument.Id).Value;
+            return physicalDocumentPage.Documents.First(o => o.Key == pageDocument.DocumentId).Value;
         }
 
         internal IEnumerable<PageDocument> GetPageDocuments(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
@@ -381,6 +378,8 @@ namespace Katzebase.Engine.Documents
             //Open the document page catalog:
             var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
             Utility.EnsureNotNull(documentPageCatalog);
+
+            physicalDocument.Id = documentPageCatalog.ConsumeNextDocumentId();
 
             //Get the page that the document current exists in, if any.
             var physicalPageMap = documentPageCatalog.GetDocumentPageMap(physicalDocument.Id);
@@ -431,7 +430,7 @@ namespace Katzebase.Engine.Documents
             core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);
 
             //Update all of the indexes that referecne the document.
-            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new PageDocument(physicalDocument.Id, documentPage.PageNumber));
+            core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new PageDocument(documentPage.PageNumber, physicalDocument.Id));
         }
 
         #endregion

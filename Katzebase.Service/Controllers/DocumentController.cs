@@ -70,13 +70,8 @@ namespace Katzebase.Service.Controllers
 
                 Utility.EnsureNotNull(content);
 
-                Guid? newId = Guid.Empty;
+                Program.Core.Documents.Store(processId, schema, content);
 
-                Program.Core.Documents.Store(processId, schema, content, out newId);
-
-                Utility.EnsureNotNullOrEmpty(newId);
-
-                result.Id = (Guid)newId;
                 result.Success = true;
             }
             catch (Exception ex)

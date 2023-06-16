@@ -1,5 +1,4 @@
 ﻿using ProtoBuf;
-using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Indexes
 {

@@ -10,7 +10,7 @@ namespace Katzebase.Engine.Documents
     public class PhysicalDocument
     {
         public string Content { get; set; } = string.Empty;
-        public Guid Id { get; set; }
+        public uint Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime Modfied { get; set; }
 
