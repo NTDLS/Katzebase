@@ -13,10 +13,13 @@ INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
 WHERE
 	PSC.Name = 'Road Bikes'
 	and TH.TransactionId > 200000
+	AND P.Name = 'Road-750 Black, 52'
 ORDER BY
 	P.ProductNumber asc,
 	TH.TransactionId desc
-	
+
+
+
 /*
 select * from AdventureWorks2012:Production:TransactionHistory as TH
 WHERE TH.ProductID = 820
@@ -26,26 +29,21 @@ WHERE TH.ProductID = 820
 drop index IX_TransactionHistory_ProductID_ActualCost
 on AdventureWorks2012:Production:TransactionHistory
 */
+
 /*
+CREATE INDEX IX_Product_Name
+(
+	Name
+) ON AdventureWorks2012:Production:Product;
 CREATE INDEX IX_TransactionHistory_ProductID_ActualCost
 (
 	ProductID,
 	ActualCost
 ) ON AdventureWorks2012:Production:TransactionHistory;
-
-Rollback Transaction;
-*/
-
-/*
 CREATE INDEX IX_ProductSubcategory_ProductSubcategoryID
 (
 	ProductSubcategoryID
-) ON AdventureWorks2012:Production:ProductSubcategory
-
-*/
-
-/*
---This is the one that was taking forver!!
+) ON AdventureWorks2012:Production:ProductSubcategory;
 CREATE INDEX IX_TransactionHistory_TransactionId
 (
 	TransactionId

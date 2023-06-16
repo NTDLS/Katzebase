@@ -11,7 +11,7 @@
 
         public int NextPageNumber() => PageMappings.Count;
 
-        public int TotalPageCount()
+        public int TotalDocumentCount()
         {
             return PageMappings.SelectMany(o => o.DocumentIDs).Count();
         }

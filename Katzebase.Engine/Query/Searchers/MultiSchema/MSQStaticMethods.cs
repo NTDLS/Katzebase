@@ -4,6 +4,7 @@ using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Intersection;
 using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
 using Katzebase.Engine.Query.Sorting;
+using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Threading;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
@@ -23,21 +24,69 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
         internal static MSQDocumentLookupResults GetDocumentsByConditions(Core core, Transaction transaction,
             MSQQuerySchemaMap schemaMap, PreparedQuery query)
         {
-            //TODO: Here we should evaluate whatever conditions we can to early emilinate the top level document scans.
-
             var topLevel = schemaMap.First();
             var topLevelMap = topLevel.Value;
 
+            var pageDocuments = topLevelMap.DocumentPageCatalog.ConsolidatedPageDocuments();
+
+            ConditionLookupOptimization? lookupOptimization = null;
+
+            //TODO: Here we should evaluate whatever conditions we can to early eliminate the top level document scans.
+            //If we dont have any conditions then we just need to return all rows from the schema.
+            if (query.Conditions.Subsets.Count > 0)
+            {
+                lookupOptimization = ConditionLookupOptimization.Build(core, transaction, topLevelMap.PhysicalSchema, query.Conditions);
+
+                var limitedPageDocuments = new List<PageDocument>();
+
+                if (lookupOptimization.CanApplyIndexing())
+                {
+                    //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
+                    pageDocuments = new List<PageDocument>();
+
+                    //All condition subsets have a selected index. Start building a list of possible document IDs.
+                    foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
+                    {
+                        Utility.EnsureNotNull(subset.IndexSelection);
+
+                        var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
+                        var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, physicalIndexPages, subset.IndexSelection, subset);
+
+                        limitedPageDocuments.AddRange(indexMatchedDocuments.Select(o => o.Value));
+                    }
+
+                    pageDocuments = limitedPageDocuments;
+                }
+                else
+                {
+                    #region Why no indexing? Find out here!
+                    //   * One or more of the conditon subsets lacks an index.
+                    //   *
+                    //   *   Since indexing requires that we can ensure document elimination we will have
+                    //   *      to ensure that we have a covering index on EACH-and-EVERY conditon group.
+                    //   *
+                    //   *   Then we can search the indexes for each condition group to obtain a list of all possible
+                    //   *       document IDs, then use those document IDs to early eliminate documents from the main lookup loop.
+                    //   *
+                    //   *   If any one conditon group does not have an index, then no indexing will be used at all since all
+                    //   *      documents will need to be scaned anyway. To prevent unindexed scans, reduce the number of
+                    //   *      condition groups (nested in parentheses).
+                    //   *
+                    //   * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we cant use an index.
+                    //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
+                    //*
+                    #endregion
+                }
+            }
+
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query);
-
-            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), topLevelMap.DocumentPageCatalog.TotalPageCount());
-
+            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), schemaMap.TotalDocumentCount());
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<PageDocument, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
             ptThreadCreation?.StopAndAccumulate();
 
-            foreach (var pageDocument in topLevelMap.DocumentPageCatalog.ConsolidatedPageDocuments())
+            foreach (var pageDocument in pageDocuments)
             {
                 if (threadPool.HasException || threadPool.ContinueToProcessQueue == false)
                 {

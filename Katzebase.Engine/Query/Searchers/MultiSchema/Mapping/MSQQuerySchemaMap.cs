@@ -31,5 +31,11 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
         {
             Add(key, new MSQQuerySchemaMapItem(core, Transaction, physicalSchema, docuemntCatalog, conditions));
         }
+
+        public int TotalDocumentCount()
+        {
+            return this.Sum(o => o.Value.DocumentPageCatalog.TotalDocumentCount());
+        }
+
     }
 }

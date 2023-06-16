@@ -13,7 +13,7 @@ namespace Katzebase.TestHarness
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
             Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
 
-            //Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/");
+            //Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/", false);
 
             #region Misc. Tests & stuff.
 

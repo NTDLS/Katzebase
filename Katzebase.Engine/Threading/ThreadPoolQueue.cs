@@ -21,7 +21,7 @@ namespace Katzebase.Engine.Threading
             int minThreads = 1;
             if (session.MinQueryThreads != null)
             {
-                maxThreads = (int)session.MinQueryThreads;
+                minThreads = (int)session.MinQueryThreads;
             }
 
             int threads = (int)Math.Ceiling((expectedItemCount / 10000.0));
