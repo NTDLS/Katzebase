@@ -99,7 +99,7 @@ namespace Katzebase.Engine.Query.Searchers
         }
 
         /// <summary>
-        /// Finds all documents using a prepared query.
+        /// Finds all documents using a prepared query. Performs all filtering and ordering.
         /// </summary>
         internal static KbQueryResult FindDocumentsByPreparedQuery(Core core, Transaction transaction, PreparedQuery query)
         {
@@ -120,7 +120,7 @@ namespace Katzebase.Engine.Query.Searchers
              *  Then we use the conditions that were supplied to eliminate results from that dataset.
             */
 
-            var subsetResults = StaticMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, false);
+            var subsetResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query);
 
             foreach (var field in query.SelectFields)
             {
@@ -135,12 +135,16 @@ namespace Katzebase.Engine.Query.Searchers
             return result;
         }
 
-        internal static IEnumerable<DocumentPointer> FindDocumentPointersByPreparedQuery(Core core, Transaction transaction, PreparedQuery query)
+        /// <summary>
+        /// Executes a prepared query (select, update, delete, etc) and returns just the distinct document pointers for the specified schema.
+        /// </summary>
+        /// <param name="core"></param>
+        /// <param name="transaction"></param>
+        /// <param name="query"></param>
+        /// <param name="schemaPrefix"></param>
+        /// <returns></returns>
+        internal static IEnumerable<DocumentPointer> FindDocumentPointersByPreparedQuery(Core core, Transaction transaction, PreparedQuery query, string schemaPrefix)
         {
-            var result = new List<DocumentPointer>();
-
-            throw new KbNotImplementedException("Need to implement MSQ justReturnDocumentPointers");
-
             var schemaMap = new QuerySchemaMap(core, transaction);
 
             foreach (var querySchema in query.Schemas)
@@ -151,7 +155,7 @@ namespace Katzebase.Engine.Query.Searchers
                 schemaMap.Add(querySchema.Prefix, physicalSchema, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
-            var subsetResults = StaticMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, true);
+            var subsetResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, schemaPrefix);
             return subsetResults.DocumentPointers;
         }
 

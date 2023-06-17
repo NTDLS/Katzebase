@@ -10,19 +10,26 @@ using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
+using static Katzebase.Engine.Documents.DocumentPointer;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 using static Katzebase.PublicLibrary.Constants;
 
 namespace Katzebase.Engine.Query.Searchers
 {
-    internal static class StaticMethods
+    internal static class StaticSchemaIntersectionMethods
     {
         /// <summary>
         /// Build a generic key/value dataset which is the combined fieldset from each inner joined document.
         /// </summary>
+        /// <param name="core"></param>
+        /// <param name="transaction"></param>
+        /// <param name="schemaMap"></param>
+        /// <param name="query"></param>
+        /// <param name="gatherDocumentPointersForSchemaPrefix">When not null, the process will focus on obtaining a list of DocumentPointers instead of key/values. This is used for UPDATES and DELETES.</param>
+        /// <returns></returns>
         internal static DocumentLookupResults GetDocumentsByConditions(Core core, Transaction transaction,
-            QuerySchemaMap schemaMap, PreparedQuery query, bool justReturnDocumentPointers)
+            QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix = null)
         {
             var topLevel = schemaMap.First();
             var topLevelMap = topLevel.Value;
@@ -79,7 +86,7 @@ namespace Katzebase.Engine.Query.Searchers
             }
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
-            var threadParam = new LookupThreadParam(core, transaction, schemaMap, query, justReturnDocumentPointers);
+            var threadParam = new LookupThreadParam(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), schemaMap.TotalDocumentCount());
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<DocumentPointer, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
@@ -127,6 +134,12 @@ namespace Katzebase.Engine.Query.Searchers
                 threadParam.Results.Collection = threadParam.Results.Collection.Take(query.RowLimit).ToList();
             }
 
+            if (gatherDocumentPointersForSchemaPrefix != null)
+            {
+                //Distill the document pointers to a distinct list. Can we do this in the threads? Maybe prevent the dups in the first place?
+                threadParam.Results.DocumentPointers = threadParam.Results.DocumentPointers.Distinct(new DocumentPageEqualityComparer()).ToList();
+            }
+
             return threadParam.Results;
         }
 
@@ -134,16 +147,16 @@ namespace Katzebase.Engine.Query.Searchers
 
         private class LookupThreadParam
         {
-            public bool JustReturnDocumentPointers { get; set; }
+            public string? GatherDocumentPointersForSchemaPrefix { get; set; } = null;
             public DocumentLookupResults Results = new();
             public QuerySchemaMap SchemaMap { get; private set; }
             public Core Core { get; private set; }
             public Transaction Transaction { get; private set; }
             public PreparedQuery Query { get; private set; }
 
-            public LookupThreadParam(Core core, Transaction transaction, QuerySchemaMap schemaMap, PreparedQuery query, bool justReturnDocumentPointers)
+            public LookupThreadParam(Core core, Transaction transaction, QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
             {
-                JustReturnDocumentPointers = justReturnDocumentPointers;
+                GatherDocumentPointersForSchemaPrefix = gatherDocumentPointersForSchemaPrefix;
                 Core = core;
                 Transaction = transaction;
                 SchemaMap = schemaMap;
@@ -201,7 +214,6 @@ namespace Katzebase.Engine.Query.Searchers
 
             if (param.SchemaMap.Count > 1)
             {
-
                 IntersectAllSchemasRecursive(param, workingDocument, topLevel, 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
             }
 
@@ -221,7 +233,12 @@ namespace Katzebase.Engine.Query.Searchers
 
                 foreach (var documentPointer in firstSchemaResultDocumentPointers)
                 {
-                    var schemaResultValues = new DocumentLookupResult(documentPointer.Value, param.Query.SelectFields.Count);
+                    var schemaResultValues = new DocumentLookupResult(param.Query.SelectFields.Count);
+
+                    if (param.GatherDocumentPointersForSchemaPrefix != null)
+                    {
+                        schemaResultValues.AddSchemaDocumentPointer(firstSchemaMap.Prefix, documentPointer.Value);
+                    }
 
                     //Add the values from the top level schema.
                     FillInSchemaResultDocumentValues(param, firstSchemaMap, firstSchemaResult.Key, documentPointer.Value, ref schemaResultValues, jThreadScopedContentCache);
@@ -235,6 +252,11 @@ namespace Katzebase.Engine.Query.Searchers
 
                         foreach (var nextLevelDocumentPointer in nextLevelDocumentPointers)
                         {
+                            if (param.GatherDocumentPointersForSchemaPrefix != null)
+                            {
+                                schemaResultValues.AddSchemaDocumentPointer(nextLevelAccumulationMap.Prefix, nextLevelDocumentPointer.Value);
+                            }
+
                             FillInSchemaResultDocumentValues(param, nextLevelAccumulationMap, nextResult.Key, nextLevelDocumentPointer.Value, ref schemaResultValues, jThreadScopedContentCache);
                         }
                     }
@@ -248,14 +270,28 @@ namespace Katzebase.Engine.Query.Searchers
                     var constrainedResults = ApplyQueryGlobalConditions(param, schemaResultRows);
                     lock (param.Results)
                     {
-                        param.Results.AddRange(constrainedResults);
+                        if (param.GatherDocumentPointersForSchemaPrefix == null)
+                        {
+                            param.Results.AddRange(constrainedResults);
+                        }
+                        else
+                        {
+                            param.Results.DocumentPointers.AddRange(constrainedResults.Select(o => o.SchemaDocumentPointers[param.GatherDocumentPointersForSchemaPrefix]));
+                        }
                     }
                 }
                 else
                 {
                     lock (param.Results)
                     {
-                        param.Results.AddRange(schemaResultRows);
+                        if (param.GatherDocumentPointersForSchemaPrefix == null)
+                        {
+                            param.Results.AddRange(schemaResultRows);
+                        }
+                        else
+                        {
+                            param.Results.DocumentPointers.AddRange(schemaResultRows.Collection.Select(o => o.SchemaDocumentPointers[param.GatherDocumentPointersForSchemaPrefix]));
+                        }
                     }
                 }
             }
@@ -469,49 +505,51 @@ namespace Katzebase.Engine.Query.Searchers
         /// Gets the values of all selected fields from document.
         /// </summary>
         private static void FillInSchemaResultDocumentValues(LookupThreadParam param, QuerySchemaMapItem accumulationMap,
-            string schemaKey, DocumentPointer documentPointers, ref DocumentLookupResult schemaResultValues, Dictionary<string, JObject> jThreadScopedContentCache)
+            string schemaKey, DocumentPointer documentPointer, ref DocumentLookupResult schemaResultValues, Dictionary<string, JObject> jThreadScopedContentCache)
         {
-            var persistDocument = param.Core.Documents.AcquireDocument(param.Transaction, accumulationMap.PhysicalSchema, documentPointers, LockOperation.Read);
+            var persistDocument = param.Core.Documents.AcquireDocument(param.Transaction, accumulationMap.PhysicalSchema, documentPointer, LockOperation.Read);
 
-            var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{documentPointers.DocumentId}"];
+            var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{documentPointer.DocumentId}"];
 
-            if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
+            if (param.GatherDocumentPointersForSchemaPrefix == null)
             {
-                var fields = new List<PrefixedField>();
-                foreach (var jField in jIndexContent)
+                if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
                 {
-                    fields.Add(new PrefixedField(schemaKey, $"{jField.Key}", schemaKey == string.Empty ? $"{jField.Key}" : $"{schemaKey}.{jField.Key}"));
-                }
-
-                lock (param.Query.SelectFields)
-                {
-                    bool fieldAdded = false;
-                    foreach (var field in fields)
+                    var fields = new List<PrefixedField>();
+                    foreach (var jField in jIndexContent)
                     {
-                        if (param.Query.SelectFields.Any(o => o.Key == field.Key) == false)
+                        fields.Add(new PrefixedField(schemaKey, $"{jField.Key}", schemaKey == string.Empty ? $"{jField.Key}" : $"{schemaKey}.{jField.Key}"));
+                    }
+
+                    lock (param.Query.SelectFields)
+                    {
+                        bool fieldAdded = false;
+                        foreach (var field in fields)
                         {
-                            param.Query.SelectFields.Add(field);
-                            fieldAdded = true;
+                            if (param.Query.SelectFields.Any(o => o.Key == field.Key) == false)
+                            {
+                                param.Query.SelectFields.Add(field);
+                                fieldAdded = true;
+                            }
+                        }
+
+                        if (fieldAdded)
+                        {
+                            schemaResultValues.Resize(param.Query.SelectFields.Count);
                         }
                     }
-
-                    if (fieldAdded)
-                    {
-                        schemaResultValues.Resize(param.Query.SelectFields.Count);
-                    }
                 }
 
-            }
-
-            //Grab all of the selected fields from the document.
-            foreach (var selectField in param.Query.SelectFields.Where(o => o.Prefix == schemaKey))
-            {
-                if (!jIndexContent.TryGetValue(selectField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                //Grab all of the selected fields from the document.
+                foreach (var selectField in param.Query.SelectFields.Where(o => o.Prefix == schemaKey))
                 {
-                    throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
-                }
+                    if (!jIndexContent.TryGetValue(selectField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                    {
+                        throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
+                    }
 
-                schemaResultValues.InsertValue(selectField.Ordinal, token?.ToString() ?? "");
+                    schemaResultValues.InsertValue(selectField.Ordinal, token?.ToString() ?? "");
+                }
             }
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.

@@ -6,5 +6,6 @@
         public string? Message { get; set; }
         public KbMetricCollection? Metrics { get; set; }
         public string? Explanation { get; set; }
+        public int RowCount { get; set; }
     }
 }

@@ -1,10 +1,42 @@
 --SET TraceWaitTimes on;
 
---delete from AdventureWorks2012:Production:Product
---where Name = 'Test-Name'
+--delete from AdventureWorks2012:Production:Product where Name = 'Does not exist';
+--delete from AdventureWorks2012:Production:Product where Name = 'Bearing Ball';
 
-select * from AdventureWorks2012:Production:Product
---where Name = 'Test-Name'
+DELETE th FROM
+	AdventureWorks2012:Production:Product as p
+INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
+	ON p.ProductID = th.ProductID
+    AND p.ListPrice = th.ActualCost
+INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
+	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
+WHERE
+	PSC.Name = 'Road Bikes'
+	and TH.TransactionId > 200000
+	AND P.Name = 'Road-750 Black, 52'
+	
+/*
+delete from
+	AdventureWorks2012:Production:Product as p
+INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
+	ON psc.ProductSubcategoryID = p.ProductSubcategoryID;
+*/
+
+/*
+DELETE FROM
+	AdventureWorks2012:Production:Product as p
+INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
+	ON p.ProductID = th.ProductID
+    AND p.ListPrice = th.ActualCost
+INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
+	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
+WHERE
+	PSC.Name = 'Road Bikes'
+	and TH.TransactionId > 200000
+	AND P.Name = 'Road-750 Black, 52'
+*/	
+--delete from AdventureWorks2012:Production:Product as p
+--where p.Name = 'Bearing Ball'
 
 /*
 INSERT INTO AdventureWorks2012:Production:Product

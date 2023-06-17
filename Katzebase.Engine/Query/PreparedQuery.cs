@@ -10,7 +10,8 @@ namespace Katzebase.Engine.Query
         internal enum QueryAttribute
         {
             IndexName,
-            IsUnique
+            IsUnique,
+            SpecificSchemaPrefix
         }
 
         public bool DynamicallyBuildSelectList { get; set; } = false;

@@ -25,7 +25,7 @@ namespace Katzebase.Engine.Query
 
         public string Prefix { get; set; } = string.Empty;
 
-        public string Key => $"{Prefix}.{_value}";
+        public string Key => string.IsNullOrEmpty(Prefix) ? (_value ?? "") : $"{Prefix}.{_value}";
 
         public SmartValue()
         {

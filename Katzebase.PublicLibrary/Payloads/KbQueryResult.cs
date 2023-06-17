@@ -9,6 +9,7 @@
         {
             return new KbQueryResult()
             {
+                RowCount = actionResponse.RowCount,
                 Success = actionResponse.Success,
                 Message = actionResponse.Message,
                 Metrics = actionResponse.Metrics,

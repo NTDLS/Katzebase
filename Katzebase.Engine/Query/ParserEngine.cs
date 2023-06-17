@@ -695,9 +695,15 @@ namespace Katzebase.Engine.Query
             #region Delete ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Delete)
             {
-                if (query.IsNextTokenConsume("from") == false)
+                token = query.GetNextToken().ToLower();
+                if (token != "from")
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.Breadcrumbs.Last() + "], expected select, [from].");
+                    result.Attributes.Add(PreparedQuery.QueryAttribute.SpecificSchemaPrefix, token);
+
+                    if (query.IsNextTokenConsume("from") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found [" + query.Breadcrumbs.Last() + "], expected select, [from].");
+                    }
                 }
 
                 string sourceSchema = query.GetNextToken();
@@ -798,13 +804,38 @@ namespace Katzebase.Engine.Query
 
                 if (token.ToLower() == "where")
                 {
-                    string conditionText = query.Remainder();
+                    var conditionTokenizer = new ConditionTokenizer(query.Text, query.Position);
+
+                    while (true)
+                    {
+                        int previousTokenPosition = conditionTokenizer.Position;
+                        var conditonToken = conditionTokenizer.GetNextToken();
+
+                        if ((new string[] { "order", "group", "" }).Contains(conditonToken) && conditionTokenizer.IsNextToken("by"))
+                        {
+                            throw new KbParserException("Invalid query. Found [" + conditonToken + "], expected end of statement.");
+                        }
+                        else if (conditonToken == string.Empty)
+                        {
+                            //Set both the conditition and query position to the begining of the "ORDER BY" or "GROUP BY".
+                            conditionTokenizer.SetPosition(previousTokenPosition);
+                            query.SetPosition(previousTokenPosition);
+                            break;
+                        }
+                    }
+
+                    string conditionText = query.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
                     if (conditionText == string.Empty)
                     {
                         throw new KbParserException("Invalid query. Found [" + token + "], expected list of conditions.");
                     }
 
                     result.Conditions = Conditions.Create(conditionText, query.LiteralStrings);
+                }
+
+                if (query.IsEnd() == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
                 }
             }
             #endregion

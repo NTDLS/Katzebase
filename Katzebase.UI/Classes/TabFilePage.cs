@@ -307,7 +307,7 @@ namespace Katzebase.UI.Classes
                     }
 
                     var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                    AppendToOutput($"Batch {batchNumber:n0} of {scripts.Count} completed in {duration:N0}ms.", Color.Black);
+                    AppendToOutput($"Batch {batchNumber:n0} of {scripts.Count} completed in {duration:N0}ms.  ({result.RowCount} rows affected)", Color.Black);
 
                     if (justExplain && string.IsNullOrWhiteSpace(result.Explanation) == false)
                     {

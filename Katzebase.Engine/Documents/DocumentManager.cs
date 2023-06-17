@@ -130,14 +130,27 @@ namespace Katzebase.Engine.Documents
 
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, preparedQuery.Schemas.First().Name, LockOperation.Read);
+                    var firstSchema = preparedQuery.Schemas.First();
 
-                    var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, txRef.Transaction, preparedQuery);
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, firstSchema.Name, LockOperation.Read);
 
-                    DeleteDocuments(txRef.Transaction, physicalSchema, documentPointers.ToArray());
+
+                    string? getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
+
+                    if (preparedQuery.Attributes.ContainsKey(PreparedQuery.QueryAttribute.SpecificSchemaPrefix))
+                    {
+                        getDocumentPointsForSchemaPrefix = (preparedQuery.Attributes[PreparedQuery.QueryAttribute.SpecificSchemaPrefix] as string);
+                    }
+
+                    Utility.EnsureNotNull(getDocumentPointsForSchemaPrefix);
+
+                    var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, txRef.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
+
+                    result.RowCount = documentPointers.Count();
+
+                    //DeleteDocuments(txRef.Transaction, physicalSchema, documentPointers.ToArray());
 
                     txRef.Commit();
-
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
 
 

@@ -4,7 +4,7 @@ namespace Katzebase.Engine.Query.Searchers
 {
     public class DocumentLookupResult
     {
-        public DocumentPointer DocumentPointer { get; set; }
+        public Dictionary<string, DocumentPointer> SchemaDocumentPointers = new();
         public List<string> Values { get; set; } = new();
         public Dictionary<string, string> ConditionFields = new();
 
@@ -14,10 +14,14 @@ namespace Katzebase.Engine.Query.Searchers
             Values[ordinal] = value;
         }
 
-        public DocumentLookupResult(DocumentPointer documentPointer, int fieldCount)
+        public DocumentLookupResult(int fieldCount)
         {
-            DocumentPointer = documentPointer;
             Values.AddRange(new string[fieldCount]);
+        }
+
+        public void AddSchemaDocumentPointer(string schemaPrefix, DocumentPointer documentPointer)
+        {
+            SchemaDocumentPointers.Add(schemaPrefix, documentPointer);
         }
 
         public void Resize(int newCount)
