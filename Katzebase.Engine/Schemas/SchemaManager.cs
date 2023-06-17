@@ -345,18 +345,13 @@ namespace Katzebase.Engine.Schemas
 
         #endregion
 
-        #region Core methods.
+        #region Core get/put/lock methods.
 
-        internal List<PhysicalSchema> AcquireChildren(Transaction transaction, PhysicalSchema node, LockOperation intendedOperation)
+        internal List<PhysicalSchema> AcquireChildren(Transaction transaction, PhysicalSchema schema, LockOperation intendedOperation)
         {
-            List<PhysicalSchema> metaList = new List<PhysicalSchema>();
+            var schemas = new List<PhysicalSchema>();
 
-            if (node.DiskPath == null)
-            {
-                throw new KbNullException($"Value should not be null {nameof(node.DiskPath)}.");
-            }
-
-            string schemaCatalogDiskPath = Path.Combine(node.DiskPath, SchemaCatalogFile);
+            string schemaCatalogDiskPath = Path.Combine(schema.DiskPath, SchemaCatalogFile);
 
             if (core.IO.FileExists(transaction, schemaCatalogDiskPath, intendedOperation))
             {
@@ -364,17 +359,17 @@ namespace Katzebase.Engine.Schemas
 
                 foreach (var catalogItem in schemaCatalog.Collection)
                 {
-                    metaList.Add(new PhysicalSchema()
+                    schemas.Add(new PhysicalSchema()
                     {
-                        DiskPath = node.DiskPath + "\\" + catalogItem.Name,
+                        DiskPath = schema.DiskPath + "\\" + catalogItem.Name,
                         Id = catalogItem.Id,
                         Name = catalogItem.Name,
-                        VirtualPath = node.VirtualPath + ":" + catalogItem.Name
+                        VirtualPath = schema.VirtualPath + ":" + catalogItem.Name
                     });
                 }
             }
 
-            return metaList;
+            return schemas;
         }
 
         internal PhysicalSchema AcquireParent(Transaction transaction, PhysicalSchema child, LockOperation intendedOperation)

@@ -1,6 +1,6 @@
-﻿namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
+﻿namespace Katzebase.Engine.Query.Searchers.Intersection
 {
-    public class MSQSchemaIntersection
+    public class SchemaIntersection
     {
         //public List<string> DebugIDs = new List<string>();
         //public List<MSQSchemaIntersectionDocumentCollection> Documents { get; set; } = new();

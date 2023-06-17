@@ -20,7 +20,8 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
         /// <summary>
         /// Gets all documents by a subset of conditions.
         /// </summary>
-        internal static SSQDocumentLookupResults GetDocumentsByConditions(Core core, Transaction transaction, QuerySchema querySchema, PreparedQuery query)
+        internal static SSQDocumentLookupResults GetDocumentsByConditions(
+            Core core, Transaction transaction, QuerySchema querySchema, PreparedQuery query, bool justReturnDocumentPointers)
         {
             var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
 
@@ -73,7 +74,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             }
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
-            var threadParam = new LookupThreadParam(core, transaction, physicalSchema, query, lookupOptimization, querySchema);
+            var threadParam = new LookupThreadParam(core, transaction, physicalSchema, query, lookupOptimization, querySchema, justReturnDocumentPointers);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentPointers.Count);
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<DocumentPointer, LookupThreadParam>.CreateAndStart(GetDocumentsByConditionsThreadProc, threadParam, threadCount);
@@ -128,6 +129,7 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
         private class LookupThreadParam
         {
+            public bool JustReturnDocumentPointers { get; set; }
             public SSQDocumentLookupResults Results = new();
             public PhysicalSchema PhysicalSchema { get; private set; }
             public Core Core { get; private set; }
@@ -136,9 +138,10 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
             public ConditionLookupOptimization? LookupOptimization { get; private set; }
             public QuerySchema QuerySchema { get; set; }
 
-            public LookupThreadParam(Core core, Transaction transaction,
-                PhysicalSchema physicalSchema, PreparedQuery query, ConditionLookupOptimization? lookupOptimization, QuerySchema querySchema)
+            public LookupThreadParam(Core core, Transaction transaction, PhysicalSchema physicalSchema, PreparedQuery query,
+                ConditionLookupOptimization? lookupOptimization, QuerySchema querySchema, bool justReturnDocumentPointers)
             {
+                JustReturnDocumentPointers = justReturnDocumentPointers;
                 Core = core;
                 Transaction = transaction;
                 PhysicalSchema = physicalSchema;
@@ -183,37 +186,46 @@ namespace Katzebase.Engine.Query.Searchers.SingleSchema
 
                 if (evaluation)
                 {
-                    var result = new SSQDocumentLookupResult(physicalDocument.Id);
-
-                    if (param.Query.DynamicallyBuildSelectList)
+                    if (param.JustReturnDocumentPointers)
                     {
-                        var dynamicFields = new List<PrefixedField>();
-                        foreach (var jToken in jContent)
+                        lock (param.Results)
                         {
-                            dynamicFields.Add(new PrefixedField(param.QuerySchema.Prefix, jToken.Key));
+                            param.Results.DocumentPointers.Add(documentPointer);
                         }
-
-                        lock (param.Query.SelectFields)
+                    }
+                    else
+                    {
+                        var result = new SSQDocumentLookupResult(physicalDocument.Id);
+                        if (param.Query.DynamicallyBuildSelectList)
                         {
-                            foreach (var dynamicField in dynamicFields)
+                            var dynamicFields = new List<PrefixedField>();
+                            foreach (var jToken in jContent)
                             {
-                                if (param.Query.SelectFields.Any(o => o.Key == dynamicField.Key) == false)
+                                dynamicFields.Add(new PrefixedField(param.QuerySchema.Prefix, jToken.Key));
+                            }
+
+                            lock (param.Query.SelectFields)
+                            {
+                                foreach (var dynamicField in dynamicFields)
                                 {
-                                    param.Query.SelectFields.Add(dynamicField);
+                                    if (param.Query.SelectFields.Any(o => o.Key == dynamicField.Key) == false)
+                                    {
+                                        param.Query.SelectFields.Add(dynamicField);
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    foreach (var field in param.Query.SelectFields)
-                    {
-                        jContent.TryGetValue(field.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
-                        result.Values.Add(jToken?.ToString() ?? string.Empty);
-                    }
+                        foreach (var field in param.Query.SelectFields)
+                        {
+                            jContent.TryGetValue(field.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                            result.Values.Add(jToken?.ToString() ?? string.Empty);
+                        }
 
-                    lock (param.Results)
-                    {
-                        param.Results.Add(result);
+                        lock (param.Results)
+                        {
+                            param.Results.Add(result);
+                        }
                     }
                 }
             }

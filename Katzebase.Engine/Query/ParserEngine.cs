@@ -47,6 +47,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
+
             #region Commit ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Commit)
             {
@@ -68,6 +69,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
+
             #region Rollback -------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Rollback)
             {
@@ -89,6 +91,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
+
             #region Create ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Create)
             {
@@ -160,6 +163,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
+
             #region Drop -----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Drop)
             {
@@ -202,6 +206,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
+
             #region Rebuild --------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Rebuild)
             {
@@ -244,51 +249,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
-            #region Delete ---------------------------------------------------------------------------------------------
-            else if (queryType == QueryType.Delete)
-            {
-                /*
-                token = query.GetNextToken();
-                if (token.ToLower() == "top")
-                {
-                    token = query.GetNextToken();
-                    int rowLimit = 0;
 
-                    if (Int32.TryParse(token, out rowLimit) == false)
-                    {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected numeric row limit.");
-                    }
-
-                    result.RowLimit = rowLimit;
-
-                    //Get schema name:
-                    token = query.GetNextToken();
-                }
-
-                if (token == string.Empty || Utilities.IsValidIdentifier(token, "/\\") == false)
-                {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
-                }
-                result.Schema = token;
-
-                token = query.GetNextToken();
-                if (token.ToLower() == "where")
-                {
-                    string conditionText = query.Substring(position).Trim();
-                    if (conditionText == string.Empty)
-                    {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected list of conditions.");
-                    }
-
-                    result.Conditions = ParseConditions(conditionText, literalStrings);
-                }
-                else if (token != string.Empty)
-                {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected end of statement.");
-                }
-                */
-            }
-            #endregion
             #region Update ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Update)
             {
@@ -347,6 +308,7 @@ namespace Katzebase.Engine.Query
                 */
             }
             #endregion
+
             #region Sample ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Sample)
             {
@@ -383,6 +345,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
+
             #region List -----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.List)
             {
@@ -422,6 +385,7 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
+
             #region Select ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Select)
             {
@@ -727,6 +691,124 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
+
+            #region Delete ---------------------------------------------------------------------------------------------
+            else if (queryType == QueryType.Delete)
+            {
+                if (query.IsNextTokenConsume("from") == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + query.Breadcrumbs.Last() + "], expected select, [from].");
+                }
+
+                string sourceSchema = query.GetNextToken();
+                string schemaAlias = string.Empty;
+                if (sourceSchema == string.Empty || TokenHelpers.IsValidIdentifier(sourceSchema, ":") == false)
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                }
+
+                if (query.IsNextToken("as"))
+                {
+                    query.SkipNextToken();
+                    schemaAlias = query.GetNextToken();
+                }
+
+                result.Schemas.Add(new QuerySchema(sourceSchema.ToLower(), schemaAlias.ToLower()));
+
+                while (query.IsNextToken("inner"))
+                {
+                    query.SkipNextToken();
+                    if (query.IsNextToken("join") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected [JOIN].");
+                    }
+                    query.SkipNextToken();
+
+                    string subSchemaSchema = query.GetNextToken();
+                    string subSchemaAlias = string.Empty;
+                    if (subSchemaSchema == string.Empty || TokenHelpers.IsValidIdentifier(subSchemaSchema, ":") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                    }
+
+                    if (query.IsNextToken("as"))
+                    {
+                        query.SkipNextToken();
+                        subSchemaAlias = query.GetNextToken();
+                    }
+                    else
+                    {
+                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected AS (schema alias).");
+                    }
+
+                    token = query.GetNextToken();
+                    if (token.ToLower() != "on")
+                    {
+                        throw new KbParserException("Invalid query. Found [" + token + "], expected ON.");
+                    }
+
+                    int joinConditionsStartPosition = query.Position;
+
+                    while (true)
+                    {
+                        if (query.IsNextToken(new string[] { "where", "inner", "" }))
+                        {
+                            break;
+                        }
+
+                        if (query.IsNextToken(new string[] { "and", "or" }))
+                        {
+                            query.SkipNextToken();
+                        }
+
+                        var joinLeftCondition = query.GetNextToken();
+                        if (joinLeftCondition == string.Empty || TokenHelpers.IsValidIdentifier(joinLeftCondition, ".") == false)
+                        {
+                            throw new KbParserException("Invalid query. Found [" + joinLeftCondition + "], expected left side of join expression.");
+                        }
+
+                        int logicalQualifierPos = query.Position;
+
+                        token = ConditionTokenizer.GetNextToken(query.Text, ref logicalQualifierPos);
+                        if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
+                        {
+                            throw new KbParserException("Invalid query. Found [" + token + "], logical qualifier.");
+                        }
+
+                        query.SetPosition(logicalQualifierPos);
+
+                        var joinRightCondition = query.GetNextToken();
+                        if (joinRightCondition == string.Empty || TokenHelpers.IsValidIdentifier(joinRightCondition, ".") == false)
+                        {
+                            throw new KbParserException("Invalid query. Found [" + joinRightCondition + "], expected right side of join expression.");
+                        }
+                    }
+
+                    var joinConditionsText = query.Text.Substring(joinConditionsStartPosition, query.Position - joinConditionsStartPosition).Trim();
+                    var joinConditions = Conditions.Create(joinConditionsText, query.LiteralStrings, subSchemaAlias);
+
+                    result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLower(), subSchemaAlias.ToLower(), joinConditions));
+                }
+
+                token = query.GetNextToken();
+                if (token != string.Empty && token.ToLower() != "where")
+                {
+                    throw new KbParserException("Invalid query. Found [" + token + "], expected [WHERE] or end of statement.");
+                }
+
+                if (token.ToLower() == "where")
+                {
+                    string conditionText = query.Remainder();
+                    if (conditionText == string.Empty)
+                    {
+                        throw new KbParserException("Invalid query. Found [" + token + "], expected list of conditions.");
+                    }
+
+                    result.Conditions = Conditions.Create(conditionText, query.LiteralStrings);
+                }
+            }
+            #endregion
+
             #region Set ------------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Set)
             {
@@ -736,6 +818,7 @@ namespace Katzebase.Engine.Query
                 result.VariableValues.Add(new KbNameValuePair(variableName, variableValue));
             }
             #endregion
+
             #region Insert ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Insert)
             {
@@ -800,7 +883,6 @@ namespace Katzebase.Engine.Query
                 }
             }
             #endregion
-
 
             #region Cleanup and Validation.
 

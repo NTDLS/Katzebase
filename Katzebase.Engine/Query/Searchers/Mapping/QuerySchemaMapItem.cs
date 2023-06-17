@@ -1,14 +1,15 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query.Constraints;
+using Katzebase.Engine.Query.Searchers.MultiSchema;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 
-namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
+namespace Katzebase.Engine.Query.Searchers.Mapping
 {
     /// <summary>
     /// This class maps the schema and documents to a query supplied schema alias.
     /// </summary>
-    internal class MSQQuerySchemaMapItem
+    internal class QuerySchemaMapItem
     {
         public string Prefix { get; set; }
         public PhysicalSchema PhysicalSchema { get; set; }
@@ -17,7 +18,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
 
         public ConditionLookupOptimization? Optimization { get; set; }
 
-        public MSQQuerySchemaMapItem(Core core, Transaction transaction, MSQQuerySchemaMap schemaMap, PhysicalSchema physicalSchema,
+        public QuerySchemaMapItem(Core core, Transaction transaction, QuerySchemaMap schemaMap, PhysicalSchema physicalSchema,
             PhysicalDocumentPageCatalog documentPageCatalog, Conditions? conditions, string prefix)
         {
             Prefix = prefix;

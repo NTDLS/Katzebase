@@ -3,18 +3,18 @@ using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 
-namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
+namespace Katzebase.Engine.Query.Searchers.Mapping
 {
     /// <summary>
     /// This class maps the schema and documents to a query supplied schema alias.
     /// The key to the dictonary is the schema alias (typically referenced by Condition.Prefix).
     /// </summary>
-    internal class MSQQuerySchemaMap : Dictionary<string, MSQQuerySchemaMapItem>
+    internal class QuerySchemaMap : Dictionary<string, QuerySchemaMapItem>
     {
         private readonly Core core;
         public Transaction Transaction { get; private set; }
 
-        public MSQQuerySchemaMap(Core core, Transaction transaction)
+        public QuerySchemaMap(Core core, Transaction transaction)
         {
             this.core = core;
             Transaction = transaction;
@@ -29,7 +29,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema.Mapping
         /// <param name="conditions">The conditons used to join this schema mapping to the one before it.</param>
         public void Add(string prefix, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog docuemntCatalog, Conditions? conditions)
         {
-            Add(prefix, new MSQQuerySchemaMapItem(core, Transaction, this, physicalSchema, docuemntCatalog, conditions, prefix));
+            Add(prefix, new QuerySchemaMapItem(core, Transaction, this, physicalSchema, docuemntCatalog, conditions, prefix));
         }
 
         public int TotalDocumentCount()

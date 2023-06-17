@@ -1,11 +1,14 @@
-﻿using Katzebase.Engine.Query;
+﻿using Katzebase.Engine.Locking;
+using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Searchers;
+using Katzebase.Engine.Query.Searchers.MultiSchema;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Documents
@@ -99,7 +102,7 @@ namespace Katzebase.Engine.Documents
 
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, preparedQuery.Schemas[0].Prefix, LockOperation.Read);
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, preparedQuery.Schemas[0].n, LockOperation.Read);
 
                     var lookupOptimization = ConditionLookupOptimization.Build(core, txRef.Transaction, physicalSchema, preparedQuery.Conditions);
                     result.Explanation = lookupOptimization.BuildFullVirtualExpression();
@@ -121,19 +124,25 @@ namespace Katzebase.Engine.Documents
 
         internal KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
         {
-            throw new KbNotImplementedException();
-
-            /*
             try
             {
                 var result = new KbActionResponse();
 
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, preparedQuery.Schemas.First().Name, LockOperation.Read);
+
+                    var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, txRef.Transaction, preparedQuery);
+
+                    DeleteDocuments(txRef.Transaction, physicalSchema, documentPointers.ToArray());
+
+                    txRef.Commit();
+
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+
 
                     //TODO: Delete the documents.
-
+                    /*
                     var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
 
                     var physicalDocument = documentCatalog.GetById(newId);
@@ -153,6 +162,7 @@ namespace Katzebase.Engine.Documents
                     txRef.Commit();
 
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    */
                 }
 
                 return result;
@@ -162,7 +172,6 @@ namespace Katzebase.Engine.Documents
                 core.Log.Write($"Failed to ExecuteDelete for process {processId}.", ex);
                 throw;
             }
-            */
         }
 
         #endregion
@@ -179,7 +188,6 @@ namespace Katzebase.Engine.Documents
                 {
                     result = StaticSearcherMethods.SampleSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
                     txRef.Commit();
-
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
@@ -235,11 +243,8 @@ namespace Katzebase.Engine.Documents
                 using (var txRef = core.Transactions.Begin(processId))
                 {
                     var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Write);
-
                     InsertDocument(txRef.Transaction, physicalSchema, physicalDocument);
-
                     txRef.Commit();
-
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
@@ -348,7 +353,7 @@ namespace Katzebase.Engine.Documents
 
         #endregion
 
-        #region Core put/get methods.
+        #region Core put/get/lock methods.
 
         /// <summary>
         /// When we want to read a document we do it here - no exceptions.
@@ -493,6 +498,35 @@ namespace Katzebase.Engine.Documents
             core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, newPhysicalDocument, new DocumentPointer(documentPage.PageNumber, newPhysicalDocument.Id));
         }
 
+        /// <summary>
+        /// When we want to update a document, this is where we do it - no exceptions.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="schema"></param>
+        /// <param name="document"></param>
+        internal void DeleteDocuments(Transaction transaction, PhysicalSchema physicalSchema, DocumentPointer[] documentPointers)
+        {
+            //Open the document page catalog:
+            var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
+            Utility.EnsureNotNull(documentPageCatalog);
+
+            foreach (var documentPointer in documentPointers)
+            {
+                var documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(documentPointer), LockOperation.Write);
+
+                //Remove the item from the document page.
+                documentPage.Documents.Remove(documentPointer.DocumentId);
+
+                //Save the document page:
+                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(documentPointer), documentPage);
+
+                //Save the docuemnt page catalog:
+                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);
+
+                //Update all of the indexes that referecne the document.
+                core.Indexes.DeleteDocumentFromIndexes(transaction, physicalSchema, documentPointer);
+            }
+        }
 
         #endregion
     }

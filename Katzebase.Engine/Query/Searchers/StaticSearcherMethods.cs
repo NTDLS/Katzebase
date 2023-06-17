@@ -1,7 +1,7 @@
-﻿using Katzebase.Engine.Query.Searchers.MultiSchema;
-using Katzebase.Engine.Query.Searchers.MultiSchema.Mapping;
-using Katzebase.Engine.Query.Searchers.SingleSchema;
+﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.Query.Searchers.Mapping;
 using Katzebase.Engine.Transactions;
+using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;
@@ -105,62 +105,54 @@ namespace Katzebase.Engine.Query.Searchers
         {
             var result = new KbQueryResult();
 
-            //If we are querying a single schema, then we just have to apply the conditions in a few threads. Hand off the request and make it so.
-            if (query.Schemas.Count == 1)
+            var schemaMap = new QuerySchemaMap(core, transaction);
+
+            foreach (var querySchema in query.Schemas)
             {
-                //-------------------------------------------------------------------------------------------------------------
-                //This is where we do SSQ stuff (Single Schema Query), e.g. queried with NO joins.
-                //-------------------------------------------------------------------------------------------------------------
-                var singleSchema = query.Schemas.First();
+                var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
+                var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                var subsetResults = SSQStaticMethods.GetDocumentsByConditions(core, transaction, singleSchema, query);
-
-                foreach (var field in query.SelectFields)
-                {
-                    result.Fields.Add(new KbQueryField(field.Alias));
-                }
-
-                foreach (var subsetResult in subsetResults.Collection)
-                {
-                    result.Rows.Add(new KbQueryRow(subsetResult.Values));
-                }
+                schemaMap.Add(querySchema.Prefix, physicalSchema, physicalDocumentPageCatalog, querySchema.Conditions);
             }
-            //If we are querying multiple schemas then we have to intersect the schemas and apply the conditions. Oh boy.
-            else if (query.Schemas.Count > 1)
+
+            /*
+             *  We need to build a generic key/value dataset which is the combined fieldset from each inner joined document.
+             *  Then we use the conditions that were supplied to eliminate results from that dataset.
+            */
+
+            var subsetResults = StaticMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, false);
+
+            foreach (var field in query.SelectFields)
             {
-                //-------------------------------------------------------------------------------------------------------------
-                //This is where we do MSQ stuff (Multi Schema Query), e.g. queried WITH joins.
-                //-------------------------------------------------------------------------------------------------------------
+                result.Fields.Add(new KbQueryField(field.Alias));
+            }
 
-                var schemaMap = new MSQQuerySchemaMap(core, transaction);
-
-                foreach (var querySchema in query.Schemas)
-                {
-                    var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
-                    var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
-
-                    schemaMap.Add(querySchema.Prefix, physicalSchema, physicalDocumentPageCatalog, querySchema.Conditions);
-                }
-
-                /*
-                 *  We need to build a generic key/value dataset which is the combined fieldset from each inner joined document.
-                 *  Then we use the conditions that were supplied to eliminate results from that dataset.
-                */
-
-                var subsetResults = MSQStaticMethods.GetDocumentsByConditions(core, transaction, schemaMap, query);
-
-                foreach (var field in query.SelectFields)
-                {
-                    result.Fields.Add(new KbQueryField(field.Alias));
-                }
-
-                foreach (var subsetResult in subsetResults.Collection)
-                {
-                    result.Rows.Add(new KbQueryRow(subsetResult.Values));
-                }
+            foreach (var subsetResult in subsetResults.Collection)
+            {
+                result.Rows.Add(new KbQueryRow(subsetResult.Values));
             }
 
             return result;
+        }
+
+        internal static IEnumerable<DocumentPointer> FindDocumentPointersByPreparedQuery(Core core, Transaction transaction, PreparedQuery query)
+        {
+            var result = new List<DocumentPointer>();
+
+            throw new KbNotImplementedException("Need to implement MSQ justReturnDocumentPointers");
+
+            var schemaMap = new QuerySchemaMap(core, transaction);
+
+            foreach (var querySchema in query.Schemas)
+            {
+                var physicalSchema = core.Schemas.Acquire(transaction, querySchema.Name, LockOperation.Read);
+                var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
+
+                schemaMap.Add(querySchema.Prefix, physicalSchema, physicalDocumentPageCatalog, querySchema.Conditions);
+            }
+
+            var subsetResults = StaticMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, true);
+            return subsetResults.DocumentPointers;
         }
 
     }

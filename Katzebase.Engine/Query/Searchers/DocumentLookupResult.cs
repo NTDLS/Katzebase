@@ -1,8 +1,8 @@
 ﻿using Katzebase.Engine.Documents;
 
-namespace Katzebase.Engine.Query.Searchers.MultiSchema
+namespace Katzebase.Engine.Query.Searchers
 {
-    public class MSQDocumentLookupResult
+    public class DocumentLookupResult
     {
         public DocumentPointer DocumentPointer { get; set; }
         public List<string> Values { get; set; } = new();
@@ -14,7 +14,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             Values[ordinal] = value;
         }
 
-        public MSQDocumentLookupResult(DocumentPointer documentPointer, int fieldCount)
+        public DocumentLookupResult(DocumentPointer documentPointer, int fieldCount)
         {
             DocumentPointer = documentPointer;
             Values.AddRange(new string[fieldCount]);

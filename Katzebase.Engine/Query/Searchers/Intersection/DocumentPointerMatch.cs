@@ -1,6 +1,6 @@
 ﻿using Katzebase.Engine.Documents;
 
-namespace Katzebase.Engine.Query.Searchers.MultiSchema.Intersection
+namespace Katzebase.Engine.Query.Searchers.Intersection
 {
     internal class DocumentPointerMatch : Dictionary<uint, DocumentPointer>
     {
