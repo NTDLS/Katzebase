@@ -19,5 +19,15 @@ namespace Katzebase.Engine.Query.Searchers
             DocumentPointer = documentPointer;
             Values.AddRange(new string[fieldCount]);
         }
+
+        public void Resize(int newCount)
+        {
+            int difference = newCount - Values.Count;
+            if (difference > 0)
+            {
+                Values.AddRange(new string[difference]);
+            }
+        }
+
     }
 }

@@ -475,6 +475,34 @@ namespace Katzebase.Engine.Query.Searchers
 
             var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{documentPointers.DocumentId}"];
 
+            if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
+            {
+                var fields = new List<PrefixedField>();
+                foreach (var jField in jIndexContent)
+                {
+                    fields.Add(new PrefixedField(schemaKey, $"{jField.Key}", schemaKey == string.Empty ? $"{jField.Key}" : $"{schemaKey}.{jField.Key}"));
+                }
+
+                lock (param.Query.SelectFields)
+                {
+                    bool fieldAdded = false;
+                    foreach (var field in fields)
+                    {
+                        if (param.Query.SelectFields.Any(o => o.Key == field.Key) == false)
+                        {
+                            param.Query.SelectFields.Add(field);
+                            fieldAdded = true;
+                        }
+                    }
+
+                    if (fieldAdded)
+                    {
+                        schemaResultValues.Resize(param.Query.SelectFields.Count);
+                    }
+                }
+
+            }
+
             //Grab all of the selected fields from the document.
             foreach (var selectField in param.Query.SelectFields.Where(o => o.Prefix == schemaKey))
             {

@@ -1,12 +1,10 @@
 --SET TraceWaitTimes on;
 
-delete from AdventureWorks2012:Production:Product
-where Name = 'Test-Name'
+--delete from AdventureWorks2012:Production:Product
+--where Name = 'Test-Name'
 
-/*
 select * from AdventureWorks2012:Production:Product
-where Name = 'Test-Name'
-*/
+--where Name = 'Test-Name'
 
 /*
 INSERT INTO AdventureWorks2012:Production:Product

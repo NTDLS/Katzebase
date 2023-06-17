@@ -941,11 +941,6 @@ namespace Katzebase.Engine.Query
                     throw new KbParserException("No fields were selected.");
                 }
 
-                if (result.DynamicallyBuildSelectList == true && result.Schemas.Count > 1)
-                {
-                    throw new KbParserException("Multi-schema queries do not support dynamic field-sets.");
-                }
-
                 if (result.Schemas.Count == 0)
                 {
                     throw new KbParserException("No schemas were selected.");
