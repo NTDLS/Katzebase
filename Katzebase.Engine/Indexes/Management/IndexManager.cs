@@ -1,7 +1,6 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes.Matching;
 using Katzebase.Engine.KbLib;
-using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Threading;
@@ -14,223 +13,25 @@ using static Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace Katzebase.Engine.Indexes
+namespace Katzebase.Engine.Indexes.Management
 {
     /// <summary>
-    /// This is the class that all API controllers should interface with for index access.
+    /// Provides core index management functionality. Reading, writing, locking, listing, etc.
     /// </summary>
     public class IndexManager
     {
-        private readonly Core core;
+        private Core core;
+        internal IndexQueryHandlers QueryHandlers { get; set; }
+        public IndexAPIHandlers APIHandlers { get; set; }
+
         public IndexManager(Core core)
         {
             this.core = core;
+            QueryHandlers = new IndexQueryHandlers(core);
+            APIHandlers = new IndexAPIHandlers(core);
         }
 
-        #region Query Handlers.
-
-        internal KbActionResponse ExecuteDrop(ulong processId, PreparedQuery preparedQuery)
-        {
-            try
-            {
-                var result = new KbActionResponse();
-                var session = core.Sessions.ByProcessId(processId);
-
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    string schemaName = preparedQuery.Schemas.First().Name;
-
-                    DropIndex(txRef.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
-
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        internal KbActionResponse ExecuteRebuild(ulong processId, PreparedQuery preparedQuery)
-        {
-            try
-            {
-                var result = new KbActionResponse();
-                var session = core.Sessions.ByProcessId(processId);
-
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    string schemaName = preparedQuery.Schemas.First().Name;
-
-                    RebuildIndex(txRef.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
-
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        internal KbActionResponse ExecuteCreate(ulong processId, PreparedQuery preparedQuery)
-        {
-            try
-            {
-                var result = new KbActionResponse();
-
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    string schemaName = preparedQuery.Schemas.First().Name;
-
-                    var index = new KbIndex
-                    {
-                        Name = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName),
-                        IsUnique = preparedQuery.Attribute<bool>(PreparedQuery.QueryAttribute.IsUnique)
-                    };
-
-                    foreach (var field in preparedQuery.SelectFields)
-                    {
-                        index.Attributes.Add(new KbIndexAttribute() { Field = field.Field });
-                    }
-
-                    CreateIndex(txRef.Transaction, schemaName, index, out Guid indexId);
-
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        #endregion
-
-        #region API Handlers.
-
-        public KbActionResponseIndexes APIListIndexes(ulong processId, string schemaName)
-        {
-            var result = new KbActionResponseIndexes();
-            try
-            {
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    var indexCatalog = AcquireIndexCatalog(txRef.Transaction, schemaName, LockOperation.Read);
-                    if (indexCatalog != null)
-                    {
-                        foreach (var index in indexCatalog.Collection)
-                        {
-                            result.Add(PhysicalIndex.ToClientPayload(index));
-                        }
-                    }
-
-
-                    txRef.Commit();
-                }
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to list indexes for process {processId}.", ex);
-                throw;
-            }
-
-            return result;
-        }
-
-        public bool APIDoesIndexExist(ulong processId, string schemaName, string indexName)
-        {
-            bool result = false;
-            try
-            {
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    var indexCatalog = AcquireIndexCatalog(txRef.Transaction, schemaName, LockOperation.Read);
-
-                    result = indexCatalog.GetByName(indexName) != null;
-
-                    txRef.Commit();
-                }
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to create index for process {processId}.", ex);
-                throw;
-            }
-
-            return result;
-        }
-
-        public void APICreateIndex(ulong processId, string schemaName, KbIndex index, out Guid newId)
-        {
-            try
-            {
-                var physicalIndex = PhysicalIndex.FromClientPayload(index);
-
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    CreateIndex(txRef.Transaction, schemaName, index, out newId);
-                    txRef.Commit();
-                }
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to create index for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        public void APIRebuildIndex(ulong processId, string schemaName, string indexName)
-        {
-            try
-            {
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    RebuildIndex(txRef.Transaction, schemaName, indexName);
-                    txRef.Commit();
-                }
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to create index for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        public void APIDropIndex(ulong processId, string schemaName, string indexName)
-        {
-            try
-            {
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    DropIndex(txRef.Transaction, schemaName, indexName);
-                    txRef.Commit();
-                }
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to create index for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        #endregion
-
-        #region Core methods.
-
-        private void CreateIndex(Transaction transaction, string schemaName, KbIndex index, out Guid newId)
+        internal void CreateIndex(Transaction transaction, string schemaName, KbIndex index, out Guid newId)
         {
             var physicalIndex = PhysicalIndex.FromClientPayload(index);
 
@@ -259,10 +60,10 @@ namespace Katzebase.Engine.Indexes
 
             RebuildIndex(transaction, physicalSchema, physicalIndex);
 
-            newId = (Guid)physicalIndex.Id;
+            newId = physicalIndex.Id;
         }
 
-        private void RebuildIndex(Transaction transaction, string schemaName, string indexName)
+        internal void RebuildIndex(Transaction transaction, string schemaName, string indexName)
         {
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
@@ -277,7 +78,7 @@ namespace Katzebase.Engine.Indexes
             RebuildIndex(transaction, physicalSchema, physicalIindex);
         }
 
-        private void DropIndex(Transaction transaction, string schemaName, string indexName)
+        internal void DropIndex(Transaction transaction, string schemaName, string indexName)
         {
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
@@ -474,7 +275,7 @@ namespace Katzebase.Engine.Indexes
             return result.ToDictionary(o => o.DocumentId, o => o);
         }
 
-        private PhysicalIndexCatalog AcquireIndexCatalog(Transaction transaction, string schemaName, LockOperation intendedOperation)
+        internal PhysicalIndexCatalog AcquireIndexCatalog(Transaction transaction, string schemaName, LockOperation intendedOperation)
         {
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, intendedOperation);
             return AcquireIndexCatalog(transaction, physicalSchema, intendedOperation);
@@ -874,7 +675,5 @@ namespace Katzebase.Engine.Indexes
                 throw;
             }
         }
-
-        #endregion
     }
 }

@@ -1,26 +1,22 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
-using Katzebase.Engine.Query;
 using Katzebase.Engine.Trace;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
-using Katzebase.PublicLibrary.Payloads;
-using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Schemas.PhysicalSchema;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace Katzebase.Engine.Schemas
+namespace Katzebase.Engine.Schemas.Management
 {
-    /// <summary>
-    /// This is the class that all API controllers should interface with for schema access.
-    /// </summary>
     public class SchemaManager
     {
         private Core core;
         private string rootCatalogFile;
         private PhysicalSchema? rootPhysicalSchema = null;
+        internal SchemaQueryHandlers QueryHandlers { get; set; }
+        public SchemaAPIHandlers APIHandlers { get; set; }
 
         public PhysicalSchema RootPhysicalSchema
         {
@@ -41,6 +37,8 @@ namespace Katzebase.Engine.Schemas
         public SchemaManager(Core core)
         {
             this.core = core;
+            QueryHandlers = new SchemaQueryHandlers(core);
+            APIHandlers = new SchemaAPIHandlers(core);
 
             rootCatalogFile = Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile);
 
@@ -55,228 +53,12 @@ namespace Katzebase.Engine.Schemas
             }
         }
 
-        #region Query Handlers.
-
-        internal KbQueryResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
-        {
-            try
-            {
-                var result = new KbQueryResult();
-
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    if (preparedQuery.SubQueryType == SubQueryType.Schemas)
-                    {
-                        result = GetListByPreparedQuery(txRef.Transaction, preparedQuery);
-                    }
-                    else
-                    {
-                        throw new KbParserException("Invalid list query subtype.");
-                    }
-
-                    txRef.Commit();
-
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        private KbQueryResult GetListByPreparedQuery(Transaction transaction, PreparedQuery preparedQuery)
-        {
-            var result = new KbQueryResult();
-
-            var schema = preparedQuery.Schemas.First();
-
-            var physicalSchema = core.Schemas.Acquire(transaction, schema.Name, LockOperation.Read);
-
-            //Lock the schema catalog:
-            var filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
-            var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, filePath, LockOperation.Read);
-
-            result.Fields.Add(new KbQueryField("Name"));
-            result.Fields.Add(new KbQueryField("Path"));
-
-            foreach (var item in schemaCatalog.Collection)
-            {
-                if (preparedQuery.RowLimit > 0 && result.Rows.Count >= preparedQuery.RowLimit)
-                {
-                    break;
-                }
-                var resultRow = new KbQueryRow();
-
-                resultRow.AddValue(item.Name);
-                resultRow.AddValue($"{physicalSchema.VirtualPath}:{item.Name}");
-
-                result.Rows.Add(resultRow);
-            }
-
-            return result;
-        }
-
-        #endregion
-
-        #region API handlers.
-
-        public KbActionResponseSchemaCollection APIListSchemas(ulong processId, string schemaName)
-        {
-            try
-            {
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    var physicalSchema = Acquire(txRef.Transaction, schemaName, LockOperation.Read);
-
-                    var result = new KbActionResponseSchemaCollection();
-
-                    if (physicalSchema.DiskPath == null)
-                    {
-                        throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
-                    }
-
-                    var filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
-                    var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(txRef.Transaction, filePath, LockOperation.Read);
-
-                    foreach (var item in schemaCatalog.Collection)
-                    {
-                        result.Add(item.ToClientPayload());
-                    }
-
-                    txRef.Commit();
-
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-
-                    return result;
-                }
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to get schema list for process {processId}.", ex);
-                throw;
-            }
-        }
 
 
-        /// <summary>
-        /// Creates a structure of schemas, denotaed by colons.
-        /// </summary>
-        /// <param name="schemaPath"></param>
-        public void APICreateSchema(ulong processId, string schemaName)
-        {
-            try
-            {
-                var segments = schemaName.Split(':');
-
-                StringBuilder pathBuilder = new StringBuilder();
-
-                foreach (string name in segments)
-                {
-                    pathBuilder.Append(name);
-                    CreateSingleSchema(processId, pathBuilder.ToString());
-                    pathBuilder.Append(":");
-                }
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to create schema lineage for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Returns true if the schema exists.
-        /// </summary>
-        /// <param name="schemaPath"></param>
-        public bool APIDoesSchemaExist(ulong processId, string schemaName)
-        {
-            try
-            {
-                bool result = false;
-
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    var segments = schemaName.Split(':');
-
-                    StringBuilder pathBuilder = new StringBuilder();
-
-                    foreach (string name in segments)
-                    {
-                        pathBuilder.Append(name);
-                        var schema = AcquireVirtual(txRef.Transaction, pathBuilder.ToString(), LockOperation.Read);
-
-                        result = (schema != null && schema.Exists);
-
-                        if (result == false)
-                        {
-                            break;
-                        }
-
-                        pathBuilder.Append(":");
-                    }
-
-                    txRef.Commit();
-                    return result;
-                }
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to confirm schema for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Drops a single schema or an entire schema path.
-        /// </summary>
-        /// <param name="schema"></param>
-        public void APIDropSchema(ulong processId, string schemaName)
-        {
-            try
-            {
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-                    var segments = schemaName.Split(':');
-                    string parentSchemaName = segments[segments.Count() - 1];
-
-                    var physicalSchema = Acquire(txRef.Transaction, schemaName, LockOperation.Write);
-                    var parentPhysicalSchema = AcquireParent(txRef.Transaction, physicalSchema, LockOperation.Write);
-
-                    if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
-                        throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
-
-                    string parentSchemaCatalogFile = Path.Combine(parentPhysicalSchema.DiskPath, SchemaCatalogFile);
-                    var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
-
-                    var nsItem = parentCatalog.Collection.FirstOrDefault(o => o.Name == parentSchemaName);
-                    if (nsItem != null)
-                    {
-                        parentCatalog.Collection.Remove(nsItem);
-
-                        core.IO.DeletePath(txRef.Transaction, physicalSchema.DiskPath);
-
-                        core.IO.PutJson(txRef.Transaction, parentSchemaCatalogFile, parentCatalog);
-                    }
-
-                    txRef.Commit();
-                }
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to drop schema for process {processId}.", ex);
-                throw;
-            }
-        }
-
-        #endregion
 
         #region Core get/put/lock methods.
 
-        private void CreateSingleSchema(ulong processId, string schemaName)
+        public void CreateSingleSchema(ulong processId, string schemaName)
         {
             try
             {

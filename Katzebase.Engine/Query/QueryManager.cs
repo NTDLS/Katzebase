@@ -42,7 +42,7 @@ namespace Katzebase.Engine.Query
                 || preparedQuery.QueryType == QueryType.Delete
                 || preparedQuery.QueryType == QueryType.Update)
             {
-                return core.Documents.ExecuteExplain(processId, preparedQuery);
+                return core.Documents.QueryHandlers.ExecuteExplain(processId, preparedQuery);
             }
             else if (preparedQuery.QueryType == QueryType.Set)
             {
@@ -59,25 +59,25 @@ namespace Katzebase.Engine.Query
         {
             if (preparedQuery.QueryType == QueryType.Select)
             {
-                return core.Documents.ExecuteSelect(processId, preparedQuery);
+                return core.Documents.QueryHandlers.ExecuteSelect(processId, preparedQuery);
             }
             else if (preparedQuery.QueryType == QueryType.Insert)
             {
-                return core.Documents.ExecuteInsert(processId, preparedQuery);
+                return core.Documents.QueryHandlers.ExecuteInsert(processId, preparedQuery);
             }
             else if (preparedQuery.QueryType == QueryType.Sample)
             {
-                return core.Documents.ExecuteSample(processId, preparedQuery);
+                return core.Documents.QueryHandlers.ExecuteSample(processId, preparedQuery);
             }
             else if (preparedQuery.QueryType == QueryType.List)
             {
                 if (preparedQuery.SubQueryType == SubQueryType.Documents)
                 {
-                    return core.Documents.ExecuteList(processId, preparedQuery);
+                    return core.Documents.QueryHandlers.ExecuteList(processId, preparedQuery);
                 }
                 else if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                 {
-                    return core.Schemas.ExecuteList(processId, preparedQuery);
+                    return core.Schemas.QueryHandlers.ExecuteList(processId, preparedQuery);
                 }
                 else
                 {
@@ -110,7 +110,7 @@ namespace Katzebase.Engine.Query
         {
             if (preparedQuery.QueryType == QueryType.Delete)
             {
-                return core.Documents.ExecuteDelete(processId, preparedQuery);
+                return core.Documents.QueryHandlers.ExecuteDelete(processId, preparedQuery);
             }
             else if (preparedQuery.QueryType == QueryType.Set)
             {
@@ -121,7 +121,7 @@ namespace Katzebase.Engine.Query
                 if (preparedQuery.SubQueryType == SubQueryType.Index
                     || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
-                    return core.Indexes.ExecuteRebuild(processId, preparedQuery);
+                    return core.Indexes.QueryHandlers.ExecuteRebuild(processId, preparedQuery);
                 }
                 throw new NotImplementedException();
             }
@@ -130,7 +130,7 @@ namespace Katzebase.Engine.Query
                 if (preparedQuery.SubQueryType == SubQueryType.Index
                     || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
-                    return core.Indexes.ExecuteCreate(processId, preparedQuery);
+                    return core.Indexes.QueryHandlers.ExecuteCreate(processId, preparedQuery);
                 }
                 throw new NotImplementedException();
             }
@@ -139,7 +139,7 @@ namespace Katzebase.Engine.Query
                 if (preparedQuery.SubQueryType == SubQueryType.Index
                     || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
-                    return core.Indexes.ExecuteDrop(processId, preparedQuery);
+                    return core.Indexes.QueryHandlers.ExecuteDrop(processId, preparedQuery);
                 }
                 throw new NotImplementedException();
             }

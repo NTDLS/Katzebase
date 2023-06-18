@@ -1,12 +1,12 @@
 ﻿using Katzebase.Engine.Caching;
-using Katzebase.Engine.Documents;
+using Katzebase.Engine.Documents.Management;
 using Katzebase.Engine.Health;
-using Katzebase.Engine.Indexes;
+using Katzebase.Engine.Indexes.Management;
 using Katzebase.Engine.IO;
 using Katzebase.Engine.Locking;
 using Katzebase.Engine.Logging;
 using Katzebase.Engine.Query;
-using Katzebase.Engine.Schemas;
+using Katzebase.Engine.Schemas.Management;
 using Katzebase.Engine.Sessions;
 using Katzebase.Engine.Transactions;
 using Katzebase.PrivateLibrary;

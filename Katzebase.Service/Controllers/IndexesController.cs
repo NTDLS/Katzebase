@@ -26,7 +26,7 @@ namespace Katzebase.Service.Controllers
 
                 Guid newId = Guid.Empty;
 
-                Program.Core.Indexes.APICreateIndex(processId, schema, content, out newId);
+                Program.Core.Indexes.APIHandlers.CreateIndex(processId, schema, content, out newId);
 
                 result.Id = newId;
                 result.Success = true;
@@ -55,7 +55,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Indexes.APIRebuildIndex(processId, schema, name);
+                Program.Core.Indexes.APIHandlers.RebuildIndex(processId, schema, name);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -82,7 +82,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Indexes.APIDropIndex(processId, schema, name);
+                Program.Core.Indexes.APIHandlers.DropIndex(processId, schema, name);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -109,7 +109,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                result.Value = Program.Core.Indexes.APIDoesIndexExist(processId, schema, name);
+                result.Value = Program.Core.Indexes.APIHandlers.DoesIndexExist(processId, schema, name);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -136,7 +136,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                result = Program.Core.Indexes.APIListIndexes(processId, schema);
+                result = Program.Core.Indexes.APIHandlers.ListIndexes(processId, schema);
 
                 result.Success = true;
             }

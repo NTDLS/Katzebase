@@ -21,7 +21,7 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            return Program.Core.Documents.APIListDocuments(processId, schema, count);
+            return Program.Core.Documents.APIHandlers.ListDocuments(processId, schema, count);
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            return Program.Core.Documents.APIDocumentSample(processId, schema, count);
+            return Program.Core.Documents.APIHandlers.DocumentSample(processId, schema, count);
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            return Program.Core.Documents.APIDocumentCatalog(processId, schema);
+            return Program.Core.Documents.APIHandlers.DocumentCatalog(processId, schema);
         }
 
         [HttpPost]
@@ -69,7 +69,7 @@ namespace Katzebase.Service.Controllers
                 var content = JsonConvert.DeserializeObject<KbDocument>(value);
 
                 Utility.EnsureNotNull(content);
-                Program.Core.Documents.APIStoreDocument(processId, schema, content);
+                Program.Core.Documents.APIHandlers.StoreDocument(processId, schema, content);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -97,7 +97,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Documents.APIDeleteDocumentById(processId, schema, id);
+                Program.Core.Documents.APIHandlers.DeleteDocumentById(processId, schema, id);
                 result.Success = true;
             }
             catch (Exception ex)

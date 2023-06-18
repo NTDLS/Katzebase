@@ -24,7 +24,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                result = Program.Core.Schemas.APIListSchemas(processId, schema);
+                result = Program.Core.Schemas.APIHandlers.ListSchemas(processId, schema);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -51,7 +51,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Schemas.APICreateSchema(processId, schema);
+                Program.Core.Schemas.APIHandlers.CreateSchema(processId, schema);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -78,7 +78,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                result.Value = Program.Core.Schemas.APIDoesSchemaExist(processId, schema);
+                result.Value = Program.Core.Schemas.APIHandlers.DoesSchemaExist(processId, schema);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -105,7 +105,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Schemas.APIDropSchema(processId, schema);
+                Program.Core.Schemas.APIHandlers.DropSchema(processId, schema);
                 result.Success = true;
             }
             catch (Exception ex)
