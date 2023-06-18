@@ -26,7 +26,7 @@ namespace Katzebase.Service.Controllers
 
                 Guid newId = Guid.Empty;
 
-                Program.Core.Indexes.Create(processId, schema, content, out newId);
+                Program.Core.Indexes.APICreateIndex(processId, schema, content, out newId);
 
                 result.Id = newId;
                 result.Success = true;
@@ -55,7 +55,34 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Indexes.Rebuild(processId, schema, name);
+                Program.Core.Indexes.APIRebuildIndex(processId, schema, name);
+                result.Success = true;
+            }
+            catch (Exception ex)
+            {
+                result.Message = ex.Message;
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Drops a single index.
+        /// </summary>
+        /// <param name="schema"></param>
+        [HttpGet]
+        [Route("{sessionId}/{schema}/{name}/Drop")]
+        public KbActionResponse Drop(Guid sessionId, string schema, string name)
+        {
+            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+            Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
+            KbActionResponse result = new KbActionResponseBoolean();
+
+            try
+            {
+                Program.Core.Indexes.APIDropIndex(processId, schema, name);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -82,7 +109,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                result.Value = Program.Core.Indexes.Exists(processId, schema, name);
+                result.Value = Program.Core.Indexes.APIDoesIndexExist(processId, schema, name);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -109,7 +136,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                result.List = Program.Core.Indexes.GetList(processId, schema);
+                result = Program.Core.Indexes.APIListIndexes(processId, schema);
 
                 result.Success = true;
             }

@@ -23,7 +23,7 @@ namespace Katzebase.Service.Controllers
             {
                 var statement = JsonConvert.DeserializeObject<string>(value);
                 Utility.EnsureNotNull(statement);
-                result = Program.Core.Query.ExplainQuery(processId, statement);
+                result = Program.Core.Query.APIExecuteStatementExplain(processId, statement);
 
                 result.Success = true;
             }
@@ -49,7 +49,7 @@ namespace Katzebase.Service.Controllers
             {
                 var statement = JsonConvert.DeserializeObject<string>(value);
                 Utility.EnsureNotNull(statement);
-                result = Program.Core.Query.ExecuteQuery(processId, statement);
+                result = Program.Core.Query.APIExecuteStatementQuery(processId, statement);
 
                 result.Success = true;
             }
@@ -75,7 +75,7 @@ namespace Katzebase.Service.Controllers
             {
                 var statement = JsonConvert.DeserializeObject<string>(value);
                 Utility.EnsureNotNull(statement);
-                result = Program.Core.Query.ExecuteNonQuery(processId, statement);
+                result = Program.Core.Query.APIExecuteStatementNonQuery(processId, statement);
 
                 result.Success = true;
             }

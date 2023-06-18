@@ -21,7 +21,7 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            return Program.Core.Documents.ExecuteList(processId, schema, count);
+            return Program.Core.Documents.APIListDocuments(processId, schema, count);
         }
 
         /// <summary>
@@ -36,7 +36,7 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            return Program.Core.Documents.ExecuteSample(processId, schema, count);
+            return Program.Core.Documents.APIDocumentSample(processId, schema, count);
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            return Program.Core.Documents.EnumerateCatalog(processId, schema);
+            return Program.Core.Documents.APIDocumentCatalog(processId, schema);
         }
 
         [HttpPost]
@@ -69,9 +69,7 @@ namespace Katzebase.Service.Controllers
                 var content = JsonConvert.DeserializeObject<KbDocument>(value);
 
                 Utility.EnsureNotNull(content);
-
-                Program.Core.Documents.Store(processId, schema, content);
-
+                Program.Core.Documents.APIStoreDocument(processId, schema, content);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -88,7 +86,7 @@ namespace Katzebase.Service.Controllers
         /// <param name="schema"></param>
         [HttpGet]
         [Route("{sessionId}/{schema}/{id}/DeleteById")]
-        public KbActionResponse DeleteById(Guid sessionId, string schema, Guid id)
+        public KbActionResponse DeleteById(Guid sessionId, string schema, uint id)
         {
             ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
 
@@ -99,7 +97,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Documents.DeleteById(processId, schema, id);
+                Program.Core.Documents.APIDeleteDocumentById(processId, schema, id);
                 result.Success = true;
             }
             catch (Exception ex)

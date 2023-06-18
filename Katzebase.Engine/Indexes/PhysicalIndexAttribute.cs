@@ -6,7 +6,7 @@ namespace Katzebase.Engine.Indexes
     {
         public string? Field { get; set; }
 
-        public static PhysicalIndexAttribute FromPayload(KbIndexAttribute indexAttribute)
+        public static PhysicalIndexAttribute FromClientPayload(KbIndexAttribute indexAttribute)
         {
             return new PhysicalIndexAttribute()
             {
@@ -14,7 +14,7 @@ namespace Katzebase.Engine.Indexes
             };
         }
 
-        public static KbIndexAttribute ToPayload(PhysicalIndexAttribute indexAttribute)
+        public static KbIndexAttribute ToClientPayload(PhysicalIndexAttribute indexAttribute)
         {
             return new KbIndexAttribute()
             {

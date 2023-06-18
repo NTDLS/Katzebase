@@ -24,7 +24,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                result.AddRange(Program.Core.Schemas.GetList(processId, schema));
+                result = Program.Core.Schemas.APIListSchemas(processId, schema);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -47,11 +47,11 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            KbActionResponse result = new KbActionResponse();
+            var result = new KbActionResponse();
 
             try
             {
-                Program.Core.Schemas.Create(processId, schema);
+                Program.Core.Schemas.APICreateSchema(processId, schema);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -74,11 +74,11 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            KbActionResponseBoolean result = new KbActionResponseBoolean();
+            var result = new KbActionResponseBoolean();
 
             try
             {
-                result.Value = Program.Core.Schemas.Exists(processId, schema);
+                result.Value = Program.Core.Schemas.APIDoesSchemaExist(processId, schema);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -101,11 +101,11 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            KbActionResponse result = new KbActionResponse();
+            var result = new KbActionResponse();
 
             try
             {
-                Program.Core.Schemas.Drop(processId, schema);
+                Program.Core.Schemas.APIDropSchema(processId, schema);
                 result.Success = true;
             }
             catch (Exception ex)

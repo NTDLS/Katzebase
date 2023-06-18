@@ -1,8 +1,9 @@
 --SET TraceWaitTimes on;
 
---delete from AdventureWorks2012:Production:Product where Name = 'Does not exist';
---delete from AdventureWorks2012:Production:Product where Name = 'Bearing Ball';
+select * from AdventureWorks2012:Production:Product where ProductId < 320
+delete from AdventureWorks2012:Production:Product where ProductId < 320
 
+/*
 DELETE th FROM
 	AdventureWorks2012:Production:Product as p
 INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
@@ -14,7 +15,7 @@ WHERE
 	PSC.Name = 'Road Bikes'
 	and TH.TransactionId > 200000
 	AND P.Name = 'Road-750 Black, 52'
-	
+*/	
 /*
 delete from
 	AdventureWorks2012:Production:Product as p

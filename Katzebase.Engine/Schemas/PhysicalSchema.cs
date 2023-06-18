@@ -39,15 +39,6 @@ namespace Katzebase.Engine.Schemas
             return Path.Combine(DiskPath, $"{documentPageCatalogItem.PageNumber}{EngineConstants.DocumentPageExtension}");
         }
 
-        static public KbSchemaItem ToPayload(PhysicalSchema schema)
-        {
-            return new KbSchemaItem()
-            {
-                Id = schema.Id,
-                Name = schema.Name
-            };
-        }
-
         public PhysicalSchema Clone()
         {
             return new PhysicalSchema
@@ -56,6 +47,15 @@ namespace Katzebase.Engine.Schemas
                 Id = Id,
                 Name = Name,
                 VirtualPath = VirtualPath
+            };
+        }
+
+        public KbSchemaItem ToClientPayload()
+        {
+            return new KbSchemaItem()
+            {
+                Id = Id,
+                Name = Name
             };
         }
 

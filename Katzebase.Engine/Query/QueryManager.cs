@@ -13,11 +13,28 @@ namespace Katzebase.Engine.Query
             this.core = core;
         }
 
-        public KbQueryResult ExplainQuery(ulong processId, string statement)
+        #region API handlers.
+
+        public KbQueryResult APIExecuteStatementExplain(ulong processId, string statement)
         {
             var preparedQuery = ParserEngine.ParseQuery(statement);
             return ExplainQuery(processId, preparedQuery);
         }
+
+        public KbQueryResult APIExecuteStatementQuery(ulong processId, string statement)
+        {
+            var preparedQuery = ParserEngine.ParseQuery(statement);
+            return ExecuteQuery(processId, preparedQuery);
+        }
+
+        public KbActionResponse APIExecuteStatementNonQuery(ulong processId, string statement)
+        {
+            var preparedQuery = ParserEngine.ParseQuery(statement);
+            return ExecuteNonQuery(processId, preparedQuery);
+        }
+
+        #endregion
+
 
         internal KbQueryResult ExplainQuery(ulong processId, PreparedQuery preparedQuery)
         {
@@ -37,11 +54,6 @@ namespace Katzebase.Engine.Query
             }
         }
 
-        public KbQueryResult ExecuteQuery(ulong processId, string statement)
-        {
-            var preparedQuery = ParserEngine.ParseQuery(statement);
-            return ExecuteQuery(processId, preparedQuery);
-        }
 
         internal KbQueryResult ExecuteQuery(ulong processId, PreparedQuery preparedQuery)
         {
@@ -92,12 +104,6 @@ namespace Katzebase.Engine.Query
             {
                 throw new NotImplementedException();
             }
-        }
-
-        public KbActionResponse ExecuteNonQuery(ulong processId, string statement)
-        {
-            var preparedQuery = ParserEngine.ParseQuery(statement);
-            return ExecuteNonQuery(processId, preparedQuery);
         }
 
         internal KbActionResponse ExecuteNonQuery(ulong processId, PreparedQuery preparedQuery)

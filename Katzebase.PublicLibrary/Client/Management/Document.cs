@@ -39,7 +39,7 @@ namespace Katzebase.PublicLibrary.Client.Management
         /// </summary>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        public void DeleteById(string schema, Guid id)
+        public void DeleteById(string schema, uint id)
         {
             string url = $"api/Document/{client.SessionId}/{schema}/{id}/DeleteById";
 

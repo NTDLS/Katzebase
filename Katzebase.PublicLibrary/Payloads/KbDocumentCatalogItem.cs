@@ -2,6 +2,6 @@
 {
     public class KbDocumentCatalogItem
     {
-        public Guid Id { get; set; }
+        public uint Id { get; set; }
     }
 }

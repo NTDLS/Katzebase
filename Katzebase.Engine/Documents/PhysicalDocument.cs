@@ -25,7 +25,7 @@ namespace Katzebase.Engine.Documents
             };
         }
 
-        static public PhysicalDocument FromPayload(KbDocument document)
+        static public PhysicalDocument FromClientPayload(KbDocument document)
         {
             return new PhysicalDocument()
             {

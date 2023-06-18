@@ -1,14 +1,11 @@
-﻿using Katzebase.Engine.Locking;
-using Katzebase.Engine.Query;
+﻿using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Searchers;
-using Katzebase.Engine.Query.Searchers.MultiSchema;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Documents
@@ -37,6 +34,7 @@ namespace Katzebase.Engine.Documents
                 {
                     result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
                     txRef.Commit();
+                    result.RowCount = result.Rows.Count;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
@@ -49,6 +47,12 @@ namespace Katzebase.Engine.Documents
             }
         }
 
+        /// <summary>
+        /// Inserts a document into a schema.
+        /// </summary>
+        /// <param name="processId"></param>
+        /// <param name="preparedQuery"></param>
+        /// <returns></returns>
         internal KbQueryResult ExecuteInsert(ulong processId, PreparedQuery preparedQuery)
         {
             try
@@ -60,14 +64,12 @@ namespace Katzebase.Engine.Documents
                     var physicalDocument = new PhysicalDocument();
 
                     var keyValuePairs = preparedQuery.UpsertKeyValuePairs.ToDictionary(o => o.Field.Field, o => o.Value.Value);
-
                     physicalDocument.Content = JsonConvert.SerializeObject(keyValuePairs);
-
                     var physicalSchema = core.Schemas.Acquire(txRef.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
-
                     InsertDocument(txRef.Transaction, physicalSchema, physicalDocument);
 
                     txRef.Commit();
+                    result.RowCount = 1;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
@@ -82,15 +84,13 @@ namespace Katzebase.Engine.Documents
 
         internal KbQueryResult ExecuteSample(ulong processId, PreparedQuery preparedQuery)
         {
-            return ExecuteSample(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
+            return APIDocumentSample(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
         }
 
         internal KbQueryResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
         {
-            throw new KbNotImplementedException();
-            //return ExecuteList(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
+            return APIListDocuments(processId, preparedQuery.Schemas.First().Name, preparedQuery.RowLimit);
         }
-
 
         internal KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
         {
@@ -108,7 +108,7 @@ namespace Katzebase.Engine.Documents
                     result.Explanation = lookupOptimization.BuildFullVirtualExpression();
 
                     txRef.Commit();
-
+                    result.RowCount = 0;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
@@ -146,36 +146,11 @@ namespace Katzebase.Engine.Documents
 
                     var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, txRef.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
 
+                    DeleteDocuments(txRef.Transaction, physicalSchema, documentPointers.ToArray());
+
+                    txRef.Commit();
                     result.RowCount = documentPointers.Count();
-
-                    //DeleteDocuments(txRef.Transaction, physicalSchema, documentPointers.ToArray());
-
-                    txRef.Commit();
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-
-
-                    //TODO: Delete the documents.
-                    /*
-                    var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
-
-                    var physicalDocument = documentCatalog.GetById(newId);
-                    if (physicalDocument != null)
-                    {
-                        string documentDiskPath = Path.Combine(physicalSchema.DiskPath, Helpers.GetDocumentModFilePath(physicalDocument.Id));
-
-                        core.IO.DeleteFile(txRef.Transaction, documentDiskPath);
-
-                        documentCatalog.Remove(physicalDocument);
-
-                        core.Indexes.DeleteDocumentFromIndexes(txRef.Transaction, physicalSchema, physicalDocument.Id);
-
-                        core.IO.PutJson(txRef.Transaction, documentCatalogDiskPath, documentCatalog);
-                    }
-
-                    txRef.Commit();
-
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    */
                 }
 
                 return result;
@@ -191,7 +166,7 @@ namespace Katzebase.Engine.Documents
 
         #region API Handlers.
 
-        public KbQueryResult ExecuteSample(ulong processId, string schemaName, int rowLimit)
+        public KbQueryResult APIDocumentSample(ulong processId, string schemaName, int rowLimit)
         {
             try
             {
@@ -201,6 +176,7 @@ namespace Katzebase.Engine.Documents
                 {
                     result = StaticSearcherMethods.SampleSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
                     txRef.Commit();
+                    result.RowCount = result.Rows.Count;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
@@ -213,7 +189,14 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-        public KbQueryResult ExecuteList(ulong processId, string schemaName, int rowLimit = -1)
+        /// <summary>
+        /// Returns all doucments in a schema with there values.
+        /// </summary>
+        /// <param name="processId"></param>
+        /// <param name="schemaName"></param>
+        /// <param name="rowLimit"></param>
+        /// <returns></returns>
+        public KbQueryResult APIListDocuments(ulong processId, string schemaName, int rowLimit = -1)
         {
             try
             {
@@ -223,6 +206,7 @@ namespace Katzebase.Engine.Documents
                 {
                     result = StaticSearcherMethods.ListSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
                     txRef.Commit();
+                    result.RowCount = result.Rows.Count;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
@@ -243,13 +227,13 @@ namespace Katzebase.Engine.Documents
         /// <param name="document"></param>
         /// <param name="newId"></param>
         /// <exception cref="KbObjectNotFoundException"></exception>
-        public KbActionResponse Store(ulong processId, string schema, KbDocument document)
+        public KbActionResponse APIStoreDocument(ulong processId, string schema, KbDocument document)
         {
             try
             {
                 var result = new KbActionResponse();
 
-                var physicalDocument = PhysicalDocument.FromPayload(document);
+                var physicalDocument = PhysicalDocument.FromClientPayload(document);
                 physicalDocument.Created = DateTime.UtcNow;
                 physicalDocument.Modfied = DateTime.UtcNow;
 
@@ -258,6 +242,7 @@ namespace Katzebase.Engine.Documents
                     var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Write);
                     InsertDocument(txRef.Transaction, physicalSchema, physicalDocument);
                     txRef.Commit();
+                    result.RowCount = 1;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                 }
 
@@ -271,88 +256,29 @@ namespace Katzebase.Engine.Documents
         }
 
         /// <summary>
-        /// Deletes a document by its ID.
-        /// </summary>
-        /// <param name="processId"></param>
-        /// <param name="schema"></param>
-        /// <param name="newId"></param>
-        /// <exception cref="KbObjectNotFoundException"></exception>
-        public KbActionResponse DeleteById(ulong processId, string schema, Guid newId)
-        {
-            throw new KbNotImplementedException();
-
-            /*
-            try
-            {
-                var result = new KbActionResponse();
-                using (var txRef = core.Transactions.Begin(processId))
-                {
-
-                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Write);
-
-                    string documentCatalogDiskPath = Path.Combine(physicalSchema.DiskPath, DocumentCatalogFile);
-
-                    var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, documentCatalogDiskPath, LockOperation.Write);
-
-
-                    var physicalDocument = documentCatalog.GetById(newId);
-                    if (physicalDocument != null)
-                    {
-                        string documentDiskPath = Path.Combine(physicalSchema.DiskPath, Helpers.GetDocumentModFilePath(physicalDocument.Id));
-
-                        core.IO.DeleteFile(txRef.Transaction, documentDiskPath);
-
-                        documentCatalog.Remove(physicalDocument);
-
-                        core.Indexes.DeleteDocumentFromIndexes(txRef.Transaction, physicalSchema, physicalDocument.Id);
-
-                        core.IO.PutJson(txRef.Transaction, documentCatalogDiskPath, documentCatalog);
-                    }
-
-                    txRef.Commit();
-
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                }
-                return result;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to delete document by ID for process {processId}.", ex);
-                throw;
-            }
-            */
-        }
-
-        /// <summary>
-        /// Returns a list of all documents in a schema.
+        /// Returns a list of all documents in a schema. Just the IDs, no values.
         /// </summary>
         /// <param name="processId"></param>
         /// <param name="schema"></param>
         /// <returns></returns>
         /// <exception cref="KbObjectNotFoundException"></exception>
-        public KbDocumentCatalogCollection EnumerateCatalog(ulong processId, string schema)
+        public KbDocumentCatalogCollection APIDocumentCatalog(ulong processId, string schemaName)
         {
-            throw new KbNotImplementedException();
-
-            /*
             try
             {
                 using (var txRef = core.Transactions.Begin(processId))
                 {
-                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Read);
-
-                    var filePath = Path.Combine(physicalSchema.DiskPath, DocumentCatalogFile);
-                    var documentCatalog = core.IO.GetJson<PhysicalDocumentCatalog>(txRef.Transaction, filePath, LockOperation.Read);
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schemaName, LockOperation.Read);
+                    var documentPointers = core.Documents.AcquireDocumentPointers(txRef.Transaction, physicalSchema, LockOperation.Read).ToList();
 
                     var result = new KbDocumentCatalogCollection();
-                    foreach (var item in documentCatalog.Collection)
+                    foreach (var documentPointer in documentPointers)
                     {
-                        result.Add(item.ToPayload());
+                        result.Add(new KbDocumentCatalogItem() { Id = documentPointer.DocumentId });
                     }
                     txRef.Commit();
-
+                    result.RowCount = documentPointers.Count;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-
                     return result;
                 }
             }
@@ -361,8 +287,40 @@ namespace Katzebase.Engine.Documents
                 core.Log.Write($"Failed to get catalog for process {processId}.", ex);
                 throw;
             }
-            */
         }
+
+
+        /// <summary>
+        /// Deletes a document by its ID.
+        /// </summary>
+        public KbActionResponse APIDeleteDocumentById(ulong processId, string schemaName, uint documentId)
+        {
+            try
+            {
+                var result = new KbActionResponse();
+
+                using (var txRef = core.Transactions.Begin(processId))
+                {
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schemaName, LockOperation.Read);
+                    var documentPointers = core.Documents.AcquireDocumentPointers(txRef.Transaction, physicalSchema, LockOperation.Read).ToList();
+
+                    var pointersToDelete = documentPointers.Where(o => o.DocumentId == documentId);
+
+                    DeleteDocuments(txRef.Transaction, physicalSchema, pointersToDelete);
+
+                    txRef.Commit();
+                    result.RowCount = documentPointers.Count;
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to delete document by ID for process {processId}.", ex);
+                throw;
+            }
+        }
+
 
         #endregion
 
@@ -517,7 +475,7 @@ namespace Katzebase.Engine.Documents
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void DeleteDocuments(Transaction transaction, PhysicalSchema physicalSchema, DocumentPointer[] documentPointers)
+        internal void DeleteDocuments(Transaction transaction, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
         {
             //Open the document page catalog:
             var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
@@ -533,12 +491,14 @@ namespace Katzebase.Engine.Documents
                 //Save the document page:
                 core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(documentPointer), documentPage);
 
+                documentPageCatalog.PageMappings[documentPointer.PageNumber].DocumentIDs.Remove(documentPointer.DocumentId);
+
                 //Save the docuemnt page catalog:
                 core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);
-
-                //Update all of the indexes that referecne the document.
-                core.Indexes.DeleteDocumentFromIndexes(transaction, physicalSchema, documentPointer);
             }
+
+            //Update all of the indexes that referecne the documents.
+            core.Indexes.DeleteDocumentsFromIndexes(transaction, physicalSchema, documentPointers);
         }
 
         #endregion

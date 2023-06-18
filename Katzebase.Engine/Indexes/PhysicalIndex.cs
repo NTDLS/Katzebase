@@ -43,7 +43,7 @@ namespace Katzebase.Engine.Indexes
             Attributes.Add(attribute);
         }
 
-        static public PhysicalIndex FromPayload(PublicLibrary.Payloads.KbIndex index)
+        static public PhysicalIndex FromClientPayload(PublicLibrary.Payloads.KbIndex index)
         {
             var persistIndex = new PhysicalIndex()
             {
@@ -56,13 +56,13 @@ namespace Katzebase.Engine.Indexes
 
             foreach (var indexAttribute in index.Attributes)
             {
-                persistIndex.AddAttribute(PhysicalIndexAttribute.FromPayload(indexAttribute));
+                persistIndex.AddAttribute(PhysicalIndexAttribute.FromClientPayload(indexAttribute));
             }
 
             return persistIndex;
         }
 
-        static public PublicLibrary.Payloads.KbIndex ToPayload(PhysicalIndex index)
+        static public PublicLibrary.Payloads.KbIndex ToClientPayload(PhysicalIndex index)
         {
             var persistIndex = new PublicLibrary.Payloads.KbIndex()
             {
@@ -75,7 +75,7 @@ namespace Katzebase.Engine.Indexes
 
             foreach (var indexAttribute in index.Attributes)
             {
-                persistIndex.AddAttribute(PhysicalIndexAttribute.ToPayload(indexAttribute));
+                persistIndex.AddAttribute(PhysicalIndexAttribute.ToClientPayload(indexAttribute));
             }
 
             return persistIndex;
