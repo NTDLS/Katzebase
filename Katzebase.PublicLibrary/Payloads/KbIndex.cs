@@ -1,17 +1,23 @@
-﻿namespace Katzebase.PublicLibrary.Payloads
+﻿using System.Reflection.Metadata;
+
+namespace Katzebase.PublicLibrary.Payloads
 {
     public class KbIndex
     {
-        public List<KbIndexAttribute> Attributes { get; set; }
+        public List<KbIndexAttribute> Attributes { get; set; } = new();
         public string Name { get; set; } = string.Empty;
         public Guid Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime Modfied { get; set; }
         public bool IsUnique { get; set; }
 
+        public KbIndex(string name)
+        {
+            Name = name;
+        }
+
         public KbIndex()
         {
-            Attributes = new List<KbIndexAttribute>();
         }
 
         public void AddAttribute(string name)
