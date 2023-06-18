@@ -822,14 +822,21 @@ namespace Katzebase.Engine.Indexes
 
         private bool RemoveDocumentsFromLeaves(PhysicalIndexLeaf leaves, IEnumerable<DocumentPointer> documentPointers)
         {
+            int deletes = 0;
+            int neededDeletes = documentPointers.Count();
             foreach (var documentPointer in documentPointers)
             {
                 if (leaves.Documents?.Count > 0)
                 {
                     if (leaves.Documents.RemoveAll(o => o.PageNumber == documentPointer.PageNumber && o.DocumentId == documentPointer.DocumentId) > 0)
                     {
-                        return true; //We found the document and removed it.
+                        deletes++;
                     }
+                }
+
+                if (deletes == neededDeletes)
+                {
+                    return true; //We found the documents and removed them.
                 }
 
                 foreach (var leaf in leaves.Children)

@@ -545,7 +545,7 @@ namespace Katzebase.Engine.Query.Searchers
                 {
                     if (!jIndexContent.TryGetValue(selectField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
                     {
-                        throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
+                        //throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
                     }
 
                     schemaResultValues.InsertValue(selectField.Ordinal, token?.ToString() ?? "");

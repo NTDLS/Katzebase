@@ -1,7 +1,9 @@
 ﻿using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Payloads;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
+using System.Xml.Linq;
 
 namespace Katzebase.TestHarness
 {
@@ -13,7 +15,9 @@ namespace Katzebase.TestHarness
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
             Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
 
-            //Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/", false);
+            Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/", false);
+
+            //TestAllAPIs();
 
             #region Misc. Tests & stuff.
 
@@ -56,6 +60,17 @@ namespace Katzebase.TestHarness
             Console.WriteLine("Press any key to continue.");
             Console.ReadLine();
         }
+
+        static void TestAllAPIs()
+        {
+            var client = new KatzebaseClient("http://localhost:6858/");
+
+            client.Server.Ping();
+            client.Query.ExecuteQuery("insert into AdventureWorks2012:Production:Product(ProductId = '900000', Name = 'API Test Product')");
+            client.Query.ExecuteQuery("select * from AdventureWorks2012:Production:Product where Name = 'API Test Product'");
+            client.Query.ExecuteQuery("delete from AdventureWorks2012:Production:Product where Name = 'API Test Product'");
+        }
+
 
         #region TestQuery(text)
 
