@@ -218,7 +218,8 @@ namespace Katzebase.Engine.IO
                         transaction.RecordFileAlter(filePath);
                     }
 
-                    if (core.Settings.DeferredIOEnabled /*&& transaction.IsUserCreated*/)
+                    //TODO: Can we enable IO deferment on system created transactions? I think we can.
+                    if (core.Settings.DeferredIOEnabled && transaction.IsUserCreated)
                     {
                         Utility.EnsureNotNull(transaction.DeferredIOs);
                         var ptDeferredWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredWrite);
