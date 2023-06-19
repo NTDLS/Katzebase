@@ -10,6 +10,15 @@
         public HealthQueryHandlers(Core core)
         {
             this.core = core;
+            
+            try
+            {
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate health query handler.", ex);
+                throw;
+            }
         }
     }
 }

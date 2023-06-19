@@ -1,5 +1,8 @@
 ﻿namespace Katzebase.PublicLibrary.Payloads
 {
+    /// <summary>
+    /// KbQueryResult is used to return a field-set and the associated row values.
+    /// </summary>
     public class KbQueryResult : KbActionResponse
     {
         public List<KbQueryField> Fields { get; set; } = new();
@@ -18,4 +21,3 @@
         }
     }
 }
-

@@ -10,21 +10,19 @@
         public TransactionQueryHandlers(Core core)
         {
             this.core = core;
+
+            try
+            {
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate transaction query handler.", ex);
+                throw;
+            }
         }
 
-        public Transaction Begin(ulong processId)
-        {
-            return core.Transactions.Acquire(processId, true);
-        }
-
-        public void Commit(ulong processId)
-        {
-            core.Transactions.Commit(processId);
-        }
-
-        public void Rollback(ulong processId)
-        {
-            core.Transactions.Rollback(processId);
-        }
+        public Transaction Begin(ulong processId) => core.Transactions.Acquire(processId, true);
+        public void Commit(ulong processId) => core.Transactions.Commit(processId);
+        public void Rollback(ulong processId) => core.Transactions.Rollback(processId);
     }
 }

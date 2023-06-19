@@ -10,6 +10,15 @@
         public HealthAPIHandlers(Core core)
         {
             this.core = core;
+
+            try
+            {
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate health API handlers.", ex);
+                throw;
+            }
         }
     }
 }

@@ -16,23 +16,32 @@ namespace Katzebase.Engine.Health.Management
         {
             this.core = core;
 
-            string healthCounterDiskPath = Path.Combine(core.Settings.LogDirectory, HealthStatsFile);
-            if (File.Exists(healthCounterDiskPath))
+            try
             {
-                var physicalCounters = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath, true);
 
-                if (physicalCounters == null || physicalCounters.Count == 0)
+                string healthCounterDiskPath = Path.Combine(core.Settings.LogDirectory, HealthStatsFile);
+                if (File.Exists(healthCounterDiskPath))
                 {
-                    Counters = new Dictionary<string, HealthCounter>();
+                    var physicalCounters = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath, true);
+
+                    if (physicalCounters == null || physicalCounters.Count == 0)
+                    {
+                        Counters = new Dictionary<string, HealthCounter>();
+                    }
+                    else
+                    {
+                        Counters = physicalCounters.ToDictionary(o => o.Instance);
+                    }
                 }
                 else
                 {
-                    Counters = physicalCounters.ToDictionary(o => o.Instance);
+                    Counters = new Dictionary<string, HealthCounter>();
                 }
             }
-            else
+            catch (Exception ex)
             {
-                Counters = new Dictionary<string, HealthCounter>();
+                core.Log.Write("Failed to instanciate health manager.", ex);
+                throw;
             }
         }
 
@@ -43,31 +52,40 @@ namespace Katzebase.Engine.Health.Management
 
         public void Checkpoint()
         {
-            lock (Counters)
+            try
             {
-                lastCheckpoint = DateTime.UtcNow;
-                var physicalCounters = Counters.Values.Where(o => o.Value > 0).ToList();
-
-                //All counters have a non-null instance because we use it for a key, but the ones that are really per-instance
-                //  will have an instance different than the type. Here we want to find the most recent instance counter and
-                //  remove any other instance counters that are n-seconds older than it is. Otherwise this grows forever.
-                //  As for the non-instance counters, we leave those forever. The user can clear them as they see fit.
-                var instanceCounters = physicalCounters.Where(o => o.Instance == o.Type.ToString());
-                if (instanceCounters.Any())
+                lock (Counters)
                 {
-                    var mostRecentCounter = instanceCounters.Max(o => o.WaitDateTimeUtc);
-                    var itemsToRemove = physicalCounters.Where(o => o.Instance == o.Type.ToString()
-                                    && (mostRecentCounter - o.WaitDateTimeUtc).TotalSeconds > core.Settings.HealthMonitoringInstanceLevelTimeToLiveSeconds).ToList();
+                    lastCheckpoint = DateTime.UtcNow;
+                    var physicalCounters = Counters.Values.Where(o => o.Value > 0).ToList();
 
-                    foreach (var itemToRemove in itemsToRemove)
+                    //All counters have a non-null instance because we use it for a key, but the ones that are really per-instance
+                    //  will have an instance different than the type. Here we want to find the most recent instance counter and
+                    //  remove any other instance counters that are n-seconds older than it is. Otherwise this grows forever.
+                    //  As for the non-instance counters, we leave those forever. The user can clear them as they see fit.
+                    var instanceCounters = physicalCounters.Where(o => o.Instance == o.Type.ToString());
+                    if (instanceCounters.Any())
                     {
-                        physicalCounters.Remove(itemToRemove);
-                        Counters.Remove(itemToRemove.Instance);
-                    }
-                }
+                        var mostRecentCounter = instanceCounters.Max(o => o.WaitDateTimeUtc);
+                        var itemsToRemove = physicalCounters.Where(o => o.Instance == o.Type.ToString()
+                                        && (mostRecentCounter - o.WaitDateTimeUtc).TotalSeconds > core.Settings.HealthMonitoringInstanceLevelTimeToLiveSeconds).ToList();
 
-                core.IO.PutJsonNonTracked(Path.Combine(core.Settings.LogDirectory, HealthStatsFile), physicalCounters, true);
+                        foreach (var itemToRemove in itemsToRemove)
+                        {
+                            physicalCounters.Remove(itemToRemove);
+                            Counters.Remove(itemToRemove.Instance);
+                        }
+                    }
+
+                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.LogDirectory, HealthStatsFile), physicalCounters, true);
+                }
             }
+            catch (Exception ex)
+            {
+                core.Log.Write("Failed to checkpoint health manager.", ex);
+                throw;
+            }
+
         }
 
         /// <summary>
@@ -77,36 +95,44 @@ namespace Katzebase.Engine.Health.Management
         /// <param name="value"></param>
         public void Increment(HealthCounterType type, double value)
         {
-            if (value == 0 || core.Settings.HealthMonitoringEnabled == false)
+            try
             {
-                return;
-            }
-
-            string key = type.ToString();
-
-            lock (Counters)
-            {
-                if (Counters.ContainsKey(key))
+                if (value == 0 || core.Settings.HealthMonitoringEnabled == false)
                 {
-                    var counterItem = Counters[key];
-                    counterItem.Value += value;
-                    counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                    return;
                 }
-                else
+
+                string key = type.ToString();
+
+                lock (Counters)
                 {
-                    Counters.Add(key, new HealthCounter()
+                    if (Counters.ContainsKey(key))
                     {
-                        Instance = key,
-                        Type = type,
-                        Value = value,
-                        WaitDateTimeUtc = DateTime.UtcNow
-                    });
-                }
+                        var counterItem = Counters[key];
+                        counterItem.Value += value;
+                        counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        Counters.Add(key, new HealthCounter()
+                        {
+                            Instance = key,
+                            Type = type,
+                            Value = value,
+                            WaitDateTimeUtc = DateTime.UtcNow
+                        });
+                    }
 
-                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= core.Settings.HealthMonitoringChekpointSeconds)
-                {
-                    Checkpoint();
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= core.Settings.HealthMonitoringChekpointSeconds)
+                    {
+                        Checkpoint();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write("Failed to increment health counter.", ex);
+                throw;
             }
         }
 
@@ -117,36 +143,44 @@ namespace Katzebase.Engine.Health.Management
         /// <param name="value"></param>
         public void Increment(HealthCounterType type, string instance, double value)
         {
-            if (value == 0 || core.Settings.HealthMonitoringEnabled == false || core.Settings.HealthMonitoringInstanceLevelEnabled == false)
+            try
             {
-                return;
-            }
-
-            string key = $"{type}:{instance}";
-
-            lock (Counters)
-            {
-                if (Counters.ContainsKey(key))
+                if (value == 0 || core.Settings.HealthMonitoringEnabled == false || core.Settings.HealthMonitoringInstanceLevelEnabled == false)
                 {
-                    var counterItem = Counters[key];
-                    counterItem.Value += value;
-                    counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                    return;
                 }
-                else
+
+                string key = $"{type}:{instance}";
+
+                lock (Counters)
                 {
-                    Counters.Add(key, new HealthCounter()
+                    if (Counters.ContainsKey(key))
                     {
-                        Instance = key,
-                        Type = type,
-                        Value = value,
-                        WaitDateTimeUtc = DateTime.UtcNow
-                    });
-                }
+                        var counterItem = Counters[key];
+                        counterItem.Value += value;
+                        counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        Counters.Add(key, new HealthCounter()
+                        {
+                            Instance = key,
+                            Type = type,
+                            Value = value,
+                            WaitDateTimeUtc = DateTime.UtcNow
+                        });
+                    }
 
-                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
-                {
-                    Checkpoint();
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
+                    {
+                        Checkpoint();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write("Failed to increment health counter.", ex);
+                throw;
             }
         }
 
@@ -154,19 +188,13 @@ namespace Katzebase.Engine.Health.Management
         /// Increment the specified counter by 1.
         /// </summary>
         /// <param name="type"></param>
-        public void Increment(HealthCounterType type)
-        {
-            Increment(type, 1);
-        }
+        public void Increment(HealthCounterType type) => Increment(type, 1);
 
         /// <summary>
         /// Increment the specified counter by 1.
         /// </summary>
         /// <param name="type"></param>
-        public void Increment(HealthCounterType type, string instance)
-        {
-            Increment(type, instance, 1);
-        }
+        public void Increment(HealthCounterType type, string instance) => Increment(type, instance, 1);
 
         /// <summary>
         /// Set the specified counter to the defined value.
@@ -175,36 +203,44 @@ namespace Katzebase.Engine.Health.Management
         /// <param name="value"></param>
         public void Set(HealthCounterType type, long value)
         {
-            if (core.Settings.HealthMonitoringEnabled == false)
+            try
             {
-                return;
-            }
-
-            string key = $"{type}";
-
-            lock (Counters)
-            {
-                if (Counters.ContainsKey(key))
+                if (core.Settings.HealthMonitoringEnabled == false)
                 {
-                    var counterItem = Counters[key];
-                    counterItem.Value = value;
-                    counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                    return;
                 }
-                else
+
+                string key = $"{type}";
+
+                lock (Counters)
                 {
-                    Counters.Add(key, new HealthCounter()
+                    if (Counters.ContainsKey(key))
                     {
-                        Instance = key,
-                        Type = type,
-                        Value = value,
-                        WaitDateTimeUtc = DateTime.UtcNow
-                    });
-                }
+                        var counterItem = Counters[key];
+                        counterItem.Value = value;
+                        counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        Counters.Add(key, new HealthCounter()
+                        {
+                            Instance = key,
+                            Type = type,
+                            Value = value,
+                            WaitDateTimeUtc = DateTime.UtcNow
+                        });
+                    }
 
-                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
-                {
-                    Checkpoint();
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
+                    {
+                        Checkpoint();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write("Failed to set health counter.", ex);
+                throw;
             }
         }
 
@@ -215,36 +251,44 @@ namespace Katzebase.Engine.Health.Management
         /// <param name="value"></param>
         public void Set(HealthCounterType type, string instance, double value)
         {
-            if (value == 0 || core.Settings.HealthMonitoringEnabled == false || core.Settings.HealthMonitoringInstanceLevelEnabled == false)
+            try
             {
-                return;
-            }
-
-            string key = $"{type}:{instance}";
-
-            lock (Counters)
-            {
-                if (Counters.ContainsKey(key))
+                if (value == 0 || core.Settings.HealthMonitoringEnabled == false || core.Settings.HealthMonitoringInstanceLevelEnabled == false)
                 {
-                    var counterItem = Counters[key];
-                    counterItem.Value = value;
-                    counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                    return;
                 }
-                else
+
+                string key = $"{type}:{instance}";
+
+                lock (Counters)
                 {
-                    Counters.Add(key, new HealthCounter()
+                    if (Counters.ContainsKey(key))
                     {
-                        Instance = key,
-                        Type = type,
-                        Value = value,
-                        WaitDateTimeUtc = DateTime.UtcNow
-                    });
-                }
+                        var counterItem = Counters[key];
+                        counterItem.Value = value;
+                        counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                    }
+                    else
+                    {
+                        Counters.Add(key, new HealthCounter()
+                        {
+                            Instance = key,
+                            Type = type,
+                            Value = value,
+                            WaitDateTimeUtc = DateTime.UtcNow
+                        });
+                    }
 
-                if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
-                {
-                    Checkpoint();
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
+                    {
+                        Checkpoint();
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write("Failed to set health counter.", ex);
+                throw;
             }
         }
     }

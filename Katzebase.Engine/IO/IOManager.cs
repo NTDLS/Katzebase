@@ -20,37 +20,49 @@ namespace Katzebase.Engine.IO
 
         public T GetJsonNonTracked<T>(string filePath, bool skipCompression = false)
         {
-            T? result;
+            try
+            {
+                T? result;
 
-            if (core.Settings.UseCompression && skipCompression == false)
-            {
-                result = JsonConvert.DeserializeObject<T>(Compression.DecompressString(File.ReadAllBytes(filePath)));
+                if (core.Settings.UseCompression && skipCompression == false)
+                {
+                    result = JsonConvert.DeserializeObject<T>(Compression.DecompressString(File.ReadAllBytes(filePath)));
+                }
+                else
+                {
+                    result = JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath));
+                }
+                Utility.EnsureNotNull(result);
+                return result;
             }
-            else
+            catch (Exception ex)
             {
-                result = JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath));
+                core.Log.Write($"Failed to get non-tracked json for file {filePath}.", ex);
+                throw;
             }
-            Utility.EnsureNotNull(result);
-            return result;
         }
 
         public T GetPBufNonTracked<T>(string filePath)
         {
-            using (var file = File.OpenRead(filePath))
+            try
             {
-                return ProtoBuf.Serializer.Deserialize<T>(file);
+                using (var file = File.OpenRead(filePath))
+                {
+                    return ProtoBuf.Serializer.Deserialize<T>(file);
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to get non-tracked pbuf for file {filePath}.", ex);
+                throw;
             }
         }
 
         internal T GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
-        {
-            return InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON);
-        }
+            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON);
 
         internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
-        {
-            return InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf);
-        }
+            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf);
 
         internal T InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
         {
@@ -132,7 +144,7 @@ namespace Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to get JSON object.", ex);
+                core.Log.Write($"Failed to get tracked file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -143,33 +155,46 @@ namespace Katzebase.Engine.IO
 
         internal void PutJsonNonTracked(string filePath, object deserializedObject, bool skipCompression = false)
         {
-            if (core.Settings.UseCompression && skipCompression == false)
+            try
             {
-                File.WriteAllBytes(filePath, Compression.Compress(JsonConvert.SerializeObject(deserializedObject)));
+                if (core.Settings.UseCompression && skipCompression == false)
+                {
+                    File.WriteAllBytes(filePath, Compression.Compress(JsonConvert.SerializeObject(deserializedObject)));
+                }
+                else
+                {
+                    File.WriteAllText(filePath, JsonConvert.SerializeObject(deserializedObject));
+                }
             }
-            else
+            catch (Exception ex)
             {
-                File.WriteAllText(filePath, JsonConvert.SerializeObject(deserializedObject));
+                core.Log.Write($"Failed to put non-tracked json for file {filePath}.", ex);
+                throw;
             }
         }
 
         internal void PutPBufNonTracked(string filePath, object deserializedObject)
         {
-            using (var file = File.Create(filePath))
+            try
             {
-                ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                using (var file = File.Create(filePath))
+                {
+                    ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                }
             }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to put non-tracked pbuf for file {filePath}.", ex);
+                throw;
+            }
+
         }
 
         internal void PutJson(Transaction transaction, string filePath, object deserializedObject)
-        {
-            InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.JSON);
-        }
+            => InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.JSON);
 
         internal void PutPBuf(Transaction transaction, string filePath, object deserializedObject)
-        {
-            InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.PBuf);
-        }
+            => InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.PBuf);
 
         private void InternalTrackedPut(Transaction transaction, string filePath, object deserializedObject, IOFormat format)
         {
@@ -251,7 +276,7 @@ namespace Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to put JSON file for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to put internal tracked file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -271,20 +296,20 @@ namespace Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to verify directory for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to verify directory for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
 
         internal void CreateDirectory(Transaction transaction, string? diskPath)
         {
-            if (diskPath == null)
-            {
-                throw new ArgumentNullException(nameof(diskPath));
-            }
-
             try
             {
+                if (diskPath == null)
+                {
+                    throw new ArgumentNullException(nameof(diskPath));
+                }
+
                 string cacheKey = Helpers.RemoveModFileName(diskPath.ToLower());
                 transaction.LockDirectory(LockOperation.Write, cacheKey);
 
@@ -300,7 +325,7 @@ namespace Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create directory for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to create directory for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -327,7 +352,7 @@ namespace Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to verify file for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to verify file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -355,7 +380,7 @@ namespace Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete file for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to delete file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -382,7 +407,7 @@ namespace Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete path for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to delete path for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }

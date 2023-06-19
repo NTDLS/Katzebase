@@ -7,3 +7,6 @@ Then we can search the indexes for each group to obtain a list of all possible d
 If any one conditon group does not have an index, then no indexing will be used at all since all documents
 	will need to be scaned anyway. To prevent unindexed scans, reduce the number of condition groups.
 
+
+All methods inside "management" namespaces should handle exceptions for logging and then throw the exceptions.
+All API controllers (not the API management classes, but the service controller) should catch and handle exceptions. Do not throw them.

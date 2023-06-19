@@ -12,6 +12,15 @@ namespace Katzebase.Engine.Query.Management
         public QueryAPIHandlers(Core core)
         {
             this.core = core;
+
+            try
+            {
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate query API handlers.", ex);
+                throw;
+            }
         }
 
         public KbQueryResult ExecuteStatementExplain(ulong processId, string statement)

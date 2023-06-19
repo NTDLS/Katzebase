@@ -11,6 +11,7 @@ namespace Katzebase.Engine.KbLib
 
         public static string RemoveModFileName(string input)
         {
+            //TODO: What is this?!?!?!?!
             return RegExRemoveModFileName.Replace(input, "");
         }
 

@@ -13,22 +13,30 @@ namespace Katzebase.Engine.Locking
         internal LockManager(Core core)
         {
             this.core = core;
-            Locks = new ObjectLocks(core);
+            try
+            {
+                Locks = new ObjectLocks(core);
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate lock manager.", ex);
+                throw;
+            }
         }
 
         internal void Remove(ObjectLock objectLock)
         {
-            lock (CriticalSections.AcquireLock)
+            try
             {
-                try
+                lock (CriticalSections.AcquireLock)
                 {
                     Locks.Remove(objectLock);
                 }
-                catch (Exception ex)
-                {
-                    core.Log.Write("Failed to remove lock.", ex);
-                    throw;
-                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to remove lock.", ex);
+                throw;
             }
         }
     }

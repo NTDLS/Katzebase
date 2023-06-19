@@ -18,6 +18,15 @@ namespace Katzebase.Engine.Documents.Management
         public DocumentQueryHandlers(Core core)
         {
             this.core = core;
+
+            try
+            {
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate document query handler.", ex);
+                throw;
+            }
         }
 
         internal KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
@@ -38,7 +47,7 @@ namespace Katzebase.Engine.Documents.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                core.Log.Write($"Failed to execute document select for process id {processId}.", ex);
                 throw;
             }
         }
@@ -57,12 +66,10 @@ namespace Katzebase.Engine.Documents.Management
 
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    var physicalDocument = new PhysicalDocument();
-
                     var keyValuePairs = preparedQuery.UpsertKeyValuePairs.ToDictionary(o => o.Field.Field, o => o.Value.Value);
-                    physicalDocument.Content = JsonConvert.SerializeObject(keyValuePairs);
+                    var documentContent = JsonConvert.SerializeObject(keyValuePairs);
                     var physicalSchema = core.Schemas.Acquire(transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
-                    core.Documents.InsertDocument(transaction, physicalSchema, physicalDocument);
+                    core.Documents.InsertDocument(transaction, physicalSchema, documentContent);
 
                     transaction.Commit();
                     result.RowCount = 1;
@@ -73,7 +80,7 @@ namespace Katzebase.Engine.Documents.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                core.Log.Write($"Failed to execute document insert for process id {processId}.", ex);
                 throw;
             }
         }
@@ -97,7 +104,7 @@ namespace Katzebase.Engine.Documents.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                core.Log.Write($"Failed to execute document sample for process id {processId}.", ex);
                 throw;
             }
         }
@@ -121,17 +128,17 @@ namespace Katzebase.Engine.Documents.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                core.Log.Write($"Failed to execute document list for process id {processId}.", ex);
                 throw;
             }
         }
 
         internal KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
         {
-            throw new KbNotImplementedException();
-            /*
             try
             {
+                throw new KbNotImplementedException();
+                /*
                 var result = new KbQueryResult();
 
                 using (var transaction = core.Transactions.Begin(processId))
@@ -147,13 +154,13 @@ namespace Katzebase.Engine.Documents.Management
                 }
 
                 return result;
+                */
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                core.Log.Write($"Failed to execute document explain for process id {processId}.", ex);
                 throw;
             }
-            */
         }
 
         internal KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
@@ -190,7 +197,7 @@ namespace Katzebase.Engine.Documents.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteDelete for process {processId}.", ex);
+                core.Log.Write($"Failed to execute document delete for process id {processId}.", ex);
                 throw;
             }
         }

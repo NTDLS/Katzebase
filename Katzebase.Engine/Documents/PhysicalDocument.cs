@@ -24,16 +24,5 @@ namespace Katzebase.Engine.Documents
                 Modfied = Modfied
             };
         }
-
-        static public PhysicalDocument FromClientPayload(KbDocument document)
-        {
-            return new PhysicalDocument()
-            {
-                Id = document.Id,
-                Created = document.Created,
-                Modfied = document.Modfied,
-                Content = document.Content
-            };
-        }
     }
 }

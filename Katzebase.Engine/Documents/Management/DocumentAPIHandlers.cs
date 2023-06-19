@@ -14,27 +14,35 @@ namespace Katzebase.Engine.Documents.Management
         public DocumentAPIHandlers(Core core)
         {
             this.core = core;
+
+            try
+            {
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate document API handlers.", ex);
+                throw;
+            }
         }
 
         public KbQueryResult DocumentSample(ulong processId, string schemaName, int rowLimit)
         {
             try
             {
-                var result = new KbQueryResult();
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    result = StaticSearcherMethods.SampleSchemaDocuments(core, transaction, schemaName, rowLimit);
+                    var result = StaticSearcherMethods.SampleSchemaDocuments(core, transaction, schemaName, rowLimit);
+
                     transaction.Commit();
                     result.RowCount = result.Rows.Count;
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                core.Log.Write($"Failed to execute document sample for process id {processId}.", ex);
                 throw;
             }
         }
@@ -50,21 +58,20 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var result = new KbQueryResult();
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    result = StaticSearcherMethods.ListSchemaDocuments(core, transaction, schemaName, rowLimit);
+                    var result = StaticSearcherMethods.ListSchemaDocuments(core, transaction, schemaName, rowLimit);
+
                     transaction.Commit();
                     result.RowCount = result.Rows.Count;
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                core.Log.Write($"Failed to execute document list for process id {processId}.", ex);
                 throw;
             }
         }
@@ -77,30 +84,27 @@ namespace Katzebase.Engine.Documents.Management
         /// <param name="document"></param>
         /// <param name="newId"></param>
         /// <exception cref="KbObjectNotFoundException"></exception>
-        public KbActionResponse StoreDocument(ulong processId, string schema, KbDocument document)
+        public KbActionResponseUInt StoreDocument(ulong processId, string schemaName, KbDocument document)
         {
             try
             {
-                var result = new KbActionResponse();
-
-                var physicalDocument = PhysicalDocument.FromClientPayload(document);
-                physicalDocument.Created = DateTime.UtcNow;
-                physicalDocument.Modfied = DateTime.UtcNow;
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    var physicalSchema = core.Schemas.Acquire(transaction, schema, LockOperation.Write);
-                    core.Documents.InsertDocument(transaction, physicalSchema, physicalDocument);
+                    var result = new KbActionResponseUInt()
+                    {
+                        Id = core.Documents.InsertDocument(transaction, schemaName, document.Content).DocumentId,
+                    };
+
                     transaction.Commit();
                     result.RowCount = 1;
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to store document for process {processId}.", ex);
+                core.Log.Write($"Failed to execute document store for process id {processId}.", ex);
                 throw;
             }
         }
@@ -118,27 +122,23 @@ namespace Katzebase.Engine.Documents.Management
             {
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-                    var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
-
                     var result = new KbDocumentCatalogCollection();
-                    foreach (var documentPointer in documentPointers)
-                    {
-                        result.Add(new KbDocumentCatalogItem() { Id = documentPointer.DocumentId });
-                    }
+                    var documentPointers = core.Documents.AcquireDocumentPointers(transaction, schemaName, LockOperation.Read).ToList();
+                    result.AddRange(documentPointers.Select(o => new KbDocumentCatalogItem(o.DocumentId)));
+
                     transaction.Commit();
                     result.RowCount = documentPointers.Count;
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
                     return result;
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to get catalog for process {processId}.", ex);
+                core.Log.Write($"Failed to execute document catalog for process id {processId}.", ex);
                 throw;
             }
         }
-
 
         /// <summary>
         /// Deletes a document by its ID.
@@ -147,29 +147,26 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var result = new KbActionResponse();
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-                    var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
-
+                    var result = new KbActionResponse();
+                    var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                    var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Write).ToList();
                     var pointersToDelete = documentPointers.Where(o => o.DocumentId == documentId);
-
                     core.Documents.DeleteDocuments(transaction, physicalSchema, pointersToDelete);
 
                     transaction.Commit();
                     result.RowCount = documentPointers.Count;
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
                     return result;
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete document by ID for process {processId}.", ex);
+                core.Log.Write($"Failed to execute document delete for process id {processId}.", ex);
                 throw;
             }
         }
-
     }
 }

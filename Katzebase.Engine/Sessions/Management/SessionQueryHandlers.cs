@@ -17,6 +17,15 @@ namespace Katzebase.Engine.Sessions.Management
         public SessionQueryHandlers(Core core)
         {
             this.core = core;
+
+            try
+            {
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate session query handler.", ex);
+                throw;
+            }
         }
 
         internal KbActionResponse ExecuteSetVariable(ulong processId, PreparedQuery preparedQuery)
@@ -88,7 +97,7 @@ namespace Katzebase.Engine.Sessions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteSetVariable for process {processId}.", ex);
+                core.Log.Write($"Failed to execute variable set for process id {processId}.", ex);
                 throw;
             }
         }

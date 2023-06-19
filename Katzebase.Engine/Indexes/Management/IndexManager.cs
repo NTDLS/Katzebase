@@ -27,215 +27,263 @@ namespace Katzebase.Engine.Indexes.Management
         public IndexManager(Core core)
         {
             this.core = core;
-            QueryHandlers = new IndexQueryHandlers(core);
-            APIHandlers = new IndexAPIHandlers(core);
+            try
+            {
+                QueryHandlers = new IndexQueryHandlers(core);
+                APIHandlers = new IndexAPIHandlers(core);
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write("Failed to instanciate indec manager.", ex);
+                throw;
+            }
         }
 
         internal void CreateIndex(Transaction transaction, string schemaName, KbIndex index, out Guid newId)
         {
-            var physicalIndex = PhysicalIndex.FromClientPayload(index);
-
-            physicalIndex.Id = Guid.NewGuid();
-            physicalIndex.Created = DateTime.UtcNow;
-            physicalIndex.Modfied = DateTime.UtcNow;
-
-            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-            var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
-
-            if (indexCatalog.GetByName(index.Name) != null)
+            try
             {
-                throw new KbObjectAlreadysExistsException(index.Name);
+                var physicalIndex = PhysicalIndex.FromClientPayload(index);
+
+                physicalIndex.Id = Guid.NewGuid();
+                physicalIndex.Created = DateTime.UtcNow;
+                physicalIndex.Modfied = DateTime.UtcNow;
+
+                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
+
+                if (indexCatalog.GetByName(index.Name) != null)
+                {
+                    throw new KbObjectAlreadysExistsException(index.Name);
+                }
+
+                indexCatalog.Add(physicalIndex);
+
+                if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
+                {
+                    throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                }
+
+                core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
+                physicalIndex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(index.Name));
+                core.IO.PutPBuf(transaction, physicalIndex.DiskPath, new PhysicalIndexPages());
+
+                RebuildIndex(transaction, physicalSchema, physicalIndex);
+
+                newId = physicalIndex.Id;
             }
-
-            indexCatalog.Add(physicalIndex);
-
-            if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
+            catch (Exception ex)
             {
-                throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                core.Log.Write($"Failed to create index for process id {transaction.ProcessId}.", ex);
+                throw;
             }
-
-            core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
-            physicalIndex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(index.Name));
-            core.IO.PutPBuf(transaction, physicalIndex.DiskPath, new PhysicalIndexPages());
-
-            RebuildIndex(transaction, physicalSchema, physicalIndex);
-
-            newId = physicalIndex.Id;
         }
 
         internal void RebuildIndex(Transaction transaction, string schemaName, string indexName)
         {
-            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-            var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
-            if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
+            try
             {
-                throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
+                if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
+                {
+                    throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                }
+
+                var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
+                physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
+
+                RebuildIndex(transaction, physicalSchema, physicalIindex);
             }
-
-            var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
-            physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
-
-            RebuildIndex(transaction, physicalSchema, physicalIindex);
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to rebuild index for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
         }
 
         internal void DropIndex(Transaction transaction, string schemaName, string indexName)
         {
-            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-            var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
-            if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
+            try
             {
-                throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
+                if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
+                {
+                    throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                }
+
+                var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
+                indexCatalog.Remove(physicalIindex);
+
+                physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
+
+                core.IO.DeleteFile(transaction, physicalIindex.DiskPath);
+                core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
             }
-
-            var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
-            indexCatalog.Remove(physicalIindex);
-
-            physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
-
-            core.IO.DeleteFile(transaction, physicalIindex.DiskPath);
-            core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to drop index for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
         }
 
         internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
             IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
         {
-            var workingPhysicalIndexLeaf = physicalIndexPages.Root;
-            var lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf;
-
-            bool foundAnything = false;
-
-            foreach (var attribute in indexSelection.Index.Attributes)
+            try
             {
-                Utility.EnsureNotNull(attribute.Field);
-                var conditionField = conditionSubset.Conditions.Where(o => o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
-                if (conditionField == null)
+                var workingPhysicalIndexLeaf = physicalIndexPages.Root;
+                var lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf;
+
+                bool foundAnything = false;
+
+                foreach (var attribute in indexSelection.Index.Attributes)
                 {
-                    //This happends when there is no condition on this index, this will be a partial match.
-                    break;
+                    Utility.EnsureNotNull(attribute.Field);
+                    var conditionField = conditionSubset.Conditions.Where(o => o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
+                    if (conditionField == null)
+                    {
+                        //This happends when there is no condition on this index, this will be a partial match.
+                        break;
+                    }
+
+                    if (conditionField.LogicalConnector == LogicalConnector.Or)
+                    {
+                        //TODO: Indexing only supports AND connectors, thats a performance problem.
+                        break;
+                    }
+
+                    Utility.EnsureNotNull(workingPhysicalIndexLeaf);
+
+                    var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch);
+
+                    var conditionValue = conditionValues[attribute.Field.ToLower()];
+                    if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
+                        lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key == conditionValue).Value;
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
+                        lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key != conditionValue).Value;
+                    else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
+
+                    ptIndexSeek?.StopAndAccumulate();
+
+                    if (lastFoundPhysicalIndexLeaf == null)
+                    {
+                        break;
+                    }
+
+                    foundAnything = true;
+
+                    if (lastFoundPhysicalIndexLeaf?.Documents?.Any() == true) //If we are at the base of the tree then there is no need to go further down.
+                    {
+                        return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
+                    }
+                    else
+                    {
+                        workingPhysicalIndexLeaf = lastFoundPhysicalIndexLeaf;
+                    }
                 }
 
-                if (conditionField.LogicalConnector == LogicalConnector.Or)
+                if (foundAnything == false)
                 {
-                    //TODO: Indexing only supports AND connectors, thats a performance problem.
-                    break;
+                    return new Dictionary<uint, DocumentPointer>();
                 }
 
                 Utility.EnsureNotNull(workingPhysicalIndexLeaf);
 
-                var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch);
+                var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
+                //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                var resultintDocuments = DistillIndexLeaves(workingPhysicalIndexLeaf);
+                ptIndexDistillation?.StopAndAccumulate();
 
-                var conditionValue = conditionValues[attribute.Field.ToLower()];
-                if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
-                    lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key == conditionValue).Value;
-                else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
-                    lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key != conditionValue).Value;
-                else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
-
-                ptIndexSeek?.StopAndAccumulate();
-
-                if (lastFoundPhysicalIndexLeaf == null)
-                {
-                    break;
-                }
-
-                foundAnything = true;
-
-                if (lastFoundPhysicalIndexLeaf?.Documents?.Any() == true) //If we are at the base of the tree then there is no need to go further down.
-                {
-                    return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
-                }
-                else
-                {
-                    workingPhysicalIndexLeaf = lastFoundPhysicalIndexLeaf;
-                }
+                return resultintDocuments;
             }
-
-            if (foundAnything == false)
+            catch (Exception ex)
             {
-                return new Dictionary<uint, DocumentPointer>();
+                core.Log.Write($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
+                throw;
             }
-
-            Utility.EnsureNotNull(workingPhysicalIndexLeaf);
-
-            var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
-            //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
-            var resultintDocuments = DistillIndexLeaves(workingPhysicalIndexLeaf);
-            ptIndexDistillation?.StopAndAccumulate();
-
-            return resultintDocuments;
         }
 
         /// <summary>
         /// Finds document IDs given a set of conditions.
         /// </summary>
         internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction,
-            PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
+                    PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
         {
-            var workingPhysicalIndexLeaf = physicalIndexPages.Root;
-            var lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf;
-
-            bool foundAnything = false;
-
-            foreach (var attribute in indexSelection.Index.Attributes)
+            try
             {
-                Utility.EnsureNotNull(attribute.Field);
-                var conditionField = conditionSubset.Conditions
-                    .Where(o => o.Left.Prefix == workingSchemaPrefix && o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
-                if (conditionField == null)
+                var workingPhysicalIndexLeaf = physicalIndexPages.Root;
+                var lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf;
+
+                bool foundAnything = false;
+
+                foreach (var attribute in indexSelection.Index.Attributes)
                 {
-                    //This happends when there is no condition on this index, this will be a partial match.
-                    break;
+                    Utility.EnsureNotNull(attribute.Field);
+                    var conditionField = conditionSubset.Conditions
+                        .Where(o => o.Left.Prefix == workingSchemaPrefix && o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
+                    if (conditionField == null)
+                    {
+                        //This happends when there is no condition on this index, this will be a partial match.
+                        break;
+                    }
+
+                    if (conditionField.LogicalConnector == LogicalConnector.Or)
+                    {
+                        //TODO: Indexing only supports AND connectors, thats a performance problem.
+                        break;
+                    }
+
+                    Utility.EnsureNotNull(workingPhysicalIndexLeaf);
+
+                    var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch);
+
+                    if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
+                        lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key == conditionField.Right.Value).Value;
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
+                        lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key != conditionField.Right.Value).Value;
+                    else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
+
+                    ptIndexSeek?.StopAndAccumulate();
+
+                    if (lastFoundPhysicalIndexLeaf == null)
+                    {
+                        break;
+                    }
+
+                    foundAnything = true;
+
+                    if (lastFoundPhysicalIndexLeaf?.Documents?.Any() == true) //If we are at the base of the tree then there is no need to go further down.
+                    {
+                        return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
+                    }
+                    else
+                    {
+                        workingPhysicalIndexLeaf = lastFoundPhysicalIndexLeaf;
+                    }
                 }
 
-                if (conditionField.LogicalConnector == LogicalConnector.Or)
+                if (foundAnything == false)
                 {
-                    //TODO: Indexing only supports AND connectors, thats a performance problem.
-                    break;
+                    return new Dictionary<uint, DocumentPointer>();
                 }
 
                 Utility.EnsureNotNull(workingPhysicalIndexLeaf);
 
-                var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch);
+                //This is an index scan.
+                var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
+                //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                var resultintDocuments = DistillIndexLeaves(workingPhysicalIndexLeaf);
+                ptIndexDistillation?.StopAndAccumulate();
 
-                if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
-                    lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key == conditionField.Right.Value).Value;
-                else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
-                    lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key != conditionField.Right.Value).Value;
-                else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
-
-                ptIndexSeek?.StopAndAccumulate();
-
-                if (lastFoundPhysicalIndexLeaf == null)
-                {
-                    break;
-                }
-
-                foundAnything = true;
-
-                if (lastFoundPhysicalIndexLeaf?.Documents?.Any() == true) //If we are at the base of the tree then there is no need to go further down.
-                {
-                    return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
-                }
-                else
-                {
-                    workingPhysicalIndexLeaf = lastFoundPhysicalIndexLeaf;
-                }
+                return resultintDocuments;
             }
-
-            if (foundAnything == false)
+            catch (Exception ex)
             {
-                return new Dictionary<uint, DocumentPointer>();
+                core.Log.Write($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
+                throw;
             }
-
-            Utility.EnsureNotNull(workingPhysicalIndexLeaf);
-
-            //This is an index scan.
-            var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
-            //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
-            var resultintDocuments = DistillIndexLeaves(workingPhysicalIndexLeaf);
-            ptIndexDistillation?.StopAndAccumulate();
-
-            return resultintDocuments;
         }
 
         /// <summary>
@@ -245,61 +293,83 @@ namespace Katzebase.Engine.Indexes.Management
         /// <returns></returns>
         private Dictionary<uint, DocumentPointer> DistillIndexLeaves(PhysicalIndexLeaf physicalIndexLeaf)
         {
-            var result = new List<DocumentPointer>();
-
-            void DistillIndexLeavesRecursive(PhysicalIndexLeaf physicalIndexLeaf)
+            try
             {
-                foreach (var child in physicalIndexLeaf.Children)
+                var result = new List<DocumentPointer>();
+
+                void DistillIndexLeavesRecursive(PhysicalIndexLeaf physicalIndexLeaf)
                 {
-                    DistillIndexLeavesRecursive(child.Value);
+                    foreach (var child in physicalIndexLeaf.Children)
+                    {
+                        DistillIndexLeavesRecursive(child.Value);
+                    }
+
+                    if (physicalIndexLeaf?.Documents?.Any() == true)
+                    {
+                        result.AddRange(physicalIndexLeaf.Documents.Select(o => new DocumentPointer(o.PageNumber, o.DocumentId)));
+                    }
                 }
 
                 if (physicalIndexLeaf?.Documents?.Any() == true)
                 {
                     result.AddRange(physicalIndexLeaf.Documents.Select(o => new DocumentPointer(o.PageNumber, o.DocumentId)));
                 }
-            }
-
-            if (physicalIndexLeaf?.Documents?.Any() == true)
-            {
-                result.AddRange(physicalIndexLeaf.Documents.Select(o => new DocumentPointer(o.PageNumber, o.DocumentId)));
-            }
-            else if (physicalIndexLeaf?.Children != null)
-            {
-                foreach (var child in physicalIndexLeaf.Children)
+                else if (physicalIndexLeaf?.Children != null)
                 {
-                    DistillIndexLeavesRecursive(child.Value);
+                    foreach (var child in physicalIndexLeaf.Children)
+                    {
+                        DistillIndexLeavesRecursive(child.Value);
+                    }
                 }
-            }
 
-            return result.ToDictionary(o => o.DocumentId, o => o);
+                return result.ToDictionary(o => o.DocumentId, o => o);
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to distill index leaves.", ex);
+                throw;
+            }
         }
 
         internal PhysicalIndexCatalog AcquireIndexCatalog(Transaction transaction, string schemaName, LockOperation intendedOperation)
         {
-            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, intendedOperation);
-            return AcquireIndexCatalog(transaction, physicalSchema, intendedOperation);
+            try
+            {
+                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, intendedOperation);
+                return AcquireIndexCatalog(transaction, physicalSchema, intendedOperation);
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
         }
 
-        public string MakeIndexFileName(string indexName)
-        {
-            return $"@Index_{0}_Pages_{Helpers.MakeSafeFileName(indexName)}.PBuf";
-        }
+        public string MakeIndexFileName(string indexName) => $"@Index_{0}_Pages_{Helpers.MakeSafeFileName(indexName)}.PBuf";
+
 
         internal PhysicalIndexCatalog AcquireIndexCatalog(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
         {
-            string indexCatalogDiskPath = Path.Combine(physicalSchema.DiskPath, IndexCatalogFile);
-
-            var indexCatalog = core.IO.GetJson<PhysicalIndexCatalog>(transaction, indexCatalogDiskPath, intendedOperation);
-
-            indexCatalog.DiskPath = indexCatalogDiskPath;
-
-            foreach (var index in indexCatalog.Collection)
+            try
             {
-                index.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(index.Name));
-            }
+                var indexCatalogDiskPath = Path.Combine(physicalSchema.DiskPath, IndexCatalogFile);
 
-            return indexCatalog;
+                var indexCatalog = core.IO.GetJson<PhysicalIndexCatalog>(transaction, indexCatalogDiskPath, intendedOperation);
+
+                indexCatalog.DiskPath = indexCatalogDiskPath;
+
+                foreach (var index in indexCatalog.Collection)
+                {
+                    index.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(index.Name));
+                }
+
+                return indexCatalog;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
         }
 
         private List<string> GetIndexSearchTokens(Transaction transaction, PhysicalIndex physicalIindex, PhysicalDocument document)
@@ -323,7 +393,7 @@ namespace Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to build index search tokens for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to get index search tokens for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -376,7 +446,7 @@ namespace Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to locate key page for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to locate index extent for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -404,7 +474,7 @@ namespace Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Multi-index insert failed for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to update document into indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -429,7 +499,7 @@ namespace Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Multi-index insert failed for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -440,8 +510,16 @@ namespace Katzebase.Engine.Indexes.Management
         private void InsertDocumentIntoIndex(Transaction transaction, PhysicalSchema physicalSchema,
             PhysicalIndex physicalIindex, PhysicalDocument document, DocumentPointer documentPointer)
         {
-            var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
-            InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document, documentPointer, physicalIndexPages, true);
+            try
+            {
+                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
+                InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document, documentPointer, physicalIndexPages, true);
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -495,7 +573,7 @@ namespace Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Index document insert failed for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -524,27 +602,35 @@ namespace Katzebase.Engine.Indexes.Management
 
         private void RebuildIndexThreadProc(ThreadPoolQueue<DocumentPointer, RebuildIndexThreadParam> pool, RebuildIndexThreadParam? param)
         {
-            Utility.EnsureNotNull(param);
-
-            while (pool.ContinueToProcessQueue)
+            try
             {
-                var documentPointer = pool.DequeueWorkItem();
-                if (documentPointer == null)
-                {
-                    continue;
-                }
+                Utility.EnsureNotNull(param);
 
-                if (param.PhysicalSchema.DiskPath == null)
+                while (pool.ContinueToProcessQueue)
                 {
-                    throw new KbNullException($"Value should not be null {nameof(param.PhysicalSchema.DiskPath)}.");
-                }
+                    var documentPointer = pool.DequeueWorkItem();
+                    if (documentPointer == null)
+                    {
+                        continue;
+                    }
 
-                var PhysicalDocument = core.Documents.AcquireDocument(param.Transaction, param.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
+                    if (param.PhysicalSchema.DiskPath == null)
+                    {
+                        throw new KbNullException($"Value should not be null {nameof(param.PhysicalSchema.DiskPath)}.");
+                    }
 
-                lock (param.SyncObject)
-                {
-                    InsertDocumentIntoIndex(param.Transaction, param.PhysicalSchema, param.PhysicalIindex, PhysicalDocument, documentPointer, param.PhysicalIndexPages, false);
+                    var PhysicalDocument = core.Documents.AcquireDocument(param.Transaction, param.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
+
+                    lock (param.SyncObject)
+                    {
+                        InsertDocumentIntoIndex(param.Transaction, param.PhysicalSchema, param.PhysicalIindex, PhysicalDocument, documentPointer, param.PhysicalIndexPages, false);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to rebuild index by thread.", ex);
+                throw;
             }
         }
 
@@ -591,7 +677,7 @@ namespace Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to rebuild single index for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to rebuild index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -602,7 +688,7 @@ namespace Katzebase.Engine.Indexes.Management
         /// <param name="transaction"></param>
         /// <param name="physicalSchema"></param>
         /// <param name="documentPointer"></param>
-        internal void DeleteDocumentsFromIndexes(Transaction transaction, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
+        internal void RemoveDocumentsFromIndexes(Transaction transaction, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
         {
             try
             {
@@ -611,54 +697,62 @@ namespace Katzebase.Engine.Indexes.Management
                 //Loop though each index in the schema.
                 foreach (var physicalIindex in indexCatalog.Collection)
                 {
-                    DeleteDocumentsFromIndex(transaction, physicalIindex, documentPointers);
+                    RemoveDocumentsFromIndex(transaction, physicalIindex, documentPointers);
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Multi-index upsert failed for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to delete document from indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
 
         private bool RemoveDocumentsFromLeaves(PhysicalIndexLeaf leaves, IEnumerable<DocumentPointer> documentPointers)
         {
-            int deletes = 0;
-            int neededDeletes = documentPointers.Count();
-            foreach (var documentPointer in documentPointers)
+            try
             {
-                if (leaves.Documents?.Count > 0)
+                int deletes = 0;
+                int neededDeletes = documentPointers.Count();
+                foreach (var documentPointer in documentPointers)
                 {
-                    if (leaves.Documents.RemoveAll(o => o.PageNumber == documentPointer.PageNumber && o.DocumentId == documentPointer.DocumentId) > 0)
+                    if (leaves.Documents?.Count > 0)
                     {
-                        deletes++;
-                    }
-                }
-
-                if (deletes == neededDeletes)
-                {
-                    return true; //We found the documents and removed them.
-                }
-
-                foreach (var leaf in leaves.Children)
-                {
-                    if (leaves.Children?.Count > 0)
-                    {
-                        if (RemoveDocumentsFromLeaves(leaf.Value, documentPointers))
+                        if (leaves.Documents.RemoveAll(o => o.PageNumber == documentPointer.PageNumber && o.DocumentId == documentPointer.DocumentId) > 0)
                         {
-                            return true;
+                            deletes++;
+                        }
+                    }
+
+                    if (deletes == neededDeletes)
+                    {
+                        return true; //We found the documents and removed them.
+                    }
+
+                    foreach (var leaf in leaves.Children)
+                    {
+                        if (leaves.Children?.Count > 0)
+                        {
+                            if (RemoveDocumentsFromLeaves(leaf.Value, documentPointers))
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
-            }
 
-            return false;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to remove documents from index leaves.", ex);
+                throw;
+            }
         }
 
         /// <summary>
         /// Removes a collection of documents from an index. Locks the index page catalog for write.
         /// </summary>
-        private void DeleteDocumentsFromIndex(Transaction transaction, PhysicalIndex physicalIindex, IEnumerable<DocumentPointer> documentPointers)
+        private void RemoveDocumentsFromIndex(Transaction transaction, PhysicalIndex physicalIindex, IEnumerable<DocumentPointer> documentPointers)
         {
             try
             {
@@ -671,7 +765,7 @@ namespace Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Index document upsert failed for process {transaction.ProcessId}.", ex);
+                core.Log.Write($"Failed to remove documents from index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }

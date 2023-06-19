@@ -4,6 +4,7 @@ using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
+using System.Diagnostics;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Schemas.PhysicalSchema;
 using static Katzebase.Engine.Trace.PerformanceTrace;
@@ -25,137 +26,141 @@ namespace Katzebase.Engine.Schemas.Management
         {
             get
             {
-                rootPhysicalSchema ??= new PhysicalSchema()
+                try
                 {
-                    Id = RootSchemaGUID,
-                    DiskPath = core.Settings.DataRootPath,
-                    VirtualPath = string.Empty,
-                    //Exists = true,
-                    Name = string.Empty,
-                };
-                return rootPhysicalSchema;
+                    rootPhysicalSchema ??= new PhysicalSchema()
+                    {
+                        Id = RootSchemaGUID,
+                        DiskPath = core.Settings.DataRootPath,
+                        VirtualPath = string.Empty,
+                        Name = string.Empty,
+                    };
+                    return rootPhysicalSchema;
+                }
+                catch (Exception ex)
+                {
+                    core.Log.Write($"Failed to obtain root schema.", ex);
+                    throw;
+                }
             }
         }
 
         public SchemaManager(Core core)
         {
             this.core = core;
-            QueryHandlers = new SchemaQueryHandlers(core);
-            APIHandlers = new SchemaAPIHandlers(core);
 
-            rootCatalogFile = Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile);
-
-            //If the catalog doesnt exist, create a new empty one.
-            if (File.Exists(rootCatalogFile) == false)
-            {
-                Directory.CreateDirectory(core.Settings.DataRootPath);
-
-                core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
-                core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
-                core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
-            }
-        }
-
-
-
-
-        #region Core get/put/lock methods.
-
-        public void CreateSingleSchema(ulong processId, string schemaName)
-        {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                QueryHandlers = new SchemaQueryHandlers(core);
+                APIHandlers = new SchemaAPIHandlers(core);
+
+                rootCatalogFile = Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile);
+
+                //If the catalog doesnt exist, create a new empty one.
+                if (File.Exists(rootCatalogFile) == false)
                 {
-                    Guid newSchemaId = Guid.NewGuid();
+                    Directory.CreateDirectory(core.Settings.DataRootPath);
 
-                    var physicalSchema = AcquireVirtual(transaction, schemaName, LockOperation.Write);
-                    if (physicalSchema.Exists)
-                    {
-                        transaction.Commit();
-                        //The schema already exists.
-                        return;
-                    }
-
-                    var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
-
-                    if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
-                    {
-                        throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
-                    }
-
-                    string parentSchemaCatalogFile = Path.Combine(parentPhysicalSchema.DiskPath, SchemaCatalogFile);
-                    PhysicalSchemaCatalog? parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentSchemaCatalogFile, LockOperation.Write);
-
-                    string filePath = string.Empty;
-
-                    core.IO.CreateDirectory(transaction, physicalSchema.DiskPath);
-
-                    //Create default schema catalog file.
-                    filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
-                    if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
-                    {
-                        core.IO.PutJson(transaction, filePath, new PhysicalSchemaCatalog());
-                    }
-
-                    //Create default document page catalog file.
-                    filePath = Path.Combine(physicalSchema.DiskPath, DocumentPageCatalogFile);
-                    if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
-                    {
-                        core.IO.PutJson(transaction, filePath, new PhysicalDocumentPageCatalog());
-                    }
-
-                    //Create default index catalog file.
-                    filePath = Path.Combine(physicalSchema.DiskPath, IndexCatalogFile);
-                    if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
-                    {
-                        core.IO.PutJson(transaction, filePath, new PhysicalIndexCatalog());
-                    }
-
-                    if (parentCatalog.ContainsName(schemaName) == false)
-                    {
-                        parentCatalog.Add(new PhysicalSchema
-                        {
-                            Id = newSchemaId,
-                            Name = physicalSchema.Name
-                        });
-
-                        core.IO.PutJson(transaction, parentSchemaCatalogFile, parentCatalog);
-                    }
-
-                    transaction.Commit();
+                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
+                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
+                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create single schema for process {processId}.", ex);
+                core.Log.Write("Failed to instanciate SchemaManager.", ex);
+                throw;
+            }
+        }
+
+        internal void CreateSingleSchema(Transaction transaction, string schemaName)
+        {
+            try
+            {
+                var physicalSchema = AcquireVirtual(transaction, schemaName, LockOperation.Write);
+                if (physicalSchema.Exists)
+                {
+                    transaction.Commit(); //The schema already exists, not much else to do.
+                    return;
+                }
+
+                var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
+
+                string parentSchemaCatalogFile = Path.Combine(parentPhysicalSchema.DiskPath, SchemaCatalogFile);
+                var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentSchemaCatalogFile, LockOperation.Write);
+
+                core.IO.CreateDirectory(transaction, physicalSchema.DiskPath);
+
+                //Create default schema catalog file.
+                var filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
+                if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
+                {
+                    core.IO.PutJson(transaction, filePath, new PhysicalSchemaCatalog());
+                }
+
+                //Create default document page catalog file.
+                filePath = Path.Combine(physicalSchema.DiskPath, DocumentPageCatalogFile);
+                if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
+                {
+                    core.IO.PutJson(transaction, filePath, new PhysicalDocumentPageCatalog());
+                }
+
+                //Create default index catalog file.
+                filePath = Path.Combine(physicalSchema.DiskPath, IndexCatalogFile);
+                if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
+                {
+                    core.IO.PutJson(transaction, filePath, new PhysicalIndexCatalog());
+                }
+
+                if (parentCatalog.ContainsName(schemaName) == false)
+                {
+                    parentCatalog.Add(new PhysicalSchema
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = physicalSchema.Name
+                    });
+
+                    core.IO.PutJson(transaction, parentSchemaCatalogFile, parentCatalog);
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
 
         internal List<PhysicalSchema> AcquireChildren(Transaction transaction, PhysicalSchema schema, LockOperation intendedOperation)
         {
-            var schemas = new List<PhysicalSchema>();
-
-            string schemaCatalogDiskPath = Path.Combine(schema.DiskPath, SchemaCatalogFile);
-
-            if (core.IO.FileExists(transaction, schemaCatalogDiskPath, intendedOperation))
+            try
             {
-                var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, schemaCatalogDiskPath, intendedOperation);
+                var schemas = new List<PhysicalSchema>();
 
-                foreach (var catalogItem in schemaCatalog.Collection)
+                string schemaCatalogDiskPath = Path.Combine(schema.DiskPath, SchemaCatalogFile);
+
+                if (core.IO.FileExists(transaction, schemaCatalogDiskPath, intendedOperation))
                 {
-                    schemas.Add(new PhysicalSchema()
-                    {
-                        DiskPath = schema.DiskPath + "\\" + catalogItem.Name,
-                        Id = catalogItem.Id,
-                        Name = catalogItem.Name,
-                        VirtualPath = schema.VirtualPath + ":" + catalogItem.Name
-                    });
-                }
-            }
+                    var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, schemaCatalogDiskPath, intendedOperation);
 
-            return schemas;
+                    foreach (var catalogItem in schemaCatalog.Collection)
+                    {
+                        schemas.Add(new PhysicalSchema()
+                        {
+                            DiskPath = schema.DiskPath + "\\" + catalogItem.Name,
+                            Id = catalogItem.Id,
+                            Name = catalogItem.Name,
+                            VirtualPath = schema.VirtualPath + ":" + catalogItem.Name
+                        });
+                    }
+                }
+
+                return schemas;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to acquire schema children for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
         }
 
         internal PhysicalSchema AcquireParent(Transaction transaction, PhysicalSchema child, LockOperation intendedOperation)
@@ -179,7 +184,7 @@ namespace Katzebase.Engine.Schemas.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to get parent schema.", ex);
+                core.Log.Write($"Failed to acquire parent schema for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -238,7 +243,7 @@ namespace Katzebase.Engine.Schemas.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to translate virtual path to schema.", ex);
+                core.Log.Write($"Failed to acquire schema for process id {transaction.ProcessId}.", ex);
                 throw;
             }
             finally
@@ -308,7 +313,7 @@ namespace Katzebase.Engine.Schemas.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to translate virtual path to schema.", ex);
+                core.Log.Write($"Failed to acquire virtual schema for process id {transaction.ProcessId}.", ex);
                 throw;
             }
             finally
@@ -316,7 +321,5 @@ namespace Katzebase.Engine.Schemas.Management
                 ptLockSchema?.StopAndAccumulate();
             }
         }
-
-        #endregion
     }
 }

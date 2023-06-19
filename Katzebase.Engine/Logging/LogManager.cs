@@ -18,12 +18,17 @@ namespace Katzebase.Engine.Logging
         public LogManager(Core core)
         {
             this.core = core;
-            RecycleLog();
+            CycleLog();
         }
+
+        public void Write(string message) => Write(new LogEntry(message) { Severity = LogSeverity.Verbose });
+        public void Trace(string message) => Write(new LogEntry(message) { Severity = LogSeverity.Trace });
+        public void Write(string message, Exception ex) => Write(new LogEntry(message) { Exception = ex, Severity = LogSeverity.Exception });
+        public void Write(string message, LogSeverity severity) => Write(new LogEntry(message) { Severity = severity });
 
         public void Start()
         {
-            RecycleLog();
+            CycleLog();
         }
 
         public void Stop()
@@ -41,9 +46,10 @@ namespace Katzebase.Engine.Logging
                     {
                         fileHandle.Flush();
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        //Discard
+                        Console.WriteLine($"Critical log exception. Failed to checkpoint log: {ex.Message}.");
+                        throw;
                     }
                 }
             }
@@ -51,173 +57,184 @@ namespace Katzebase.Engine.Logging
 
         public void Write(LogEntry entry)
         {
-            if (entry.Severity == LogSeverity.Trace && core.Settings.WriteTraceData == false)
+            try
             {
-                return;
-            }
-
-            if (entry.Exception != null)
-            {
-                if (typeof(KbExceptionBase).IsAssignableFrom(entry.Exception.GetType()))
+                if (entry.Severity == LogSeverity.Trace && core.Settings.WriteTraceData == false)
                 {
-                    entry.Severity = ((KbExceptionBase)entry.Exception).Severity;
-                }
-            }
-
-            lock (this)
-            {
-                if (entry.Severity == LogSeverity.Warning)
-                {
-                    core.Health.Increment(HealthCounterType.Warnings);
-                }
-                else if (entry.Severity == LogSeverity.Exception)
-                {
-                    core.Health.Increment(HealthCounterType.Exceptions);
-                }
-
-                RecycleLog();
-
-                StringBuilder message = new StringBuilder();
-
-                message.AppendFormat("{0}|{1}|{2}", entry.DateTime.ToShortDateString(), entry.DateTime.ToShortTimeString(), entry.Severity);
-
-                if (entry.Message != null && entry.Message != string.Empty)
-                {
-                    message.Append("|");
-                    message.Append(entry.Message);
+                    return;
                 }
 
                 if (entry.Exception != null)
                 {
                     if (typeof(KbExceptionBase).IsAssignableFrom(entry.Exception.GetType()))
                     {
-                        if (entry.Exception.Message != null && entry.Exception.Message != string.Empty)
+                        entry.Severity = ((KbExceptionBase)entry.Exception).Severity;
+                    }
+                }
+
+                lock (this)
+                {
+                    if (entry.Severity == LogSeverity.Warning)
+                    {
+                        core.Health.Increment(HealthCounterType.Warnings);
+                    }
+                    else if (entry.Severity == LogSeverity.Exception)
+                    {
+                        core.Health.Increment(HealthCounterType.Exceptions);
+                    }
+
+                    CycleLog();
+
+                    StringBuilder message = new StringBuilder();
+
+                    message.AppendFormat("{0}|{1}|{2}", entry.DateTime.ToShortDateString(), entry.DateTime.ToShortTimeString(), entry.Severity);
+
+                    if (entry.Message != null && entry.Message != string.Empty)
+                    {
+                        message.Append("|");
+                        message.Append(entry.Message);
+                    }
+
+                    if (entry.Exception != null)
+                    {
+                        if (typeof(KbExceptionBase).IsAssignableFrom(entry.Exception.GetType()))
                         {
-                            message.AppendFormat("|Exception: {0}: ", entry.Exception.GetType().Name);
-                            message.Append(entry.Exception.Message);
+                            if (entry.Exception.Message != null && entry.Exception.Message != string.Empty)
+                            {
+                                message.AppendFormat("|Exception: {0}: ", entry.Exception.GetType().Name);
+                                message.Append(entry.Exception.Message);
+                            }
                         }
+                        else
+                        {
+                            if (entry.Exception.Message != null && entry.Exception.Message != string.Empty)
+                            {
+                                message.Append("|Exception: ");
+                                message.Append(GetExceptionText(entry.Exception));
+                            }
+
+                            if (entry.Exception.StackTrace != null && entry.Exception.StackTrace != string.Empty)
+                            {
+                                message.Append("|Stack: ");
+                                message.Append(entry.Exception.StackTrace);
+                            }
+                        }
+                    }
+
+                    if (entry.Severity == LogSeverity.Warning)
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkYellow;
+                    }
+                    else if (entry.Severity == LogSeverity.Exception)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                    }
+                    else if (entry.Severity == LogSeverity.Verbose)
+                    {
+                        Console.ForegroundColor = ConsoleColor.White;
                     }
                     else
                     {
-                        if (entry.Exception.Message != null && entry.Exception.Message != string.Empty)
-                        {
-                            message.Append("|Exception: ");
-                            message.Append(GetExceptionText(entry.Exception));
-                        }
+                        Console.ForegroundColor = ConsoleColor.Gray;
+                    }
 
-                        if (entry.Exception.StackTrace != null && entry.Exception.StackTrace != string.Empty)
-                        {
-                            message.Append("|Stack: ");
-                            message.Append(entry.Exception.StackTrace);
-                        }
+                    Console.WriteLine(message.ToString());
+
+                    Console.ForegroundColor = ConsoleColor.Gray;
+
+                    Utility.EnsureNotNull(fileHandle);
+
+                    fileHandle.WriteLine(message.ToString());
+
+                    if (core.Settings.FlushLog)
+                    {
+                        fileHandle.Flush();
                     }
                 }
-
-                if (entry.Severity == LogSeverity.Warning)
-                {
-                    Console.ForegroundColor = ConsoleColor.DarkYellow;
-                }
-                else if (entry.Severity == LogSeverity.Exception)
-                {
-                    Console.ForegroundColor = ConsoleColor.Red;
-                }
-                else if (entry.Severity == LogSeverity.Verbose)
-                {
-                    Console.ForegroundColor = ConsoleColor.White;
-                }
-                else
-                {
-                    Console.ForegroundColor = ConsoleColor.Gray;
-                }
-
-                Console.WriteLine(message.ToString());
-
-                Console.ForegroundColor = ConsoleColor.Gray;
-
-                Utility.EnsureNotNull(fileHandle);
-
-                fileHandle.WriteLine(message.ToString());
-
-                if (core.Settings.FlushLog)
-                {
-                    fileHandle.Flush();
-                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Critical log exception. Failed write log entry: {ex.Message}.");
+                throw;
             }
         }
 
-        private string GetExceptionText(Exception ex)
+        private string GetExceptionText(Exception excpetion)
         {
-            StringBuilder message = new StringBuilder();
-            return GetExceptionText(ex, 0, ref message);
-        }
-
-        private string GetExceptionText(Exception ex, int level, ref StringBuilder message)
-        {
-            if (ex.Message != null && ex.Message != string.Empty)
+            try
             {
-                message.AppendFormat("{0} {1}", level, ex.Message);
+                var message = new StringBuilder();
+                return GetExceptionText(excpetion, 0, ref message);
             }
-
-            if (ex.InnerException != null && level < 100)
+            catch (Exception ex)
             {
-                return GetExceptionText(ex.InnerException, level + 1, ref message);
+                Console.WriteLine($"Critical log exception. Failed to get exception text: {ex.Message}.");
+                throw;
             }
-
-            return message.ToString();
         }
 
-
-        public void Write(string message)
+        private string GetExceptionText(Exception exception, int level, ref StringBuilder message)
         {
-            Write(new LogEntry(message) { Severity = LogSeverity.Verbose });
-        }
-
-        public void Trace(string message)
-        {
-            Write(new LogEntry(message) { Severity = LogSeverity.Trace });
-        }
-
-        public void Write(string message, Exception ex)
-        {
-            Write(new LogEntry(message) { Exception = ex, Severity = LogSeverity.Exception });
-        }
-
-        public void Write(string message, LogSeverity severity)
-        {
-            Write(new LogEntry(message) { Severity = severity });
-        }
-
-        private void RecycleLog()
-        {
-            lock (this)
+            try
             {
-                if (recycledTime.Date != DateTime.Now)
+                if (exception.Message != null && exception.Message != string.Empty)
                 {
-                    Close();
-
-                    recycledTime = DateTime.Now;
-                    string fileName = core.Settings.LogDirectory + "\\" + $"{recycledTime.Year}_{recycledTime.Month:00}_{recycledTime.Day:00}.txt";
-                    Directory.CreateDirectory(core.Settings.LogDirectory);
-                    fileHandle = new StreamWriter(fileName, true);
+                    message.AppendFormat("{0} {1}", level, exception.Message);
                 }
+
+                if (exception.InnerException != null && level < 100)
+                {
+                    return GetExceptionText(exception.InnerException, level + 1, ref message);
+                }
+
+                return message.ToString();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Critical log exception. Failed to get exception text: {ex.Message}.");
+                throw;
+            }
+        }
+
+        private void CycleLog()
+        {
+            try
+            {
+                lock (this)
+                {
+                    if (recycledTime.Date != DateTime.Now)
+                    {
+                        Close();
+
+                        recycledTime = DateTime.Now;
+                        string fileName = core.Settings.LogDirectory + "\\" + $"{recycledTime.Year}_{recycledTime.Month:00}_{recycledTime.Day:00}.txt";
+                        Directory.CreateDirectory(core.Settings.LogDirectory);
+                        fileHandle = new StreamWriter(fileName, true);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Critical log exception. Failed to cycle log file: {ex.Message}.");
+                throw;
             }
         }
 
         public void Close()
         {
-            if (fileHandle != null)
+            try
             {
-                try
+                if (fileHandle != null)
                 {
                     fileHandle.Close();
                     fileHandle.Dispose();
                 }
-                catch
-                {
-                    //Discard
-                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Critical log exception. Failed to close log file: {ex.Message}.");
+                throw;
             }
         }
-
     }
 }

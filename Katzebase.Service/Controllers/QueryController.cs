@@ -13,78 +13,72 @@ namespace Katzebase.Service.Controllers
         [Route("{sessionId}/ExplainQuery")]
         public KbQueryResult ExplainQuery(Guid sessionId, [FromBody] string value)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
-
-            var result = new KbQueryResult();
-
             try
             {
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
                 var statement = JsonConvert.DeserializeObject<string>(value);
                 Utility.EnsureNotNull(statement);
-                result = Program.Core.Query.APIHandlers.ExecuteStatementExplain(processId, statement);
-
-                result.Success = true;
+                return Program.Core.Query.APIHandlers.ExecuteStatementExplain(processId, statement);
             }
             catch (Exception ex)
             {
-                result.Message = ex.Message;
+                return new KbQueryResult
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
             }
-
-            return result;
         }
 
         [HttpPost]
         [Route("{sessionId}/ExecuteQuery")]
         public KbQueryResult ExecuteQuery(Guid sessionId, [FromBody] string value)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
-
-            var result = new KbQueryResult();
-
             try
             {
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
                 var statement = JsonConvert.DeserializeObject<string>(value);
                 Utility.EnsureNotNull(statement);
-                result = Program.Core.Query.APIHandlers.ExecuteStatementQuery(processId, statement);
-
-                result.Success = true;
+                return Program.Core.Query.APIHandlers.ExecuteStatementQuery(processId, statement);
             }
             catch (Exception ex)
             {
-                result.Message = ex.Message;
+                return new KbQueryResult
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
             }
-
-            return result;
         }
 
         [HttpPost]
         [Route("{sessionId}/ExecuteNonQuery")]
         public KbActionResponse ExecuteNonQuery(Guid sessionId, [FromBody] string value)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
-
-            var result = new KbActionResponse();
-
             try
             {
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
                 var statement = JsonConvert.DeserializeObject<string>(value);
                 Utility.EnsureNotNull(statement);
-                result = Program.Core.Query.APIHandlers.ExecuteStatementNonQuery(processId, statement);
-
-                result.Success = true;
+                return Program.Core.Query.APIHandlers.ExecuteStatementNonQuery(processId, statement);
             }
             catch (Exception ex)
             {
-                result.Message = ex.Message;
+                return new KbActionResponseBoolean
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
             }
-
-            return result;
         }
     }
 }

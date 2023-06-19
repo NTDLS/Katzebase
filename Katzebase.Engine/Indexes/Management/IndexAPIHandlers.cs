@@ -1,4 +1,5 @@
 ﻿using Katzebase.PublicLibrary.Payloads;
+using System;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Indexes.Management
@@ -13,25 +14,36 @@ namespace Katzebase.Engine.Indexes.Management
         public IndexAPIHandlers(Core core)
         {
             this.core = core;
+
+            try
+            {
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate index API handlers.", ex);
+                throw;
+            }
         }
 
         public KbActionResponseIndexes ListIndexes(ulong processId, string schemaName)
         {
-            var result = new KbActionResponseIndexes();
             try
             {
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
+                    var result = new KbActionResponseIndexes();
+
                     var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, schemaName, LockOperation.Read);
                     if (indexCatalog != null)
                     {
-                        foreach (var index in indexCatalog.Collection)
-                        {
-                            result.Add(PhysicalIndex.ToClientPayload(index));
-                        }
+                        result.List.AddRange(indexCatalog.Collection.Select(o => PhysicalIndex.ToClientPayload(o)));
                     }
 
                     transaction.Commit();
+                    result.RowCount = 0;
+                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
             }
             catch (Exception ex)
@@ -40,21 +52,23 @@ namespace Katzebase.Engine.Indexes.Management
                 throw;
             }
 
-            return result;
         }
 
-        public bool DoesIndexExist(ulong processId, string schemaName, string indexName)
+        public KbActionResponseBoolean DoesIndexExist(ulong processId, string schemaName, string indexName)
         {
-            bool result = false;
             try
             {
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
+                    var result = new KbActionResponseBoolean();
                     var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, schemaName, LockOperation.Read);
-
-                    result = indexCatalog.GetByName(indexName) != null;
+                    result.Value = indexCatalog.GetByName(indexName) != null;
 
                     transaction.Commit();
+                    result.RowCount = 0;
+                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
             }
             catch (Exception ex)
@@ -62,11 +76,9 @@ namespace Katzebase.Engine.Indexes.Management
                 core.Log.Write($"Failed to create index for process {processId}.", ex);
                 throw;
             }
-
-            return result;
         }
 
-        public void CreateIndex(ulong processId, string schemaName, KbIndex index, out Guid newId)
+        public KbActionResponseGuid CreateIndex(ulong processId, string schemaName, KbIndex index)
         {
             try
             {
@@ -74,8 +86,15 @@ namespace Katzebase.Engine.Indexes.Management
 
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    core.Indexes.CreateIndex(transaction, schemaName, index, out newId);
+                    var result = new KbActionResponseGuid();
+                    core.Indexes.CreateIndex(transaction, schemaName, index, out Guid newId);
+                    result.Id = newId;
+
                     transaction.Commit();
+                    result.RowCount = 0;
+                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
             }
             catch (Exception ex)
@@ -85,14 +104,21 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
-        public void RebuildIndex(ulong processId, string schemaName, string indexName)
+        public KbActionResponse RebuildIndex(ulong processId, string schemaName, string indexName)
         {
             try
             {
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
+                    var result = new KbActionResponse();
+
                     core.Indexes.RebuildIndex(transaction, schemaName, indexName);
+
                     transaction.Commit();
+                    result.RowCount = 0;
+                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
             }
             catch (Exception ex)
@@ -102,14 +128,21 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
-        public void DropIndex(ulong processId, string schemaName, string indexName)
+        public KbActionResponse DropIndex(ulong processId, string schemaName, string indexName)
         {
             try
             {
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
+                    var result = new KbActionResponse();
+
                     core.Indexes.DropIndex(transaction, schemaName, indexName);
+
                     transaction.Commit();
+                    result.RowCount = 0;
+                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
             }
             catch (Exception ex)

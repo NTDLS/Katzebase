@@ -16,25 +16,30 @@ namespace Katzebase.Service.Controllers
         [Route("{sessionId}/Ping")]
         public KbActionResponsePing Exists(Guid sessionId)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
-
-            var result = new KbActionResponsePing();
-
             try
             {
-                result.ProcessId = processId;
-                result.SessionId = sessionId;
-                result.ServerTimeUTC = DateTime.UtcNow;
-                result.Success = true;
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
+                var result = new KbActionResponsePing
+                {
+                    ProcessId = processId,
+                    SessionId = sessionId,
+                    ServerTimeUTC = DateTime.UtcNow,
+                    Success = true
+                };
+
+                return result;
             }
             catch (Exception ex)
             {
-                result.Message = ex.Message;
+                return new KbActionResponsePing
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
             }
-
-            return result;
         }
     }
 }

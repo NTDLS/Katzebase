@@ -17,11 +17,22 @@ namespace Katzebase.Service.Controllers
         [Route("{sessionId}/{schema}/List/{count}")]
         public KbQueryResult List(Guid sessionId, string schema, int count)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
+            try
+            {
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            return Program.Core.Documents.APIHandlers.ListDocuments(processId, schema, count);
+                return Program.Core.Documents.APIHandlers.ListDocuments(processId, schema, count);
+            }
+            catch (Exception ex)
+            {
+                return new KbQueryResult
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
+            }
         }
 
         /// <summary>
@@ -32,11 +43,22 @@ namespace Katzebase.Service.Controllers
         [Route("{sessionId}/{schema}/Sample/{count}")]
         public KbQueryResult Sample(Guid sessionId, string schema, int count)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
+            try
+            {
+                ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            return Program.Core.Documents.APIHandlers.DocumentSample(processId, schema, count);
+                return Program.Core.Documents.APIHandlers.DocumentSample(processId, schema, count);
+            }
+            catch (Exception ex)
+            {
+                return new KbQueryResult
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
+            }
         }
 
         /// <summary>
@@ -47,37 +69,46 @@ namespace Katzebase.Service.Controllers
         [Route("{sessionId}/{schema}/Catalog")]
         public KbDocumentCatalogCollection Catalog(Guid sessionId, string schema)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
+            try
+            {
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            return Program.Core.Documents.APIHandlers.DocumentCatalog(processId, schema);
+                return Program.Core.Documents.APIHandlers.DocumentCatalog(processId, schema);
+            }
+            catch (Exception ex)
+            {
+                return new KbDocumentCatalogCollection
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
+            }
         }
 
         [HttpPost]
         [Route("{sessionId}/{schema}/Store")]
-        public KbActionResponseGuid Store(Guid sessionId, string schema, [FromBody] string value)
+        public KbActionResponseUInt Store(Guid sessionId, string schema, [FromBody] string value)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
-
-            KbActionResponseGuid result = new KbActionResponseGuid();
-
             try
             {
-                var content = JsonConvert.DeserializeObject<KbDocument>(value);
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
+                var content = JsonConvert.DeserializeObject<KbDocument>(value);
                 Utility.EnsureNotNull(content);
-                Program.Core.Documents.APIHandlers.StoreDocument(processId, schema, content);
-                result.Success = true;
+                return Program.Core.Documents.APIHandlers.StoreDocument(processId, schema, content);
             }
             catch (Exception ex)
             {
-                result.Message = ex.Message;
+                return new KbActionResponseUInt
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
             }
-
-            return result;
         }
 
         /// <summary>
@@ -88,24 +119,22 @@ namespace Katzebase.Service.Controllers
         [Route("{sessionId}/{schema}/{id}/DeleteById")]
         public KbActionResponse DeleteById(Guid sessionId, string schema, uint id)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-
-            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
-
-            KbActionResponse result = new KbActionResponse();
-
             try
             {
-                Program.Core.Documents.APIHandlers.DeleteDocumentById(processId, schema, id);
-                result.Success = true;
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
+                return Program.Core.Documents.APIHandlers.DeleteDocumentById(processId, schema, id);
             }
             catch (Exception ex)
             {
-                result.Message = ex.Message;
+                return new KbActionResponseUInt
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
             }
-
-            return result;
         }
     }
 }

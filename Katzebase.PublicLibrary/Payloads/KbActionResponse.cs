@@ -7,5 +7,15 @@
         public KbMetricCollection? Metrics { get; set; }
         public string? Explanation { get; set; }
         public int RowCount { get; set; }
+
+        public KbActionResponse()
+        {
+        }
+
+        public KbActionResponse(Exception ex)
+        {
+            Message = ex.Message;
+            Success = false;
+        }
     }
 }

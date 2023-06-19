@@ -1,5 +1,6 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using System.Net.WebSockets;
 using System.Text;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
@@ -15,6 +16,15 @@ namespace Katzebase.Engine.Schemas.Management
         public SchemaAPIHandlers(Core core)
         {
             this.core = core;
+
+            try
+            {
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate schema API handlers.", ex);
+                throw;
+            }
         }
 
         public KbActionResponseSchemaCollection ListSchemas(ulong processId, string schemaName)
@@ -41,9 +51,9 @@ namespace Katzebase.Engine.Schemas.Management
                     }
 
                     transaction.Commit();
-
+                    result.RowCount = 0;
                     result.Metrics = transaction.PT?.ToCollection();
-
+                    result.Success = true;
                     return result;
                 }
             }
@@ -59,19 +69,28 @@ namespace Katzebase.Engine.Schemas.Management
         /// Creates a structure of schemas, denotaed by colons.
         /// </summary>
         /// <param name="schemaPath"></param>
-        public void CreateSchema(ulong processId, string schemaName)
+        public KbActionResponse CreateSchema(ulong processId, string schemaName)
         {
             try
             {
-                var segments = schemaName.Split(':');
-
-                StringBuilder pathBuilder = new StringBuilder();
-
-                foreach (string name in segments)
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    pathBuilder.Append(name);
-                    core.Schemas.CreateSingleSchema(processId, pathBuilder.ToString());
-                    pathBuilder.Append(":");
+                    var result = new KbActionResponse();
+                    var segments = schemaName.Split(':');
+                    var pathBuilder = new StringBuilder();
+
+                    foreach (string name in segments)
+                    {
+                        pathBuilder.Append(name);
+                        core.Schemas.CreateSingleSchema(transaction, pathBuilder.ToString());
+                        pathBuilder.Append(":");
+                    }
+
+                    transaction.Commit();
+                    result.RowCount = 0;
+                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
             }
             catch (Exception ex)
@@ -85,26 +104,23 @@ namespace Katzebase.Engine.Schemas.Management
         /// Returns true if the schema exists.
         /// </summary>
         /// <param name="schemaPath"></param>
-        public bool DoesSchemaExist(ulong processId, string schemaName)
+        public KbActionResponseBoolean DoesSchemaExist(ulong processId, string schemaName)
         {
             try
             {
-                bool result = false;
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
+                    var result = new KbActionResponseBoolean();
                     var segments = schemaName.Split(':');
-
-                    StringBuilder pathBuilder = new StringBuilder();
+                    var pathBuilder = new StringBuilder();
 
                     foreach (string name in segments)
                     {
                         pathBuilder.Append(name);
                         var schema = core.Schemas.AcquireVirtual(transaction, pathBuilder.ToString(), LockOperation.Read);
 
-                        result = schema != null && schema.Exists;
-
-                        if (result == false)
+                        result.Value = schema != null && schema.Exists;
+                        if (result.Value == false)
                         {
                             break;
                         }
@@ -113,6 +129,9 @@ namespace Katzebase.Engine.Schemas.Management
                     }
 
                     transaction.Commit();
+                    result.RowCount = 0;
+                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
                     return result;
                 }
             }
@@ -127,12 +146,14 @@ namespace Katzebase.Engine.Schemas.Management
         /// Drops a single schema or an entire schema path.
         /// </summary>
         /// <param name="schema"></param>
-        public void DropSchema(ulong processId, string schemaName)
+        public KbActionResponse DropSchema(ulong processId, string schemaName)
         {
             try
             {
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
+                    var result = new KbActionResponseBoolean();
+
                     var segments = schemaName.Split(':');
                     string parentSchemaName = segments[segments.Count() - 1];
 
@@ -156,6 +177,9 @@ namespace Katzebase.Engine.Schemas.Management
                     }
 
                     transaction.Commit();
+                    result.RowCount = 0;
+                    result.Metrics = transaction.PT?.ToCollection();
+                    return result;
                 }
             }
             catch (Exception ex)
@@ -164,6 +188,5 @@ namespace Katzebase.Engine.Schemas.Management
                 throw;
             }
         }
-
     }
 }

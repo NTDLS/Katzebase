@@ -16,23 +16,22 @@ namespace Katzebase.Service.Controllers
         [Route("{sessionId}/{schema}/List")]
         public KbActionResponseSchemaCollection List(Guid sessionId, string schema)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
-
-            var result = new KbActionResponseSchemaCollection();
-
             try
             {
-                result = Program.Core.Schemas.APIHandlers.ListSchemas(processId, schema);
-                result.Success = true;
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
+                return Program.Core.Schemas.APIHandlers.ListSchemas(processId, schema);
             }
             catch (Exception ex)
             {
-                result.Message = ex.Message;
+                return new KbActionResponseSchemaCollection
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
             }
-
-            return result;
         }
 
         /// <summary>
@@ -43,23 +42,22 @@ namespace Katzebase.Service.Controllers
         [Route("{sessionId}/{schema}/Create")]
         public KbActionResponse Create(Guid sessionId, string schema)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
-
-            var result = new KbActionResponse();
-
             try
             {
-                Program.Core.Schemas.APIHandlers.CreateSchema(processId, schema);
-                result.Success = true;
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
+                return Program.Core.Schemas.APIHandlers.CreateSchema(processId, schema);
             }
             catch (Exception ex)
             {
-                result.Message = ex.Message;
+                return new KbActionResponsePing
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
             }
-
-            return result;
         }
 
         /// <summary>
@@ -70,23 +68,22 @@ namespace Katzebase.Service.Controllers
         [Route("{sessionId}/{schema}/Exists")]
         public KbActionResponseBoolean Exists(Guid sessionId, string schema)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
-
-            var result = new KbActionResponseBoolean();
-
             try
             {
-                result.Value = Program.Core.Schemas.APIHandlers.DoesSchemaExist(processId, schema);
-                result.Success = true;
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
+                return Program.Core.Schemas.APIHandlers.DoesSchemaExist(processId, schema);
             }
             catch (Exception ex)
             {
-                result.Message = ex.Message;
+                return new KbActionResponseBoolean
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
             }
-
-            return result;
         }
 
         /// <summary>
@@ -97,23 +94,22 @@ namespace Katzebase.Service.Controllers
         [Route("{sessionId}/{schema}/Drop")]
         public KbActionResponse Drop(Guid sessionId, string schema)
         {
-            ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-            Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
-            Program.Core.Log.Trace(Thread.CurrentThread.Name);
-
-            var result = new KbActionResponse();
-
             try
             {
-                Program.Core.Schemas.APIHandlers.DropSchema(processId, schema);
-                result.Success = true;
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
+                return Program.Core.Schemas.APIHandlers.DropSchema(processId, schema);
             }
             catch (Exception ex)
             {
-                result.Message = ex.Message;
+                return new KbActionResponsePing
+                {
+                    Message = ex.Message,
+                    Success = false
+                };
             }
-
-            return result;
         }
     }
 }

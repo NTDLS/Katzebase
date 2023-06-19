@@ -1,4 +1,5 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
+using System.Diagnostics;
 
 namespace Katzebase.Engine.Sessions.Management
 {
@@ -16,37 +17,61 @@ namespace Katzebase.Engine.Sessions.Management
         public SessionManager(Core core)
         {
             this.core = core;
-            APIHandlers = new SessionAPIHandlers(core);
-            QueryHandlers = new SessionQueryHandlers(core);
+            try
+            {
+                APIHandlers = new SessionAPIHandlers(core);
+                QueryHandlers = new SessionQueryHandlers(core);
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate session manager.", ex);
+                throw;
+            }
         }
 
         public ulong UpsertSessionId(Guid sessionId)
         {
-            lock (Collection)
+            try
             {
-                if (Collection.ContainsKey(sessionId))
+                lock (Collection)
                 {
-                    return Collection[sessionId].ProcessId;
+                    if (Collection.ContainsKey(sessionId))
+                    {
+                        return Collection[sessionId].ProcessId;
+                    }
+                    else
+                    {
+                        ulong processId = nextProcessId++;
+                        Collection.Add(sessionId, new SessionState(processId, sessionId));
+                        return processId;
+                    }
                 }
-                else
-                {
-                    ulong processId = nextProcessId++;
-                    Collection.Add(sessionId, new SessionState(processId, sessionId));
-                    return processId;
-                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to upsert session for session {sessionId}.", ex);
+                throw;
             }
         }
 
-        public SessionState ByProcessId(ulong sessionId)
+        public SessionState ByProcessId(ulong processId)
         {
-            lock (Collection)
+            try
             {
-                var result = Collection.Where(o => o.Value.ProcessId == sessionId).FirstOrDefault();
-                if (result.Value != null)
+                lock (Collection)
                 {
-                    return result.Value;
+                    var result = Collection.Where(o => o.Value.ProcessId == processId).FirstOrDefault();
+                    if (result.Value != null)
+                    {
+                        return result.Value;
+                    }
+                    throw new KbSessionNotFoundException($"The session was not found: {processId}");
                 }
-                throw new KbSessionNotFoundException($"The session was not found: {sessionId}");
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to get session state by process id for process id {processId}.", ex);
+                throw;
             }
         }
     }

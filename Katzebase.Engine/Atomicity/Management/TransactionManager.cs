@@ -16,32 +16,57 @@ namespace Katzebase.Engine.Atomicity.Management
         public TransactiontAPIHandlers APIHandlers { get; set; }
         internal List<Transaction> Collection = new();
         private readonly Core core;
+        internal Transaction Acquire(ulong processId) => Acquire(processId, false);
 
         public TransactionManager(Core core)
         {
             this.core = core;
-            QueryHandlers = new TransactionQueryHandlers(core);
-            APIHandlers = new TransactiontAPIHandlers(core);
+            try
+            {
+                QueryHandlers = new TransactionQueryHandlers(core);
+                APIHandlers = new TransactiontAPIHandlers(core);
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write("Failed to instanciate transaction manager.", ex);
+                throw;
+            }
         }
 
         internal Transaction? GetByProcessId(ulong processId)
         {
-            lock (Collection)
+            try
             {
-                var transaction = (from o in Collection where o.ProcessId == processId select o).FirstOrDefault();
-                return transaction;
+                lock (Collection)
+                {
+                    var transaction = (from o in Collection where o.ProcessId == processId select o).FirstOrDefault();
+                    return transaction;
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to get transaction by process id for process id {processId}.", ex);
+                throw;
             }
         }
 
         internal void RemoveByProcessId(ulong processId)
         {
-            lock (Collection)
+            try
             {
-                var transaction = GetByProcessId(processId);
-                if (transaction != null)
+                lock (Collection)
                 {
-                    Collection.Remove(transaction);
+                    var transaction = GetByProcessId(processId);
+                    if (transaction != null)
+                    {
+                        Collection.Remove(transaction);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to remove transaction by process id for process {processId}.", ex);
+                throw;
             }
         }
 
@@ -54,8 +79,7 @@ namespace Katzebase.Engine.Atomicity.Management
                 Directory.CreateDirectory(core.Settings.TransactionDataPath);
 
                 var transactionFiles = Directory.EnumerateFiles(core.Settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories);
-
-                if (transactionFiles.Count() > 0)
+                if (transactionFiles.Any())
                 {
                     core.Log.Write($"Found {transactionFiles.Count()} open transactions.", LogSeverity.Warning);
                 }
@@ -63,14 +87,11 @@ namespace Katzebase.Engine.Atomicity.Management
                 foreach (string transactionFile in transactionFiles)
                 {
                     var processIdString = Path.GetFileNameWithoutExtension(Path.GetDirectoryName(transactionFile));
-                    if (processIdString == null)
-                    {
-                        throw new ArgumentNullException(nameof(processIdString));
-                    }
+                    Utility.EnsureNotNull(processIdString);
 
                     ulong processId = ulong.Parse(processIdString);
 
-                    Transaction transaction = new Transaction(core, this, processId, true);
+                    var transaction = new Transaction(core, this, processId, true);
 
                     var atoms = File.ReadLines(transactionFile).ToList();
                     foreach (var atom in atoms)
@@ -90,14 +111,13 @@ namespace Katzebase.Engine.Atomicity.Management
                     {
                         core.Log.Write($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
                     }
-
                 }
 
                 core.Log.Write("Recovery complete.");
             }
             catch (Exception ex)
             {
-                core.Log.Write("Could not recover uncomitted transations.", ex);
+                core.Log.Write("Failed to recover uncomitted transations.", ex);
                 throw;
             }
         }
@@ -141,25 +161,16 @@ namespace Katzebase.Engine.Atomicity.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to begin transaction for process {processId}.", ex);
+                core.Log.Write($"Failed to acquire transaction for process {processId}.", ex);
                 throw;
             }
-        }
-
-        internal Transaction Acquire(ulong processId)
-        {
-            return Acquire(processId, false);
         }
 
         public void Commit(ulong processId)
         {
             try
             {
-                var transaction = GetByProcessId(processId);
-                if (transaction != null)
-                {
-                    transaction.Commit();
-                }
+                GetByProcessId(processId)?.Commit();
             }
             catch (Exception ex)
             {
@@ -172,18 +183,13 @@ namespace Katzebase.Engine.Atomicity.Management
         {
             try
             {
-                var transaction = GetByProcessId(processId);
-                if (transaction != null)
-                {
-                    transaction.Rollback();
-                }
+                GetByProcessId(processId)?.Rollback();
             }
             catch (Exception ex)
             {
                 core.Log.Write($"Failed to rollback transaction for process {processId}.", ex);
                 throw;
             }
-
         }
     }
 }

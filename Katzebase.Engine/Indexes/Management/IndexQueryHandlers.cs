@@ -13,6 +13,15 @@ namespace Katzebase.Engine.Indexes.Management
         public IndexQueryHandlers(Core core)
         {
             this.core = core;
+
+            try
+            {
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to instanciate index query handler.", ex);
+                throw;
+            }
         }
 
         internal KbActionResponse ExecuteDrop(ulong processId, PreparedQuery preparedQuery)
@@ -36,7 +45,7 @@ namespace Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                core.Log.Write($"Failed to execute index drop for process id {processId}.", ex);
                 throw;
             }
         }
@@ -62,7 +71,7 @@ namespace Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                core.Log.Write($"Failed to execute index rebuild for process id {processId}.", ex);
                 throw;
             }
         }
@@ -98,7 +107,7 @@ namespace Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to ExecuteSelect for process {processId}.", ex);
+                core.Log.Write($"Failed to execute index create for process id {processId}.", ex);
                 throw;
             }
         }
