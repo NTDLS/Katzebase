@@ -1,7 +1,8 @@
-﻿using Katzebase.Engine.Atomicity;
-
-namespace Katzebase.Engine.Atomicity.Management
+﻿namespace Katzebase.Engine.Atomicity.Management
 {
+    /// <summary>
+    /// Internal class methods for handling query requests related to transactions.
+    /// </summary>
     internal class TransactionQueryHandlers
     {
         private readonly Core core;

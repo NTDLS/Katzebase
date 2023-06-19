@@ -4,7 +4,10 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Atomicity
 {
-    public class ReversibleAction
+    /// <summary>
+    /// The atom is a unit of reversable work.
+    /// </summary>
+    public class Atom
     {
         [JsonConverter(typeof(StringEnumConverter))]
         public ActionType Action { get; set; }
@@ -12,7 +15,7 @@ namespace Katzebase.Engine.Atomicity
         public string? BackupPath { get; set; }
         public int Sequence { get; set; } = 0;
 
-        public ReversibleAction(ActionType action, string originalPath)
+        public Atom(ActionType action, string originalPath)
         {
             Action = action;
             OriginalPath = originalPath;

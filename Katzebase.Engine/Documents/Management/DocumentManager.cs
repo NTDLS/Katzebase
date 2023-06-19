@@ -7,11 +7,11 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 namespace Katzebase.Engine.Documents.Management
 {
     /// <summary>
-    /// Provides core document management functionality. Reading, writing, locking, listing, etc.
+    /// Public core class methods for locking, reading, writing and managing tasks related to documents.
     /// </summary>
     public class DocumentManager
     {
-        private Core core;
+        private readonly Core core;
         internal DocumentQueryHandlers QueryHandlers { get; set; }
         public DocumentAPIHandlers APIHandlers { get; set; }
 

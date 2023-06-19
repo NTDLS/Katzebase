@@ -1,17 +1,19 @@
 ﻿using Katzebase.Engine.Atomicity.Management;
+using Katzebase.Engine.IO;
 using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Locking;
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json;
+using System.Diagnostics;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {
-        public List<ReversibleAction> ReversibleActions = new List<ReversibleAction>();
+        public List<Atom> Atoms = new List<Atom>();
         public ulong ProcessId { get; set; }
         public DateTime StartTime { get; set; }
         public List<ulong> BlockedBy { get; set; }
@@ -36,7 +38,7 @@ namespace Katzebase.Engine.Atomicity
         public bool IsUserCreated { get; set; }
         public DeferredDiskIO? DeferredIOs { get; set; }
 
-        private Core core;
+        private readonly Core core;
         private TransactionManager transactionManager;
         private StreamWriter? transactionLogHandle = null;
         private bool isComittedOrRolledBack = false;
@@ -93,9 +95,8 @@ namespace Katzebase.Engine.Atomicity
             if (disposing)
             {
                 //Rollback Transaction if its still open:
-                if (isComittedOrRolledBack == false)
+                if (IsUserCreated == false && isComittedOrRolledBack == false)
                 {
-                    isComittedOrRolledBack = true;
                     Rollback();
                 }
             }
@@ -212,7 +213,7 @@ namespace Katzebase.Engine.Atomicity
         private bool IsFileAlreadyRecorded(string filePath)
         {
             filePath = Helpers.RemoveModFileName(filePath.ToLower());
-            return ReversibleActions.Exists(o => o.OriginalPath == filePath);
+            return Atoms.Exists(o => o.OriginalPath == filePath);
         }
 
         public void RecordFileCreate(string filePath)
@@ -220,23 +221,23 @@ namespace Katzebase.Engine.Atomicity
             try
             {
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-                lock (ReversibleActions)
+                lock (Atoms)
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
                         return;
                     }
 
-                    var reversibleAction = new ReversibleAction(ActionType.FileCreate, filePath.ToLower())
+                    var atom = new Atom(ActionType.FileCreate, filePath.ToLower())
                     {
-                        Sequence = ReversibleActions.Count
+                        Sequence = Atoms.Count
                     };
 
-                    ReversibleActions.Add(reversibleAction);
+                    Atoms.Add(atom);
 
                     Utility.EnsureNotNull(transactionLogHandle);
 
-                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
+                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                 }
 
                 ptRecording?.StopAndAccumulate();
@@ -253,23 +254,23 @@ namespace Katzebase.Engine.Atomicity
             try
             {
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-                lock (ReversibleActions)
+                lock (Atoms)
                 {
                     if (IsFileAlreadyRecorded(path))
                     {
                         return;
                     }
 
-                    var reversibleAction = new ReversibleAction(ActionType.DirectoryCreate, path.ToLower())
+                    var atom = new Atom(ActionType.DirectoryCreate, path.ToLower())
                     {
-                        Sequence = ReversibleActions.Count
+                        Sequence = Atoms.Count
                     };
 
-                    ReversibleActions.Add(reversibleAction);
+                    Atoms.Add(atom);
 
                     Utility.EnsureNotNull(transactionLogHandle);
 
-                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
+                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                 }
                 ptRecording?.StopAndAccumulate();
             }
@@ -286,7 +287,7 @@ namespace Katzebase.Engine.Atomicity
             {
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                lock (ReversibleActions)
+                lock (Atoms)
                 {
                     if (IsFileAlreadyRecorded(diskPath))
                     {
@@ -297,17 +298,17 @@ namespace Katzebase.Engine.Atomicity
                     Directory.CreateDirectory(backupPath);
                     Helpers.CopyDirectory(diskPath, backupPath);
 
-                    var reversibleAction = new ReversibleAction(ActionType.DirectoryDelete, diskPath.ToLower())
+                    var atom = new Atom(ActionType.DirectoryDelete, diskPath.ToLower())
                     {
                         BackupPath = backupPath,
-                        Sequence = ReversibleActions.Count
+                        Sequence = Atoms.Count
                     };
 
-                    ReversibleActions.Add(reversibleAction);
+                    Atoms.Add(atom);
 
                     Utility.EnsureNotNull(transactionLogHandle);
 
-                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
+                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                 }
                 ptRecording?.StopAndAccumulate();
             }
@@ -324,7 +325,7 @@ namespace Katzebase.Engine.Atomicity
             {
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                lock (ReversibleActions)
+                lock (Atoms)
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
@@ -334,17 +335,17 @@ namespace Katzebase.Engine.Atomicity
                     string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
                     File.Copy(filePath, backupPath);
 
-                    var reversibleAction = new ReversibleAction(ActionType.FileDelete, filePath.ToLower())
+                    var atom = new Atom(ActionType.FileDelete, filePath.ToLower())
                     {
                         BackupPath = backupPath,
-                        Sequence = ReversibleActions.Count
+                        Sequence = Atoms.Count
                     };
 
-                    ReversibleActions.Add(reversibleAction);
+                    Atoms.Add(atom);
 
                     Utility.EnsureNotNull(transactionLogHandle);
 
-                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
+                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                 }
                 ptRecording?.StopAndAccumulate();
             }
@@ -361,7 +362,7 @@ namespace Katzebase.Engine.Atomicity
             {
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                lock (ReversibleActions)
+                lock (Atoms)
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
@@ -371,17 +372,17 @@ namespace Katzebase.Engine.Atomicity
                     string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
                     File.Copy(filePath, backupPath);
 
-                    var reversibleAction = new ReversibleAction(ActionType.FileAlter, filePath.ToLower())
+                    var atom = new Atom(ActionType.FileAlter, filePath.ToLower())
                     {
                         BackupPath = backupPath,
-                        Sequence = ReversibleActions.Count
+                        Sequence = Atoms.Count
                     };
 
-                    ReversibleActions.Add(reversibleAction);
+                    Atoms.Add(atom);
 
                     Utility.EnsureNotNull(transactionLogHandle);
 
-                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
+                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                 }
                 ptRecording?.StopAndAccumulate();
             }
@@ -416,7 +417,7 @@ namespace Katzebase.Engine.Atomicity
                 var ptRollback = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Rollback);
                 try
                 {
-                    var rollbackActions = ReversibleActions.OrderByDescending(o => o.Sequence);
+                    var rollbackActions = Atoms.OrderByDescending(o => o.Sequence);
 
                     foreach (var record in rollbackActions)
                     {
@@ -499,8 +500,6 @@ namespace Katzebase.Engine.Atomicity
                 return;
             }
 
-            isComittedOrRolledBack = true;
-
             try
             {
                 var ptCommit = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Commit);
@@ -510,6 +509,8 @@ namespace Katzebase.Engine.Atomicity
 
                     if (referenceCount == 0)
                     {
+                        isComittedOrRolledBack = true;
+
                         try
                         {
                             Utility.EnsureNotNull(DeferredIOs);
@@ -554,7 +555,7 @@ namespace Katzebase.Engine.Atomicity
                     transactionLogHandle = null;
                 }
 
-                foreach (var record in ReversibleActions)
+                foreach (var record in Atoms)
                 {
                     //Delete all the backup files.
                     if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)

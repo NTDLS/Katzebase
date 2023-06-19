@@ -5,6 +5,9 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Schemas.Management
 {
+    /// <summary>
+    /// Public class methods for handling API requests related to schema.
+    /// </summary>
     public class SchemaAPIHandlers
     {
         private readonly Core core;

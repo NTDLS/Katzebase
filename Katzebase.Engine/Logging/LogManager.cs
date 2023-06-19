@@ -7,11 +7,11 @@ using static Katzebase.PublicLibrary.Constants;
 namespace Katzebase.Engine.Logging
 {
     /// <summary>
-    /// This is the class that all API controllers should interface with for log access.
+    /// Public core class methods for locking, reading, writing and managing tasks related to logging.
     /// </summary>
     public class LogManager
     {
-        private Core core;
+        private readonly Core core;
         private StreamWriter? fileHandle = null;
         private DateTime recycledTime = DateTime.MinValue;
 

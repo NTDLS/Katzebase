@@ -1,13 +1,9 @@
-﻿using Katzebase.Engine.Query;
-using Katzebase.Engine.Trace;
-using Katzebase.PublicLibrary.Exceptions;
-using Katzebase.PublicLibrary.Payloads;
-using static Katzebase.Engine.Sessions.SessionState;
-using static Katzebase.Engine.Trace.PerformanceTrace;
-
-namespace Katzebase.Engine.Sessions.Management
+﻿namespace Katzebase.Engine.Sessions.Management
 {
-    internal class SessionAPIHandlers
+    /// <summary>
+    /// Public class methods for handling API requests related to sessions.
+    /// </summary>
+    public class SessionAPIHandlers
     {
         private readonly Core core;
 

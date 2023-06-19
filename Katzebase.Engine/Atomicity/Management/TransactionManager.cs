@@ -1,5 +1,4 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Trace;
+﻿using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
 using static Katzebase.Engine.KbLib.EngineConstants;
@@ -9,14 +8,14 @@ using static Katzebase.PublicLibrary.Constants;
 namespace Katzebase.Engine.Atomicity.Management
 {
     /// <summary>
-    /// This is the class that all API controllers should interface with for transaction access.
+    /// Public core class methods for locking, reading, writing and managing tasks related to transactions.
     /// </summary>
     public class TransactionManager
     {
         internal TransactionQueryHandlers QueryHandlers { get; set; }
         public TransactiontAPIHandlers APIHandlers { get; set; }
         internal List<Transaction> Collection = new();
-        private Core core;
+        private readonly Core core;
 
         public TransactionManager(Core core)
         {
@@ -73,15 +72,15 @@ namespace Katzebase.Engine.Atomicity.Management
 
                     Transaction transaction = new Transaction(core, this, processId, true);
 
-                    var reversibleActions = File.ReadLines(transactionFile).ToList();
-                    foreach (var reversibleAction in reversibleActions)
+                    var atoms = File.ReadLines(transactionFile).ToList();
+                    foreach (var atom in atoms)
                     {
-                        var ra = JsonConvert.DeserializeObject<ReversibleAction>(reversibleAction);
+                        var ra = JsonConvert.DeserializeObject<Atom>(atom);
                         Utility.EnsureNotNull(ra);
-                        transaction.ReversibleActions.Add(ra);
+                        transaction.Atoms.Add(ra);
                     }
 
-                    core.Log.Write($"Rolling back session {transaction.ProcessId} with {transaction.ReversibleActions.Count} actions.", LogSeverity.Warning);
+                    core.Log.Write($"Rolling back session {transaction.ProcessId} with {transaction.Atoms.Count} actions.", LogSeverity.Warning);
 
                     try
                     {

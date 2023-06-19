@@ -2,11 +2,14 @@
 
 namespace Katzebase.Engine.Health.Management
 {
+    /// <summary>
+    /// Public core class methods for locking, reading, writing and managing tasks related to health.
+    /// </summary>
     public class HealthManager
     {
         public Dictionary<string, HealthCounter> Counters;
 
-        private Core core;
+        private readonly Core core;
         private DateTime lastCheckpoint = DateTime.MinValue;
 
         public HealthManager(Core core)

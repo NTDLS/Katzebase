@@ -7,6 +7,7 @@ using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.IO
 {
+    //Internal core class methods for locking, reading, writing and managing tasks related to disk I/O.
     internal class IOManager
     {
         private readonly Core core;
@@ -312,7 +313,7 @@ namespace Katzebase.Engine.IO
 
                 Utility.EnsureNotNull(transaction.DeferredIOs);
 
-                if (transaction.DeferredIOs.Collection.Values.Any(o => o.DiskPath == lowerFilePath))
+                if (transaction.DeferredIOs.ContainsKey(lowerFilePath))
                 {
                     return true; //The file might not yet exist, but its in the cache.
                 }

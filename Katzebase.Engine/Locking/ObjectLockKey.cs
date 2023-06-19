@@ -4,7 +4,7 @@ namespace Katzebase.Engine.Locking
 {
     internal class ObjectLockKey
     {
-        private Core core;
+        private readonly Core core;
         public ObjectLock ObjectLock { get; set; }
         public LockOperation LockOperation { get; set; }
         public ulong ProcessId { get; set; }

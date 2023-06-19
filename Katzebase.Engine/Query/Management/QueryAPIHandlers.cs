@@ -2,6 +2,9 @@
 
 namespace Katzebase.Engine.Query.Management
 {
+    /// <summary>
+    /// Public class methods for handling API requests related to queries.
+    /// </summary>
     public class QueryAPIHandlers
     {
         private readonly Core core;

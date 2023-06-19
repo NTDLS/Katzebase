@@ -8,6 +8,9 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Documents.Management
 {
+    /// <summary>
+    /// Internal class methods for handling query requests related to documents.
+    /// </summary>
     internal class DocumentQueryHandlers
     {
         private readonly Core core;
@@ -164,7 +167,6 @@ namespace Katzebase.Engine.Documents.Management
                     var firstSchema = preparedQuery.Schemas.First();
 
                     var physicalSchema = core.Schemas.Acquire(transaction, firstSchema.Name, LockOperation.Read);
-
 
                     string? getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
 

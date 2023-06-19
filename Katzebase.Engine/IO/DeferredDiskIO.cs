@@ -1,11 +1,26 @@
 ﻿using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Atomicity
+namespace Katzebase.Engine.IO
 {
     internal class DeferredDiskIO
     {
-        private Core core;
-        public Dictionary<string, DeferredDiskIOObject> Collection = new Dictionary<string, DeferredDiskIOObject>();
+        private class DeferredDiskIOObject
+        {
+            public string DiskPath { get; private set; }
+            public object Reference { get; set; }
+            public IOFormat Format { get; private set; }
+
+            public DeferredDiskIOObject(string diskPath, object reference, IOFormat format)
+            {
+                DiskPath = diskPath.ToLower();
+                Reference = reference;
+                Format = format;
+            }
+        }
+
+        private readonly Core core;
+        private Dictionary<string, DeferredDiskIOObject> Collection = new();
+        public bool ContainsKey(string key) => Collection.ContainsKey(key);
 
         public DeferredDiskIO(Core core)
         {
@@ -23,11 +38,11 @@ namespace Katzebase.Engine.Atomicity
                 {
                     if (deferred.Value.Reference != null)
                     {
-                        if (deferred.Value.DeferredFormat == IOFormat.JSON)
+                        if (deferred.Value.Format == IOFormat.JSON)
                         {
                             core.IO.PutJsonNonTracked(deferred.Value.DiskPath, deferred.Value.Reference);
                         }
-                        else if (deferred.Value.DeferredFormat == IOFormat.PBuf)
+                        else if (deferred.Value.Format == IOFormat.PBuf)
                         {
                             core.IO.PutPBufNonTracked(deferred.Value.DiskPath, deferred.Value.Reference);
                         }
@@ -54,20 +69,11 @@ namespace Katzebase.Engine.Atomicity
             {
                 if (Collection.ContainsKey(key))
                 {
-                    var wrapper = Collection[key];
-                    wrapper.Hits++;
-                    wrapper.Reference = reference;
-                    wrapper.DeferredFormat = deferredFormat;
+                    Collection[key].Reference = reference;
                 }
                 else
                 {
-                    var wrapper = new DeferredDiskIOObject(diskPath, reference)
-                    {
-                        Hits = 1,
-                        DeferredFormat = deferredFormat
-                    };
-
-                    Collection.Add(key, wrapper);
+                    Collection.Add(key, new DeferredDiskIOObject(diskPath, reference, deferredFormat));
                 }
 
                 return true;

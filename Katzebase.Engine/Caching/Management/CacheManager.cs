@@ -3,8 +3,12 @@ using System.Runtime.Caching;
 
 namespace Katzebase.Engine.Caching.Management
 {
+    /// <summary>
+    /// Public core class methods for locking, reading, writing and managing tasks related to cache.
+    /// </summary>
     public class CacheManager
     {
+        private readonly Core core;
         public int PartitionCount { get; private set; }
         public int CachedItemCount => partitions.Sum(o => o.Count());
 
@@ -13,6 +17,8 @@ namespace Katzebase.Engine.Caching.Management
 
         public CacheManager(Core core)
         {
+            this.core = core;
+
             PartitionCount = core.Settings.CachePartitions > 0 ? core.Settings.CachePartitions : Environment.ProcessorCount;
 
             partitions = new MemoryCache[PartitionCount];

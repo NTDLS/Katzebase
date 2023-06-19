@@ -2,10 +2,13 @@
 
 namespace Katzebase.Engine.Locking
 {
+    /// <summary>
+    /// Internal core class methods for locking, reading, writing and managing tasks related to locking.
+    /// </summary>
     internal class LockManager
     {
         internal ObjectLocks Locks { get; set; }
-        private Core core;
+        private readonly Core core;
 
         internal LockManager(Core core)
         {

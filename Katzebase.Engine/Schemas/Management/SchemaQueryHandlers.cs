@@ -6,6 +6,9 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Schemas.Management
 {
+    /// <summary>
+    /// Internal class methods for handling query requests related to schemas.
+    /// </summary>
     internal class SchemaQueryHandlers
     {
         private readonly Core core;

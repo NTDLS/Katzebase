@@ -4,9 +4,12 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Query.Management
 {
+    /// <summary>
+    /// Public core class methods for locking, reading, writing and managing tasks related to queries.
+    /// </summary>
     public class QueryManager
     {
-        private Core core;
+        private readonly Core core;
         public QueryAPIHandlers APIHandlers { get; set; }
 
         public QueryManager(Core core)

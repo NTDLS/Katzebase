@@ -1,6 +1,9 @@
 ﻿namespace Katzebase.Engine.Sessions.Management
 {
-    internal class HealthAPIHandlers
+    /// <summary>
+    /// Public class methods for handling API requests related to health.
+    /// </summary>
+    public class HealthAPIHandlers
     {
         private readonly Core core;
 

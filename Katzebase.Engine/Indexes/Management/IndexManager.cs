@@ -16,11 +16,11 @@ using static Katzebase.Engine.Trace.PerformanceTrace;
 namespace Katzebase.Engine.Indexes.Management
 {
     /// <summary>
-    /// Provides core index management functionality. Reading, writing, locking, listing, etc.
+    /// Public core class methods for locking, reading, writing and managing tasks related to indexes.
     /// </summary>
     public class IndexManager
     {
-        private Core core;
+        private readonly Core core;
         internal IndexQueryHandlers QueryHandlers { get; set; }
         public IndexAPIHandlers APIHandlers { get; set; }
 

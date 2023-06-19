@@ -7,6 +7,9 @@ using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Sessions.Management
 {
+    /// <summary>
+    /// Internal class methods for handling query requests related to sessions.
+    /// </summary>
     internal class SessionQueryHandlers
     {
         private readonly Core core;

@@ -6,7 +6,7 @@ namespace Katzebase.Engine.Locking
 {
     internal class ObjectLock
     {
-        private Core core;
+        private readonly Core core;
         public string DiskPath { get; private set; }
         public LockType LockType { get; private set; }
         public List<ObjectLockKey> Keys = new List<ObjectLockKey>();

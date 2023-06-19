@@ -11,7 +11,7 @@ namespace Katzebase.Engine.Locking
         private readonly List<ObjectLock> collection = new();
         private readonly Dictionary<Transaction, LockIntention> transactionWaitingForLocks = new();
 
-        private Core core;
+        private readonly Core core;
         public ObjectLocks(Core core)
         {
             this.core = core;

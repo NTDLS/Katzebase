@@ -3,6 +3,9 @@ using Katzebase.PublicLibrary.Payloads;
 
 namespace Katzebase.Engine.Indexes.Management
 {
+    /// <summary>
+    /// Internal class methods for handling query requests related to indexes.
+    /// </summary>
     internal class IndexQueryHandlers
     {
         private readonly Core core;

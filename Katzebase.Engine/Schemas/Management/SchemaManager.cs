@@ -10,10 +10,13 @@ using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Schemas.Management
 {
+    /// <summary>
+    /// Public core class methods for locking, reading, writing and managing tasks related to schemas.
+    /// </summary>
     public class SchemaManager
     {
-        private Core core;
-        private string rootCatalogFile;
+        private readonly Core core;
+        private readonly string rootCatalogFile;
         private PhysicalSchema? rootPhysicalSchema = null;
         internal SchemaQueryHandlers QueryHandlers { get; set; }
         public SchemaAPIHandlers APIHandlers { get; set; }

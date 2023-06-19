@@ -4,6 +4,9 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Documents.Management
 {
+    /// <summary>
+    /// Public class methods for handling API requests related to documents.
+    /// </summary>
     public class DocumentAPIHandlers
     {
         private readonly Core core;

@@ -10,10 +10,7 @@ namespace Katzebase.Service
         {
             get
             {
-                if (_core == null)
-                {
-                    _core = new Core(Configuration);
-                }
+                _core ??= new Core(Configuration);
                 return _core;
             }
         }

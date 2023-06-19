@@ -13,18 +13,7 @@ namespace Katzebase.TestHarness
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
             Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
 
-            //Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/", false);
-
-            for (int i = 0; i < 2; i++)
-            {
-                (new Thread(TestAllAPIsThreadProc)).Start();
-            }
-
-            while (true)
-            {
-                Thread.Sleep(1000);
-            }
-
+            Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/", false);
 
             #region Misc. Tests & stuff.
 
@@ -68,97 +57,59 @@ namespace Katzebase.TestHarness
             Console.ReadLine();
         }
 
-        static Random rand = new Random();
 
-        static void TestAllAPIsThreadProc()
+        static void TestAllAPIs()
         {
             var client = new KatzebaseClient("http://localhost:6858/");
 
-            while (true)
-            {
-                bool explicitTransaction = (rand.Next(0, 100) > 50);
+            client.Server.Ping();
 
-                if (explicitTransaction)
-                {
-                    client.Transaction.Begin();
-                }
-
-                TestAllAPIs(client);
-
-                if (explicitTransaction)
-                {
-                    if ((rand.Next(0, 100) > 25))
-                    {
-                        client.Transaction.Commit();
-                    }
-                    else
-                    {
-                        client.Transaction.Rollback();
-                    }
-                }
+            client.Schema.Create("TestAllAPIs");
+            client.Schema.Create("TestAllAPIs:SubSchema");
+            client.Schema.Exists("TestAllAPIs:SubSchema");
+            client.Schema.Create("TestAllAPIs:SubSchema:Product");
 
 
-                Thread.Sleep(100);
-            }
-        }
+            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '10000', Name = 'API Test Product')");
+            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '20000', Name = 'API Test Product')");
+            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '30000', Name = 'API Test Product')");
+            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '40000', Name = 'API Test Product')");
+            client.Query.ExecuteQuery("select * from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
+            client.Query.ExecuteQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product' and ProductId != 10000");
+            client.Query.ExecuteNonQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
 
-        static void TestAllAPIs(KatzebaseClient client)
-        {
-            try
-            {
-                client.Server.Ping();
+            client.Schema.Indexes.List("TestAllAPIs:SubSchema");
 
-                client.Schema.Create("TestAllAPIs");
-                client.Schema.Create("TestAllAPIs:SubSchema");
-                client.Schema.Exists("TestAllAPIs:SubSchema");
-                client.Schema.Create("TestAllAPIs:SubSchema:Product");
+            var ixSubSchemaProductId = new KbIndex("IX_SubSchema_ProductId");
+            ixSubSchemaProductId.AddAttribute("ProductId");
+            client.Schema.Indexes.Create("TestAllAPIs:SubSchema", ixSubSchemaProductId);
 
+            var ixSubSchemaName = new KbIndex("IX_SubSchema_Name");
+            ixSubSchemaName.AddAttribute("Name");
+            client.Schema.Indexes.Create("TestAllAPIs:SubSchema", ixSubSchemaName);
 
-                client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '10000', Name = 'API Test Product')");
-                client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '20000', Name = 'API Test Product')");
-                client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '30000', Name = 'API Test Product')");
-                client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '40000', Name = 'API Test Product')");
-                client.Query.ExecuteQuery("select * from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
-                client.Query.ExecuteQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product' and ProductId != 10000");
-                client.Query.ExecuteNonQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
+            var ixSubSchemaProductIdName = new KbIndex("IX_SubSchema_ProductId_Name") { IsUnique = true };
+            ixSubSchemaProductIdName.AddAttribute("ProductId");
+            ixSubSchemaProductIdName.AddAttribute("Name");
+            client.Schema.Indexes.Create("TestAllAPIs:SubSchema", ixSubSchemaProductIdName);
 
-                client.Schema.Indexes.List("TestAllAPIs:SubSchema");
+            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '10000', Name = 'API Test Product')");
+            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '20000', Name = 'API Test Product')");
+            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '30000', Name = 'API Test Product')");
+            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '40000', Name = 'API Test Product')");
+            client.Query.ExecuteQuery("select * from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
+            client.Query.ExecuteQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product' and ProductId != 10000");
+            client.Query.ExecuteNonQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
 
-                var ixSubSchemaProductId = new KbIndex("IX_SubSchema_ProductId");
-                ixSubSchemaProductId.AddAttribute("ProductId");
-                client.Schema.Indexes.Create("TestAllAPIs:SubSchema", ixSubSchemaProductId);
+            client.Schema.Indexes.Rebuild("TestAllAPIs:SubSchema", "IX_SubSchema_ProductId_Name");
 
-                var ixSubSchemaName = new KbIndex("IX_SubSchema_Name");
-                ixSubSchemaName.AddAttribute("Name");
-                client.Schema.Indexes.Create("TestAllAPIs:SubSchema", ixSubSchemaName);
+            client.Schema.Indexes.Drop("TestAllAPIs:SubSchema", "IX_SubSchema_ProductId");
 
-                var ixSubSchemaProductIdName = new KbIndex("IX_SubSchema_ProductId_Name") { IsUnique = true };
-                ixSubSchemaProductIdName.AddAttribute("ProductId");
-                ixSubSchemaProductIdName.AddAttribute("Name");
-                client.Schema.Indexes.Create("TestAllAPIs:SubSchema", ixSubSchemaProductIdName);
+            client.Schema.Indexes.Exists("TestAllAPIs:SubSchema", "IX_SubSchema_ProductId_Name");
+            client.Schema.Indexes.Exists("TestAllAPIs:SubSchema", "IX_SubSchema_ProductId");
 
-                client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '10000', Name = 'API Test Product')");
-                client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '20000', Name = 'API Test Product')");
-                client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '30000', Name = 'API Test Product')");
-                client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '40000', Name = 'API Test Product')");
-                client.Query.ExecuteQuery("select * from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
-                client.Query.ExecuteQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product' and ProductId != 10000");
-                client.Query.ExecuteNonQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
-
-                client.Schema.Indexes.Rebuild("TestAllAPIs:SubSchema", "IX_SubSchema_ProductId_Name");
-
-                client.Schema.Indexes.Drop("TestAllAPIs:SubSchema", "IX_SubSchema_ProductId");
-
-                client.Schema.Indexes.Exists("TestAllAPIs:SubSchema", "IX_SubSchema_ProductId_Name");
-                client.Schema.Indexes.Exists("TestAllAPIs:SubSchema", "IX_SubSchema_ProductId");
-
-                client.Schema.Indexes.List("TestAllAPIs:SubSchema");
-                client.Schema.Drop("TestAllAPIs");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            client.Schema.Indexes.List("TestAllAPIs:SubSchema");
+            client.Schema.Drop("TestAllAPIs");
         }
 
         #region TestQuery(text)

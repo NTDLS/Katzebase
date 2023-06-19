@@ -3,6 +3,9 @@ using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Indexes.Management
 {
+    /// <summary>
+    /// Public class methods for handling API requests related to indexes.
+    /// </summary>
     public class IndexAPIHandlers
     {
         private readonly Core core;
@@ -27,7 +30,6 @@ namespace Katzebase.Engine.Indexes.Management
                             result.Add(PhysicalIndex.ToClientPayload(index));
                         }
                     }
-
 
                     transaction.Commit();
                 }

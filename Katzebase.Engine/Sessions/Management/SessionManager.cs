@@ -3,11 +3,11 @@
 namespace Katzebase.Engine.Sessions.Management
 {
     /// <summary>
-    /// This is the class that all API controllers should interface with for session access.
+    /// Public core class methods for locking, reading, writing and managing tasks related to sessions.
     /// </summary>
     public class SessionManager
     {
-        private Core core;
+        private readonly Core core;
         internal SessionAPIHandlers APIHandlers { get; set; }
         internal SessionQueryHandlers QueryHandlers { get; set; }
         private ulong nextProcessId = 1;
