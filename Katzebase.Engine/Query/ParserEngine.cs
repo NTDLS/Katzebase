@@ -19,7 +19,7 @@ namespace Katzebase.Engine.Query
 
             if (Enum.TryParse(token, true, out QueryType queryType) == false || Enum.IsDefined(typeof(QueryType), queryType) == false)
             {
-                throw new KbParserException("Invalid query. Found [" + token + "], expected select, insert, update or delete.");
+                throw new KbParserException("Invalid query. Found '" + token + "', expected: 'select', 'insert', 'update' or 'delete'.");
             }
 
             result.QueryType = queryType;
@@ -31,19 +31,19 @@ namespace Katzebase.Engine.Query
             {
                 if (query.IsNextToken(new string[] { "transaction" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected 'transaction'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
                 }
 
                 token = query.GetNextToken();
                 if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected 'transaction'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
                 }
                 result.SubQueryType = subQueryType;
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -53,19 +53,19 @@ namespace Katzebase.Engine.Query
             {
                 if (query.IsNextToken(new string[] { "transaction" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected: 'transaction'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
                 }
 
                 token = query.GetNextToken();
                 if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected: 'transaction.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction.");
                 }
                 result.SubQueryType = subQueryType;
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected: end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -75,19 +75,19 @@ namespace Katzebase.Engine.Query
             {
                 if (query.IsNextToken(new string[] { "transaction" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected: 'transaction'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
                 }
 
                 token = query.GetNextToken();
                 if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected: 'transaction'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
                 }
                 result.SubQueryType = subQueryType;
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected: end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -97,13 +97,13 @@ namespace Katzebase.Engine.Query
             {
                 if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected 'index' or 'uniquekey'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected 'index' or 'uniquekey'.");
                 }
 
                 token = query.GetNextToken();
                 if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected: 'index' or 'uniquekey'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index' or 'uniquekey'.");
                 }
                 result.SubQueryType = subQueryType;
 
@@ -112,13 +112,13 @@ namespace Katzebase.Engine.Query
                 token = query.GetNextToken();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected: index name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: index name.");
                 }
                 result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
 
                 if (query.NextCharacter != '(')
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.NextCharacter + "], expected: ','.");
+                    throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ','.");
                 }
                 query.SkipDelimiters('(');
 
@@ -127,7 +127,7 @@ namespace Katzebase.Engine.Query
                     token = query.GetNextToken().ToLower();
                     if (token == string.Empty)
                     {
-                        throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected [, or )].");
+                        throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: ',' or ')'.");
                     }
 
                     result.SelectFields.Add(token);
@@ -146,20 +146,20 @@ namespace Katzebase.Engine.Query
                 token = query.GetNextToken().ToLower();
                 if (token != "on")
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected index [on].");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
                 }
 
                 token = query.GetNextToken();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
                 result.Schemas.Add(new QuerySchema(token));
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -169,40 +169,40 @@ namespace Katzebase.Engine.Query
             {
                 if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [index] or [uniquekey].");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index' or 'uniquekey'.");
                 }
 
                 token = query.GetNextToken();
                 if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [index] or [uniquekey].");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index' or 'uniquekey'.");
                 }
                 result.SubQueryType = subQueryType;
 
                 token = query.GetNextToken();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected index name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: index name.");
                 }
                 result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
 
                 token = query.GetNextToken().ToLower();
                 if (token != "on")
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected index [on].");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
                 }
 
                 token = query.GetNextToken();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
                 result.Schemas.Add(new QuerySchema(token));
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -212,40 +212,40 @@ namespace Katzebase.Engine.Query
             {
                 if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [index] or [uniquekey].");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index' or 'uniquekey'.");
                 }
 
                 token = query.GetNextToken();
                 if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [index] or [uniquekey].");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index' or 'uniquekey'.");
                 }
                 result.SubQueryType = subQueryType;
 
                 token = query.GetNextToken();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected index name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: index name.");
                 }
                 result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
 
                 token = query.GetNextToken().ToLower();
                 if (token != "on")
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected index [on].");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
                 }
 
                 token = query.GetNextToken();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
                 result.Schemas.Add(new QuerySchema(token));
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -262,7 +262,7 @@ namespace Katzebase.Engine.Query
 
                     if (Int32.TryParse(token, out rowLimit) == false)
                     {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected numeric row limit.");
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: numeric row limit.");
                     }
 
                     result.RowLimit = rowLimit;
@@ -273,14 +273,14 @@ namespace Katzebase.Engine.Query
 
                 if (token == string.Empty || Utilities.IsValidIdentifier(token, "/\\") == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
                 result.Schema = token;
 
                 token = query.GetNextToken();
                 if (token.ToLower() != "set")
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [SET].");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'set'.");
                 }
 
                 result.UpsertKeyValuePairs = ParseUpsertKeyValues(query, ref position);
@@ -288,7 +288,7 @@ namespace Katzebase.Engine.Query
                 token = query.GetNextToken();
                 if (token != string.Empty && token.ToLower() != "where")
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [WHERE] or end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'where' or end of statement.");
                 }
 
                 if (token.ToLower() == "where")
@@ -296,14 +296,14 @@ namespace Katzebase.Engine.Query
                     string conditionText = query.Substring(position).Trim();
                     if (conditionText == string.Empty)
                     {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected list of conditions.");
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: list of conditions.");
                     }
 
                     result.Conditions = ParseConditions(conditionText, literalStrings);
                 }
                 else if (token != string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: end of statement.");
                 }
                 */
             }
@@ -314,20 +314,20 @@ namespace Katzebase.Engine.Query
             {
                 if (query.IsNextToken("documents") == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [documents].");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'documents'.");
                 }
 
                 token = query.GetNextToken();
                 if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected 'documents'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'documents'.");
                 }
                 result.SubQueryType = subQueryType;
 
                 token = query.GetNextToken();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
                 result.Schemas.Add(new QuerySchema(token));
@@ -335,13 +335,13 @@ namespace Katzebase.Engine.Query
                 token = query.GetNextToken();
                 if (int.TryParse(token, out int topCount) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected top count.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: numeric top count.");
                 }
                 result.RowLimit = topCount;
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -351,20 +351,20 @@ namespace Katzebase.Engine.Query
             {
                 if (query.IsNextToken(new string[] { "documents", "schemas" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected: 'documents' or 'schemas'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'documents' or 'schemas'.");
                 }
 
                 token = query.GetNextToken();
                 if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected: 'documents' or 'schemas'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'documents' or 'schemas'.");
                 }
                 result.SubQueryType = subQueryType;
 
                 token = query.GetNextToken();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
                 result.Schemas.Add(new QuerySchema(token));
@@ -374,14 +374,14 @@ namespace Katzebase.Engine.Query
                 {
                     if (int.TryParse(token, out int topCount) == false)
                     {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected top count.");
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: numeric top count.");
                     }
                     result.RowLimit = topCount;
                 }
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -405,7 +405,7 @@ namespace Katzebase.Engine.Query
                     string fieldName = query.GetNextToken();
                     if (string.IsNullOrWhiteSpace(fieldName))
                     {
-                        throw new KbParserException("Invalid token. Found whitespace expected identifer.");
+                        throw new KbParserException("Invalid token. Found whitespace expected: an identifer.");
                     }
 
                     string fieldPrefix = string.Empty;
@@ -464,14 +464,14 @@ namespace Katzebase.Engine.Query
                 }
                 else
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected [FROM].");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: 'from'.");
                 }
 
                 string sourceSchema = query.GetNextToken();
                 string schemaAlias = string.Empty;
                 if (sourceSchema == string.Empty || TokenHelpers.IsValidIdentifier(sourceSchema, ":") == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
                 if (query.IsNextToken("as"))
@@ -487,7 +487,7 @@ namespace Katzebase.Engine.Query
                     query.SkipNextToken();
                     if (query.IsNextToken("join") == false)
                     {
-                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected [JOIN].");
+                        throw new KbParserException("Invalid query. Found '" + query.GetNextToken() + "', expected: 'join'.");
                     }
                     query.SkipNextToken();
 
@@ -495,7 +495,7 @@ namespace Katzebase.Engine.Query
                     string subSchemaAlias = string.Empty;
                     if (subSchemaSchema == string.Empty || TokenHelpers.IsValidIdentifier(subSchemaSchema, ":") == false)
                     {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                     }
 
                     if (query.IsNextToken("as"))
@@ -505,13 +505,13 @@ namespace Katzebase.Engine.Query
                     }
                     else
                     {
-                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected AS (schema alias).");
+                        throw new KbParserException("Invalid query. Found '" + query.GetNextToken() + "', expected: 'as' (schema alias).");
                     }
 
                     token = query.GetNextToken();
                     if (token.ToLower() != "on")
                     {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected ON.");
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected 'on'.");
                     }
 
                     int joinConditionsStartPosition = query.Position;
@@ -531,7 +531,7 @@ namespace Katzebase.Engine.Query
                         var joinLeftCondition = query.GetNextToken();
                         if (joinLeftCondition == string.Empty || TokenHelpers.IsValidIdentifier(joinLeftCondition, ".") == false)
                         {
-                            throw new KbParserException("Invalid query. Found [" + joinLeftCondition + "], expected left side of join expression.");
+                            throw new KbParserException("Invalid query. Found '" + joinLeftCondition + "', expected: left side of join expression.");
                         }
 
                         int logicalQualifierPos = query.Position;
@@ -539,7 +539,7 @@ namespace Katzebase.Engine.Query
                         token = ConditionTokenizer.GetNextToken(query.Text, ref logicalQualifierPos);
                         if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
                         {
-                            throw new KbParserException("Invalid query. Found [" + token + "], logical qualifier.");
+                            throw new KbParserException("Invalid query. Found '" + token + "], logical qualifier.");
                         }
 
                         query.SetPosition(logicalQualifierPos);
@@ -547,7 +547,7 @@ namespace Katzebase.Engine.Query
                         var joinRightCondition = query.GetNextToken();
                         if (joinRightCondition == string.Empty || TokenHelpers.IsValidIdentifier(joinRightCondition, ".") == false)
                         {
-                            throw new KbParserException("Invalid query. Found [" + joinRightCondition + "], expected right side of join expression.");
+                            throw new KbParserException("Invalid query. Found '" + joinRightCondition + "', expected: right side of join expression.");
                         }
                     }
 
@@ -560,7 +560,7 @@ namespace Katzebase.Engine.Query
                 token = query.GetNextToken();
                 if (token != string.Empty && token.ToLower() != "where")
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [WHERE] or end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'where' or end of statement.");
                 }
 
                 if (token.ToLower() == "where")
@@ -585,7 +585,7 @@ namespace Katzebase.Engine.Query
                     string conditionText = query.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
                     if (conditionText == string.Empty)
                     {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected list of conditions.");
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: list of conditions.");
                     }
 
                     result.Conditions = Conditions.Create(conditionText, query.LiteralStrings);
@@ -597,7 +597,7 @@ namespace Katzebase.Engine.Query
 
                     if (query.IsNextToken("by") == false)
                     {
-                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected 'by'.");
+                        throw new KbParserException("Invalid query. Found '" + query.GetNextToken() + "', expected: 'by'.");
                     }
                     query.SkipNextToken();
 
@@ -615,7 +615,7 @@ namespace Katzebase.Engine.Query
                             }
                             else if (!(query.Position < query.Length || query.IsNextToken("order") == false)) //We should have consumed the entire GROUP BY at this point.
                             {
-                                throw new KbParserException("Invalid query. Found [" + fieldToken + "], expected ','.");
+                                throw new KbParserException("Invalid query. Found '" + fieldToken + "', expected: ','.");
                             }
                         }
 
@@ -641,7 +641,7 @@ namespace Katzebase.Engine.Query
 
                     if (query.IsNextToken("by") == false)
                     {
-                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected 'by'.");
+                        throw new KbParserException("Invalid query. Found '" + query.GetNextToken() + "', expected: 'by'.");
                     }
                     query.SkipNextToken();
 
@@ -661,7 +661,7 @@ namespace Katzebase.Engine.Query
                             }
                             else if (query.Position < query.Length) //We should have consumed the entire query at this point.
                             {
-                                throw new KbParserException("Invalid query. Found [" + fieldToken + "], expected ','.");
+                                throw new KbParserException("Invalid query. Found '" + fieldToken + "', expected: ','.");
                             }
                         }
 
@@ -669,7 +669,7 @@ namespace Katzebase.Engine.Query
                         {
                             if (query.Position < query.Length)
                             {
-                                throw new KbParserException("Invalid query. Found [" + query.Remainder() + "], expected 'end of statement'.");
+                                throw new KbParserException("Invalid query. Found '" + query.Remainder() + "', expected: end of statement.");
                             }
 
                             query.SetPosition(previousTokenPosition);
@@ -702,7 +702,7 @@ namespace Katzebase.Engine.Query
 
                     if (query.IsNextTokenConsume("from") == false)
                     {
-                        throw new KbParserException("Invalid query. Found [" + query.Breadcrumbs.Last() + "], expected select, [from].");
+                        throw new KbParserException("Invalid query. Found '" + query.Breadcrumbs.Last() + "', expected: 'from'.");
                     }
                 }
 
@@ -710,7 +710,7 @@ namespace Katzebase.Engine.Query
                 string schemaAlias = string.Empty;
                 if (sourceSchema == string.Empty || TokenHelpers.IsValidIdentifier(sourceSchema, ":") == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
                 if (query.IsNextToken("as"))
@@ -726,7 +726,7 @@ namespace Katzebase.Engine.Query
                     query.SkipNextToken();
                     if (query.IsNextToken("join") == false)
                     {
-                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected [JOIN].");
+                        throw new KbParserException("Invalid query. Found '" + query.GetNextToken() + "', expected: join.");
                     }
                     query.SkipNextToken();
 
@@ -734,7 +734,7 @@ namespace Katzebase.Engine.Query
                     string subSchemaAlias = string.Empty;
                     if (subSchemaSchema == string.Empty || TokenHelpers.IsValidIdentifier(subSchemaSchema, ":") == false)
                     {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected schema name.");
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                     }
 
                     if (query.IsNextToken("as"))
@@ -744,13 +744,13 @@ namespace Katzebase.Engine.Query
                     }
                     else
                     {
-                        throw new KbParserException("Invalid query. Found [" + query.GetNextToken() + "], expected AS (schema alias).");
+                        throw new KbParserException("Invalid query. Found '" + query.GetNextToken() + "', expected: 'as' (schema alias).");
                     }
 
                     token = query.GetNextToken();
                     if (token.ToLower() != "on")
                     {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected ON.");
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
                     }
 
                     int joinConditionsStartPosition = query.Position;
@@ -770,7 +770,7 @@ namespace Katzebase.Engine.Query
                         var joinLeftCondition = query.GetNextToken();
                         if (joinLeftCondition == string.Empty || TokenHelpers.IsValidIdentifier(joinLeftCondition, ".") == false)
                         {
-                            throw new KbParserException("Invalid query. Found [" + joinLeftCondition + "], expected left side of join expression.");
+                            throw new KbParserException("Invalid query. Found '" + joinLeftCondition + "', expected: left side of join expression.");
                         }
 
                         int logicalQualifierPos = query.Position;
@@ -778,7 +778,7 @@ namespace Katzebase.Engine.Query
                         token = ConditionTokenizer.GetNextToken(query.Text, ref logicalQualifierPos);
                         if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
                         {
-                            throw new KbParserException("Invalid query. Found [" + token + "], logical qualifier.");
+                            throw new KbParserException("Invalid query. Found '" + token + "], logical qualifier.");
                         }
 
                         query.SetPosition(logicalQualifierPos);
@@ -786,7 +786,7 @@ namespace Katzebase.Engine.Query
                         var joinRightCondition = query.GetNextToken();
                         if (joinRightCondition == string.Empty || TokenHelpers.IsValidIdentifier(joinRightCondition, ".") == false)
                         {
-                            throw new KbParserException("Invalid query. Found [" + joinRightCondition + "], expected right side of join expression.");
+                            throw new KbParserException("Invalid query. Found '" + joinRightCondition + "', expected: right side of join expression.");
                         }
                     }
 
@@ -799,7 +799,7 @@ namespace Katzebase.Engine.Query
                 token = query.GetNextToken();
                 if (token != string.Empty && token.ToLower() != "where")
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [WHERE] or end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'where' or end of statement.");
                 }
 
                 if (token.ToLower() == "where")
@@ -813,7 +813,7 @@ namespace Katzebase.Engine.Query
 
                         if ((new string[] { "order", "group", "" }).Contains(conditonToken) && conditionTokenizer.IsNextToken("by"))
                         {
-                            throw new KbParserException("Invalid query. Found [" + conditonToken + "], expected end of statement.");
+                            throw new KbParserException("Invalid query. Found '" + conditonToken + "', expected: end of statement.");
                         }
                         else if (conditonToken == string.Empty)
                         {
@@ -827,7 +827,7 @@ namespace Katzebase.Engine.Query
                     string conditionText = query.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
                     if (conditionText == string.Empty)
                     {
-                        throw new KbParserException("Invalid query. Found [" + token + "], expected list of conditions.");
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: list of conditions.");
                     }
 
                     result.Conditions = Conditions.Create(conditionText, query.LiteralStrings);
@@ -835,7 +835,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -855,19 +855,19 @@ namespace Katzebase.Engine.Query
             {
                 if (query.IsNextTokenConsume("into") == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.Breadcrumbs.Last() + "], expected 'into'.");
+                    throw new KbParserException("Invalid query. Found '" + query.Breadcrumbs.Last() + "', expected: 'into'.");
                 }
 
                 token = query.GetNextToken();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.Breadcrumbs.Last() + "], expected: schema name.");
+                    throw new KbParserException("Invalid query. Found '" + query.Breadcrumbs.Last() + "', expected: schema name.");
                 }
                 result.Schemas.Add(new QuerySchema(token));
 
                 if (query.NextCharacter != '(')
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.NextCharacter + "], expected [(].");
+                    throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: '('.");
                 }
                 query.SkipWhile('(');
 
@@ -879,18 +879,18 @@ namespace Katzebase.Engine.Query
                     string fieldName = query.GetNextToken();
                     if (fieldName == string.Empty)
                     {
-                        throw new KbParserException("Invalid query. Found [" + fieldName + "], expected field name.");
+                        throw new KbParserException("Invalid query. Found '" + fieldName + "', expected: field name.");
                     }
 
                     if (query.IsNextTokenConsume("=") == false)
                     {
-                        throw new KbParserException("Invalid query. Found [" + query.Breadcrumbs.Last() + "], expected [=].");
+                        throw new KbParserException("Invalid query. Found '" + query.Breadcrumbs.Last() + "', expected: '='.");
                     }
 
                     string fieldValue = query.GetNextToken();
                     if (fieldName == string.Empty)
                     {
-                        throw new KbParserException("Invalid query. Found [" + fieldValue + "], expected field value.");
+                        throw new KbParserException("Invalid query. Found '" + fieldValue + "', expected: field value.");
                     }
 
                     upsertKeyValues.Add(new UpsertKeyValue(PrefixedField.Parse(fieldName), new SmartValue(fieldValue)));
@@ -901,7 +901,7 @@ namespace Katzebase.Engine.Query
                     }
                     else if (query.NextCharacter != ')')
                     {
-                        throw new KbParserException("Invalid query. Found [" + query.NextCharacter + "], expected [,] or [)].");
+                        throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ',' or ')'.");
                     }
                     else if (query.NextCharacter == ')')
                     {
@@ -915,7 +915,7 @@ namespace Katzebase.Engine.Query
 
                             if (query.NextCharacter != '(')
                             {
-                                throw new KbParserException("Invalid query. Found [" + query.NextCharacter + "], expected [(].");
+                                throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: '('.");
                             }
                             query.SkipWhile('(');
                         }
@@ -930,7 +930,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + query.PeekNextToken() + "], expected end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -1040,19 +1040,19 @@ namespace Katzebase.Engine.Query
 
                 if (token == string.Empty || Utilities.IsValidIdentifier(token) == false)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected identifier name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: identifier name.");
                 }
                 keyValue.Key = token;
 
                 token = Utilities.GetNextToken(conditionsText, ref position);
                 if (token != "=")
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected [=].");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: '='.");
                 }
 
                 if ((token = Utilities.GetNextToken(conditionsText, ref position)) == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found [" + token + "], expected condition value.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: condition value.");
                 }
                 keyValue.Value.Value = token;
 
