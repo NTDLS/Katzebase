@@ -1,4 +1,5 @@
-﻿using Katzebase.Engine.KbLib;
+﻿using Katzebase.Engine.Atomicity.Management;
+using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Locking;
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
@@ -6,9 +7,9 @@ using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Transactions
+namespace Katzebase.Engine.Atomicity
 {
-    internal class Transaction
+    internal class Transaction : IDisposable
     {
         public List<ReversibleAction> ReversibleActions = new List<ReversibleAction>();
         public ulong ProcessId { get; set; }
@@ -38,6 +39,7 @@ namespace Katzebase.Engine.Transactions
         private Core core;
         private TransactionManager transactionManager;
         private StreamWriter? transactionLogHandle = null;
+        private bool isComittedOrRolledBack = false;
 
         private int referenceCount = 0;
         public int ReferenceCount
@@ -68,6 +70,40 @@ namespace Katzebase.Engine.Transactions
                 }
             }
         }
+
+
+        #region IDisposable.
+
+        private bool disposed = false;
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+
+        // Protected implementation of Dispose pattern.
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                //Rollback Transaction if its still open:
+                if (isComittedOrRolledBack == false)
+                {
+                    isComittedOrRolledBack = true;
+                    Rollback();
+                }
+            }
+
+            disposed = true;
+        }
+
+        #endregion
 
         #region Locking Helpers.
 
@@ -146,10 +182,10 @@ namespace Katzebase.Engine.Transactions
         public Transaction(Core core, TransactionManager transactionManager, ulong processId, bool isRecovery)
         {
             this.core = core;
-            this.StartTime = DateTime.UtcNow;
-            this.ProcessId = processId;
+            StartTime = DateTime.UtcNow;
+            ProcessId = processId;
             this.transactionManager = transactionManager;
-            this.BlockedBy = new List<ulong>();
+            BlockedBy = new List<ulong>();
 
             if (isRecovery == false)
             {
@@ -159,12 +195,12 @@ namespace Katzebase.Engine.Transactions
                     PT = new PerformanceTrace();
                 }
 
-                this.HeldLockKeys = new List<ObjectLockKey>();
-                this.DeferredIOs = new DeferredDiskIO(core);
+                HeldLockKeys = new List<ObjectLockKey>();
+                DeferredIOs = new DeferredDiskIO(core);
 
                 Directory.CreateDirectory(TransactionPath);
 
-                this.transactionLogHandle = new StreamWriter(TransactionLogFilePath)
+                transactionLogHandle = new StreamWriter(TransactionLogFilePath)
                 {
                     AutoFlush = true
                 };
@@ -200,14 +236,14 @@ namespace Katzebase.Engine.Transactions
 
                     Utility.EnsureNotNull(transactionLogHandle);
 
-                    this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
+                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
 
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to record file creation for process {this.ProcessId}.", ex);
+                core.Log.Write($"Failed to record file creation for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -233,13 +269,13 @@ namespace Katzebase.Engine.Transactions
 
                     Utility.EnsureNotNull(transactionLogHandle);
 
-                    this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
+                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to record file creation for process {this.ProcessId}.", ex);
+                core.Log.Write($"Failed to record file creation for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -271,13 +307,13 @@ namespace Katzebase.Engine.Transactions
 
                     Utility.EnsureNotNull(transactionLogHandle);
 
-                    this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
+                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to record file deletion for for process {this.ProcessId}.", ex);
+                core.Log.Write($"Failed to record file deletion for for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -308,13 +344,13 @@ namespace Katzebase.Engine.Transactions
 
                     Utility.EnsureNotNull(transactionLogHandle);
 
-                    this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
+                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to record file deletion for for process {this.ProcessId}.", ex);
+                core.Log.Write($"Failed to record file deletion for for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -345,13 +381,13 @@ namespace Katzebase.Engine.Transactions
 
                     Utility.EnsureNotNull(transactionLogHandle);
 
-                    this.transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
+                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(reversibleAction));
                 }
                 ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to record file alteration for for process {this.ProcessId}.", ex);
+                core.Log.Write($"Failed to record file alteration for for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -368,6 +404,13 @@ namespace Katzebase.Engine.Transactions
 
         public void Rollback()
         {
+            if (isComittedOrRolledBack)
+            {
+                return;
+            }
+
+            isComittedOrRolledBack = true;
+
             try
             {
                 var ptRollback = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Rollback);
@@ -440,17 +483,24 @@ namespace Katzebase.Engine.Transactions
                 }
 
                 ptRollback?.StopAndAccumulate();
-                PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - this.StartTime).TotalMilliseconds);
+                PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to rollback transaction for for process {this.ProcessId}.", ex);
+                core.Log.Write($"Failed to rollback transaction for for process {ProcessId}.", ex);
                 throw;
             }
         }
 
         public void Commit()
         {
+            if (isComittedOrRolledBack)
+            {
+                return;
+            }
+
+            isComittedOrRolledBack = true;
+
             try
             {
                 var ptCommit = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Commit);
@@ -484,11 +534,11 @@ namespace Katzebase.Engine.Transactions
 
                 ptCommit?.StopAndAccumulate();
 
-                PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - this.StartTime).TotalMilliseconds);
+                PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to commit transaction for for process {this.ProcessId}.", ex);
+                core.Log.Write($"Failed to commit transaction for for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -524,7 +574,7 @@ namespace Katzebase.Engine.Transactions
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to cleanup transaction for for process {this.ProcessId}.", ex);
+                core.Log.Write($"Failed to cleanup transaction for for process {ProcessId}.", ex);
                 throw;
             }
         }

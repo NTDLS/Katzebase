@@ -1,6 +1,6 @@
 ﻿using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Transactions
+namespace Katzebase.Engine.Atomicity
 {
     internal class DeferredDiskIO
     {

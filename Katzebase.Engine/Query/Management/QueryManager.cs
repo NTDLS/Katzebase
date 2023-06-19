@@ -2,39 +2,18 @@
 using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Query
+namespace Katzebase.Engine.Query.Management
 {
     public class QueryManager
     {
         private Core core;
+        public QueryAPIHandlers APIHandlers { get; set; }
 
         public QueryManager(Core core)
         {
             this.core = core;
+            APIHandlers = new QueryAPIHandlers(core);
         }
-
-        #region API handlers.
-
-        public KbQueryResult APIExecuteStatementExplain(ulong processId, string statement)
-        {
-            var preparedQuery = ParserEngine.ParseQuery(statement);
-            return ExplainQuery(processId, preparedQuery);
-        }
-
-        public KbQueryResult APIExecuteStatementQuery(ulong processId, string statement)
-        {
-            var preparedQuery = ParserEngine.ParseQuery(statement);
-            return ExecuteQuery(processId, preparedQuery);
-        }
-
-        public KbActionResponse APIExecuteStatementNonQuery(ulong processId, string statement)
-        {
-            var preparedQuery = ParserEngine.ParseQuery(statement);
-            return ExecuteNonQuery(processId, preparedQuery);
-        }
-
-        #endregion
-
 
         internal KbQueryResult ExplainQuery(ulong processId, PreparedQuery preparedQuery)
         {
@@ -53,7 +32,6 @@ namespace Katzebase.Engine.Query
                 throw new NotImplementedException();
             }
         }
-
 
         internal KbQueryResult ExecuteQuery(ulong processId, PreparedQuery preparedQuery)
         {
@@ -114,7 +92,7 @@ namespace Katzebase.Engine.Query
             }
             else if (preparedQuery.QueryType == QueryType.Set)
             {
-                return core.Sessions.ExecuteSetVariable(processId, preparedQuery);
+                return core.Sessions.QueryHandlers.ExecuteSetVariable(processId, preparedQuery);
             }
             else if (preparedQuery.QueryType == QueryType.Rebuild)
             {
@@ -147,7 +125,7 @@ namespace Katzebase.Engine.Query
             {
                 if (preparedQuery.SubQueryType == SubQueryType.Transaction)
                 {
-                    core.Transactions.Begin(processId, true);
+                    core.Transactions.QueryHandlers.Begin(processId);
                     return new KbActionResponse { Success = true };
                 }
                 throw new NotImplementedException();
@@ -156,7 +134,7 @@ namespace Katzebase.Engine.Query
             {
                 if (preparedQuery.SubQueryType == SubQueryType.Transaction)
                 {
-                    core.Transactions.Rollback(processId);
+                    core.Transactions.QueryHandlers.Rollback(processId);
                     return new KbActionResponse { Success = true };
                 }
                 throw new NotImplementedException();
@@ -165,7 +143,7 @@ namespace Katzebase.Engine.Query
             {
                 if (preparedQuery.SubQueryType == SubQueryType.Transaction)
                 {
-                    core.Transactions.Commit(processId);
+                    core.Transactions.QueryHandlers.Commit(processId);
                     return new KbActionResponse { Success = true };
                 }
                 throw new NotImplementedException();

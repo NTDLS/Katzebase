@@ -18,9 +18,9 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schemaName, LockOperation.Read);
+                    var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
 
                     var result = new KbActionResponseSchemaCollection();
 
@@ -30,16 +30,16 @@ namespace Katzebase.Engine.Schemas.Management
                     }
 
                     var filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
-                    var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(txRef.Transaction, filePath, LockOperation.Read);
+                    var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, filePath, LockOperation.Read);
 
                     foreach (var item in schemaCatalog.Collection)
                     {
                         result.Add(item.ToClientPayload());
                     }
 
-                    txRef.Commit();
+                    transaction.Commit();
 
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    result.Metrics = transaction.PT?.ToCollection();
 
                     return result;
                 }
@@ -88,7 +88,7 @@ namespace Katzebase.Engine.Schemas.Management
             {
                 bool result = false;
 
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
                     var segments = schemaName.Split(':');
 
@@ -97,7 +97,7 @@ namespace Katzebase.Engine.Schemas.Management
                     foreach (string name in segments)
                     {
                         pathBuilder.Append(name);
-                        var schema = core.Schemas.AcquireVirtual(txRef.Transaction, pathBuilder.ToString(), LockOperation.Read);
+                        var schema = core.Schemas.AcquireVirtual(transaction, pathBuilder.ToString(), LockOperation.Read);
 
                         result = schema != null && schema.Exists;
 
@@ -109,7 +109,7 @@ namespace Katzebase.Engine.Schemas.Management
                         pathBuilder.Append(":");
                     }
 
-                    txRef.Commit();
+                    transaction.Commit();
                     return result;
                 }
             }
@@ -128,31 +128,31 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
                     var segments = schemaName.Split(':');
                     string parentSchemaName = segments[segments.Count() - 1];
 
-                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schemaName, LockOperation.Write);
-                    var parentPhysicalSchema = core.Schemas.AcquireParent(txRef.Transaction, physicalSchema, LockOperation.Write);
+                    var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                    var parentPhysicalSchema = core.Schemas.AcquireParent(transaction, physicalSchema, LockOperation.Write);
 
                     if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
                         throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
 
                     string parentSchemaCatalogFile = Path.Combine(parentPhysicalSchema.DiskPath, SchemaCatalogFile);
-                    var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
+                    var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentSchemaCatalogFile, LockOperation.Write);
 
                     var nsItem = parentCatalog.Collection.FirstOrDefault(o => o.Name == parentSchemaName);
                     if (nsItem != null)
                     {
                         parentCatalog.Collection.Remove(nsItem);
 
-                        core.IO.DeletePath(txRef.Transaction, physicalSchema.DiskPath);
+                        core.IO.DeletePath(transaction, physicalSchema.DiskPath);
 
-                        core.IO.PutJson(txRef.Transaction, parentSchemaCatalogFile, parentCatalog);
+                        core.IO.PutJson(transaction, parentSchemaCatalogFile, parentCatalog);
                     }
 
-                    txRef.Commit();
+                    transaction.Commit();
                 }
             }
             catch (Exception ex)

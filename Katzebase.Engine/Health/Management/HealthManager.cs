@@ -1,6 +1,6 @@
 ﻿using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Health
+namespace Katzebase.Engine.Health.Management
 {
     public class HealthManager
     {
@@ -170,7 +170,7 @@ namespace Katzebase.Engine.Health
         /// </summary>
         /// <param name="type"></param>
         /// <param name="value"></param>
-        public void Set(HealthCounterType type, Int64 value)
+        public void Set(HealthCounterType type, long value)
         {
             if (core.Settings.HealthMonitoringEnabled == false)
             {

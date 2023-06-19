@@ -1,7 +1,7 @@
-﻿using Katzebase.Engine.Documents;
+﻿using Katzebase.Engine.Atomicity;
+using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Trace;
-using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using static Katzebase.Engine.KbLib.EngineConstants;
@@ -62,19 +62,19 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
                     Guid newSchemaId = Guid.NewGuid();
 
-                    var physicalSchema = AcquireVirtual(txRef.Transaction, schemaName, LockOperation.Write);
+                    var physicalSchema = AcquireVirtual(transaction, schemaName, LockOperation.Write);
                     if (physicalSchema.Exists)
                     {
-                        txRef.Commit();
+                        transaction.Commit();
                         //The schema already exists.
                         return;
                     }
 
-                    var parentPhysicalSchema = AcquireParent(txRef.Transaction, physicalSchema, LockOperation.Write);
+                    var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
 
                     if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
                     {
@@ -82,31 +82,31 @@ namespace Katzebase.Engine.Schemas.Management
                     }
 
                     string parentSchemaCatalogFile = Path.Combine(parentPhysicalSchema.DiskPath, SchemaCatalogFile);
-                    PhysicalSchemaCatalog? parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
+                    PhysicalSchemaCatalog? parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentSchemaCatalogFile, LockOperation.Write);
 
                     string filePath = string.Empty;
 
-                    core.IO.CreateDirectory(txRef.Transaction, physicalSchema.DiskPath);
+                    core.IO.CreateDirectory(transaction, physicalSchema.DiskPath);
 
                     //Create default schema catalog file.
                     filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
-                    if (core.IO.FileExists(txRef.Transaction, filePath, LockOperation.Write) == false)
+                    if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
                     {
-                        core.IO.PutJson(txRef.Transaction, filePath, new PhysicalSchemaCatalog());
+                        core.IO.PutJson(transaction, filePath, new PhysicalSchemaCatalog());
                     }
 
                     //Create default document page catalog file.
                     filePath = Path.Combine(physicalSchema.DiskPath, DocumentPageCatalogFile);
-                    if (core.IO.FileExists(txRef.Transaction, filePath, LockOperation.Write) == false)
+                    if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
                     {
-                        core.IO.PutJson(txRef.Transaction, filePath, new PhysicalDocumentPageCatalog());
+                        core.IO.PutJson(transaction, filePath, new PhysicalDocumentPageCatalog());
                     }
 
                     //Create default index catalog file.
                     filePath = Path.Combine(physicalSchema.DiskPath, IndexCatalogFile);
-                    if (core.IO.FileExists(txRef.Transaction, filePath, LockOperation.Write) == false)
+                    if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
                     {
-                        core.IO.PutJson(txRef.Transaction, filePath, new PhysicalIndexCatalog());
+                        core.IO.PutJson(transaction, filePath, new PhysicalIndexCatalog());
                     }
 
                     if (parentCatalog.ContainsName(schemaName) == false)
@@ -117,10 +117,10 @@ namespace Katzebase.Engine.Schemas.Management
                             Name = physicalSchema.Name
                         });
 
-                        core.IO.PutJson(txRef.Transaction, parentSchemaCatalogFile, parentCatalog);
+                        core.IO.PutJson(transaction, parentSchemaCatalogFile, parentCatalog);
                     }
 
-                    txRef.Commit();
+                    transaction.Commit();
                 }
             }
             catch (Exception ex)

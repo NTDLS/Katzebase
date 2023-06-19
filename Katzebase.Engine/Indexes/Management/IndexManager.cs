@@ -1,10 +1,10 @@
-﻿using Katzebase.Engine.Documents;
+﻿using Katzebase.Engine.Atomicity;
+using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes.Matching;
 using Katzebase.Engine.KbLib;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Threading;
-using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;

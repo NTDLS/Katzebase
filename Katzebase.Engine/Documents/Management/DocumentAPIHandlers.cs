@@ -19,12 +19,12 @@ namespace Katzebase.Engine.Documents.Management
             {
                 var result = new KbQueryResult();
 
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    result = StaticSearcherMethods.SampleSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
-                    txRef.Commit();
+                    result = StaticSearcherMethods.SampleSchemaDocuments(core, transaction, schemaName, rowLimit);
+                    transaction.Commit();
                     result.RowCount = result.Rows.Count;
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    result.Metrics = transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -49,12 +49,12 @@ namespace Katzebase.Engine.Documents.Management
             {
                 var result = new KbQueryResult();
 
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    result = StaticSearcherMethods.ListSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
-                    txRef.Commit();
+                    result = StaticSearcherMethods.ListSchemaDocuments(core, transaction, schemaName, rowLimit);
+                    transaction.Commit();
                     result.RowCount = result.Rows.Count;
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    result.Metrics = transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -84,13 +84,13 @@ namespace Katzebase.Engine.Documents.Management
                 physicalDocument.Created = DateTime.UtcNow;
                 physicalDocument.Modfied = DateTime.UtcNow;
 
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schema, LockOperation.Write);
-                    core.Documents.InsertDocument(txRef.Transaction, physicalSchema, physicalDocument);
-                    txRef.Commit();
+                    var physicalSchema = core.Schemas.Acquire(transaction, schema, LockOperation.Write);
+                    core.Documents.InsertDocument(transaction, physicalSchema, physicalDocument);
+                    transaction.Commit();
                     result.RowCount = 1;
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    result.Metrics = transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -113,19 +113,19 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schemaName, LockOperation.Read);
-                    var documentPointers = core.Documents.AcquireDocumentPointers(txRef.Transaction, physicalSchema, LockOperation.Read).ToList();
+                    var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+                    var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
 
                     var result = new KbDocumentCatalogCollection();
                     foreach (var documentPointer in documentPointers)
                     {
                         result.Add(new KbDocumentCatalogItem() { Id = documentPointer.DocumentId });
                     }
-                    txRef.Commit();
+                    transaction.Commit();
                     result.RowCount = documentPointers.Count;
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    result.Metrics = transaction.PT?.ToCollection();
                     return result;
                 }
             }
@@ -146,18 +146,18 @@ namespace Katzebase.Engine.Documents.Management
             {
                 var result = new KbActionResponse();
 
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schemaName, LockOperation.Read);
-                    var documentPointers = core.Documents.AcquireDocumentPointers(txRef.Transaction, physicalSchema, LockOperation.Read).ToList();
+                    var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+                    var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
 
                     var pointersToDelete = documentPointers.Where(o => o.DocumentId == documentId);
 
-                    core.Documents.DeleteDocuments(txRef.Transaction, physicalSchema, pointersToDelete);
+                    core.Documents.DeleteDocuments(transaction, physicalSchema, pointersToDelete);
 
-                    txRef.Commit();
+                    transaction.Commit();
                     result.RowCount = documentPointers.Count;
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    result.Metrics = transaction.PT?.ToCollection();
                     return result;
                 }
             }

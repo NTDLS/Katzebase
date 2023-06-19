@@ -17,7 +17,7 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            KbActionResponseGuid result = new KbActionResponseGuid();
+            var result = new KbActionResponseGuid();
 
             try
             {
@@ -51,7 +51,7 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            KbActionResponse result = new KbActionResponseBoolean();
+            var result = new KbActionResponseBoolean();
 
             try
             {
@@ -78,7 +78,7 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            KbActionResponse result = new KbActionResponseBoolean();
+            var result = new KbActionResponseBoolean();
 
             try
             {
@@ -105,7 +105,7 @@ namespace Katzebase.Service.Controllers
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
             Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-            KbActionResponseBoolean result = new KbActionResponseBoolean();
+            var result = new KbActionResponseBoolean();
 
             try
             {

@@ -1,5 +1,5 @@
-﻿using Katzebase.Engine.Query;
-using Katzebase.Engine.Transactions;
+﻿using Katzebase.Engine.Atomicity;
+using Katzebase.Engine.Query;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.KbLib.EngineConstants;
@@ -21,20 +21,20 @@ namespace Katzebase.Engine.Schemas.Management
             {
                 var result = new KbQueryResult();
 
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                     {
-                        result = GetListByPreparedQuery(txRef.Transaction, preparedQuery);
+                        result = GetListByPreparedQuery(transaction, preparedQuery);
                     }
                     else
                     {
                         throw new KbParserException("Invalid list query subtype.");
                     }
 
-                    txRef.Commit();
+                    transaction.Commit();
 
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    result.Metrics = transaction.PT?.ToCollection();
                 }
 
                 return result;

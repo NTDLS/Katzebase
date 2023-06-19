@@ -1,6 +1,4 @@
-﻿using System.Reflection.Metadata;
-
-namespace Katzebase.PublicLibrary.Payloads
+﻿namespace Katzebase.PublicLibrary.Payloads
 {
     public class KbIndex
     {

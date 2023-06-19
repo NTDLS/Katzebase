@@ -5,50 +5,15 @@ using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.Sessions.SessionState;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace Katzebase.Engine.Sessions
+namespace Katzebase.Engine.Sessions.Management
 {
-    /// <summary>
-    /// This is the class that all API controllers should interface with for session access.
-    /// </summary>
-    public class SessionManager
+    internal class SessionQueryHandlers
     {
-        private Core core;
-        private ulong nextProcessId = 1;
-        internal Dictionary<Guid, SessionState> Collection { get; set; } = new();
+        private readonly Core core;
 
-        public SessionManager(Core core)
+        public SessionQueryHandlers(Core core)
         {
             this.core = core;
-        }
-
-        public ulong UpsertSessionId(Guid sessionId)
-        {
-            lock (Collection)
-            {
-                if (Collection.ContainsKey(sessionId))
-                {
-                    return Collection[sessionId].ProcessId;
-                }
-                else
-                {
-                    ulong processId = nextProcessId++;
-                    Collection.Add(sessionId, new SessionState(processId, sessionId));
-                    return processId;
-                }
-            }
-        }
-
-        public SessionState ByProcessId(ulong sessionId)
-        {
-            lock (Collection)
-            {
-                var result = Collection.Where(o => o.Value.ProcessId == sessionId).FirstOrDefault();
-                if (result.Value != null)
-                {
-                    return result.Value;
-                }
-                throw new KbSessionNotFoundException($"The session was not found: {sessionId}");
-            }
         }
 
         internal KbActionResponse ExecuteSetVariable(ulong processId, PreparedQuery preparedQuery)
@@ -63,7 +28,7 @@ namespace Katzebase.Engine.Sessions
                 {
                     ptAcquireTransaction?.StopAndAccumulate();
 
-                    var session = ByProcessId(processId);
+                    var session = core.Sessions.ByProcessId(processId);
 
                     bool VariableOnOff(string value)
                     {

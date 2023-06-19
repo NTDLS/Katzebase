@@ -20,7 +20,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Transactions.Begin(processId, true);
+                Program.Core.Transactions.APIHandlers.Begin(processId);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -43,7 +43,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Transactions.Commit(processId);
+                Program.Core.Transactions.APIHandlers.Commit(processId);
                 result.Success = true;
             }
             catch (Exception ex)
@@ -66,7 +66,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Transactions.Rollback(processId);
+                Program.Core.Transactions.APIHandlers.Rollback(processId);
                 result.Success = true;
             }
             catch (Exception ex)

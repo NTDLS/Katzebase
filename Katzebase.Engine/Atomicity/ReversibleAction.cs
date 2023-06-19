@@ -2,7 +2,7 @@
 using Newtonsoft.Json.Converters;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
-namespace Katzebase.Engine.Transactions
+namespace Katzebase.Engine.Atomicity
 {
     public class ReversibleAction
     {

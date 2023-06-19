@@ -1,7 +1,7 @@
 ﻿using System.Collections.Specialized;
 using System.Runtime.Caching;
 
-namespace Katzebase.Engine.Caching
+namespace Katzebase.Engine.Caching.Management
 {
     public class CacheManager
     {
@@ -17,7 +17,7 @@ namespace Katzebase.Engine.Caching
 
             partitions = new MemoryCache[PartitionCount];
 
-            int maxMemoryPerPartition = (int)((double)core.Settings.CacheMaxMemory / (double)PartitionCount);
+            int maxMemoryPerPartition = (int)(core.Settings.CacheMaxMemory / (double)PartitionCount);
             maxMemoryPerPartition = maxMemoryPerPartition < 5 ? 5 : maxMemoryPerPartition;
 
             cachePolicy = new CacheItemPolicy()

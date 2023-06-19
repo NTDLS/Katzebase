@@ -1,7 +1,7 @@
-﻿using Katzebase.Engine.Indexes.Matching;
+﻿using Katzebase.Engine.Atomicity;
+using Katzebase.Engine.Indexes.Matching;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
-using Katzebase.Engine.Transactions;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using System.Text;

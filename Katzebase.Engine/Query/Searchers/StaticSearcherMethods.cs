@@ -1,7 +1,6 @@
-﻿using Katzebase.Engine.Documents;
+﻿using Katzebase.Engine.Atomicity;
+using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query.Searchers.Mapping;
-using Katzebase.Engine.Transactions;
-using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.KbLib.EngineConstants;

@@ -17,9 +17,9 @@ namespace Katzebase.Engine.Indexes.Management
             var result = new KbActionResponseIndexes();
             try
             {
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    var indexCatalog = core.Indexes.AcquireIndexCatalog(txRef.Transaction, schemaName, LockOperation.Read);
+                    var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, schemaName, LockOperation.Read);
                     if (indexCatalog != null)
                     {
                         foreach (var index in indexCatalog.Collection)
@@ -29,7 +29,7 @@ namespace Katzebase.Engine.Indexes.Management
                     }
 
 
-                    txRef.Commit();
+                    transaction.Commit();
                 }
             }
             catch (Exception ex)
@@ -46,13 +46,13 @@ namespace Katzebase.Engine.Indexes.Management
             bool result = false;
             try
             {
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    var indexCatalog = core.Indexes.AcquireIndexCatalog(txRef.Transaction, schemaName, LockOperation.Read);
+                    var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, schemaName, LockOperation.Read);
 
                     result = indexCatalog.GetByName(indexName) != null;
 
-                    txRef.Commit();
+                    transaction.Commit();
                 }
             }
             catch (Exception ex)
@@ -70,10 +70,10 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var physicalIndex = PhysicalIndex.FromClientPayload(index);
 
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    core.Indexes.CreateIndex(txRef.Transaction, schemaName, index, out newId);
-                    txRef.Commit();
+                    core.Indexes.CreateIndex(transaction, schemaName, index, out newId);
+                    transaction.Commit();
                 }
             }
             catch (Exception ex)
@@ -87,10 +87,10 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    core.Indexes.RebuildIndex(txRef.Transaction, schemaName, indexName);
-                    txRef.Commit();
+                    core.Indexes.RebuildIndex(transaction, schemaName, indexName);
+                    transaction.Commit();
                 }
             }
             catch (Exception ex)
@@ -104,10 +104,10 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
-                    core.Indexes.DropIndex(txRef.Transaction, schemaName, indexName);
-                    txRef.Commit();
+                    core.Indexes.DropIndex(transaction, schemaName, indexName);
+                    transaction.Commit();
                 }
             }
             catch (Exception ex)

@@ -1,7 +1,7 @@
-﻿using Katzebase.Engine.Documents;
+﻿using Katzebase.Engine.Atomicity;
+using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
-using Katzebase.Engine.Transactions;
 
 namespace Katzebase.Engine.Query.Searchers.Mapping
 {

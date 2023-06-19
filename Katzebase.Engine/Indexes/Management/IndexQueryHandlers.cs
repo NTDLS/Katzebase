@@ -19,14 +19,14 @@ namespace Katzebase.Engine.Indexes.Management
                 var result = new KbActionResponse();
                 var session = core.Sessions.ByProcessId(processId);
 
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
                     string schemaName = preparedQuery.Schemas.First().Name;
 
-                    core.Indexes.DropIndex(txRef.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+                    core.Indexes.DropIndex(transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
 
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    transaction.Commit();
+                    result.Metrics = transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -45,14 +45,14 @@ namespace Katzebase.Engine.Indexes.Management
                 var result = new KbActionResponse();
                 var session = core.Sessions.ByProcessId(processId);
 
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
                     string schemaName = preparedQuery.Schemas.First().Name;
 
-                    core.Indexes.RebuildIndex(txRef.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+                    core.Indexes.RebuildIndex(transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
 
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    transaction.Commit();
+                    result.Metrics = transaction.PT?.ToCollection();
                 }
 
                 return result;
@@ -70,7 +70,7 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var result = new KbActionResponse();
 
-                using (var txRef = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Begin(processId))
                 {
                     string schemaName = preparedQuery.Schemas.First().Name;
 
@@ -85,10 +85,10 @@ namespace Katzebase.Engine.Indexes.Management
                         index.Attributes.Add(new KbIndexAttribute() { Field = field.Field });
                     }
 
-                    core.Indexes.CreateIndex(txRef.Transaction, schemaName, index, out Guid indexId);
+                    core.Indexes.CreateIndex(transaction, schemaName, index, out Guid indexId);
 
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    transaction.Commit();
+                    result.Metrics = transaction.PT?.ToCollection();
                 }
 
                 return result;

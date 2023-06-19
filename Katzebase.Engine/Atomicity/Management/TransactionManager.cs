@@ -1,23 +1,28 @@
-﻿using Katzebase.Engine.Trace;
+﻿using Katzebase.Engine.Atomicity;
+using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 using static Katzebase.PublicLibrary.Constants;
 
-namespace Katzebase.Engine.Transactions
+namespace Katzebase.Engine.Atomicity.Management
 {
     /// <summary>
     /// This is the class that all API controllers should interface with for transaction access.
     /// </summary>
     public class TransactionManager
     {
-        internal List<Transaction> Collection = new List<Transaction>();
+        internal TransactionQueryHandlers QueryHandlers { get; set; }
+        public TransactiontAPIHandlers APIHandlers { get; set; }
+        internal List<Transaction> Collection = new();
         private Core core;
 
         public TransactionManager(Core core)
         {
             this.core = core;
+            QueryHandlers = new TransactionQueryHandlers(core);
+            APIHandlers = new TransactiontAPIHandlers(core);
         }
 
         internal Transaction? GetByProcessId(ulong processId)
@@ -36,7 +41,7 @@ namespace Katzebase.Engine.Transactions
                 var transaction = GetByProcessId(processId);
                 if (transaction != null)
                 {
-                    this.Collection.Remove(transaction);
+                    Collection.Remove(transaction);
                 }
             }
         }
@@ -104,7 +109,7 @@ namespace Katzebase.Engine.Transactions
         /// </summary>
         /// <param name="processId"></param>
         /// <returns></returns>
-        public TransactionReference Begin(ulong processId, bool isUserCreated)
+        internal Transaction Begin(ulong processId, bool isUserCreated)
         {
             var startTime = DateTime.UtcNow;
 
@@ -128,9 +133,11 @@ namespace Katzebase.Engine.Transactions
 
                     transaction.AddReference();
 
-                    var result = new TransactionReference(transaction);
                     ptAcquireTransaction?.StopAndAccumulate((DateTime.UtcNow - startTime).TotalMilliseconds);
-                    return result;
+
+                    Utility.EnsureNotNull(transaction);
+
+                    return transaction;
                 }
             }
             catch (Exception ex)
@@ -140,7 +147,7 @@ namespace Katzebase.Engine.Transactions
             }
         }
 
-        internal TransactionReference Begin(ulong processId)
+        internal Transaction Begin(ulong processId)
         {
             return Begin(processId, false);
         }

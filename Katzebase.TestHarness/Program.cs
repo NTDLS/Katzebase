@@ -1,9 +1,7 @@
 ﻿using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Payloads;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using System.Xml.Linq;
 
 namespace Katzebase.TestHarness
 {
@@ -159,7 +157,7 @@ namespace Katzebase.TestHarness
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);            
+                Console.WriteLine(ex.Message);
             }
         }
 
