@@ -1,12 +1,18 @@
 
 --SET TraceWaitTimes on;
+/*
+insert into AdventureWorks2012:Production:Product
+(ProductId = '10000', Name = 'API Test Product 1'),
+(ProductId = '10002', Name = 'API Test Product 2'),
+(ProductId = '10003', Name = 'API Test Product 3'),
+(ProductId = '10004', Name = 'API Test Product 4'),
+(ProductId = '10005', Name = 'API Test Product 5');
+*/
+--select * from AdventureWorks2012:Production:Product where ProductId > 9999
+delete from AdventureWorks2012:Production:Product where ProductId > 9999
 
-ins-ert into AdventureWorks2012:Production:Product(ProductId = '900000', Name = 'API Test Product');
-sel-ect * from AdventureWorks2012:Production:Product where Name = 'API Test Product';
-del-ete from AdventureWorks2012:Production:Product where Name = 'API Test Product';
 
-
-rebu-ild index IX_Product_Name on AdventureWorks2012:Production:Product
+--rebuild index IX_Product_Name on AdventureWorks2012:Production:Product
 
 
 --INSERT INTO AdventureWorks2012:dbo:AWBuildVersion(SystemInformationID = 'API Test Product');

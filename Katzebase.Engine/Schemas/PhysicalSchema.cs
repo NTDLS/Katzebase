@@ -24,20 +24,22 @@ namespace Katzebase.Engine.Schemas
         [JsonIgnore]
         public string VirtualPath { get; set; } = string.Empty;
 
-        public string DocumentPageCatalogDiskPath()
-        {
-            return Path.Combine(DiskPath, EngineConstants.DocumentPageCatalogFile);
-        }
+        public string IndexCatalogFilePath()
+            => Path.Combine(DiskPath, EngineConstants.IndexCatalogFile);
 
-        public string DocumentPageCatalogItemDiskPath(DocumentPointer documentPointer)
-        {
-            return Path.Combine(DiskPath, $"{documentPointer.PageNumber}{EngineConstants.DocumentPageExtension}");
-        }
+        public string DocumentPageCatalogFilePath()
+            => Path.Combine(DiskPath, EngineConstants.DocumentPageCatalogFile);
+
+        public string SchemaCatalogFilePath()
+            => Path.Combine(DiskPath, EngineConstants.SchemaCatalogFile);
+
+        public string DocumentPageCatalogItemFilePath(DocumentPointer documentPointer)
+            => Path.Combine(DiskPath, $"{documentPointer.PageNumber}{EngineConstants.DocumentPageExtension}");
 
         public string DocumentPageCatalogItemDiskPath(PhysicalDocumentPageMap documentPageCatalogItem)
-        {
-            return Path.Combine(DiskPath, $"{documentPageCatalogItem.PageNumber}{EngineConstants.DocumentPageExtension}");
-        }
+            => Path.Combine(DiskPath, $"{documentPageCatalogItem.PageNumber}{EngineConstants.DocumentPageExtension}");
+
+
 
         public PhysicalSchema Clone()
         {

@@ -352,11 +352,9 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var indexCatalogDiskPath = Path.Combine(physicalSchema.DiskPath, IndexCatalogFile);
+                var indexCatalog = core.IO.GetJson<PhysicalIndexCatalog>(transaction, physicalSchema.IndexCatalogFilePath(), intendedOperation);
 
-                var indexCatalog = core.IO.GetJson<PhysicalIndexCatalog>(transaction, indexCatalogDiskPath, intendedOperation);
-
-                indexCatalog.DiskPath = indexCatalogDiskPath;
+                indexCatalog.DiskPath = physicalSchema.IndexCatalogFilePath();
 
                 foreach (var index in indexCatalog.Collection)
                 {

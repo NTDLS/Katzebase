@@ -2,14 +2,14 @@
 {
     public static class EngineConstants
     {
-        public const string DocumentPageExtension = ".kbpage";
-        public const string SchemaCatalogFile = "@schemas.kbcat";
-        public const string DocumentPageCatalogFile = "@pages.kbcat";
-        public const string IndexCatalogFile = "@indexes.kbcat";
-        public const string LoginCatalogFile = "@logins.kbcat";
-        public const string TransactionActionsFile = "@transaction.kblog";
-        public const string HealthStatsFile = "@health.json";
-        public static Guid RootSchemaGUID = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
+        public static string DocumentPageExtension { get; } = ".kbpage";
+        public static string SchemaCatalogFile { get; } = "@schemas.kbcat";
+        public static string DocumentPageCatalogFile { get; } = "@pages.kbcat";
+        public static string IndexCatalogFile { get; } = "@indexes.kbcat";
+        public static string LoginCatalogFile { get; } = "@logins.kbcat";
+        public static string TransactionActionsFile { get; } = "@transaction.kblog";
+        public static string HealthStatsFile { get; } = "@health.json";
+        public static Guid RootSchemaGUID { get; } = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
 
         public enum IOFormat
         {

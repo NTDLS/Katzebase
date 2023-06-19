@@ -33,17 +33,16 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var result = new KbQueryResult();
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, transaction, preparedQuery);
+                    var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, transaction, preparedQuery);
+
                     transaction.Commit();
                     result.RowCount = result.Rows.Count;
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {
@@ -62,21 +61,24 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var result = new KbQueryResult();
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    var keyValuePairs = preparedQuery.UpsertKeyValuePairs.ToDictionary(o => o.Field.Field, o => o.Value.Value);
-                    var documentContent = JsonConvert.SerializeObject(keyValuePairs);
+                    var result = new KbQueryResult();
                     var physicalSchema = core.Schemas.Acquire(transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
-                    core.Documents.InsertDocument(transaction, physicalSchema, documentContent);
+
+                    foreach (var upsertValues in preparedQuery.UpsertValues)
+                    {
+                        var keyValuePairs = upsertValues.ToDictionary(o => o.Field.Field, o => o.Value.Value);
+                        var documentContent = JsonConvert.SerializeObject(keyValuePairs);
+                        core.Documents.InsertDocument(transaction, physicalSchema, documentContent);
+                    }
 
                     transaction.Commit();
-                    result.RowCount = 1;
+                    result.RowCount = preparedQuery.UpsertValues.Count;
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {
@@ -89,18 +91,17 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var result = new KbQueryResult();
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
                     string schemaName = preparedQuery.Schemas.Single().Name;
-                    result = StaticSearcherMethods.SampleSchemaDocuments(core, transaction, schemaName, preparedQuery.RowLimit);
+                    var result = StaticSearcherMethods.SampleSchemaDocuments(core, transaction, schemaName, preparedQuery.RowLimit);
+
                     transaction.Commit();
                     result.RowCount = result.Rows.Count;
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {
@@ -113,18 +114,17 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var result = new KbQueryResult();
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
                     string schemaName = preparedQuery.Schemas.Single().Name;
-                    result = StaticSearcherMethods.ListSchemaDocuments(core, transaction, schemaName, preparedQuery.RowLimit);
+                    var result = StaticSearcherMethods.ListSchemaDocuments(core, transaction, schemaName, preparedQuery.RowLimit);
+
                     transaction.Commit();
                     result.RowCount = result.Rows.Count;
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {
@@ -139,8 +139,6 @@ namespace Katzebase.Engine.Documents.Management
             {
                 throw new KbNotImplementedException();
                 /*
-                var result = new KbQueryResult();
-
                 using (var transaction = core.Transactions.Begin(processId))
                 {
                     var physicalSchema = core.Schemas.Acquire(transaction, preparedQuery.Schemas[0].n, LockOperation.Read);
@@ -151,9 +149,9 @@ namespace Katzebase.Engine.Documents.Management
                     transaction.Commit();
                     result.RowCount = 0;
                     result.Metrics = transaction.PT?.ToCollection();
-                }
-
+                    result.Success = true;
                 return result;
+                }
                 */
             }
             catch (Exception ex)
@@ -167,15 +165,13 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var result = new KbActionResponse();
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
+                    var result = new KbActionResponse();
                     var firstSchema = preparedQuery.Schemas.First();
-
                     var physicalSchema = core.Schemas.Acquire(transaction, firstSchema.Name, LockOperation.Read);
 
-                    string? getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
+                    var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
 
                     if (preparedQuery.Attributes.ContainsKey(PreparedQuery.QueryAttribute.SpecificSchemaPrefix))
                     {
@@ -191,9 +187,9 @@ namespace Katzebase.Engine.Documents.Management
                     transaction.Commit();
                     result.RowCount = documentPointers.Count();
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {

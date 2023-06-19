@@ -25,7 +25,11 @@ namespace Katzebase.Engine.Query
         public PrefixedFields SelectFields { get; set; } = new();
         public PrefixedFields GroupFields { get; set; } = new();
         public SortFields SortFields { get; set; } = new();
-        public UpsertKeyValues UpsertKeyValuePairs { get; set; } = new();
+
+        /// <summary>
+        /// List of key/values used for insert statements.
+        /// </summary>
+        public List<UpsertKeyValues> UpsertValues { get; set; } = new();
         public List<KbNameValuePair> VariableValues { get; set; } = new();
 
         public T Attribute<T>(QueryAttribute attribute)

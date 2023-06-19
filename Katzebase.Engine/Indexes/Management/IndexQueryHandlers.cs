@@ -28,20 +28,20 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var result = new KbActionResponse();
                 var session = core.Sessions.ByProcessId(processId);
 
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
+                    var result = new KbActionResponse();
                     string schemaName = preparedQuery.Schemas.First().Name;
 
                     core.Indexes.DropIndex(transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
 
                     transaction.Commit();
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {
@@ -54,20 +54,20 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var result = new KbActionResponse();
                 var session = core.Sessions.ByProcessId(processId);
 
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
+                    var result = new KbActionResponse();
                     string schemaName = preparedQuery.Schemas.First().Name;
 
                     core.Indexes.RebuildIndex(transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
 
                     transaction.Commit();
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {
@@ -80,10 +80,10 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var result = new KbActionResponse();
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
+                    var result = new KbActionResponse();
+
                     string schemaName = preparedQuery.Schemas.First().Name;
 
                     var index = new KbIndex
@@ -101,9 +101,9 @@ namespace Katzebase.Engine.Indexes.Management
 
                     transaction.Commit();
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {

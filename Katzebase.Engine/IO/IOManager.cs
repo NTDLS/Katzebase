@@ -218,7 +218,7 @@ namespace Katzebase.Engine.IO
                         transaction.RecordFileAlter(filePath);
                     }
 
-                    if (core.Settings.DeferredIOEnabled && transaction.IsUserCreated)
+                    if (core.Settings.DeferredIOEnabled /*&& transaction.IsUserCreated*/)
                     {
                         Utility.EnsureNotNull(transaction.DeferredIOs);
                         var ptDeferredWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredWrite);

@@ -32,13 +32,9 @@ namespace Katzebase.Engine.Sessions.Management
         {
             try
             {
-                var result = new KbActionResponse();
-                var pt = new PerformanceTrace();
-
-                var ptAcquireTransaction = pt?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    ptAcquireTransaction?.StopAndAccumulate();
+                    var result = new KbActionResponse();
 
                     var session = core.Sessions.ByProcessId(processId);
 
@@ -91,9 +87,10 @@ namespace Katzebase.Engine.Sessions.Management
                     }
 
                     transaction.Commit();
+                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {

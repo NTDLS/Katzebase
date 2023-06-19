@@ -1,9 +1,11 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
+using Katzebase.Engine.Query;
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
 using System.Diagnostics;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Schemas.PhysicalSchema;
@@ -86,31 +88,12 @@ namespace Katzebase.Engine.Schemas.Management
 
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
 
-                string parentSchemaCatalogFile = Path.Combine(parentPhysicalSchema.DiskPath, SchemaCatalogFile);
-                var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentSchemaCatalogFile, LockOperation.Write);
-
                 core.IO.CreateDirectory(transaction, physicalSchema.DiskPath);
+                core.IO.PutJson(transaction, physicalSchema.SchemaCatalogFilePath(), new PhysicalSchemaCatalog());
+                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogFilePath(), new PhysicalDocumentPageCatalog());
+                core.IO.PutJson(transaction, physicalSchema.IndexCatalogFilePath(), new PhysicalIndexCatalog());
 
-                //Create default schema catalog file.
-                var filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
-                if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
-                {
-                    core.IO.PutJson(transaction, filePath, new PhysicalSchemaCatalog());
-                }
-
-                //Create default document page catalog file.
-                filePath = Path.Combine(physicalSchema.DiskPath, DocumentPageCatalogFile);
-                if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
-                {
-                    core.IO.PutJson(transaction, filePath, new PhysicalDocumentPageCatalog());
-                }
-
-                //Create default index catalog file.
-                filePath = Path.Combine(physicalSchema.DiskPath, IndexCatalogFile);
-                if (core.IO.FileExists(transaction, filePath, LockOperation.Write) == false)
-                {
-                    core.IO.PutJson(transaction, filePath, new PhysicalIndexCatalog());
-                }
+                var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
                 if (parentCatalog.ContainsName(schemaName) == false)
                 {
@@ -120,7 +103,7 @@ namespace Katzebase.Engine.Schemas.Management
                         Name = physicalSchema.Name
                     });
 
-                    core.IO.PutJson(transaction, parentSchemaCatalogFile, parentCatalog);
+                    core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
                 }
             }
             catch (Exception ex)
@@ -130,26 +113,25 @@ namespace Katzebase.Engine.Schemas.Management
             }
         }
 
-        internal List<PhysicalSchema> AcquireChildren(Transaction transaction, PhysicalSchema schema, LockOperation intendedOperation)
+        internal List<PhysicalSchema> AcquireChildren(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
         {
             try
             {
                 var schemas = new List<PhysicalSchema>();
 
-                string schemaCatalogDiskPath = Path.Combine(schema.DiskPath, SchemaCatalogFile);
 
-                if (core.IO.FileExists(transaction, schemaCatalogDiskPath, intendedOperation))
+                if (core.IO.FileExists(transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation))
                 {
-                    var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, schemaCatalogDiskPath, intendedOperation);
+                    var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation);
 
                     foreach (var catalogItem in schemaCatalog.Collection)
                     {
                         schemas.Add(new PhysicalSchema()
                         {
-                            DiskPath = schema.DiskPath + "\\" + catalogItem.Name,
+                            DiskPath = physicalSchema.DiskPath + "\\" + catalogItem.Name,
                             Id = catalogItem.Id,
                             Name = catalogItem.Name,
-                            VirtualPath = schema.VirtualPath + ":" + catalogItem.Name
+                            VirtualPath = physicalSchema.VirtualPath + ":" + catalogItem.Name
                         });
                     }
                 }
@@ -321,5 +303,40 @@ namespace Katzebase.Engine.Schemas.Management
                 ptLockSchema?.StopAndAccumulate();
             }
         }
+
+        internal PhysicalSchemaCatalog AcquireCatalog(Transaction transaction, string schemaName, LockOperation intendedOperation)
+        {
+            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, intendedOperation);
+            return core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), intendedOperation);
+        }
+
+        internal List<Tuple<string, string>> GetListByPreparedQuery(Transaction transaction, string schemaName, int rowLimit)
+        {
+            try
+            {
+                var physicalSchema = core.Schemas.Acquire(transaction, schemaName,  LockOperation.Read);
+                var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Read);
+
+                var result = new List<Tuple<string, string>>();
+
+                foreach (var item in schemaCatalog.Collection)
+                {
+                    if (rowLimit > 0 && result.Count >= rowLimit)
+                    {
+                        break;
+                    }
+
+                    result.Add(new Tuple<string, string>(item.Name, $"{physicalSchema.VirtualPath}:{item.Name}"));
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to get schema list for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
     }
 }

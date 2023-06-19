@@ -42,8 +42,7 @@ namespace Katzebase.Engine.Schemas.Management
                         throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
                     }
 
-                    var filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
-                    var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, filePath, LockOperation.Read);
+                    var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
 
                     foreach (var item in schemaCatalog.Collection)
                     {
@@ -155,7 +154,7 @@ namespace Katzebase.Engine.Schemas.Management
                     var result = new KbActionResponseBoolean();
 
                     var segments = schemaName.Split(':');
-                    string parentSchemaName = segments[segments.Count() - 1];
+                    var parentSchemaName = segments[segments.Count() - 1];
 
                     var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
                     var parentPhysicalSchema = core.Schemas.AcquireParent(transaction, physicalSchema, LockOperation.Write);
@@ -163,7 +162,7 @@ namespace Katzebase.Engine.Schemas.Management
                     if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
                         throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
 
-                    string parentSchemaCatalogFile = Path.Combine(parentPhysicalSchema.DiskPath, SchemaCatalogFile);
+                    var parentSchemaCatalogFile = parentPhysicalSchema.SchemaCatalogFilePath();
                     var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentSchemaCatalogFile, LockOperation.Write);
 
                     var nsItem = parentCatalog.Collection.FirstOrDefault(o => o.Name == parentSchemaName);

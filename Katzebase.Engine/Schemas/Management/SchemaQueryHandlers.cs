@@ -32,13 +32,18 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                var result = new KbQueryResult();
-
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
+                    var result = new KbQueryResult();
+
                     if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                     {
-                        result = GetListByPreparedQuery(transaction, preparedQuery);
+                        var schemaList = core.Schemas.GetListByPreparedQuery(transaction, preparedQuery.Schemas.Single().Name, preparedQuery.RowLimit);
+
+                        result.Fields.Add(new KbQueryField("Name"));
+                        result.Fields.Add(new KbQueryField("Path"));
+
+                        result.Rows.AddRange(schemaList.Select(o => new KbQueryRow(new List<string> { o.Item1, o.Item2 })));
                     }
                     else
                     {
@@ -46,53 +51,14 @@ namespace Katzebase.Engine.Schemas.Management
                     }
 
                     transaction.Commit();
-
                     result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
                 }
-
-                return result;
             }
             catch (Exception ex)
             {
                 core.Log.Write($"Failed to execute schema list for process id {processId}.", ex);
-                throw;
-            }
-        }
-
-        private KbQueryResult GetListByPreparedQuery(Transaction transaction, PreparedQuery preparedQuery)
-        {
-            try
-            {
-                var result = new KbQueryResult();
-                var schema = preparedQuery.Schemas.Single();
-                var physicalSchema = core.Schemas.Acquire(transaction, schema.Name, LockOperation.Read);
-
-                //Lock the schema catalog:
-                var filePath = Path.Combine(physicalSchema.DiskPath, SchemaCatalogFile);
-                var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, filePath, LockOperation.Read);
-
-                result.Fields.Add(new KbQueryField("Name"));
-                result.Fields.Add(new KbQueryField("Path"));
-
-                foreach (var item in schemaCatalog.Collection)
-                {
-                    if (preparedQuery.RowLimit > 0 && result.Rows.Count >= preparedQuery.RowLimit)
-                    {
-                        break;
-                    }
-                    var resultRow = new KbQueryRow();
-
-                    resultRow.AddValue(item.Name);
-                    resultRow.AddValue($"{physicalSchema.VirtualPath}:{item.Name}");
-
-                    result.Rows.Add(resultRow);
-                }
-
-                return result;
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to get schema list for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }

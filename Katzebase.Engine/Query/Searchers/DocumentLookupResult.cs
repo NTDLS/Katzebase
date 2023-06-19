@@ -11,6 +11,10 @@ namespace Katzebase.Engine.Query.Searchers
         public void InsertValue(int ordinal, string value)
         {
             //We do not accumulate values in the same order that they were requested by the query, we need to put them in the right place.
+            if (Values.Count <= ordinal)
+            {
+                Resize(ordinal + 1);
+            }
             Values[ordinal] = value;
         }
 

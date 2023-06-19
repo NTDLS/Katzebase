@@ -40,7 +40,7 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
+                var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
 
                 //Get the page that the document current exists in if any.
                 var physicalPageMap = documentPageCatalog.GetDocumentPageMap(documentId);
@@ -68,7 +68,7 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(documentPointer), lockIntention);
+                var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), lockIntention);
                 return physicalDocumentPage.Documents.First(o => o.Key == documentPointer.DocumentId).Value;
             }
             catch (Exception ex)
@@ -88,7 +88,7 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var physicalDocumentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
+                var physicalDocumentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
                 return physicalDocumentPageCatalog.ConsolidatedDocumentPointers();
             }
             catch (Exception ex)
@@ -102,7 +102,7 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                return core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), lockIntention);
+                return core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
             }
             catch (Exception ex)
             {
@@ -131,7 +131,7 @@ namespace Katzebase.Engine.Documents.Management
                 PhysicalDocumentPage documentPage;
 
                 //Open the document page catalog:
-                var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
+                var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
                 Utility.EnsureNotNull(documentPageCatalog);
 
                 var physicalDocument = new PhysicalDocument
@@ -177,7 +177,7 @@ namespace Katzebase.Engine.Documents.Management
                 core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), documentPage);
 
                 //Save the docuemnt page catalog:
-                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);
+                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
 
                 var documentPointer = new DocumentPointer(documentPage.PageNumber, physicalDocument.Id);
 
@@ -203,7 +203,7 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(documentPointer), LockOperation.Write);
+                var documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), LockOperation.Write);
 
                 var physicalDocument = new PhysicalDocument()
                 {
@@ -216,7 +216,7 @@ namespace Katzebase.Engine.Documents.Management
                 documentPage.Documents[documentPointer.DocumentId] = physicalDocument;
 
                 //Save the document page:
-                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(documentPointer), documentPage);
+                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
 
                 //Update all of the indexes that referecne the document.
                 core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new DocumentPointer(documentPage.PageNumber, physicalDocument.Id));
@@ -239,23 +239,23 @@ namespace Katzebase.Engine.Documents.Management
             try
             {
                 //Open the document page catalog:
-                var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogDiskPath(), LockOperation.Write);
+                var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
                 Utility.EnsureNotNull(documentPageCatalog);
 
                 foreach (var documentPointer in documentPointers)
                 {
-                    var documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(documentPointer), LockOperation.Write);
+                    var documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), LockOperation.Write);
 
                     //Remove the item from the document page.
                     documentPage.Documents.Remove(documentPointer.DocumentId);
 
                     //Save the document page:
-                    core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(documentPointer), documentPage);
+                    core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
 
                     documentPageCatalog.PageMappings[documentPointer.PageNumber].DocumentIDs.Remove(documentPointer.DocumentId);
 
                     //Save the docuemnt page catalog:
-                    core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogDiskPath(), documentPageCatalog);
+                    core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
                 }
 
                 //Update all of the indexes that referecne the documents.
