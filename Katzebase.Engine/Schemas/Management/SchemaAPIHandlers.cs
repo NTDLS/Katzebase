@@ -18,7 +18,7 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
 
@@ -88,7 +88,7 @@ namespace Katzebase.Engine.Schemas.Management
             {
                 bool result = false;
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var segments = schemaName.Split(':');
 
@@ -128,7 +128,7 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var segments = schemaName.Split(':');
                     string parentSchemaName = segments[segments.Count() - 1];

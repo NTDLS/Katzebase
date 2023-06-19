@@ -19,7 +19,7 @@ namespace Katzebase.Engine.Indexes.Management
                 var result = new KbActionResponse();
                 var session = core.Sessions.ByProcessId(processId);
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     string schemaName = preparedQuery.Schemas.First().Name;
 
@@ -45,7 +45,7 @@ namespace Katzebase.Engine.Indexes.Management
                 var result = new KbActionResponse();
                 var session = core.Sessions.ByProcessId(processId);
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     string schemaName = preparedQuery.Schemas.First().Name;
 
@@ -70,7 +70,7 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var result = new KbActionResponse();
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     string schemaName = preparedQuery.Schemas.First().Name;
 

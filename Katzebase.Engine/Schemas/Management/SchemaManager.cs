@@ -62,7 +62,7 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     Guid newSchemaId = Guid.NewGuid();
 

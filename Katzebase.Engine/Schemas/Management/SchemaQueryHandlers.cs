@@ -21,7 +21,7 @@ namespace Katzebase.Engine.Schemas.Management
             {
                 var result = new KbQueryResult();
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                     {

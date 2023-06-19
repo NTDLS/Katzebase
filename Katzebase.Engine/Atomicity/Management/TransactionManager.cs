@@ -109,7 +109,7 @@ namespace Katzebase.Engine.Atomicity.Management
         /// </summary>
         /// <param name="processId"></param>
         /// <returns></returns>
-        internal Transaction Begin(ulong processId, bool isUserCreated)
+        internal Transaction Acquire(ulong processId, bool isUserCreated)
         {
             var startTime = DateTime.UtcNow;
 
@@ -147,9 +147,9 @@ namespace Katzebase.Engine.Atomicity.Management
             }
         }
 
-        internal Transaction Begin(ulong processId)
+        internal Transaction Acquire(ulong processId)
         {
-            return Begin(processId, false);
+            return Acquire(processId, false);
         }
 
         public void Commit(ulong processId)

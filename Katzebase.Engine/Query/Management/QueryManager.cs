@@ -125,7 +125,7 @@ namespace Katzebase.Engine.Query.Management
             {
                 if (preparedQuery.SubQueryType == SubQueryType.Transaction)
                 {
-                    core.Transactions.QueryHandlers.Begin(processId);
+                    core.Transactions.QueryHandlers.Acquire(processId);
                     return new KbActionResponse { Success = true };
                 }
                 throw new NotImplementedException();

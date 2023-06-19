@@ -19,7 +19,7 @@ namespace Katzebase.Engine.Documents.Management
             {
                 var result = new KbQueryResult();
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     result = StaticSearcherMethods.SampleSchemaDocuments(core, transaction, schemaName, rowLimit);
                     transaction.Commit();
@@ -49,7 +49,7 @@ namespace Katzebase.Engine.Documents.Management
             {
                 var result = new KbQueryResult();
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     result = StaticSearcherMethods.ListSchemaDocuments(core, transaction, schemaName, rowLimit);
                     transaction.Commit();
@@ -84,7 +84,7 @@ namespace Katzebase.Engine.Documents.Management
                 physicalDocument.Created = DateTime.UtcNow;
                 physicalDocument.Modfied = DateTime.UtcNow;
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var physicalSchema = core.Schemas.Acquire(transaction, schema, LockOperation.Write);
                     core.Documents.InsertDocument(transaction, physicalSchema, physicalDocument);
@@ -113,7 +113,7 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
                     var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
@@ -146,7 +146,7 @@ namespace Katzebase.Engine.Documents.Management
             {
                 var result = new KbActionResponse();
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
                     var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();

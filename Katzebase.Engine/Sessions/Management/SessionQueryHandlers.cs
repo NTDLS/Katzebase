@@ -24,7 +24,7 @@ namespace Katzebase.Engine.Sessions.Management
                 var pt = new PerformanceTrace();
 
                 var ptAcquireTransaction = pt?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     ptAcquireTransaction?.StopAndAccumulate();
 

@@ -17,7 +17,7 @@ namespace Katzebase.Engine.Indexes.Management
             var result = new KbActionResponseIndexes();
             try
             {
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, schemaName, LockOperation.Read);
                     if (indexCatalog != null)
@@ -46,7 +46,7 @@ namespace Katzebase.Engine.Indexes.Management
             bool result = false;
             try
             {
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, schemaName, LockOperation.Read);
 
@@ -70,7 +70,7 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var physicalIndex = PhysicalIndex.FromClientPayload(index);
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     core.Indexes.CreateIndex(transaction, schemaName, index, out newId);
                     transaction.Commit();
@@ -87,7 +87,7 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     core.Indexes.RebuildIndex(transaction, schemaName, indexName);
                     transaction.Commit();
@@ -104,7 +104,7 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     core.Indexes.DropIndex(transaction, schemaName, indexName);
                     transaction.Commit();

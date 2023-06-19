@@ -23,7 +23,7 @@ namespace Katzebase.Engine.Documents.Management
             {
                 var result = new KbQueryResult();
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, transaction, preparedQuery);
                     transaction.Commit();
@@ -52,7 +52,7 @@ namespace Katzebase.Engine.Documents.Management
             {
                 var result = new KbQueryResult();
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var physicalDocument = new PhysicalDocument();
 
@@ -81,7 +81,7 @@ namespace Katzebase.Engine.Documents.Management
             {
                 var result = new KbQueryResult();
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     string schemaName = preparedQuery.Schemas.Single().Name;
                     result = StaticSearcherMethods.SampleSchemaDocuments(core, transaction, schemaName, preparedQuery.RowLimit);
@@ -105,7 +105,7 @@ namespace Katzebase.Engine.Documents.Management
             {
                 var result = new KbQueryResult();
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     string schemaName = preparedQuery.Schemas.Single().Name;
                     result = StaticSearcherMethods.ListSchemaDocuments(core, transaction, schemaName, preparedQuery.RowLimit);
@@ -159,7 +159,7 @@ namespace Katzebase.Engine.Documents.Management
             {
                 var result = new KbActionResponse();
 
-                using (var transaction = core.Transactions.Begin(processId))
+                using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var firstSchema = preparedQuery.Schemas.First();
 
