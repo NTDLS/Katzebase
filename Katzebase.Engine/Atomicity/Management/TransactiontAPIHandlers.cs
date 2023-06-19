@@ -11,7 +11,7 @@ namespace Katzebase.Engine.Atomicity.Management
             this.core = core;
         }
 
-        public void Acquire(ulong processId)
+        public void Begin(ulong processId)
         {
             core.Transactions.Acquire(processId, true);
         }

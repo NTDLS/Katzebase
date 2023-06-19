@@ -20,7 +20,7 @@ namespace Katzebase.Service.Controllers
 
             try
             {
-                Program.Core.Transactions.APIHandlers.Acquire(processId);
+                Program.Core.Transactions.APIHandlers.Begin(processId);
                 result.Success = true;
             }
             catch (Exception ex)
