@@ -9,6 +9,8 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using static Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static Katzebase.Engine.KbLib.EngineConstants;
@@ -744,40 +746,42 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
-        private bool RemoveDocumentsFromLeaves(PhysicalIndexLeaf leaves, IEnumerable<DocumentPointer> documentPointers)
+
+        private long RemoveDocumentsFromLeaves(PhysicalIndexLeaf leaf, IEnumerable<DocumentPointer> documentPointers)
         {
+            return RemoveDocumentsFromLeaves(leaf, documentPointers, documentPointers.Count());
+        }
+
+        private long RemoveDocumentsFromLeaves(PhysicalIndexLeaf leaf, IEnumerable<DocumentPointer> documentPointers, long maxCount)
+        {
+            long totalDeletes = 0;
+
             try
             {
-                int deletes = 0;
-                int neededDeletes = documentPointers.Count();
-                foreach (var documentPointer in documentPointers)
+                if (leaf.Documents?.Any() == true)
                 {
-                    if (leaves.Documents?.Count > 0)
+                    foreach (var documentPointer in documentPointers)
                     {
-                        if (leaves.Documents.RemoveAll(o => o.PageNumber == documentPointer.PageNumber && o.DocumentId == documentPointer.DocumentId) > 0)
+                        totalDeletes += (leaf?.Documents.RemoveAll(o => o.PageNumber == documentPointer.PageNumber && o.DocumentId == documentPointer.DocumentId) ?? 0);
+                        if (totalDeletes == maxCount)
                         {
-                            deletes++;
+                            break;
                         }
-                    }
 
-                    if (deletes == neededDeletes)
-                    {
-                        return true; //We found the documents and removed them.
                     }
+                    return totalDeletes;
+                }
 
-                    foreach (var leaf in leaves.Children)
+                foreach (var child in leaf.Children)
+                {
+                    totalDeletes += RemoveDocumentsFromLeaves(child.Value, documentPointers); //Dig to the bottom of each branch using recursion.
+                    if (totalDeletes == maxCount)
                     {
-                        if (leaves.Children?.Count > 0)
-                        {
-                            if (RemoveDocumentsFromLeaves(leaf.Value, documentPointers))
-                            {
-                                return true;
-                            }
-                        }
+                        break;
                     }
                 }
 
-                return false;
+                return totalDeletes;
             }
             catch (Exception ex)
             {
@@ -795,10 +799,8 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
 
-                if (RemoveDocumentsFromLeaves(physicalIndexPages.Root, documentPointers))
-                {
-                    core.IO.PutPBuf(transaction, physicalIindex.DiskPath, physicalIndexPages);
-                }
+                RemoveDocumentsFromLeaves(physicalIndexPages.Root, documentPointers);
+                core.IO.PutPBuf(transaction, physicalIindex.DiskPath, physicalIndexPages);
             }
             catch (Exception ex)
             {

@@ -11,6 +11,9 @@ namespace Katzebase.Engine.Indexes
         [ProtoMember(2)]
         public uint DocumentId { get; set; }
 
+        [ProtoIgnore]
+        public string Key => $"{PageNumber}:{DocumentId}";
+
         public PhysicalIndexEntry(uint documentId, int pageNumber)
         {
             DocumentId = documentId;

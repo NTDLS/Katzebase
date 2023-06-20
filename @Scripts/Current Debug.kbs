@@ -1,8 +1,15 @@
-select * from Test2 where Num1 >= 2
+delete from
+AdventureWorks2012:Production:Product
+where ProductId > 9999
 
+select * from
+AdventureWorks2012:Production:Product
+where ProductId < 9999
 
 
 /*
+select * from Test2 where Num1 >= 2
+
 select * from Test2
 Where Num1 > 1 and Num1 < 3
 order by name, num1, num2
