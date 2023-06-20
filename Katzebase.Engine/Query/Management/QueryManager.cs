@@ -137,7 +137,8 @@ namespace Katzebase.Engine.Query.Management
                 else if (preparedQuery.QueryType == QueryType.Drop)
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Index
-                        || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                        || preparedQuery.SubQueryType == SubQueryType.UniqueKey
+                        || preparedQuery.SubQueryType == SubQueryType.Schema)
                     {
                         return core.Indexes.QueryHandlers.ExecuteDrop(processId, preparedQuery);
                     }

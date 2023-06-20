@@ -12,6 +12,7 @@ namespace Katzebase.Engine.Atomicity
         [JsonConverter(typeof(StringEnumConverter))]
         public ActionType Action { get; set; }
         public string OriginalPath { get; set; }
+        public string Key { get; set; }
         public string? BackupPath { get; set; }
         public int Sequence { get; set; } = 0;
 
@@ -19,6 +20,7 @@ namespace Katzebase.Engine.Atomicity
         {
             Action = action;
             OriginalPath = originalPath;
+            Key = OriginalPath.ToLower();
         }
     }
 }

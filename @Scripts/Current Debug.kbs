@@ -1,3 +1,5 @@
+drop schema AdventureWorks2012:Purchasing
+/*
 delete from
 AdventureWorks2012:Production:Product
 where ProductId > 9999
@@ -5,7 +7,7 @@ where ProductId > 9999
 select * from
 AdventureWorks2012:Production:Product
 where ProductId < 9999
-
+*/
 
 /*
 select * from Test2 where Num1 >= 2

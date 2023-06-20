@@ -37,7 +37,18 @@ namespace Katzebase.Engine.Indexes.Management
                     var result = new KbActionResponse();
                     string schemaName = preparedQuery.Schemas.First().Name;
 
-                    core.Indexes.DropIndex(transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+                    if (preparedQuery.SubQueryType == SubQueryType.Schema)
+                    {
+                        core.Schemas.Drop(transaction, schemaName);
+                    }
+                    else if (preparedQuery.SubQueryType == SubQueryType.Index)
+                    {
+                        core.Indexes.DropIndex(transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+                    }
+                    else
+                    {
+                        throw new KbNotImplementedException();
+                    }
 
                     transaction.Commit();
                     result.Metrics = transaction.PT?.ToCollection();

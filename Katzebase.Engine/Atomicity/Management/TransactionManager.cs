@@ -78,7 +78,7 @@ namespace Katzebase.Engine.Atomicity.Management
 
                 Directory.CreateDirectory(core.Settings.TransactionDataPath);
 
-                var transactionFiles = Directory.EnumerateFiles(core.Settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories);
+                var transactionFiles = Directory.EnumerateFiles(core.Settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories).ToList();
                 if (transactionFiles.Any())
                 {
                     core.Log.Write($"Found {transactionFiles.Count()} open transactions.", LogSeverity.Warning);

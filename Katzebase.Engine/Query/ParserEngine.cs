@@ -179,29 +179,32 @@ namespace Katzebase.Engine.Query
             #region Drop -----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Drop)
             {
-                if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
+                if (query.IsNextToken(new string[] { "schema", "index", "uniquekey" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index' or 'uniquekey'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'schema', 'index' or 'uniquekey'.");
                 }
 
                 token = query.GetNextToken();
-                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                if (Enum.TryParse(token, true, out SubQueryType subQueryType) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index' or 'uniquekey'.");
                 }
                 result.SubQueryType = subQueryType;
 
-                token = query.GetNextToken();
-                if (token == string.Empty)
+                if (subQueryType == SubQueryType.Index || subQueryType == SubQueryType.UniqueKey)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: index name.");
-                }
-                result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
+                    token = query.GetNextToken();
+                    if (token == string.Empty)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: object name.");
+                    }
+                    result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
 
-                token = query.GetNextToken().ToLower();
-                if (token != "on")
-                {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
+                    token = query.GetNextToken().ToLower();
+                    if (token != "on")
+                    {
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
+                    }
                 }
 
                 token = query.GetNextToken();

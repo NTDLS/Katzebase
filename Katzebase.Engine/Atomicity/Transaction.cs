@@ -13,7 +13,7 @@ namespace Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {
-        public List<Atom> Atoms = new List<Atom>();
+        public List<Atom> Atoms = new ();
         public ulong ProcessId { get; set; }
         public DateTime StartTime { get; set; }
         public List<ulong> BlockedBy { get; set; }
@@ -210,7 +210,7 @@ namespace Katzebase.Engine.Atomicity
 
         #region Action Recorders.
 
-        private bool IsFileAlreadyRecorded(string filePath) => Atoms.Exists(o => o.OriginalPath == filePath.ToLower());
+        private bool IsFileAlreadyRecorded(string filePath) => Atoms.Exists(o => o.Key == filePath.ToLower());
 
         public void RecordFileCreate(string filePath)
         {
@@ -224,7 +224,7 @@ namespace Katzebase.Engine.Atomicity
                         return;
                     }
 
-                    var atom = new Atom(ActionType.FileCreate, filePath.ToLower())
+                    var atom = new Atom(ActionType.FileCreate, filePath)
                     {
                         Sequence = Atoms.Count
                     };
@@ -257,7 +257,7 @@ namespace Katzebase.Engine.Atomicity
                         return;
                     }
 
-                    var atom = new Atom(ActionType.DirectoryCreate, path.ToLower())
+                    var atom = new Atom(ActionType.DirectoryCreate, path)
                     {
                         Sequence = Atoms.Count
                     };
@@ -294,7 +294,7 @@ namespace Katzebase.Engine.Atomicity
                     Directory.CreateDirectory(backupPath);
                     Helpers.CopyDirectory(diskPath, backupPath);
 
-                    var atom = new Atom(ActionType.DirectoryDelete, diskPath.ToLower())
+                    var atom = new Atom(ActionType.DirectoryDelete, diskPath)
                     {
                         BackupPath = backupPath,
                         Sequence = Atoms.Count
@@ -331,7 +331,7 @@ namespace Katzebase.Engine.Atomicity
                     string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
                     File.Copy(filePath, backupPath);
 
-                    var atom = new Atom(ActionType.FileDelete, filePath.ToLower())
+                    var atom = new Atom(ActionType.FileDelete, filePath)
                     {
                         BackupPath = backupPath,
                         Sequence = Atoms.Count
@@ -368,7 +368,7 @@ namespace Katzebase.Engine.Atomicity
                     string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
                     File.Copy(filePath, backupPath);
 
-                    var atom = new Atom(ActionType.FileAlter, filePath.ToLower())
+                    var atom = new Atom(ActionType.FileAlter, filePath)
                     {
                         BackupPath = backupPath,
                         Sequence = Atoms.Count

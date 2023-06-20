@@ -113,6 +113,33 @@ namespace Katzebase.Engine.Schemas.Management
             }
         }
 
+        internal void Drop(Transaction transaction, string schemaName)
+        {
+            try
+            {
+                var physicalSchema = AcquireVirtual(transaction, schemaName, LockOperation.Write);
+                if (physicalSchema.Exists == false)
+                {
+                    transaction.Commit(); //The schema does not exists, not much else to do.
+                    return;
+                }
+
+                var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
+                core.IO.DeletePath(transaction, physicalSchema.DiskPath);
+
+                var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
+
+                parentCatalog.Collection.RemoveAll(o => o.Name.ToLower() == schemaName.ToLower());
+
+                core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
         internal List<PhysicalSchema> AcquireChildren(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
         {
             try
