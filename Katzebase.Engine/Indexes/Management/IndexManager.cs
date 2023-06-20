@@ -9,6 +9,7 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
+using System.Text.RegularExpressions;
 using static Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static Katzebase.Engine.KbLib.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
@@ -128,14 +129,13 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
+
         internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
             IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
         {
             try
             {
-                var workingPhysicalIndexLeaf = physicalIndexPages.Root;
-                var lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf;
-
+                List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = new() { physicalIndexPages.Root };
                 bool foundAnything = false;
 
                 foreach (var attribute in indexSelection.Index.Attributes)
@@ -154,33 +154,44 @@ namespace Katzebase.Engine.Indexes.Management
                         break;
                     }
 
-                    Utility.EnsureNotNull(workingPhysicalIndexLeaf);
+                    IEnumerable<PhysicalIndexLeaf>? foundLeaves = null;
+
+                    var conditionValue = conditionValues[attribute.Field.ToLower()];
 
                     var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch);
 
-                    var conditionValue = conditionValues[attribute.Field.ToLower()];
                     if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
-                        lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key == conditionValue).Value;
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => w.Key == conditionValue).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
-                        lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key != conditionValue).Value;
-                    else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => w.Key != conditionValue).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThan)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterAsDecimal(w.Key, conditionValue) == true).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterOrEqualAsDecimal(w.Key, conditionValue) == true).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.LessThan)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserAsDecimal(w.Key, conditionValue) == true).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.LessThanOrEqual)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqualAsDecimal(w.Key, conditionValue) == true).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.Like)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionValue) == true).Select(s => s.Value));
+                    else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {conditionField.LogicalQualifier}");
 
                     ptIndexSeek?.StopAndAccumulate();
 
-                    if (lastFoundPhysicalIndexLeaf == null)
+                    Utility.EnsureNotNull(foundLeaves);
+
+                    if (foundLeaves.FirstOrDefault()?.Documents?.Any() == true) //We found documents, we are at the base of the index.
                     {
-                        break;
+                        return foundLeaves.SelectMany(o => o.Documents ?? new List<PhysicalIndexEntry>()).ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
                     }
 
-                    foundAnything = true;
+                    //Drop down to the next leve in the virtual tree we are building.
+                    workingPhysicalIndexLeaves = new List<PhysicalIndexLeaf>();
+                    workingPhysicalIndexLeaves.AddRange(foundLeaves);
 
-                    if (lastFoundPhysicalIndexLeaf?.Documents?.Any() == true) //If we are at the base of the tree then there is no need to go further down.
+                    if (foundAnything == false)
                     {
-                        return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
-                    }
-                    else
-                    {
-                        workingPhysicalIndexLeaf = lastFoundPhysicalIndexLeaf;
+                        foundAnything = foundLeaves.Any();
                     }
                 }
 
@@ -189,14 +200,15 @@ namespace Katzebase.Engine.Indexes.Management
                     return new Dictionary<uint, DocumentPointer>();
                 }
 
-                Utility.EnsureNotNull(workingPhysicalIndexLeaf);
+                Utility.EnsureNotNull(workingPhysicalIndexLeaves);
 
+                //This is an index scan.
                 var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
                 //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
-                var resultintDocuments = DistillIndexLeaves(workingPhysicalIndexLeaf);
+                var resultingDocuments = DistillIndexLeaves(workingPhysicalIndexLeaves);
                 ptIndexDistillation?.StopAndAccumulate();
 
-                return resultintDocuments;
+                return resultingDocuments;
             }
             catch (Exception ex)
             {
@@ -213,8 +225,8 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var workingPhysicalIndexLeaf = physicalIndexPages.Root;
-                var lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf;
+                List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = new() { physicalIndexPages.Root };
+                //List<PhysicalIndexLeaf> lastFoundPhysicalIndexLeaves = new();
 
                 bool foundAnything = false;
 
@@ -235,32 +247,42 @@ namespace Katzebase.Engine.Indexes.Management
                         break;
                     }
 
-                    Utility.EnsureNotNull(workingPhysicalIndexLeaf);
+                    IEnumerable<PhysicalIndexLeaf>? foundLeaves = null;
 
                     var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch);
 
                     if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
-                        lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key == conditionField.Right.Value).Value;
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => w.Key == conditionField.Right.Value).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
-                        lastFoundPhysicalIndexLeaf = workingPhysicalIndexLeaf.Children.FirstOrDefault(o => o.Key != conditionField.Right.Value).Value;
-                    else throw new KbNotImplementedException($"Condition qualifier {conditionField.LogicalQualifier} has not been implemented.");
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => w.Key != conditionField.Right.Value).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThan)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterAsDecimal(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterOrEqualAsDecimal(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.LessThan)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserAsDecimal(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.LessThanOrEqual)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqualAsDecimal(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.Like)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                    else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {conditionField.LogicalQualifier}");
 
                     ptIndexSeek?.StopAndAccumulate();
 
-                    if (lastFoundPhysicalIndexLeaf == null)
+                    Utility.EnsureNotNull(foundLeaves);
+
+                    if (foundLeaves.FirstOrDefault()?.Documents?.Any() == true) //We found documents, we are at the base of the index.
                     {
-                        break;
+                        return foundLeaves.SelectMany(o => o.Documents ?? new List<PhysicalIndexEntry>()).ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
                     }
 
-                    foundAnything = true;
+                    //Drop down to the next leve in the virtual tree we are building.
+                    workingPhysicalIndexLeaves = new List<PhysicalIndexLeaf>();
+                    workingPhysicalIndexLeaves.AddRange(foundLeaves);
 
-                    if (lastFoundPhysicalIndexLeaf?.Documents?.Any() == true) //If we are at the base of the tree then there is no need to go further down.
+                    if (foundAnything == false)
                     {
-                        return lastFoundPhysicalIndexLeaf.Documents.ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
-                    }
-                    else
-                    {
-                        workingPhysicalIndexLeaf = lastFoundPhysicalIndexLeaf;
+                        foundAnything = foundLeaves.Any();
                     }
                 }
 
@@ -269,15 +291,15 @@ namespace Katzebase.Engine.Indexes.Management
                     return new Dictionary<uint, DocumentPointer>();
                 }
 
-                Utility.EnsureNotNull(workingPhysicalIndexLeaf);
+                Utility.EnsureNotNull(workingPhysicalIndexLeaves);
 
                 //This is an index scan.
                 var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
                 //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
-                var resultintDocuments = DistillIndexLeaves(workingPhysicalIndexLeaf);
+                var resultingDocuments = DistillIndexLeaves(workingPhysicalIndexLeaves);
                 ptIndexDistillation?.StopAndAccumulate();
 
-                return resultintDocuments;
+                return resultingDocuments;
             }
             catch (Exception ex)
             {
@@ -286,12 +308,24 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
+        private Dictionary<uint, DocumentPointer> DistillIndexLeaves(List<PhysicalIndexLeaf> physicalIndexLeaves)
+        {
+            var result = new List<DocumentPointer>();
+
+            foreach (var leaf in physicalIndexLeaves)
+            {
+                result.AddRange(DistillIndexLeaves(leaf));
+            }
+
+            return result.ToDictionary(o => o.DocumentId, o => o);
+        }
+
         /// <summary>
         /// Traverse to the bottom of the index tree (from whatever starting point is passed in) and return a list of all documentids.
         /// </summary>
         /// <param name="indexEntires"></param>
         /// <returns></returns>
-        private Dictionary<uint, DocumentPointer> DistillIndexLeaves(PhysicalIndexLeaf physicalIndexLeaf)
+        private List<DocumentPointer> DistillIndexLeaves(PhysicalIndexLeaf physicalIndexLeaf)
         {
             try
             {
@@ -322,7 +356,7 @@ namespace Katzebase.Engine.Indexes.Management
                     }
                 }
 
-                return result.ToDictionary(o => o.DocumentId, o => o);
+                return result;
             }
             catch (Exception ex)
             {
@@ -433,6 +467,10 @@ namespace Katzebase.Engine.Indexes.Management
                         result.ExtentLevel++;
                         result.Leaf = result.Leaf.Children[token]; //Move one level lower in the extent tree.
                     }
+                    else
+                    {
+                        break;
+                    }
                 }
 
                 if (result.ExtentLevel > 0)
@@ -529,6 +567,7 @@ namespace Katzebase.Engine.Indexes.Management
             try
             {
                 var searchTokens = GetIndexSearchTokens(transaction, physicalIindex, document);
+
                 var indexScanResult = LocateExtentInGivenIndexPageCatalog(transaction, searchTokens, physicalIndexPages);
 
                 //If we found a full match for all supplied key values - add the document to the leaf collection.

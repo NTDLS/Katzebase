@@ -112,7 +112,7 @@ namespace Katzebase.Engine.Query.Searchers
             ptThreadCompletion?.StopAndAccumulate();
 
             //Get a list of all the fields we need to sory by.
-            if (query.SortFields.Any())
+            if (query.SortFields.Any() && threadParam.Results.Collection.Any())
             {
                 var sortingColumns = new List<(int fieldIndex, KbSortDirection sortDirection)>();
                 foreach (var sortField in query.SortFields.OfType<SortField>())
@@ -340,17 +340,8 @@ namespace Katzebase.Engine.Query.Searchers
                         keyValuePairs.Add(condition.Left?.Value ?? "", conditionToken?.ToString() ?? "");
                     }
 
-                    foreach (var ff in keyValuePairs)
-                    {
-                        if (ff.Value == "732")
-                        {
-                        }
-                    }
-
                     //Match on values from the document.
                     var documentIds = param.Core.Indexes.MatchDocuments(param.Transaction, physicalIndexPages, subset.IndexSelection, subset, keyValuePairs);
-
-                    //var doWeStillNeedThis? = nextLevelMap.DocumentPageCatalog.FindDocumentPointers(documentIds).ToList();
 
                     furtherLimitedDocumentPointers.AddRange(documentIds.Values);
                 }
@@ -554,13 +545,13 @@ namespace Katzebase.Engine.Query.Searchers
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.
             //TODO: We could grab some of these from the field selector above to cut down on redundant json scanning.
-            foreach (var conditionField in param.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey))
+            foreach (var conditionField in param.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey).Select(o => o.Field).Distinct())
             {
-                if (!jIndexContent.TryGetValue(conditionField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                if (!jIndexContent.TryGetValue(conditionField, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
                 {
-                    throw new KbParserException($"Condition field not found: {conditionField.Key}.");
+                    throw new KbParserException($"Condition field not found: {conditionField}.");
                 }
-                schemaResultValues.ConditionFields.Add(conditionField.Key, token?.ToString() ?? "");
+                schemaResultValues.ConditionFields.Add(conditionField, token?.ToString() ?? "");
             }
         }
 

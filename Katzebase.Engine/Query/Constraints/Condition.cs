@@ -1,4 +1,5 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
+using System.Text.RegularExpressions;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Query.Constraints
@@ -47,6 +48,68 @@ namespace Katzebase.Engine.Query.Constraints
             return IsMatch(passedValue, this.LogicalQualifier, Right.Value);
         }
 
+        public static bool? IsMatchGreaterOrEqualAsDecimal(string? left, string? right)
+        {
+            if (left != null && right != null && int.TryParse(left, out var iLeft))
+            {
+                if (decimal.TryParse(right, out var iRight))
+                {
+                    return iLeft >= iRight;
+                }
+
+            }
+            return null;
+        }
+
+        public static bool? IsMatchLesserOrEqualAsDecimal(string? left, string? right)
+        {
+            if (left != null && right != null && int.TryParse(left, out var iLeft))
+            {
+                if (decimal.TryParse(right, out var iRight))
+                {
+                    return iLeft <= iRight;
+                }
+
+            }
+            return null;
+        }
+
+        public static bool? IsMatchGreaterAsDecimal(string? left, string? right)
+        {
+            if (left != null && right != null && int.TryParse(left, out var iLeft))
+            {
+                if (decimal.TryParse(right, out var iRight))
+                {
+                    return iLeft > iRight;
+                }
+
+            }
+            return null;
+        }
+        public static bool? IsMatchLesserAsDecimal(string? left, string? right)
+        {
+            if (left != null && right != null && int.TryParse(left, out var iLeft))
+            {
+                if (decimal.TryParse(right, out var iRight))
+                {
+                    return iLeft < iRight;
+                }
+
+            }
+            return null;
+        }
+
+        public static bool? IsMatchLike(string? input, string? pattern)
+        {
+            if (input == null || pattern == null)
+            {
+                return null;
+            }
+
+            string regexPattern = "^" + Regex.Escape(pattern).Replace("%", ".*").Replace("_", ".") + "$";
+            return Regex.IsMatch(input, regexPattern);
+        }
+
         public static bool IsMatch(string? leftString, LogicalQualifier logicalQualifier, string? rightString)
         {
             if (logicalQualifier == LogicalQualifier.Equals)
@@ -59,69 +122,27 @@ namespace Katzebase.Engine.Query.Constraints
             }
             else if (logicalQualifier == LogicalQualifier.GreaterThan)
             {
-                if (decimal.TryParse(leftString, out decimal left) && decimal.TryParse(rightString, out decimal right))
-                {
-                    return left > right;
-                }
+                return IsMatchGreaterAsDecimal(leftString, rightString) == true;
             }
             else if (logicalQualifier == LogicalQualifier.LessThan)
             {
-                if (decimal.TryParse(leftString, out decimal left) && decimal.TryParse(rightString, out decimal right))
-                {
-                    return left < right;
-                }
+                return IsMatchLesserAsDecimal(leftString, rightString) == true;
             }
             else if (logicalQualifier == LogicalQualifier.GreaterThanOrEqual)
             {
-                if (decimal.TryParse(leftString, out decimal left) && decimal.TryParse(rightString, out decimal right))
-                {
-                    return left >= right;
-                }
+                return IsMatchGreaterOrEqualAsDecimal(leftString, rightString) == true;
             }
             else if (logicalQualifier == LogicalQualifier.LessThanOrEqual)
             {
-                if (decimal.TryParse(leftString, out decimal left) && decimal.TryParse(rightString, out decimal right))
-                {
-                    return left <= right;
-                }
+                return IsMatchLesserOrEqualAsDecimal(leftString, rightString) == true;
             }
-            else if (logicalQualifier == LogicalQualifier.Like
-                || logicalQualifier == LogicalQualifier.NotLike)
+            else if (logicalQualifier == LogicalQualifier.Like)
             {
-                var right = rightString;
-                bool result = false;
-
-                if (right != null)
-                {
-                    bool startsWith = right.StartsWith("%");
-                    bool endsWith = right.EndsWith("%");
-
-
-                    right = right.Trim('%');
-
-                    if (startsWith == true && endsWith == true)
-                    {
-                        result = leftString?.Contains(right) ?? false;
-                    }
-                    else if (startsWith == true)
-                    {
-                        result = leftString?.EndsWith(right) ?? false;
-                    }
-                    else if (endsWith == true)
-                    {
-                        result = leftString?.StartsWith(right) ?? false;
-                    }
-                    else
-                    {
-                        result = leftString == rightString;
-                    }
-                }
-
-                if (logicalQualifier == LogicalQualifier.NotLike)
-                {
-                    return result == false;
-                }
-                return result;
+                return IsMatchLike(leftString, rightString) == true;
+            }
+            else if (logicalQualifier == LogicalQualifier.NotLike)
+            {
+                return IsMatchLike(leftString, rightString) == false;
             }
             else
             {

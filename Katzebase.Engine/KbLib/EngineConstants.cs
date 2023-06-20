@@ -75,6 +75,7 @@
         public enum SubQueryType
         {
             None,
+            Schema,
             Schemas,
             Documents,
             Transaction,

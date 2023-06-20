@@ -95,15 +95,15 @@ namespace Katzebase.Engine.Query
             #region Create ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Create)
             {
-                if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
+                if (query.IsNextToken(new string[] { "schema", "index", "uniquekey" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected 'index' or 'uniquekey'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected 'schema', 'index' or 'uniquekey'.");
                 }
 
                 token = query.GetNextToken();
-                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                if (Enum.TryParse(token, true, out SubQueryType subQueryType) == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index' or 'uniquekey'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'schema', 'index' or 'uniquekey'.");
                 }
                 result.SubQueryType = subQueryType;
 
@@ -112,50 +112,62 @@ namespace Katzebase.Engine.Query
                 token = query.GetNextToken();
                 if (token == string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: index name.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: object name.");
                 }
-                result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
 
-                if (query.NextCharacter != '(')
+                if (subQueryType == SubQueryType.Schema)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ','.");
+                    result.Schemas.Add(new QuerySchema(token));
                 }
-                query.SkipDelimiters('(');
-
-                while (true) //Get fields
+                else if (subQueryType == SubQueryType.Index || subQueryType == SubQueryType.UniqueKey)
                 {
+                    result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
+
+                    if (query.NextCharacter != '(')
+                    {
+                        throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ','.");
+                    }
+                    query.SkipDelimiters('(');
+
+                    while (true) //Get fields
+                    {
+                        token = query.GetNextToken().ToLower();
+                        if (token == string.Empty)
+                        {
+                            throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: ',' or ')'.");
+                        }
+
+                        result.SelectFields.Add(token);
+
+                        if (query.NextCharacter == ',')
+                        {
+                            query.SkipDelimiters(',');
+                        }
+                        if (query.NextCharacter == ')')
+                        {
+                            query.SkipDelimiters(')');
+                            break;
+                        }
+                    }
+
                     token = query.GetNextToken().ToLower();
+                    if (token != "on")
+                    {
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
+                    }
+
+                    token = query.GetNextToken();
                     if (token == string.Empty)
                     {
-                        throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: ',' or ')'.");
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                     }
 
-                    result.SelectFields.Add(token);
-
-                    if (query.NextCharacter == ',')
-                    {
-                        query.SkipDelimiters(',');
-                    }
-                    if (query.NextCharacter == ')')
-                    {
-                        query.SkipDelimiters(')');
-                        break;
-                    }
+                    result.Schemas.Add(new QuerySchema(token));
                 }
-
-                token = query.GetNextToken().ToLower();
-                if (token != "on")
+                else
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
+                    throw new KbNotImplementedException();
                 }
-
-                token = query.GetNextToken();
-                if (token == string.Empty)
-                {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
-                }
-
-                result.Schemas.Add(new QuerySchema(token));
 
                 if (query.IsEnd() == false)
                 {

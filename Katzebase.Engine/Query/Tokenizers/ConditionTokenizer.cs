@@ -68,6 +68,10 @@ namespace Katzebase.Engine.Query.Tokenizers
                     return "<";
                 case LogicalQualifier.GreaterThan:
                     return ">";
+                case LogicalQualifier.Like:
+                    return "~";
+                case LogicalQualifier.NotLike:
+                    return "!~";
             }
 
             return "";

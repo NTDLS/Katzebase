@@ -1,5 +1,7 @@
 ﻿using Katzebase.Engine.Query;
+using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Indexes.Management
 {
@@ -86,18 +88,29 @@ namespace Katzebase.Engine.Indexes.Management
 
                     string schemaName = preparedQuery.Schemas.First().Name;
 
-                    var index = new KbIndex
+                    if (preparedQuery.SubQueryType == SubQueryType.Schema)
                     {
-                        Name = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName),
-                        IsUnique = preparedQuery.Attribute<bool>(PreparedQuery.QueryAttribute.IsUnique)
-                    };
-
-                    foreach (var field in preparedQuery.SelectFields)
-                    {
-                        index.Attributes.Add(new KbIndexAttribute() { Field = field.Field });
+                        core.Schemas.CreateSingleSchema(transaction, schemaName);
                     }
+                    else if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                    {
+                        var index = new KbIndex
+                        {
+                            Name = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName),
+                            IsUnique = preparedQuery.Attribute<bool>(PreparedQuery.QueryAttribute.IsUnique)
+                        };
 
-                    core.Indexes.CreateIndex(transaction, schemaName, index, out Guid indexId);
+                        foreach (var field in preparedQuery.SelectFields)
+                        {
+                            index.Attributes.Add(new KbIndexAttribute() { Field = field.Field });
+                        }
+
+                        core.Indexes.CreateIndex(transaction, schemaName, index, out Guid indexId);
+                    }
+                    else
+                    {
+                        throw new KbNotImplementedException();
+                    }
 
                     transaction.Commit();
                     result.Metrics = transaction.PT?.ToCollection();

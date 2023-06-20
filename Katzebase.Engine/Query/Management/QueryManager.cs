@@ -127,7 +127,8 @@ namespace Katzebase.Engine.Query.Management
                 else if (preparedQuery.QueryType == QueryType.Create)
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Index
-                        || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                        || preparedQuery.SubQueryType == SubQueryType.UniqueKey
+                        || preparedQuery.SubQueryType == SubQueryType.Schema)
                     {
                         return core.Indexes.QueryHandlers.ExecuteCreate(processId, preparedQuery);
                     }

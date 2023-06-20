@@ -6,6 +6,7 @@ namespace Katzebase.Engine.Query.Searchers
     {
         public Dictionary<string, DocumentPointer> SchemaDocumentPointers = new();
         public List<string> Values { get; set; } = new();
+
         public Dictionary<string, string> ConditionFields = new();
 
         public void InsertValue(int ordinal, string value)
