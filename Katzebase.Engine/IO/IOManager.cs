@@ -68,22 +68,34 @@ namespace Katzebase.Engine.IO
         {
             try
             {
-                string cacheKey = Helpers.RemoveModFileName(filePath.ToLower());
+                transaction.LockFile(intendedOperation, filePath);
 
-                transaction.LockFile(intendedOperation, cacheKey);
+                if (core.Settings.DeferredIOEnabled)
+                {
+                    Utility.EnsureNotNull(transaction.DeferredIOs);
+                    var ptDeferredWriteRead = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredRead);
+                    var deferredIOObject = transaction.DeferredIOs.GetDeferredDiskIO<T>(filePath);
+                    ptDeferredWriteRead?.StopAndAccumulate();
+
+                    if (deferredIOObject != null)
+                    {
+                        core.Health.Increment(HealthCounterType.IODeferredIOReads);
+                        core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
+                        return deferredIOObject;
+                    }
+                }
+
 
                 if (core.Settings.CacheEnabled)
                 {
                     var ptCacheRead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheRead);
-                    var cachedObject = core.Cache.Get(cacheKey);
+                    var cachedObject = core.Cache.Get(filePath);
                     ptCacheRead?.StopAndAccumulate();
 
                     if (cachedObject != null)
                     {
                         core.Health.Increment(HealthCounterType.IOCacheReadHits);
-
                         core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
-
                         return (T)cachedObject;
                     }
                 }
@@ -133,7 +145,7 @@ namespace Katzebase.Engine.IO
                 if (core.Settings.CacheEnabled && deserializedObject != null)
                 {
                     var ptCacheWrite = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheWrite);
-                    core.Cache.Upsert(cacheKey, deserializedObject);
+                    core.Cache.Upsert(filePath, deserializedObject);
                     ptCacheWrite?.StopAndAccumulate();
                     core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
                 }
@@ -200,10 +212,7 @@ namespace Katzebase.Engine.IO
         {
             try
             {
-                string cacheKey = Helpers.RemoveModFileName(filePath.ToLower());
-                transaction.LockFile(LockOperation.Write, cacheKey);
-
-                bool deferDiskWrite = false;
+                transaction.LockFile(LockOperation.Write, filePath);
 
                 if (transaction != null)
                 {
@@ -218,59 +227,57 @@ namespace Katzebase.Engine.IO
                         transaction.RecordFileAlter(filePath);
                     }
 
-                    //TODO: Can we enable IO deferment on system created transactions? I think we can.
-                    if (core.Settings.DeferredIOEnabled && transaction.IsUserCreated)
+                    if (core.Settings.DeferredIOEnabled)
                     {
+                        core.Log.Trace($"IO:Write-Deferred:{filePath}");
+
                         Utility.EnsureNotNull(transaction.DeferredIOs);
                         var ptDeferredWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredWrite);
-                        deferDiskWrite = transaction.DeferredIOs.RecordDeferredDiskIO(cacheKey, filePath, deserializedObject, format);
+                        transaction.DeferredIOs.PutDeferredDiskIO(filePath, filePath, deserializedObject, format);
                         ptDeferredWrite?.StopAndAccumulate();
+
+                        core.Health.Increment(HealthCounterType.IODeferredIOWrites);
+
+                        return; //We can skip caching because we write this to the deferred IO cache - which is infinitely more deterministic than the memory cache auto-ejections.
                     }
                 }
 
-                if (deferDiskWrite == false)
+                core.Log.Trace($"IO:Write:{filePath}");
+
+                if (format == IOFormat.JSON)
                 {
-                    core.Log.Trace($"IO:Write:{filePath}");
+                    var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
+                    string text = JsonConvert.SerializeObject(deserializedObject);
+                    ptSerialize?.StopAndAccumulate();
 
-                    if (format == IOFormat.JSON)
+                    if (core.Settings.UseCompression)
                     {
-                        var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
-                        string text = JsonConvert.SerializeObject(deserializedObject);
-                        ptSerialize?.StopAndAccumulate();
-
-                        if (core.Settings.UseCompression)
-                        {
-                            File.WriteAllBytes(filePath, Compression.Compress(text));
-                        }
-                        else
-                        {
-                            File.WriteAllText(filePath, text);
-                        }
-                    }
-                    else if (format == IOFormat.PBuf)
-                    {
-                        using (var file = File.Create(filePath))
-                        {
-                            var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
-                            ProtoBuf.Serializer.Serialize(file, deserializedObject);
-                            ptSerialize?.StopAndAccumulate();
-                            file.Close();
-                        }
+                        File.WriteAllBytes(filePath, Compression.Compress(text));
                     }
                     else
                     {
-                        throw new NotImplementedException();
+                        File.WriteAllText(filePath, text);
+                    }
+                }
+                else if (format == IOFormat.PBuf)
+                {
+                    using (var file = File.Create(filePath))
+                    {
+                        var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
+                        ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                        ptSerialize?.StopAndAccumulate();
+                        file.Close();
                     }
                 }
                 else
                 {
-                    core.Log.Trace($"IO:Write-Deferred:{filePath}");
+                    throw new NotImplementedException();
                 }
 
                 if (core.Settings.CacheEnabled)
                 {
                     var ptCacheWrite = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
-                    core.Cache.Upsert(cacheKey, deserializedObject);
+                    core.Cache.Upsert(filePath, deserializedObject);
                     ptCacheWrite?.StopAndAccumulate();
                     core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
                 }
@@ -288,8 +295,7 @@ namespace Katzebase.Engine.IO
         {
             try
             {
-                string cacheKey = Helpers.RemoveModFileName(diskPath.ToLower());
-                transaction.LockDirectory(intendedOperation, cacheKey);
+                transaction.LockDirectory(intendedOperation, diskPath);
 
                 core.Log.Trace($"IO:Exists-Directory:{transaction.ProcessId}->{diskPath}");
 
@@ -311,8 +317,7 @@ namespace Katzebase.Engine.IO
                     throw new ArgumentNullException(nameof(diskPath));
                 }
 
-                string cacheKey = Helpers.RemoveModFileName(diskPath.ToLower());
-                transaction.LockDirectory(LockOperation.Write, cacheKey);
+                transaction.LockDirectory(LockOperation.Write, diskPath);
 
                 bool doesFileExist = Directory.Exists(diskPath);
 
@@ -344,8 +349,7 @@ namespace Katzebase.Engine.IO
                     return true; //The file might not yet exist, but its in the cache.
                 }
 
-                string cacheKey = Helpers.RemoveModFileName(lowerFilePath);
-                transaction.LockFile(intendedOperation, cacheKey);
+                transaction.LockFile(intendedOperation, lowerFilePath);
 
                 core.Log.Trace($"IO:Exits-File:{transaction.ProcessId}->{filePath}");
 
@@ -362,7 +366,7 @@ namespace Katzebase.Engine.IO
         {
             try
             {
-                string cacheKey = Helpers.RemoveModFileName(filePath.ToLower());
+                string cacheKey = filePath.ToLower();
                 transaction.LockFile(LockOperation.Write, cacheKey);
 
                 if (core.Settings.CacheEnabled)
@@ -390,13 +394,12 @@ namespace Katzebase.Engine.IO
         {
             try
             {
-                string cacheKey = Helpers.RemoveModFileName(diskPath.ToLower());
-                transaction.LockDirectory(LockOperation.Write, cacheKey);
+                transaction.LockDirectory(LockOperation.Write, diskPath);
 
                 if (core.Settings.CacheEnabled)
                 {
                     var ptCacheWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
-                    core.Cache.RemoveItemsWithPrefix(cacheKey);
+                    core.Cache.RemoveItemsWithPrefix(diskPath);
                     ptCacheWrite?.StopAndAccumulate();
                 }
 

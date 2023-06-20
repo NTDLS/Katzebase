@@ -57,14 +57,30 @@ namespace Katzebase.Engine.IO
             }
         }
 
+        public T? GetDeferredDiskIO<T>(string key)
+        {
+            key = key.ToLower();
+
+            lock (this)
+            {
+                if (Collection.ContainsKey(key))
+                {
+                    return (T)Collection[key].Reference;
+                }
+            }
+            return default(T);
+        }
+
         /// <summary>
         /// Keeps a reference to a file so that we can defer serializing and writing it to disk.
         /// </summary>
         /// <param name="key"></param>
         /// <param name="reference"></param>
         /// <returns></returns>
-        public bool RecordDeferredDiskIO(string key, string diskPath, object reference, IOFormat deferredFormat)
+        public void PutDeferredDiskIO(string key, string diskPath, object reference, IOFormat deferredFormat)
         {
+            key = key.ToLower();
+
             lock (this)
             {
                 if (Collection.ContainsKey(key))
@@ -75,8 +91,6 @@ namespace Katzebase.Engine.IO
                 {
                     Collection.Add(key, new DeferredDiskIOObject(diskPath, reference, deferredFormat));
                 }
-
-                return true;
             }
         }
     }

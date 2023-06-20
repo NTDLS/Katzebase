@@ -7,14 +7,6 @@ namespace Katzebase.Engine.KbLib
 {
     public static class Helpers
     {
-        public static Regex RegExRemoveModFileName = new Regex("(\\\\\\{.*\\})");
-
-        public static string RemoveModFileName(string input)
-        {
-            //TODO: What is this?!?!?!?!
-            return RegExRemoveModFileName.Replace(input, "");
-        }
-
         public static void CopyDirectory(string sourcePath, string destinationPath)
         {
             //Now Create all of the directories

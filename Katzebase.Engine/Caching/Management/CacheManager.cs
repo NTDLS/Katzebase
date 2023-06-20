@@ -34,9 +34,9 @@ namespace Katzebase.Engine.Caching.Management
                 };
 
                 var config = new NameValueCollection
-            {
-                { "CacheMemoryLimitMegabytes", $"{maxMemoryPerPartition}" }
-            };
+                {
+                    { "CacheMemoryLimitMegabytes", $"{maxMemoryPerPartition}" }
+                };
 
                 for (int i = 0; i < PartitionCount; i++)
                 {
@@ -55,6 +55,7 @@ namespace Katzebase.Engine.Caching.Management
         {
             try
             {
+                key = key.ToLower();
                 int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
 
                 lock (partitions[partitionIndex])
@@ -80,6 +81,7 @@ namespace Katzebase.Engine.Caching.Management
         {
             try
             {
+                key = key.ToLower();
                 int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
 
                 lock (partitions[partitionIndex])
@@ -98,6 +100,7 @@ namespace Katzebase.Engine.Caching.Management
         {
             try
             {
+                key = key.ToLower();
                 int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
 
                 int itemsEjected = 0;
@@ -123,6 +126,7 @@ namespace Katzebase.Engine.Caching.Management
         {
             try
             {
+                prefix = prefix.ToLower();
                 for (int i = 0; i < PartitionCount; i++)
                 {
                     lock (partitions[i])

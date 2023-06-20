@@ -17,6 +17,7 @@ namespace Katzebase.Engine.Trace
             Sampling,
             CacheRead,
             DeferredWrite,
+            DeferredRead,
             CacheWrite,
             IORead,
             IOWrite,

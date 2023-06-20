@@ -210,11 +210,7 @@ namespace Katzebase.Engine.Atomicity
 
         #region Action Recorders.
 
-        private bool IsFileAlreadyRecorded(string filePath)
-        {
-            filePath = Helpers.RemoveModFileName(filePath.ToLower());
-            return Atoms.Exists(o => o.OriginalPath == filePath);
-        }
+        private bool IsFileAlreadyRecorded(string filePath) => Atoms.Exists(o => o.OriginalPath == filePath.ToLower());
 
         public void RecordFileCreate(string filePath)
         {
