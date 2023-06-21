@@ -16,11 +16,11 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 var statement = JsonConvert.DeserializeObject<string>(value);
-                Utility.EnsureNotNull(statement);
+                KbUtility.EnsureNotNull(statement);
                 return Program.Core.Query.APIHandlers.ExecuteStatementExplain(processId, statement);
             }
             catch (Exception ex)
@@ -40,11 +40,11 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 var statement = JsonConvert.DeserializeObject<string>(value);
-                Utility.EnsureNotNull(statement);
+                KbUtility.EnsureNotNull(statement);
                 return Program.Core.Query.APIHandlers.ExecuteStatementQuery(processId, statement);
             }
             catch (Exception ex)
@@ -64,11 +64,11 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 var statement = JsonConvert.DeserializeObject<string>(value);
-                Utility.EnsureNotNull(statement);
+                KbUtility.EnsureNotNull(statement);
                 return Program.Core.Query.APIHandlers.ExecuteStatementNonQuery(processId, statement);
             }
             catch (Exception ex)

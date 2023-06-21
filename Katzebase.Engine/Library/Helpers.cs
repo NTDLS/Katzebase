@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Katzebase.Engine.KbLib
+namespace Katzebase.Engine.Library
 {
     public static class Helpers
     {

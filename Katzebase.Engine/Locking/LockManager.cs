@@ -1,4 +1,4 @@
-﻿using Katzebase.Engine.KbLib;
+﻿using Katzebase.Engine.Library;
 
 namespace Katzebase.Engine.Locking
 {
@@ -28,7 +28,7 @@ namespace Katzebase.Engine.Locking
         {
             try
             {
-                lock (CriticalSections.AcquireLock)
+                lock (CentralCriticalSections.AcquireLock)
                 {
                     Locks.Remove(objectLock);
                 }

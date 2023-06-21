@@ -1,4 +1,4 @@
-﻿using static Katzebase.PublicLibrary.Constants;
+﻿using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.PublicLibrary.Exceptions
 {
@@ -6,14 +6,14 @@ namespace Katzebase.PublicLibrary.Exceptions
     {
         public KbAssertException()
         {
-            Severity = LogSeverity.Warning;
+            Severity = KbLogSeverity.Warning;
         }
 
         public KbAssertException(string message)
             : base($"Assert exception: {message}.")
 
         {
-            Severity = LogSeverity.Exception;
+            Severity = KbLogSeverity.Exception;
         }
     }
 }

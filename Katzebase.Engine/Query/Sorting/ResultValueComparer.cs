@@ -1,4 +1,4 @@
-﻿using static Katzebase.PublicLibrary.Constants;
+﻿using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Query.Sorting
 {

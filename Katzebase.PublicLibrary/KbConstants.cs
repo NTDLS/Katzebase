@@ -1,10 +1,10 @@
 ﻿namespace Katzebase.PublicLibrary
 {
-    public static class Constants
+    public static class KbConstants
     {
         public static string FriendlyName = "Katzebase";
 
-        public enum LogSeverity
+        public enum KbLogSeverity
         {
             Trace = 0, //Super-verbose, debug-like information.
             Verbose = 1, //General status messages.

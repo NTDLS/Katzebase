@@ -1,4 +1,4 @@
-﻿using static Katzebase.PublicLibrary.Constants;
+﻿using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.PublicLibrary.Exceptions
 {
@@ -6,14 +6,14 @@ namespace Katzebase.PublicLibrary.Exceptions
     {
         public KbDeadlockException()
         {
-            Severity = LogSeverity.Warning;
+            Severity = KbLogSeverity.Warning;
         }
 
         public KbDeadlockException(string message)
             : base($"Deadlock exception: {message}.")
 
         {
-            Severity = LogSeverity.Warning;
+            Severity = KbLogSeverity.Warning;
         }
     }
 }

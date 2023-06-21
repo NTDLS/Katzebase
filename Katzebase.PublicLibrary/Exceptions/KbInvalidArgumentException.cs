@@ -1,4 +1,4 @@
-﻿using static Katzebase.PublicLibrary.Constants;
+﻿using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.PublicLibrary.Exceptions
 {
@@ -6,14 +6,14 @@ namespace Katzebase.PublicLibrary.Exceptions
     {
         public KbInvalidArgumentException()
         {
-            Severity = LogSeverity.Warning;
+            Severity = KbLogSeverity.Warning;
         }
 
         public KbInvalidArgumentException(string message)
             : base($"Invalid argument exception: {message}.")
 
         {
-            Severity = LogSeverity.Warning;
+            Severity = KbLogSeverity.Warning;
         }
     }
 }

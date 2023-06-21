@@ -1,9 +1,9 @@
 ﻿using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
-using static Katzebase.PublicLibrary.Constants;
+using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Atomicity.Management
 {
@@ -107,13 +107,13 @@ namespace Katzebase.Engine.Atomicity.Management
                 var transactionFiles = Directory.EnumerateFiles(core.Settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories).ToList();
                 if (transactionFiles.Any())
                 {
-                    core.Log.Write($"Found {transactionFiles.Count()} open transactions.", LogSeverity.Warning);
+                    core.Log.Write($"Found {transactionFiles.Count()} open transactions.", KbLogSeverity.Warning);
                 }
 
                 foreach (string transactionFile in transactionFiles)
                 {
                     var processIdString = Path.GetFileNameWithoutExtension(Path.GetDirectoryName(transactionFile));
-                    Utility.EnsureNotNull(processIdString);
+                    KbUtility.EnsureNotNull(processIdString);
 
                     ulong processId = ulong.Parse(processIdString);
 
@@ -123,11 +123,11 @@ namespace Katzebase.Engine.Atomicity.Management
                     foreach (var atom in atoms)
                     {
                         var ra = JsonConvert.DeserializeObject<Atom>(atom);
-                        Utility.EnsureNotNull(ra);
+                        KbUtility.EnsureNotNull(ra);
                         transaction.Atoms.Add(ra);
                     }
 
-                    core.Log.Write($"Rolling back session {transaction.ProcessId} with {transaction.Atoms.Count} actions.", LogSeverity.Warning);
+                    core.Log.Write($"Rolling back session {transaction.ProcessId} with {transaction.Atoms.Count} actions.", KbLogSeverity.Warning);
 
                     try
                     {
@@ -178,7 +178,7 @@ namespace Katzebase.Engine.Atomicity.Management
 
                     ptAcquireTransaction?.StopAndAccumulate((DateTime.UtcNow - startTime).TotalMilliseconds);
 
-                    Utility.EnsureNotNull(transaction);
+                    KbUtility.EnsureNotNull(transaction);
 
                     return transaction;
                 }

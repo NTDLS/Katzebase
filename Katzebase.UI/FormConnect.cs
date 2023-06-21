@@ -35,7 +35,7 @@ namespace Katzebase.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Unable to connect to the specified server: \"{ex.Message}\".", PublicLibrary.Constants.FriendlyName);
+                MessageBox.Show($"Unable to connect to the specified server: \"{ex.Message}\".", PublicLibrary.KbConstants.FriendlyName);
             }
 
         }

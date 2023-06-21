@@ -1,4 +1,4 @@
-﻿using static Katzebase.PublicLibrary.Constants;
+﻿using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Logging
 {
@@ -7,7 +7,7 @@ namespace Katzebase.Engine.Logging
         public DateTime DateTime { get; set; }
         public string? Message { get; set; }
         public Exception? Exception { get; set; }
-        public LogSeverity? Severity { get; set; }
+        public KbLogSeverity? Severity { get; set; }
 
         public LogEntry()
         {

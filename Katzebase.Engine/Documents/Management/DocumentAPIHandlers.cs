@@ -1,6 +1,6 @@
 ﻿using Katzebase.Engine.Query.Searchers;
 using Katzebase.PublicLibrary.Payloads;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Documents.Management
 {

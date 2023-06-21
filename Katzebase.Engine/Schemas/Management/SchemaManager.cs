@@ -7,7 +7,7 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using System.Diagnostics;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Schemas.PhysicalSchema;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
@@ -219,7 +219,7 @@ namespace Katzebase.Engine.Schemas.Management
 
                     var schemaDiskPath = Path.Combine(core.Settings.DataRootPath, string.Join("\\", segments));
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
-                    Utility.EnsureNotNull(parentSchemaDiskPath);
+                    KbUtility.EnsureNotNull(parentSchemaDiskPath);
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, SchemaCatalogFile);
 
@@ -282,7 +282,7 @@ namespace Katzebase.Engine.Schemas.Management
 
                     var schemaDiskPath = Path.Combine(core.Settings.DataRootPath, string.Join("\\", segments));
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
-                    Utility.EnsureNotNull(parentSchemaDiskPath);
+                    KbUtility.EnsureNotNull(parentSchemaDiskPath);
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, SchemaCatalogFile);
 

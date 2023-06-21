@@ -1,8 +1,8 @@
-﻿using Katzebase.Engine.KbLib;
+﻿using Katzebase.Engine.Library;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary;
 using System.Text;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Query.Constraints
 {
@@ -119,7 +119,7 @@ namespace Katzebase.Engine.Query.Constraints
 
             HighLevelExpressionTree = BuildHighlevelExpressionTree();
 
-            Utility.Assert(Root.Conditions.Any(), "The root expression cannot contain conditions.");
+            KbUtility.Assert(Root.Conditions.Any(), "The root expression cannot contain conditions.");
         }
 
         public string ReplaceFirst(string text, string search, string replace)

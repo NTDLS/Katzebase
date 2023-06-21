@@ -49,19 +49,35 @@ namespace Katzebase.TestHarness
             //(new Thread(() => { TestThread("AdventureWorks2012:dbo:AWBuildVersion"); })).Start();
 
 
-            (new Thread(() =>
+            var databasesNames = new string[]{
+                    "master",
+                    "tempdb",
+                    "model",
+                    "msdb",
+                    "VroomPS_Sharp",
+                    "ShogoSync",
+                    "WordList",
+                    "DynamicDNS",
+                    "VroomPS_Dev",
+                    "TightWiki",
+                    "NetworkDLS_Com",
+                    "DevWiki",
+                    "AdventureWorks2012",
+                    "Global_IIS_Applications",
+                    "TopNotchERP",
+                    "VPTFreeRegistrationService_OLD",
+                    "VroomRegistrationService",
+                    "Maintenance"
+                };
+
+            foreach (var databasesName in databasesNames)
             {
-                Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/", false);
-            })).Start();
-            
-            (new Thread(() =>
-            {
-                Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "TopNotchERP", "http://localhost:6858/", true);
-            })).Start();
-            (new Thread(() =>
-            {
-                Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "WordList", "http://localhost:6858/", true);
-            })).Start();
+                (new Thread(() =>
+                {
+                    Exporter.ExportSQLServerDatabaseToKatzebase("localhost", databasesName, "http://localhost:6858/", false);
+                })).Start();
+            }
+
 
             #region Misc. Tests & stuff.
 

@@ -4,7 +4,7 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Documents.Management
 {
@@ -178,7 +178,7 @@ namespace Katzebase.Engine.Documents.Management
                         getDocumentPointsForSchemaPrefix = preparedQuery.Attributes[PreparedQuery.QueryAttribute.SpecificSchemaPrefix] as string;
                     }
 
-                    Utility.EnsureNotNull(getDocumentPointsForSchemaPrefix);
+                    KbUtility.EnsureNotNull(getDocumentPointsForSchemaPrefix);
 
                     var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
 

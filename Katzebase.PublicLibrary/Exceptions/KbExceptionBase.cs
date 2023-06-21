@@ -1,21 +1,21 @@
-﻿using static Katzebase.PublicLibrary.Constants;
+﻿using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.PublicLibrary.Exceptions
 {
     public class KbExceptionBase : Exception
     {
-        public LogSeverity Severity { get; set; }
+        public KbLogSeverity Severity { get; set; }
 
         public KbExceptionBase()
         {
-            Severity = LogSeverity.Exception;
+            Severity = KbLogSeverity.Exception;
         }
 
         public KbExceptionBase(string? message)
             : base(message)
 
         {
-            Severity = LogSeverity.Exception;
+            Severity = KbLogSeverity.Exception;
         }
     }
 }

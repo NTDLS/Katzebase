@@ -1,7 +1,7 @@
 ﻿using System.IO.Compression;
 using System.Text;
 
-namespace Katzebase.Engine.KbLib
+namespace Katzebase.Engine.Library
 {
     public static class Compression
     {

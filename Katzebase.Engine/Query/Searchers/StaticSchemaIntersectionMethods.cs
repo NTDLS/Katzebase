@@ -11,9 +11,9 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.Documents.DocumentPointer;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
-using static Katzebase.PublicLibrary.Constants;
+using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Query.Searchers
 {
@@ -54,7 +54,7 @@ namespace Katzebase.Engine.Query.Searchers
                     //All condition subsets have a selected index. Start building a list of possible document IDs.
                     foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
                     {
-                        Utility.EnsureNotNull(subset.IndexSelection);
+                        KbUtility.EnsureNotNull(subset.IndexSelection);
 
                         var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
                         var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, physicalIndexPages, subset.IndexSelection, subset, topLevelMap.Prefix);
@@ -118,7 +118,7 @@ namespace Katzebase.Engine.Query.Searchers
                 foreach (var sortField in query.SortFields.OfType<SortField>())
                 {
                     var field = query.SelectFields.Where(o => o.Key == sortField.Key).FirstOrDefault();
-                    Utility.EnsureNotNull(field);
+                    KbUtility.EnsureNotNull(field);
                     sortingColumns.Add(new(field.Ordinal, sortField.SortDirection));
                 }
 
@@ -166,7 +166,7 @@ namespace Katzebase.Engine.Query.Searchers
 
         private static void LookupThreadProc(ThreadPoolQueue<DocumentPointer, LookupThreadParam> pool, LookupThreadParam? param)
         {
-            Utility.EnsureNotNull(param);
+            KbUtility.EnsureNotNull(param);
 
             while (pool.ContinueToProcessQueue)
             {
@@ -307,7 +307,7 @@ namespace Katzebase.Engine.Query.Searchers
             var nextLevel = param.SchemaMap.Skip(skipCount).First();
             var nextLevelMap = nextLevel.Value;
 
-            Utility.EnsureNotNull(nextLevelMap?.Conditions);
+            KbUtility.EnsureNotNull(nextLevelMap?.Conditions);
 
             var expression = new NCalc.Expression(nextLevelMap.Conditions.HighLevelExpressionTree);
 
@@ -324,7 +324,7 @@ namespace Katzebase.Engine.Query.Searchers
                 //All condition subsets have a selected index. Start building a list of possible document IDs.
                 foreach (var subset in nextLevelMap.Optimization.Conditions.NonRootSubsets)
                 {
-                    Utility.EnsureNotNull(subset.IndexSelection);
+                    KbUtility.EnsureNotNull(subset.IndexSelection);
 
                     var physicalIndexPages = param.Core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
 
@@ -469,8 +469,8 @@ namespace Katzebase.Engine.Query.Searchers
 
             foreach (var condition in conditionSubset.Conditions)
             {
-                Utility.EnsureNotNull(condition.Left.Value);
-                Utility.EnsureNotNull(condition.Right.Value);
+                KbUtility.EnsureNotNull(condition.Left.Value);
+                KbUtility.EnsureNotNull(condition.Right.Value);
 
                 var jContent = jJoinScopedContentCache[condition.Left.Prefix];
 
@@ -614,7 +614,7 @@ namespace Katzebase.Engine.Query.Searchers
 
             foreach (var condition in conditionSubset.Conditions)
             {
-                Utility.EnsureNotNull(condition.Left.Value);
+                KbUtility.EnsureNotNull(condition.Left.Value);
 
                 //Get the value of the condition:
                 if (!conditionField.TryGetValue(condition.Left.Key, out string? value))

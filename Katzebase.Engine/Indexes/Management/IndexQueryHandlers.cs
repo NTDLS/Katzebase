@@ -1,7 +1,7 @@
 ﻿using Katzebase.Engine.Query;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Indexes.Management
 {

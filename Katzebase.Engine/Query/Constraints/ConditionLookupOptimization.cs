@@ -5,7 +5,7 @@ using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Query.Searchers.MultiSchema
 {
@@ -147,7 +147,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
 
                         //Mark which condition this index selection satisifies.
                         var sourceSubset = lookupOptimization.Conditions.SubsetByKey(subset.SubsetKey);
-                        Utility.EnsureNotNull(sourceSubset);
+                        KbUtility.EnsureNotNull(sourceSubset);
                         sourceSubset.IndexSelection = indexSelection;
 
                         foreach (var conditon in sourceSubset.Conditions)

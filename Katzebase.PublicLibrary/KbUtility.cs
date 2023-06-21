@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Katzebase.PublicLibrary
 {
-    public static class Utility
+    public static class KbUtility
     {
         public static string RemoveComments(string input)
         {
@@ -31,7 +31,7 @@ namespace Katzebase.PublicLibrary
 
         public static List<string> SplitQueryTextIntoBatches(string text)
         {
-            text = Utility.RemoveComments(text);
+            text = KbUtility.RemoveComments(text);
 
             var lines = text.Replace("\r\n", "\n").Split('\n').Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
 

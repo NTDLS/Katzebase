@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.KbLib
+﻿namespace Katzebase.Engine.Library
 {
     public class KbNameValuePair<TKey, TValue>
     {

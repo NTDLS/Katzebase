@@ -15,7 +15,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 Program.Core.Transactions.APIHandlers.Begin(processId);
@@ -39,7 +39,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 Program.Core.Transactions.APIHandlers.Commit(processId);
@@ -63,7 +63,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{Utility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 Program.Core.Transactions.APIHandlers.Rollback(processId);

@@ -1,7 +1,7 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Documents.Management
 {
@@ -44,7 +44,7 @@ namespace Katzebase.Engine.Documents.Management
 
                 //Get the page that the document current exists in if any.
                 var physicalPageMap = documentPageCatalog.GetDocumentPageMap(documentId);
-                Utility.EnsureNotNull(physicalPageMap);
+                KbUtility.EnsureNotNull(physicalPageMap);
 
                 //We found a page that contains the document, we need to open the page and modify the document with the given document id.
                 var physicalDocumentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageMap), lockIntention);
@@ -132,7 +132,7 @@ namespace Katzebase.Engine.Documents.Management
 
                 //Open the document page catalog:
                 var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
-                Utility.EnsureNotNull(documentPageCatalog);
+                KbUtility.EnsureNotNull(documentPageCatalog);
 
                 var physicalDocument = new PhysicalDocument
                 {
@@ -240,7 +240,7 @@ namespace Katzebase.Engine.Documents.Management
             {
                 //Open the document page catalog:
                 var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
-                Utility.EnsureNotNull(documentPageCatalog);
+                KbUtility.EnsureNotNull(documentPageCatalog);
 
                 foreach (var documentPointer in documentPointers)
                 {

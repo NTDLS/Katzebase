@@ -1,7 +1,7 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes.Matching;
-using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Library;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Threading;
@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using static Katzebase.Engine.Indexes.Matching.IndexConstants;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.Indexes.Management
@@ -142,7 +142,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                 foreach (var attribute in indexSelection.Index.Attributes)
                 {
-                    Utility.EnsureNotNull(attribute.Field);
+                    KbUtility.EnsureNotNull(attribute.Field);
                     var conditionField = conditionSubset.Conditions.Where(o => o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
                     if (conditionField == null)
                     {
@@ -182,7 +182,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                     ptIndexSeek?.StopAndAccumulate();
 
-                    Utility.EnsureNotNull(foundLeaves);
+                    KbUtility.EnsureNotNull(foundLeaves);
 
                     if (foundLeaves.FirstOrDefault()?.Documents?.Any() == true) //We found documents, we are at the base of the index.
                     {
@@ -204,7 +204,7 @@ namespace Katzebase.Engine.Indexes.Management
                     return new Dictionary<uint, DocumentPointer>();
                 }
 
-                Utility.EnsureNotNull(workingPhysicalIndexLeaves);
+                KbUtility.EnsureNotNull(workingPhysicalIndexLeaves);
 
                 //This is an index scan.
                 var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
@@ -236,7 +236,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                 foreach (var attribute in indexSelection.Index.Attributes)
                 {
-                    Utility.EnsureNotNull(attribute.Field);
+                    KbUtility.EnsureNotNull(attribute.Field);
                     var conditionField = conditionSubset.Conditions
                         .Where(o => o.Left.Prefix == workingSchemaPrefix && o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
                     if (conditionField == null)
@@ -275,7 +275,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                     ptIndexSeek?.StopAndAccumulate();
 
-                    Utility.EnsureNotNull(foundLeaves);
+                    KbUtility.EnsureNotNull(foundLeaves);
 
                     if (foundLeaves.FirstOrDefault()?.Documents?.Any() == true) //We found documents, we are at the base of the index.
                     {
@@ -297,7 +297,7 @@ namespace Katzebase.Engine.Indexes.Management
                     return new Dictionary<uint, DocumentPointer>();
                 }
 
-                Utility.EnsureNotNull(workingPhysicalIndexLeaves);
+                KbUtility.EnsureNotNull(workingPhysicalIndexLeaves);
 
                 //This is an index scan.
                 var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
@@ -418,7 +418,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                 foreach (var indexAttribute in physicalIindex.Attributes)
                 {
-                    Utility.EnsureNotNull(indexAttribute.Field);
+                    KbUtility.EnsureNotNull(indexAttribute.Field);
 
                     var jsonContent = JObject.Parse(document.Content);
                     if (jsonContent.TryGetValue(indexAttribute.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
@@ -579,7 +579,7 @@ namespace Katzebase.Engine.Indexes.Management
                 //If we found a full match for all supplied key values - add the document to the leaf collection.
                 if (indexScanResult.MatchType == IndexMatchType.Full)
                 {
-                    Utility.EnsureNotNull(indexScanResult.Leaf);
+                    KbUtility.EnsureNotNull(indexScanResult.Leaf);
 
                     indexScanResult.Leaf.Documents ??= new List<PhysicalIndexEntry>();
 
@@ -597,11 +597,11 @@ namespace Katzebase.Engine.Indexes.Management
 
                     for (int i = indexScanResult.ExtentLevel; i < searchTokens.Count; i++)
                     {
-                        Utility.EnsureNotNull(indexScanResult?.Leaf);
+                        KbUtility.EnsureNotNull(indexScanResult?.Leaf);
                         indexScanResult.Leaf = indexScanResult.Leaf.AddNewLeaf(searchTokens[i]);
                     }
 
-                    Utility.EnsureNotNull(indexScanResult?.Leaf);
+                    KbUtility.EnsureNotNull(indexScanResult?.Leaf);
 
                     indexScanResult.Leaf.Documents ??= new List<PhysicalIndexEntry>();
                 }
@@ -647,7 +647,7 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                Utility.EnsureNotNull(param);
+                KbUtility.EnsureNotNull(param);
 
                 while (pool.ContinueToProcessQueue)
                 {

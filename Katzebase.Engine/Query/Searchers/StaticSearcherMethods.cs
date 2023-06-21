@@ -3,7 +3,7 @@ using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query.Searchers.Mapping;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Query.Searchers
 {

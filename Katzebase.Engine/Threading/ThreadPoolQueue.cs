@@ -118,7 +118,7 @@ namespace Katzebase.Engine.Threading
         internal static void PassThroughThreadProc(object? param)
         {
             var pool = param as ThreadPoolQueue<T, P>;
-            Utility.EnsureNotNull(pool);
+            KbUtility.EnsureNotNull(pool);
 
             try
             {

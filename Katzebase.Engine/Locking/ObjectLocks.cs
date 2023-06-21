@@ -1,8 +1,8 @@
 ﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Locking
 {
@@ -21,7 +21,7 @@ namespace Katzebase.Engine.Locking
         {
             try
             {
-                lock (CriticalSections.AcquireLock)
+                lock (CentralCriticalSections.AcquireLock)
                 {
                     collection.Remove(objectLock);
                 }
@@ -35,7 +35,7 @@ namespace Katzebase.Engine.Locking
 
         public List<ObjectLock> GloballyHeldLocks(string diskPath, LockType lockType)
         {
-            lock (CriticalSections.AcquireLock)
+            lock (CentralCriticalSections.AcquireLock)
             {
                 var lockedObjects = new List<ObjectLock>();
 
@@ -87,14 +87,10 @@ namespace Katzebase.Engine.Locking
 
                 while (true)
                 {
-                    lock (CriticalSections.AcquireLock)
-                    {
-                        if (transaction.IsDeadlocked)
-                        {
-                            core.Health.Increment(HealthCounterType.DeadlockCount);
-                            throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.");
-                        }
+                    transaction.EnsureActive();
 
+                    lock (CentralCriticalSections.AcquireLock)
+                    {
                         var lockedObjects = GloballyHeldLocks(intention.DiskPath, intention.LockType); //Find any existing locks:
 
                         if (lockedObjects.Count == 0)
@@ -125,7 +121,7 @@ namespace Katzebase.Engine.Locking
                                     }
 
                                     var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-                                    Utility.EnsureNotNull(transaction.HeldLockKeys);
+                                    KbUtility.EnsureNotNull(transaction.HeldLockKeys);
                                     transaction.HeldLockKeys.Add(lockKey);
                                 }
 
@@ -160,7 +156,7 @@ namespace Katzebase.Engine.Locking
                                     }
 
                                     var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-                                    Utility.EnsureNotNull(transaction.HeldLockKeys);
+                                    KbUtility.EnsureNotNull(transaction.HeldLockKeys);
                                     transaction.HeldLockKeys.Add(lockKey);
                                 }
 
@@ -194,7 +190,10 @@ namespace Katzebase.Engine.Locking
                                     if (blockingMe.Any())
                                     {
                                         transaction.IsDeadlocked = true;
-                                        break;
+                                        transaction.Rollback();
+
+                                        core.Health.Increment(HealthCounterType.DeadlockCount);
+                                        throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.");
                                     }
                                 }
                             }

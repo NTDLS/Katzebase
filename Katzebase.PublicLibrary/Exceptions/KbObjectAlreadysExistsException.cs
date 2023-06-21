@@ -1,4 +1,4 @@
-﻿using static Katzebase.PublicLibrary.Constants;
+﻿using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.PublicLibrary.Exceptions
 {
@@ -6,14 +6,14 @@ namespace Katzebase.PublicLibrary.Exceptions
     {
         public KbObjectAlreadysExistsException()
         {
-            Severity = LogSeverity.Warning;
+            Severity = KbLogSeverity.Warning;
         }
 
         public KbObjectAlreadysExistsException(string? message)
             : base($"Object already exists exception: {message}.")
 
         {
-            Severity = LogSeverity.Exception;
+            Severity = KbLogSeverity.Exception;
         }
     }
 }

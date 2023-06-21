@@ -157,7 +157,7 @@ namespace Katzebase.UI
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
 
@@ -244,14 +244,14 @@ namespace Katzebase.UI
             try
             {
                 var menuStrip = sender as ContextMenuStrip;
-                Utility.EnsureNotNull(menuStrip);
+                KbUtility.EnsureNotNull(menuStrip);
 
                 menuStrip.Close();
 
-                Utility.EnsureNotNull(menuStrip.Tag);
+                KbUtility.EnsureNotNull(menuStrip.Tag);
 
                 var node = (menuStrip.Tag) as ServerTreeNode;
-                Utility.EnsureNotNull(node);
+                KbUtility.EnsureNotNull(node);
 
                 if (e.ClickedItem?.Text == "Refresh")
                 {
@@ -276,7 +276,7 @@ namespace Katzebase.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -295,7 +295,7 @@ namespace Katzebase.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -446,7 +446,7 @@ namespace Katzebase.UI
 
         private TabFilePage CreateNewTab(string tabText = "", string serverAddress = "")
         {
-            Utility.EnsureNotNull(_editorFactory);
+            KbUtility.EnsureNotNull(_editorFactory);
 
             if (string.IsNullOrWhiteSpace(serverAddress))
             {
@@ -496,7 +496,7 @@ namespace Katzebase.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, PublicLibrary.Constants.FriendlyName);
+                MessageBox.Show(ex.Message, PublicLibrary.KbConstants.FriendlyName);
             }
 
             return false;
@@ -906,7 +906,7 @@ namespace Katzebase.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

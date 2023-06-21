@@ -1,5 +1,5 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Query.Tokenizers
 {

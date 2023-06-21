@@ -1,8 +1,8 @@
 ﻿using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
-using static Katzebase.Engine.KbLib.EngineConstants;
-using static Katzebase.PublicLibrary.Constants;
+using static Katzebase.Engine.Library.EngineConstants;
+using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Logging
 {
@@ -21,10 +21,10 @@ namespace Katzebase.Engine.Logging
             CycleLog();
         }
 
-        public void Write(string message) => Write(new LogEntry(message) { Severity = LogSeverity.Verbose });
-        public void Trace(string message) => Write(new LogEntry(message) { Severity = LogSeverity.Trace });
-        public void Write(string message, Exception ex) => Write(new LogEntry(message) { Exception = ex, Severity = LogSeverity.Exception });
-        public void Write(string message, LogSeverity severity) => Write(new LogEntry(message) { Severity = severity });
+        public void Write(string message) => Write(new LogEntry(message) { Severity = KbLogSeverity.Verbose });
+        public void Trace(string message) => Write(new LogEntry(message) { Severity = KbLogSeverity.Trace });
+        public void Write(string message, Exception ex) => Write(new LogEntry(message) { Exception = ex, Severity = KbLogSeverity.Exception });
+        public void Write(string message, KbLogSeverity severity) => Write(new LogEntry(message) { Severity = severity });
 
         public void Start()
         {
@@ -59,7 +59,7 @@ namespace Katzebase.Engine.Logging
         {
             try
             {
-                if (entry.Severity == LogSeverity.Trace && core.Settings.WriteTraceData == false)
+                if (entry.Severity == KbLogSeverity.Trace && core.Settings.WriteTraceData == false)
                 {
                     return;
                 }
@@ -74,11 +74,11 @@ namespace Katzebase.Engine.Logging
 
                 lock (this)
                 {
-                    if (entry.Severity == LogSeverity.Warning)
+                    if (entry.Severity == KbLogSeverity.Warning)
                     {
                         core.Health.Increment(HealthCounterType.Warnings);
                     }
-                    else if (entry.Severity == LogSeverity.Exception)
+                    else if (entry.Severity == KbLogSeverity.Exception)
                     {
                         core.Health.Increment(HealthCounterType.Exceptions);
                     }
@@ -121,15 +121,15 @@ namespace Katzebase.Engine.Logging
                         }
                     }
 
-                    if (entry.Severity == LogSeverity.Warning)
+                    if (entry.Severity == KbLogSeverity.Warning)
                     {
                         Console.ForegroundColor = ConsoleColor.DarkYellow;
                     }
-                    else if (entry.Severity == LogSeverity.Exception)
+                    else if (entry.Severity == KbLogSeverity.Exception)
                     {
                         Console.ForegroundColor = ConsoleColor.Red;
                     }
-                    else if (entry.Severity == LogSeverity.Verbose)
+                    else if (entry.Severity == KbLogSeverity.Verbose)
                     {
                         Console.ForegroundColor = ConsoleColor.White;
                     }
@@ -142,7 +142,7 @@ namespace Katzebase.Engine.Logging
 
                     Console.ForegroundColor = ConsoleColor.Gray;
 
-                    Utility.EnsureNotNull(fileHandle);
+                    KbUtility.EnsureNotNull(fileHandle);
 
                     fileHandle.WriteLine(message.ToString());
 

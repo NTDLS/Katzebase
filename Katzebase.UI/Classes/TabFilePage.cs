@@ -240,7 +240,7 @@ namespace Katzebase.UI.Classes
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -261,7 +261,7 @@ namespace Katzebase.UI.Classes
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -293,7 +293,7 @@ namespace Katzebase.UI.Classes
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -306,7 +306,7 @@ namespace Katzebase.UI.Classes
                 group.OnException += Group_OnException;
                 group.OnStatus += Group_OnStatus;
 
-                var scripts = Utility.SplitQueryTextIntoBatches(scriptText);
+                var scripts = KbUtility.SplitQueryTextIntoBatches(scriptText);
 
                 int batchNumber = 1;
 
@@ -341,7 +341,7 @@ namespace Katzebase.UI.Classes
                         foreach (var wt in result.Metrics.Where(o => o.Value >= 0.5).OrderBy(o => o.Value))
                         {
                             stringBuilder.Append($"\t{wt.Name} -> Total: {wt.Value:n0}");
-                            if (wt.MetricType == PublicLibrary.Constants.KbMetricType.Cumulative)
+                            if (wt.MetricType == PublicLibrary.KbConstants.KbMetricType.Cumulative)
                             {
                                 stringBuilder.Append($"    Count: {wt.Count:n0}    Average: {(wt.Value / wt.Count):n2}");
                             }
@@ -420,7 +420,7 @@ namespace Katzebase.UI.Classes
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.Constants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

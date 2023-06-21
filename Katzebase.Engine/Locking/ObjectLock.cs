@@ -1,6 +1,6 @@
 ﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.KbLib;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using Katzebase.Engine.Library;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Locking
 {
@@ -39,7 +39,7 @@ namespace Katzebase.Engine.Locking
         {
             try
             {
-                lock (CriticalSections.AcquireLock)
+                lock (CentralCriticalSections.AcquireLock)
                 {
                     var key = new ObjectLockKey(core, this, transaction.ProcessId, lockIntention.Operation);
                     Keys.Add(key);
@@ -58,7 +58,7 @@ namespace Katzebase.Engine.Locking
         {
             try
             {
-                lock (CriticalSections.AcquireLock)
+                lock (CentralCriticalSections.AcquireLock)
                 {
                     Keys.Remove(key);
 

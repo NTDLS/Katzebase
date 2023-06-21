@@ -1,8 +1,8 @@
 ﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace Katzebase.Engine.IO
@@ -32,7 +32,7 @@ namespace Katzebase.Engine.IO
                 {
                     result = JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath));
                 }
-                Utility.EnsureNotNull(result);
+                KbUtility.EnsureNotNull(result);
                 return result;
             }
             catch (Exception ex)
@@ -76,7 +76,7 @@ namespace Katzebase.Engine.IO
 
                     if (core.Settings.DeferredIOEnabled)
                     {
-                        Utility.EnsureNotNull(transaction.DeferredIOs);
+                        KbUtility.EnsureNotNull(transaction.DeferredIOs);
                         var ptDeferredWriteRead = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredRead);
                         var deferredIOObject = transaction.DeferredIOs.GetDeferredDiskIO<T>(filePath);
                         ptDeferredWriteRead?.StopAndAccumulate();
@@ -153,7 +153,7 @@ namespace Katzebase.Engine.IO
                         core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
                     }
 
-                    Utility.EnsureNotNull(deserializedObject);
+                    KbUtility.EnsureNotNull(deserializedObject);
 
                     return deserializedObject;
                 }
@@ -239,7 +239,7 @@ namespace Katzebase.Engine.IO
                         {
                             core.Log.Trace($"IO:Write-Deferred:{filePath}");
 
-                            Utility.EnsureNotNull(transaction.DeferredIOs);
+                            KbUtility.EnsureNotNull(transaction.DeferredIOs);
                             var ptDeferredWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredWrite);
                             transaction.DeferredIOs.PutDeferredDiskIO(filePath, filePath, deserializedObject, format);
                             ptDeferredWrite?.StopAndAccumulate();
@@ -351,7 +351,7 @@ namespace Katzebase.Engine.IO
             {
                 string lowerFilePath = filePath.ToLower();
 
-                Utility.EnsureNotNull(transaction.DeferredIOs);
+                KbUtility.EnsureNotNull(transaction.DeferredIOs);
 
                 if (transaction.DeferredIOs.ContainsKey(lowerFilePath))
                 {

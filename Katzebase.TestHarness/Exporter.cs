@@ -17,11 +17,11 @@ namespace Katzebase.TestHarness
 
                 if (omitSQLSchemaName)
                 {
-                    tSQL = "select name as ObjectName from sys.tables where type = 'u' order by OBJECT_SCHEMA_NAME(object_id) + '.' + name";
+                    tSQL = "select '[' + name + ']' as ObjectName from sys.tables where type = 'u' order by OBJECT_SCHEMA_NAME(object_id) + '.' + name";
                 }
                 else
                 {
-                    tSQL = "select OBJECT_SCHEMA_NAME(object_id) + '.' + name as ObjectName from sys.tables where type = 'u' order by OBJECT_SCHEMA_NAME(object_id) + '.' + name";
+                    tSQL = "select '[' + OBJECT_SCHEMA_NAME(object_id) + '].[' + name + ']' as ObjectName from sys.tables where type = 'u' order by OBJECT_SCHEMA_NAME(object_id) + '.' + name";
                 }
 
                 using (var command = new SqlCommand(tSQL, connection))
@@ -43,7 +43,7 @@ namespace Katzebase.TestHarness
         {
             var client = new KatzebaseClient(katzeBaseServerAdddress);
 
-            string kbSchema = $"{sqlServerDatabase}:{sqlServerTable.Replace('.', ':')}";
+            string kbSchema = $"{sqlServerDatabase}:{sqlServerTable.Replace("[", "").Replace("]", "").Replace("dbo.", "").Replace('.', ':')}";
 
             if (client.Schema.Exists(kbSchema))
             {
@@ -60,7 +60,7 @@ namespace Katzebase.TestHarness
 
                 try
                 {
-                    using (var command = new SqlCommand($"SELECT * FROM {sqlServerTable}", connection))
+                    using (var command = new SqlCommand($"SELECT TOP 500000 * FROM {sqlServerTable}", connection))
                     {
                         command.CommandTimeout = 10000;
                         command.CommandType = System.Data.CommandType.Text;

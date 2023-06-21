@@ -2,7 +2,7 @@
 using Katzebase.PublicLibrary.Payloads;
 using System.Net.WebSockets;
 using System.Text;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Schemas.Management
 {

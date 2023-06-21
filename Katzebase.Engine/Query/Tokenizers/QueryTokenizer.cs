@@ -224,7 +224,7 @@ namespace Katzebase.Engine.Query.Tokenizers
         /// <returns></returns>
         public static Dictionary<string, string> CleanQueryText(ref string query, bool swapLiteralsBackIn = false)
         {
-            query = Utility.RemoveComments(query);
+            query = KbUtility.RemoveComments(query);
 
             var literalStrings = SwapOutLiteralStrings(ref query);
             query = query.Trim();

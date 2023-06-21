@@ -1,12 +1,12 @@
 ﻿using Katzebase.Engine.Atomicity.Management;
 using Katzebase.Engine.IO;
-using Katzebase.Engine.KbLib;
+using Katzebase.Engine.Library;
 using Katzebase.Engine.Locking;
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json;
-using static Katzebase.Engine.KbLib.EngineConstants;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Atomicity
 {
@@ -79,6 +79,10 @@ namespace Katzebase.Engine.Atomicity
             {
                 throw new KbTransactionCancelledException("The transaction was cancelled");
             }
+            if (IsDeadlocked)
+            {
+                throw new KbTransactionCancelledException("The transaction was deadlocked");
+            }
             if (IsComittedOrRolledBack)
             {
                 throw new KbTransactionCancelledException("The transaction was comitted or rolled back.");
@@ -132,7 +136,7 @@ namespace Katzebase.Engine.Atomicity
 
                     diskpath = diskpath.ToLower();
 
-                    Utility.EnsureNotNull(HeldLockKeys);
+                    KbUtility.EnsureNotNull(HeldLockKeys);
 
                     lock (HeldLockKeys)
                     {
@@ -161,7 +165,7 @@ namespace Katzebase.Engine.Atomicity
 
                     diskpath = diskpath.ToLower();
 
-                    Utility.EnsureNotNull(HeldLockKeys);
+                    KbUtility.EnsureNotNull(HeldLockKeys);
 
                     lock (HeldLockKeys)
                     {
@@ -228,7 +232,7 @@ namespace Katzebase.Engine.Atomicity
                     AutoFlush = true
                 };
 
-                Utility.EnsureNotNull(transactionLogHandle);
+                KbUtility.EnsureNotNull(transactionLogHandle);
             }
         }
 
@@ -259,7 +263,7 @@ namespace Katzebase.Engine.Atomicity
 
                         Atoms.Add(atom);
 
-                        Utility.EnsureNotNull(transactionLogHandle);
+                        KbUtility.EnsureNotNull(transactionLogHandle);
 
                         transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
@@ -297,7 +301,7 @@ namespace Katzebase.Engine.Atomicity
 
                         Atoms.Add(atom);
 
-                        Utility.EnsureNotNull(transactionLogHandle);
+                        KbUtility.EnsureNotNull(transactionLogHandle);
 
                         transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
@@ -340,7 +344,7 @@ namespace Katzebase.Engine.Atomicity
 
                         Atoms.Add(atom);
 
-                        Utility.EnsureNotNull(transactionLogHandle);
+                        KbUtility.EnsureNotNull(transactionLogHandle);
 
                         transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
@@ -382,7 +386,7 @@ namespace Katzebase.Engine.Atomicity
 
                         Atoms.Add(atom);
 
-                        Utility.EnsureNotNull(transactionLogHandle);
+                        KbUtility.EnsureNotNull(transactionLogHandle);
 
                         transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
@@ -424,7 +428,7 @@ namespace Katzebase.Engine.Atomicity
 
                         Atoms.Add(atom);
 
-                        Utility.EnsureNotNull(transactionLogHandle);
+                        KbUtility.EnsureNotNull(transactionLogHandle);
 
                         transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
@@ -491,8 +495,8 @@ namespace Katzebase.Engine.Atomicity
                             {
                                 var diskPath = Path.GetDirectoryName(record.OriginalPath);
 
-                                Utility.EnsureNotNull(diskPath);
-                                Utility.EnsureNotNull(record.BackupPath);
+                                KbUtility.EnsureNotNull(diskPath);
+                                KbUtility.EnsureNotNull(record.BackupPath);
 
                                 Directory.CreateDirectory(diskPath);
                                 File.Copy(record.BackupPath, record.OriginalPath, true);
@@ -506,7 +510,7 @@ namespace Katzebase.Engine.Atomicity
                             }
                             else if (record.Action == ActionType.DirectoryDelete)
                             {
-                                Utility.EnsureNotNull(record.BackupPath);
+                                KbUtility.EnsureNotNull(record.BackupPath);
                                 Helpers.CopyDirectory(record.BackupPath, record.OriginalPath);
                             }
                         }
@@ -570,7 +574,7 @@ namespace Katzebase.Engine.Atomicity
 
                             try
                             {
-                                Utility.EnsureNotNull(DeferredIOs);
+                                KbUtility.EnsureNotNull(DeferredIOs);
                                 DeferredIOs.CommitDeferredDiskIO();
                                 CleanupTransaction();
                                 transactionManager.RemoveByProcessId(ProcessId);
@@ -618,12 +622,12 @@ namespace Katzebase.Engine.Atomicity
                     //Delete all the backup files.
                     if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
                     {
-                        Utility.EnsureNotNull(record.BackupPath);
+                        KbUtility.EnsureNotNull(record.BackupPath);
                         File.Delete(record.BackupPath);
                     }
                     else if (record.Action == ActionType.DirectoryDelete)
                     {
-                        Utility.EnsureNotNull(record.BackupPath);
+                        KbUtility.EnsureNotNull(record.BackupPath);
                         Directory.Delete(record.BackupPath, true);
                     }
                 }
