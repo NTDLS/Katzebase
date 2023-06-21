@@ -89,7 +89,8 @@ namespace Katzebase.Engine.Query.Searchers
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), schemaMap.TotalDocumentCount());
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
-            var threadPool = ThreadPoolQueue<DocumentPointer, LookupThreadParam>.CreateAndStart(LookupThreadProc, threadParam, threadCount);
+            var threadPool = ThreadPoolQueue<DocumentPointer, LookupThreadParam>
+                .CreateAndStart($"GetDocumentsByConditions:{transaction.ProcessId}", LookupThreadProc, threadParam, threadCount);
             ptThreadCreation?.StopAndAccumulate();
 
             foreach (var documentPointer in documentPointers)

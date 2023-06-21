@@ -16,7 +16,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 var statement = JsonConvert.DeserializeObject<string>(value);
@@ -40,7 +40,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 var statement = JsonConvert.DeserializeObject<string>(value);
@@ -64,7 +64,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 var statement = JsonConvert.DeserializeObject<string>(value);

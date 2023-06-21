@@ -45,6 +45,18 @@ namespace Katzebase.Engine.Threading
     /// <typeparam name="P">The type of the parameter that will be passed to the worker thread proc.</typeparam>
     public class ThreadPoolQueue<T, P>
     {
+        private class PassThroughThreadParam<TPT, TPP>
+        {
+            public ThreadPoolQueue<TPT, TPP> Pool { get; set; }
+            public int ThreadNumber { get; set; }
+
+            public PassThroughThreadParam(ThreadPoolQueue<TPT, TPP> pool, int threadNumber)
+            {
+                Pool = pool;
+                ThreadNumber = threadNumber;
+            }
+        }
+
         private readonly List<Thread> _threads = new();
         private int _runningThreadCount = 0;
         private object UserThreadParam { get; set; }
@@ -58,9 +70,11 @@ namespace Katzebase.Engine.Threading
 
         public int ThreadCount { get; private set; }
         public int QueueSize { get; private set; }
+        public string PoolName { get; private set; }
 
-        public ThreadPoolQueue(UserThreadThread userThreadProc, object userThreadParam, int threadCount, int queueSize)
+        public ThreadPoolQueue(string poolName, UserThreadThread userThreadProc, object userThreadParam, int threadCount, int queueSize)
         {
+            PoolName = poolName;
             Queue = new FixedSizeWaitQueue<T>(queueSize);
             UserThreadParam = userThreadParam;
             UserThreadProc = userThreadProc;
@@ -84,16 +98,16 @@ namespace Katzebase.Engine.Threading
             }
         }
 
-        public static ThreadPoolQueue<T, P> Create(UserThreadThread userThreadProc, object userThreadParam, int threadCount)
+        public static ThreadPoolQueue<T, P> Create(string poolName, UserThreadThread userThreadProc, object userThreadParam, int threadCount)
         {
-            var pool = new ThreadPoolQueue<T, P>(userThreadProc, userThreadParam, threadCount, threadCount * 10);
+            var pool = new ThreadPoolQueue<T, P>(poolName, userThreadProc, userThreadParam, threadCount, threadCount * 10);
 
             return pool;
         }
 
-        public static ThreadPoolQueue<T, P> CreateAndStart(UserThreadThread userThreadProc, object userThreadParam, int threadCount)
+        public static ThreadPoolQueue<T, P> CreateAndStart(string poolName, UserThreadThread userThreadProc, object userThreadParam, int threadCount)
         {
-            var pool = new ThreadPoolQueue<T, P>(userThreadProc, userThreadParam, threadCount, threadCount * 10);
+            var pool = new ThreadPoolQueue<T, P>(poolName, userThreadProc, userThreadParam, threadCount, threadCount * 10);
             pool.Start();
             return pool;
         }
@@ -106,33 +120,30 @@ namespace Katzebase.Engine.Threading
             {
                 var thread = new Thread(PassThroughThreadProc);
                 _threads.Add(thread);
-
-                thread.Name = $"ThreadPoolQueue-{i}";
-
                 IncrementRunningThreadCount();
-
-                thread.Start(this);
+                thread.Start(new PassThroughThreadParam<T, P>(this, i));
             }
         }
 
-        internal static void PassThroughThreadProc(object? param)
+        private static void PassThroughThreadProc(object? param)
         {
-            var pool = param as ThreadPoolQueue<T, P>;
-            KbUtility.EnsureNotNull(pool);
+            var threadParam = param as PassThroughThreadParam<T, P>;
+            KbUtility.EnsureNotNull(threadParam);
 
             try
             {
-                pool.UserThreadProc(pool, (P)pool.UserThreadParam);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbPool:{threadParam.Pool.PoolName}:{threadParam.ThreadNumber}";
+                threadParam.Pool.UserThreadProc(threadParam.Pool, (P)threadParam.Pool.UserThreadParam);
             }
             catch (Exception ex)
             {
-                pool.Exception = ex;
-                pool.ContinueToProcessQueue = false;
-                pool.Queue.Stop();
+                threadParam.Pool.Exception = ex;
+                threadParam.Pool.ContinueToProcessQueue = false;
+                threadParam.Pool.Queue.Stop();
             }
             finally
             {
-                pool.DecrementRunningThreadCount();
+                threadParam.Pool.DecrementRunningThreadCount();
             }
         }
 

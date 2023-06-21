@@ -19,7 +19,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Schemas.APIHandlers.ListSchemas(processId, schema);
@@ -45,7 +45,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Schemas.APIHandlers.CreateSchema(processId, schema);
@@ -71,7 +71,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Schemas.APIHandlers.DoesSchemaExist(processId, schema);
@@ -97,7 +97,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Schemas.APIHandlers.DropSchema(processId, schema);

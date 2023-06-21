@@ -20,7 +20,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Documents.APIHandlers.ListDocuments(processId, schema, count);
@@ -46,7 +46,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Documents.APIHandlers.DocumentSample(processId, schema, count);
@@ -72,7 +72,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Documents.APIHandlers.DocumentCatalog(processId, schema);
@@ -94,7 +94,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 var content = JsonConvert.DeserializeObject<KbDocument>(value);
@@ -122,7 +122,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Documents.APIHandlers.DeleteDocumentById(processId, schema, id);

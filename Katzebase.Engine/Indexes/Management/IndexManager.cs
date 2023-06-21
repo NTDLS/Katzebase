@@ -701,7 +701,7 @@ namespace Katzebase.Engine.Indexes.Management
                 int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentPointers.Count);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                 var threadPool = ThreadPoolQueue<DocumentPointer, RebuildIndexThreadParam>
-                    .CreateAndStart(RebuildIndexThreadProc, threadParam, threadCount);
+                    .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", RebuildIndexThreadProc, threadParam, threadCount);
                 ptThreadCreation?.StopAndAccumulate();
 
                 foreach (var documentPointer in documentPointers)

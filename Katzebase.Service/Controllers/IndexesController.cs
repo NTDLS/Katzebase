@@ -16,7 +16,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 var content = JsonConvert.DeserializeObject<KbIndex>(value);
@@ -45,7 +45,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Indexes.APIHandlers.RebuildIndex(processId, schema, name);
@@ -71,7 +71,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Indexes.APIHandlers.DropIndex(processId, schema, name);
@@ -97,7 +97,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Indexes.APIHandlers.DoesIndexExist(processId, schema, name);
@@ -123,7 +123,7 @@ namespace Katzebase.Service.Controllers
             try
             {
                 var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
-                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"API:{processId}:{KbUtility.GetCurrentMethod()}";
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
                 return Program.Core.Indexes.APIHandlers.ListIndexes(processId, schema);
