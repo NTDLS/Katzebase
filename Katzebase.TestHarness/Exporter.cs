@@ -60,7 +60,7 @@ namespace Katzebase.TestHarness
 
                 try
                 {
-                    using (var command = new SqlCommand($"SELECT TOP 500000 * FROM {sqlServerTable}", connection))
+                    using (var command = new SqlCommand($"SELECT * FROM {sqlServerTable}", connection))
                     {
                         command.CommandTimeout = 10000;
                         command.CommandType = System.Data.CommandType.Text;
@@ -69,9 +69,9 @@ namespace Katzebase.TestHarness
                         {
                             int rowCount = 0;
 
-                            while (dataReader.Read() /*&& rowCount++ < 10000*/)
+                            while (dataReader.Read())
                             {
-                                var dbObject = new ExpandoObject() as IDictionary<string, Object>;
+                                var dbObject = new ExpandoObject() as IDictionary<string, object>;
 
                                 for (int iField = 0; iField < dataReader.FieldCount; iField++)
                                 {
@@ -87,7 +87,7 @@ namespace Katzebase.TestHarness
                                     Console.WriteLine($"{kbSchema}: {rowCount}");
                                 }
 
-                                if (rowCount > 0 && (rowCount % 1000) == 0)
+                                if (rowCount > 0 && (rowCount % 10000) == 0)
                                 {
                                     Console.WriteLine("Comitting...");
                                     client.Transaction.Commit();

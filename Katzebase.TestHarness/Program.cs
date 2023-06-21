@@ -50,24 +50,9 @@ namespace Katzebase.TestHarness
 
 
             var databasesNames = new string[]{
-                    "master",
-                    "tempdb",
-                    "model",
-                    "msdb",
-                    "VroomPS_Sharp",
-                    "ShogoSync",
                     "WordList",
-                    "DynamicDNS",
-                    "VroomPS_Dev",
-                    "TightWiki",
-                    "NetworkDLS_Com",
-                    "DevWiki",
                     "AdventureWorks2012",
-                    "Global_IIS_Applications",
-                    "TopNotchERP",
-                    "VPTFreeRegistrationService_OLD",
-                    "VroomRegistrationService",
-                    "Maintenance"
+                    "TopNotchERP"
                 };
 
             foreach (var databasesName in databasesNames)

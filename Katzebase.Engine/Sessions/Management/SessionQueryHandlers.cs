@@ -60,22 +60,7 @@ namespace Katzebase.Engine.Sessions.Management
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponse();
-
                     var session = core.Sessions.ByProcessId(processId);
-
-                    bool VariableOnOff(string value)
-                    {
-                        value = value.ToLower().Trim();
-                        if (value == "on")
-                        {
-                            return true;
-                        }
-                        else if (value == "off")
-                        {
-                            return false;
-                        }
-                        throw new KbGenericException($"Undefined variable value: {value}.");
-                    }
 
                     foreach (var variable in preparedQuery.VariableValues)
                     {
@@ -88,7 +73,7 @@ namespace Katzebase.Engine.Sessions.Management
                         switch (connectionSetting)
                         {
                             case KbConnectionSetting.TraceWaitTimes:
-                                session.UpsertConnectionSetting(connectionSetting, (double)(VariableOnOff(variable.Value) ? 1 : 0));
+                                session.UpsertConnectionSetting(connectionSetting, Boolean.Parse(variable.Value) ? 1 : 0);
                                 break;
                             case KbConnectionSetting.MinQueryThreads:
                             case KbConnectionSetting.MaxQueryThreads:

@@ -147,7 +147,8 @@ namespace Katzebase.UI
                     if (string.IsNullOrEmpty(_firstLoadFilename))
                     {
                         var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName());
-                        tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\n";
+                        tabFilePage.Editor.Text = "set TraceWaitTimes false;\r\n\r\n";
+                        tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                         tabFilePage.IsSaved = true;
                     }
                     else
@@ -271,7 +272,8 @@ namespace Katzebase.UI
                 {
                     var rootNode = TreeManagement.GetRootNode(node);
                     var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
-                    tabFilePage.Editor.Text = "SET TraceWaitTimes ON;\r\n\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\t" + TreeManagement.CalculateFullSchema(node);
+                    tabFilePage.Editor.Text = "set TraceWaitTimes false;\r\n\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\t" + TreeManagement.CalculateFullSchema(node) + "\r\n";
+                    tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                 }
             }
             catch (Exception ex)
@@ -902,7 +904,8 @@ namespace Katzebase.UI
             try
             {
                 var tabFilePage = CreateNewTab();
-                tabFilePage.Editor.Text = "SET TraceWaitTimes OFF;\r\n\r\n";
+                tabFilePage.Editor.Text = "set TraceWaitTimes false;\r\n\r\n";
+                tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
             }
             catch (Exception ex)
             {

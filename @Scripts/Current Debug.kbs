@@ -1,13 +1,17 @@
+/*
+This is a comment
+
+*/
 select * from WordList:FlatTranslate
 --where English like 'apple%'
 
-/*
+
 CREATE INDEX IX_FlatTranslate_English
 (
 	English
 ) ON WordList:FlatTranslate
-*/
-/*
+
+
 delete from
 AdventureWorks2012:Production:Product
 where ProductId > 9999
@@ -15,17 +19,17 @@ where ProductId > 9999
 select * from
 AdventureWorks2012:Production:Product
 where ProductId < 9999
-*/
 
-/*
+
+
 select * from Test2 where Num1 >= 2
 
 select * from Test2
 Where Num1 > 1 and Num1 < 3
 order by name, num1, num2
-*/
 
-/*
+
+
 create schema Test;
 
 insert into Test2
@@ -47,27 +51,27 @@ insert into Test2
 
 CREATE INDEX Test2_Num1_Num2 (Num1, Num2) on Test2;
 
-*/
+
 
 --SET TraceWaitTimes on;
-/*
+
 insert into AdventureWorks2012:Production:Product
 (ProductId = '10000', Name = 'API Test Product 1'),
 (ProductId = '10002', Name = 'API Test Product 2'),
 (ProductId = '10003', Name = 'API Test Product 3'),
 (ProductId = '10004', Name = 'API Test Product 4'),
 (ProductId = '10005', Name = 'API Test Product 5');
-*/
+
 --select * from AdventureWorks2012:Production:Product where ProductId > 9999
 --delete from AdventureWorks2012:Production:Product where ProductId > 9999
 
-/*select
+select
 	*
 from
 	AdventureWorks2012:Production:Product
 where
 	ProductId = 10005
-*/
+
 
 
 --rebuild index IX_Product_Name on AdventureWorks2012:Production:Product
@@ -77,7 +81,7 @@ where
 --select * from AdventureWorks2012:dbo:AWBuildVersion where SystemInformationID = 'API Test Product';
 --delete from AdventureWorks2012:dbo:AWBuildVersion where SystemInformationID = 'API Test Product';
 
-/*
+
 DELETE th FROM
 	AdventureWorks2012:Production:Product as p
 INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
@@ -89,15 +93,15 @@ WHERE
 	PSC.Name = 'Road Bikes'
 	and TH.TransactionId > 200000
 	AND P.Name = 'Road-750 Black, 52'
-*/	
-/*
+	
+
 delete from
 	AdventureWorks2012:Production:Product as p
 INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
 	ON psc.ProductSubcategoryID = p.ProductSubcategoryID;
-*/
 
-/*
+
+
 DELETE FROM
 	AdventureWorks2012:Production:Product as p
 INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
@@ -109,11 +113,11 @@ WHERE
 	PSC.Name = 'Road Bikes'
 	and TH.TransactionId > 200000
 	AND P.Name = 'Road-750 Black, 52'
-*/	
+	
 --delete from AdventureWorks2012:Production:Product as p
 --where p.Name = 'Bearing Ball'
 
-/*
+
 INSERT INTO AdventureWorks2012:Production:Product
 (
 	ProductId = 'Test-ProductId',
@@ -121,9 +125,9 @@ INSERT INTO AdventureWorks2012:Production:Product
 	ProductNumber = 'Test-ProductNumber',
 	Color = 'Test-Color'
 )
-*/
 
-/*
+
+
 --Possible iterations: 2,115,485,064
 SELECT --Should yeild 457 records
 	P.Name,
@@ -144,20 +148,20 @@ WHERE
 ORDER BY
 	P.ProductNumber asc,
 	TH.TransactionId desc
-*/
 
 
-/*
+
+
 select * from AdventureWorks2012:Production:TransactionHistory as TH
 WHERE TH.ProductID = 820
-*/
 
-/*
+
+
 drop index IX_TransactionHistory_ProductID_ActualCost
 on AdventureWorks2012:Production:TransactionHistory
-*/
 
-/*
+
+
 CREATE INDEX IX_Product_ProductId_Name
 (
 	ProductId,
@@ -186,11 +190,11 @@ REBUILD INDEX IX_Product_Name ON AdventureWorks2012:Production:Product;
 REBUILD INDEX IX_TransactionHistory_ProductID_ActualCost ON AdventureWorks2012:Production:TransactionHistory;
 REBUILD UNIQUEKEY IX_ProductSubcategory_ProductSubcategoryID ON AdventureWorks2012:Production:ProductSubcategory;
 REBUILD UNIQUEKEY IX_TransactionHistory_TransactionId ON AdventureWorks2012:Production:TransactionHistory
-*/
 
 
 
-/*
+
+
 --SET TraceWaitTimes ON;
 
 SELECT TOP 5
@@ -211,4 +215,3 @@ WHERE
 ORDER BY
 	P.ProductNumber asc,
 	TH.TransactionId desc
-*/
