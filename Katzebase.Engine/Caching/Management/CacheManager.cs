@@ -12,7 +12,7 @@ namespace Katzebase.Engine.Caching.Management
         public int PartitionCount { get; private set; }
         public int CachedItemCount => partitions.Sum(o => o.Count());
 
-        private CacheItemPolicy cachePolicy;
+        private readonly CacheItemPolicy cachePolicy;
         private readonly MemoryCache[] partitions;
 
         public CacheManager(Core core)

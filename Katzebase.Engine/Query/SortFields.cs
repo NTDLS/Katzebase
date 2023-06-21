@@ -1,6 +1,6 @@
 ﻿using static Katzebase.PublicLibrary.KbConstants;
 
-namespace Katzebase.Engine.Query.Tokenizers
+namespace Katzebase.Engine.Query
 {
     public class SortFields : PrefixedFields
     {
@@ -20,10 +20,10 @@ namespace Katzebase.Engine.Query.Tokenizers
 
             var newField = new SortField(prefix, field)
             {
-                Ordinal = this.Count,
+                Ordinal = Count,
                 SortDirection = sortDirection
             };
-            this.Add(newField);
+            Add(newField);
 
             return newField;
         }

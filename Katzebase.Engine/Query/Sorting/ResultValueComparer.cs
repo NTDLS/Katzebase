@@ -4,7 +4,7 @@ namespace Katzebase.Engine.Query.Sorting
 {
     public class ResultValueComparer : IComparer<List<string>>
     {
-        private List<(int fieldIndex, KbSortDirection direction)> sortingColumns;
+        private readonly List<(int fieldIndex, KbSortDirection direction)> sortingColumns;
 
         public ResultValueComparer(List<(int fieldIndex, KbSortDirection sortDirection)> sortingColumns)
         {

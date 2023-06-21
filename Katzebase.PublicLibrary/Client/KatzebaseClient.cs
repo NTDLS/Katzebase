@@ -10,7 +10,7 @@
         public Management.Transaction Transaction { get; private set; }
         public Management.Query Query { get; private set; }
 
-        private Thread keepAliveThread;
+        private readonly Thread keepAliveThread;
 
         /// <summary>
         /// This is the process id of the session on the server. This is populated with each call to Client.Server.Ping().

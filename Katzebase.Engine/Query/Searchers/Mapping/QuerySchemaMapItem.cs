@@ -1,7 +1,6 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query.Constraints;
-using Katzebase.Engine.Query.Searchers.MultiSchema;
 using Katzebase.Engine.Schemas;
 
 namespace Katzebase.Engine.Query.Searchers.Mapping

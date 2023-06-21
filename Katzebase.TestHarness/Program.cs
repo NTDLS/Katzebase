@@ -1,5 +1,4 @@
 ﻿using Katzebase.PublicLibrary.Client;
-using Katzebase.PublicLibrary.Client.Management;
 using Katzebase.PublicLibrary.Payloads;
 using System.Diagnostics;
 using System.Reflection;

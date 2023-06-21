@@ -7,7 +7,7 @@ namespace Katzebase.Engine.Threading
         private readonly ConcurrentQueue<T> _queue = new ConcurrentQueue<T>();
         public int MaxSize { get; private set; }
         private bool _keepRunning = true;
-        private AutoResetEvent _queued = new(false);
+        private readonly AutoResetEvent _queued = new(false);
         public int Count => _queue.Count;
 
         public FixedSizeWaitQueue(int maxSize)

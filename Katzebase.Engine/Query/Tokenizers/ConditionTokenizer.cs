@@ -5,11 +5,11 @@ namespace Katzebase.Engine.Query.Tokenizers
 {
     public class ConditionTokenizer
     {
-        static char[] DefaultTokenDelimiters = new char[] { ',' };
+        static readonly char[] DefaultTokenDelimiters = new char[] { ',' };
 
         private string _text;
         private int _position = 0;
-        private int _startPosition = 0;
+        private readonly int _startPosition = 0;
 
         public string Text => _text;
         public int Position => _position;

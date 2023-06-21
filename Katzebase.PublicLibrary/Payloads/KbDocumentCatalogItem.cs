@@ -10,7 +10,7 @@
 
         public KbDocumentCatalogItem(uint id)
         {
-             Id = id;
+            Id = id;
         }
     }
 }

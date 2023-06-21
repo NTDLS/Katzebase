@@ -1,13 +1,12 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.Engine.Indexes.Matching;
-using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
 using static Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Query.Searchers.MultiSchema
+namespace Katzebase.Engine.Query.Constraints
 {
     internal class ConditionLookupOptimization
     {
@@ -53,7 +52,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
                 {
                     if (subset.Conditions.Where(o => o.Left.Prefix != workingSchemaPrefix).Any())
                     {
-                        if ((subset.Conditions.Where(o => o.LogicalConnector != LogicalConnector.And).Any() == false))
+                        if (subset.Conditions.Where(o => o.LogicalConnector != LogicalConnector.And).Any() == false)
                         {
                             //We can't yet figure out how to eliminate documents if the conditions are for more
                             //..    than one schema and all of the logical connectors are not AND. This can be done however.
@@ -258,7 +257,7 @@ namespace Katzebase.Engine.Query.Searchers.MultiSchema
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subset = Conditions.SubsetByKey(subsetKey);
-                result.AppendLine("".PadLeft((depth) * 4, ' ') + $"[{FriendlyExp(subset.Expression)}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.Index.Name + ")}" : " {non-Indexable}"));
+                result.AppendLine("".PadLeft(depth * 4, ' ') + $"[{FriendlyExp(subset.Expression)}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.Index.Name + ")}" : " {non-Indexable}"));
 
                 if (subset.Conditions.Count > 0)
                 {

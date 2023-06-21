@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Katzebase.Engine.Heartbeat.Management
+﻿namespace Katzebase.Engine.Heartbeat.Management
 {
     internal class HeartbeatManager
     {
         private readonly Core core;
-        private Thread threadHandle;
+        private readonly Thread threadHandle;
         private bool continueRunning = false;
 
         public HeartbeatManager(Core core)

@@ -5,7 +5,7 @@ namespace Katzebase.UI
 {
     public partial class FormAbout : Form
     {
-        Assembly assembly = Assembly.GetExecutingAssembly();
+        readonly Assembly assembly = Assembly.GetExecutingAssembly();
 
         public FormAbout()
         {

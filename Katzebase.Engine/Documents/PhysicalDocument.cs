@@ -1,6 +1,4 @@
-﻿using Katzebase.PublicLibrary.Payloads;
-
-namespace Katzebase.Engine.Documents
+﻿namespace Katzebase.Engine.Documents
 {
     /// <summary>
     /// This is the page document that is physically written to the disk by

@@ -862,7 +862,8 @@ namespace Katzebase.Engine.Query
                 {
                     result.AddAttribute(PreparedQuery.QueryAttribute.ProcessId, ulong.Parse(referencedProcessId));
                 }
-                catch{
+                catch
+                {
                     throw new KbParserException("Invalid query. Found '" + referencedProcessId + "', expected: numeric process id.");
                 }
             }

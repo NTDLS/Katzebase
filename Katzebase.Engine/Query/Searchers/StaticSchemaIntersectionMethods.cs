@@ -4,7 +4,6 @@ using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers.Intersection;
 using Katzebase.Engine.Query.Searchers.Mapping;
-using Katzebase.Engine.Query.Searchers.MultiSchema;
 using Katzebase.Engine.Query.Sorting;
 using Katzebase.Engine.Threading;
 using Katzebase.PublicLibrary;

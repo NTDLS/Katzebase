@@ -1,12 +1,9 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
-using Katzebase.Engine.Query;
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
-using Katzebase.PublicLibrary.Payloads;
-using System.Diagnostics;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Schemas.PhysicalSchema;
 using static Katzebase.Engine.Trace.PerformanceTrace;
@@ -339,7 +336,7 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                var physicalSchema = core.Schemas.Acquire(transaction, schemaName,  LockOperation.Read);
+                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
                 var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Read);
 
                 var result = new List<Tuple<string, string>>();

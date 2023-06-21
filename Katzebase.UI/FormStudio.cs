@@ -14,7 +14,7 @@ namespace Katzebase.UI
         private readonly ImageList _treeImages = new ImageList();
         private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
         public string _lastusedServerAddress = string.Empty;
-        private string _firstLoadFilename = string.Empty;
+        private readonly string _firstLoadFilename = string.Empty;
 
         public FormStudio()
         {

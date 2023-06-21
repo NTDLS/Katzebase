@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Sessions.Management
+﻿namespace Katzebase.Engine.Health.Management
 {
     /// <summary>
     /// Internal class methods for handling query requests related to health.
@@ -10,7 +10,7 @@
         public HealthQueryHandlers(Core core)
         {
             this.core = core;
-            
+
             try
             {
             }

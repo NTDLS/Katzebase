@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Sessions.Management
+﻿namespace Katzebase.Engine.Health.Management
 {
     /// <summary>
     /// Public class methods for handling API requests related to health.

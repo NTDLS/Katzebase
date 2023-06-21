@@ -14,8 +14,8 @@ namespace Katzebase.UI.Classes
         private static string sqlHighlighter => Path.Combine(Path.GetDirectoryName(Application.ExecutablePath) ?? "", "Highlighters", "KBS.xshd");
 #endif
 
-        private TabControl _tabControl;
-        private FormStudio _form;
+        private readonly TabControl _tabControl;
+        private readonly FormStudio _form;
 
         public EditorFactory(FormStudio form, TabControl tabControl)
         {

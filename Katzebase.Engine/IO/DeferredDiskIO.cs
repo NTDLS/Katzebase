@@ -19,7 +19,7 @@ namespace Katzebase.Engine.IO
         }
 
         private readonly Core core;
-        private Dictionary<string, DeferredDiskIOObject> Collection = new();
+        private readonly Dictionary<string, DeferredDiskIOObject> Collection = new();
         public bool ContainsKey(string key) => Collection.ContainsKey(key);
 
         public DeferredDiskIO(Core core)

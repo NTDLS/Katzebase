@@ -1,6 +1,5 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using System.Net.WebSockets;
 using System.Text;
 using static Katzebase.Engine.Library.EngineConstants;
 

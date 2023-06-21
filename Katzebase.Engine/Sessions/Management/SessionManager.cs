@@ -1,6 +1,4 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
-using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Katzebase.Engine.Sessions.Management
 {
