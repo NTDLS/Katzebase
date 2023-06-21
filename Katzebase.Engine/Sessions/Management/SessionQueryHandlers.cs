@@ -28,6 +28,31 @@ namespace Katzebase.Engine.Sessions.Management
             }
         }
 
+        internal KbActionResponse ExecuteKillProcess(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                using (var transaction = core.Transactions.Acquire(processId))
+                {
+                    var result = new KbActionResponse();
+
+                    var referencedProcessId = preparedQuery.Attribute<ulong>(PreparedQuery.QueryAttribute.ProcessId);
+
+                    core.Sessions.CloseByProcessId(referencedProcessId);
+
+                    transaction.Commit();
+                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to execute variable set for process id {processId}.", ex);
+                throw;
+            }
+        }
+
         internal KbActionResponse ExecuteSetVariable(ulong processId, PreparedQuery preparedQuery)
         {
             try
@@ -40,6 +65,7 @@ namespace Katzebase.Engine.Sessions.Management
 
                     bool VariableOnOff(string value)
                     {
+                        value = value.ToLower().Trim();
                         if (value == "on")
                         {
                             return true;
@@ -53,37 +79,27 @@ namespace Katzebase.Engine.Sessions.Management
 
                     foreach (var variable in preparedQuery.VariableValues)
                     {
-                        if (variable.Name.StartsWith("@")) //User session variable
+                        if (Enum.TryParse(variable.Name, true, out KbConnectionSetting connectionSetting) == false
+                            || Enum.IsDefined(typeof(KbConnectionSetting), connectionSetting) == false)
                         {
-                            session.UpsertVariable(variable.Name.Substring(1), variable.Value);
+                            throw new KbGenericException($"Unknown system variable: {variable.Name}.");
                         }
-                        else //System variable:
+
+                        switch (connectionSetting)
                         {
-                            if (Enum.TryParse(variable.Name, true, out KbSystemVariable systemVariable) == false
-                                || Enum.IsDefined(typeof(KbSystemVariable), systemVariable) == false)
-                            {
-                                throw new KbGenericException($"Unknown system variable: {variable.Name}.");
-                            }
+                            case KbConnectionSetting.TraceWaitTimes:
+                                session.UpsertConnectionSetting(connectionSetting, (double)(VariableOnOff(variable.Value) ? 1 : 0));
+                                break;
+                            case KbConnectionSetting.MinQueryThreads:
+                            case KbConnectionSetting.MaxQueryThreads:
+                            case KbConnectionSetting.QueryThreadWeight:
+                                session.UpsertConnectionSetting(connectionSetting, double.Parse(variable.Value));
+                                break;
 
-                            switch (systemVariable)
-                            {
-                                case KbSystemVariable.TraceWaitTimes:
-                                    session.TraceWaitTimesEnabled = VariableOnOff(variable.Value.ToLower());
-                                    break;
-                                case KbSystemVariable.MinQueryThreads:
-                                    session.MinQueryThreads = int.Parse(variable.Value);
-                                    break;
-                                case KbSystemVariable.MaxQueryThreads:
-                                    session.MaxQueryThreads = int.Parse(variable.Value);
-                                    break;
-                                case KbSystemVariable.QueryThreadWeight:
-                                    session.QueryThreadWeight = int.Parse(variable.Value);
-                                    break;
-
-                                default:
-                                    throw new KbNotImplementedException();
-                            }
+                            default:
+                                throw new KbNotImplementedException();
                         }
+
                     }
 
                     transaction.Commit();

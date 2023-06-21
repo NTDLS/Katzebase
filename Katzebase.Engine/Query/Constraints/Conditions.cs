@@ -248,6 +248,11 @@ namespace Katzebase.Engine.Query.Constraints
 
                     //Logical Qualifier
                     token = conditionTokenizer.GetNextToken().ToLower();
+                    if (token == "not")
+                    {
+                        token += " " + conditionTokenizer.GetNextToken().ToLower();
+                    }
+
                     LogicalQualifier logicalQualifier = ConditionTokenizer.ParseLogicalQualifier(token);
 
                     //Righthand value:

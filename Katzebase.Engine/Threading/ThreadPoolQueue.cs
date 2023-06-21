@@ -7,21 +7,21 @@ namespace Katzebase.Engine.Threading
     {
         public static int CalculateThreadCount(SessionState session, int expectedItemCount, double multiplier = 1)
         {
-            if (session.QueryThreadWeight != null)
+            if (session.IsConnectionSettingSet(SessionState.KbConnectionSetting.QueryThreadWeight))
             {
-                multiplier = (double)session.QueryThreadWeight;
+                multiplier = session.GetConnectionSetting(SessionState.KbConnectionSetting.TraceWaitTimes) ?? multiplier;
             }
 
             int maxThreads = (int)Math.Ceiling(Environment.ProcessorCount * 16.0 * multiplier);
-            if (session.MaxQueryThreads != null)
+            if (session.IsConnectionSettingSet(SessionState.KbConnectionSetting.MaxQueryThreads))
             {
-                maxThreads = (int)session.MaxQueryThreads;
+                maxThreads = (int)(session.GetConnectionSetting(SessionState.KbConnectionSetting.MaxQueryThreads) ?? maxThreads);
             }
 
             int minThreads = 1;
-            if (session.MinQueryThreads != null)
+            if (session.IsConnectionSettingSet(SessionState.KbConnectionSetting.MinQueryThreads))
             {
-                minThreads = (int)session.MinQueryThreads;
+                minThreads = (int)(session.GetConnectionSetting(SessionState.KbConnectionSetting.MinQueryThreads) ?? minThreads);
             }
 
             int threads = (int)Math.Ceiling((expectedItemCount / 10000.0));

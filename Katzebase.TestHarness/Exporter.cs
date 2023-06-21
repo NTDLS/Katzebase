@@ -50,9 +50,9 @@ namespace Katzebase.TestHarness
                 return;
             }
 
-            client.Transaction.Begin();
-
             client.Schema.Create(kbSchema);
+
+            client.Transaction.Begin();
 
             using (SqlConnection connection = new SqlConnection($"Server={sqlServer};Database={sqlServerDatabase};Trusted_Connection=True;"))
             {
@@ -78,7 +78,7 @@ namespace Katzebase.TestHarness
                                     var dataType = dataReader.GetFieldType(iField);
                                     if (dataType != null)
                                     {
-                                        dbObject.Add(dataReader.GetName(iField), $"{dataReader[iField]}");
+                                        dbObject.Add(dataReader.GetName(iField), dataReader[iField]?.ToString()?.Trim() ?? "");
                                     }
                                 }
 

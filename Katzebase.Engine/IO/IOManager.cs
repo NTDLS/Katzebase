@@ -68,91 +68,95 @@ namespace Katzebase.Engine.IO
         {
             try
             {
-                transaction.LockFile(intendedOperation, filePath);
-
-                if (core.Settings.DeferredIOEnabled)
+                lock (transaction.SyncObject)
                 {
-                    Utility.EnsureNotNull(transaction.DeferredIOs);
-                    var ptDeferredWriteRead = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredRead);
-                    var deferredIOObject = transaction.DeferredIOs.GetDeferredDiskIO<T>(filePath);
-                    ptDeferredWriteRead?.StopAndAccumulate();
+                    transaction.EnsureActive();
 
-                    if (deferredIOObject != null)
+                    transaction.LockFile(intendedOperation, filePath);
+
+                    if (core.Settings.DeferredIOEnabled)
                     {
-                        core.Health.Increment(HealthCounterType.IODeferredIOReads);
-                        core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
-                        return deferredIOObject;
+                        Utility.EnsureNotNull(transaction.DeferredIOs);
+                        var ptDeferredWriteRead = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredRead);
+                        var deferredIOObject = transaction.DeferredIOs.GetDeferredDiskIO<T>(filePath);
+                        ptDeferredWriteRead?.StopAndAccumulate();
+
+                        if (deferredIOObject != null)
+                        {
+                            core.Health.Increment(HealthCounterType.IODeferredIOReads);
+                            core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
+                            return deferredIOObject;
+                        }
                     }
-                }
 
-
-                if (core.Settings.CacheEnabled)
-                {
-                    var ptCacheRead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheRead);
-                    var cachedObject = core.Cache.Get(filePath);
-                    ptCacheRead?.StopAndAccumulate();
-
-                    if (cachedObject != null)
+                    if (core.Settings.CacheEnabled)
                     {
-                        core.Health.Increment(HealthCounterType.IOCacheReadHits);
-                        core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
-                        return (T)cachedObject;
+                        var ptCacheRead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheRead);
+                        var cachedObject = core.Cache.Get(filePath);
+                        ptCacheRead?.StopAndAccumulate();
+
+                        if (cachedObject != null)
+                        {
+                            core.Health.Increment(HealthCounterType.IOCacheReadHits);
+                            core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
+                            return (T)cachedObject;
+                        }
                     }
-                }
 
-                core.Health.Increment(HealthCounterType.IOCacheReadMisses);
+                    core.Health.Increment(HealthCounterType.IOCacheReadMisses);
 
-                core.Log.Trace($"IO:Read:{transaction.ProcessId}->{filePath}");
+                    core.Log.Trace($"IO:Read:{transaction.ProcessId}->{filePath}");
 
-                T? deserializedObject;
+                    T? deserializedObject;
 
-                if (format == IOFormat.JSON)
-                {
-                    string text = string.Empty;
-
-                    var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
-                    if (core.Settings.UseCompression)
+                    if (format == IOFormat.JSON)
                     {
-                        text = Compression.DecompressString(File.ReadAllBytes(filePath));
+                        string text = string.Empty;
+
+                        var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
+                        if (core.Settings.UseCompression)
+                        {
+                            text = Compression.DecompressString(File.ReadAllBytes(filePath));
+                        }
+                        else
+                        {
+                            text = File.ReadAllText(filePath);
+                        }
+                        ptIORead?.StopAndAccumulate();
+
+                        var ptDeserialize = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.Deserialize);
+                        deserializedObject = JsonConvert.DeserializeObject<T>(text);
+                        ptDeserialize?.StopAndAccumulate();
+                    }
+                    else if (format == IOFormat.PBuf)
+                    {
+                        var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
+                        using (var file = File.OpenRead(filePath))
+                        {
+                            ptIORead?.StopAndAccumulate();
+                            var ptDeserialize = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.Deserialize);
+                            deserializedObject = ProtoBuf.Serializer.Deserialize<T>(file);
+                            ptDeserialize?.StopAndAccumulate();
+                            file.Close();
+                        }
                     }
                     else
                     {
-                        text = File.ReadAllText(filePath);
+                        throw new NotImplementedException();
                     }
-                    ptIORead?.StopAndAccumulate();
 
-                    var ptDeserialize = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.Deserialize);
-                    deserializedObject = JsonConvert.DeserializeObject<T>(text);
-                    ptDeserialize?.StopAndAccumulate();
-                }
-                else if (format == IOFormat.PBuf)
-                {
-                    var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
-                    using (var file = File.OpenRead(filePath))
+                    if (core.Settings.CacheEnabled && deserializedObject != null)
                     {
-                        ptIORead?.StopAndAccumulate();
-                        var ptDeserialize = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.Deserialize);
-                        deserializedObject = ProtoBuf.Serializer.Deserialize<T>(file);
-                        ptDeserialize?.StopAndAccumulate();
-                        file.Close();
+                        var ptCacheWrite = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheWrite);
+                        core.Cache.Upsert(filePath, deserializedObject);
+                        ptCacheWrite?.StopAndAccumulate();
+                        core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
                     }
-                }
-                else
-                {
-                    throw new NotImplementedException();
-                }
 
-                if (core.Settings.CacheEnabled && deserializedObject != null)
-                {
-                    var ptCacheWrite = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheWrite);
-                    core.Cache.Upsert(filePath, deserializedObject);
-                    ptCacheWrite?.StopAndAccumulate();
-                    core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
+                    Utility.EnsureNotNull(deserializedObject);
+
+                    return deserializedObject;
                 }
-
-                Utility.EnsureNotNull(deserializedObject);
-
-                return deserializedObject;
             }
             catch (Exception ex)
             {
@@ -212,74 +216,79 @@ namespace Katzebase.Engine.IO
         {
             try
             {
-                transaction.LockFile(LockOperation.Write, filePath);
-
-                if (transaction != null)
+                lock (transaction.SyncObject)
                 {
-                    bool doesFileExist = File.Exists(filePath);
+                    transaction.EnsureActive();
 
-                    if (doesFileExist == false)
+                    transaction.LockFile(LockOperation.Write, filePath);
+
+                    if (transaction != null)
                     {
-                        transaction.RecordFileCreate(filePath);
+                        bool doesFileExist = File.Exists(filePath);
+
+                        if (doesFileExist == false)
+                        {
+                            transaction.RecordFileCreate(filePath);
+                        }
+                        else
+                        {
+                            transaction.RecordFileAlter(filePath);
+                        }
+
+                        if (core.Settings.DeferredIOEnabled)
+                        {
+                            core.Log.Trace($"IO:Write-Deferred:{filePath}");
+
+                            Utility.EnsureNotNull(transaction.DeferredIOs);
+                            var ptDeferredWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredWrite);
+                            transaction.DeferredIOs.PutDeferredDiskIO(filePath, filePath, deserializedObject, format);
+                            ptDeferredWrite?.StopAndAccumulate();
+
+                            core.Health.Increment(HealthCounterType.IODeferredIOWrites);
+
+                            return; //We can skip caching because we write this to the deferred IO cache - which is infinitely more deterministic than the memory cache auto-ejections.
+                        }
                     }
-                    else
-                    {
-                        transaction.RecordFileAlter(filePath);
-                    }
 
-                    if (core.Settings.DeferredIOEnabled)
-                    {
-                        core.Log.Trace($"IO:Write-Deferred:{filePath}");
+                    core.Log.Trace($"IO:Write:{filePath}");
 
-                        Utility.EnsureNotNull(transaction.DeferredIOs);
-                        var ptDeferredWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredWrite);
-                        transaction.DeferredIOs.PutDeferredDiskIO(filePath, filePath, deserializedObject, format);
-                        ptDeferredWrite?.StopAndAccumulate();
-
-                        core.Health.Increment(HealthCounterType.IODeferredIOWrites);
-
-                        return; //We can skip caching because we write this to the deferred IO cache - which is infinitely more deterministic than the memory cache auto-ejections.
-                    }
-                }
-
-                core.Log.Trace($"IO:Write:{filePath}");
-
-                if (format == IOFormat.JSON)
-                {
-                    var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
-                    string text = JsonConvert.SerializeObject(deserializedObject);
-                    ptSerialize?.StopAndAccumulate();
-
-                    if (core.Settings.UseCompression)
-                    {
-                        File.WriteAllBytes(filePath, Compression.Compress(text));
-                    }
-                    else
-                    {
-                        File.WriteAllText(filePath, text);
-                    }
-                }
-                else if (format == IOFormat.PBuf)
-                {
-                    using (var file = File.Create(filePath))
+                    if (format == IOFormat.JSON)
                     {
                         var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
-                        ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                        string text = JsonConvert.SerializeObject(deserializedObject);
                         ptSerialize?.StopAndAccumulate();
-                        file.Close();
-                    }
-                }
-                else
-                {
-                    throw new NotImplementedException();
-                }
 
-                if (core.Settings.CacheEnabled)
-                {
-                    var ptCacheWrite = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
-                    core.Cache.Upsert(filePath, deserializedObject);
-                    ptCacheWrite?.StopAndAccumulate();
-                    core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
+                        if (core.Settings.UseCompression)
+                        {
+                            File.WriteAllBytes(filePath, Compression.Compress(text));
+                        }
+                        else
+                        {
+                            File.WriteAllText(filePath, text);
+                        }
+                    }
+                    else if (format == IOFormat.PBuf)
+                    {
+                        using (var file = File.Create(filePath))
+                        {
+                            var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
+                            ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                            ptSerialize?.StopAndAccumulate();
+                            file.Close();
+                        }
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+
+                    if (core.Settings.CacheEnabled)
+                    {
+                        var ptCacheWrite = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
+                        core.Cache.Upsert(filePath, deserializedObject);
+                        ptCacheWrite?.StopAndAccumulate();
+                        core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
+                    }
                 }
             }
             catch (Exception ex)

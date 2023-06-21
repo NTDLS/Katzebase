@@ -82,6 +82,7 @@
             closeAllToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
+            toolStripButtonStop = new ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)splitContainerProject).BeginInit();
             splitContainerProject.Panel1.SuspendLayout();
             splitContainerProject.Panel2.SuspendLayout();
@@ -178,7 +179,7 @@
             // 
             // toolStrip1
             // 
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonNewFile, toolStripButtonOpen, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonUndo, toolStripButtonRedo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
+            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonNewFile, toolStripButtonOpen, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripButtonStop, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonUndo, toolStripButtonRedo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
             toolStrip1.Location = new Point(0, 24);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Size = new Size(1032, 25);
@@ -539,6 +540,16 @@
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
+            // toolStripButtonStop
+            // 
+            toolStripButtonStop.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonStop.Image = Properties.Resources.ToolStop;
+            toolStripButtonStop.ImageTransparentColor = Color.Magenta;
+            toolStripButtonStop.Name = "toolStripButtonStop";
+            toolStripButtonStop.Size = new Size(23, 22);
+            toolStripButtonStop.Text = "Stop";
+            toolStripButtonStop.Click += toolStripButtonStop_Click;
+            // 
             // FormStudio
             // 
             AllowDrop = true;
@@ -629,5 +640,6 @@
         private ToolStripMenuItem openToolStripMenuItem;
         private ToolStripMenuItem saveToolStripMenuItem1;
         private ToolStripMenuItem saveAsToolStripMenuItem;
+        private ToolStripButton toolStripButtonStop;
     }
 }

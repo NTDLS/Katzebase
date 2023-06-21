@@ -176,6 +176,8 @@ namespace Katzebase.Engine.Indexes.Management
                         foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqualAsDecimal(w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.Like)
                         foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionValue) == true).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.NotLike)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionValue) == false).Select(s => s.Value));
                     else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {conditionField.LogicalQualifier}");
 
                     ptIndexSeek?.StopAndAccumulate();
@@ -267,6 +269,8 @@ namespace Katzebase.Engine.Indexes.Management
                         foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqualAsDecimal(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.Like)
                         foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.NotLike)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
                     else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {conditionField.LogicalQualifier}");
 
                     ptIndexSeek?.StopAndAccumulate();
@@ -647,6 +651,8 @@ namespace Katzebase.Engine.Indexes.Management
 
                 while (pool.ContinueToProcessQueue)
                 {
+                    param.Transaction.EnsureActive();
+
                     var documentPointer = pool.DequeueWorkItem();
                     if (documentPointer == null)
                     {
@@ -700,7 +706,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                 foreach (var documentPointer in documentPointers)
                 {
-                    if (threadPool.HasException || threadPool.ContinueToProcessQueue == false)
+                    if (threadPool.HasException)
                     {
                         break;
                     }

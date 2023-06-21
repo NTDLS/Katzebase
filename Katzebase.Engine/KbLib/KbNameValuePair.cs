@@ -1,11 +1,11 @@
 ﻿namespace Katzebase.Engine.KbLib
 {
-    public class KbNameValuePair
+    public class KbNameValuePair<TKey, TValue>
     {
-        public string Name { get; set; }
-        public string Value { get; set; }
+        public TKey Name { get; set; }
+        public TValue Value { get; set; }
 
-        public KbNameValuePair(string name, string value)
+        public KbNameValuePair(TKey name, TValue value)
         {
             Name = name;
             Value = value;

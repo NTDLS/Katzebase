@@ -35,6 +35,26 @@ namespace Katzebase.PublicLibrary.Client.Management
         }
 
         /// <summary>
+        /// Stores a document in the given schema.
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="document"></param>
+        public void Store(string schema, object document)
+        {
+            string url = $"api/Document/{client.SessionId}/{schema}/Store";
+
+            var postContent = new StringContent(JsonConvert.SerializeObject(new KbDocument(document)), Encoding.UTF8, "text/plain");
+
+            using var response = client.Connection.PostAsync(url, postContent);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
+            if (result == null || result.Success == false)
+            {
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.Message);
+            }
+        }
+
+        /// <summary>
         /// Deletes a document in the given schema by its Id.
         /// </summary>
         /// <param name="schema"></param>

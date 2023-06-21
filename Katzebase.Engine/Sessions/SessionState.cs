@@ -1,21 +1,32 @@
 ﻿using Katzebase.Engine.KbLib;
+using System.Xml;
 
 namespace Katzebase.Engine.Sessions
 {
     public class SessionState
     {
-        public enum KbSystemVariable
+        public enum KbConnectionSetting
         {
             TraceWaitTimes,
             MinQueryThreads,
             MaxQueryThreads,
             QueryThreadWeight
-
         }
-        public bool? TraceWaitTimesEnabled { get; set; }
-        public int? MinQueryThreads { get; set; } = null;
-        public int? MaxQueryThreads { get; set; } = null;
-        public double? QueryThreadWeight { get; set; } = null;
+
+        /// <summary>
+        /// Settings associated with the connection.
+        /// </summary>
+        public List<KbNameValuePair<KbConnectionSetting, double>> Variables { get; set; } = new();
+
+        //public bool? TraceWaitTimesEnabled { get; set; }
+        //public int? MinQueryThreads { get; set; } = null;
+        //public int? MaxQueryThreads { get; set; } = null;
+        //public double? QueryThreadWeight { get; set; } = null;
+
+        /// <summary>
+        /// The last UTC date/time that the connection was interacted with.
+        /// </summary>
+        public DateTime LastCheckinTime { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// ProcessId is produced by the server.
@@ -27,12 +38,9 @@ namespace Katzebase.Engine.Sessions
         /// </summary>
         public Guid SessionId { get; set; }
 
-        public List<KbNameValuePair> Variables { get; set; } = new();
 
-        public KbNameValuePair UpsertVariable(string name, string value)
+        public KbNameValuePair<KbConnectionSetting, double> UpsertConnectionSetting(KbConnectionSetting name, double value)
         {
-            name = name.ToLowerInvariant();
-
             var result = Variables.Where(o => o.Name == name).FirstOrDefault();
             if (result != null)
             {
@@ -40,12 +48,27 @@ namespace Katzebase.Engine.Sessions
             }
             else
             {
-                result = new KbNameValuePair(name, value);
+                result = new(name, value);
                 Variables.Add(result);
             }
             return result;
         }
 
+        public bool IsConnectionSettingSet(KbConnectionSetting name)
+        {
+            var result = Variables.Where(o => o.Name == name).FirstOrDefault();
+            return result != null;
+        }
+
+        public double? GetConnectionSetting(KbConnectionSetting name)
+        {
+            var result = Variables.Where(o => o.Name == name).FirstOrDefault();
+            if (result != null)
+            {
+                return result.Value;
+            }
+            return null;
+        }
 
         public SessionState(ulong processId, Guid sessionId)
         {

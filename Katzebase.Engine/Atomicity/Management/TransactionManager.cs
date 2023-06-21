@@ -70,12 +70,38 @@ namespace Katzebase.Engine.Atomicity.Management
             }
         }
 
+        /// <summary>
+        /// Kills all transactions associated with the given processIDs. This is typically called from the session manager and probably should not be called otherwise.
+        /// </summary>
+        /// <param name="processIDs"></param>
+        internal void CloseByProcessIDs(List<ulong> processIDs)
+        {
+            try
+            {
+                lock (Collection)
+                {
+                    foreach (var processId in processIDs)
+                    {
+                        var transaction = GetByProcessId(processId);
+                        if (transaction != null)
+                        {
+                            transaction.Rollback();
+                            Collection.Remove(transaction);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to remove transactions by processIDs.", ex);
+                throw;
+            }
+        }
+
         internal void Recover()
         {
             try
             {
-                core.Log.Write("Starting recovery.");
-
                 Directory.CreateDirectory(core.Settings.TransactionDataPath);
 
                 var transactionFiles = Directory.EnumerateFiles(core.Settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories).ToList();
@@ -112,8 +138,6 @@ namespace Katzebase.Engine.Atomicity.Management
                         core.Log.Write($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
                     }
                 }
-
-                core.Log.Write("Recovery complete.");
             }
             catch (Exception ex)
             {

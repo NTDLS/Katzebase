@@ -75,14 +75,11 @@ namespace Katzebase.Engine.Query.Management
                         throw new KbParserException("Invalid list query subtype.");
                     }
                 }
-                else if (preparedQuery.QueryType == QueryType.Set)
-                {
-                    //Reroute to non-query as appropriate:
-                    return KbQueryResult.FromActionResponse(ExecuteNonQuery(processId, preparedQuery));
-                }
                 else if (preparedQuery.QueryType == QueryType.Delete
                     || preparedQuery.QueryType == QueryType.Rebuild
                     || preparedQuery.QueryType == QueryType.Create
+                    || preparedQuery.QueryType == QueryType.Set
+                    || preparedQuery.QueryType == QueryType.Kill
                     || preparedQuery.QueryType == QueryType.Drop
                     || preparedQuery.QueryType == QueryType.Begin
                     || preparedQuery.QueryType == QueryType.Commit
@@ -110,6 +107,10 @@ namespace Katzebase.Engine.Query.Management
                 if (preparedQuery.QueryType == QueryType.Delete)
                 {
                     return core.Documents.QueryHandlers.ExecuteDelete(processId, preparedQuery);
+                }
+                else if (preparedQuery.QueryType == QueryType.Kill)
+                {
+                    return core.Sessions.QueryHandlers.ExecuteKillProcess(processId, preparedQuery);
                 }
                 else if (preparedQuery.QueryType == QueryType.Set)
                 {

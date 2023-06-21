@@ -170,6 +170,8 @@ namespace Katzebase.Engine.Query.Searchers
 
             while (pool.ContinueToProcessQueue)
             {
+                param.Transaction.EnsureActive();
+
                 var toplevelDocument = pool.DequeueWorkItem();
                 if (toplevelDocument == null)
                 {

@@ -54,6 +54,11 @@
         public int HealthMonitoringChekpointSeconds { get; set; }
 
         /// <summary>
+        /// The number of seconds that a connection must be idle before its transactions are rolled back and connectin closed.
+        /// </summary>
+        public int MaxIdleConnectionSeconds { get; set; }
+
+        /// <summary>
         /// The base listening URL for the web-services.
         /// </summary>
         public string BaseAddress { get; set; } = string.Empty;

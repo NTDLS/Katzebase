@@ -1,6 +1,6 @@
 ﻿namespace Katzebase.PublicLibrary.Client
 {
-    public class KatzebaseClient
+    public class KatzebaseClient : IDisposable
     {
         public HttpClient Connection { get; private set; }
         public Guid SessionId { get; private set; }
@@ -9,6 +9,8 @@
         public Management.Server Server { get; private set; }
         public Management.Transaction Transaction { get; private set; }
         public Management.Query Query { get; private set; }
+
+        private Thread keepAliveThread;
 
         /// <summary>
         /// This is the process id of the session on the server. This is populated with each call to Client.Server.Ping().
@@ -29,6 +31,9 @@
             Server = new Management.Server(this);
             Transaction = new Management.Transaction(this);
             Query = new Management.Query(this);
+
+            keepAliveThread = new Thread(KeepAliveThread);
+            keepAliveThread.Start();
         }
 
         public KatzebaseClient(string baseAddress, TimeSpan timeout)
@@ -45,6 +50,54 @@
             Server = new Management.Server(this);
             Transaction = new Management.Transaction(this);
             Query = new Management.Query(this);
+
+            keepAliveThread = new Thread(KeepAliveThread);
+            keepAliveThread.Start();
         }
+
+        private void KeepAliveThread()
+        {
+            int approximateSleepTimeMs = 1000;
+
+            while (disposed == false)
+            {
+                Server.Ping(); //This keeps the connection alive on the server side.
+
+                for (int sleep = 0; disposed == false && sleep < (approximateSleepTimeMs + 10); sleep++)
+                {
+                    Thread.Sleep(10);
+                }
+            }
+        }
+
+        #region IDisposable.
+
+        private bool disposed = false;
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                if (Connection != null)
+                {
+                    Transaction.Rollback();
+                    Connection.Dispose();
+                }
+            }
+
+            disposed = true;
+        }
+
+        #endregion
     }
 }

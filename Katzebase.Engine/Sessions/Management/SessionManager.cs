@@ -1,4 +1,5 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace Katzebase.Engine.Sessions.Management
@@ -29,6 +30,17 @@ namespace Katzebase.Engine.Sessions.Management
             }
         }
 
+        public List<SessionState> GetExpiredSessions()
+        {
+            lock (Collection)
+            {
+                var sessions = Collection.Where(o => (DateTime.UtcNow - o.Value.LastCheckinTime)
+                    .TotalSeconds > core.Settings.MaxIdleConnectionSeconds).Select(o => o.Value).ToList();
+
+                return sessions;
+            }
+        }
+
         public ulong UpsertSessionId(Guid sessionId)
         {
             try
@@ -37,7 +49,11 @@ namespace Katzebase.Engine.Sessions.Management
                 {
                     if (Collection.ContainsKey(sessionId))
                     {
-                        return Collection[sessionId].ProcessId;
+                        var session = Collection[sessionId];
+
+                        session.LastCheckinTime = DateTime.UtcNow;
+
+                        return session.ProcessId;
                     }
                     else
                     {
@@ -50,6 +66,60 @@ namespace Katzebase.Engine.Sessions.Management
             catch (Exception ex)
             {
                 core.Log.Write($"Failed to upsert session for session {sessionId}.", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Kills all referenced sessions and any associated transactions.
+        /// </summary>
+        /// <param name="processIDs"></param>
+        internal void CloseByProcessIDs(List<ulong> processIDs)
+        {
+            try
+            {
+                lock (Collection)
+                {
+                    core.Transactions.CloseByProcessIDs(processIDs);
+
+                    var expiredSessions = Collection.Where(o => processIDs.Contains(o.Value.ProcessId)).ToList();
+
+                    foreach (var expiredSession in expiredSessions)
+                    {
+                        Collection.Remove(expiredSession.Key);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to remove sessions by processIDs.", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Kills a session and any associated transaction. This is how we kill a process.
+        /// </summary>
+        /// <param name="processId"></param>
+        public void CloseByProcessId(ulong processId)
+        {
+            try
+            {
+                lock (Collection)
+                {
+                    core.Transactions.CloseByProcessIDs(new List<ulong> { processId });
+
+                    var session = Collection.Where(o => o.Value.ProcessId == processId).FirstOrDefault().Value;
+                    if (session != null)
+                    {
+                        Collection.Remove(session.SessionId);
+                    }
+
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to remove sessions by processIDs.", ex);
                 throw;
             }
         }

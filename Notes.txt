@@ -10,3 +10,6 @@ If any one conditon group does not have an index, then no indexing will be used 
 
 All methods inside "management" namespaces should handle exceptions for logging and then throw the exceptions.
 All API controllers (not the API management classes, but the service controller) should catch and handle exceptions. Do not throw them.
+
+
+All long running processes should run Transaction.EnsureActive() often to throw an exception if the transaction has been killed.

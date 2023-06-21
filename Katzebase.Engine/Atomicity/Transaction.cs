@@ -6,14 +6,13 @@ using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using static Katzebase.Engine.KbLib.EngineConstants;
 
 namespace Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {
-        public List<Atom> Atoms = new ();
+        public List<Atom> Atoms = new();
         public ulong ProcessId { get; set; }
         public DateTime StartTime { get; set; }
         public List<ulong> BlockedBy { get; set; }
@@ -41,7 +40,8 @@ namespace Katzebase.Engine.Atomicity
         private readonly Core core;
         private TransactionManager transactionManager;
         private StreamWriter? transactionLogHandle = null;
-        private bool isComittedOrRolledBack = false;
+        public bool IsComittedOrRolledBack { get; private set; } = false;
+        public bool IsCancelled { get; private set; } = false;
 
         private int referenceCount = 0;
         public int ReferenceCount
@@ -73,6 +73,18 @@ namespace Katzebase.Engine.Atomicity
             }
         }
 
+        public void EnsureActive()
+        {
+            if (IsCancelled)
+            {
+                throw new KbTransactionCancelledException("The transaction was cancelled");
+            }
+            if (IsComittedOrRolledBack)
+            {
+                throw new KbTransactionCancelledException("The transaction was comitted or rolled back.");
+            }
+        }
+
 
         #region IDisposable.
 
@@ -95,7 +107,7 @@ namespace Katzebase.Engine.Atomicity
             if (disposing)
             {
                 //Rollback Transaction if its still open:
-                if (IsUserCreated == false && isComittedOrRolledBack == false)
+                if (IsUserCreated == false && IsComittedOrRolledBack == false)
                 {
                     Rollback();
                 }
@@ -112,18 +124,23 @@ namespace Katzebase.Engine.Atomicity
         {
             try
             {
-                var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"File:{lockOperation}");
-
-                diskpath = diskpath.ToLower();
-
-                Utility.EnsureNotNull(HeldLockKeys);
-
-                lock (HeldLockKeys)
+                lock (SyncObject)
                 {
-                    var lockIntention = new LockIntention(diskpath, LockType.File, lockOperation);
-                    core.Locking.Locks.Acquire(this, lockIntention);
+                    EnsureActive();
+
+                    var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"File:{lockOperation}");
+
+                    diskpath = diskpath.ToLower();
+
+                    Utility.EnsureNotNull(HeldLockKeys);
+
+                    lock (HeldLockKeys)
+                    {
+                        var lockIntention = new LockIntention(diskpath, LockType.File, lockOperation);
+                        core.Locking.Locks.Acquire(this, lockIntention);
+                    }
+                    ptLock?.StopAndAccumulate();
                 }
-                ptLock?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -136,19 +153,24 @@ namespace Katzebase.Engine.Atomicity
         {
             try
             {
-                var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
-
-                diskpath = diskpath.ToLower();
-
-                Utility.EnsureNotNull(HeldLockKeys);
-
-                lock (HeldLockKeys)
+                lock (SyncObject)
                 {
-                    var lockIntention = new LockIntention(diskpath, LockType.Directory, lockOperation);
-                    core.Locking.Locks.Acquire(this, lockIntention);
-                }
+                    EnsureActive();
 
-                ptLock?.StopAndAccumulate();
+                    var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
+
+                    diskpath = diskpath.ToLower();
+
+                    Utility.EnsureNotNull(HeldLockKeys);
+
+                    lock (HeldLockKeys)
+                    {
+                        var lockIntention = new LockIntention(diskpath, LockType.Directory, lockOperation);
+                        core.Locking.Locks.Acquire(this, lockIntention);
+                    }
+
+                    ptLock?.StopAndAccumulate();
+                }
             }
             catch (Exception ex)
             {
@@ -191,7 +213,7 @@ namespace Katzebase.Engine.Atomicity
             if (isRecovery == false)
             {
                 var session = core.Sessions.ByProcessId(processId);
-                if (session.TraceWaitTimesEnabled == true)
+                if (session.GetConnectionSetting(Sessions.SessionState.KbConnectionSetting.TraceWaitTimes) == 1)
                 {
                     PT = new PerformanceTrace();
                 }
@@ -205,6 +227,8 @@ namespace Katzebase.Engine.Atomicity
                 {
                     AutoFlush = true
                 };
+
+                Utility.EnsureNotNull(transactionLogHandle);
             }
         }
 
@@ -216,27 +240,32 @@ namespace Katzebase.Engine.Atomicity
         {
             try
             {
-                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-                lock (Atoms)
+                lock (SyncObject)
                 {
-                    if (IsFileAlreadyRecorded(filePath))
+                    EnsureActive();
+
+                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+                    lock (Atoms)
                     {
-                        return;
+                        if (IsFileAlreadyRecorded(filePath))
+                        {
+                            return;
+                        }
+
+                        var atom = new Atom(ActionType.FileCreate, filePath)
+                        {
+                            Sequence = Atoms.Count
+                        };
+
+                        Atoms.Add(atom);
+
+                        Utility.EnsureNotNull(transactionLogHandle);
+
+                        transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
 
-                    var atom = new Atom(ActionType.FileCreate, filePath)
-                    {
-                        Sequence = Atoms.Count
-                    };
-
-                    Atoms.Add(atom);
-
-                    Utility.EnsureNotNull(transactionLogHandle);
-
-                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                    ptRecording?.StopAndAccumulate();
                 }
-
-                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -249,26 +278,31 @@ namespace Katzebase.Engine.Atomicity
         {
             try
             {
-                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-                lock (Atoms)
+                lock (SyncObject)
                 {
-                    if (IsFileAlreadyRecorded(path))
+                    EnsureActive();
+
+                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+                    lock (Atoms)
                     {
-                        return;
+                        if (IsFileAlreadyRecorded(path))
+                        {
+                            return;
+                        }
+
+                        var atom = new Atom(ActionType.DirectoryCreate, path)
+                        {
+                            Sequence = Atoms.Count
+                        };
+
+                        Atoms.Add(atom);
+
+                        Utility.EnsureNotNull(transactionLogHandle);
+
+                        transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
-
-                    var atom = new Atom(ActionType.DirectoryCreate, path)
-                    {
-                        Sequence = Atoms.Count
-                    };
-
-                    Atoms.Add(atom);
-
-                    Utility.EnsureNotNull(transactionLogHandle);
-
-                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                    ptRecording?.StopAndAccumulate();
                 }
-                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -281,32 +315,37 @@ namespace Katzebase.Engine.Atomicity
         {
             try
             {
-                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-
-                lock (Atoms)
+                lock (SyncObject)
                 {
-                    if (IsFileAlreadyRecorded(diskPath))
+                    EnsureActive();
+
+                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+
+                    lock (Atoms)
                     {
-                        return;
+                        if (IsFileAlreadyRecorded(diskPath))
+                        {
+                            return;
+                        }
+
+                        string backupPath = Path.Combine(TransactionPath, Guid.NewGuid().ToString());
+                        Directory.CreateDirectory(backupPath);
+                        Helpers.CopyDirectory(diskPath, backupPath);
+
+                        var atom = new Atom(ActionType.DirectoryDelete, diskPath)
+                        {
+                            BackupPath = backupPath,
+                            Sequence = Atoms.Count
+                        };
+
+                        Atoms.Add(atom);
+
+                        Utility.EnsureNotNull(transactionLogHandle);
+
+                        transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
-
-                    string backupPath = Path.Combine(TransactionPath, Guid.NewGuid().ToString());
-                    Directory.CreateDirectory(backupPath);
-                    Helpers.CopyDirectory(diskPath, backupPath);
-
-                    var atom = new Atom(ActionType.DirectoryDelete, diskPath)
-                    {
-                        BackupPath = backupPath,
-                        Sequence = Atoms.Count
-                    };
-
-                    Atoms.Add(atom);
-
-                    Utility.EnsureNotNull(transactionLogHandle);
-
-                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                    ptRecording?.StopAndAccumulate();
                 }
-                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -319,31 +358,36 @@ namespace Katzebase.Engine.Atomicity
         {
             try
             {
-                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-
-                lock (Atoms)
+                lock (SyncObject)
                 {
-                    if (IsFileAlreadyRecorded(filePath))
+                    EnsureActive();
+
+                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+
+                    lock (Atoms)
                     {
-                        return;
+                        if (IsFileAlreadyRecorded(filePath))
+                        {
+                            return;
+                        }
+
+                        string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
+                        File.Copy(filePath, backupPath);
+
+                        var atom = new Atom(ActionType.FileDelete, filePath)
+                        {
+                            BackupPath = backupPath,
+                            Sequence = Atoms.Count
+                        };
+
+                        Atoms.Add(atom);
+
+                        Utility.EnsureNotNull(transactionLogHandle);
+
+                        transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
-
-                    string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
-                    File.Copy(filePath, backupPath);
-
-                    var atom = new Atom(ActionType.FileDelete, filePath)
-                    {
-                        BackupPath = backupPath,
-                        Sequence = Atoms.Count
-                    };
-
-                    Atoms.Add(atom);
-
-                    Utility.EnsureNotNull(transactionLogHandle);
-
-                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                    ptRecording?.StopAndAccumulate();
                 }
-                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -356,31 +400,36 @@ namespace Katzebase.Engine.Atomicity
         {
             try
             {
-                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-
-                lock (Atoms)
+                lock (SyncObject)
                 {
-                    if (IsFileAlreadyRecorded(filePath))
+                    EnsureActive();
+
+                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+
+                    lock (Atoms)
                     {
-                        return;
+                        if (IsFileAlreadyRecorded(filePath))
+                        {
+                            return;
+                        }
+
+                        string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
+                        File.Copy(filePath, backupPath);
+
+                        var atom = new Atom(ActionType.FileAlter, filePath)
+                        {
+                            BackupPath = backupPath,
+                            Sequence = Atoms.Count
+                        };
+
+                        Atoms.Add(atom);
+
+                        Utility.EnsureNotNull(transactionLogHandle);
+
+                        transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
-
-                    string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
-                    File.Copy(filePath, backupPath);
-
-                    var atom = new Atom(ActionType.FileAlter, filePath)
-                    {
-                        BackupPath = backupPath,
-                        Sequence = Atoms.Count
-                    };
-
-                    Atoms.Add(atom);
-
-                    Utility.EnsureNotNull(transactionLogHandle);
-
-                    transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                    ptRecording?.StopAndAccumulate();
                 }
-                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -401,142 +450,155 @@ namespace Katzebase.Engine.Atomicity
 
         public void Rollback()
         {
-            if (isComittedOrRolledBack)
+            lock (SyncObject)
             {
-                return;
-            }
+                if (IsComittedOrRolledBack)
+                {
+                    return;
+                }
 
-            isComittedOrRolledBack = true;
+                IsComittedOrRolledBack = true;
+                IsCancelled = true;
 
-            try
-            {
-                var ptRollback = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Rollback);
                 try
                 {
-                    var rollbackActions = Atoms.OrderByDescending(o => o.Sequence);
-
-                    foreach (var record in rollbackActions)
-                    {
-                        //We need to eject the rolled back item from the cache since its last known state has changed.
-                        core.Cache.Remove(record.OriginalPath);
-
-                        if (record.Action == ActionType.FileCreate)
-                        {
-                            try
-                            {
-                                if (File.Exists(record.OriginalPath))
-                                {
-                                    File.Delete(record.OriginalPath);
-                                }
-                            }
-                            catch
-                            {
-                                //Discard.
-                            }
-                            Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(record.OriginalPath));
-                        }
-                        else if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
-                        {
-                            var diskPath = Path.GetDirectoryName(record.OriginalPath);
-
-                            Utility.EnsureNotNull(diskPath);
-                            Utility.EnsureNotNull(record.BackupPath);
-
-                            Directory.CreateDirectory(diskPath);
-                            File.Copy(record.BackupPath, record.OriginalPath, true);
-                        }
-                        else if (record.Action == ActionType.DirectoryCreate)
-                        {
-                            if (Directory.Exists(record.OriginalPath))
-                            {
-                                Directory.Delete(record.OriginalPath, false);
-                            }
-                        }
-                        else if (record.Action == ActionType.DirectoryDelete)
-                        {
-                            Utility.EnsureNotNull(record.BackupPath);
-                            Helpers.CopyDirectory(record.BackupPath, record.OriginalPath);
-                        }
-                    }
-
-                    transactionManager.RemoveByProcessId(ProcessId);
-
+                    var ptRollback = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Rollback);
                     try
                     {
-                        CleanupTransaction();
+                        var rollbackActions = Atoms.OrderByDescending(o => o.Sequence);
+
+                        foreach (var record in rollbackActions)
+                        {
+                            //We need to eject the rolled back item from the cache since its last known state has changed.
+                            core.Cache.Remove(record.OriginalPath);
+
+                            if (record.Action == ActionType.FileCreate)
+                            {
+                                try
+                                {
+                                    if (File.Exists(record.OriginalPath))
+                                    {
+                                        File.Delete(record.OriginalPath);
+                                    }
+                                }
+                                catch
+                                {
+                                    //Discard.
+                                }
+                                Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(record.OriginalPath));
+                            }
+                            else if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
+                            {
+                                var diskPath = Path.GetDirectoryName(record.OriginalPath);
+
+                                Utility.EnsureNotNull(diskPath);
+                                Utility.EnsureNotNull(record.BackupPath);
+
+                                Directory.CreateDirectory(diskPath);
+                                File.Copy(record.BackupPath, record.OriginalPath, true);
+                            }
+                            else if (record.Action == ActionType.DirectoryCreate)
+                            {
+                                if (Directory.Exists(record.OriginalPath))
+                                {
+                                    Directory.Delete(record.OriginalPath, false);
+                                }
+                            }
+                            else if (record.Action == ActionType.DirectoryDelete)
+                            {
+                                Utility.EnsureNotNull(record.BackupPath);
+                                Helpers.CopyDirectory(record.BackupPath, record.OriginalPath);
+                            }
+                        }
+
+                        transactionManager.RemoveByProcessId(ProcessId);
+
+                        try
+                        {
+                            CleanupTransaction();
+                        }
+                        catch
+                        {
+                            //Discard.
+                        }
                     }
                     catch
                     {
-                        //Discard.
+                        throw;
                     }
+                    finally
+                    {
+                        ReleaseLocks();
+                    }
+
+                    ptRollback?.StopAndAccumulate();
+                    PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
+
                 }
-                catch
+                catch (Exception ex)
                 {
+                    core.Log.Write($"Failed to rollback transaction for for process {ProcessId}.", ex);
                     throw;
                 }
-                finally
-                {
-                    ReleaseLocks();
-                }
-
-                ptRollback?.StopAndAccumulate();
-                PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to rollback transaction for for process {ProcessId}.", ex);
-                throw;
             }
         }
 
         public void Commit()
         {
-            if (isComittedOrRolledBack)
+            lock (SyncObject)
             {
-                return;
-            }
-
-            try
-            {
-                var ptCommit = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Commit);
-                lock (this)
+                if (IsCancelled)
                 {
-                    referenceCount--;
-
-                    if (referenceCount == 0)
-                    {
-                        isComittedOrRolledBack = true;
-
-                        try
-                        {
-                            Utility.EnsureNotNull(DeferredIOs);
-                            DeferredIOs.CommitDeferredDiskIO();
-                            CleanupTransaction();
-                            transactionManager.RemoveByProcessId(ProcessId);
-                        }
-                        catch
-                        {
-                            throw;
-                        }
-                        finally
-                        {
-                            ReleaseLocks();
-                        }
-                    }
-                    else if (referenceCount < 0)
-                    {
-                        throw new KbGenericException("Transaction reference count fell below zero.");
-                    }
+                    throw new KbTransactionCancelledException();
                 }
 
-                ptCommit?.StopAndAccumulate();
+                if (IsComittedOrRolledBack)
+                {
+                    return;
+                }
 
-                PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to commit transaction for for process {ProcessId}.", ex);
-                throw;
+                try
+                {
+                    var ptCommit = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Commit);
+                    lock (this)
+                    {
+                        referenceCount--;
+
+                        if (referenceCount == 0)
+                        {
+                            IsComittedOrRolledBack = true;
+
+                            try
+                            {
+                                Utility.EnsureNotNull(DeferredIOs);
+                                DeferredIOs.CommitDeferredDiskIO();
+                                CleanupTransaction();
+                                transactionManager.RemoveByProcessId(ProcessId);
+                            }
+                            catch
+                            {
+                                throw;
+                            }
+                            finally
+                            {
+                                ReleaseLocks();
+                            }
+                        }
+                        else if (referenceCount < 0)
+                        {
+                            throw new KbGenericException("Transaction reference count fell below zero.");
+                        }
+                    }
+
+                    ptCommit?.StopAndAccumulate();
+
+                    PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
+                }
+                catch (Exception ex)
+                {
+                    core.Log.Write($"Failed to commit transaction for for process {ProcessId}.", ex);
+                    throw;
+                }
             }
         }
 

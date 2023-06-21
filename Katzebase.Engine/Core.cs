@@ -2,6 +2,7 @@
 using Katzebase.Engine.Caching.Management;
 using Katzebase.Engine.Documents.Management;
 using Katzebase.Engine.Health.Management;
+using Katzebase.Engine.Heartbeat.Management;
 using Katzebase.Engine.Indexes.Management;
 using Katzebase.Engine.IO;
 using Katzebase.Engine.Locking;
@@ -22,6 +23,7 @@ namespace Katzebase.Engine
         internal LockManager Locking;
         internal CacheManager Cache;
         internal KatzebaseSettings Settings;
+        internal HeartbeatManager Heartbeat;
 
         public SchemaManager Schemas;
         public DocumentManager Documents;
@@ -74,20 +76,26 @@ namespace Katzebase.Engine
             Log.Write("Initializing query manager.");
             Query = new QueryManager(this);
 
-            Log.Write("Initilization complete.");
+            Log.Write("Initializing hearbeat.");
+            Heartbeat = new HeartbeatManager(this);
         }
 
         public void Start()
         {
             Log.Write("Starting the server.");
 
+            Log.Write("Starting recovery.");
             Transactions.Recover();
+            Log.Write("Recovery complete.");
+
+            Heartbeat.Start();
         }
 
         public void Stop()
         {
             Log.Write("Stopping the server.");
 
+            Heartbeat.Stop();
             Health.Close();
             Log.Close();
         }

@@ -82,8 +82,7 @@ namespace Katzebase.Engine.Schemas.Management
                 var physicalSchema = AcquireVirtual(transaction, schemaName, LockOperation.Write);
                 if (physicalSchema.Exists)
                 {
-                    transaction.Commit(); //The schema already exists, not much else to do.
-                    return;
+                    return; //The schema already exists, not much else to do.
                 }
 
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
@@ -120,8 +119,7 @@ namespace Katzebase.Engine.Schemas.Management
                 var physicalSchema = AcquireVirtual(transaction, schemaName, LockOperation.Write);
                 if (physicalSchema.Exists == false)
                 {
-                    transaction.Commit(); //The schema does not exists, not much else to do.
-                    return;
+                    return; //The schema does not exists, not much else to do.
                 }
 
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);

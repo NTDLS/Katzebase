@@ -11,6 +11,7 @@ namespace Katzebase.Engine.Query
         {
             IndexName,
             IsUnique,
+            ProcessId,
             SpecificSchemaPrefix
         }
 
@@ -30,7 +31,8 @@ namespace Katzebase.Engine.Query
         /// List of key/values used for insert statements.
         /// </summary>
         public List<UpsertKeyValues> UpsertValues { get; set; } = new();
-        public List<KbNameValuePair> VariableValues { get; set; } = new();
+
+        public List<KbNameValuePair<string, string>> VariableValues { get; set; } = new();
 
         public T Attribute<T>(QueryAttribute attribute)
         {

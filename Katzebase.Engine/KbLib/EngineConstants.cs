@@ -7,8 +7,8 @@
         public static string DocumentPageCatalogFile { get; } = "@pages.kbcat";
         public static string IndexCatalogFile { get; } = "@indexes.kbcat";
         public static string LoginCatalogFile { get; } = "@logins.kbcat";
-        public static string TransactionActionsFile { get; } = "@transaction.kblog";
-        public static string HealthStatsFile { get; } = "@health.json";
+        public static string TransactionActionsFile { get; } = "@transaction.kbatom";
+        public static string HealthStatsFile { get; } = "@health.kblog";
         public static Guid RootSchemaGUID { get; } = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
 
         public enum IOFormat
@@ -69,7 +69,8 @@
             Commit,
             Drop,
             Rebuild,
-            Set
+            Set,
+            Kill
         }
 
         public enum SubQueryType

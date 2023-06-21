@@ -1,4 +1,12 @@
-drop schema AdventureWorks2012:Purchasing
+select * from WordList:FlatTranslate
+--where English like 'apple%'
+
+/*
+CREATE INDEX IX_FlatTranslate_English
+(
+	English
+) ON WordList:FlatTranslate
+*/
 /*
 delete from
 AdventureWorks2012:Production:Product

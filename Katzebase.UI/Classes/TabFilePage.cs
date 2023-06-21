@@ -4,6 +4,7 @@ using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using System.Text;
+using System.Windows.Forms;
 
 namespace Katzebase.UI.Classes
 {
@@ -79,11 +80,10 @@ namespace Katzebase.UI.Classes
             ReadOnly = true,
             AllowUserToOrderColumns = true,
             AllowUserToResizeRows = true,
-            AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells
-
+            AllowUserToResizeColumns = true,
         };
-        public TabControl BottomTabControl { get; private set; } = new() { Dock = DockStyle.Fill };
 
+        public TabControl BottomTabControl { get; private set; } = new() { Dock = DockStyle.Fill };
         public TextEditor Editor { get; private set; }
         public FormFindText FindTextForm { get; private set; }
         public FormReplaceText ReplaceTextForm { get; private set; }
@@ -181,6 +181,22 @@ namespace Katzebase.UI.Classes
 
         #region Execute.
 
+        public void ExecuteStopCommand()
+        {
+            if (IsScriptExecuting == false)
+            {
+                return;
+            }
+            if (Client == null)
+            {
+                IsScriptExecuting = false;
+                return;
+            }
+
+
+            Client.Server.TerminateProcess(Client.ServerProcessId);
+        }
+
         /// <summary>
         /// This is for actually executing the script against a live database.
         /// </summary>
@@ -269,6 +285,9 @@ namespace Katzebase.UI.Classes
                 {
                     BottomTabControl.SelectedTab = OutputTab;
                 }
+
+                OutputGrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.DisplayedCells);
+                tabFilePage.Editor.Focus();
 
                 IsScriptExecuting = false;
             }

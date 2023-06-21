@@ -107,6 +107,8 @@ namespace Katzebase.UI
             toolStripButtonReplace.Enabled = isTabOpen;
             toolStripButtonExecuteScript.Enabled = isTabOpen && (tabFilePage?.IsScriptExecuting == false);
             toolStripButtonExplainPlan.Enabled = isTabOpen && (tabFilePage?.IsScriptExecuting == false);
+            toolStripButtonStop.Enabled = isTabOpen && (tabFilePage?.IsScriptExecuting == true);
+
             toolStripButtonUndo.Enabled = isTabOpen;
 
             toolStripButtonDecreaseIndent.Enabled = isTextSelected;
@@ -613,6 +615,12 @@ namespace Katzebase.UI
         private void toolStripButtonOpen_Click(object sender, EventArgs e)
         {
             OpenTab();
+        }
+
+
+        private void toolStripButtonStop_Click(object sender, EventArgs e)
+        {
+            CurrentTabFilePage()?.ExecuteStopCommand();
         }
 
         private void toolStripButtonExecuteScript_Click(object sender, EventArgs e)

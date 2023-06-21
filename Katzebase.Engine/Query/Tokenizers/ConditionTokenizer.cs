@@ -44,9 +44,9 @@ namespace Katzebase.Engine.Query.Tokenizers
                     return LogicalQualifier.GreaterThanOrEqual;
                 case "<=":
                     return LogicalQualifier.LessThanOrEqual;
-                case "~":
+                case "like":
                     return LogicalQualifier.Like;
-                case "!~":
+                case "not like":
                     return LogicalQualifier.NotLike;
             }
             return LogicalQualifier.None;

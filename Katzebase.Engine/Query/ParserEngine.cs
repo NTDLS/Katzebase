@@ -855,15 +855,31 @@ namespace Katzebase.Engine.Query
             }
             #endregion
 
+            #region Kill -----------------------------------------------------------------------------------------------
+            else if (queryType == QueryType.Kill)
+            {
+                string referencedProcessId = query.Remainder();
+                try
+                {
+                    result.AddAttribute(PreparedQuery.QueryAttribute.ProcessId, ulong.Parse(referencedProcessId));
+                }
+                catch{
+                    throw new KbParserException("Invalid query. Found '" + referencedProcessId + "', expected: numeric process id.");
+                }
+            }
+            #endregion
+
+
             #region Set ------------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Set)
             {
                 //Variable 
                 string variableName = query.GetNextToken();
                 string variableValue = query.Remainder();
-                result.VariableValues.Add(new KbNameValuePair(variableName, variableValue));
+                result.VariableValues.Add(new(variableName, variableValue));
             }
             #endregion
+
 
             #region Insert ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Insert)

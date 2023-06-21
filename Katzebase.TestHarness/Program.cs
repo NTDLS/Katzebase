@@ -1,4 +1,5 @@
 ﻿using Katzebase.PublicLibrary.Client;
+using Katzebase.PublicLibrary.Client.Management;
 using Katzebase.PublicLibrary.Payloads;
 using System.Diagnostics;
 using System.Reflection;
@@ -7,13 +8,60 @@ namespace Katzebase.TestHarness
 {
     class Program
     {
+
+        private static void TestThread(string schemaName)
+        {
+            var client = new KatzebaseClient("http://localhost:6858/");
+            client.Server.Ping();
+
+            client.Schema.Exists(schemaName);
+
+            client.Transaction.Begin();
+
+            client.Schema.Create(schemaName);
+
+            int count = 0;
+
+            while (true)
+            {
+                if (count > 0 && (count % 100) == 0)
+                {
+                    client.Transaction.Commit();
+                    client.Transaction.Begin();
+                }
+
+                client.Document.Store(schemaName, new { FirstName = "First", LastName = "Last" });
+                Thread.Sleep(10);
+                count++;
+            }
+
+            client.Transaction.Commit();
+
+        }
+
         static void Main(string[] args)
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
             Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
 
-            Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/", false);
+            //(new Thread(() => { TestThread("TopNotchERP:Address"); })).Start();
+            //(new Thread(() => { TestThread("AdventureWorks2012:dbo:AWBuildVersion"); })).Start();
+
+
+            (new Thread(() =>
+            {
+                Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "AdventureWorks2012", "http://localhost:6858/", false);
+            })).Start();
+            
+            (new Thread(() =>
+            {
+                Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "TopNotchERP", "http://localhost:6858/", true);
+            })).Start();
+            (new Thread(() =>
+            {
+                Exporter.ExportSQLServerDatabaseToKatzebase("localhost", "WordList", "http://localhost:6858/", true);
+            })).Start();
 
             #region Misc. Tests & stuff.
 
@@ -261,7 +309,7 @@ namespace Katzebase.TestHarness
                     client.Transaction.Begin();
                 }
 
-                StudentRecord student = new StudentRecord()
+                var student = new
                 {
                     FirstName = RandomString(2),
                     LastName = RandomString(2),
@@ -326,7 +374,7 @@ namespace Katzebase.TestHarness
                     client.Transaction.Begin();
                 }
 
-                StudentRecord student = new StudentRecord()
+                var student = new
                 {
                     FirstName = RandomString(2),
                     LastName = RandomString(2),
@@ -432,7 +480,7 @@ namespace Katzebase.TestHarness
                     client.Transaction.Begin();
                 }
 
-                StudentRecord student = new StudentRecord()
+                var student = new
                 {
                     FirstName = RandomString(2),
                     LastName = RandomString(2),
@@ -500,7 +548,7 @@ namespace Katzebase.TestHarness
 
                     #region Store Documents.
 
-                    StudentRecord student = new StudentRecord()
+                    var student = new
                     {
                         FirstName = "John",
                         LastName = "Doe",
