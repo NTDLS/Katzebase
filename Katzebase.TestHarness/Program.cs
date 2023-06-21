@@ -8,46 +8,8 @@ namespace Katzebase.TestHarness
     class Program
     {
 
-        private static void TestThread(string schemaName)
+        private static void ExportSQLServerDatabases()
         {
-            var client = new KatzebaseClient("http://localhost:6858/");
-            client.Server.Ping();
-
-            client.Schema.Exists(schemaName);
-
-            client.Transaction.Begin();
-
-            client.Schema.Create(schemaName);
-
-            int count = 0;
-
-            while (true)
-            {
-                if (count > 0 && (count % 100) == 0)
-                {
-                    client.Transaction.Commit();
-                    client.Transaction.Begin();
-                }
-
-                client.Document.Store(schemaName, new { FirstName = "First", LastName = "Last" });
-                Thread.Sleep(10);
-                count++;
-            }
-
-            client.Transaction.Commit();
-
-        }
-
-        static void Main(string[] args)
-        {
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
-            Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
-
-            //(new Thread(() => { TestThread("TopNotchERP:Address"); })).Start();
-            //(new Thread(() => { TestThread("AdventureWorks2012:dbo:AWBuildVersion"); })).Start();
-
-
             var databasesNames = new string[]{
                     "WordList",
                     "AdventureWorks2012",
@@ -61,7 +23,18 @@ namespace Katzebase.TestHarness
                     Exporter.ExportSQLServerDatabaseToKatzebase("localhost", databasesName, "http://localhost:6858/", false);
                 })).Start();
             }
+        }
 
+        static void Main(string[] args)
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+            Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
+
+            //(new Thread(() => { TestThread("TopNotchERP:Address"); })).Start();
+            //(new Thread(() => { TestThread("AdventureWorks2012:dbo:AWBuildVersion"); })).Start();
+
+            //ExportSQLServerDatabases();
 
             #region Misc. Tests & stuff.
 

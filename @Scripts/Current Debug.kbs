@@ -1,7 +1,41 @@
-/*
-This is a comment
+select
+	sw.Id,
+	sw.Text as SourceWord,
+	S.TargetWordId,
+	tw.Text as TargetWord,
+	tl.Name as TargetLanguage
+from
+	WordList:Word as sw
+inner join WordList:Synonym as S
+	on S.SourceWordId = sw.Id
+inner join WordList:Word as tw
+	on tw.Id = S.TargetWordId
+inner join WordList:Language as tl
+	ON tl.Id = tw.LanguageId
+inner join WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+where
+	sw.Text = 'moon'
+	and sl.Name = 'English'
+order by
+	S.TargetWordId
 
+--select * from WordList:Synonym where SourceWordId = 583273
+
+
+/*
+DROP INDEX IX_FlatTranslate_English ON WordList:FlatTranslate
+
+CREATE UniqueKey IX_Word_Id
+(
+	Id
+) ON WordList:Word
 */
+
+--select * from WordList:Synonym where SourceWordId = 583273
+
+
+/*
 select * from WordList:FlatTranslate
 --where English like 'apple%'
 
@@ -215,3 +249,4 @@ WHERE
 ORDER BY
 	P.ProductNumber asc,
 	TH.TransactionId desc
+*/

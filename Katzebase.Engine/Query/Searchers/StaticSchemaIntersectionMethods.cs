@@ -547,13 +547,13 @@ namespace Katzebase.Engine.Query.Searchers
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.
             //TODO: We could grab some of these from the field selector above to cut down on redundant json scanning.
-            foreach (var conditionField in param.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey).Select(o => o.Field).Distinct())
+            foreach (var conditionField in param.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey).Distinct())
             {
-                if (!jIndexContent.TryGetValue(conditionField, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                if (!jIndexContent.TryGetValue(conditionField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
                 {
-                    throw new KbParserException($"Condition field not found: {conditionField}.");
+                    throw new KbParserException($"Condition field not found: {conditionField.Key}.");
                 }
-                schemaResultValues.ConditionFields.Add(conditionField, token?.ToString() ?? "");
+                schemaResultValues.ConditionFields.Add(conditionField.Key, token?.ToString() ?? "");
             }
         }
 
