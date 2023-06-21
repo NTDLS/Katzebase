@@ -5,7 +5,7 @@
         //public List<string> DebugIDs = new List<string>();
         //public List<MSQSchemaIntersectionDocumentCollection> Documents { get; set; } = new();
 
-        public List<string[]> RowValues = new List<string[]>();
+        public List<string[]> RowValues = new();
 
     }
 }

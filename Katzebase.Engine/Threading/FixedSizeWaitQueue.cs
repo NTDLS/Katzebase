@@ -4,7 +4,7 @@ namespace Katzebase.Engine.Threading
 {
     public class FixedSizeWaitQueue<T>
     {
-        private readonly ConcurrentQueue<T> _queue = new ConcurrentQueue<T>();
+        private readonly ConcurrentQueue<T> _queue = new();
         public int MaxSize { get; private set; }
         private bool _keepRunning = true;
         private readonly AutoResetEvent _queued = new(false);
@@ -33,7 +33,7 @@ namespace Katzebase.Engine.Threading
 
         public T? Dequeue()
         {
-            T? result = default(T);
+            T? result = default;
 
             while (_keepRunning && _queue.TryDequeue(out result) == false)
             {

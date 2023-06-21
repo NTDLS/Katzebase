@@ -11,7 +11,7 @@ namespace Katzebase.UI
         private bool _timerTicking = false;
         private bool _firstShown = true;
         private readonly EditorFactory? _editorFactory = null;
-        private readonly ImageList _treeImages = new ImageList();
+        private readonly ImageList _treeImages = new();
         private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
         public string _lastusedServerAddress = string.Empty;
         private readonly string _firstLoadFilename = string.Empty;

@@ -9,7 +9,7 @@ namespace Katzebase.Engine.Locking
         private readonly Core core;
         public string DiskPath { get; private set; }
         public LockType LockType { get; private set; }
-        public List<ObjectLockKey> Keys = new List<ObjectLockKey>();
+        public List<ObjectLockKey> Keys = new();
 
         /// <summary>
         /// The total number of times we attmepted to lock this object.

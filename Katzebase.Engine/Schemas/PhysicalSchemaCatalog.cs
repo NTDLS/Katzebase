@@ -2,7 +2,7 @@
 {
     public class PhysicalSchemaCatalog
     {
-        public List<PhysicalSchema> Collection = new List<PhysicalSchema>();
+        public List<PhysicalSchema> Collection = new();
 
         public void Add(PhysicalSchema schema)
         {

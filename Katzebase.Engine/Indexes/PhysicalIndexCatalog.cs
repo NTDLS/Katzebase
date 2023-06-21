@@ -5,7 +5,7 @@ namespace Katzebase.Engine.Indexes
     [Serializable]
     public class PhysicalIndexCatalog
     {
-        public List<PhysicalIndex> Collection = new List<PhysicalIndex>();
+        public List<PhysicalIndex> Collection = new();
 
         [JsonIgnore]
         public string? DiskPath { get; set; }

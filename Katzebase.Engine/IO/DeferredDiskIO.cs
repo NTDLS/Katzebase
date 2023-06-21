@@ -68,7 +68,7 @@ namespace Katzebase.Engine.IO
                     return (T)Collection[key].Reference;
                 }
             }
-            return default(T);
+            return default;
         }
 
         /// <summary>

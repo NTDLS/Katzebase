@@ -2,6 +2,6 @@
 {
     public static class CentralCriticalSections
     {
-        public static object AcquireLock = new object();
+        public static object AcquireLock = new();
     }
 }
