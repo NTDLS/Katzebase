@@ -15,10 +15,8 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
 
         public Dictionary<string, string> ConditionFields { get; set; } = new Dictionary<string, string>();
 
-        public void InsertValue(string schemaKey, int ordinal, string value)
+        public void InsertValue(int ordinal, string value)
         {
-            SchemaKeys.Add(schemaKey);
-
             if (Values.Count <= ordinal)
             {
                 int difference = (ordinal + 1) - Values.Count;

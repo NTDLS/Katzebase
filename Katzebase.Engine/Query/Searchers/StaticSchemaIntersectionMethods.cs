@@ -88,7 +88,7 @@ namespace Katzebase.Engine.Query.Searchers
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), schemaMap.TotalDocumentCount());
 
-            //threadCount = 1;
+            threadCount = 1;
 
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<DocumentPointer, LookupThreadParam>
@@ -443,7 +443,7 @@ namespace Katzebase.Engine.Query.Searchers
         /// </summary>
         /// 
         private static void FillInSchemaResultDocumentValues(LookupThreadParam param, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultValues, Dictionary<string, JObject> threadScopedContentCache)
+            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, Dictionary<string, JObject> threadScopedContentCache)
         {
             var jObject = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
 
@@ -468,6 +468,9 @@ namespace Katzebase.Engine.Query.Searchers
                 }
             }
 
+            //Keep track of which schemas we've matched on.
+            schemaResultRow.SchemaKeys.Add(schemaKey);
+
             //Grab all of the selected fields from the document.
             foreach (var selectField in param.Query.SelectFields.Where(o => o.Prefix == schemaKey))
             {
@@ -476,7 +479,7 @@ namespace Katzebase.Engine.Query.Searchers
                     //throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
                 }
 
-                schemaResultValues.InsertValue(schemaKey, selectField.Ordinal, token?.ToString() ?? "");
+                schemaResultRow.InsertValue(selectField.Ordinal, token?.ToString() ?? "");
             }
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.
@@ -487,7 +490,7 @@ namespace Katzebase.Engine.Query.Searchers
                 {
                     throw new KbParserException($"Condition field not found: {conditionField.Key}.");
                 }
-                schemaResultValues.ConditionFields.Add(conditionField.Key, token?.ToString() ?? "");
+                schemaResultRow.ConditionFields.Add(conditionField.Key, token?.ToString() ?? "");
             }
         }
 
