@@ -87,6 +87,9 @@ namespace Katzebase.Engine.Query.Searchers
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), schemaMap.TotalDocumentCount());
+
+            //threadCount = 1;
+
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<DocumentPointer, LookupThreadParam>
                 .CreateAndStart($"GetDocumentsByConditions:{transaction.ProcessId}", LookupThreadProc, threadParam, threadCount);
@@ -178,151 +181,105 @@ namespace Katzebase.Engine.Query.Searchers
                     continue;
                 }
 
-                IntersectAllSchemas(param, toplevelDocument);
+                var resultingRows = new SchemaIntersectionRowCollection();
+
+                IntersectAllSchemas(param, toplevelDocument, ref resultingRows);
+
+                //Limit the results by the rows that have the correct number of schema matches.
+                //TODO: This could probably be used to implement OUTER JOINS.
+                if (param.GatherDocumentPointersForSchemaPrefix == null)
+                {
+                    resultingRows.Rows = resultingRows.Rows.Where(o => o.SchemaKeys.Count == param.SchemaMap.Count).ToList();
+                }
+                else
+                {
+                    resultingRows.Rows = resultingRows.Rows.Where(o => o.SchemaDocumentPointers.Count == param.SchemaMap.Count).ToList();
+                }
+
+                lock (param.Results)
+                {
+                    //Accumulate the results up to the parent.
+                    if (param.GatherDocumentPointersForSchemaPrefix == null)
+                    {
+                        param.Results.AddRange(resultingRows);
+                    }
+                    else
+                    {
+                        param.Results.DocumentPointers.AddRange(resultingRows.Rows.Select(o => o.SchemaDocumentPointers[param.GatherDocumentPointersForSchemaPrefix]));
+                    }
+                }
             }
         }
 
         #endregion
 
-        #region Schema inersection.
-
-        /// <summary>
-        /// INNER joins all scheams specified in LookupThreadParam.SchemaMap, returns results in LookupThreadParam.Results
-        /// </summary>
-        private static void IntersectAllSchemas(LookupThreadParam param, DocumentPointer workingDocument)
+        private static void IntersectAllSchemas(LookupThreadParam param, DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection resultingRows)
         {
-            var jThreadScopedContentCache = new Dictionary<string, JObject>();
+            var topLevelSchemaMap = param.SchemaMap.First();
 
-            var cumulativeResults = new SchemaIntersectionDocumentCollection();
+            var toplevelPhysicalDocument = param.Core.Documents.AcquireDocument(param.Transaction, topLevelSchemaMap.Value.PhysicalSchema, topLevelDocumentPointer.DocumentId, LockOperation.Read);
 
-            var jJoinScopedContentCache = new Dictionary<string, JObject>();
-            var topLevel = param.SchemaMap.First();
-            var physicalDocumentWorkingLevel = param.Core.Documents.AcquireDocument(param.Transaction, topLevel.Value.PhysicalSchema, workingDocument.DocumentId, LockOperation.Read);
+            var jObjectToBeCachedContent = JObject.Parse(toplevelPhysicalDocument.Content);
 
-            //Get the document content and add it to a collection so it can be referenced by schema alias on all subsequent joins.
-
-            var jToBeCachedContent = JObject.Parse(physicalDocumentWorkingLevel.Content);
-            jJoinScopedContentCache.Add(topLevel.Key, jToBeCachedContent);
-            jThreadScopedContentCache.Add($"{topLevel.Key}:{physicalDocumentWorkingLevel.Id}", jToBeCachedContent);
-
-            if (cumulativeResults.MatchedDocumentPointsPerSchema.TryGetValue(topLevel.Key, out var documentPointers))
+            var threadScopedContentCache = new Dictionary<string, JObject>
             {
-                documentPointers.Upsert(workingDocument);
-            }
-            else
+                { $"{topLevelSchemaMap.Key}:{topLevelDocumentPointer.Key}", jObjectToBeCachedContent }
+            };
+
+            //This cache is used to store the content of all documents required for a single row join.
+            var joinScopedContentCache = new Dictionary<string, JObject>
             {
-                cumulativeResults.MatchedDocumentPointsPerSchema.Add(topLevel.Key, new DocumentPointerMatch(workingDocument));
+                { topLevelSchemaMap.Key, jObjectToBeCachedContent }
+            };
+
+            var resultingRow = new SchemaIntersectionRow();
+            lock (resultingRows)
+            {
+                resultingRows.Add(resultingRow);
             }
+
+            if (param.GatherDocumentPointersForSchemaPrefix != null)
+            {
+                resultingRow.AddSchemaDocumentPointer(topLevelSchemaMap.Key, topLevelDocumentPointer);
+            }
+
+            FillInSchemaResultDocumentValues(param, topLevelSchemaMap.Key, topLevelDocumentPointer, ref resultingRow, threadScopedContentCache);
 
             if (param.SchemaMap.Count > 1)
             {
-                IntersectAllSchemasRecursive(param, workingDocument, topLevel, 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
+                IntersectAllSchemasRecursive(param, 1, ref resultingRow, ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
             }
 
-            //Take all of the found schama/document IDs and acculumate the doucment values here.
-            if (cumulativeResults.MatchedDocumentPointsPerSchema.Count == param.SchemaMap.Count)
+            if (param.Query.Conditions.AllFields.Any())
             {
-                //This is an inner join that may include one-to-many, many-to-one, one-to-one or many-to-many joins.
-                //Lets grab the schema results with the most rows and consider that the number of resutls we are expecting.
-                //TODO: Think this though, does this work for one-to-many, many-to-one, one-to-one AND many-to-many joins.
-                var allSchemasResults = cumulativeResults.MatchedDocumentPointsPerSchema.OrderByDescending(o => o.Value.Count);
-
-                var firstSchemaResult = allSchemasResults.First();
-                var firstSchemaMap = param.SchemaMap[firstSchemaResult.Key];
-
-                var schemaResultRows = new DocumentLookupResults();
-                var firstSchemaResultDocumentPointers = cumulativeResults.MatchedDocumentPointsPerSchema[firstSchemaResult.Key];
-
-                foreach (var documentPointer in firstSchemaResultDocumentPointers)
-                {
-                    var schemaResultValues = new DocumentLookupResult(param.Query.SelectFields.Count);
-
-                    if (param.GatherDocumentPointersForSchemaPrefix != null)
-                    {
-                        schemaResultValues.AddSchemaDocumentPointer(firstSchemaMap.Prefix, documentPointer.Value);
-                    }
-
-                    //Add the values from the top level schema.
-                    FillInSchemaResultDocumentValues(param, firstSchemaMap, firstSchemaResult.Key, documentPointer.Value, ref schemaResultValues, jThreadScopedContentCache);
-
-                    //Fill in the values from all of the other schemas.
-                    var remainingSchemas = allSchemasResults.Skip(1);
-                    foreach (var nextResult in remainingSchemas)
-                    {
-                        var nextLevelAccumulationMap = param.SchemaMap[nextResult.Key];
-                        var nextLevelDocumentPointers = cumulativeResults.MatchedDocumentPointsPerSchema[nextResult.Key];
-
-                        foreach (var nextLevelDocumentPointer in nextLevelDocumentPointers)
-                        {
-                            if (param.GatherDocumentPointersForSchemaPrefix != null)
-                            {
-                                schemaResultValues.AddSchemaDocumentPointer(nextLevelAccumulationMap.Prefix, nextLevelDocumentPointer.Value);
-                            }
-
-                            FillInSchemaResultDocumentValues(param, nextLevelAccumulationMap, nextResult.Key, nextLevelDocumentPointer.Value, ref schemaResultValues, jThreadScopedContentCache);
-                        }
-                    }
-
-                    schemaResultRows.Add(schemaResultValues);
-                }
-
-                if (param.Query.Conditions.AllFields.Any())
-                {
-                    //Limit the results by the query where clause.
-                    var constrainedResults = ApplyQueryGlobalConditions(param, schemaResultRows);
-                    lock (param.Results)
-                    {
-                        if (param.GatherDocumentPointersForSchemaPrefix == null)
-                        {
-                            param.Results.AddRange(constrainedResults);
-                        }
-                        else
-                        {
-                            param.Results.DocumentPointers.AddRange(constrainedResults.Select(o => o.SchemaDocumentPointers[param.GatherDocumentPointersForSchemaPrefix]));
-                        }
-                    }
-                }
-                else
-                {
-                    lock (param.Results)
-                    {
-                        if (param.GatherDocumentPointersForSchemaPrefix == null)
-                        {
-                            param.Results.AddRange(schemaResultRows);
-                        }
-                        else
-                        {
-                            param.Results.DocumentPointers.AddRange(schemaResultRows.Collection.Select(o => o.SchemaDocumentPointers[param.GatherDocumentPointersForSchemaPrefix]));
-                        }
-                    }
-                }
+                //Filter the rows by the global conditions.
+                resultingRows.Rows = ApplyQueryGlobalConditions(param, resultingRows);
             }
         }
 
-        private static void IntersectAllSchemasRecursive(LookupThreadParam param, DocumentPointer workingDocument, KeyValuePair<string,
-            QuerySchemaMapItem> workingLevel, int skipCount, ref SchemaIntersectionDocumentCollection cumulativeResults,
-            Dictionary<string, JObject> jJoinScopedContentCache, Dictionary<string, JObject> jThreadScopedContentCache)
+        private static void IntersectAllSchemasRecursive(LookupThreadParam param,
+            int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
+            ref Dictionary<string, JObject> threadScopedContentCache, ref Dictionary<string, JObject> joinScopedContentCache)
         {
-            var thisThreadResults = new Dictionary<uint, SchemaIntersectionDocumentCollection>();
-            var nextLevel = param.SchemaMap.Skip(skipCount).First();
-            var nextLevelMap = nextLevel.Value;
+            var currentSchemaKVP = param.SchemaMap.Skip(skipSchemaCount).First();
+            var currentSchemaMap = currentSchemaKVP.Value;
 
-            KbUtility.EnsureNotNull(nextLevelMap?.Conditions);
+            KbUtility.EnsureNotNull(currentSchemaMap?.Conditions);
 
-            var expression = new NCalc.Expression(nextLevelMap.Conditions.HighLevelExpressionTree);
-
-            #region New indexing stuff..
+            var expression = new NCalc.Expression(currentSchemaMap.Conditions.HighLevelExpressionTree);
 
             //Create a reference to the entire document catalog.
-            var limitedDocumentPointers = nextLevelMap.DocumentPageCatalog.ConsolidatedDocumentPointers();
+            var limitedDocumentPointers = currentSchemaMap.DocumentPageCatalog.ConsolidatedDocumentPointers();
 
-            if (nextLevelMap.Optimization?.CanApplyIndexing() == true)
+            #region Indexing to reduce the number of document pointers in "limitedDocumentPointers".
+
+            if (currentSchemaMap.Optimization?.CanApplyIndexing() == true)
             {
                 //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                 var furtherLimitedDocumentPointers = new List<DocumentPointer>();
 
                 //All condition subsets have a selected index. Start building a list of possible document IDs.
-                foreach (var subset in nextLevelMap.Optimization.Conditions.NonRootSubsets)
+                foreach (var subset in currentSchemaMap.Optimization.Conditions.NonRootSubsets)
                 {
                     KbUtility.EnsureNotNull(subset.IndexSelection);
 
@@ -333,11 +290,11 @@ namespace Katzebase.Engine.Query.Searchers
                     //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
                     foreach (var condition in subset.Conditions)
                     {
-                        var jIndexContent = jJoinScopedContentCache[condition.Right?.Prefix ?? ""];
+                        var jIndexContent = joinScopedContentCache[condition.Right?.Prefix ?? ""];
 
                         if (!jIndexContent.TryGetValue(condition.Right?.Value ?? "", StringComparison.CurrentCultureIgnoreCase, out JToken? conditionToken))
                         {
-                            throw new KbParserException($"Join clause field not found in document [{workingLevel.Key}].");
+                            throw new KbParserException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
                         }
                         keyValuePairs.Add(condition.Left?.Value ?? "", conditionToken?.ToString() ?? "");
                     }
@@ -373,28 +330,25 @@ namespace Katzebase.Engine.Query.Searchers
 
             #endregion
 
-            int thisSchemaMatchCount = 0;
+            int matchesFromThisSchema = 0;
+
+            var rowTemplate = resultingRow.Clone();
 
             foreach (var documentPointer in limitedDocumentPointers)
             {
-                string threadScopedDocuemntCacheKey = $"{nextLevel.Key}:{documentPointer.DocumentId}";
+                string threadScopedDocuemntCacheKey = $"{currentSchemaKVP.Key}:{documentPointer.Key}";
 
-                JObject? jContentNextLevel = null;
-
-                if (jThreadScopedContentCache.ContainsKey(threadScopedDocuemntCacheKey))
+                //Get the document content from the thread cache (or cache it).
+                if (threadScopedContentCache.TryGetValue(threadScopedDocuemntCacheKey, out JObject? jContentNextLevel) == false)
                 {
-                    jContentNextLevel = jThreadScopedContentCache[threadScopedDocuemntCacheKey];
-                }
-                else
-                {
-                    var physicalDocumentNextLevel = param.Core.Documents.AcquireDocument(param.Transaction, nextLevelMap.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
+                    var physicalDocumentNextLevel = param.Core.Documents.AcquireDocument(param.Transaction, currentSchemaMap.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
                     jContentNextLevel = JObject.Parse(physicalDocumentNextLevel.Content);
-                    jThreadScopedContentCache.Add(threadScopedDocuemntCacheKey, jContentNextLevel);
+                    threadScopedContentCache.Add(threadScopedDocuemntCacheKey, jContentNextLevel);
                 }
 
-                jJoinScopedContentCache.Add(nextLevel.Key, jContentNextLevel);
+                joinScopedContentCache.Add(currentSchemaKVP.Key, jContentNextLevel);
 
-                SetSchemaIntersectionExpressionParameters(ref expression, nextLevelMap.Conditions, jJoinScopedContentCache);
+                SetSchemaIntersectionExpressionParameters(ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
 
                 var ptEvaluate = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
@@ -402,45 +356,35 @@ namespace Katzebase.Engine.Query.Searchers
 
                 if (evaluation)
                 {
-                    thisSchemaMatchCount++;
+                    matchesFromThisSchema++;
 
-                    if (thisSchemaMatchCount > 1) //Clearly a 1-to-many join.
+                    if (matchesFromThisSchema > 1)
                     {
-                        //And, maybe we show this in the "plan"?
-                    }
-
-                    lock (cumulativeResults)
-                    {
-                        if (cumulativeResults.MatchedDocumentPointsPerSchema.TryGetValue(nextLevel.Key, out var documentPointers))
+                        resultingRow = rowTemplate.Clone();
+                        lock (resultingRows)
                         {
-                            documentPointers.Upsert(documentPointer);
-                        }
-                        else
-                        {
-                            cumulativeResults.MatchedDocumentPointsPerSchema.Add(nextLevel.Key, new DocumentPointerMatch(documentPointer));
+                            resultingRows.Add(resultingRow);
                         }
                     }
 
-                    if (skipCount < param.SchemaMap.Count - 1)
+                    if (param.GatherDocumentPointersForSchemaPrefix != null)
                     {
-                        IntersectAllSchemasRecursive(param, documentPointer, nextLevel, skipCount + 1, ref cumulativeResults, jJoinScopedContentCache, jThreadScopedContentCache);
+                        resultingRow.AddSchemaDocumentPointer(currentSchemaKVP.Key, documentPointer);
                     }
 
-                    if (thisThreadResults.TryGetValue(workingDocument.DocumentId, out SchemaIntersectionDocumentCollection? docuemntCollection) == false)
-                    {
-                        docuemntCollection = new SchemaIntersectionDocumentCollection();
-                        thisThreadResults.Add(workingDocument.DocumentId, docuemntCollection);
-                        docuemntCollection.Documents.Add(new SchemaIntersectionDocumentItem(workingLevel.Key, workingDocument.DocumentId));
-                    }
+                    FillInSchemaResultDocumentValues(param, currentSchemaKVP.Key, documentPointer, ref resultingRow, threadScopedContentCache);
 
-                    docuemntCollection.Documents.Add(new SchemaIntersectionDocumentItem(nextLevel.Key, documentPointer.DocumentId));
+                    if (skipSchemaCount < param.SchemaMap.Count - 1)
+                    {
+                        IntersectAllSchemasRecursive(param, skipSchemaCount + 1, ref resultingRow, ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
+                    }
                 }
 
-                jJoinScopedContentCache.Remove(nextLevel.Key);//We are no longer working with the document at this level.
+                joinScopedContentCache.Remove(currentSchemaKVP.Key);//We are no longer working with the document at this level.
             }
-
-            jJoinScopedContentCache.Remove(workingLevel.Key);//We are no longer working with the document at this level.
         }
+
+        #region Schema inersection.
 
         /// <summary>
         /// Gets the json content values for the specified conditions.
@@ -497,59 +441,49 @@ namespace Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Gets the values of all selected fields from document.
         /// </summary>
-        private static void FillInSchemaResultDocumentValues(LookupThreadParam param, QuerySchemaMapItem accumulationMap,
-            string schemaKey, DocumentPointer documentPointer, ref DocumentLookupResult schemaResultValues, Dictionary<string, JObject> jThreadScopedContentCache)
+        /// 
+        private static void FillInSchemaResultDocumentValues(LookupThreadParam param, string schemaKey,
+            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultValues, Dictionary<string, JObject> threadScopedContentCache)
         {
-            var persistDocument = param.Core.Documents.AcquireDocument(param.Transaction, accumulationMap.PhysicalSchema, documentPointer, LockOperation.Read);
+            var jObject = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
 
-            var jIndexContent = jThreadScopedContentCache[$"{schemaKey}:{documentPointer.DocumentId}"];
 
-            if (param.GatherDocumentPointersForSchemaPrefix == null)
+            if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
-                if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
+                var fields = new List<PrefixedField>();
+                foreach (var jField in jObject)
                 {
-                    var fields = new List<PrefixedField>();
-                    foreach (var jField in jIndexContent)
-                    {
-                        fields.Add(new PrefixedField(schemaKey, $"{jField.Key}", schemaKey == string.Empty ? $"{jField.Key}" : $"{schemaKey}.{jField.Key}"));
-                    }
+                    fields.Add(new PrefixedField(schemaKey, $"{jField.Key}", schemaKey == string.Empty ? $"{jField.Key}" : $"{schemaKey}.{jField.Key}"));
+                }
 
-                    lock (param.Query.SelectFields)
+                lock (param.Query.SelectFields)
+                {
+                    foreach (var field in fields)
                     {
-                        bool fieldAdded = false;
-                        foreach (var field in fields)
+                        if (param.Query.SelectFields.Any(o => o.Key == field.Key) == false)
                         {
-                            if (param.Query.SelectFields.Any(o => o.Key == field.Key) == false)
-                            {
-                                param.Query.SelectFields.Add(field);
-                                fieldAdded = true;
-                            }
-                        }
-
-                        if (fieldAdded)
-                        {
-                            schemaResultValues.Resize(param.Query.SelectFields.Count);
+                            param.Query.SelectFields.Add(field);
                         }
                     }
                 }
+            }
 
-                //Grab all of the selected fields from the document.
-                foreach (var selectField in param.Query.SelectFields.Where(o => o.Prefix == schemaKey))
+            //Grab all of the selected fields from the document.
+            foreach (var selectField in param.Query.SelectFields.Where(o => o.Prefix == schemaKey))
+            {
+                if (!jObject.TryGetValue(selectField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
                 {
-                    if (!jIndexContent.TryGetValue(selectField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
-                    {
-                        //throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
-                    }
-
-                    schemaResultValues.InsertValue(selectField.Ordinal, token?.ToString() ?? "");
+                    //throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
                 }
+
+                schemaResultValues.InsertValue(schemaKey, selectField.Ordinal, token?.ToString() ?? "");
             }
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.
             //TODO: We could grab some of these from the field selector above to cut down on redundant json scanning.
             foreach (var conditionField in param.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey).Distinct())
             {
-                if (!jIndexContent.TryGetValue(conditionField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                if (!jObject.TryGetValue(conditionField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
                 {
                     throw new KbParserException($"Condition field not found: {conditionField.Key}.");
                 }
@@ -564,12 +498,12 @@ namespace Katzebase.Engine.Query.Searchers
         /// <summary>
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
-        private static List<DocumentLookupResult> ApplyQueryGlobalConditions(LookupThreadParam param, DocumentLookupResults inputResults)
+        private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(LookupThreadParam param, SchemaIntersectionRowCollection inputResults)
         {
-            var outputResults = new List<DocumentLookupResult>();
+            var outputResults = new List<SchemaIntersectionRow>();
             var expression = new NCalc.Expression(param.Query.Conditions.HighLevelExpressionTree);
 
-            foreach (var inputResult in inputResults.Collection)
+            foreach (var inputResult in inputResults.Rows)
             {
                 SetQueryGlobalConditionsExpressionParameters(ref expression, param.Query.Conditions, inputResult.ConditionFields);
 

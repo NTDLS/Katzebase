@@ -571,14 +571,10 @@ namespace Katzebase.Engine.Query
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLower(), subSchemaAlias.ToLower(), joinConditions));
                 }
 
-                token = query.GetNextToken();
-                if (token != string.Empty && token.ToLower() != "where")
+                if (query.IsNextToken("where"))
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'where' or end of statement.");
-                }
+                    query.SkipNextToken();
 
-                if (token.ToLower() == "where")
-                {
                     var conditionTokenizer = new ConditionTokenizer(query.Text, query.Position);
 
                     while (true)

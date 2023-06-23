@@ -1,8 +1,9 @@
 ﻿using Katzebase.Engine.Documents;
+using Katzebase.Engine.Query.Searchers.Intersection;
 
 namespace Katzebase.Engine.Query.Searchers
 {
-    public class DocumentLookupResults
+    internal class DocumentLookupResults
     {
         public List<DocumentLookupResult> Collection { get; set; } = new();
 
@@ -16,14 +17,14 @@ namespace Katzebase.Engine.Query.Searchers
             Collection.Add(result);
         }
 
-        public void AddRange(List<DocumentLookupResult> result)
+        public void AddRange(List<SchemaIntersectionRow> rows)
         {
-            Collection.AddRange(result);
+            Collection.AddRange(rows.Select(o => new DocumentLookupResult(o.Values)));
         }
 
-        public void AddRange(DocumentLookupResults result)
+        public void AddRange(SchemaIntersectionRowCollection rowCollection)
         {
-            Collection.AddRange(result.Collection);
+            Collection.AddRange(rowCollection.Rows.Select(o => new DocumentLookupResult(o.Values)));
         }
     }
 }

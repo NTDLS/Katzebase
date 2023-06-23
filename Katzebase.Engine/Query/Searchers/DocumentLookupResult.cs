@@ -9,34 +9,9 @@ namespace Katzebase.Engine.Query.Searchers
 
         public Dictionary<string, string> ConditionFields = new();
 
-        public void InsertValue(int ordinal, string value)
+        public DocumentLookupResult(List<string> values)
         {
-            //We do not accumulate values in the same order that they were requested by the query, we need to put them in the right place.
-            if (Values.Count <= ordinal)
-            {
-                Resize(ordinal + 1);
-            }
-            Values[ordinal] = value;
+            Values.AddRange(values);
         }
-
-        public DocumentLookupResult(int fieldCount)
-        {
-            Values.AddRange(new string[fieldCount]);
-        }
-
-        public void AddSchemaDocumentPointer(string schemaPrefix, DocumentPointer documentPointer)
-        {
-            SchemaDocumentPointers.Add(schemaPrefix, documentPointer);
-        }
-
-        public void Resize(int newCount)
-        {
-            int difference = newCount - Values.Count;
-            if (difference > 0)
-            {
-                Values.AddRange(new string[difference]);
-            }
-        }
-
     }
 }

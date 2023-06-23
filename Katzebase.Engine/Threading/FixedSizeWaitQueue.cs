@@ -9,6 +9,8 @@ namespace Katzebase.Engine.Threading
         private bool _keepRunning = true;
         private readonly AutoResetEvent _queued = new(false);
         public int Count => _queue.Count;
+        public ulong CumulativeQueuedCount { get; private set; } = 0;
+        public ulong CumulativeDequeuedCount { get; private set; } = 0;
 
         public FixedSizeWaitQueue(int maxSize)
         {
@@ -28,6 +30,7 @@ namespace Katzebase.Engine.Threading
             }
 
             _queue.Enqueue(obj);
+            CumulativeQueuedCount++;
             _queued.Set();
         }
 
@@ -39,6 +42,8 @@ namespace Katzebase.Engine.Threading
             {
                 _queued.WaitOne(1);
             }
+
+            CumulativeDequeuedCount++;
 
             return result;
         }

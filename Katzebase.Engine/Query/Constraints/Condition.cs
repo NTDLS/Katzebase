@@ -148,8 +148,6 @@ namespace Katzebase.Engine.Query.Constraints
             {
                 throw new KbParserException("Unsupprted condition type.");
             }
-
-            return false;
         }
     }
 }
