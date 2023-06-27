@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Documents;
+using Katzebase.PublicLibrary.Exceptions;
 
 namespace Katzebase.Engine.Query.Searchers.Intersection
 {
@@ -17,7 +18,7 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
         public Dictionary<string, string> ConditionFields { get; set; } = new Dictionary<string, string>();
         public Dictionary<string, string> MethodFields { get; set; } = new Dictionary<string, string>();
 
-        public void InsertValue(int ordinal, string value)
+        public void InsertValue(string fieldNameForException, int ordinal, string value)
         {
             if (Values.Count <= ordinal)
             {
@@ -27,6 +28,11 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
                     Values.AddRange(new string[difference]);
                 }
             }
+            if (Values[ordinal] != null)
+            {
+                throw new KbEngineException($"Ambigious field [{fieldNameForException}].");
+            }
+
             Values[ordinal] = value;
         }
 

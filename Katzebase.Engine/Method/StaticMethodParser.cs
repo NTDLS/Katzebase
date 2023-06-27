@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Katzebase.Engine.Method
 {
-    internal class StaticParser
+    internal class StaticMethodParser
     {
         private static readonly char[] _mathChars = "+-/*!~^()=<>".ToCharArray();
 
@@ -318,6 +318,7 @@ namespace Katzebase.Engine.Method
                         }
 
                         parseMath = false;
+                        isComplex = false;
                         param = string.Empty;
                     }
                 }
@@ -365,7 +366,7 @@ namespace Katzebase.Engine.Method
                         query.SkipNextChar();
                         parenScope--;
                     }
-                    else if ((query.NextCharacter == ',' && parenScope == 0) || token == "from")
+                    else if ((query.NextCharacter == ',' && parenScope == 0) || token.ToLower() == "from")
                     {
                         if (parenScope != 0)
                         {
@@ -382,7 +383,7 @@ namespace Katzebase.Engine.Method
                         //Done with this parameter.
                         query.SkipWhile(',');
 
-                        if (token == "from")
+                        if (token.ToLower() == "from")
                         {
                             return preparseFields;
                         }
@@ -396,7 +397,7 @@ namespace Katzebase.Engine.Method
                         param.Append(query.NextCharacter);
                         query.SkipWhile(',');
                     }
-                    else if (token == "as")
+                    else if (token.ToLower() == "as")
                     {
                         query.SkipNextToken();
                         alias = query.GetNextToken();

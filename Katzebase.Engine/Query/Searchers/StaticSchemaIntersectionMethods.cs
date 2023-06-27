@@ -116,7 +116,6 @@ namespace Katzebase.Engine.Query.Searchers
             threadPool.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
 
-
             //Get a list of all the fields we need to sory by.
             if (query.SortFields.Any() && threadParam.Results.Collection.Any())
             {
@@ -205,8 +204,8 @@ namespace Katzebase.Engine.Query.Searchers
                     {
                         foreach (var row in resultingRows.Rows)
                         {
-                            var methodResult = MethodImplCall.CollapseAllFunctionParameters(methodField, row.MethodFields);
-                            row.InsertValue(methodField.Ordinal, methodResult);
+                            var methodResult = MethodImplementations.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
                         }
                     }
 
@@ -214,8 +213,8 @@ namespace Katzebase.Engine.Query.Searchers
                     {
                         foreach (var row in resultingRows.Rows)
                         {
-                            var methodResult = MethodImplCall.CollapseAllFunctionParameters(methodField, row.MethodFields);
-                            row.InsertValue(methodField.Ordinal, methodResult);
+                            var methodResult = MethodImplementations.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
                         }
                     }
                 }
@@ -504,8 +503,19 @@ namespace Katzebase.Engine.Query.Searchers
                     //throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
                 }
 
-                schemaResultRow.InsertValue(selectField.Ordinal, token?.ToString() ?? "");
+                schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString() ?? "");
             }
+
+            foreach (var selectField in param.Query.SelectFields.OfType<ParsedFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
+            {
+                if (!jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                {
+                    //throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
+                }
+
+                schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString() ?? "");
+            }
+
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
             foreach (var methodField in param.Query.SelectFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())

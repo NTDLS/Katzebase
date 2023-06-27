@@ -1,9 +1,28 @@
+SELECT
+	IIF(Equals(sw.Text, 'moonwort'), 'YES!', Concat('Nope, its just [', tw.Text, ']...')) as 'Debug'
+FROM
+	WordList:Word as sw
+inner join WordList:Word as tw
+	on tw.Id = sw.Id
+WHERE
+	sw.Text like 'moon%'
+ORDER BY
+	'Debug' DESC
+
+/*
+SELECT
+	Text
+FROM
+	WordList:Word as sw
+WHERE
+	sw.Text like 'moon%'
+*/
+/*
 select
 	IIF(Equals(tw.Text, 'Luna'), 'YES!', tw.Text) as 'Is Fuqed',
-	
+
 	IIF(Equals(tw.Text, 'Luna'), 'YES!', '') as 'Is Luna?',
 	
-	/*
 	DateTimeUTC(),
 	DateTimeUTC('hh-mm-ss'),
 	
@@ -34,9 +53,6 @@ select
 	
 	1 + Length(tl.Name) as g,
 	Length(tl.Name) + 1 as g,
-	*/
-
-
 	
 	sw.Text as SourceWord,
 	sl.Name as SourceLanguage,
@@ -59,7 +75,7 @@ where
 order by
 	--sw.Text
 	'Is Luna?' DESC
-
+*/
 /*
 select
 	sw.Text as SourceWord,

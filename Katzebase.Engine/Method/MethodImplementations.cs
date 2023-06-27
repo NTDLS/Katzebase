@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Katzebase.Engine.Method
 {
-    internal class MethodImplCall
+    internal class MethodImplementations
     {
         static string[] FunctionPrototypes = {
                 "Guid:",
@@ -283,31 +283,31 @@ namespace Katzebase.Engine.Method
             }
         }
 
-        internal class KbFunctions
+        internal static class KbFunctions
         {
             private static List<KbFunction>? _protypes = null;
 
-            public static List<KbFunction> Protypes
+            public static void Initialize()
             {
-                get
+                if (_protypes == null)
                 {
-                    if (_protypes == null)
+                    _protypes = new List<KbFunction>();
+
+                    foreach (var prototype in FunctionPrototypes)
                     {
-                        _protypes = new List<KbFunction>();
-
-                        foreach (var prototype in FunctionPrototypes)
-                        {
-                            _protypes.Add(KbFunction.Parse(prototype));
-                        }
+                        _protypes.Add(KbFunction.Parse(prototype));
                     }
-
-                    return _protypes;
                 }
             }
 
             public static KbFunctionParameterValues ApplyMethodPrototype(string methodName, List<string> parameters)
             {
-                var method = Protypes.Where(o => o.Name.ToLower() == methodName.ToLower()).FirstOrDefault();
+                if (_protypes == null)
+                {
+                    throw new KbFatalException("Method prototypes were not initialized.");
+                }
+
+                var method = _protypes.Where(o => o.Name.ToLower() == methodName.ToLower()).FirstOrDefault();
 
                 if (method == null)
                 {

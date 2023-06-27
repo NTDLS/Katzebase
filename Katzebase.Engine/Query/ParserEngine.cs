@@ -416,7 +416,7 @@ namespace Katzebase.Engine.Query
                 }
                 else
                 {
-                    result.SelectFields = Method.StaticParser.ParseQueryFields(query);
+                    result.SelectFields = Method.StaticMethodParser.ParseQueryFields(query);
 
                     result.SelectFields.RefillStringLiterals(query.LiteralStrings);
                 }
@@ -924,27 +924,6 @@ namespace Katzebase.Engine.Query
                 }
             }
 
-            foreach (var field in result.SortFields)
-            {
-                if (query.LiteralStrings.ContainsKey(field.Alias))
-                {
-                    field.Alias = query.LiteralStrings[field.Alias].Substring(1, query.LiteralStrings[field.Alias].Length - 2);
-                    field.Field = field.Alias;
-                }
-
-                /*
-                if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
-                {
-                    throw new KbParserException($"The order-by schema alias {field.Prefix} was not found in the query.");
-                }
-                */
-                //if (result.SelectFields.Where(o => o.Key == field.Key).Any() == false && result.DynamicallyBuildSelectList == false)
-                //{
-                //    throw new KbParserException($"The sort-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
-                //}
-            }
-
-
             foreach (var field in result.GroupFields)
             {
                 if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
@@ -967,6 +946,25 @@ namespace Katzebase.Engine.Query
                 {
                     throw new KbParserException($"The select schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
                 }
+            }
+
+            foreach (var field in result.SortFields)
+            {
+                if (query.LiteralStrings.ContainsKey(field.Alias))
+                {
+                    field.Alias = query.LiteralStrings[field.Alias].Substring(1, query.LiteralStrings[field.Alias].Length - 2);
+                    field.Field = field.Alias;
+                }
+
+                if (result.SelectFields.Any(o => o.Alias == field.Alias) == false)
+                {
+                    throw new KbParserException($"The order-by field [{field.Field}] was not found in the query.");
+                }
+
+                //if (result.SelectFields.Where(o => o.Key == field.Key).Any() == false && result.DynamicallyBuildSelectList == false)
+                //{
+                //    throw new KbParserException($"The sort-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
+                //}
             }
 
             foreach (var field in result.Conditions.AllFields)
