@@ -3,6 +3,7 @@ using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
 using System.Text.RegularExpressions;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Katzebase.Engine.Query.Function
 {
@@ -366,12 +367,14 @@ namespace Katzebase.Engine.Query.Function
                         query.SkipNextChar();
                         isComplex = true;
                         parenScope++;
+                        continue;
                     }
                     else if (query.NextCharacter == ')')
                     {
                         param.Append(query.NextCharacter);
                         query.SkipNextChar();
                         parenScope--;
+                        continue;
                     }
                     else if (query.NextCharacter == ',' && parenScope == 0 || token.ToLower() == "from")
                     {
@@ -380,9 +383,26 @@ namespace Katzebase.Engine.Query.Function
                             throw new KbParserException("Invalid query. Found end of field while still in scope.");
                         }
 
+                        if (param.Length == 0)
+                        {
+                            throw new KbParserException("Unexpected empty token found at end of statement.");
+                        }
+
                         if (param.Length > 0 && char.IsDigit(param[0]))
                         {
                             isComplex = true;
+                        }
+
+                        if (alias == null || alias == string.Empty)
+                        {
+                            if (isComplex)
+                            {
+                                alias = $"Expression{preparseFields.Count + 1}";
+                            }
+                            else
+                            {
+                                alias = param.ToString();
+                            }
                         }
 
                         preparseFields.Add(new PreparseField { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
@@ -403,14 +423,21 @@ namespace Katzebase.Engine.Query.Function
                     {
                         param.Append(query.NextCharacter);
                         query.SkipWhile(',');
+                        continue;
                     }
                     else if (token.ToLower() == "as")
                     {
                         query.SkipNextToken();
                         alias = query.GetNextToken();
+                        continue;
                     }
                     else
                     {
+                        if (token == null || token == string.Empty)
+                        {
+                            throw new KbParserException("Unexpected empty token found.");
+                        }
+
                         param.Append(query.GetNextToken());
                     }
                 }

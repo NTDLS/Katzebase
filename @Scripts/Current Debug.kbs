@@ -1,5 +1,18 @@
 SELECT
-	IIF(Equals(sw.Text, 'moonwort'), 'YES!', Concat('Nope, its just [', tw.Text, ']...')) as 'Debug'
+	x,
+	IIF(Equals(sw.Text, 'moonwort'), '---!!YES!!---',
+		Concat('Nope, its just [', tw.Text, ']...'))
+FROM
+	WordList:Word as sw
+inner join WordList:Word as tw
+	on tw.Id = sw.Id
+WHERE
+	sw.Text like 'moon%'
+
+/*
+SELECT
+	IIF(Equals(sw.Text, 'moonwort'), '---!!YES!!---',
+		Concat('Nope, its just [', tw.Text, ']...')) as 'Is Moonwart'
 FROM
 	WordList:Word as sw
 inner join WordList:Word as tw
@@ -7,7 +20,8 @@ inner join WordList:Word as tw
 WHERE
 	sw.Text like 'moon%'
 ORDER BY
-	'Debug' DESC
+	'Is Moonwart'
+*/
 
 /*
 SELECT
@@ -15,11 +29,11 @@ SELECT
 FROM
 	WordList:Word as sw
 WHERE
-	sw.Text like 'moon%'
+	sw.Text like 'moon%';
 */
 /*
 select
-	IIF(Equals(tw.Text, 'Luna'), 'YES!', tw.Text) as 'Is Fuqed',
+	IIF(Equals(tw.Text, 'Luna'), 'YES!', tw.Text) as 'Is Luna 2',
 
 	IIF(Equals(tw.Text, 'Luna'), 'YES!', '') as 'Is Luna?',
 	
@@ -76,6 +90,7 @@ order by
 	--sw.Text
 	'Is Luna?' DESC
 */
+
 /*
 select
 	sw.Text as SourceWord,
@@ -95,6 +110,7 @@ where
 */
 
 /*
+--You'll have to cancel this badboy, figure out indexing.
 select
 	sw.Text as SourceWord,
 	S.TargetWordId,
@@ -126,7 +142,7 @@ CREATE UniqueKey IX_Word_Id
 
 /*
 select * from WordList:FlatTranslate
---where English like 'apple%'
+where English like 'apple%'
 
 
 CREATE INDEX IX_FlatTranslate_English

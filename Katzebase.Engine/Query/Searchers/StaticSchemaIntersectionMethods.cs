@@ -495,25 +495,24 @@ namespace Katzebase.Engine.Query.Searchers
             //Keep track of which schemas we've matched on.
             schemaResultRow.SchemaKeys.Add(schemaKey);
 
-            //Grab all of the selected fields from the document.
-            foreach (var selectField in param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
+            if (schemaKey != string.Empty)
             {
-                if (!jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                //Grab all of the selected fields from the document.
+                foreach (var selectField in param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
                 {
-                    //throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
+                    if (jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                    {
+                        schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString() ?? "");
+                    }
                 }
-
-                schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString() ?? "");
             }
 
             foreach (var selectField in param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
             {
-                if (!jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                if (jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
                 {
-                    //throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
+                    schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString() ?? "");
                 }
-
-                schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString() ?? "");
             }
 
 
