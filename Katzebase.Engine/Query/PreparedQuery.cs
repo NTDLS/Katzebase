@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Library;
+using Katzebase.Engine.Method.ParsedMethodParameter;
 using Katzebase.Engine.Query.Constraints;
 using static Katzebase.Engine.Library.EngineConstants;
 
@@ -22,7 +23,12 @@ namespace Katzebase.Engine.Query
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }
         public Conditions Conditions { get; set; } = new();
-        public PrefixedFields SelectFields { get; set; } = new();
+        //public PrefixedFields SelectFields { get; set; } = new();
+
+        public PrefixedFields CreateFields { get; set; } = new();
+
+        public GenericParsedMethodParameters SelectFields = new();
+
         public PrefixedFields GroupFields { get; set; } = new();
         public SortFields SortFields { get; set; } = new();
 

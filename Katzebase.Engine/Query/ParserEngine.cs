@@ -136,7 +136,7 @@ namespace Katzebase.Engine.Query
                             throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: ',' or ')'.");
                         }
 
-                        result.SelectFields.Add(token);
+                        result.CreateFields.Add(token);
 
                         if (query.NextCharacter == ',')
                         {
@@ -409,67 +409,16 @@ namespace Katzebase.Engine.Query
                     result.RowLimit = query.GetNextTokenAsInt();
                 }
 
-                while (true)
+                if (query.IsNextToken("*"))
                 {
-                    if (query.IsNextToken("from"))
-                    {
-                        break;
-                    }
+                    query.SkipNextToken();
+                    result.DynamicallyBuildSelectList = true;
+                }
+                else
+                {
+                    result.SelectFields = Method.StaticParser.ParseQueryFields(query);
 
-                    string fieldName = query.GetNextToken();
-                    if (string.IsNullOrWhiteSpace(fieldName))
-                    {
-                        throw new KbParserException("Invalid token. Found whitespace expected: an identifer.");
-                    }
-
-                    string fieldPrefix = string.Empty;
-                    string fieldAlias;
-
-
-                    if (fieldName.Contains('.'))
-                    {
-                        var splitTok = fieldName.Split('.');
-                        fieldPrefix = splitTok[0];
-                        fieldName = splitTok[1];
-                    }
-
-                    query.SwapFieldLiteral(ref fieldName);
-
-                    if (TokenHelpers.IsValidIdentifier(fieldName) == false && fieldName != "*")
-                    {
-                        throw new KbParserException("Invalid token identifier [" + fieldName + "].");
-                    }
-
-                    if (query.IsNextToken("as"))
-                    {
-                        query.SkipNextToken();
-                        fieldAlias = query.GetNextToken();
-                    }
-                    else
-                    {
-                        fieldAlias = fieldName;
-                    }
-
-                    query.SwapFieldLiteral(ref fieldAlias);
-
-                    if (fieldName == "*")
-                    {
-                        result.DynamicallyBuildSelectList = true;
-                    }
-                    else
-                    {
-                        result.SelectFields.Add(fieldPrefix, fieldName, fieldAlias);
-                    }
-
-                    if (query.IsCurrentChar(','))
-                    {
-                        query.SkipDelimiters();
-                    }
-                    else
-                    {
-                        //We should have found a delimiter here, if not either we are done parsing or the query is malformed. The next check will find out.
-                        break;
-                    }
+                    result.SelectFields.RefillStringLiterals(query.LiteralStrings);
                 }
 
                 if (query.IsNextToken("from"))
@@ -689,8 +638,7 @@ namespace Katzebase.Engine.Query
                         var sortDirection = KbSortDirection.Ascending;
                         if (query.IsNextToken(new string[] { "asc", "desc" }))
                         {
-                            var directionString = query.GetNextToken();
-                            if (directionString.StartsWith("desc"))
+                            if (query.IsNextTokenConsume("desc"))
                             {
                                 sortDirection = KbSortDirection.Descending;
                             }
@@ -865,7 +813,6 @@ namespace Katzebase.Engine.Query
             }
             #endregion
 
-
             #region Set ------------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Set)
             {
@@ -875,7 +822,6 @@ namespace Katzebase.Engine.Query
                 result.VariableValues.Add(new(variableName, variableValue));
             }
             #endregion
-
 
             #region Insert ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Insert)
@@ -980,16 +926,24 @@ namespace Katzebase.Engine.Query
 
             foreach (var field in result.SortFields)
             {
+                if (query.LiteralStrings.ContainsKey(field.Alias))
+                {
+                    field.Alias = query.LiteralStrings[field.Alias].Substring(1, query.LiteralStrings[field.Alias].Length - 2);
+                    field.Field = field.Alias;
+                }
+
+                /*
                 if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
                 {
                     throw new KbParserException($"The order-by schema alias {field.Prefix} was not found in the query.");
                 }
-
-                if (result.SelectFields.Where(o => o.Key == field.Key).Any() == false && result.DynamicallyBuildSelectList == false)
-                {
-                    throw new KbParserException($"The sort-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
-                }
+                */
+                //if (result.SelectFields.Where(o => o.Key == field.Key).Any() == false && result.DynamicallyBuildSelectList == false)
+                //{
+                //    throw new KbParserException($"The sort-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
+                //}
             }
+
 
             foreach (var field in result.GroupFields)
             {
@@ -999,7 +953,15 @@ namespace Katzebase.Engine.Query
                 }
             }
 
-            foreach (var field in result.SelectFields)
+            foreach (var field in result.SelectFields) //Top level fields.
+            {
+                if (query.LiteralStrings.ContainsKey(field.Alias))
+                {
+                    field.Alias = query.LiteralStrings[field.Alias].Substring(1, query.LiteralStrings[field.Alias].Length - 2);
+                }
+            }
+
+            foreach (var field in result.SelectFields.AllDocumentFields()) //Document related fields.
             {
                 if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
                 {
@@ -1037,6 +999,10 @@ namespace Katzebase.Engine.Query
 
             return result;
         }
+
+
+
+
 
         /*
         private static UpsertKeyValues ParseUpsertKeyValues(string conditionsText, ref int position)

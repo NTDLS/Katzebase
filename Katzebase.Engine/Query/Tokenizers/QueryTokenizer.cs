@@ -195,6 +195,16 @@ namespace Katzebase.Engine.Query.Tokenizers
             }
         }
 
+        public void SkipNextChar()
+        {
+            _position++;
+
+            while (_position < _text.Length && char.IsWhiteSpace(_text[_position]))
+            {
+                _position++;
+            }
+        }
+
         public void SkipWhiteSpace()
         {
             while (_position < _text.Length && char.IsWhiteSpace(_text[_position]))

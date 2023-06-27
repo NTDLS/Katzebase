@@ -1,6 +1,8 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
+using Katzebase.Engine.Method;
+using Katzebase.Engine.Method.ParsedMethodParameter;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers.Intersection;
 using Katzebase.Engine.Query.Searchers.Mapping;
@@ -88,7 +90,7 @@ namespace Katzebase.Engine.Query.Searchers
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
             int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), schemaMap.TotalDocumentCount());
 
-            threadCount = 1;
+            //threadCount = 1;
 
             transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
             var threadPool = ThreadPoolQueue<DocumentPointer, LookupThreadParam>
@@ -114,13 +116,14 @@ namespace Katzebase.Engine.Query.Searchers
             threadPool.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
 
+
             //Get a list of all the fields we need to sory by.
             if (query.SortFields.Any() && threadParam.Results.Collection.Any())
             {
                 var sortingColumns = new List<(int fieldIndex, KbSortDirection sortDirection)>();
                 foreach (var sortField in query.SortFields.OfType<SortField>())
                 {
-                    var field = query.SelectFields.Where(o => o.Key == sortField.Key).FirstOrDefault();
+                    var field = query.SelectFields.Where(o => o.Alias == sortField.Key).FirstOrDefault();
                     KbUtility.EnsureNotNull(field);
                     sortingColumns.Add(new(field.Ordinal, sortField.SortDirection));
                 }
@@ -194,6 +197,27 @@ namespace Katzebase.Engine.Query.Searchers
                 else
                 {
                     resultingRows.Rows = resultingRows.Rows.Where(o => o.SchemaDocumentPointers.Count == param.SchemaMap.Count).ToList();
+                }
+
+                //Execute functions
+                {
+                    foreach (var methodField in param.Query.SelectFields.OfType<ParsedMethodAndParams>())
+                    {
+                        foreach (var row in resultingRows.Rows)
+                        {
+                            var methodResult = MethodImplCall.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            row.InsertValue(methodField.Ordinal, methodResult);
+                        }
+                    }
+
+                    foreach (var methodField in param.Query.SelectFields.OfType<ParsedExpression>())
+                    {
+                        foreach (var row in resultingRows.Rows)
+                        {
+                            var methodResult = MethodImplCall.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            row.InsertValue(methodField.Ordinal, methodResult);
+                        }
+                    }
                 }
 
                 lock (param.Results)
@@ -447,7 +471,6 @@ namespace Katzebase.Engine.Query.Searchers
         {
             var jObject = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
 
-
             if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
                 var fields = new List<PrefixedField>();
@@ -460,9 +483,11 @@ namespace Katzebase.Engine.Query.Searchers
                 {
                     foreach (var field in fields)
                     {
-                        if (param.Query.SelectFields.Any(o => o.Key == field.Key) == false)
+                        if (param.Query.SelectFields.OfType<ParsedFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
                         {
-                            param.Query.SelectFields.Add(field);
+                            var newField = new ParsedFieldParameter(field.Key);
+                            newField.Alias = field.Key;
+                            param.Query.SelectFields.Add(newField);
                         }
                     }
                 }
@@ -472,15 +497,27 @@ namespace Katzebase.Engine.Query.Searchers
             schemaResultRow.SchemaKeys.Add(schemaKey);
 
             //Grab all of the selected fields from the document.
-            foreach (var selectField in param.Query.SelectFields.Where(o => o.Prefix == schemaKey))
+            foreach (var selectField in param.Query.SelectFields.OfType<ParsedFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
             {
-                if (!jObject.TryGetValue(selectField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                if (!jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
                 {
                     //throw new KbParserException($"Field not found: {schemaKey}.{selectField}.");
                 }
 
                 schemaResultRow.InsertValue(selectField.Ordinal, token?.ToString() ?? "");
             }
+
+            //We have to make sure that we have all of the method fields too so we can use them for calling functions.
+            foreach (var methodField in param.Query.SelectFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())
+            {
+                if (!jObject.TryGetValue(methodField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                {
+                    throw new KbParserException($"Method field not found: {methodField.Key}.");
+                }
+                schemaResultRow.MethodFields.Add(methodField.Key, token?.ToString() ?? "");
+            }
+
+            schemaResultRow.MethodFields.Add($"{schemaKey}.$UID$", documentPointer.Key);
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.
             //TODO: We could grab some of these from the field selector above to cut down on redundant json scanning.

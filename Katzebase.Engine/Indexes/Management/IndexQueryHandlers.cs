@@ -111,7 +111,7 @@ namespace Katzebase.Engine.Indexes.Management
                             IsUnique = preparedQuery.Attribute<bool>(PreparedQuery.QueryAttribute.IsUnique)
                         };
 
-                        foreach (var field in preparedQuery.SelectFields)
+                        foreach (var field in preparedQuery.CreateFields)
                         {
                             index.Attributes.Add(new KbIndexAttribute() { Field = field.Field });
                         }

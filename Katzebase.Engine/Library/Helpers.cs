@@ -42,6 +42,40 @@ namespace Katzebase.Engine.Library
             return sum;
         }
 
+        public static string GetSHA1Hash(string input)
+        {
+            using (SHA1 sha1 = SHA1.Create())
+            {
+                byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+                byte[] hashBytes = sha1.ComputeHash(inputBytes);
+
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    builder.Append(hashBytes[i].ToString("x2"));
+                }
+
+                return builder.ToString();
+            }
+        }
+
+        public static string GetSHA256Hash(string input)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+                byte[] hashBytes = sha256.ComputeHash(inputBytes);
+
+                StringBuilder builder = new StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    builder.Append(hashBytes[i].ToString("x2"));
+                }
+
+                return builder.ToString();
+            }
+        }
+
         public static bool IsDirectoryEmpty(string path)
         {
             if (Directory.Exists(path))
@@ -74,6 +108,60 @@ namespace Katzebase.Engine.Library
                 builder.Append(bytes[i].ToString("x2"));
             }
             return builder.ToString();
+        }
+
+        public static T ConvertTo<T>(string value)
+        {
+            if (typeof(T) == typeof(string))
+            {
+                return (T)Convert.ChangeType(value, typeof(T));
+            }
+            else if (typeof(T) == typeof(int))
+            {
+                if (int.TryParse(value, out var parsedResult) == false)
+                {
+                    throw new Exception($"Error converting value [{value}] to integer.");
+                }
+                return (T)Convert.ChangeType(parsedResult, typeof(T));
+            }
+            else if (typeof(T) == typeof(float))
+            {
+                if (float.TryParse(value, out var parsedResult) == false)
+                {
+                    throw new Exception($"Error converting value [{value}] to float.");
+                }
+                return (T)Convert.ChangeType(parsedResult, typeof(T));
+            }
+            else if (typeof(T) == typeof(double))
+            {
+                if (double.TryParse(value, out var parsedResult) == false)
+                {
+                    throw new Exception($"Error converting value [{value}] to double.");
+                }
+                return (T)Convert.ChangeType(parsedResult, typeof(T));
+            }
+            else if (typeof(T) == typeof(bool))
+            {
+                value = value.ToLower();
+
+                if (value.All(char.IsNumber))
+                {
+                    if (int.Parse(value) != 0)
+                        value = "true";
+                    else
+                        value = "false";
+                }
+
+                if (bool.TryParse(value, out var parsedResult) == false)
+                {
+                    throw new Exception($"Error converting value [{value}] to boolean.");
+                }
+                return (T)Convert.ChangeType(parsedResult, typeof(T));
+            }
+            else
+            {
+                throw new Exception($"Unsupported conversion type.");
+            }
         }
     }
 }

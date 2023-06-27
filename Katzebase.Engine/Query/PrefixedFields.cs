@@ -2,7 +2,6 @@
 {
     public class PrefixedFields : List<PrefixedField>
     {
-
         public new PrefixedField Add(PrefixedField field)
         {
             field.Ordinal = this.Count;

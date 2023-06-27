@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
 <SyntaxDefinition name="TSQL" extensions=".sql" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
-	<Color name="Punctuation" exampleText="a(b.c);" />
-	<Color name="NumberLiteral" foreground="DarkBlue" exampleText="3.1415f"/>
+	<Color name="Punctuation" foreground="Green" exampleText="a(b.c);" />
+	<Color name="NumberLiteral" foreground="Blue" exampleText="3.1415f"/>
 	<Color name="KbMarkup" foreground="Brown" fontWeight="bold" exampleText="{$INT 10000:30000}" />
-	<Color name="KbConfig" fontWeight="bold" foreground="DarkCyan" exampleText="$CommandTimeout"/>
-	<Color name="KbConst" fontWeight="bold" foreground="Magenta" exampleText="NonQuery"/>
+	<Color name="KbConfig" fontWeight="bold" foreground="DarkCyan" exampleText="TraceWaitTimes"/>
+	<Color name="KbFunction" fontWeight="bold" foreground="DarkBlue" exampleText="DateTimeUTC"/>
+	<Color name="KbConst" fontWeight="bold" foreground="Magenta" exampleText="true"/>
 	<Color name="Comment" foreground="Green" exampleText="-- comment" />
 	<Color name="Char" foreground="Red" exampleText="name = 'abc'"/>
 	<Color name="Keywords" fontWeight="bold" foreground="Blue" exampleText="SELECT FROM"/>
@@ -65,6 +66,31 @@
 			<Word>MinQueryThreads</Word>
 			<Word>MaxQueryThreads</Word>
 			<Word>QueryThreadWeight</Word>
+		</Keywords>
+		
+		<Keywords color="KbFunction">
+			<Word>Guid</Word>
+			<Word>Equals</Word>
+			<Word>DocumentUID</Word>
+			<Word>DocumentPage</Word>
+			<Word>DocumentID</Word>
+			<Word>DateTimeUTC</Word>
+			<Word>DateTime</Word>
+			<Word>ToProper</Word>
+			<Word>ToLower</Word>
+			<Word>ToUpper</Word>
+			<Word>Length</Word>
+			<Word>SubString</Word>
+			<Word>ConCat</Word>
+			<Word>Trim</Word>
+			<Word>Checksum</Word>
+			<Word>Sha1</Word>
+			<Word>IndexOf</Word>
+			<Word>LastIndexOf</Word>
+			<Word>Sha256</Word>
+			<Word>Right</Word>
+			<Word>Left</Word>
+			<Word>IIF</Word>
 		</Keywords>
 
 		<Keywords color="Keywords">
