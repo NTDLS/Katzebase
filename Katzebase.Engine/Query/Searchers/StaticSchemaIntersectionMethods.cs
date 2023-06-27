@@ -1,9 +1,9 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
-using Katzebase.Engine.Method;
-using Katzebase.Engine.Method.ParsedMethodParameter;
 using Katzebase.Engine.Query.Constraints;
+using Katzebase.Engine.Query.Function;
+using Katzebase.Engine.Query.QueryField;
 using Katzebase.Engine.Query.Searchers.Intersection;
 using Katzebase.Engine.Query.Searchers.Mapping;
 using Katzebase.Engine.Query.Sorting;
@@ -200,20 +200,20 @@ namespace Katzebase.Engine.Query.Searchers
 
                 //Execute functions
                 {
-                    foreach (var methodField in param.Query.SelectFields.OfType<ParsedMethodAndParams>())
+                    foreach (var methodField in param.Query.SelectFields.OfType<QueryFieldMethodAndParams>())
                     {
                         foreach (var row in resultingRows.Rows)
                         {
-                            var methodResult = MethodImplementations.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            var methodResult = QueryFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
                         }
                     }
 
-                    foreach (var methodField in param.Query.SelectFields.OfType<ParsedExpression>())
+                    foreach (var methodField in param.Query.SelectFields.OfType<QueryFieldExpression>())
                     {
                         foreach (var row in resultingRows.Rows)
                         {
-                            var methodResult = MethodImplementations.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            var methodResult = QueryFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
                         }
                     }
@@ -482,9 +482,9 @@ namespace Katzebase.Engine.Query.Searchers
                 {
                     foreach (var field in fields)
                     {
-                        if (param.Query.SelectFields.OfType<ParsedFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
+                        if (param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
                         {
-                            var newField = new ParsedFieldParameter(field.Key);
+                            var newField = new QueryFieldDocumentFieldParameter(field.Key);
                             newField.Alias = field.Key;
                             param.Query.SelectFields.Add(newField);
                         }
@@ -496,7 +496,7 @@ namespace Katzebase.Engine.Query.Searchers
             schemaResultRow.SchemaKeys.Add(schemaKey);
 
             //Grab all of the selected fields from the document.
-            foreach (var selectField in param.Query.SelectFields.OfType<ParsedFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
+            foreach (var selectField in param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
             {
                 if (!jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
                 {
@@ -506,7 +506,7 @@ namespace Katzebase.Engine.Query.Searchers
                 schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString() ?? "");
             }
 
-            foreach (var selectField in param.Query.SelectFields.OfType<ParsedFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
+            foreach (var selectField in param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
             {
                 if (!jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
                 {

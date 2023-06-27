@@ -1,10 +1,13 @@
 ﻿using Katzebase.Engine.Library;
-using Katzebase.Engine.Method.ParsedMethodParameter;
 using Katzebase.Engine.Query.Constraints;
+using Katzebase.Engine.Query.QueryField;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Query
 {
+    /// <summary>
+    /// Contains a parsed query via StaticQueryParser.PrepareQuery();
+    /// </summary>
     internal class PreparedQuery
     {
         internal enum QueryAttribute
@@ -27,7 +30,7 @@ namespace Katzebase.Engine.Query
 
         public PrefixedFields CreateFields { get; set; } = new();
 
-        public GenericParsedMethodParameters SelectFields = new();
+        public QueryFieldParameterBaseCollection SelectFields = new();
 
         public PrefixedFields GroupFields { get; set; } = new();
         public SortFields SortFields { get; set; } = new();

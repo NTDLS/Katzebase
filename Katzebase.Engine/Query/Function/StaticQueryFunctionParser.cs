@@ -1,20 +1,27 @@
-﻿using Katzebase.Engine.Method.ParsedMethodParameter;
+﻿using Katzebase.Engine.Query.QueryField;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Katzebase.Engine.Method
+namespace Katzebase.Engine.Query.Function
 {
-    internal class StaticMethodParser
+    internal class StaticQueryFunctionParser
     {
         private static readonly char[] _mathChars = "+-/*!~^()=<>".ToCharArray();
 
-        internal static GenericParsedMethodParameters ParseQueryFields(QueryTokenizer query)
+        private class PreparseField
+        {
+            public string Text { get; set; } = string.Empty;
+            public string Alias { get; set; } = string.Empty;
+            public bool IsComplex { get; set; }
+        }
+
+        internal static QueryFieldParameterBaseCollection ParseQueryFields(QueryTokenizer query)
         {
             var preParsed = PreParseQueryFields(query);
 
-            var result = new GenericParsedMethodParameters();
+            var result = new QueryFieldParameterBaseCollection();
 
             foreach (var field in preParsed)
             {
@@ -26,7 +33,7 @@ namespace Katzebase.Engine.Method
                 }
                 else
                 {
-                    var newField = new ParsedFieldParameter(field.Text);
+                    var newField = new QueryFieldDocumentFieldParameter(field.Text);
                     newField.Alias = field.Alias;
                     result.Add(newField);
                 }
@@ -66,9 +73,9 @@ namespace Katzebase.Engine.Method
             return false;
         }
 
-        private static ParsedExpression ParseMathExpression(string text)
+        private static QueryFieldExpression ParseMathExpression(string text)
         {
-            var expression = new ParsedExpression();
+            var expression = new QueryFieldExpression();
             string param = string.Empty;
 
             int paramCount = 0;
@@ -104,10 +111,10 @@ namespace Katzebase.Engine.Method
 
                             if (parenScope == 0)
                             {
-                                string subParamText = text.Substring(startPosition, (endPosition - startPosition) + 1);
+                                string subParamText = text.Substring(startPosition, endPosition - startPosition + 1);
 
                                 string paramKey = $"{{p{paramCount++}}}";
-                                var mathParamParams = (ParsedMethodAndParams)ParseMethodCall(subParamText, paramKey);
+                                var mathParamParams = (QueryFieldMethodAndParams)ParseMethodCall(subParamText, paramKey);
 
                                 expression.Parameters.Add(mathParamParams);
 
@@ -150,10 +157,10 @@ namespace Katzebase.Engine.Method
                             //We either found the end of the string or found a non identifier character.
                             endPosition--;
 
-                            string subParamText = text.Substring(startPosition, (endPosition - startPosition) + 1);
+                            string subParamText = text.Substring(startPosition, endPosition - startPosition + 1);
 
                             string paramKey = $"{{p{paramCount++}}}";
-                            var mathParamParams = new ParsedFieldParameter(subParamText);
+                            var mathParamParams = new QueryFieldDocumentFieldParameter(subParamText);
 
                             mathParamParams.ExpressionKey = paramKey;
 
@@ -180,7 +187,7 @@ namespace Katzebase.Engine.Method
             return expression;
         }
 
-        private static GenericParsedMethodParameter ParseMethodCall(string text, string expressionKey = "")
+        private static QueryFieldParameterBase ParseMethodCall(string text, string expressionKey = "")
         {
             char firstChar = text[0];
 
@@ -203,12 +210,12 @@ namespace Katzebase.Engine.Method
                 bool parseMath = false;
                 int parenIndex = text.IndexOf('(');
 
-                ParsedMethodAndParams results;
+                QueryFieldMethodAndParams results;
 
 
                 if (expressionKey != string.Empty)
                 {
-                    results = new ParsedNamedMethodAndParams()
+                    results = new QueryFieldNamedMethodAndParams()
                     {
                         Method = text.Substring(0, parenIndex),
                         ExpressionKey = expressionKey,
@@ -216,7 +223,7 @@ namespace Katzebase.Engine.Method
                 }
                 else
                 {
-                    results = new ParsedMethodAndParams()
+                    results = new QueryFieldMethodAndParams()
                     {
                         Method = text.Substring(0, parenIndex),
                     };
@@ -295,7 +302,7 @@ namespace Katzebase.Engine.Method
                         param += c;
                     }
 
-                    if ((c == ',' && parenScope == 1) || (i == text.Length - 1))
+                    if (c == ',' && parenScope == 1 || i == text.Length - 1)
                     {
                         if (parseMath)
                         {
@@ -307,13 +314,13 @@ namespace Katzebase.Engine.Method
                         }
                         else if (param.StartsWith("$") && param.EndsWith("$"))
                         {
-                            results.Parameters.Add(new ParsedConstantParameter(param));
+                            results.Parameters.Add(new QueryFieldConstantParameter(param));
                         }
                         else
                         {
                             if (param.Length > 0)
                             {
-                                results.Parameters.Add(new ParsedFieldParameter(param));
+                                results.Parameters.Add(new QueryFieldDocumentFieldParameter(param));
                             }
                         }
 
@@ -328,7 +335,7 @@ namespace Katzebase.Engine.Method
             else
             {
                 //Parse constant.
-                return new ParsedConstantParameter(text);
+                return new QueryFieldConstantParameter(text);
             }
         }
 
@@ -366,7 +373,7 @@ namespace Katzebase.Engine.Method
                         query.SkipNextChar();
                         parenScope--;
                     }
-                    else if ((query.NextCharacter == ',' && parenScope == 0) || token.ToLower() == "from")
+                    else if (query.NextCharacter == ',' && parenScope == 0 || token.ToLower() == "from")
                     {
                         if (parenScope != 0)
                         {

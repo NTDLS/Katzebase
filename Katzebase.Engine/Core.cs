@@ -14,7 +14,6 @@ using Katzebase.PrivateLibrary;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Caching;
-using static Katzebase.Engine.Method.MethodImplementations;
 
 namespace Katzebase.Engine
 {
@@ -76,9 +75,6 @@ namespace Katzebase.Engine
 
             Log.Write("Initializing query manager.");
             Query = new QueryManager(this);
-
-            Log.Write("Initializing method manager.");
-            KbFunctions.Initialize();
 
             Log.Write("Initializing hearbeat.");
             Heartbeat = new HeartbeatManager(this);

@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Query.Constraints;
+using Katzebase.Engine.Query.Function;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
 using static Katzebase.Engine.Library.EngineConstants;
@@ -6,9 +7,9 @@ using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Query
 {
-    internal class ParserEngine
+    internal class StaticQueryParser
     {
-        static public PreparedQuery ParseQuery(string queryText)
+        static public PreparedQuery PrepareQuery(string queryText)
         {
             PreparedQuery result = new PreparedQuery();
 
@@ -416,7 +417,7 @@ namespace Katzebase.Engine.Query
                 }
                 else
                 {
-                    result.SelectFields = Method.StaticMethodParser.ParseQueryFields(query);
+                    result.SelectFields = StaticQueryFunctionParser.ParseQueryFields(query);
 
                     result.SelectFields.RefillStringLiterals(query.LiteralStrings);
                 }
@@ -997,10 +998,6 @@ namespace Katzebase.Engine.Query
 
             return result;
         }
-
-
-
-
 
         /*
         private static UpsertKeyValues ParseUpsertKeyValues(string conditionsText, ref int position)

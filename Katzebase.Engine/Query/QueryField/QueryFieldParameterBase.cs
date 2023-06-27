@@ -1,6 +1,6 @@
-﻿namespace Katzebase.Engine.Method.ParsedMethodParameter
+﻿namespace Katzebase.Engine.Query.QueryField
 {
-    internal class GenericParsedMethodParameter
+    internal class QueryFieldParameterBase
     {
         public string Alias { get; set; } = string.Empty;
         public int Ordinal { get; set; } = -1;

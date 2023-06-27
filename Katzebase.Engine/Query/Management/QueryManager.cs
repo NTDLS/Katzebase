@@ -1,4 +1,5 @@
-﻿using Katzebase.PublicLibrary.Exceptions;
+﻿using Katzebase.Engine.Query.Function;
+using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.Library.EngineConstants;
 
@@ -16,6 +17,8 @@ namespace Katzebase.Engine.Query.Management
         {
             this.core = core;
             APIHandlers = new QueryAPIHandlers(core);
+
+            QueryFunctionCollection.Initialize();
         }
 
         internal KbQueryResult ExplainQuery(ulong processId, PreparedQuery preparedQuery)
