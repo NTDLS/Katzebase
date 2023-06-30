@@ -19,15 +19,28 @@ namespace Katzebase.Engine.Query
 
             if (Enum.TryParse(token, true, out QueryType queryType) == false || Enum.IsDefined(typeof(QueryType), queryType) == false)
             {
-                throw new KbParserException("Invalid query. Found '" + token + "', expected: 'select', 'insert', 'update' or 'delete'.");
+                string acceptibleValues = string.Join("', '", ((QueryType[])Enum.GetValues(typeof(QueryType))).Where(o => o != QueryType.None));
+                throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptibleValues}'.");
             }
 
             result.QueryType = queryType;
 
             //Parser insanity. Keep these region tags at 100 characters! :D
 
+            #region Exec -----------------------------------------------------------------------------------------------
+            if (queryType == QueryType.Exec)
+            {
+                result.ProcedureCall = StaticFunctionParsers.ParseProcedureParameters(query);
+
+                if (query.IsEnd() == false)
+                {
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                }
+            }
+            #endregion
+
             #region Begin ----------------------------------------------------------------------------------------------
-            if (queryType == QueryType.Begin)
+            else if (queryType == QueryType.Begin)
             {
                 if (query.IsNextToken(new string[] { "transaction" }) == false)
                 {
@@ -417,7 +430,7 @@ namespace Katzebase.Engine.Query
                 }
                 else
                 {
-                    result.SelectFields = StaticQueryFunctionParser.ParseQueryFields(query);
+                    result.SelectFields = StaticFunctionParsers.ParseQueryFields(query);
 
                     result.SelectFields.RefillStringLiterals(query.LiteralStrings);
                 }

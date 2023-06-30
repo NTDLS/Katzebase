@@ -77,6 +77,29 @@ namespace Katzebase.Engine.Caching.Management
             }
         }
 
+        public void Clear()
+        {
+            try
+            {
+                for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
+                {
+                    lock (partitions[partitionIndex])
+                    {
+                        var cacheKeys = partitions[partitionIndex].Select(x => x.Key);
+                        foreach (string cacheKey in cacheKeys)
+                        {
+                            partitions[partitionIndex].Remove(cacheKey);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write("Failed to clear cache.", ex);
+                throw;
+            }
+        }
+
         public object? Get(string key)
         {
             try

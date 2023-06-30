@@ -2,8 +2,6 @@
 using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query.Constraints;
-using Katzebase.Engine.Query.Function;
-using Katzebase.Engine.Query.QueryField;
 using Katzebase.Engine.Query.Searchers.Intersection;
 using Katzebase.Engine.Query.Searchers.Mapping;
 using Katzebase.Engine.Query.Sorting;
@@ -15,6 +13,8 @@ using static Katzebase.Engine.Documents.DocumentPointer;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 using static Katzebase.PublicLibrary.KbConstants;
+using Katzebase.Engine.Query.Function.Scaler;
+using Katzebase.Engine.Query.FunctionParameter;
 
 namespace Katzebase.Engine.Query.Searchers
 {
@@ -217,20 +217,20 @@ namespace Katzebase.Engine.Query.Searchers
 
                 //Execute functions
                 {
-                    foreach (var methodField in param.Query.SelectFields.OfType<QueryFieldMethodAndParams>())
+                    foreach (var methodField in param.Query.SelectFields.OfType<FunctionMethodAndParams>())
                     {
                         foreach (var row in resultingRows.Rows)
                         {
-                            var methodResult = QueryFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            var methodResult = QueryScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
                         }
                     }
 
-                    foreach (var methodField in param.Query.SelectFields.OfType<QueryFieldExpression>())
+                    foreach (var methodField in param.Query.SelectFields.OfType<FunctionExpression>())
                     {
                         foreach (var row in resultingRows.Rows)
                         {
-                            var methodResult = QueryFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            var methodResult = QueryScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
                         }
                     }
@@ -499,9 +499,9 @@ namespace Katzebase.Engine.Query.Searchers
                 {
                     foreach (var field in fields)
                     {
-                        if (param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
+                        if (param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
                         {
-                            var newField = new QueryFieldDocumentFieldParameter(field.Key)
+                            var newField = new FunctionDocumentFieldParameter(field.Key)
                             {
                                 Alias = field.Key
                             };
@@ -517,7 +517,7 @@ namespace Katzebase.Engine.Query.Searchers
             if (schemaKey != string.Empty)
             {
                 //Grab all of the selected fields from the document.
-                foreach (var selectField in param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
+                foreach (var selectField in param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
                 {
                     if (jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
                     {
@@ -527,7 +527,7 @@ namespace Katzebase.Engine.Query.Searchers
                 }
             }
 
-            foreach (var selectField in param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
+            foreach (var selectField in param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
             {
                 if (jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
                 {

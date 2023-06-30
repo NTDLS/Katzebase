@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Query.Function
+﻿namespace Katzebase.Engine.Query.Function.Scaler
 {
     internal enum KbParameterType
     {

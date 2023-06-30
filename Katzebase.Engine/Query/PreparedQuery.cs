@@ -1,6 +1,6 @@
 ﻿using Katzebase.Engine.Library;
 using Katzebase.Engine.Query.Constraints;
-using Katzebase.Engine.Query.QueryField;
+using Katzebase.Engine.Query.FunctionParameter;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Query
@@ -30,8 +30,8 @@ namespace Katzebase.Engine.Query
 
         public PrefixedFields CreateFields { get; set; } = new();
 
-        public QueryFieldParameterBaseCollection SelectFields = new();
-
+        public FunctionParameterBaseCollection SelectFields = new();
+        public FunctionParameterBase ProcedureCall = new();
         public PrefixedFields GroupFields { get; set; } = new();
         public SortFields SortFields { get; set; } = new();
 

@@ -1,17 +1,17 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.Engine.Library;
-using Katzebase.Engine.Query.QueryField;
+using Katzebase.Engine.Query.FunctionParameter;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
 using System.Globalization;
 using System.Text;
 
-namespace Katzebase.Engine.Query.Function
+namespace Katzebase.Engine.Query.Function.Scaler
 {
     /// <summary>
     /// Contains all function protype defintions, function implemtations and expression collapse functionality.
     /// </summary>
-    internal class QueryFunctionImplementation
+    internal class QueryScalerFunctionImplementation
     {
         internal static string[] FunctionPrototypes = {
                 "Guid:",
@@ -38,32 +38,32 @@ namespace Katzebase.Engine.Query.Function
                 "IIF:boolean/condition,string/whenTrue,string/whenFalse",
             };
 
-        internal static string? CollapseAllFunctionParameters(QueryFieldParameterBase param, Dictionary<string, string?> rowFields)
+        internal static string? CollapseAllFunctionParameters(FunctionParameterBase param, Dictionary<string, string?> rowFields)
         {
-            if (param is QueryFieldConstantParameter)
+            if (param is FunctionConstantParameter)
             {
-                return ((QueryFieldConstantParameter)param).Value;
+                return ((FunctionConstantParameter)param).Value;
             }
-            else if (param is QueryFieldDocumentFieldParameter)
+            else if (param is FunctionDocumentFieldParameter)
             {
-                var result = rowFields.Where(o => o.Key == ((QueryFieldDocumentFieldParameter)param).Value.Key).SingleOrDefault().Value;
+                var result = rowFields.Where(o => o.Key == ((FunctionDocumentFieldParameter)param).Value.Key).SingleOrDefault().Value;
 
                 if (result == null)
                 {
-                    throw new KbMethodException($"Field was not found when processing method: {((QueryFieldDocumentFieldParameter)param).Value.Key}.");
+                    throw new KbMethodException($"Field was not found when processing method: {((FunctionDocumentFieldParameter)param).Value.Key}.");
                 }
 
                 return result;
             }
-            else if (param is QueryFieldExpression)
+            else if (param is FunctionExpression)
             {
-                var expression = new NCalc.Expression(((QueryFieldExpression)param).Value.Replace("{", "(").Replace("}", ")"));
+                var expression = new NCalc.Expression(((FunctionExpression)param).Value.Replace("{", "(").Replace("}", ")"));
 
-                foreach (var subParam in ((QueryFieldExpression)param).Parameters)
+                foreach (var subParam in ((FunctionExpression)param).Parameters)
                 {
-                    if (subParam is QueryFieldMethodAndParams)
+                    if (subParam is FunctionMethodAndParams)
                     {
-                        string variable = ((QueryFieldNamedMethodAndParams)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
+                        string variable = ((FunctionNamedMethodAndParams)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
                         var value = CollapseAllFunctionParameters(subParam, rowFields);
                         if (value != null)
                         {
@@ -74,10 +74,10 @@ namespace Katzebase.Engine.Query.Function
                             expression.Parameters.Add(variable, null);
                         }
                     }
-                    else if (subParam is QueryFieldDocumentFieldParameter)
+                    else if (subParam is FunctionDocumentFieldParameter)
                     {
-                        string variable = ((QueryFieldDocumentFieldParameter)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
-                        var value = rowFields.Where(o => o.Key == ((QueryFieldDocumentFieldParameter)subParam).Value.Key).SingleOrDefault().Value;
+                        string variable = ((FunctionDocumentFieldParameter)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
+                        var value = rowFields.Where(o => o.Key == ((FunctionDocumentFieldParameter)subParam).Value.Key).SingleOrDefault().Value;
                         if (value != null)
                         {
                             expression.Parameters.Add(variable, decimal.Parse(value));
@@ -95,16 +95,16 @@ namespace Katzebase.Engine.Query.Function
 
                 return expression.Evaluate()?.ToString() ?? string.Empty;
             }
-            else if (param is QueryFieldMethodAndParams)
+            else if (param is FunctionMethodAndParams)
             {
                 var subParams = new List<string?>();
 
-                foreach (var subParam in ((QueryFieldMethodAndParams)param).Parameters)
+                foreach (var subParam in ((FunctionMethodAndParams)param).Parameters)
                 {
                     subParams.Add(CollapseAllFunctionParameters(subParam, rowFields));
                 }
 
-                return ExecuteMethod(((QueryFieldMethodAndParams)param).Method, subParams, rowFields);
+                return ExecuteMethod(((FunctionMethodAndParams)param).Method, subParams, rowFields);
             }
             else
             {
@@ -116,7 +116,7 @@ namespace Katzebase.Engine.Query.Function
 
         private static string? ExecuteMethod(string methodName, List<string?> parameters, Dictionary<string, string?> rowFields)
         {
-            var method = QueryFunctionCollection.ApplyMethodPrototype(methodName, parameters);
+            var method = QueryScalerFunctionCollection.ApplyMethodPrototype(methodName, parameters);
 
             switch (methodName.ToLower())
             {

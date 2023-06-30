@@ -7,6 +7,7 @@ using Katzebase.Engine.Indexes.Management;
 using Katzebase.Engine.IO;
 using Katzebase.Engine.Locking;
 using Katzebase.Engine.Logging;
+using Katzebase.Engine.Query.Function.Procedures.Management;
 using Katzebase.Engine.Query.Management;
 using Katzebase.Engine.Schemas.Management;
 using Katzebase.Engine.Sessions.Management;
@@ -31,6 +32,7 @@ namespace Katzebase.Engine
         public LogManager Log;
         public HealthManager Health;
         public SessionManager Sessions;
+        public ProcedureManager Functions;
         public IndexManager Indexes;
         public QueryManager Query;
 
@@ -75,6 +77,9 @@ namespace Katzebase.Engine
 
             Log.Write("Initializing query manager.");
             Query = new QueryManager(this);
+
+            Log.Write("Initializing procedure manager.");
+            Functions = new ProcedureManager(this);
 
             Log.Write("Initializing hearbeat.");
             Heartbeat = new HeartbeatManager(this);

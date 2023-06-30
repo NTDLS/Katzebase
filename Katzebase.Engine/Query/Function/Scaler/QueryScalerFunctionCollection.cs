@@ -1,25 +1,25 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
 
-namespace Katzebase.Engine.Query.Function
+namespace Katzebase.Engine.Query.Function.Scaler
 {
-    internal static class QueryFunctionCollection
+    internal static class QueryScalerFunctionCollection
     {
-        private static List<QueryFunction>? _protypes = null;
+        private static List<QueryScalerFunction>? _protypes = null;
 
         public static void Initialize()
         {
             if (_protypes == null)
             {
-                _protypes = new List<QueryFunction>();
+                _protypes = new List<QueryScalerFunction>();
 
-                foreach (var prototype in QueryFunctionImplementation.FunctionPrototypes)
+                foreach (var prototype in QueryScalerFunctionImplementation.FunctionPrototypes)
                 {
-                    _protypes.Add(QueryFunction.Parse(prototype));
+                    _protypes.Add(QueryScalerFunction.Parse(prototype));
                 }
             }
         }
 
-        public static QueryFunctionParameterValueCollection ApplyMethodPrototype(string methodName, List<string?> parameters)
+        public static QueryScalerFunctionParameterValueCollection ApplyMethodPrototype(string methodName, List<string?> parameters)
         {
             if (_protypes == null)
             {

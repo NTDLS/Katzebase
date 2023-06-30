@@ -1,4 +1,4 @@
-﻿using Katzebase.Engine.Query.Function;
+﻿using Katzebase.Engine.Query.Function.Scaler;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.Library.EngineConstants;
@@ -18,7 +18,7 @@ namespace Katzebase.Engine.Query.Management
             this.core = core;
             APIHandlers = new QueryAPIHandlers(core);
 
-            QueryFunctionCollection.Initialize();
+            QueryScalerFunctionCollection.Initialize();
         }
 
         internal KbQueryResult ExplainQuery(ulong processId, PreparedQuery preparedQuery)
@@ -62,6 +62,10 @@ namespace Katzebase.Engine.Query.Management
                 else if (preparedQuery.QueryType == QueryType.Sample)
                 {
                     return core.Documents.QueryHandlers.ExecuteSample(processId, preparedQuery);
+                }
+                else if (preparedQuery.QueryType == QueryType.Exec)
+                {
+                    return core.Functions.QueryHandlers.ExecuteExec(processId, preparedQuery);
                 }
                 else if (preparedQuery.QueryType == QueryType.List)
                 {

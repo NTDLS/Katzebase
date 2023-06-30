@@ -1,11 +1,11 @@
 ﻿using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary.Exceptions;
 
-namespace Katzebase.Engine.Query.Function
+namespace Katzebase.Engine.Query.Function.Scaler
 {
-    internal class QueryFunctionParameterValueCollection
+    internal class QueryScalerFunctionParameterValueCollection
     {
-        public List<QueryFunctionParameterValue> Values { get; set; } = new();
+        public List<QueryScalerFunctionParameterValue> Values { get; set; } = new();
 
         public T Get<T>(string name)
         {

@@ -1,13 +1,12 @@
-﻿using Katzebase.Engine.Query.QueryField;
+﻿using Katzebase.Engine.Query.FunctionParameter;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
 using System.Text.RegularExpressions;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Katzebase.Engine.Query.Function
 {
-    internal class StaticQueryFunctionParser
+    internal class StaticFunctionParsers
     {
         private static readonly char[] _mathChars = "+-/*!~^()=<>".ToCharArray();
 
@@ -18,11 +17,22 @@ namespace Katzebase.Engine.Query.Function
             public bool IsComplex { get; set; }
         }
 
-        internal static QueryFieldParameterBaseCollection ParseQueryFields(QueryTokenizer query)
+        internal static FunctionParameterBase ParseProcedureParameters(QueryTokenizer query)
+        {
+            var preParsed = PreParseFunctionCall(query);
+            if (preParsed != null)
+            {
+                return ParseMethodCall(preParsed.Text);
+            }
+
+            return new FunctionParameterBase();
+        }
+
+        internal static FunctionParameterBaseCollection ParseQueryFields(QueryTokenizer query)
         {
             var preParsed = PreParseQueryFields(query);
 
-            var result = new QueryFieldParameterBaseCollection();
+            var result = new FunctionParameterBaseCollection();
 
             foreach (var field in preParsed)
             {
@@ -34,8 +44,10 @@ namespace Katzebase.Engine.Query.Function
                 }
                 else
                 {
-                    var newField = new QueryFieldDocumentFieldParameter(field.Text);
-                    newField.Alias = field.Alias;
+                    var newField = new FunctionDocumentFieldParameter(field.Text)
+                    {
+                        Alias = field.Alias
+                    };
                     result.Add(newField);
                 }
             }
@@ -74,9 +86,9 @@ namespace Katzebase.Engine.Query.Function
             return false;
         }
 
-        private static QueryFieldExpression ParseMathExpression(string text)
+        private static FunctionExpression ParseMathExpression(string text)
         {
-            var expression = new QueryFieldExpression();
+            var expression = new FunctionExpression();
             string param = string.Empty;
 
             int paramCount = 0;
@@ -115,7 +127,7 @@ namespace Katzebase.Engine.Query.Function
                                 string subParamText = text.Substring(startPosition, endPosition - startPosition + 1);
 
                                 string paramKey = $"{{p{paramCount++}}}";
-                                var mathParamParams = (QueryFieldMethodAndParams)ParseMethodCall(subParamText, paramKey);
+                                var mathParamParams = (FunctionMethodAndParams)ParseMethodCall(subParamText, paramKey);
 
                                 expression.Parameters.Add(mathParamParams);
 
@@ -161,7 +173,7 @@ namespace Katzebase.Engine.Query.Function
                             string subParamText = text.Substring(startPosition, endPosition - startPosition + 1);
 
                             string paramKey = $"{{p{paramCount++}}}";
-                            var mathParamParams = new QueryFieldDocumentFieldParameter(subParamText);
+                            var mathParamParams = new FunctionDocumentFieldParameter(subParamText);
 
                             mathParamParams.ExpressionKey = paramKey;
 
@@ -188,7 +200,7 @@ namespace Katzebase.Engine.Query.Function
             return expression;
         }
 
-        private static QueryFieldParameterBase ParseMethodCall(string text, string expressionKey = "")
+        private static FunctionParameterBase ParseMethodCall(string text, string expressionKey = "")
         {
             char firstChar = text[0];
 
@@ -211,12 +223,12 @@ namespace Katzebase.Engine.Query.Function
                 bool parseMath = false;
                 int parenIndex = text.IndexOf('(');
 
-                QueryFieldMethodAndParams results;
+                FunctionMethodAndParams results;
 
 
                 if (expressionKey != string.Empty)
                 {
-                    results = new QueryFieldNamedMethodAndParams()
+                    results = new FunctionNamedMethodAndParams()
                     {
                         Method = text.Substring(0, parenIndex),
                         ExpressionKey = expressionKey,
@@ -224,7 +236,7 @@ namespace Katzebase.Engine.Query.Function
                 }
                 else
                 {
-                    results = new QueryFieldMethodAndParams()
+                    results = new FunctionMethodAndParams()
                     {
                         Method = text.Substring(0, parenIndex),
                     };
@@ -315,13 +327,13 @@ namespace Katzebase.Engine.Query.Function
                         }
                         else if (param.StartsWith("$") && param.EndsWith("$"))
                         {
-                            results.Parameters.Add(new QueryFieldConstantParameter(param));
+                            results.Parameters.Add(new FunctionConstantParameter(param));
                         }
                         else
                         {
                             if (param.Length > 0)
                             {
-                                results.Parameters.Add(new QueryFieldDocumentFieldParameter(param));
+                                results.Parameters.Add(new FunctionDocumentFieldParameter(param));
                             }
                         }
 
@@ -336,7 +348,7 @@ namespace Katzebase.Engine.Query.Function
             else
             {
                 //Parse constant.
-                return new QueryFieldConstantParameter(text);
+                return new FunctionConstantParameter(text);
             }
         }
 
@@ -429,6 +441,62 @@ namespace Katzebase.Engine.Query.Function
                     {
                         query.SkipNextToken();
                         alias = query.GetNextToken();
+                        continue;
+                    }
+                    else
+                    {
+                        if (token == null || token == string.Empty)
+                        {
+                            throw new KbParserException("Unexpected empty token found.");
+                        }
+
+                        param.Append(query.GetNextToken());
+                    }
+                }
+            }
+        }
+
+        private static PreparseField PreParseFunctionCall(QueryTokenizer query)
+        {
+            while (true)
+            {
+                var param = new StringBuilder();
+                int parenScope = 0;
+
+                var token = query.GetNextToken();
+                if (token == null || token == string.Empty)
+                {
+                    throw new KbParserException("Found empty token, expected procedure name");
+                }
+
+                param.Append(token);
+
+                while (true)
+                {
+                    token = query.PeekNextToken(new char[] { ',', '(', ')' });
+
+                    if (query.NextCharacter == '(')
+                    {
+                        param.Append(query.NextCharacter);
+                        query.SkipNextChar();
+                        parenScope++;
+                        continue;
+                    }
+                    else if (query.NextCharacter == ')')
+                    {
+                        param.Append(query.NextCharacter);
+                        query.SkipNextChar();
+                        parenScope--;
+                        continue;
+                    }
+                    else if (query.NextCharacter == null && parenScope == 0)
+                    {
+                        return new PreparseField { Text = param.ToString(), IsComplex = true };
+                    }
+                    else if (query.NextCharacter == ',')
+                    {
+                        param.Append(query.NextCharacter);
+                        query.SkipWhile(',');
                         continue;
                     }
                     else

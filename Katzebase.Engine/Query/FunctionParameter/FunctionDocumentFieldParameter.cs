@@ -1,11 +1,11 @@
-﻿namespace Katzebase.Engine.Query.QueryField
+﻿namespace Katzebase.Engine.Query.FunctionParameter
 {
-    internal class QueryFieldDocumentFieldParameter : QueryFieldParameterBase
+    internal class FunctionDocumentFieldParameter : FunctionParameterBase
     {
         public PrefixedField Value { get; set; }
         public string ExpressionKey { get; set; } = string.Empty;
 
-        public QueryFieldDocumentFieldParameter(string value)
+        public FunctionDocumentFieldParameter(string value)
         {
             Value = PrefixedField.Parse(value);
         }

@@ -1,3 +1,9 @@
+EXEC ClearCache;
+EXEC ReleaseFreeAllocations;
+
+
+--select DateTimeUTC('aaa', 'bbb', 'ccc') from Test
+
 /*
 create schema Test;
 

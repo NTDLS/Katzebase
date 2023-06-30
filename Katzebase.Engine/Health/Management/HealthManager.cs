@@ -12,12 +12,17 @@ namespace Katzebase.Engine.Health.Management
         private readonly Core core;
         private DateTime lastCheckpoint = DateTime.MinValue;
 
+        internal HealthQueryHandlers QueryHandlers { get; set; }
+        public HealthAPIHandlers APIHandlers { get; set; }
+
         public HealthManager(Core core)
         {
             this.core = core;
 
             try
             {
+                QueryHandlers = new HealthQueryHandlers(core);
+                APIHandlers = new HealthAPIHandlers(core);
 
                 string healthCounterDiskPath = Path.Combine(core.Settings.LogDirectory, HealthStatsFile);
                 if (File.Exists(healthCounterDiskPath))

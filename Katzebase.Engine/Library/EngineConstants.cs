@@ -70,7 +70,8 @@
             Drop,
             Rebuild,
             Set,
-            Kill
+            Kill,
+            Exec
         }
 
         public enum SubQueryType
