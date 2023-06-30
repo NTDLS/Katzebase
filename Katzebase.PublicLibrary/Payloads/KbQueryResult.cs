@@ -8,6 +8,16 @@
         public List<KbQueryField> Fields { get; set; } = new();
         public List<KbQueryRow> Rows { get; set; } = new();
 
+        public void AddField(string name)
+        {
+            Fields.Add(new KbQueryField(name));
+        }
+
+        public void AddRow(List<string?> values)
+        {
+            Rows.Add(new KbQueryRow(values));
+        }
+
         public static KbQueryResult FromActionResponse(KbActionResponse actionResponse)
         {
             return new KbQueryResult()

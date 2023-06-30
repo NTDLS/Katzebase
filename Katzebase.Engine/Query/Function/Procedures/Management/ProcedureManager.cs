@@ -1,4 +1,6 @@
 ﻿using Katzebase.Engine.Query.FunctionParameter;
+using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
 
 namespace Katzebase.Engine.Query.Function.Procedures.Management
 {
@@ -27,7 +29,7 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
             }
         }
 
-        internal void ExecuteProcedure(FunctionParameterBase procedureCall)
+        internal KbQueryResult ExecuteProcedure(FunctionParameterBase procedureCall)
         {
             string methodName = string.Empty;
 
@@ -46,17 +48,39 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
                 case "clearcache":
                     {
                         core.Cache.Clear();
-                        return;
+                        return new KbQueryResult();
                     }
                 case "releasefreeallocations":
                     {
                         GC.Collect();
-                        return;
+                        return new KbQueryResult();
+                    }
+                case "getallocationpartitions":
+                    {
+                        var result = new KbQueryResult();
+
+                        result.AddField("Partition");
+                        result.AddField("Allocations");
+
+                        var partitionAllocations = core.Cache.GetAllocations();
+
+                        int partition = 0;
+
+                        foreach (var partitionAllocation in partitionAllocations.PartitionAllocations)
+                        {
+                            var values = new List<string?> { (partition++).ToString(), partitionAllocation.ToString() };
+
+                            result.AddRow(values);
+                        }
+
+                        return result;
                     }
             }
 
             //TODO: Next check for user procedures in a schema:
             //...
+
+            throw new KbMethodException($"Unknown procedure [{methodName}].");
         }
     }
 }

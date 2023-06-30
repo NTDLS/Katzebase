@@ -100,6 +100,39 @@ namespace Katzebase.Engine.Caching.Management
             }
         }
 
+        public class PartitionAllocationDetails
+        {
+            public int PartitionCount { get; set; }
+            public List<int> PartitionAllocations = new List<int>();
+        }
+
+
+        public PartitionAllocationDetails GetAllocations()
+        {
+            try
+            {
+                var result = new PartitionAllocationDetails
+                {
+                     PartitionCount = PartitionCount
+                };
+
+                for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
+                {
+                    lock (partitions[partitionIndex])
+                    {
+                        result.PartitionAllocations.Add(partitions[partitionIndex].Count());
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write("Failed to clear cache.", ex);
+                throw;
+            }
+        }
+
         public object? Get(string key)
         {
             try
