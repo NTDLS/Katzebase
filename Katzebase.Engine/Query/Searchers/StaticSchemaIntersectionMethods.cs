@@ -130,6 +130,7 @@ namespace Katzebase.Engine.Query.Searchers
                 //Sort the results:
                 var ptSorting = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Sorting);
                 threadParam.Results.Collection = threadParam.Results.Collection.OrderBy(row => row.Values, new ResultValueComparer(sortingColumns)).ToList();
+
                 ptSorting?.StopAndAccumulate();
             }
 
@@ -143,6 +144,22 @@ namespace Katzebase.Engine.Query.Searchers
             {
                 //Distill the document pointers to a distinct list. Can we do this in the threads? Maybe prevent the dups in the first place?
                 threadParam.Results.DocumentPointers = threadParam.Results.DocumentPointers.Distinct(new DocumentPageEqualityComparer()).ToList();
+            }
+
+            if (query.DynamicallyBuildSelectList && threadParam.Results.Collection.Count > 0)
+            {
+                //If this was a "select *", we may have discovered different "fields" in different documents. We need to make sure that all rows
+                //  have the same number of values.
+
+                int maxFieldCount = query.SelectFields.Count;
+                foreach (var row in threadParam.Results.Collection)
+                {
+                    if (row.Values.Count < maxFieldCount)
+                    {
+                        int difference = maxFieldCount - row.Values.Count;
+                        row.Values.AddRange(new string[difference]);
+                    }
+                }
             }
 
             return threadParam.Results;
@@ -484,8 +501,10 @@ namespace Katzebase.Engine.Query.Searchers
                     {
                         if (param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
                         {
-                            var newField = new QueryFieldDocumentFieldParameter(field.Key);
-                            newField.Alias = field.Key;
+                            var newField = new QueryFieldDocumentFieldParameter(field.Key)
+                            {
+                                Alias = field.Key
+                            };
                             param.Query.SelectFields.Add(newField);
                         }
                     }
@@ -500,30 +519,32 @@ namespace Katzebase.Engine.Query.Searchers
                 //Grab all of the selected fields from the document.
                 foreach (var selectField in param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
                 {
-                    if (jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                    if (jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
                     {
-                        schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString() ?? "");
+                        //Field was not found, log warning which can be returned to the user.
                     }
+                    schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString());
                 }
             }
 
             foreach (var selectField in param.Query.SelectFields.OfType<QueryFieldDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
             {
-                if (jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                if (jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
                 {
-                    schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString() ?? "");
+                    //Field was not found, log warning which can be returned to the user.
                 }
+                schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString());
             }
-
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
             foreach (var methodField in param.Query.SelectFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())
             {
-                if (!jObject.TryGetValue(methodField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                if (jObject.TryGetValue(methodField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
                 {
-                    throw new KbParserException($"Method field not found: {methodField.Key}.");
+                    //Field was not found, log warning which can be returned to the user.
+                    //throw new KbParserException($"Method field not found: {methodField.Key}.");
                 }
-                schemaResultRow.MethodFields.Add(methodField.Key, token?.ToString() ?? "");
+                schemaResultRow.MethodFields.Add(methodField.Key, token?.ToString());
             }
 
             schemaResultRow.MethodFields.Add($"{schemaKey}.$UID$", documentPointer.Key);
@@ -532,11 +553,12 @@ namespace Katzebase.Engine.Query.Searchers
             //TODO: We could grab some of these from the field selector above to cut down on redundant json scanning.
             foreach (var conditionField in param.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey).Distinct())
             {
-                if (!jObject.TryGetValue(conditionField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token))
+                if (jObject.TryGetValue(conditionField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
                 {
-                    throw new KbParserException($"Condition field not found: {conditionField.Key}.");
+                    //Field was not found, log warning which can be returned to the user.
+                    //throw new KbParserException($"Condition field not found: {conditionField.Key}.");
                 }
-                schemaResultRow.ConditionFields.Add(conditionField.Key, token?.ToString() ?? "");
+                schemaResultRow.ConditionFields.Add(conditionField.Key, token?.ToString());
             }
         }
 
@@ -572,7 +594,8 @@ namespace Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Sets the parameters for the WHERE clasue expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
-        private static void SetQueryGlobalConditionsExpressionParameters(ref NCalc.Expression expression, Conditions conditions, Dictionary<string, string> conditionField)
+        private static void SetQueryGlobalConditionsExpressionParameters(
+            ref NCalc.Expression expression, Conditions conditions, Dictionary<string, string?> conditionField)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditions.Root.SubsetKeys)
@@ -586,7 +609,7 @@ namespace Katzebase.Engine.Query.Searchers
         /// Sets the parameters for the WHERE clasue expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
         private static void SetQueryGlobalConditionsExpressionParameters(ref NCalc.Expression expression,
-            Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, string> conditionField)
+            Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, string?> conditionField)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
@@ -600,12 +623,13 @@ namespace Katzebase.Engine.Query.Searchers
                 KbUtility.EnsureNotNull(condition.Left.Value);
 
                 //Get the value of the condition:
-                if (!conditionField.TryGetValue(condition.Left.Key, out string? value))
+                if (conditionField.TryGetValue(condition.Left.Key, out string? value) == false)
                 {
-                    throw new KbParserException($"Field not found in document [{condition.Left.Key}].");
+                    //Field was not found, log warning which can be returned to the user.
+                    //throw new KbParserException($"Field not found in document [{condition.Left.Key}].");
                 }
 
-                expression.Parameters[condition.ConditionKey] = condition.IsMatch(value.ToLower());
+                expression.Parameters[condition.ConditionKey] = condition.IsMatch(value?.ToLower());
             }
         }
 

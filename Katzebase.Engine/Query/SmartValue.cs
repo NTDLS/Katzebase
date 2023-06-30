@@ -107,6 +107,11 @@ namespace Katzebase.Engine.Query
 
                 _value = value?.ToLowerInvariant();
 
+                if (_value == "null")
+                {
+                    _value = null;
+                }
+
                 if (_value != null)
                 {
                     if (_value.StartsWith('\'') && _value.EndsWith('\''))
@@ -138,8 +143,9 @@ namespace Katzebase.Engine.Query
                         IsConstant = true;
                         IsNumeric = true;
                     }
-                    IsSet = true;
                 }
+
+                IsSet = true;
             }
         }
     }

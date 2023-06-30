@@ -42,7 +42,7 @@ namespace Katzebase.Engine.Schemas.Management
                         result.Fields.Add(new KbQueryField("Name"));
                         result.Fields.Add(new KbQueryField("Path"));
 
-                        result.Rows.AddRange(schemaList.Select(o => new KbQueryRow(new List<string> { o.Item1, o.Item2 })));
+                        result.Rows.AddRange(schemaList.Select(o => new KbQueryRow(new List<string?> { o.Item1, o.Item2 })));
                     }
                     else
                     {

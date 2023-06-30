@@ -2,16 +2,16 @@
 {
     public class KbQueryRow
     {
-        public List<string> Values { get; set; }
+        public List<string?> Values { get; set; }
 
-        public KbQueryRow(List<string> values)
+        public KbQueryRow(List<string?> values)
         {
             Values = values;
         }
 
         public KbQueryRow()
         {
-            Values = new List<string>();
+            Values = new();
         }
 
         public void AddValue(string? value)

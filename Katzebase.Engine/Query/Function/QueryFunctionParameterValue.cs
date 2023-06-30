@@ -5,7 +5,7 @@
         public QueryFunctionParameterPrototype Parameter { get; set; }
         public string? Value { get; set; } = null;
 
-        public QueryFunctionParameterValue(QueryFunctionParameterPrototype parameter, string value)
+        public QueryFunctionParameterValue(QueryFunctionParameterPrototype parameter, string? value)
         {
             Parameter = parameter;
             Value = value;

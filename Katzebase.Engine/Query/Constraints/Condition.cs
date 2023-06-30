@@ -43,9 +43,9 @@ namespace Katzebase.Engine.Query.Constraints
             return clone;
         }
 
-        public bool IsMatch(string passedValue)
+        public bool IsMatch(string? passedValue)
         {
-            return IsMatch(passedValue, this.LogicalQualifier, Right.Value);
+            return IsMatch(passedValue, LogicalQualifier, Right.Value);
         }
 
         public static bool? IsMatchGreaterOrEqualAsDecimal(string? left, string? right)

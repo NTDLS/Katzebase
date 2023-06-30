@@ -2,6 +2,7 @@
 using Katzebase.Engine.Library;
 using Katzebase.Engine.Query.QueryField;
 using Katzebase.PublicLibrary.Exceptions;
+using Newtonsoft.Json.Linq;
 using System.Globalization;
 using System.Text;
 
@@ -37,7 +38,7 @@ namespace Katzebase.Engine.Query.Function
                 "IIF:boolean/condition,string/whenTrue,string/whenFalse",
             };
 
-        internal static string CollapseAllFunctionParameters(QueryFieldParameterBase param, Dictionary<string, string> rowFields)
+        internal static string? CollapseAllFunctionParameters(QueryFieldParameterBase param, Dictionary<string, string?> rowFields)
         {
             if (param is QueryFieldConstantParameter)
             {
@@ -63,14 +64,28 @@ namespace Katzebase.Engine.Query.Function
                     if (subParam is QueryFieldMethodAndParams)
                     {
                         string variable = ((QueryFieldNamedMethodAndParams)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
-                        decimal value = decimal.Parse(CollapseAllFunctionParameters(subParam, rowFields));
-                        expression.Parameters.Add(variable, value);
+                        var value = CollapseAllFunctionParameters(subParam, rowFields);
+                        if (value != null)
+                        {
+                            expression.Parameters.Add(variable, decimal.Parse(value));
+                        }
+                        else
+                        {
+                            expression.Parameters.Add(variable, null);
+                        }
                     }
                     else if (subParam is QueryFieldDocumentFieldParameter)
                     {
                         string variable = ((QueryFieldDocumentFieldParameter)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
-                        var value = decimal.Parse(rowFields.Where(o => o.Key == ((QueryFieldDocumentFieldParameter)subParam).Value.Key).SingleOrDefault().Value);
-                        expression.Parameters.Add(variable, value);
+                        var value = rowFields.Where(o => o.Key == ((QueryFieldDocumentFieldParameter)subParam).Value.Key).SingleOrDefault().Value;
+                        if (value != null)
+                        {
+                            expression.Parameters.Add(variable, decimal.Parse(value));
+                        }
+                        else
+                        {
+                            expression.Parameters.Add(variable, null);
+                        }
                     }
                     else
                     {
@@ -82,7 +97,7 @@ namespace Katzebase.Engine.Query.Function
             }
             else if (param is QueryFieldMethodAndParams)
             {
-                var subParams = new List<string>();
+                var subParams = new List<string?>();
 
                 foreach (var subParam in ((QueryFieldMethodAndParams)param).Parameters)
                 {
@@ -99,7 +114,7 @@ namespace Katzebase.Engine.Query.Function
         }
 
 
-        private static string ExecuteMethod(string methodName, List<string> parameters, Dictionary<string, string> rowFields)
+        private static string? ExecuteMethod(string methodName, List<string?> parameters, Dictionary<string, string?> rowFields)
         {
             var method = QueryFunctionCollection.ApplyMethodPrototype(methodName, parameters);
 
@@ -113,11 +128,19 @@ namespace Katzebase.Engine.Query.Function
                 case "documentid":
                     {
                         var rowId = rowFields.Where(o => o.Key == $"{method.Get<string>("schemaAlias")}.$UID$").FirstOrDefault();
+                        if (rowId.Value == null)
+                        {
+                            return null;
+                        }
                         return DocumentPointer.Parse(rowId.Value).DocumentId.ToString();
                     }
                 case "documentpage":
                     {
                         var rowId = rowFields.Where(o => o.Key == $"{method.Get<string>("schemaAlias")}.$UID$").FirstOrDefault();
+                        if (rowId.Value == null)
+                        {
+                            return null;
+                        }
                         return DocumentPointer.Parse(rowId.Value).PageNumber.ToString();
                     }
 

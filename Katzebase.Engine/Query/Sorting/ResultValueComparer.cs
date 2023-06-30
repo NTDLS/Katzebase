@@ -2,7 +2,7 @@
 
 namespace Katzebase.Engine.Query.Sorting
 {
-    public class ResultValueComparer : IComparer<List<string>>
+    public class ResultValueComparer : IComparer<List<string?>>
     {
         private readonly List<(int fieldIndex, KbSortDirection direction)> sortingColumns;
 
@@ -11,7 +11,7 @@ namespace Katzebase.Engine.Query.Sorting
             this.sortingColumns = sortingColumns;
         }
 
-        public int Compare(List<string>? x, List<string>? y)
+        public int Compare(List<string?>? x, List<string?>? y)
         {
             foreach (var (fieldIndex, sortDirection) in sortingColumns)
             {

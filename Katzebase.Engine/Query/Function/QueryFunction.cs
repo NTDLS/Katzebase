@@ -50,7 +50,7 @@ namespace Katzebase.Engine.Query.Function
             return new QueryFunction(methodName, parameters);
         }
 
-        internal QueryFunctionParameterValueCollection ApplyParameters(List<string> values)
+        internal QueryFunctionParameterValueCollection ApplyParameters(List<string?> values)
         {
             int requiredParameterCount = Parameters.Where(o => o.Type.ToString().ToLower().Contains("optional") == false).Count();
 

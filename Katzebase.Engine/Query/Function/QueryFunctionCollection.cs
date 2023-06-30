@@ -19,7 +19,7 @@ namespace Katzebase.Engine.Query.Function
             }
         }
 
-        public static QueryFunctionParameterValueCollection ApplyMethodPrototype(string methodName, List<string> parameters)
+        public static QueryFunctionParameterValueCollection ApplyMethodPrototype(string methodName, List<string?> parameters)
         {
             if (_protypes == null)
             {

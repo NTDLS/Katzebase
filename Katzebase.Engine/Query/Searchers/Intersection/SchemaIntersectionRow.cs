@@ -7,7 +7,7 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
     {
         public Dictionary<string, DocumentPointer> SchemaDocumentPointers = new();
 
-        public List<string> Values { get; private set; } = new List<string>();
+        public List<string?> Values { get; private set; } = new();
 
         /// <summary>
         /// The schemas that were used to make up this row.
@@ -15,10 +15,10 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
         public HashSet<string> SchemaKeys { get; set; } = new();
 
         //TODO: Can probably combine these:
-        public Dictionary<string, string> ConditionFields { get; set; } = new Dictionary<string, string>();
-        public Dictionary<string, string> MethodFields { get; set; } = new Dictionary<string, string>();
+        public Dictionary<string, string?> ConditionFields { get; set; } = new();
+        public Dictionary<string, string?> MethodFields { get; set; } = new();
 
-        public void InsertValue(string fieldNameForException, int ordinal, string value)
+        public void InsertValue(string fieldNameForException, int ordinal, string? value)
         {
             if (Values.Count <= ordinal)
             {
