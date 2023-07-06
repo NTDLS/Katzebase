@@ -124,6 +124,14 @@ namespace Katzebase.Engine.Library
                 }
                 return (T)Convert.ChangeType(parsedResult, typeof(T));
             }
+            else if (typeof(T) == typeof(ulong))
+            {
+                if (ulong.TryParse(value, out var parsedResult) == false)
+                {
+                    throw new Exception($"Error converting value [{value}] to integer.");
+                }
+                return (T)Convert.ChangeType(parsedResult, typeof(T));
+            }
             else if (typeof(T) == typeof(float))
             {
                 if (float.TryParse(value, out var parsedResult) == false)

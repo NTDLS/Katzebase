@@ -53,6 +53,14 @@ namespace Katzebase.Engine.Locking
             }
         }
 
+        internal Dictionary<Transaction, LockIntention> CloneTransactionWaitingForLocks()
+        {
+            lock (transactionWaitingForLocks)
+            {
+                return transactionWaitingForLocks.ToDictionary(o => o.Key, o => o.Value);
+            }
+        }
+
         public void Acquire(Transaction transaction, LockIntention intention)
         {
             lock (transaction.GrantedLockCache)

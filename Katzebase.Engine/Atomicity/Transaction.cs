@@ -59,6 +59,16 @@ namespace Katzebase.Engine.Atomicity
             }
         }
 
+        internal List<ulong> CloneBlocks()
+        {
+            lock (CentralCriticalSections.AcquireLock)
+            {
+                var clone = new List<ulong>();
+                clone.AddRange(this.BlockedBy);
+                return clone;
+            }
+        }
+
         private void ReleaseLocks()
         {
             if (HeldLockKeys != null)

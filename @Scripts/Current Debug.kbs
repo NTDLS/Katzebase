@@ -1,9 +1,23 @@
+/*
+set TraceWaitTimes true;
+set MinQueryThreads 1;
+set MaxQueryThreads 10;
+set QueryThreadWeight 2.0;
 
-EXEC ClearCache;
-EXEC ReleaseFreeAllocations;
+exec ClearCache;
+exec ReleaseCacheAllocations;
+exec ShowCachePartitions;
+exec ShowHealthCounters;
+exec ClearHealthCounters;
+exec CheckpointHealthCounters;
+exec ShowBlocks(5)
+exec ShowTransactions;
+exec ShowWaitingLocks
+*/
 
-exec getallocationpartitions
 
+
+/*
 select
 	sw.Text as SourceWord,
 	S.TargetWordId,
@@ -19,7 +33,7 @@ inner join WordList:Language as tl
 	on tl.Id = tw.LanguageId
 where
 	sw.Text like 'moon%'
-
+*/
 
 --select DateTimeUTC('aaa', 'bbb', 'ccc') from Test
 

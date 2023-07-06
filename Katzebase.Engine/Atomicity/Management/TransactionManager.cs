@@ -1,6 +1,7 @@
 ﻿using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
+using System.Diagnostics;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 using static Katzebase.PublicLibrary.KbConstants;
@@ -17,6 +18,16 @@ namespace Katzebase.Engine.Atomicity.Management
         internal List<Transaction> Collection = new();
         private readonly Core core;
         internal Transaction Acquire(ulong processId) => Acquire(processId, false);
+
+        internal List<Transaction> CloneTransactions()
+        {
+            lock (Collection)
+            {
+                var clone = new List<Transaction>();
+                clone.AddRange(Collection);
+                return clone;
+            }
+        }
 
         public TransactionManager(Core core)
         {

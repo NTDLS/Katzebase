@@ -23,6 +23,11 @@ namespace Katzebase.Engine.Sessions
         //public double? QueryThreadWeight { get; set; } = null;
 
         /// <summary>
+        /// The UTC date/time that the session was created.
+        /// </summary>
+        public DateTime LoginTime { get; set; } = DateTime.UtcNow;
+
+        /// <summary>
         /// The last UTC date/time that the connection was interacted with.
         /// </summary>
         public DateTime LastCheckinTime { get; set; } = DateTime.UtcNow;

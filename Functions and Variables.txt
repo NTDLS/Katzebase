@@ -1,0 +1,52 @@
+================================================================================================================================================
+Session variables:
+================================================================================================================================================
+-TraceWaitTimes
+Enables tracing of wait time for the transaction.
+
+-MinQueryThreads
+Sets the minimum number of threads that will be used for query operations for the session.
+
+-MaxQueryThreads
+Sets the maximum number of threads that will be used for query operations for the session.
+
+-QueryThreadWeight
+Sets the thread weight that will be used to calculate the number of threads used for query operations for the session.
+Thread count calculation:
+	(threadCount = expectedItemCount / 10000)
+	The thread count is then capped by the min/max thread count:
+	(maxThreads = SystemCPUCount * 16.0 * QueryThreadWeight)
+
+================================================================================================================================================
+System functions:
+================================================================================================================================================
+
+-ClearCache
+Cleares the internal memory cache. This does not release the memory, but leaves it allocated for further cache operations.
+
+-ReleaseCacheAllocations
+Releases unused memory from the internal memory cache back to the operating system. Call ClearCache before calling ReleaseCacheAllocations to maximize the memory that will be released.
+
+-ShowCachePartitions
+Shows the memory allocations by memory cache partition.
+
+-ShowHealthCounters
+Shows the helath counters that are tracked by the engine.
+
+-ClearHealthCounters
+Clears the helath counters that are tracked by the engine.
+
+-CheckpointHealthCounters
+Writes the health counters to disk.
+
+-ShowProcesses
+Shows all active processes, their session ID, process ID and various transaction information.
+
+-ShowBlocks
+Shows blocks associated with a process.
+
+-ShowWaitingLocks
+Shows all transactions that are waiting on a lock, what type of lock and the object which is being waited on.
+
+-ShowTransactions
+Shows all transactions that are current active.

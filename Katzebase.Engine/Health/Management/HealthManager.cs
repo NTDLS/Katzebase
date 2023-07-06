@@ -55,6 +55,23 @@ namespace Katzebase.Engine.Health.Management
             Checkpoint();
         }
 
+        public Dictionary<string, HealthCounter> CloneCounters()
+        {
+            lock (Counters)
+            {
+                return Counters.ToDictionary(o=>o.Key, o=>o.Value);
+            }
+        }
+
+        public void ClearCounters()
+        {
+            lock (Counters)
+            {
+                Counters.Clear();
+                Checkpoint();
+            }
+        }
+
         public void Checkpoint()
         {
             try

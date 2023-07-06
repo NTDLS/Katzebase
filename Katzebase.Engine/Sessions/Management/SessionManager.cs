@@ -28,6 +28,15 @@ namespace Katzebase.Engine.Sessions.Management
             }
         }
 
+        public Dictionary<Guid, SessionState> CloneSessions()
+        {
+            lock (Collection)
+            {
+                return Collection.ToDictionary(o => o.Key, o => o.Value);
+            }
+        }
+
+
         public List<SessionState> GetExpiredSessions()
         {
             lock (Collection)

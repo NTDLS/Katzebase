@@ -66,6 +66,16 @@
 			<Word>MinQueryThreads</Word>
 			<Word>MaxQueryThreads</Word>
 			<Word>QueryThreadWeight</Word>
+			<Word>ClearCache</Word>
+			<Word>ReleaseCacheAllocations</Word>
+			<Word>ShowCachePartitions</Word>
+			<Word>ShowHealthCounters</Word>
+			<Word>ClearHealthCounters</Word>
+			<Word>CheckpointHealthCounters</Word>
+			<Word>ShowProcesses</Word>
+			<Word>ShowBlocks</Word>
+			<Word>ShowWaitingLocks</Word>
+			<Word>ShowTransactions</Word>
 		</Keywords>
 		
 		<Keywords color="KbFunction">
@@ -123,6 +133,7 @@
 			<Word>schema</Word>
 			<Word>select</Word>
 			<Word>set</Word>
+			<Word>exec</Word>
 			<Word>terminate</Word>
 			<Word>top</Word>
 			<Word>top</Word>

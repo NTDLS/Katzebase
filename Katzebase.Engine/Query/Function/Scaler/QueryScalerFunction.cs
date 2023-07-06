@@ -62,7 +62,7 @@ namespace Katzebase.Engine.Query.Function.Scaler
                 }
                 else
                 {
-                    throw new KbMethodException($"Incorrect number of parameter passed to {Name}.");
+                    throw new KbFunctionException($"Incorrect number of parameter passed to {Name}.");
                 }
             }
 

@@ -2,15 +2,15 @@
 
 namespace Katzebase.PublicLibrary.Exceptions
 {
-    public class KbMethodException : KbExceptionBase
+    public class KbFunctionException : KbExceptionBase
     {
-        public KbMethodException()
+        public KbFunctionException()
         {
             Severity = KbLogSeverity.Warning;
         }
 
-        public KbMethodException(string message)
-            : base($"Method exception: {message}.")
+        public KbFunctionException(string message)
+            : base($"Function exception: {message}.")
 
         {
             Severity = KbLogSeverity.Warning;

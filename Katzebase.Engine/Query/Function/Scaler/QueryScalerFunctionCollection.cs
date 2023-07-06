@@ -30,7 +30,7 @@ namespace Katzebase.Engine.Query.Function.Scaler
 
             if (method == null)
             {
-                throw new KbMethodException($"Undefined method: {methodName}.");
+                throw new KbFunctionException($"Undefined method: {methodName}.");
             }
 
             return method.ApplyParameters(parameters);

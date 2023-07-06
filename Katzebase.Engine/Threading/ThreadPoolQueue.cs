@@ -9,7 +9,7 @@ namespace Katzebase.Engine.Threading
         {
             if (session.IsConnectionSettingSet(SessionState.KbConnectionSetting.QueryThreadWeight))
             {
-                multiplier = session.GetConnectionSetting(SessionState.KbConnectionSetting.TraceWaitTimes) ?? multiplier;
+                multiplier = session.GetConnectionSetting(SessionState.KbConnectionSetting.QueryThreadWeight) ?? multiplier;
             }
 
             int maxThreads = (int)Math.Ceiling(Environment.ProcessorCount * 16.0 * multiplier);

@@ -50,7 +50,7 @@ namespace Katzebase.Engine.Query.Function.Scaler
 
                 if (result == null)
                 {
-                    throw new KbMethodException($"Field was not found when processing method: {((FunctionDocumentFieldParameter)param).Value.Key}.");
+                    throw new KbFunctionException($"Field was not found when processing method: {((FunctionDocumentFieldParameter)param).Value.Key}.");
                 }
 
                 return result;
@@ -198,7 +198,7 @@ namespace Katzebase.Engine.Query.Function.Scaler
                     }
             }
 
-            throw new KbMethodException($"Undefined method: {methodName}.");
+            throw new KbFunctionException($"Undefined method: {methodName}.");
         }
     }
 }
