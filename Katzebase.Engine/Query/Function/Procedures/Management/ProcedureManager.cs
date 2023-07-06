@@ -157,6 +157,7 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
                         result.AddField("TxStartTime");
                         result.AddField("TxHeldLockKeys");
                         result.AddField("TxGrantedLocks");
+                        result.AddField("TxDeferredIOs");
                         result.AddField("TxActive");
                         result.AddField("TxDeadlocked");
                         result.AddField("TxCancelled");
@@ -173,6 +174,7 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
                                 transaction?.StartTime.ToString(),
                                 transaction?.HeldLockKeys?.Count.ToString(),
                                 transaction?.GrantedLockCache?.Count.ToString(),
+                                transaction?.DeferredIOs?.Count().ToString(),
                                 (!(transaction?.IsComittedOrRolledBack == true)).ToString(),
                                 transaction?.IsDeadlocked.ToString(),
                                 transaction?.IsCancelled.ToString(),
@@ -196,6 +198,7 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
                         result.AddField("TxStartTime");
                         result.AddField("TxHeldLockKeys");
                         result.AddField("TxGrantedLocks");
+                        result.AddField("TxDeferredIOs");
                         result.AddField("TxActive");
                         result.AddField("TxDeadlocked");
                         result.AddField("TxCancelled");
@@ -218,6 +221,7 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
                                 transaction?.StartTime.ToString(),
                                 transaction?.HeldLockKeys?.Count.ToString(),
                                 transaction?.GrantedLockCache?.Count.ToString(),
+                                transaction?.DeferredIOs?.Count().ToString(),
                                 (!(transaction?.IsComittedOrRolledBack == true)).ToString(),
                                 transaction?.IsDeadlocked.ToString(),
                                 transaction?.IsCancelled.ToString(),

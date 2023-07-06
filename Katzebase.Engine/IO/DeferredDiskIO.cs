@@ -27,6 +27,14 @@ namespace Katzebase.Engine.IO
             this.core = core;
         }
 
+        public int Count()
+        {
+            lock (this)
+            {
+                return Collection.Count;
+            }
+        }
+
         /// <summary>
         /// Writes all deferred IOs to disk.
         /// </summary>
