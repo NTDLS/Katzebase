@@ -492,7 +492,7 @@ namespace Katzebase.Engine.Query.Searchers
                 var fields = new List<PrefixedField>();
                 foreach (var jField in jObject)
                 {
-                    fields.Add(new PrefixedField(schemaKey, $"{jField.Key}", schemaKey == string.Empty ? $"{jField.Key}" : $"{schemaKey}.{jField.Key}"));
+                    fields.Add(new PrefixedField(schemaKey, jField.Key, jField.Key));
                 }
 
                 lock (param.Query.SelectFields)
@@ -503,7 +503,7 @@ namespace Katzebase.Engine.Query.Searchers
                         {
                             var newField = new FunctionDocumentFieldParameter(field.Key)
                             {
-                                Alias = field.Key
+                                Alias = field.Alias
                             };
                             param.Query.SelectFields.Add(newField);
                         }

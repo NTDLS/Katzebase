@@ -90,6 +90,7 @@ namespace Katzebase.Engine.Query.Management
                     || preparedQuery.QueryType == QueryType.Drop
                     || preparedQuery.QueryType == QueryType.Begin
                     || preparedQuery.QueryType == QueryType.Commit
+                    || preparedQuery.QueryType == QueryType.SelectInto
                     || preparedQuery.QueryType == QueryType.Rollback)
                 {
                     //Reroute to non-query as appropriate:
@@ -111,7 +112,11 @@ namespace Katzebase.Engine.Query.Management
         {
             try
             {
-                if (preparedQuery.QueryType == QueryType.Delete)
+                if (preparedQuery.QueryType == QueryType.SelectInto)
+                {
+                    return core.Documents.QueryHandlers.ExecuteSelectInto(processId, preparedQuery);
+                }
+                else if (preparedQuery.QueryType == QueryType.Delete)
                 {
                     return core.Documents.QueryHandlers.ExecuteDelete(processId, preparedQuery);
                 }

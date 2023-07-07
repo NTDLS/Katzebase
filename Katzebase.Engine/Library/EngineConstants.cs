@@ -57,6 +57,7 @@
         {
             None,
             Select,
+            SelectInto,
             Sample,
             List,
             Alter,

@@ -373,7 +373,7 @@ namespace Katzebase.Engine.Query.Function
                         isComplex = true; //Found math token;
                     }
 
-                    if (query.NextCharacter == '(')
+                    if (token == string.Empty && query.NextCharacter == '(')
                     {
                         param.Append(query.NextCharacter);
                         query.SkipNextChar();
@@ -381,14 +381,14 @@ namespace Katzebase.Engine.Query.Function
                         parenScope++;
                         continue;
                     }
-                    else if (query.NextCharacter == ')')
+                    else if (token == string.Empty && query.NextCharacter == ')')
                     {
                         param.Append(query.NextCharacter);
                         query.SkipNextChar();
                         parenScope--;
                         continue;
                     }
-                    else if (query.NextCharacter == ',' && parenScope == 0 || token.ToLower() == "from")
+                    else if ((token == string.Empty && query.NextCharacter == ',' && parenScope == 0) || token.ToLower() == "from" || token.ToLower() == "into")
                     {
                         if (parenScope != 0)
                         {
@@ -413,7 +413,7 @@ namespace Katzebase.Engine.Query.Function
                             }
                             else
                             {
-                                alias = param.ToString();
+                                alias = PrefixedField.Parse(param.ToString()).Alias;
                             }
                         }
 
@@ -426,12 +426,16 @@ namespace Katzebase.Engine.Query.Function
                         {
                             return preparseFields;
                         }
+                        else if (token.ToLower() == "into")
+                        {
+                            return preparseFields;
+                        }
 
                         isComplex = false;
 
                         break;
                     }
-                    else if (query.NextCharacter == ',')
+                    else if (token == string.Empty && query.NextCharacter == ',')
                     {
                         param.Append(query.NextCharacter);
                         query.SkipWhile(',');

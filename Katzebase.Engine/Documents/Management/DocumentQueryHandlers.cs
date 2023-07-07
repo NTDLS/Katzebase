@@ -1,10 +1,12 @@
 ﻿using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Searchers;
+using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
 using static Katzebase.Engine.Library.EngineConstants;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Katzebase.Engine.Documents.Management
 {
@@ -36,6 +38,62 @@ namespace Katzebase.Engine.Documents.Management
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, transaction, preparedQuery);
+
+                    transaction.Commit();
+                    result.RowCount = result.Rows.Count;
+                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to execute document select for process id {processId}.", ex);
+                throw;
+            }
+        }
+
+        internal KbQueryResult ExecuteSelectInto(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                using (var transaction = core.Transactions.Acquire(processId))
+                {
+                    //TODO: Create the schema?
+
+                    var targetSchema = preparedQuery.Attributes[PreparedQuery.QueryAttribute.TargetSchema].ToString();
+                    KbUtility.EnsureNotNull(targetSchema);
+
+                    var physicalTargetSchema = core.Schemas.AcquireVirtual(transaction, targetSchema, LockOperation.Write);
+
+                    if (physicalTargetSchema.Exists == false)
+                    {
+                        core.Schemas.CreateSingleSchema(transaction, targetSchema);
+                        physicalTargetSchema = core.Schemas.AcquireVirtual(transaction, targetSchema, LockOperation.Write);
+                    }
+
+                    var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, transaction, preparedQuery);
+
+                    var duplicateFields = result.Fields.GroupBy(o => o.Name).Where(o => o.Count() > 1).Select(o => o.Key).ToList();
+
+                    if (duplicateFields.Any())
+                    {
+                        string fields = "[" + string.Join("],[", duplicateFields) + "]";
+                        throw new KbParserException($"The field(s) {fields} was specified more than once.");
+                    }
+
+                    foreach (var row in result.Rows)
+                    {
+                        var document = new Dictionary<string, string>();
+
+                        for (int i = 0; i < result.Fields.Count; i++)
+                        {
+                            document.Add(result.Fields[i].Name, row.Values[i] ?? string.Empty);
+                        }
+                        string documentContent = JsonConvert.SerializeObject(document);
+
+                        core.Documents.InsertDocument(transaction, physicalTargetSchema, documentContent);
+                    }
 
                     transaction.Commit();
                     result.RowCount = result.Rows.Count;

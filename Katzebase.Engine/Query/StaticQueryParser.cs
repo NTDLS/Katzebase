@@ -431,8 +431,17 @@ namespace Katzebase.Engine.Query
                 else
                 {
                     result.SelectFields = StaticFunctionParsers.ParseQueryFields(query);
-
                     result.SelectFields.RefillStringLiterals(query.LiteralStrings);
+                }
+
+                if (query.IsNextToken("into"))
+                {
+                    query.SkipNextToken();
+                    var selectIntoSchema = query.GetNextToken();
+                    result.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, selectIntoSchema);
+
+                    result.QueryType = QueryType.SelectInto;
+
                 }
 
                 if (query.IsNextToken("from"))

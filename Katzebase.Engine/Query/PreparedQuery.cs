@@ -15,7 +15,8 @@ namespace Katzebase.Engine.Query
             IndexName,
             IsUnique,
             ProcessId,
-            SpecificSchemaPrefix
+            SpecificSchemaPrefix,
+            TargetSchema
         }
 
         public bool DynamicallyBuildSelectList { get; set; } = false;

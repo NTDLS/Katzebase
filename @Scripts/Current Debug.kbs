@@ -1,10 +1,7 @@
 select
-	sw.Text as SourceWord,
-	S.TargetWordId,
-	tw.Text as TargetWord,
-	tl.Name as TargetLanguage
-into
-	WordList:MoonWords
+	sw.*
+--into
+--	WordList:MoonWords
 from
 	WordList:Word as sw
 inner join WordList:Synonym as s
