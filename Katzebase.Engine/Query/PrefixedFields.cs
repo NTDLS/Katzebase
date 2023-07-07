@@ -4,7 +4,7 @@
     {
         public new PrefixedField Add(PrefixedField field)
         {
-            field.Ordinal = this.Count;
+            field.Ordinal = Count;
             base.Add(field);
             return field;
         }
@@ -12,8 +12,8 @@
         public PrefixedField Add(string key)
         {
             var newField = PrefixedField.Parse(key);
-            newField.Ordinal = this.Count;
-            this.Add(newField);
+            newField.Ordinal = Count;
+            Add(newField);
             return newField;
         }
 
@@ -21,10 +21,10 @@
         {
             var newField = new PrefixedField(prefix, field)
             {
-                Ordinal = this.Count
+                Ordinal = Count
             };
 
-            this.Add(newField);
+            Add(newField);
             return newField;
         }
 
@@ -32,10 +32,10 @@
         {
             var newField = new PrefixedField(prefix, field, alias)
             {
-                Ordinal = this.Count
+                Ordinal = Count
             };
 
-            this.Add(newField);
+            Add(newField);
             return newField;
         }
     }

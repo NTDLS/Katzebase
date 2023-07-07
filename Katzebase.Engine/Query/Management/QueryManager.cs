@@ -79,7 +79,7 @@ namespace Katzebase.Engine.Query.Management
                     }
                     else
                     {
-                        throw new KbParserException("Invalid list query subtype.");
+                        throw new KbEngineException("Invalid list query subtype.");
                     }
                 }
                 else if (preparedQuery.QueryType == QueryType.Delete

@@ -1,11 +1,11 @@
 ﻿using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary.Exceptions;
 
-namespace Katzebase.Engine.Query.Function.Scaler
+namespace Katzebase.Engine.Query.Function.Procedures
 {
-    internal class QueryScalerFunctionParameterValueCollection
+    internal class QueryProcedureParameterValueCollection
     {
-        public List<QueryScalerFunctionParameterValue> Values { get; set; } = new();
+        public List<QueryProcedureParameterValue> Values { get; set; } = new();
 
         public T Get<T>(string name)
         {
@@ -64,14 +64,14 @@ namespace Katzebase.Engine.Query.Function.Scaler
 
                 if (parameter.Value == null)
                 {
-                    if (parameter.Parameter.DefaultValue == null)
+                    if (parameter.Parameter.HasDefault == false)
                     {
-                        throw new KbGenericException($"Value for {name} cannot be null.");
+                        throw new KbGenericException($"Value for {name} is not optional.");
                     }
                     return Helpers.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
                 }
 
-                return Helpers.ConvertToNullable<T>(parameter.Value);
+                return Helpers.ConvertTo<T>(parameter.Value);
             }
             catch
             {

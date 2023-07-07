@@ -2,14 +2,13 @@
 using Katzebase.Engine.Library;
 using Katzebase.Engine.Query.FunctionParameter;
 using Katzebase.PublicLibrary.Exceptions;
-using Newtonsoft.Json.Linq;
 using System.Globalization;
 using System.Text;
 
 namespace Katzebase.Engine.Query.Function.Scaler
 {
     /// <summary>
-    /// Contains all function protype defintions, function implemtations and expression collapse functionality.
+    /// Contains all function protype defintions, function implementations and expression collapse functionality.
     /// </summary>
     internal class QueryScalerFunctionImplementation
     {
@@ -50,7 +49,7 @@ namespace Katzebase.Engine.Query.Function.Scaler
 
                 if (result == null)
                 {
-                    throw new KbFunctionException($"Field was not found when processing method: {((FunctionDocumentFieldParameter)param).Value.Key}.");
+                    throw new KbFunctionException($"Field was not found when processing function: {((FunctionDocumentFieldParameter)param).Value.Key}.");
                 }
 
                 return result;
@@ -61,9 +60,9 @@ namespace Katzebase.Engine.Query.Function.Scaler
 
                 foreach (var subParam in ((FunctionExpression)param).Parameters)
                 {
-                    if (subParam is FunctionMethodAndParams)
+                    if (subParam is FunctionWithParams)
                     {
-                        string variable = ((FunctionNamedMethodAndParams)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
+                        string variable = ((FunctionNamedWithParams)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
                         var value = CollapseAllFunctionParameters(subParam, rowFields);
                         if (value != null)
                         {
@@ -95,16 +94,16 @@ namespace Katzebase.Engine.Query.Function.Scaler
 
                 return expression.Evaluate()?.ToString() ?? string.Empty;
             }
-            else if (param is FunctionMethodAndParams)
+            else if (param is FunctionWithParams)
             {
                 var subParams = new List<string?>();
 
-                foreach (var subParam in ((FunctionMethodAndParams)param).Parameters)
+                foreach (var subParam in ((FunctionWithParams)param).Parameters)
                 {
                     subParams.Add(CollapseAllFunctionParameters(subParam, rowFields));
                 }
 
-                return ExecuteMethod(((FunctionMethodAndParams)param).Method, subParams, rowFields);
+                return ExecuteFunction(((FunctionWithParams)param).Function, subParams, rowFields);
             }
             else
             {
@@ -114,20 +113,20 @@ namespace Katzebase.Engine.Query.Function.Scaler
         }
 
 
-        private static string? ExecuteMethod(string methodName, List<string?> parameters, Dictionary<string, string?> rowFields)
+        private static string? ExecuteFunction(string functionName, List<string?> parameters, Dictionary<string, string?> rowFields)
         {
-            var method = QueryScalerFunctionCollection.ApplyMethodPrototype(methodName, parameters);
+            var proc = QueryScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
-            switch (methodName.ToLower())
+            switch (functionName.ToLower())
             {
                 case "documentuid":
                     {
-                        var rowId = rowFields.Where(o => o.Key == $"{method.Get<string>("schemaAlias")}.$UID$").FirstOrDefault();
+                        var rowId = rowFields.Where(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$").FirstOrDefault();
                         return rowId.Value;
                     }
                 case "documentid":
                     {
-                        var rowId = rowFields.Where(o => o.Key == $"{method.Get<string>("schemaAlias")}.$UID$").FirstOrDefault();
+                        var rowId = rowFields.Where(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$").FirstOrDefault();
                         if (rowId.Value == null)
                         {
                             return null;
@@ -136,7 +135,7 @@ namespace Katzebase.Engine.Query.Function.Scaler
                     }
                 case "documentpage":
                     {
-                        var rowId = rowFields.Where(o => o.Key == $"{method.Get<string>("schemaAlias")}.$UID$").FirstOrDefault();
+                        var rowId = rowFields.Where(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$").FirstOrDefault();
                         if (rowId.Value == null)
                         {
                             return null;
@@ -145,48 +144,48 @@ namespace Katzebase.Engine.Query.Function.Scaler
                     }
 
                 case "equals":
-                    return (method.Get<string>("text1") == method.Get<string>("text2")).ToString();
+                    return (proc.Get<string>("text1") == proc.Get<string>("text2")).ToString();
 
                 case "guid":
                     return Guid.NewGuid().ToString();
 
                 case "datetimeutc":
-                    return DateTime.UtcNow.ToString(method.Get<string>("format"));
+                    return DateTime.UtcNow.ToString(proc.Get<string>("format"));
                 case "datetime":
-                    return DateTime.Now.ToString(method.Get<string>("format"));
+                    return DateTime.Now.ToString(proc.Get<string>("format"));
 
                 case "checksum":
-                    return Helpers.Checksum(method.Get<string>("text")).ToString();
+                    return Helpers.Checksum(proc.Get<string>("text")).ToString();
                 case "sha1":
-                    return Helpers.GetSHA1Hash(method.Get<string>("text")).ToString();
+                    return Helpers.GetSHA1Hash(proc.Get<string>("text")).ToString();
                 case "sha256":
-                    return Helpers.GetSHA256Hash(method.Get<string>("text")).ToString();
+                    return Helpers.GetSHA256Hash(proc.Get<string>("text")).ToString();
                 case "indexof":
-                    return method.Get<string>("textToSearch").IndexOf(method.Get<string>("textToFind")).ToString();
+                    return proc.Get<string>("textToSearch").IndexOf(proc.Get<string>("textToFind")).ToString();
                 case "lastindexof":
-                    return method.Get<string>("textToSearch").LastIndexOf(method.Get<string>("textToFind")).ToString();
+                    return proc.Get<string>("textToSearch").LastIndexOf(proc.Get<string>("textToFind")).ToString();
                 case "right":
-                    return method.Get<string>("text").Substring(method.Get<string>("text").Length - method.Get<int>("length"));
+                    return proc.Get<string>("text").Substring(proc.Get<string>("text").Length - proc.Get<int>("length"));
                 case "left":
-                    return method.Get<string>("text").Substring(0, method.Get<int>("length"));
+                    return proc.Get<string>("text").Substring(0, proc.Get<int>("length"));
                 case "iif":
                     {
-                        if (method.Get<bool>("condition"))
-                            return method.Get<string>("whenTrue");
-                        else return method.Get<string>("whenFalse");
+                        if (proc.Get<bool>("condition"))
+                            return proc.Get<string>("whenTrue");
+                        else return proc.Get<string>("whenFalse");
                     }
                 case "toproper":
-                    return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(method.Get<string>("text"));
+                    return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(proc.Get<string>("text"));
                 case "tolower":
-                    return method.Get<string>("text").ToLowerInvariant();
+                    return proc.Get<string>("text").ToLowerInvariant();
                 case "toupper":
-                    return method.Get<string>("text").ToUpperInvariant();
+                    return proc.Get<string>("text").ToUpperInvariant();
                 case "length":
-                    return method.Get<string>("text").Length.ToString();
+                    return proc.Get<string>("text").Length.ToString();
                 case "trim":
-                    return method.Get<string>("text").Trim();
+                    return proc.Get<string>("text").Trim();
                 case "substring":
-                    return method.Get<string>("text").Substring(method.Get<int>("startIndex"), method.Get<int>("length"));
+                    return proc.Get<string>("text").Substring(proc.Get<int>("startIndex"), proc.Get<int>("length"));
                 case "concat":
                     {
                         var builder = new StringBuilder();
@@ -198,7 +197,7 @@ namespace Katzebase.Engine.Query.Function.Scaler
                     }
             }
 
-            throw new KbFunctionException($"Undefined method: {methodName}.");
+            throw new KbFunctionException($"Undefined function: {functionName}.");
         }
     }
 }

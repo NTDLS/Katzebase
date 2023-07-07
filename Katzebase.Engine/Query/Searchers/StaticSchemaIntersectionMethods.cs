@@ -2,6 +2,8 @@
 using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query.Constraints;
+using Katzebase.Engine.Query.Function.Scaler;
+using Katzebase.Engine.Query.FunctionParameter;
 using Katzebase.Engine.Query.Searchers.Intersection;
 using Katzebase.Engine.Query.Searchers.Mapping;
 using Katzebase.Engine.Query.Sorting;
@@ -13,8 +15,6 @@ using static Katzebase.Engine.Documents.DocumentPointer;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 using static Katzebase.PublicLibrary.KbConstants;
-using Katzebase.Engine.Query.Function.Scaler;
-using Katzebase.Engine.Query.FunctionParameter;
 
 namespace Katzebase.Engine.Query.Searchers
 {
@@ -217,7 +217,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                 //Execute functions
                 {
-                    foreach (var methodField in param.Query.SelectFields.OfType<FunctionMethodAndParams>())
+                    foreach (var methodField in param.Query.SelectFields.OfType<FunctionWithParams>())
                     {
                         foreach (var row in resultingRows.Rows)
                         {
@@ -334,7 +334,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                         if (!jIndexContent.TryGetValue(condition.Right?.Value ?? "", StringComparison.CurrentCultureIgnoreCase, out JToken? conditionToken))
                         {
-                            throw new KbParserException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
+                            throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
                         }
                         keyValuePairs.Add(condition.Left?.Value ?? "", conditionToken?.ToString() ?? "");
                     }
@@ -461,7 +461,7 @@ namespace Katzebase.Engine.Query.Searchers
                 //Get the value of the condition:
                 if (!jContent.TryGetValue(condition.Left.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jLeftToken))
                 {
-                    throw new KbParserException($"Field not found in document [{condition.Left.Value}].");
+                    throw new KbEngineException($"Field not found in document [{condition.Left.Value}].");
                 }
 
                 jContent = jJoinScopedContentCache[condition.Right.Prefix];
@@ -469,7 +469,7 @@ namespace Katzebase.Engine.Query.Searchers
                 //Get the value of the condition:
                 if (!jContent.TryGetValue(condition.Right.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jRightToken))
                 {
-                    throw new KbParserException($"Field not found in document [{condition.Right.Value}].");
+                    throw new KbEngineException($"Field not found in document [{condition.Right.Value}].");
                 }
 
                 var singleConditionResult = Condition.IsMatch(jLeftToken.ToString().ToLower(), condition.LogicalQualifier, jRightToken.ToString());
@@ -542,7 +542,7 @@ namespace Katzebase.Engine.Query.Searchers
                 if (jObject.TryGetValue(methodField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
                 {
                     //Field was not found, log warning which can be returned to the user.
-                    //throw new KbParserException($"Method field not found: {methodField.Key}.");
+                    //throw new KbEngineException($"Method field not found: {methodField.Key}.");
                 }
                 schemaResultRow.MethodFields.Add(methodField.Key, token?.ToString());
             }
@@ -556,7 +556,7 @@ namespace Katzebase.Engine.Query.Searchers
                 if (jObject.TryGetValue(conditionField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
                 {
                     //Field was not found, log warning which can be returned to the user.
-                    //throw new KbParserException($"Condition field not found: {conditionField.Key}.");
+                    //throw new KbEngineException($"Condition field not found: {conditionField.Key}.");
                 }
                 schemaResultRow.ConditionFields.Add(conditionField.Key, token?.ToString());
             }
@@ -626,7 +626,7 @@ namespace Katzebase.Engine.Query.Searchers
                 if (conditionField.TryGetValue(condition.Left.Key, out string? value) == false)
                 {
                     //Field was not found, log warning which can be returned to the user.
-                    //throw new KbParserException($"Field not found in document [{condition.Left.Key}].");
+                    //throw new KbEngineException($"Field not found in document [{condition.Left.Key}].");
                 }
 
                 expression.Parameters[condition.ConditionKey] = condition.IsMatch(value?.ToLower());

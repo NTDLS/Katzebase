@@ -18,15 +18,15 @@ namespace Katzebase.Engine.Query.Function.Scaler
 
         public static QueryScalerFunction Parse(string prototype)
         {
-            int indexOfMethodNameEnd = prototype.IndexOf(':');
-            string methodName = prototype.Substring(0, indexOfMethodNameEnd);
-            var parameterStrings = prototype.Substring(indexOfMethodNameEnd + 1).Split(',', StringSplitOptions.RemoveEmptyEntries);
+            int indexOfNameEnd = prototype.IndexOf(':');
+            string functionName = prototype.Substring(0, indexOfNameEnd);
+            var parameterStrings = prototype.Substring(indexOfNameEnd + 1).Split(',', StringSplitOptions.RemoveEmptyEntries);
             List<QueryScalerFunctionParameterPrototype> parameters = new();
 
             foreach (var param in parameterStrings)
             {
                 var typeAndName = param.Split("/");
-                if (Enum.TryParse(typeAndName[0], true, out KbParameterType paramType) == false)
+                if (Enum.TryParse(typeAndName[0], true, out KbQueryScalerFunctionParameterType paramType) == false)
                 {
                     throw new KbGenericException($"Unknown parameter type {typeAndName[0]}");
                 }
@@ -39,7 +39,8 @@ namespace Katzebase.Engine.Query.Function.Scaler
                 }
                 else if (nameAndDefault.Count() == 2)
                 {
-                    parameters.Add(new QueryScalerFunctionParameterPrototype(paramType, nameAndDefault[0], nameAndDefault[1]));
+                    parameters.Add(new QueryScalerFunctionParameterPrototype(paramType, nameAndDefault[0],
+                        nameAndDefault[1].ToLower() == "null" ? null : nameAndDefault[1]));
                 }
                 else
                 {
@@ -47,7 +48,7 @@ namespace Katzebase.Engine.Query.Function.Scaler
                 }
             }
 
-            return new QueryScalerFunction(methodName, parameters);
+            return new QueryScalerFunction(functionName, parameters);
         }
 
         internal QueryScalerFunctionParameterValueCollection ApplyParameters(List<string?> values)
@@ -56,7 +57,7 @@ namespace Katzebase.Engine.Query.Function.Scaler
 
             if (Parameters.Count < requiredParameterCount)
             {
-                if (Parameters.Count > 0 && Parameters[0].Type == KbParameterType.Infinite_String)
+                if (Parameters.Count > 0 && Parameters[0].Type == KbQueryScalerFunctionParameterType.Infinite_String)
                 {
                     //The first parameter is infinite, we dont even check anything else.
                 }
@@ -68,7 +69,7 @@ namespace Katzebase.Engine.Query.Function.Scaler
 
             var result = new QueryScalerFunctionParameterValueCollection();
 
-            if (Parameters.Count > 0 && Parameters[0].Type == KbParameterType.Infinite_String)
+            if (Parameters.Count > 0 && Parameters[0].Type == KbQueryScalerFunctionParameterType.Infinite_String)
             {
                 for (int i = 0; i < Parameters.Count; i++)
                 {

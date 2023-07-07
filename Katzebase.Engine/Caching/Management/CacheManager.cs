@@ -103,7 +103,7 @@ namespace Katzebase.Engine.Caching.Management
         public class PartitionAllocationDetails
         {
             public int PartitionCount { get; set; }
-            public List<int> PartitionAllocations = new List<int>();
+            public List<int> PartitionAllocations = new();
         }
 
 
@@ -113,7 +113,7 @@ namespace Katzebase.Engine.Caching.Management
             {
                 var result = new PartitionAllocationDetails
                 {
-                     PartitionCount = PartitionCount
+                    PartitionCount = PartitionCount
                 };
 
                 for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)

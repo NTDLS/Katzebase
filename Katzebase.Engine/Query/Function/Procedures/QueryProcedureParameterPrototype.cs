@@ -1,24 +1,23 @@
-﻿namespace Katzebase.Engine.Query.Function.Scaler
+﻿namespace Katzebase.Engine.Query.Function.Procedures
 {
     /// <summary>
     /// A parsed function parameter prototype
     /// </summary>
-    internal class QueryScalerFunctionParameterPrototype
+    internal class QueryProcedureParameterPrototype
     {
-        public KbQueryScalerFunctionParameterType Type { get; set; }
+        public KbQueryProcedureParameterType Type { get; set; }
         public string Name { get; set; }
         public string? DefaultValue { get; set; }
         public bool HasDefault { get; set; }
 
-        public QueryScalerFunctionParameterPrototype(KbQueryScalerFunctionParameterType type, string name)
+        public QueryProcedureParameterPrototype(KbQueryProcedureParameterType type, string name)
         {
             Type = type;
             Name = name;
             HasDefault = false;
-
         }
 
-        public QueryScalerFunctionParameterPrototype(KbQueryScalerFunctionParameterType type, string name, string? defaultValue)
+        public QueryProcedureParameterPrototype(KbQueryProcedureParameterType type, string name, string? defaultValue)
         {
             Type = type;
             Name = name;

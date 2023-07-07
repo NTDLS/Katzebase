@@ -29,7 +29,7 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
             {
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
-                    var result =  core.Functions.ExecuteProcedure(preparedQuery.ProcedureCall);
+                    var result = core.Functions.ExecuteProcedure(preparedQuery.ProcedureCall);
 
                     transaction.Commit();
                     result.RowCount = result.Rows.Count;

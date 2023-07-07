@@ -3,12 +3,12 @@ using Katzebase.PublicLibrary.Exceptions;
 
 namespace Katzebase.Engine.Query.FunctionParameter
 {
-    internal class FunctionMethodAndParams : FunctionParameterBase
+    internal class FunctionWithParams : FunctionParameterBase
     {
-        public string Method { get; set; } = string.Empty;
+        public string Function { get; set; } = string.Empty;
         public List<FunctionParameterBase> Parameters { get; set; } = new();
 
-        public T GetParam<T>(int ordinal)
+        public T? GetParam<T>(int ordinal)
         {
             if (ordinal >= Parameters.Count)
             {
@@ -21,7 +21,7 @@ namespace Katzebase.Engine.Query.FunctionParameter
                 throw new KbFunctionException($"Parameter {ordinal} could not be converted to an expression.");
             }
 
-            return Helpers.ConvertTo<T>(expression.Value);
+            return Helpers.ConvertTo<T?>(expression.Value);
         }
     }
 }

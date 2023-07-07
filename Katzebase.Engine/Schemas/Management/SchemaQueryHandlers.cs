@@ -46,7 +46,7 @@ namespace Katzebase.Engine.Schemas.Management
                     }
                     else
                     {
-                        throw new KbParserException("Invalid list query subtype.");
+                        throw new KbEngineException("Invalid list query subtype.");
                     }
 
                     transaction.Commit();

@@ -19,21 +19,21 @@ namespace Katzebase.Engine.Query.Function.Scaler
             }
         }
 
-        public static QueryScalerFunctionParameterValueCollection ApplyMethodPrototype(string methodName, List<string?> parameters)
+        public static QueryScalerFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string?> parameters)
         {
             if (_protypes == null)
             {
-                throw new KbFatalException("Method prototypes were not initialized.");
+                throw new KbFatalException("Function prototypes were not initialized.");
             }
 
-            var method = _protypes.Where(o => o.Name.ToLower() == methodName.ToLower()).FirstOrDefault();
+            var function = _protypes.Where(o => o.Name.ToLower() == functionName.ToLower()).FirstOrDefault();
 
-            if (method == null)
+            if (function == null)
             {
-                throw new KbFunctionException($"Undefined method: {methodName}.");
+                throw new KbFunctionException($"Undefined function: {functionName}.");
             }
 
-            return method.ApplyParameters(parameters);
+            return function.ApplyParameters(parameters);
         }
     }
 }

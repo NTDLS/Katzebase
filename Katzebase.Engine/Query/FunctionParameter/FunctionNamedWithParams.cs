@@ -1,6 +1,6 @@
 ﻿namespace Katzebase.Engine.Query.FunctionParameter
 {
-    internal class FunctionNamedMethodAndParams : FunctionMethodAndParams
+    internal class FunctionNamedWithParams : FunctionWithParams
     {
         public string ExpressionKey { get; set; } = string.Empty;
     }

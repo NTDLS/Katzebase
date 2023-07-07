@@ -21,6 +21,8 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
             {
                 QueryHandlers = new ProcedureQueryHandlers(core);
                 APIHandlers = new ProcedureAPIHandlers(core);
+
+                QueryProcedureCollection.Initialize();
             }
             catch (Exception ex)
             {
@@ -31,19 +33,29 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
 
         internal KbQueryResult ExecuteProcedure(FunctionParameterBase procedureCall)
         {
-            string methodName = string.Empty;
+            string functionName = string.Empty;
+
+            QueryProcedureParameterValueCollection? proc = null;
 
             if (procedureCall is FunctionConstantParameter)
             {
-                methodName = ((FunctionConstantParameter)procedureCall).Value;
+                var procCall = ((FunctionConstantParameter)procedureCall);
+                functionName = procCall.Value;
+                proc = QueryProcedureCollection.ApplyProcedurePrototype(procCall.Value, new List<FunctionParameterBase>());
             }
-            else if (procedureCall is FunctionMethodAndParams)
+            else if (procedureCall is FunctionWithParams)
             {
-                methodName = ((FunctionMethodAndParams)procedureCall).Method;
+                var procCall = ((FunctionWithParams)procedureCall);
+                functionName = procCall.Function;
+                proc = QueryProcedureCollection.ApplyProcedurePrototype(procCall.Function, procCall.Parameters);
+            }
+            else
+            {
+                throw new KbNotImplementedException("Procedure call type is not implemented");
             }
 
             //First check for system procedures:
-            switch (methodName.ToLower())
+            switch (functionName.ToLower())
             {
                 case "clearcache":
                     {
@@ -96,9 +108,13 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
                     }
                 case "showwaitinglocks":
                     {
-                        //var procCall = (FunctionMethodAndParams)procedureCall;
-                        //var processId = procCall.GetParam<ulong>(0);
-                        var waitingForLocks = core.Locking.Locks.CloneTransactionWaitingForLocks();
+                        var waitingForLocks = core.Locking.Locks.CloneTransactionWaitingForLocks().ToList();
+
+                        var processId = proc.GetNullable<ulong?>("processId");
+                        if (processId != null)
+                        {
+                            waitingForLocks = waitingForLocks.Where(o => o.Key.ProcessId == processId).ToList();
+                        }
 
                         var result = new KbQueryResult();
 
@@ -106,7 +122,6 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
                         result.AddField("LockType");
                         result.AddField("Operation");
                         result.AddField("ObjectName");
-
 
                         foreach (var waitingForLock in waitingForLocks)
                         {
@@ -125,15 +140,21 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
 
                 case "showblocks":
                     {
-                        var procCall = (FunctionMethodAndParams)procedureCall;
-                        var processId = procCall.GetParam<ulong>(0);
-                        var transaction = core.Transactions.CloneTransactions().Where(o => o.ProcessId == processId).FirstOrDefault();
+                        var procCall = (FunctionWithParams)procedureCall;
+
+                        var transactions = core.Transactions.CloneTransactions();
+
+                        var processId = proc.GetNullable<ulong?>("processId");
+                        if (processId != null)
+                        {
+                            transactions = transactions.Where(o => o.ProcessId == processId).ToList();
+                        }
 
                         var result = new KbQueryResult();
 
                         result.AddField("ProcessId");
 
-                        if (transaction != null)
+                        foreach(var transaction in transactions)
                         {
                             var blockedBy = transaction.CloneBlocks();
 
@@ -165,9 +186,14 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
 
                         var transactions = core.Transactions.CloneTransactions();
 
+                        var processId = proc.GetNullable<ulong?>("processId");
+                        if (processId != null)
+                        {
+                            transactions = transactions.Where(o => o.ProcessId == processId).ToList();
+                        }
+
                         foreach (var transaction in transactions)
                         {
-
                             var values = new List<string?> {
                                 (transaction?.BlockedBy.Count > 0).ToString(),
                                 transaction?.ReferenceCount.ToString(),
@@ -206,6 +232,12 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
 
                         var sessions = core.Sessions.CloneSessions();
                         var transactions = core.Transactions.CloneTransactions();
+
+                        var processId = proc.GetNullable<ulong?>("processId");
+                        if (processId != null)
+                        {
+                            transactions = transactions.Where(o => o.ProcessId == processId).ToList();
+                        }
 
                         foreach (var session in sessions)
                         {
@@ -247,7 +279,7 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
             //TODO: Next check for user procedures in a schema:
             //...
 
-            throw new KbFunctionException($"Unknown procedure [{methodName}].");
+            throw new KbFunctionException($"Undefined procedure [{functionName}].");
         }
     }
 }

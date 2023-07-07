@@ -1,7 +1,6 @@
 ﻿using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
-using System.Diagnostics;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
 using static Katzebase.PublicLibrary.KbConstants;

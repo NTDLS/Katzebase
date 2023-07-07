@@ -59,7 +59,7 @@ namespace Katzebase.Engine.Health.Management
         {
             lock (Counters)
             {
-                return Counters.ToDictionary(o=>o.Key, o=>o.Value);
+                return Counters.ToDictionary(o => o.Key, o => o.Value);
             }
         }
 

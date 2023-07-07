@@ -22,7 +22,7 @@ namespace Katzebase.Engine.Query.Function
             var preParsed = PreParseFunctionCall(query);
             if (preParsed != null)
             {
-                return ParseMethodCall(preParsed.Text);
+                return ParseFunctionCall(preParsed.Text);
             }
 
             return new FunctionParameterBase();
@@ -38,9 +38,9 @@ namespace Katzebase.Engine.Query.Function
             {
                 if (field.IsComplex)
                 {
-                    var methodCall = ParseMethodCall(field.Text);
-                    methodCall.Alias = field.Alias;
-                    result.Add(methodCall);
+                    var functionCall = ParseFunctionCall(field.Text);
+                    functionCall.Alias = field.Alias;
+                    result.Add(functionCall);
                 }
                 else
                 {
@@ -127,7 +127,7 @@ namespace Katzebase.Engine.Query.Function
                                 string subParamText = text.Substring(startPosition, endPosition - startPosition + 1);
 
                                 string paramKey = $"{{p{paramCount++}}}";
-                                var mathParamParams = (FunctionMethodAndParams)ParseMethodCall(subParamText, paramKey);
+                                var mathParamParams = (FunctionWithParams)ParseFunctionCall(subParamText, paramKey);
 
                                 expression.Parameters.Add(mathParamParams);
 
@@ -200,7 +200,7 @@ namespace Katzebase.Engine.Query.Function
             return expression;
         }
 
-        private static FunctionParameterBase ParseMethodCall(string text, string expressionKey = "")
+        private static FunctionParameterBase ParseFunctionCall(string text, string expressionKey = "")
         {
             char firstChar = text[0];
 
@@ -215,7 +215,7 @@ namespace Katzebase.Engine.Query.Function
             }
             else if (char.IsLetter(firstChar) && IsNextNonIdentifier(text, 0, '('))
             {
-                //Parse method call with one or more parameters.
+                //Parse function call with one or more parameters.
 
                 string param = string.Empty;
                 int parenScope = 0;
@@ -223,22 +223,22 @@ namespace Katzebase.Engine.Query.Function
                 bool parseMath = false;
                 int parenIndex = text.IndexOf('(');
 
-                FunctionMethodAndParams results;
+                FunctionWithParams results;
 
 
                 if (expressionKey != string.Empty)
                 {
-                    results = new FunctionNamedMethodAndParams()
+                    results = new FunctionNamedWithParams()
                     {
-                        Method = text.Substring(0, parenIndex),
+                        Function = text.Substring(0, parenIndex),
                         ExpressionKey = expressionKey,
                     };
                 }
                 else
                 {
-                    results = new FunctionMethodAndParams()
+                    results = new FunctionWithParams()
                     {
-                        Method = text.Substring(0, parenIndex),
+                        Function = text.Substring(0, parenIndex),
                     };
                 }
 
@@ -257,7 +257,7 @@ namespace Katzebase.Engine.Query.Function
 
                     if (_mathChars.Contains(c) && !(c == '(' || c == ')'))
                     {
-                        //The paramter contains math characters. '(' and ')' are usre for method calls and do not count.
+                        //The paramter contains math characters. '(' and ')' are usre for function calls and do not count.
                         parseMath = true;
                     }
 
@@ -323,7 +323,7 @@ namespace Katzebase.Engine.Query.Function
                         }
                         else if (isComplex)
                         {
-                            results.Parameters.Add(ParseMethodCall(param));
+                            results.Parameters.Add(ParseFunctionCall(param));
                         }
                         else if (param.StartsWith("$") && param.EndsWith("$"))
                         {

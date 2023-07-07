@@ -1,3 +1,6 @@
+exec showwaitinglocks--(1)
+
+/*
 select
 	sw.*
 --into
@@ -12,7 +15,7 @@ inner join WordList:Language as tl
 	on tl.Id = tw.LanguageId
 where
 	sw.Text like 'moon%'
-
+*/
 /*
 set TraceWaitTimes true;
 set MinQueryThreads 1;

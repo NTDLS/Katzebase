@@ -36,9 +36,9 @@
                 {
                     RefillStringLiterals(((FunctionExpression)param).Parameters, literals);
                 }
-                if (param is FunctionMethodAndParams)
+                if (param is FunctionWithParams)
                 {
-                    RefillStringLiterals(((FunctionMethodAndParams)param).Parameters, literals);
+                    RefillStringLiterals(((FunctionWithParams)param).Parameters, literals);
                 }
             }
         }
@@ -59,7 +59,7 @@
                 var children = new List<FunctionParameterBase>();
 
                 children.AddRange(this.OfType<FunctionExpression>());
-                children.AddRange(this.OfType<FunctionMethodAndParams>());
+                children.AddRange(this.OfType<FunctionWithParams>());
 
                 foreach (var param in children)
                 {
@@ -67,9 +67,9 @@
                     {
                         GetAllFieldsRecursive(ref _allFields, ((FunctionExpression)param).Parameters);
                     }
-                    if (param is FunctionMethodAndParams)
+                    if (param is FunctionWithParams)
                     {
-                        GetAllFieldsRecursive(ref _allFields, ((FunctionMethodAndParams)param).Parameters);
+                        GetAllFieldsRecursive(ref _allFields, ((FunctionWithParams)param).Parameters);
                     }
                 }
             }
@@ -95,9 +95,9 @@
                 {
                     GetAllFieldsRecursive(ref result, ((FunctionExpression)param).Parameters);
                 }
-                if (param is FunctionMethodAndParams)
+                if (param is FunctionWithParams)
                 {
-                    GetAllFieldsRecursive(ref result, ((FunctionMethodAndParams)param).Parameters);
+                    GetAllFieldsRecursive(ref result, ((FunctionWithParams)param).Parameters);
                 }
             }
         }
