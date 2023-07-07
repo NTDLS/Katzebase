@@ -24,7 +24,7 @@ namespace Katzebase.Engine.Query.Searchers
 
         public void AddRange(SchemaIntersectionRowCollection rowCollection)
         {
-            Collection.AddRange(rowCollection.Rows.Select(o => new DocumentLookupResult(o.Values)));
+            Collection.AddRange(rowCollection.Collection.Select(o => new DocumentLookupResult(o.Values)));
         }
     }
 }

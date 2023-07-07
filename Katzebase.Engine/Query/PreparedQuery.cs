@@ -33,7 +33,7 @@ namespace Katzebase.Engine.Query
 
         public FunctionParameterBaseCollection SelectFields = new();
         public FunctionParameterBase ProcedureCall = new();
-        public PrefixedFields GroupFields { get; set; } = new();
+        public FunctionParameterBaseCollection GroupFields { get; set; } = new();
         public SortFields SortFields { get; set; } = new();
 
         /// <summary>

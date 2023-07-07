@@ -1,0 +1,13 @@
+﻿namespace Katzebase.Engine.Query.FunctionParameter
+{
+    internal static class FunctionParameterTypes
+    {
+        internal static string[] AggregateFunctionNames = { "min", "max", "sum", "avg", "count" };
+
+        internal enum FunctionType
+        {
+            Aggregate,
+            Scaler
+        }
+    }
+}

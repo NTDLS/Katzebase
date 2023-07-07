@@ -56,6 +56,8 @@
             {
                 _allFields = new();
 
+                _allFields.AddRange(this.OfType<FunctionDocumentFieldParameter>().Select(o => o.Value).ToList());
+
                 var children = new List<FunctionParameterBase>();
 
                 children.AddRange(this.OfType<FunctionExpression>());

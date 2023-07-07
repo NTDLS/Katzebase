@@ -2,11 +2,16 @@
 {
     internal class SchemaIntersectionRowCollection
     {
-        public List<SchemaIntersectionRow> Rows { get; set; } = new();
+        public List<SchemaIntersectionRow> Collection { get; set; } = new();
 
         public void Add(SchemaIntersectionRow row)
         {
-            Rows.Add(row);
+            Collection.Add(row);
+        }
+
+        public void AddRange(SchemaIntersectionRowCollection rows)
+        {
+            Collection.AddRange(rows.Collection);
         }
     }
 }

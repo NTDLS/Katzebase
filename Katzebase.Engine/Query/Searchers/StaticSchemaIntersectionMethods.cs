@@ -2,6 +2,7 @@
 using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query.Constraints;
+using Katzebase.Engine.Query.Function.Aggregate;
 using Katzebase.Engine.Query.Function.Scaler;
 using Katzebase.Engine.Query.FunctionParameter;
 using Katzebase.Engine.Query.Searchers.Intersection;
@@ -11,6 +12,10 @@ using Katzebase.Engine.Threading;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
+using ProtoBuf;
+using System.Collections;
+using System;
+using System.Collections.Generic;
 using static Katzebase.Engine.Documents.DocumentPointer;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
@@ -116,6 +121,86 @@ namespace Katzebase.Engine.Query.Searchers
             threadPool.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
 
+            #region Grouping.
+
+            int GetDictonaryIndex(Dictionary<string, string?> dictionary, string searchKey)
+            {
+                int currentIndex = 0;
+                foreach (var entry in dictionary)
+                {
+                    if (entry.Key == searchKey)
+                    {
+                        return currentIndex;
+                    }
+                    currentIndex++;
+                }
+                return -1;
+            }
+
+            if (query.GroupFields.Any() && threadParam.Results.Collection.Any())
+            {
+                //var firstRow = threadParam.Results.Collection.First();
+
+                //Here we are going to build a grouping_key using the concatenated select fields.
+                var groupedValues = threadParam.Results.Collection.GroupBy(arr =>
+                    string.Join("\t", query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => arr.MethodFields[groupFieldParam.Value.Key])));
+
+                var groupedResults = new SchemaIntersectionRowCollection();
+
+                foreach (var group in groupedValues)
+                {
+                    var values = new List<string?>();
+
+                    var groupValues = group.Key.Split('\t');
+
+                    for (int i = 0; i < query.SelectFields.Count; i++)
+                    {
+                        var field = query.SelectFields[i];
+
+                        if (field is FunctionDocumentFieldParameter)
+                        {
+                            var specific = (FunctionDocumentFieldParameter)field;
+                            var specificValue = group.First().MethodFields[specific.Value.Key];
+                            values.Add(specificValue);
+                        }
+                        else if (field is FunctionWithParams)
+                        {
+                            var proc = (FunctionWithParams)field;
+                            var value = QueryAggregateFunctionImplementation.CollapseAllFunctionParameters(proc, group);
+                            values.Add(value);
+                        }
+                        else
+                        {
+                            throw new KbNotImplementedException($"The aggregate type is not implemented.");
+                        }
+                    }
+
+                    var rowResults = new SchemaIntersectionRow
+                    {
+                        Values = values,
+                    };
+
+                    groupedResults.Add(rowResults);
+                }
+
+                /*
+                    foreach (var methodField in param.Query.SelectFields.OfType<FunctionWithParams>().Where(o=>o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
+                    {
+                        foreach (var row in resultingRows.Rows)
+                        {
+                            var methodResult = QueryScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
+                        }
+                    }
+                */
+
+                threadParam.Results = groupedResults;
+            }
+
+            #endregion
+
+            #region Sorting.
+
             //Get a list of all the fields we need to sory by.
             if (query.SortFields.Any() && threadParam.Results.Collection.Any())
             {
@@ -134,6 +219,8 @@ namespace Katzebase.Engine.Query.Searchers
                 ptSorting?.StopAndAccumulate();
             }
 
+            #endregion
+
             //Enforce row limits.
             if (query.RowLimit > 0)
             {
@@ -143,7 +230,7 @@ namespace Katzebase.Engine.Query.Searchers
             if (gatherDocumentPointersForSchemaPrefix != null)
             {
                 //Distill the document pointers to a distinct list. Can we do this in the threads? Maybe prevent the dups in the first place?
-                threadParam.Results.DocumentPointers = threadParam.Results.DocumentPointers.Distinct(new DocumentPageEqualityComparer()).ToList();
+                threadParam.DocumentPointers = threadParam.DocumentPointers.Distinct(new DocumentPageEqualityComparer()).ToList();
             }
 
             if (query.DynamicallyBuildSelectList && threadParam.Results.Collection.Count > 0)
@@ -162,7 +249,11 @@ namespace Katzebase.Engine.Query.Searchers
                 }
             }
 
-            return threadParam.Results;
+            var results = new DocumentLookupResults();
+
+            results.AddRange(threadParam.Results);
+
+            return results;
         }
 
         #region Threading.
@@ -170,7 +261,10 @@ namespace Katzebase.Engine.Query.Searchers
         private class LookupThreadParam
         {
             public string? GatherDocumentPointersForSchemaPrefix { get; set; } = null;
-            public DocumentLookupResults Results = new();
+            public SchemaIntersectionRowCollection Results { get; set; } = new();
+            public List<DocumentPointer> DocumentPointers { get; set; } = new();
+
+            public DocumentLookupResults Results_old = new();
             public QuerySchemaMap SchemaMap { get; private set; }
             public Core Core { get; private set; }
             public Transaction Transaction { get; private set; }
@@ -208,18 +302,18 @@ namespace Katzebase.Engine.Query.Searchers
                 //TODO: This could probably be used to implement OUTER JOINS.
                 if (param.GatherDocumentPointersForSchemaPrefix == null)
                 {
-                    resultingRows.Rows = resultingRows.Rows.Where(o => o.SchemaKeys.Count == param.SchemaMap.Count).ToList();
+                    resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaKeys.Count == param.SchemaMap.Count).ToList();
                 }
                 else
                 {
-                    resultingRows.Rows = resultingRows.Rows.Where(o => o.SchemaDocumentPointers.Count == param.SchemaMap.Count).ToList();
+                    resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaDocumentPointers.Count == param.SchemaMap.Count).ToList();
                 }
 
                 //Execute functions
                 {
-                    foreach (var methodField in param.Query.SelectFields.OfType<FunctionWithParams>())
+                    foreach (var methodField in param.Query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
                     {
-                        foreach (var row in resultingRows.Rows)
+                        foreach (var row in resultingRows.Collection)
                         {
                             var methodResult = QueryScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
@@ -228,7 +322,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                     foreach (var methodField in param.Query.SelectFields.OfType<FunctionExpression>())
                     {
-                        foreach (var row in resultingRows.Rows)
+                        foreach (var row in resultingRows.Collection)
                         {
                             var methodResult = QueryScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
@@ -245,7 +339,7 @@ namespace Katzebase.Engine.Query.Searchers
                     }
                     else
                     {
-                        param.Results.DocumentPointers.AddRange(resultingRows.Rows.Select(o => o.SchemaDocumentPointers[param.GatherDocumentPointersForSchemaPrefix]));
+                        param.DocumentPointers.AddRange(resultingRows.Collection.Select(o => o.SchemaDocumentPointers[param.GatherDocumentPointersForSchemaPrefix]));
                     }
                 }
             }
@@ -293,7 +387,7 @@ namespace Katzebase.Engine.Query.Searchers
             if (param.Query.Conditions.AllFields.Any())
             {
                 //Filter the rows by the global conditions.
-                resultingRows.Rows = ApplyQueryGlobalConditions(param, resultingRows);
+                resultingRows.Collection = ApplyQueryGlobalConditions(param, resultingRows);
             }
         }
 
@@ -547,6 +641,17 @@ namespace Katzebase.Engine.Query.Searchers
                 schemaResultRow.MethodFields.Add(methodField.Key, token?.ToString());
             }
 
+            //We have to make sure that we have all of the method fields too so we can use them for calling functions.
+            foreach (var methodField in param.Query.GroupFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())
+            {
+                if (jObject.TryGetValue(methodField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
+                {
+                    //Field was not found, log warning which can be returned to the user.
+                    //throw new KbEngineException($"Method field not found: {methodField.Key}.");
+                }
+                //schemaResultRow.MethodFields.Add(methodField.Key, token?.ToString());
+            }
+
             schemaResultRow.MethodFields.Add($"{schemaKey}.$UID$", documentPointer.Key);
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.
@@ -574,7 +679,7 @@ namespace Katzebase.Engine.Query.Searchers
             var outputResults = new List<SchemaIntersectionRow>();
             var expression = new NCalc.Expression(param.Query.Conditions.HighLevelExpressionTree);
 
-            foreach (var inputResult in inputResults.Rows)
+            foreach (var inputResult in inputResults.Collection)
             {
                 SetQueryGlobalConditionsExpressionParameters(ref expression, param.Query.Conditions, inputResult.ConditionFields);
 

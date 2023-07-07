@@ -7,7 +7,7 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
     {
         public Dictionary<string, DocumentPointer> SchemaDocumentPointers = new();
 
-        public List<string?> Values { get; private set; } = new();
+        public List<string?> Values { get; set; } = new();
 
         /// <summary>
         /// The schemas that were used to make up this row.

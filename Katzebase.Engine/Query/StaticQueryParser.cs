@@ -583,6 +583,10 @@ namespace Katzebase.Engine.Query
                     }
                     query.SkipNextToken();
 
+                    result.GroupFields = StaticFunctionParsers.ParseGroupByFields(query);
+
+                    /*
+
                     while (true)
                     {
                         int previousTokenPosition = query.Position;
@@ -615,6 +619,7 @@ namespace Katzebase.Engine.Query
                             query.SkipDelimiters();
                         }
                     }
+                    */
                 }
 
                 if (query.IsNextToken("order"))
@@ -949,10 +954,10 @@ namespace Katzebase.Engine.Query
 
             foreach (var field in result.GroupFields)
             {
-                if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
-                {
-                    throw new KbParserException($"The group-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
-                }
+                //if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
+                //{
+                //    throw new KbParserException($"The group-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
+                //}
             }
 
             foreach (var field in result.SelectFields) //Top level fields.

@@ -1,12 +1,16 @@
 ﻿using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary.Exceptions;
+using static Katzebase.Engine.Query.FunctionParameter.FunctionParameterTypes;
 
 namespace Katzebase.Engine.Query.FunctionParameter
 {
     internal class FunctionWithParams : FunctionParameterBase
     {
+
         public string Function { get; set; } = string.Empty;
         public List<FunctionParameterBase> Parameters { get; set; } = new();
+
+        public FunctionType FunctionType { get; set; }
 
         public T? GetParam<T>(int ordinal)
         {
@@ -22,6 +26,20 @@ namespace Katzebase.Engine.Query.FunctionParameter
             }
 
             return Helpers.ConvertTo<T?>(expression.Value);
+        }
+
+        public FunctionWithParams(string functionName)
+        {
+            Function = functionName;
+
+            if (AggregateFunctionNames.Contains(Function.ToLower()))
+            {
+                FunctionType = FunctionType.Aggregate;
+            }
+            else
+            {
+                FunctionType = FunctionType.Scaler;
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using Katzebase.Engine.Query.Function.Scaler;
+﻿using Katzebase.Engine.Query.Function.Aggregate;
+using Katzebase.Engine.Query.Function.Scaler;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.Library.EngineConstants;
@@ -19,6 +20,7 @@ namespace Katzebase.Engine.Query.Management
             APIHandlers = new QueryAPIHandlers(core);
 
             QueryScalerFunctionCollection.Initialize();
+            QueryAggregateFunctionCollection.Initialize();
         }
 
         internal KbQueryResult ExplainQuery(ulong processId, PreparedQuery preparedQuery)

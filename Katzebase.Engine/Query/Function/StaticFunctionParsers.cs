@@ -28,6 +28,33 @@ namespace Katzebase.Engine.Query.Function
             return new FunctionParameterBase();
         }
 
+        internal static FunctionParameterBaseCollection ParseGroupByFields(QueryTokenizer query)
+        {
+            var preParsed = PreParseGroupByFields(query);
+
+            var result = new FunctionParameterBaseCollection();
+
+            foreach (var field in preParsed)
+            {
+                if (field.IsComplex)
+                {
+                    var functionCall = ParseFunctionCall(field.Text);
+                    functionCall.Alias = field.Alias;
+                    result.Add(functionCall);
+                }
+                else
+                {
+                    var newField = new FunctionDocumentFieldParameter(field.Text)
+                    {
+                        Alias = field.Alias
+                    };
+                    result.Add(newField);
+                }
+            }
+
+            return result;
+        }
+
         internal static FunctionParameterBaseCollection ParseQueryFields(QueryTokenizer query)
         {
             var preParsed = PreParseQueryFields(query);
@@ -228,18 +255,14 @@ namespace Katzebase.Engine.Query.Function
 
                 if (expressionKey != string.Empty)
                 {
-                    results = new FunctionNamedWithParams()
+                    results = new FunctionNamedWithParams(text.Substring(0, parenIndex))
                     {
-                        Function = text.Substring(0, parenIndex),
                         ExpressionKey = expressionKey,
                     };
                 }
                 else
                 {
-                    results = new FunctionWithParams()
-                    {
-                        Function = text.Substring(0, parenIndex),
-                    };
+                    results = new FunctionWithParams(text.Substring(0, parenIndex));
                 }
 
                 bool parenScopeFellToZero = false;
@@ -446,6 +469,115 @@ namespace Katzebase.Engine.Query.Function
                         query.SkipNextToken();
                         alias = query.GetNextToken();
                         continue;
+                    }
+                    else
+                    {
+                        if (token == null || token == string.Empty)
+                        {
+                            throw new KbParserException("Unexpected empty token found.");
+                        }
+
+                        param.Append(query.GetNextToken());
+                    }
+                }
+            }
+        }
+
+        private static List<PreparseField> PreParseGroupByFields(QueryTokenizer query)
+        {
+            var preparseFields = new List<PreparseField>();
+
+            while (true)
+            {
+                var param = new StringBuilder();
+                var alias = string.Empty;
+
+                int parenScope = 0;
+                bool isComplex = false;
+
+                while (true)
+                {
+                    var token = query.PeekNextToken(new char[] { ',', '(', ')' });
+
+                    if (token != string.Empty && _mathChars.Contains(token[0]) && !(token[0] == '(' || token[0] == ')'))
+                    {
+                        isComplex = true; //Found math token;
+                    }
+
+                    if (token == string.Empty && query.NextCharacter == '(')
+                    {
+                        param.Append(query.NextCharacter);
+                        query.SkipNextChar();
+                        isComplex = true;
+                        parenScope++;
+                        continue;
+                    }
+                    else if (token == string.Empty && query.NextCharacter == ')')
+                    {
+                        param.Append(query.NextCharacter);
+                        query.SkipNextChar();
+                        parenScope--;
+                        continue;
+                    }
+                    else if (
+                            (token == string.Empty && query.NextCharacter == ',' && parenScope == 0) || token.ToLower() == "order"
+                            || (token == string.Empty && parenScope == 0 && query.IsEnd()) 
+                        )
+                    {
+                        if (parenScope != 0)
+                        {
+                            throw new KbParserException("Invalid query. Found end of field while still in scope.");
+                        }
+
+                        if (param.Length == 0)
+                        {
+                            throw new KbParserException("Unexpected empty token found at end of statement.");
+                        }
+
+                        if (param.Length > 0 && char.IsDigit(param[0]))
+                        {
+                            isComplex = true;
+                        }
+
+                        if (alias == null || alias == string.Empty)
+                        {
+                            if (isComplex)
+                            {
+                                alias = $"Expression{preparseFields.Count + 1}";
+                            }
+                            else
+                            {
+                                alias = PrefixedField.Parse(param.ToString()).Alias;
+                            }
+                        }
+
+                        preparseFields.Add(new PreparseField { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
+
+                        //Done with this parameter.
+                        query.SkipWhile(',');
+
+                        if (token.ToLower() == "order")
+                        {
+                            return preparseFields;
+                        }
+                        else if (token == string.Empty && parenScope == 0 && query.IsEnd())
+                        {
+                            return preparseFields;
+                        }
+
+                        isComplex = false;
+
+                        break;
+                    }
+                    else if (token == string.Empty && query.NextCharacter == ',')
+                    {
+                        param.Append(query.NextCharacter);
+                        query.SkipWhile(',');
+                        continue;
+                    }
+                    else if (token.ToLower() == "as")
+                    {
+                        throw new KbParserException("Unexpected token [as] found.");
                     }
                     else
                     {

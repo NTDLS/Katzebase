@@ -1,4 +1,30 @@
-exec showwaitinglocks--(1)
+select
+	--Count(),
+	Min(s.TargetWordId) as Min,
+	Max(s.TargetWordId) as Max,
+	Sum(s.TargetWordId) as Sum,
+	Avg(s.TargetWordId) as Avg,
+	Count(s.TargetWordId) as Count,
+	--sw.Text as SourceWord,
+	--S.TargetWordId,
+	sw.Text as SourceWord,
+	tw.Text as TargetWord
+	--tl.Name as TargetLanguage
+from
+	WordList:Word as sw
+inner join WordList:Synonym as s
+	on s.SourceWordId = sw.Id
+inner join WordList:Word as tw
+	ON tw.Id = S.TargetWordId
+inner join WordList:Language as tl
+	on tl.Id = tw.LanguageId
+where
+	sw.Text = 'moon'
+group by
+	sw.Text,
+	tw.Text
+--order by
+	--SourceWord
 
 /*
 select
