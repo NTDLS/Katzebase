@@ -12,10 +12,6 @@ using Katzebase.Engine.Threading;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Newtonsoft.Json.Linq;
-using ProtoBuf;
-using System.Collections;
-using System;
-using System.Collections.Generic;
 using static Katzebase.Engine.Documents.DocumentPointer;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
@@ -122,20 +118,6 @@ namespace Katzebase.Engine.Query.Searchers
             ptThreadCompletion?.StopAndAccumulate();
 
             #region Grouping.
-
-            int GetDictonaryIndex(Dictionary<string, string?> dictionary, string searchKey)
-            {
-                int currentIndex = 0;
-                foreach (var entry in dictionary)
-                {
-                    if (entry.Key == searchKey)
-                    {
-                        return currentIndex;
-                    }
-                    currentIndex++;
-                }
-                return -1;
-            }
 
             if (query.GroupFields.Any() && threadParam.Results.Collection.Any())
             {

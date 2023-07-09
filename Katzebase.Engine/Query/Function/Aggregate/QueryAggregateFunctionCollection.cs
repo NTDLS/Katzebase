@@ -1,4 +1,5 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
+using static Katzebase.Engine.Query.Function.Aggregate.QueryAggregateFunctionImplementation;
 
 namespace Katzebase.Engine.Query.Function.Aggregate
 {
@@ -19,7 +20,7 @@ namespace Katzebase.Engine.Query.Function.Aggregate
             }
         }
 
-        public static QueryAggregateFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string?> parameters)
+        public static QueryAggregateFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<AggregateGenericParameter> parameters)
         {
             if (_protypes == null)
             {

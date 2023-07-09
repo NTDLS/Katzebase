@@ -3,10 +3,9 @@
     internal enum KbQueryAggregateFunctionParameterType
     {
         Undefined,
+        DecimalArray,
         String,
         Boolean,
-        Integer,
-        Infinite_String,
-        optional_string
+        Integer
     }
 }

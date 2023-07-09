@@ -1,3 +1,19 @@
+select top 10
+	SourceWordId,
+	Min(TargetWordId) as Min,
+	Max(TargetWordId) as Max,
+	Sum(TargetWordId) as Sum,
+	Avg(TargetWordId) as Avg,
+	Count(TargetWordId) as Count
+from
+	WordList:Synonym 
+group by
+	SourceWordId
+
+--order by
+	--SourceWord
+
+/*
 select
 	--Count(),
 	Min(s.TargetWordId) as Min,
@@ -25,6 +41,7 @@ group by
 	tw.Text
 --order by
 	--SourceWord
+*/
 
 /*
 select

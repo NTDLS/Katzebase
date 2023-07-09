@@ -1,5 +1,6 @@
 ﻿using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary.Exceptions;
+using Newtonsoft.Json.Linq;
 
 namespace Katzebase.Engine.Query.Function.Aggregate
 {
@@ -11,13 +12,33 @@ namespace Katzebase.Engine.Query.Function.Aggregate
         {
             try
             {
+                /*
+                if(is List<AggregateDecimalArrayParameter>)
+                        {
+                }
+                */
                 var parameter = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault();
                 if (parameter == null)
                 {
                     throw new KbGenericException($"Value for {name} cannot be null.");
                 }
 
-                if (parameter.Value == null)
+                var paramValue = string.Empty;
+
+                if (parameter.Value is AggregateDecimalArrayParameter)
+                {
+                    if (typeof(T)  == typeof(AggregateDecimalArrayParameter))
+                    {
+                        return (T)Convert.ChangeType(parameter.Value, typeof(T));
+                    }
+                    throw new KbEngineException("Requested type must be AggregateDecimalArrayParameter.");
+                }
+                else if (parameter.Value is AggregateSingleParameter)
+                {
+                    paramValue = ((AggregateSingleParameter)parameter.Value).Value;
+                }
+
+                if (paramValue == null)
                 {
                     if (parameter.Parameter.DefaultValue == null)
                     {
@@ -26,7 +47,7 @@ namespace Katzebase.Engine.Query.Function.Aggregate
                     return Helpers.ConvertTo<T>(parameter.Parameter.DefaultValue);
                 }
 
-                return Helpers.ConvertTo<T>(parameter.Value);
+                return Helpers.ConvertTo<T>(paramValue);
             }
             catch
             {
@@ -34,6 +55,7 @@ namespace Katzebase.Engine.Query.Function.Aggregate
             }
         }
 
+        /*
         public T Get<T>(string name, T defaultValue)
         {
             try
@@ -51,7 +73,8 @@ namespace Katzebase.Engine.Query.Function.Aggregate
                 throw new KbGenericException($"Undefined parameter {name}.");
             }
         }
-
+        */
+        /*
         public T? GetNullable<T>(string name)
         {
             try
@@ -78,7 +101,8 @@ namespace Katzebase.Engine.Query.Function.Aggregate
                 throw new KbGenericException($"Undefined parameter {name}.");
             }
         }
-
+        */
+        /*
         public T? GetNullable<T>(string name, T? defaultValue)
         {
             try
@@ -96,5 +120,6 @@ namespace Katzebase.Engine.Query.Function.Aggregate
                 throw new KbGenericException($"Undefined parameter {name}.");
             }
         }
+        */
     }
 }

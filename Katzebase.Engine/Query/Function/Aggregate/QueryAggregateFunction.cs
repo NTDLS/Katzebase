@@ -51,44 +51,18 @@ namespace Katzebase.Engine.Query.Function.Aggregate
             return new QueryAggregateFunction(functionName, parameters);
         }
 
-        internal QueryAggregateFunctionParameterValueCollection ApplyParameters(List<string?> values)
+        internal QueryAggregateFunctionParameterValueCollection ApplyParameters(List<AggregateGenericParameter> values)
         {
-            int requiredParameterCount = Parameters.Where(o => o.Type.ToString().ToLower().Contains("optional") == false).Count();
-
-            if (Parameters.Count < requiredParameterCount)
+            if (values.Count != Parameters.Count)
             {
-                if (Parameters.Count > 0 && Parameters[0].Type == KbQueryAggregateFunctionParameterType.Infinite_String)
-                {
-                    //The first parameter is infinite, we dont even check anything else.
-                }
-                else
-                {
-                    throw new KbFunctionException($"Incorrect number of parameter passed to {Name}.");
-                }
+                throw new KbFunctionException($"Incorrect number of parameter passed to [{Name}].");
             }
 
             var result = new QueryAggregateFunctionParameterValueCollection();
 
-            if (Parameters.Count > 0 && Parameters[0].Type == KbQueryAggregateFunctionParameterType.Infinite_String)
+            for (int i = 0; i < Parameters.Count; i++)
             {
-                for (int i = 0; i < Parameters.Count; i++)
-                {
-                    result.Values.Add(new QueryAggregateFunctionParameterValue(Parameters[0], values[i]));
-                }
-            }
-            else
-            {
-                for (int i = 0; i < Parameters.Count; i++)
-                {
-                    if (i >= values.Count)
-                    {
-                        result.Values.Add(new QueryAggregateFunctionParameterValue(Parameters[i]));
-                    }
-                    else
-                    {
-                        result.Values.Add(new QueryAggregateFunctionParameterValue(Parameters[i], values[i]));
-                    }
-                }
+                result.Values.Add(new QueryAggregateFunctionParameterValue(Parameters[i], values[i]));
             }
 
             return result;

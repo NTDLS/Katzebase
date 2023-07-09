@@ -1,10 +1,6 @@
 ﻿using Katzebase.Engine.Query.FunctionParameter;
-using Katzebase.Engine.Query.Searchers;
 using Katzebase.Engine.Query.Searchers.Intersection;
-using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
-using System.Linq;
-using System.Web;
 
 namespace Katzebase.Engine.Query.Function.Aggregate
 {
@@ -14,30 +10,24 @@ namespace Katzebase.Engine.Query.Function.Aggregate
     internal class QueryAggregateFunctionImplementation
     {
         internal static string[] FunctionPrototypes = {
-                "count:string/fieldName",
-                "sum:string/fieldName",
-                "min:string/fieldName",
-                "max:string/fieldName",
-                "avg:string/fieldName",
+                "count:DecimalArray/fieldName",
+                "sum:DecimalArray/fieldName",
+                "min:DecimalArray/fieldName",
+                "max:DecimalArray/fieldName",
+                "avg:DecimalArray/fieldName"
             };
-
-        internal class ArrayParameter
-        {
-            public List<decimal> Values { get; set; } = new();
-        }
 
         internal static string? CollapseAllFunctionParameters(FunctionParameterBase param, IGrouping<string, SchemaIntersectionRow> group)
         {
-
             if (param is FunctionWithParams)
             {
-                var subParams = new List<ArrayParameter>();
+                var subParams = new List<AggregateGenericParameter>();
 
                 foreach (var subParam in ((FunctionWithParams)param).Parameters)
                 {
                     var specificParam = (FunctionDocumentFieldParameter)subParam;
                     var values = group.SelectMany(o => o.MethodFields.Where(m => m.Key == specificParam.Value.Key)).Select(s => s.Value);
-                    subParams.Add(new ArrayParameter() { Values = values.Select(o => decimal.Parse(o ?? "0")).ToList() });
+                    subParams.Add(new AggregateDecimalArrayParameter() { Values = values.Select(o => decimal.Parse(o ?? "0")).ToList() });
                 }
 
                 return ExecuteFunction(((FunctionWithParams)param).Function, subParams, group);
@@ -64,31 +54,36 @@ namespace Katzebase.Engine.Query.Function.Aggregate
 
         }
 
-        private static string? ExecuteFunction(string functionName, List<ArrayParameter> parameters, IGrouping<string, SchemaIntersectionRow> group)
+        private static string? ExecuteFunction(string functionName, List<AggregateGenericParameter> parameters, IGrouping<string, SchemaIntersectionRow> group)
         {
-            //var proc = QueryAggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
+            var proc = QueryAggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
             switch (functionName.ToLower())
             {
                 case "sum":
                     {
-                        return parameters.First().Values.Sum(o => o).ToString();
+                        var arrayOfValues = proc.Get<AggregateDecimalArrayParameter>("fieldName");
+                        return arrayOfValues.Values.Sum(o => o).ToString();
                     }
                 case "min":
                     {
-                        return parameters.First().Values.Min(o => o).ToString();
+                        var arrayOfValues = proc.Get<AggregateDecimalArrayParameter>("fieldName");
+                        return arrayOfValues.Values.Min(o => o).ToString();
                     }
                 case "max":
                     {
-                        return parameters.First().Values.Max(o => o).ToString();
+                        var arrayOfValues = proc.Get<AggregateDecimalArrayParameter>("fieldName");
+                        return arrayOfValues.Values.Max(o => o).ToString();
                     }
                 case "avg":
                     {
-                        return parameters.First().Values.Average(o => o).ToString();
+                        var arrayOfValues = proc.Get<AggregateDecimalArrayParameter>("fieldName");
+                        return arrayOfValues.Values.Average(o => o).ToString();
                     }
                 case "count":
                     {
-                        return parameters.First().Values.Count().ToString();
+                        var arrayOfValues = proc.Get<AggregateDecimalArrayParameter>("fieldName");
+                        return arrayOfValues.Values.Count().ToString();
                     }
             }
 
