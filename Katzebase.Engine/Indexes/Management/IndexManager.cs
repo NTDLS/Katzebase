@@ -268,6 +268,8 @@ namespace Katzebase.Engine.Indexes.Management
                         foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotLike)
                         foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.Between)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {conditionField.LogicalQualifier}");
 
                     ptIndexSeek?.StopAndAccumulate();

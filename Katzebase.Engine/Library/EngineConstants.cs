@@ -100,6 +100,7 @@
             Like,
             NotEquals,
             NotLike,
+            Between,
             LessThan,
             GreaterThan,
             LessThanOrEqual,

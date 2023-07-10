@@ -1,3 +1,11 @@
+select
+	Count(SourceWordId) as Count --Should be 262
+from
+	WordList:Synonym 
+where
+	SourceWordId Between 800000 and 800010
+	
+/*
 select top 10
 	SourceWordId,
 	Min(TargetWordId) as Min,
@@ -9,7 +17,7 @@ from
 	WordList:Synonym 
 group by
 	SourceWordId
-
+*/
 --order by
 	--SourceWord
 

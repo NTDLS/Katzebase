@@ -105,7 +105,9 @@ namespace Katzebase.Engine.Query.Searchers
                     break;
                 }
 
-                if (query.RowLimit != 0 && query.SortFields.Any() == false && threadParam.Results.Collection.Count >= query.RowLimit)
+                //We cant stop when we hit the row limit if we are sorting or grouping.
+                if (query.RowLimit != 0 && query.SortFields.Any() == false
+                     && query.GroupFields.Any() == false && threadParam.Results.Collection.Count >= query.RowLimit)
                 {
                     break;
                 }
@@ -119,13 +121,24 @@ namespace Katzebase.Engine.Query.Searchers
 
             #region Grouping.
 
-            if (query.GroupFields.Any() && threadParam.Results.Collection.Any())
+            if (threadParam.Results.Collection.Any() && (query.GroupFields.Any()
+                || query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Aggregate).Any())
+               )
             {
-                //var firstRow = threadParam.Results.Collection.First();
+                IEnumerable<IGrouping<string, SchemaIntersectionRow>>? groupedValues;
 
-                //Here we are going to build a grouping_key using the concatenated select fields.
-                var groupedValues = threadParam.Results.Collection.GroupBy(arr =>
-                    string.Join("\t", query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => arr.MethodFields[groupFieldParam.Value.Key])));
+                if (query.GroupFields.Any())
+                {
+                    //Here we are going to build a grouping_key using the concatenated select fields.
+                    groupedValues = threadParam.Results.Collection.GroupBy(arr =>
+                        string.Join("\t", query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => arr.MethodFields[groupFieldParam.Value.Key])));
+                }
+                else
+                {
+                    //We do not have a group by, but we do have aggregate functions. Group by an empty string.
+                    groupedValues = threadParam.Results.Collection.GroupBy(arr =>
+                        string.Join("\t", query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => string.Empty)));
+                }
 
                 var groupedResults = new SchemaIntersectionRowCollection();
 
@@ -164,17 +177,6 @@ namespace Katzebase.Engine.Query.Searchers
 
                     groupedResults.Add(rowResults);
                 }
-
-                /*
-                    foreach (var methodField in param.Query.SelectFields.OfType<FunctionWithParams>().Where(o=>o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
-                    {
-                        foreach (var row in resultingRows.Rows)
-                        {
-                            var methodResult = QueryScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
-                            row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
-                        }
-                    }
-                */
 
                 threadParam.Results = groupedResults;
             }
@@ -631,7 +633,10 @@ namespace Katzebase.Engine.Query.Searchers
                     //Field was not found, log warning which can be returned to the user.
                     //throw new KbEngineException($"Method field not found: {methodField.Key}.");
                 }
-                //schemaResultRow.MethodFields.Add(methodField.Key, token?.ToString());
+                if (schemaResultRow.MethodFields.ContainsKey(methodField.Key) == false)
+                {
+                    schemaResultRow.MethodFields.Add(methodField.Key, token?.ToString());
+                }
             }
 
             schemaResultRow.MethodFields.Add($"{schemaKey}.$UID$", documentPointer.Key);
@@ -645,7 +650,10 @@ namespace Katzebase.Engine.Query.Searchers
                     //Field was not found, log warning which can be returned to the user.
                     //throw new KbEngineException($"Condition field not found: {conditionField.Key}.");
                 }
-                schemaResultRow.ConditionFields.Add(conditionField.Key, token?.ToString());
+                if (schemaResultRow.ConditionFields.ContainsKey(conditionField.Key) == false)
+                {
+                    schemaResultRow.ConditionFields.Add(conditionField.Key, token?.ToString());
+                }
             }
         }
 

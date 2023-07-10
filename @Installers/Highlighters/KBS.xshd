@@ -141,6 +141,7 @@
 			<Word>uniquekey</Word>
 			<Word>update</Word>
 			<Word>where</Word>
+			<Word>group</Word>
 		</Keywords>
 	</RuleSet>
 </SyntaxDefinition>

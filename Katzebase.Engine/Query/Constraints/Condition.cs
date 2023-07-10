@@ -110,6 +110,31 @@ namespace Katzebase.Engine.Query.Constraints
             return Regex.IsMatch(input, regexPattern);
         }
 
+        public static bool? IsMatchBetween(string? input, string? pattern)
+        {
+            if (input == null || pattern == null)
+            {
+                return null;
+            }
+
+            var range = pattern.Split(':');
+
+            if (!decimal.TryParse(input, out var value))
+            {
+                throw new KbEngineException("Left of range could not be converted to decimal.");
+            }
+            if (!decimal.TryParse(range[0], out var rangeLeft))
+            {
+                throw new KbEngineException("Left of range could not be converted to decimal.");
+            }
+            if (!decimal.TryParse(range[1], out var rangeRight))
+            {
+                throw new KbEngineException("Right of range could not be converted to decimal.");
+            }
+
+            return value >= rangeLeft && value <= rangeRight;
+        }
+
         public static bool IsMatch(string? leftString, LogicalQualifier logicalQualifier, string? rightString)
         {
             if (logicalQualifier == LogicalQualifier.Equals)
@@ -143,6 +168,10 @@ namespace Katzebase.Engine.Query.Constraints
             else if (logicalQualifier == LogicalQualifier.NotLike)
             {
                 return IsMatchLike(leftString, rightString) == false;
+            }
+            else if (logicalQualifier == LogicalQualifier.Between)
+            {
+                return IsMatchBetween(leftString, rightString) == true;
             }
             else
             {

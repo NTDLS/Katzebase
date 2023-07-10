@@ -1,6 +1,7 @@
 ﻿using Katzebase.Engine.Library;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Exceptions;
 using System.Text;
 using static Katzebase.Engine.Library.EngineConstants;
 
@@ -264,6 +265,21 @@ namespace Katzebase.Engine.Query.Constraints
                     }
 
                     int endPosition = conditionTokenizer.Position;
+
+                    if (logicalQualifier == LogicalQualifier.Between)
+                    {
+                        string and = conditionTokenizer.GetNextToken().ToLower();
+                        if (and != "and")
+                        {
+                            throw new KbParserException($"Invalid token, Found [{and}] expected [and].");
+                        }
+
+                        var rightRange = conditionTokenizer.GetNextToken().ToLower();
+
+                        right = $"{right}:{rightRange}";
+
+                        endPosition = conditionTokenizer.Position;
+                    }
 
                     if (right.StartsWith($"{leftHandAlias}."))
                     {//Swap the left and right.

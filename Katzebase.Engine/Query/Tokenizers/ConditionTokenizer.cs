@@ -48,6 +48,8 @@ namespace Katzebase.Engine.Query.Tokenizers
                     return LogicalQualifier.Like;
                 case "not like":
                     return LogicalQualifier.NotLike;
+                case "between":
+                    return LogicalQualifier.Between;
             }
             return LogicalQualifier.None;
         }
