@@ -1,9 +1,19 @@
 select
-	Count(SourceWordId) as Count --Should be 262
+	Count(SourceWordId) as Count,
+	Sum(SourceWordId) as Sum,
+	Min(SourceWordId) as Min,
+	Max(SourceWordId) as Max,
+	Avg(SourceWordId) as Avg
+INTO
+	WordList:Stats
 from
 	WordList:Synonym 
 where
-	SourceWordId Between 800000 and 800010
+	SourceWordId Between 800000 and 800010;
+	
+SELECT * FROM WordList:Stats;
+
+DROP SCHEMA WordList:Stats;
 	
 /*
 select top 10

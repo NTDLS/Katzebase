@@ -120,11 +120,12 @@ namespace Katzebase.Engine.Schemas.Management
                 }
 
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
+
                 core.IO.DeletePath(transaction, physicalSchema.DiskPath);
 
                 var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
-                parentCatalog.Collection.RemoveAll(o => o.Name.ToLower() == schemaName.ToLower());
+                parentCatalog.Collection.RemoveAll(o => o.Name.ToLower() == physicalSchema.Name.ToLower());
 
                 core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
             }
