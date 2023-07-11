@@ -60,10 +60,32 @@ namespace Katzebase.Engine.Schemas.Management
                 {
                     Directory.CreateDirectory(core.Settings.DataRootPath);
 
-                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
+                    var physicalSchemaCatalog = new PhysicalSchemaCatalog();
+                    physicalSchemaCatalog.Collection.Add(new PhysicalSchema()
+                    {
+                        VirtualPath = "Temporary",
+                        IsTemporary = false,
+                        Id = Guid.NewGuid(),
+                        DiskPath = Path.Combine(core.Settings.DataRootPath, "Temporary")
+                    });
+
+                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile), physicalSchemaCatalog);
                     core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
                     core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
                 }
+
+                var temporarySchemaPath = Path.Combine(core.Settings.DataRootPath, "Temporary");
+
+                try
+                {
+                    Directory.Delete(temporarySchemaPath, true);
+                }
+                catch { }
+
+                Directory.CreateDirectory(temporarySchemaPath);
+                core.IO.PutJsonNonTracked(Path.Combine(temporarySchemaPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
+                core.IO.PutJsonNonTracked(Path.Combine(temporarySchemaPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
+                core.IO.PutJsonNonTracked(Path.Combine(temporarySchemaPath, IndexCatalogFile), new PhysicalIndexCatalog());
             }
             catch (Exception ex)
             {
@@ -91,7 +113,7 @@ namespace Katzebase.Engine.Schemas.Management
 
                 var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
-                if (parentCatalog.ContainsName(schemaName) == false)
+                if (parentCatalog.ContainsName(physicalSchema.Name) == false)
                 {
                     parentCatalog.Add(new PhysicalSchema
                     {
@@ -100,6 +122,15 @@ namespace Katzebase.Engine.Schemas.Management
                     });
 
                     core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
+
+                    if (physicalSchema.IsTemporary)
+                    {
+                        if (transaction.IsUserCreated)
+                        {
+                            //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
+                            transaction.TemporarySchemas.Add(physicalSchema.VirtualPath);
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -203,6 +234,14 @@ namespace Katzebase.Engine.Schemas.Management
 
             try
             {
+                bool isTemporary = false;
+                if (schemaName.StartsWith('#'))
+                {
+                    var session = core.Sessions.ByProcessId(transaction.ProcessId);
+                    schemaName = $"Temporary:{schemaName.Substring(1).Replace(':', '_')}_{session.SessionId}";
+                    isTemporary = true;
+                }
+
                 ptLockSchema = transaction.PT?.CreateDurationTracker<PhysicalSchema>(PerformanceTraceCumulativeMetricType.Lock);
                 schemaName = schemaName.Trim(new char[] { ':' }).Trim();
 
@@ -235,6 +274,7 @@ namespace Katzebase.Engine.Schemas.Management
                         physicalSchema.Name = parentSchemaame;
                         physicalSchema.DiskPath = schemaDiskPath;
                         physicalSchema.VirtualPath = schemaName;
+                        physicalSchema.IsTemporary = isTemporary;
                     }
                     else
                     {
@@ -266,6 +306,14 @@ namespace Katzebase.Engine.Schemas.Management
 
             try
             {
+                bool isTemporary = false;
+                if (schemaName.StartsWith('#'))
+                {
+                    var session = core.Sessions.ByProcessId(transaction.ProcessId);
+                    schemaName = $"Temporary:{schemaName.Substring(1).Replace(':', '_')}_{session.SessionId}";
+                    isTemporary = true;
+                }
+
                 ptLockSchema = transaction.PT?.CreateDurationTracker<PhysicalSchema>(PerformanceTraceCumulativeMetricType.Lock);
                 schemaName = schemaName.Trim(new char[] { ':' }).Trim();
 
@@ -299,6 +347,8 @@ namespace Katzebase.Engine.Schemas.Management
                         virtualSchema.DiskPath = schemaDiskPath;
                         virtualSchema.VirtualPath = schemaName;
                         virtualSchema.Exists = true;
+                        virtualSchema.IsTemporary = isTemporary;
+
                     }
                     else
                     {
@@ -307,7 +357,9 @@ namespace Katzebase.Engine.Schemas.Management
                             Name = parentSchemaName,
                             DiskPath = core.Settings.DataRootPath + "\\" + schemaName.Replace(':', '\\'),
                             VirtualPath = schemaName,
-                            Exists = false
+                            Exists = false,
+                            IsTemporary = isTemporary
+
                         };
                     }
 

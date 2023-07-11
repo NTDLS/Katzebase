@@ -21,8 +21,12 @@ namespace Katzebase.Engine.Schemas
 
         [JsonIgnore]
         public string DiskPath { get; set; } = string.Empty;
+
         [JsonIgnore]
         public string VirtualPath { get; set; } = string.Empty;
+
+        [JsonIgnore]
+        public bool IsTemporary { get; set; }
 
         public string IndexCatalogFilePath()
             => Path.Combine(DiskPath, EngineConstants.IndexCatalogFile);

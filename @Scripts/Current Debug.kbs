@@ -1,3 +1,5 @@
+begin transaction;
+
 select
 	Count(SourceWordId) as Count,
 	Sum(SourceWordId) as Sum,
@@ -5,16 +7,19 @@ select
 	Max(SourceWordId) as Max,
 	Avg(SourceWordId) as Avg
 INTO
-	WordList:Stats
+	#WordList:Stats
 from
 	WordList:Synonym 
 where
 	SourceWordId Between 800000 and 800010;
 	
-SELECT * FROM WordList:Stats;
+SELECT * FROM #WordList:Stats;
 
-DROP SCHEMA WordList:Stats;
-	
+--drop schema #WordList:Stats;
+
+commit transaction;
+
+
 /*
 select top 10
 	SourceWordId,

@@ -1,6 +1,5 @@
 ﻿using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary.Exceptions;
-using Newtonsoft.Json.Linq;
 
 namespace Katzebase.Engine.Query.Function.Aggregate
 {
@@ -27,7 +26,7 @@ namespace Katzebase.Engine.Query.Function.Aggregate
 
                 if (parameter.Value is AggregateDecimalArrayParameter)
                 {
-                    if (typeof(T)  == typeof(AggregateDecimalArrayParameter))
+                    if (typeof(T) == typeof(AggregateDecimalArrayParameter))
                     {
                         return (T)Convert.ChangeType(parameter.Value, typeof(T));
                     }

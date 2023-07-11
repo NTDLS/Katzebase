@@ -1,5 +1,4 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
-using static Katzebase.Engine.Query.Function.Aggregate.QueryAggregateFunctionImplementation;
 
 namespace Katzebase.Engine.Query.Function.Aggregate
 {

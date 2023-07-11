@@ -455,9 +455,9 @@ namespace Katzebase.Engine.Query
 
                 string sourceSchema = query.GetNextToken();
                 string schemaAlias = string.Empty;
-                if (sourceSchema == string.Empty || TokenHelpers.IsValidIdentifier(sourceSchema, ":") == false)
+                if (sourceSchema == string.Empty || TokenHelpers.IsValidIdentifier(sourceSchema, "#:") == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
+                    throw new KbParserException("Invalid query. Found '" + sourceSchema + "', expected: schema name.");
                 }
 
                 if (query.IsNextToken("as"))

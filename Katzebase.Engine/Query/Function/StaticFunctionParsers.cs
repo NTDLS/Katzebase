@@ -521,7 +521,7 @@ namespace Katzebase.Engine.Query.Function
                     }
                     else if (
                             (token == string.Empty && query.NextCharacter == ',' && parenScope == 0) || token.ToLower() == "order"
-                            || (token == string.Empty && parenScope == 0 && query.IsEnd()) 
+                            || (token == string.Empty && parenScope == 0 && query.IsEnd())
                         )
                     {
                         if (parenScope != 0)

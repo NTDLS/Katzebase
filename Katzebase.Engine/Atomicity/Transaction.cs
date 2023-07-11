@@ -19,6 +19,7 @@ namespace Katzebase.Engine.Atomicity
         public bool IsDeadlocked { get; set; }
         public List<ObjectLockKey>? HeldLockKeys { get; set; }
         public PerformanceTrace? PT { get; private set; } = null;
+        public HashSet<string> TemporarySchemas { get; set; } = new();
 
         /// <summary>
         /// Used for general locking, if any.
@@ -525,8 +526,6 @@ namespace Katzebase.Engine.Atomicity
                             }
                         }
 
-                        transactionManager.RemoveByProcessId(ProcessId);
-
                         try
                         {
                             CleanupTransaction();
@@ -535,6 +534,10 @@ namespace Katzebase.Engine.Atomicity
                         {
                             //Discard.
                         }
+
+                        transactionManager.RemoveByProcessId(ProcessId);
+                        DeleteTemporarySchemas();
+
                     }
                     catch
                     {
@@ -588,6 +591,7 @@ namespace Katzebase.Engine.Atomicity
                                 DeferredIOs.CommitDeferredDiskIO();
                                 CleanupTransaction();
                                 transactionManager.RemoveByProcessId(ProcessId);
+                                DeleteTemporarySchemas();
                             }
                             catch
                             {
@@ -612,6 +616,21 @@ namespace Katzebase.Engine.Atomicity
                 {
                     core.Log.Write($"Failed to commit transaction for for process {ProcessId}.", ex);
                     throw;
+                }
+            }
+        }
+
+        private void DeleteTemporarySchemas()
+        {
+            if (TemporarySchemas.Any())
+            {
+                using (var ephemeralTx = core.Transactions.Acquire(ProcessId))
+                {
+                    foreach (var tempSchema in TemporarySchemas)
+                    {
+                        core.Schemas.Drop(ephemeralTx, tempSchema);
+                    }
+                    ephemeralTx.Commit();
                 }
             }
         }

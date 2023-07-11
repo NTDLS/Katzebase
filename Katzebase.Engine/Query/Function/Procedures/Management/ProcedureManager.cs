@@ -154,7 +154,7 @@ namespace Katzebase.Engine.Query.Function.Procedures.Management
 
                         result.AddField("ProcessId");
 
-                        foreach(var transaction in transactions)
+                        foreach (var transaction in transactions)
                         {
                             var blockedBy = transaction.CloneBlocks();
 
