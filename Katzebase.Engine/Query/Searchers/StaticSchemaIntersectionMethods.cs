@@ -233,7 +233,10 @@ namespace Katzebase.Engine.Query.Searchers
                 }
             }
 
-            var results = new DocumentLookupResults();
+            var results = new DocumentLookupResults()
+            {
+                DocumentPointers = threadParam.DocumentPointers
+            };
 
             results.AddRange(threadParam.Results);
 

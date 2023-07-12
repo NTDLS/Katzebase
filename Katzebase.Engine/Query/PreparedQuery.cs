@@ -41,6 +41,11 @@ namespace Katzebase.Engine.Query
         /// </summary>
         public List<UpsertKeyValues> UpsertValues { get; set; } = new();
 
+        /// <summary>
+        /// List of values for updates by field name.
+        /// </summary>
+        public NamedFunctionParameterBaseCollection UpdateValues { get; set; } = new();
+
         public List<KbNameValuePair<string, string>> VariableValues { get; set; } = new();
 
         public T Attribute<T>(QueryAttribute attribute)

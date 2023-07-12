@@ -1,3 +1,12 @@
+UPDATE
+	AdventureWorks2012:Production:Product
+SET
+	Name = 'Test-Name',
+	Color = 'Test-Color'
+WHERE
+	Color = 'Test-Color'
+
+/*
 begin transaction;
 
 select
@@ -18,7 +27,7 @@ SELECT * FROM #WordList:Stats;
 --drop schema #WordList:Stats;
 
 commit transaction;
-
+*/
 
 /*
 select top 10

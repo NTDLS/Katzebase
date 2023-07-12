@@ -141,6 +141,57 @@ namespace Katzebase.Engine.Documents.Management
             }
         }
 
+
+        /// <summary>
+        /// Updates a document in a schema.
+        /// </summary>
+        /// <param name="processId"></param>
+        /// <param name="preparedQuery"></param>
+        /// <returns></returns>
+        internal KbActionResponse ExecuteUpdate(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                using (var transaction = core.Transactions.Acquire(processId))
+                {
+                    var result = new KbActionResponse();
+                    var firstSchema = preparedQuery.Schemas.Single();
+                    var physicalSchema = core.Schemas.Acquire(transaction, firstSchema.Name, LockOperation.Read);
+
+                    var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
+
+                    if (preparedQuery.Attributes.ContainsKey(PreparedQuery.QueryAttribute.SpecificSchemaPrefix))
+                    {
+                        getDocumentPointsForSchemaPrefix = preparedQuery.Attributes[PreparedQuery.QueryAttribute.SpecificSchemaPrefix] as string;
+                    }
+
+                    KbUtility.EnsureNotNull(getDocumentPointsForSchemaPrefix);
+
+                    var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
+
+                    foreach (var upsertValues in preparedQuery.UpsertValues)
+                    {
+                        //var keyValuePairs = upsertValues.ToDictionary(o => o.Field.Field, o => o.Value.Value);
+                        //var documentContent = JsonConvert.SerializeObject(keyValuePairs);
+                        //core.Documents.InsertDocument(transaction, physicalSchema, documentContent);
+                    }
+
+                    throw new KbNotImplementedException("UPDATE is not implemented");
+
+                    transaction.Commit();
+                    result.RowCount = preparedQuery.UpsertValues.Count;
+                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to execute document update for process id {processId}.", ex);
+                throw;
+            }
+        }
+
         internal KbQueryResult ExecuteSample(ulong processId, PreparedQuery preparedQuery)
         {
             try
@@ -222,7 +273,7 @@ namespace Katzebase.Engine.Documents.Management
                 using (var transaction = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponse();
-                    var firstSchema = preparedQuery.Schemas.First();
+                    var firstSchema = preparedQuery.Schemas.Single();
                     var physicalSchema = core.Schemas.Acquire(transaction, firstSchema.Name, LockOperation.Read);
 
                     var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;

@@ -281,37 +281,22 @@ namespace Katzebase.Engine.Query
             #region Update ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Update)
             {
-                /*
-                token = query.GetNextToken();
-                if (token.ToLower() == "top")
-                {
-                    token = query.GetNextToken();
-                    int rowLimit = 0;
-
-                    if (Int32.TryParse(token, out rowLimit) == false)
-                    {
-                        throw new KbParserException("Invalid query. Found '" + token + "', expected: numeric row limit.");
-                    }
-
-                    result.RowLimit = rowLimit;
-
-                    //Get schema name:
-                    token = query.GetNextToken();
-                }
-
-                if (token == string.Empty || Utilities.IsValidIdentifier(token, "/\\") == false)
+                string sourceSchema = query.GetNextToken();
+                string schemaAlias = string.Empty;
+                if (sourceSchema == string.Empty || TokenHelpers.IsValidIdentifier(sourceSchema, ":") == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
-                result.Schema = token;
 
-                token = query.GetNextToken();
-                if (token.ToLower() != "set")
+                result.Schemas.Add(new QuerySchema(sourceSchema.ToLower()));
+
+                if (query.IsNextTokenConsume("set") == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'set'.");
+                    throw new KbParserException("Invalid query. Found '" + query.Breadcrumbs.Last() + "', expected: 'set'.");
                 }
 
-                result.UpsertKeyValuePairs = ParseUpsertKeyValues(query, ref position);
+                result.UpdateValues = StaticFunctionParsers.ParseUpdateFields(query);
+                result.UpdateValues.RefillStringLiterals(query.LiteralStrings);
 
                 token = query.GetNextToken();
                 if (token != string.Empty && token.ToLower() != "where")
@@ -321,19 +306,39 @@ namespace Katzebase.Engine.Query
 
                 if (token.ToLower() == "where")
                 {
-                    string conditionText = query.Substring(position).Trim();
+                    var conditionTokenizer = new ConditionTokenizer(query.Text, query.Position);
+
+                    while (true)
+                    {
+                        int previousTokenPosition = conditionTokenizer.Position;
+                        var conditonToken = conditionTokenizer.GetNextToken();
+
+                        if ((new string[] { "order", "group", "" }).Contains(conditonToken) && conditionTokenizer.IsNextToken("by"))
+                        {
+                            throw new KbParserException("Invalid query. Found '" + conditonToken + "', expected: end of statement.");
+                        }
+                        else if (conditonToken == string.Empty)
+                        {
+                            //Set both the conditition and query position to the begining of the "ORDER BY" or "GROUP BY".
+                            conditionTokenizer.SetPosition(previousTokenPosition);
+                            query.SetPosition(previousTokenPosition);
+                            break;
+                        }
+                    }
+
+                    string conditionText = query.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
                     if (conditionText == string.Empty)
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: list of conditions.");
                     }
 
-                    result.Conditions = ParseConditions(conditionText, literalStrings);
+                    result.Conditions = Conditions.Create(conditionText, query.LiteralStrings);
                 }
-                else if (token != string.Empty)
+
+                if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: end of statement.");
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
-                */
             }
             #endregion
 
