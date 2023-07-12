@@ -194,52 +194,14 @@ namespace Katzebase.Engine.Documents.Management
         }
 
         /// <summary>
-        /// When we want to update a document, this is where we do it - no exceptions.
-        /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="schema"></param>
-        /// <param name="document"></param>
-        internal void UpdateDocument(Transaction transaction, PhysicalSchema physicalSchema, DocumentPointer documentPointer, string content)
-        {
-            try
-            {
-                var documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), LockOperation.Write);
-
-                var physicalDocument = new PhysicalDocument()
-                {
-                    Id = documentPointer.DocumentId,
-                    Content = content,
-                    Created = documentPage.Documents[documentPointer.DocumentId].Created,
-                    Modfied = DateTime.UtcNow
-                };
-
-                documentPage.Documents[documentPointer.DocumentId] = physicalDocument;
-
-                //Save the document page:
-                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
-
-                var documents = new Dictionary<DocumentPointer, PhysicalDocument>
-                {
-                    { new DocumentPointer(documentPage.PageNumber, physicalDocument.Id), physicalDocument }
-                };
-
-                //Update all of the indexes that referecne the document.
-                core.Indexes.UpdateDocumentsIntoIndexes(transaction, physicalSchema, documents);
-            }
-            catch (Exception ex)
-            {
-                core.Log.Write($"Failed to update document for process {transaction.ProcessId}.", ex);
-                throw;
-            }
-        }
-
-        /// <summary>
         /// When we want to update multiple documents in the same schema, this is where we do it - no exceptions.
         /// </summary>
         /// <param name="transaction"></param>
-        /// <param name="schema"></param>
-        /// <param name="document"></param>
-        internal void UpdateDocuments(Transaction transaction, PhysicalSchema physicalSchema, Dictionary<DocumentPointer, string> documents)
+        /// <param name="physicalSchema"></param>
+        /// <param name="documents">List of dovuemtn pointers and their new content.</param>
+        /// <param name="listOfModifiedFields">A list of the fields that were modified so that we can filter the indexes we need to update.</param>
+        internal void UpdateDocuments(Transaction transaction, PhysicalSchema physicalSchema,
+            Dictionary<DocumentPointer, string> documents, IEnumerable<string>? listOfModifiedFields = null)
         {
             try
             {
@@ -266,7 +228,7 @@ namespace Katzebase.Engine.Documents.Management
                 }
 
                 //Update all of the indexes that referecne the document.
-                core.Indexes.UpdateDocumentsIntoIndexes(transaction, physicalSchema, physicalDocuments);
+                core.Indexes.UpdateDocumentsIntoIndexes(transaction, physicalSchema, physicalDocuments, listOfModifiedFields);
             }
             catch (Exception ex)
             {

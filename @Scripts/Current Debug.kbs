@@ -1,8 +1,8 @@
 UPDATE
 	AdventureWorks2012:Production:Product
 SET
-	Name = Guid(),
-	Color = 'Test-Color'
+	Name = Guid()
+	--Color = 'Test-Color'
 WHERE
 	Color = 'Test-Color';
 

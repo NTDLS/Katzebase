@@ -213,8 +213,10 @@ namespace Katzebase.Engine.Documents.Management
                         updatedDocuments.Add(documentPointer, JsonConvert.SerializeObject(dictionary));
                     }
 
+                    var listOfModifiedFields = preparedQuery.UpdateValues.Select(o => o.Key);
+
                     //We update all of the documents all at once so we dont have to keep opening/closing catalogs.
-                    core.Documents.UpdateDocuments(transaction, physicalSchema, updatedDocuments);
+                    core.Documents.UpdateDocuments(transaction, physicalSchema, updatedDocuments, listOfModifiedFields);
 
                     transaction.Commit();
                     result.RowCount = documentPointers.Count();

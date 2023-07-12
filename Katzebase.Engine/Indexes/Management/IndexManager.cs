@@ -498,14 +498,21 @@ namespace Katzebase.Engine.Indexes.Management
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void UpdateDocumentsIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema, Dictionary<DocumentPointer, PhysicalDocument> documents)
+        internal void UpdateDocumentsIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema,
+            Dictionary<DocumentPointer, PhysicalDocument> documents, IEnumerable<string>? listOfModifiedFields)
         {
             try
             {
                 var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                RemoveDocumentsFromIndexes(transaction, physicalSchema, documents.Select(o => o.Key));
-                InsertDocumentsIntoIndexes(transaction, physicalSchema, documents);
+                foreach (var physicalIindex in indexCatalog.Collection)
+                {
+                    if (listOfModifiedFields == null || physicalIindex.Attributes.Where(o => listOfModifiedFields.Contains(o.Field)).Any())
+                    {
+                        RemoveDocumentsFromIndex(transaction, physicalIindex, documents.Select(o => o.Key));
+                        InsertDocumentsIntoIndex(transaction, physicalIindex, documents);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -529,7 +536,7 @@ namespace Katzebase.Engine.Indexes.Management
                 //Loop though each index in the schema.
                 foreach (var physicalIindex in indexCatalog.Collection)
                 {
-                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, physicalDocument, documentPointer);
+                    InsertDocumentIntoIndex(transaction, physicalIindex, physicalDocument, documentPointer);
                 }
             }
             catch (Exception ex)
@@ -538,6 +545,29 @@ namespace Katzebase.Engine.Indexes.Management
                 throw;
             }
         }
+
+        /// <summary>
+        /// Inserts an index entry for a single document into each index in the schema.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="schema"></param>
+        /// <param name="document"></param>
+        internal void InsertDocumentsIntoIndex(Transaction transaction, PhysicalIndex physicalIindex, Dictionary<DocumentPointer, PhysicalDocument> documents)
+        {
+            try
+            {
+                foreach (var document in documents)
+                {
+                    InsertDocumentIntoIndex(transaction, physicalIindex, document.Value, document.Key);
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
 
         /// <summary>
         /// Inserts an index entry for a single document into each index in the schema.
@@ -556,7 +586,7 @@ namespace Katzebase.Engine.Indexes.Management
                     //Loop though each index in the schema.
                     foreach (var physicalIindex in indexCatalog.Collection)
                     {
-                        InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document.Value, document.Key);
+                        InsertDocumentIntoIndex(transaction, physicalIindex, document.Value, document.Key);
                     }
                 }
             }
@@ -570,13 +600,12 @@ namespace Katzebase.Engine.Indexes.Management
         /// <summary>
         /// Inserts an index entry for a single document into a single index using the file name from the index object.
         /// </summary>
-        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalSchema physicalSchema,
-            PhysicalIndex physicalIindex, PhysicalDocument document, DocumentPointer documentPointer)
+        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalIndex physicalIindex, PhysicalDocument document, DocumentPointer documentPointer)
         {
             try
             {
                 var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
-                InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document, documentPointer, physicalIndexPages, true);
+                InsertDocumentIntoIndex(transaction, physicalIindex, document, documentPointer, physicalIndexPages, true);
             }
             catch (Exception ex)
             {
@@ -588,7 +617,7 @@ namespace Katzebase.Engine.Indexes.Management
         /// <summary>
         /// Inserts an index entry for a single document into a single index using a long lived index page catalog.
         /// </summary>
-        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIindex,
+        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalIndex physicalIindex,
             PhysicalDocument document, DocumentPointer documentPointer, PhysicalIndexPages physicalIndexPages, bool flushPageCatalog)
         {
             try
@@ -606,7 +635,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                     if (physicalIindex.IsUnique && indexScanResult.Leaf.Documents.Count > 1)
                     {
-                        string exceptionText = $"Duplicate key violation occurred for index [{physicalSchema.VirtualPath}]/[{physicalIindex.Name}]. Values: {{{string.Join(",", searchTokens)}}}";
+                        string exceptionText = $"Duplicate key violation occurred for index [[{physicalIindex.Name}]. Values: {{{string.Join(",", searchTokens)}}}";
                         throw new KbDuplicateKeyViolationException(exceptionText);
                     }
                 }
@@ -689,7 +718,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                     lock (param.SyncObject)
                     {
-                        InsertDocumentIntoIndex(param.Transaction, param.PhysicalSchema, param.PhysicalIindex, PhysicalDocument, documentPointer, param.PhysicalIndexPages, false);
+                        InsertDocumentIntoIndex(param.Transaction, param.PhysicalIindex, PhysicalDocument, documentPointer, param.PhysicalIndexPages, false);
                     }
                 }
             }
@@ -825,7 +854,6 @@ namespace Katzebase.Engine.Indexes.Management
             try
             {
                 var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
-
                 RemoveDocumentsFromLeaves(physicalIndexPages.Root, documentPointers);
                 core.IO.PutPBuf(transaction, physicalIindex.DiskPath, physicalIndexPages);
             }
