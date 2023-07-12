@@ -218,8 +218,55 @@ namespace Katzebase.Engine.Documents.Management
                 //Save the document page:
                 core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
 
+                var documents = new Dictionary<DocumentPointer, PhysicalDocument>
+                {
+                    { new DocumentPointer(documentPage.PageNumber, physicalDocument.Id), physicalDocument }
+                };
+
                 //Update all of the indexes that referecne the document.
-                core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, new DocumentPointer(documentPage.PageNumber, physicalDocument.Id));
+                core.Indexes.UpdateDocumentsIntoIndexes(transaction, physicalSchema, documents);
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to update document for process {transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// When we want to update multiple documents in the same schema, this is where we do it - no exceptions.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="schema"></param>
+        /// <param name="document"></param>
+        internal void UpdateDocuments(Transaction transaction, PhysicalSchema physicalSchema, Dictionary<DocumentPointer, string> documents)
+        {
+            try
+            {
+                var physicalDocuments = new Dictionary<DocumentPointer, PhysicalDocument>();
+
+                foreach (var document in documents)
+                {
+                    var documentPage = core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemFilePath(document.Key), LockOperation.Write);
+
+                    var physicalDocument = new PhysicalDocument()
+                    {
+                        Id = document.Key.DocumentId,
+                        Content = document.Value,
+                        Created = documentPage.Documents[document.Key.DocumentId].Created,
+                        Modfied = DateTime.UtcNow
+                    };
+
+                    documentPage.Documents[document.Key.DocumentId] = physicalDocument;
+
+                    //Save the document page:
+                    core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemFilePath(document.Key), documentPage);
+
+                    physicalDocuments.Add(document.Key, physicalDocument);
+                }
+
+                //Update all of the indexes that referecne the document.
+                core.Indexes.UpdateDocumentsIntoIndexes(transaction, physicalSchema, physicalDocuments);
             }
             catch (Exception ex)
             {

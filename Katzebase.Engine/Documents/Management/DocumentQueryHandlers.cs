@@ -1,9 +1,12 @@
 ﻿using Katzebase.Engine.Query;
+using Katzebase.Engine.Query.Function.Scaler;
+using Katzebase.Engine.Query.FunctionParameter;
 using Katzebase.Engine.Query.Searchers;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Documents.Management
@@ -169,17 +172,52 @@ namespace Katzebase.Engine.Documents.Management
 
                     var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
 
-                    foreach (var upsertValues in preparedQuery.UpsertValues)
+                    var updatedDocuments = new Dictionary<DocumentPointer, string>();
+
+
+                    foreach (var documentPointer in documentPointers)
                     {
-                        //var keyValuePairs = upsertValues.ToDictionary(o => o.Field.Field, o => o.Value.Value);
-                        //var documentContent = JsonConvert.SerializeObject(keyValuePairs);
-                        //core.Documents.InsertDocument(transaction, physicalSchema, documentContent);
+                        var physicalDocument = core.Documents.AcquireDocument(transaction, physicalSchema, documentPointer, LockOperation.Write);
+
+                        var dictionary = JsonConvert.DeserializeObject<Dictionary<string, string?>>(physicalDocument.Content);
+                        KbUtility.EnsureNotNull(dictionary);
+
+                        foreach (var updateValue in preparedQuery.UpdateValues)
+                        {
+                            string? fieldValue = string.Empty;
+
+                            //Execute functions
+                            if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
+                            {
+                                fieldValue = QueryScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, dictionary);
+                            }
+                            else if (updateValue.Value is FunctionConstantParameter)
+                            {
+                                fieldValue = ((FunctionConstantParameter)updateValue.Value).Value;
+                            }
+                            else
+                            {
+                                throw new KbEngineException("");
+                            }
+
+                            if (dictionary.ContainsKey(updateValue.Key))
+                            {
+                                dictionary[updateValue.Key] = fieldValue;
+                            }
+                            else
+                            {
+                                dictionary.Add(updateValue.Key, fieldValue);
+                            }
+                        }
+
+                        updatedDocuments.Add(documentPointer, JsonConvert.SerializeObject(dictionary));
                     }
 
-                    throw new KbNotImplementedException("UPDATE is not implemented");
+                    //We update all of the documents all at once so we dont have to keep opening/closing catalogs.
+                    core.Documents.UpdateDocuments(transaction, physicalSchema, updatedDocuments);
 
                     transaction.Commit();
-                    result.RowCount = preparedQuery.UpsertValues.Count;
+                    result.RowCount = documentPointers.Count();
                     result.Metrics = transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;

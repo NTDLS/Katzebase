@@ -98,7 +98,7 @@ namespace Katzebase.Engine.Query.Function
                 }
                 else
                 {
-                    var newField = new FunctionDocumentFieldParameter(field.Value.Text)
+                    var newField = new FunctionConstantParameter(field.Value.Text)
                     {
                         Alias = field.Value.Alias
                     };
@@ -487,7 +487,7 @@ namespace Katzebase.Engine.Query.Function
                             }
                         }
 
-                        preparseFields.Add(updateFieldName, new PreparseField { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
+                        preparseFields.Add(updateFieldName.ToLower(), new PreparseField { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
 
                         updateFieldName = string.Empty;
 

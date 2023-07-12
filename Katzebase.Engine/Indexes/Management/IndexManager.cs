@@ -498,20 +498,14 @@ namespace Katzebase.Engine.Indexes.Management
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        private void UpdateDocumentIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument, DocumentPointer documentPointer)
+        internal void UpdateDocumentsIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema, Dictionary<DocumentPointer, PhysicalDocument> documents)
         {
             try
             {
                 var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                throw new KbNotImplementedException();
-
-                //Loop though each index in the schema.
-                foreach (var physicalIindex in indexCatalog.Collection)
-                {
-                    //DeleteDocumentsFromIndex(transaction, physicalSchema, physicalIindex, documentPointer);
-                    //InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, physicalDocument, documentPointer);
-                }
+                RemoveDocumentsFromIndexes(transaction, physicalSchema, documents.Select(o => o.Key));
+                InsertDocumentsIntoIndexes(transaction, physicalSchema, documents);
             }
             catch (Exception ex)
             {
@@ -536,6 +530,34 @@ namespace Katzebase.Engine.Indexes.Management
                 foreach (var physicalIindex in indexCatalog.Collection)
                 {
                     InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, physicalDocument, documentPointer);
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Inserts an index entry for a single document into each index in the schema.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="schema"></param>
+        /// <param name="document"></param>
+        internal void InsertDocumentsIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema, Dictionary<DocumentPointer, PhysicalDocument> documents)
+        {
+            try
+            {
+                var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
+
+                foreach (var document in documents)
+                {
+                    //Loop though each index in the schema.
+                    foreach (var physicalIindex in indexCatalog.Collection)
+                    {
+                        InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document.Value, document.Key);
+                    }
                 }
             }
             catch (Exception ex)
@@ -697,7 +719,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                 var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
                 var threadParam = new RebuildIndexThreadParam(transaction, physicalSchema, physicalIndexPages, physicalIindex);
-                int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), documentPointers.Count);
+                int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, documentPointers.Count);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                 var threadPool = ThreadPoolQueue<DocumentPointer, RebuildIndexThreadParam>
                     .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", RebuildIndexThreadProc, threadParam, threadCount);

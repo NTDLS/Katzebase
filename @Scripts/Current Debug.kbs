@@ -1,11 +1,14 @@
 UPDATE
 	AdventureWorks2012:Production:Product
 SET
-	Name = 'Test-Name',
+	Name = Guid(),
 	Color = 'Test-Color'
 WHERE
-	Color = 'Test-Color'
+	Color = 'Test-Color';
 
+select * from 	AdventureWorks2012:Production:Product
+WHERE
+	Color = 'Test-Color';
 /*
 begin transaction;
 
