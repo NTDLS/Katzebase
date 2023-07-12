@@ -89,7 +89,7 @@ namespace Katzebase.Engine.Query.Searchers
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
-            int threadCount = ThreadPoolHelper.CalculateThreadCount(core.Sessions.ByProcessId(transaction.ProcessId), schemaMap.TotalDocumentCount());
+            int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, schemaMap.TotalDocumentCount());
 
             //threadCount = 1;
 

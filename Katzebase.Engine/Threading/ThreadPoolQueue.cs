@@ -1,12 +1,15 @@
-﻿using Katzebase.Engine.Sessions;
+﻿using Katzebase.Engine.Atomicity;
+using Katzebase.Engine.Sessions;
 using Katzebase.PublicLibrary;
 
 namespace Katzebase.Engine.Threading
 {
     public static class ThreadPoolHelper
     {
-        public static int CalculateThreadCount(SessionState session, int expectedItemCount, double multiplier = 1)
+        internal static int CalculateThreadCount(Core core, Transaction transaction,  int expectedItemCount, double multiplier = 1)
         {
+            var session = core.Sessions.ByProcessId(transaction.ProcessId);
+
             if (session.IsConnectionSettingSet(SessionState.KbConnectionSetting.QueryThreadWeight))
             {
                 multiplier = session.GetConnectionSetting(SessionState.KbConnectionSetting.QueryThreadWeight) ?? multiplier;
@@ -18,7 +21,12 @@ namespace Katzebase.Engine.Threading
                 maxThreads = (int)(session.GetConnectionSetting(SessionState.KbConnectionSetting.MaxQueryThreads) ?? maxThreads);
             }
 
-            int minThreads = 1;
+            if (maxThreads > core.Settings.MaxQueryThreads)
+            {
+                maxThreads = core.Settings.MaxQueryThreads;
+            }
+
+            int minThreads = core.Settings.MinQueryThreads;
             if (session.IsConnectionSettingSet(SessionState.KbConnectionSetting.MinQueryThreads))
             {
                 minThreads = (int)(session.GetConnectionSetting(SessionState.KbConnectionSetting.MinQueryThreads) ?? minThreads);
