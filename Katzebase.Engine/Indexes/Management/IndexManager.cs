@@ -23,6 +23,7 @@ namespace Katzebase.Engine.Indexes.Management
         private readonly Core core;
         internal IndexQueryHandlers QueryHandlers { get; set; }
         public IndexAPIHandlers APIHandlers { get; set; }
+        private string MakeIndexFileName(string indexName) => $"@Index_{0}_Pages_{Helpers.MakeSafeFileName(indexName)}.PBuf";
 
         public IndexManager(Core core)
         {
@@ -128,7 +129,6 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
-
         internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
             IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
         {
@@ -175,6 +175,8 @@ namespace Katzebase.Engine.Indexes.Management
                         foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotLike)
                         foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionValue) == false).Select(s => s.Value));
+                    else if (conditionField.LogicalQualifier == LogicalQualifier.Between)
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {conditionField.LogicalQualifier}");
 
                     ptIndexSeek?.StopAndAccumulate();
@@ -383,9 +385,6 @@ namespace Katzebase.Engine.Indexes.Management
                 throw;
             }
         }
-
-        public string MakeIndexFileName(string indexName) => $"@Index_{0}_Pages_{Helpers.MakeSafeFileName(indexName)}.PBuf";
-
 
         internal PhysicalIndexCatalog AcquireIndexCatalog(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
         {
@@ -801,7 +800,6 @@ namespace Katzebase.Engine.Indexes.Management
                 throw;
             }
         }
-
 
         private long RemoveDocumentsFromLeaves(PhysicalIndexLeaf leaf, IEnumerable<DocumentPointer> documentPointers)
         {

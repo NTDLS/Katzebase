@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Katzebase.Engine.Query.FunctionParameter
+﻿namespace Katzebase.Engine.Query.FunctionParameter
 {
     internal class NamedFunctionParameterBaseCollection : Dictionary<string, FunctionParameterBase>
     {
