@@ -108,9 +108,9 @@ namespace Katzebase.Engine.Query
             #region Create ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Create)
             {
-                if (query.IsNextToken(new string[] { "schema", "index", "uniquekey" }) == false)
+                if (query.IsNextToken(new string[] { "schema", "index", "uniquekey", "procedure" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected 'schema', 'index' or 'uniquekey'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected 'schema', 'index', 'uniquekey' or 'procedure'.");
                 }
 
                 token = query.GetNextToken();
@@ -128,7 +128,70 @@ namespace Katzebase.Engine.Query
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: object name.");
                 }
 
-                if (subQueryType == SubQueryType.Schema)
+                if (subQueryType == SubQueryType.Procedure)
+                {
+                    result.AddAttribute(PreparedQuery.QueryAttribute.ObjectName, token);
+
+                    var parameters = new List<string>();
+
+                    if (query.NextCharacter == '(') //Parse paramaters
+                    {
+                        query.SkipNextChar();
+
+                        while (true)
+                        {
+                            var param = query.GetNextToken();
+                            parameters.Add(param);
+
+                            if (query.NextCharacter != ',')
+                            {
+                                if (query.NextCharacter != ')')
+                                {
+                                    throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ')'.");
+                                }
+                                query.SkipNextChar();
+                                break;
+                            }
+                            query.SkipNextChar();
+                        }
+                    }
+
+                    result.AddAttribute(PreparedQuery.QueryAttribute.Parameters, parameters);
+
+                    if (query.IsNextTokenConsume("on") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + query.Breadcrumbs.Last() + "', expected: 'ON'.");
+                    }
+
+                    token = query.GetNextToken();
+                    if (token == string.Empty)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
+                    }
+
+                    result.AddAttribute(PreparedQuery.QueryAttribute.Schema, token);
+
+                    if (query.IsNextTokenConsume("as") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + query.Breadcrumbs.Last() + "', expected: 'AS'.");
+                    }
+
+                    if (query.NextCharacter != '(')
+                    {
+                        throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: '('.");
+                    }
+
+
+                    if (query.Remainder().Last() != ')')
+                    {
+                        throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ')'.");
+                    }
+
+                    result.AddAttribute(PreparedQuery.QueryAttribute.Body, query.Remainder());
+
+                    query.SkipToEnd();
+                }
+                else if (subQueryType == SubQueryType.Schema)
                 {
                     result.Schemas.Add(new QuerySchema(token));
                 }

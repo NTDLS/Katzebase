@@ -149,6 +149,7 @@ namespace Katzebase.Engine.Query.Management
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Index
                         || preparedQuery.SubQueryType == SubQueryType.UniqueKey
+                        || preparedQuery.SubQueryType == SubQueryType.Procedure
                         || preparedQuery.SubQueryType == SubQueryType.Schema)
                     {
                         return core.Indexes.QueryHandlers.ExecuteCreate(processId, preparedQuery);

@@ -83,7 +83,8 @@
             Documents,
             Transaction,
             Index,
-            UniqueKey
+            UniqueKey,
+            Procedure
         }
 
         public enum LogicalConnector

@@ -133,6 +133,11 @@ namespace Katzebase.Engine.Query.Tokenizers
             GetNextToken(DefaultTokenDelimiters);
         }
 
+        public void SkipToEnd()
+        {
+            _position = _text.Length;
+        }
+
         public string PeekNextToken(char[] delimiters)
         {
             int originalPosition = _position;

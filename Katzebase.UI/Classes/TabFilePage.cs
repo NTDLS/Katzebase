@@ -305,7 +305,7 @@ namespace Katzebase.UI.Classes
                 group.OnException += Group_OnException;
                 group.OnStatus += Group_OnStatus;
 
-                var scripts = KbUtility.SplitQueryTextIntoBatches(scriptText);
+                var scripts = KbUtility.SplitQueryTextIntoBatches(scriptText, "go");
 
                 int batchNumber = 1;
 

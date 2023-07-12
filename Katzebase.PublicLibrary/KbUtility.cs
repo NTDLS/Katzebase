@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Katzebase.PublicLibrary
@@ -29,8 +30,10 @@ namespace Katzebase.PublicLibrary
             return noComments;
         }
 
-        public static List<string> SplitQueryTextIntoBatches(string text)
+        public static List<string> SplitQueryTextIntoBatches(string text, string delimiter)
         {
+            delimiter = delimiter.ToLower();
+
             text = KbUtility.RemoveComments(text);
 
             var lines = text.Replace("\r\n", "\n").Split('\n').Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
@@ -40,10 +43,36 @@ namespace Katzebase.PublicLibrary
                 lines[i] = lines[i].Trim();
             }
 
-            text = string.Join("\r\n", lines).Trim() + "\r\n";
+            var batches = new List<string>();
 
-            var batches = text.Split(";\r\n", StringSplitOptions.RemoveEmptyEntries)
-                .Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
+            //text = string.Join("\r\n", lines).Trim() + "\r\n";
+
+            var batchText = new StringBuilder();
+
+            foreach (var line in lines)
+            {
+                if (line.ToLower() == delimiter)
+                {
+                    if (batchText.Length > 0)
+                    {
+                        batches.Add(batchText.ToString());
+                        batchText.Clear();
+                    }
+                }
+                else
+                {
+                    batchText.AppendLine(line.Trim());
+                }
+            }
+
+            if (batchText.Length > 0)
+            {
+                batches.Add(batchText.ToString());
+                batchText.Clear();
+            }
+
+            //var batches = text.Split(";\r\n", StringSplitOptions.RemoveEmptyEntries)
+            //    .Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
 
             return batches;
         }
