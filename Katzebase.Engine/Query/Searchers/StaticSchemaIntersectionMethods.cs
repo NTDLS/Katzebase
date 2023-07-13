@@ -1,10 +1,10 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.Engine.Documents;
+using Katzebase.Engine.Functions.Aggregate;
+using Katzebase.Engine.Functions.Parameters;
+using Katzebase.Engine.Functions.Scaler;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query.Constraints;
-using Katzebase.Engine.Query.Function.Aggregate;
-using Katzebase.Engine.Query.Function.Scaler;
-using Katzebase.Engine.Query.FunctionParameter;
 using Katzebase.Engine.Query.Searchers.Intersection;
 using Katzebase.Engine.Query.Searchers.Mapping;
 using Katzebase.Engine.Query.Sorting;
@@ -161,7 +161,7 @@ namespace Katzebase.Engine.Query.Searchers
                         else if (field is FunctionWithParams)
                         {
                             var proc = (FunctionWithParams)field;
-                            var value = QueryAggregateFunctionImplementation.CollapseAllFunctionParameters(proc, group);
+                            var value = AggregateFunctionImplementation.CollapseAllFunctionParameters(proc, group);
                             values.Add(value);
                         }
                         else

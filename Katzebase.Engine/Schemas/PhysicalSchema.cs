@@ -31,6 +31,9 @@ namespace Katzebase.Engine.Schemas
         public string IndexCatalogFilePath()
             => Path.Combine(DiskPath, EngineConstants.IndexCatalogFile);
 
+        public string ProcedureCatalogFilePath()
+            => Path.Combine(DiskPath, EngineConstants.ProcedureCatalogFile);
+
         public string DocumentPageCatalogFilePath()
             => Path.Combine(DiskPath, EngineConstants.DocumentPageCatalogFile);
 

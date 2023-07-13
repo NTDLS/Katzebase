@@ -1,6 +1,6 @@
-﻿using Katzebase.Engine.Query;
-using Katzebase.Engine.Query.Function.Scaler;
-using Katzebase.Engine.Query.FunctionParameter;
+﻿using Katzebase.Engine.Functions.Parameters;
+using Katzebase.Engine.Functions.Scaler;
+using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Searchers;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;

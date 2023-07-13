@@ -1,6 +1,6 @@
-﻿using Katzebase.Engine.Library;
+﻿using Katzebase.Engine.Functions.Parameters;
+using Katzebase.Engine.Library;
 using Katzebase.Engine.Query.Constraints;
-using Katzebase.Engine.Query.FunctionParameter;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Query

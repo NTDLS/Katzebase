@@ -1,5 +1,5 @@
-﻿using Katzebase.Engine.Query.Constraints;
-using Katzebase.Engine.Query.Function;
+﻿using Katzebase.Engine.Functions;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
 using static Katzebase.Engine.Library.EngineConstants;

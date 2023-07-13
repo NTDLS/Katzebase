@@ -109,7 +109,7 @@ namespace Katzebase.Engine.Indexes.Management
                         var parameters = preparedQuery.Attribute<List<string>>(PreparedQuery.QueryAttribute.Parameters);
                         var bodyText = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Body);
 
-                        //core.Functions.CreateCustomFunction(transaction, objectSchema, objectName);
+                        core.Procedures.CreateCustomProcedure(transaction, objectSchema, objectName, parameters, bodyText);
                     }
                     else if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                     {

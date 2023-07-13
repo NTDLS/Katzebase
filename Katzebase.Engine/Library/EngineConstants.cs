@@ -6,6 +6,7 @@
         public static string SchemaCatalogFile { get; } = "@schemas.kbcat";
         public static string DocumentPageCatalogFile { get; } = "@pages.kbcat";
         public static string IndexCatalogFile { get; } = "@indexes.kbcat";
+        public static string ProcedureCatalogFile { get; } = "@procedures.kbcat";
         public static string LoginCatalogFile { get; } = "@logins.kbcat";
         public static string TransactionActionsFile { get; } = "@transaction.kbatom";
         public static string HealthStatsFile { get; } = "@health.kblog";

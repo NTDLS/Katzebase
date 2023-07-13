@@ -19,8 +19,8 @@ CREATE PROCEDURE UpdateProductByColorAndGetItsName
 )
 GO
 
-EXEC UpdateProductByColorAndGetItsName('Test-Color')
-GO
+--EXEC UpdateProductByColorAndGetItsName('Test-Color')
+--GO
 
 
 /*
