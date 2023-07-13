@@ -6,28 +6,28 @@ namespace Katzebase.Engine.Functions.Procedures
     /// <summary>
     /// Contains a parsed procedure prototype.
     /// </summary>
-    internal class QueryProcedure
+    internal class Procedure
     {
         public string Name { get; set; }
-        public List<QueryProcedureParameterPrototype> Parameters { get; private set; } = new();
+        public List<ProcedureParameterPrototype> Parameters { get; private set; } = new();
 
-        public QueryProcedure(string name, List<QueryProcedureParameterPrototype> parameters)
+        public Procedure(string name, List<ProcedureParameterPrototype> parameters)
         {
             Name = name;
             Parameters.AddRange(parameters);
         }
 
-        public static QueryProcedure Parse(string prototype)
+        public static Procedure Parse(string prototype)
         {
             int indexOfNameEnd = prototype.IndexOf(':');
             string procedureName = prototype.Substring(0, indexOfNameEnd);
             var parameterStrings = prototype.Substring(indexOfNameEnd + 1).Split(',', StringSplitOptions.RemoveEmptyEntries);
-            List<QueryProcedureParameterPrototype> parameters = new();
+            List<ProcedureParameterPrototype> parameters = new();
 
             foreach (var param in parameterStrings)
             {
                 var typeAndName = param.Split("/");
-                if (Enum.TryParse(typeAndName[0], true, out KbQueryProcedureParameterType paramType) == false)
+                if (Enum.TryParse(typeAndName[0], true, out KbProcedureParameterType paramType) == false)
                 {
                     throw new KbGenericException($"Unknown parameter type {typeAndName[0]}");
                 }
@@ -36,11 +36,11 @@ namespace Katzebase.Engine.Functions.Procedures
 
                 if (nameAndDefault.Count() == 1)
                 {
-                    parameters.Add(new QueryProcedureParameterPrototype(paramType, nameAndDefault[0]));
+                    parameters.Add(new ProcedureParameterPrototype(paramType, nameAndDefault[0]));
                 }
                 else if (nameAndDefault.Count() == 2)
                 {
-                    parameters.Add(new QueryProcedureParameterPrototype(paramType, nameAndDefault[0],
+                    parameters.Add(new ProcedureParameterPrototype(paramType, nameAndDefault[0],
                         nameAndDefault[1].ToLower() == "null" ? null : nameAndDefault[1]));
                 }
                 else
@@ -49,16 +49,16 @@ namespace Katzebase.Engine.Functions.Procedures
                 }
             }
 
-            return new QueryProcedure(procedureName, parameters);
+            return new Procedure(procedureName, parameters);
         }
 
-        internal QueryProcedureParameterValueCollection ApplyParameters(List<FunctionParameterBase> values)
+        internal ProcedureParameterValueCollection ApplyParameters(List<FunctionParameterBase> values)
         {
             int requiredParameterCount = Parameters.Where(o => o.Type.ToString().ToLower().Contains("optional") == false).Count();
 
             if (Parameters.Count < requiredParameterCount)
             {
-                if (Parameters.Count > 0 && Parameters[0].Type == KbQueryProcedureParameterType.Infinite_String)
+                if (Parameters.Count > 0 && Parameters[0].Type == KbProcedureParameterType.Infinite_String)
                 {
                     //The first parameter is infinite, we dont even check anything else.
                 }
@@ -68,16 +68,16 @@ namespace Katzebase.Engine.Functions.Procedures
                 }
             }
 
-            var result = new QueryProcedureParameterValueCollection();
+            var result = new ProcedureParameterValueCollection();
 
-            if (Parameters.Count > 0 && Parameters[0].Type == KbQueryProcedureParameterType.Infinite_String)
+            if (Parameters.Count > 0 && Parameters[0].Type == KbProcedureParameterType.Infinite_String)
             {
                 for (int i = 0; i < Parameters.Count; i++)
                 {
                     if (values[i] is FunctionExpression)
                     {
                         var expression = (FunctionExpression)values[i];
-                        result.Values.Add(new QueryProcedureParameterValue(Parameters[0], expression.Value));
+                        result.Values.Add(new ProcedureParameterValue(Parameters[0], expression.Value));
                     }
                     else
                     {
@@ -91,14 +91,14 @@ namespace Katzebase.Engine.Functions.Procedures
                 {
                     if (i >= values.Count)
                     {
-                        result.Values.Add(new QueryProcedureParameterValue(Parameters[i]));
+                        result.Values.Add(new ProcedureParameterValue(Parameters[i]));
                     }
                     else
                     {
                         if (values[i] is FunctionExpression)
                         {
                             var expression = (FunctionExpression)values[i];
-                            result.Values.Add(new QueryProcedureParameterValue(Parameters[i], expression.Value));
+                            result.Values.Add(new ProcedureParameterValue(Parameters[i], expression.Value));
                         }
                         else
                         {

@@ -3,7 +3,7 @@
     internal enum KbAggregateFunctionParameterType
     {
         Undefined,
-        DecimalArray,
+        NumericArray,
         String,
         Boolean,
         Integer

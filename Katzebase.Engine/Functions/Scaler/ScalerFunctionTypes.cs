@@ -5,7 +5,7 @@
         Undefined,
         String,
         Boolean,
-        Integer,
+        Numeric,
         Infinite_String,
         optional_string
     }

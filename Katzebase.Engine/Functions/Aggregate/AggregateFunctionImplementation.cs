@@ -11,11 +11,11 @@ namespace Katzebase.Engine.Functions.Aggregate
     internal class AggregateFunctionImplementation
     {
         internal static string[] FunctionPrototypes = {
-                "count:DecimalArray/fieldName",
-                "sum:DecimalArray/fieldName",
-                "min:DecimalArray/fieldName",
-                "max:DecimalArray/fieldName",
-                "avg:DecimalArray/fieldName"
+                "count:NumericArray/fieldName",
+                "sum:NumericArray/fieldName",
+                "min:NumericArray/fieldName",
+                "max:NumericArray/fieldName",
+                "avg:NumericArray/fieldName"
             };
 
         internal static string? CollapseAllFunctionParameters(FunctionParameterBase param, IGrouping<string, SchemaIntersectionRow> group)

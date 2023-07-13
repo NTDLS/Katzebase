@@ -1,11 +1,11 @@
 ﻿namespace Katzebase.Engine.Functions.Procedures
 {
-    internal enum KbQueryProcedureParameterType
+    public enum KbProcedureParameterType
     {
         Undefined,
         String,
         Boolean,
-        Integer,
+        Numeric,
         Infinite_String,
         optional_string
     }

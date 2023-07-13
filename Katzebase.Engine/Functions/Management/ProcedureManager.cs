@@ -1,6 +1,7 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.Engine.Functions.Parameters;
 using Katzebase.Engine.Functions.Procedures;
+using Katzebase.Engine.Functions.Procedures.Persistent;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Library;
 using Katzebase.Engine.Schemas;
@@ -29,7 +30,7 @@ namespace Katzebase.Engine.Functions.Management
                 QueryHandlers = new ProcedureQueryHandlers(core);
                 APIHandlers = new ProcedureAPIHandlers(core);
 
-                QueryProcedureCollection.Initialize();
+                ProcedureCollection.Initialize();
             }
             catch (Exception ex)
             {
@@ -38,7 +39,7 @@ namespace Katzebase.Engine.Functions.Management
             }
         }
 
-        internal void CreateCustomProcedure(Transaction transaction, string schemaName, string objectName, List<string> parameters, string body)
+        internal void CreateCustomProcedure(Transaction transaction, string schemaName, string objectName, List<PhysicalProcedureParameter> parameters, string body)
         {
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             var physicalProcedureCatalog = Acquire(transaction, physicalSchema, LockOperation.Write);
@@ -81,19 +82,19 @@ namespace Katzebase.Engine.Functions.Management
         {
             string procedureName = string.Empty;
 
-            QueryProcedureParameterValueCollection? proc = null;
+            ProcedureParameterValueCollection? proc = null;
 
             if (procedureCall is FunctionConstantParameter)
             {
                 var procCall = (FunctionConstantParameter)procedureCall;
                 procedureName = procCall.Value;
-                proc = QueryProcedureCollection.ApplyProcedurePrototype(procCall.Value, new List<FunctionParameterBase>());
+                proc = ProcedureCollection.ApplyProcedurePrototype(procCall.Value, new List<FunctionParameterBase>());
             }
             else if (procedureCall is FunctionWithParams)
             {
                 var procCall = (FunctionWithParams)procedureCall;
                 procedureName = procCall.Function;
-                proc = QueryProcedureCollection.ApplyProcedurePrototype(procCall.Function, procCall.Parameters);
+                proc = ProcedureCollection.ApplyProcedurePrototype(procCall.Function, procCall.Parameters);
             }
             else
             {

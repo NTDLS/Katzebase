@@ -1,4 +1,6 @@
-﻿using Katzebase.Engine.Query;
+﻿using Katzebase.Engine.Functions.Procedures;
+using Katzebase.Engine.Functions.Procedures.Persistent;
+using Katzebase.Engine.Query;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.Library.EngineConstants;
@@ -106,7 +108,7 @@ namespace Katzebase.Engine.Indexes.Management
                     {
                         var objectName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.ObjectName);
                         var objectSchema = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Schema);
-                        var parameters = preparedQuery.Attribute<List<string>>(PreparedQuery.QueryAttribute.Parameters);
+                        var parameters = preparedQuery.Attribute<List<PhysicalProcedureParameter>>(PreparedQuery.QueryAttribute.Parameters);
                         var bodyText = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Body);
 
                         core.Procedures.CreateCustomProcedure(transaction, objectSchema, objectName, parameters, bodyText);

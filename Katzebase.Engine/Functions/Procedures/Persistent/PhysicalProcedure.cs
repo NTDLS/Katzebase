@@ -1,9 +1,9 @@
-﻿namespace Katzebase.Engine.Functions
+﻿namespace Katzebase.Engine.Functions.Procedures.Persistent
 {
     [Serializable]
     public class PhysicalProcedure
     {
-        public List<string> Parameters { get; set; } = new();
+        public List<PhysicalProcedureParameter> Parameters { get; set; } = new();
         public string Name { get; set; } = string.Empty;
         public Guid Id { get; set; }
         public DateTime Created { get; set; }
@@ -19,11 +19,6 @@
                 Created = Created,
                 Modfied = Modfied
             };
-        }
-
-        public void AddParameter(string name)
-        {
-            Parameters.Add(name);
         }
     }
 }

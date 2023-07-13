@@ -3,7 +3,7 @@
     /// <summary>
     /// Contains procedure protype defintions.
     /// </summary>
-    internal class QueryProcedureImplementation
+    internal class SystemProcedureImplementation
     {
         internal static string[] SystemProcedurePrototypes = {
                 "ClearHealthCounters:",
@@ -12,10 +12,10 @@
                 "ReleaseCacheAllocations:",
                 "ShowcachePartitions:",
                 "ShowGealthCounters:",
-                "ShowWaitingLocks:Integer/processId=null",
-                "ShowBlocks:Integer/processId=null",
-                "ShowTransactions:Integer/processId=null",
-                "ShowProcesses:Integer/processId=null",
+                "ShowWaitingLocks:Numeric/processId=null",
+                "ShowBlocks:Numeric/processId=null",
+                "ShowTransactions:Numeric/processId=null",
+                "ShowProcesses:Numeric/processId=null",
             };
     }
 }

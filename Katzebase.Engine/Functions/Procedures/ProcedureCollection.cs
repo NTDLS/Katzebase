@@ -3,24 +3,24 @@ using Katzebase.PublicLibrary.Exceptions;
 
 namespace Katzebase.Engine.Functions.Procedures
 {
-    internal static class QueryProcedureCollection
+    internal static class ProcedureCollection
     {
-        private static List<QueryProcedure>? _systemProcedureProtypes = null;
+        private static List<Procedure>? _systemProcedureProtypes = null;
 
         public static void Initialize()
         {
             if (_systemProcedureProtypes == null)
             {
-                _systemProcedureProtypes = new List<QueryProcedure>();
+                _systemProcedureProtypes = new List<Procedure>();
 
-                foreach (var prototype in QueryProcedureImplementation.SystemProcedurePrototypes)
+                foreach (var prototype in SystemProcedureImplementation.SystemProcedurePrototypes)
                 {
-                    _systemProcedureProtypes.Add(QueryProcedure.Parse(prototype));
+                    _systemProcedureProtypes.Add(Procedure.Parse(prototype));
                 }
             }
         }
 
-        public static QueryProcedureParameterValueCollection ApplyProcedurePrototype(string procedureName, List<FunctionParameterBase> parameters)
+        public static ProcedureParameterValueCollection ApplyProcedurePrototype(string procedureName, List<FunctionParameterBase> parameters)
         {
             if (_systemProcedureProtypes == null)
             {

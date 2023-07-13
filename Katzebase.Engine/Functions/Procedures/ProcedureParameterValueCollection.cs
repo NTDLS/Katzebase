@@ -3,9 +3,9 @@ using Katzebase.PublicLibrary.Exceptions;
 
 namespace Katzebase.Engine.Functions.Procedures
 {
-    internal class QueryProcedureParameterValueCollection
+    internal class ProcedureParameterValueCollection
     {
-        public List<QueryProcedureParameterValue> Values { get; set; } = new();
+        public List<ProcedureParameterValue> Values { get; set; } = new();
 
         public T Get<T>(string name)
         {

@@ -1,6 +1,6 @@
 CREATE PROCEDURE UpdateProductByColorAndGetItsName
 (
-	@ProductColor
+	@ProductColor as string
 ) ON AdventureWorks2012:Production:Product AS
 (
 	UPDATE

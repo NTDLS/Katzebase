@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Katzebase.Engine.Functions
+namespace Katzebase.Engine.Functions.Procedures.Persistent
 {
     [Serializable]
     public class PhysicalProcedureCatalog

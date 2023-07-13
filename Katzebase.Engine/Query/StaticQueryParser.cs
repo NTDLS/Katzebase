@@ -1,7 +1,10 @@
 ﻿using Katzebase.Engine.Functions;
+using Katzebase.Engine.Functions.Procedures;
+using Katzebase.Engine.Functions.Procedures.Persistent;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
+using static Katzebase.Engine.Functions.Procedures.Persistent.PhysicalProcedure;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.PublicLibrary.KbConstants;
 
@@ -132,7 +135,7 @@ namespace Katzebase.Engine.Query
                 {
                     result.AddAttribute(PreparedQuery.QueryAttribute.ObjectName, token);
 
-                    var parameters = new List<string>();
+                    var parameters = new List<PhysicalProcedureParameter>();
 
                     if (query.NextCharacter == '(') //Parse paramaters
                     {
@@ -140,8 +143,20 @@ namespace Katzebase.Engine.Query
 
                         while (true)
                         {
-                            var param = query.GetNextToken();
-                            parameters.Add(param);
+                            var paramName = query.GetNextToken();
+                            if (query.IsNextTokenConsume("as") == false)
+                            {
+                                throw new KbParserException("Invalid query. Found '" + query.Breadcrumbs.Last() + "', expected: 'AS'.");
+                            }
+                            token = query.GetNextToken();
+
+                            if (Enum.TryParse(token, true, out KbProcedureParameterType paramType) == false || Enum.IsDefined(typeof(KbProcedureParameterType), paramType) == false)
+                            {
+                                string acceptibleValues = string.Join("', '", ((KbProcedureParameterType[])Enum.GetValues(typeof(KbProcedureParameterType))).Where(o => o != KbProcedureParameterType.Undefined));
+                                throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptibleValues}'.");
+                            }
+
+                            parameters.Add(new PhysicalProcedureParameter(paramName, paramType));
 
                             if (query.NextCharacter != ',')
                             {

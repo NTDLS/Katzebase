@@ -24,7 +24,7 @@ namespace Katzebase.Engine.Functions.Scaler
                 "ToLower:string/text",
                 "ToUpper:string/text",
                 "Length:string/text",
-                "SubString:string/text,integer/startIndex,integer/length",
+                "SubString:string/text,numeric/startIndex,numeric/length",
                 "ConCat:infinite_string/text",
                 "Trim:string/text",
                 "Checksum:string/text",
@@ -32,8 +32,8 @@ namespace Katzebase.Engine.Functions.Scaler
                 "IndexOf:string/textToFind,string/textToSearch",
                 "LastIndexOf:string/textToFind,string/textToSearch",
                 "Sha256:string/text",
-                "Right:string/text,integer/length",
-                "Left:string/text,integer/length",
+                "Right:string/text,numeric/length",
+                "Left:string/text,numeric/length",
                 "IIF:boolean/condition,string/whenTrue,string/whenFalse",
             };
 
