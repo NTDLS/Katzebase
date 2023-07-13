@@ -19,7 +19,7 @@ namespace Katzebase.Engine.Query.Management
             this.core = core;
             APIHandlers = new QueryAPIHandlers(core);
 
-            QueryScalerFunctionCollection.Initialize();
+            ScalerFunctionCollection.Initialize();
             AggregateFunctionCollection.Initialize();
         }
 

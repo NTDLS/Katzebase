@@ -2,24 +2,24 @@
 
 namespace Katzebase.Engine.Functions.Scaler
 {
-    internal static class QueryScalerFunctionCollection
+    internal static class ScalerFunctionCollection
     {
-        private static List<QueryScalerFunction>? _protypes = null;
+        private static List<ScalerFunction>? _protypes = null;
 
         public static void Initialize()
         {
             if (_protypes == null)
             {
-                _protypes = new List<QueryScalerFunction>();
+                _protypes = new List<ScalerFunction>();
 
-                foreach (var prototype in QueryScalerFunctionImplementation.FunctionPrototypes)
+                foreach (var prototype in ScalerFunctionImplementation.FunctionPrototypes)
                 {
-                    _protypes.Add(QueryScalerFunction.Parse(prototype));
+                    _protypes.Add(ScalerFunction.Parse(prototype));
                 }
             }
         }
 
-        public static QueryScalerFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string?> parameters)
+        public static ScalerFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string?> parameters)
         {
             if (_protypes == null)
             {

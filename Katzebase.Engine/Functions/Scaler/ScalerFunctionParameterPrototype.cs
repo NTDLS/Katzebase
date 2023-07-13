@@ -3,14 +3,14 @@
     /// <summary>
     /// A parsed function parameter prototype
     /// </summary>
-    internal class QueryScalerFunctionParameterPrototype
+    internal class ScalerFunctionParameterPrototype
     {
-        public KbQueryScalerFunctionParameterType Type { get; set; }
+        public KbScalerFunctionParameterType Type { get; set; }
         public string Name { get; set; }
         public string? DefaultValue { get; set; }
         public bool HasDefault { get; set; }
 
-        public QueryScalerFunctionParameterPrototype(KbQueryScalerFunctionParameterType type, string name)
+        public ScalerFunctionParameterPrototype(KbScalerFunctionParameterType type, string name)
         {
             Type = type;
             Name = name;
@@ -18,7 +18,7 @@
 
         }
 
-        public QueryScalerFunctionParameterPrototype(KbQueryScalerFunctionParameterType type, string name, string? defaultValue)
+        public ScalerFunctionParameterPrototype(KbScalerFunctionParameterType type, string name, string? defaultValue)
         {
             Type = type;
             Name = name;

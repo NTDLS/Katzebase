@@ -10,7 +10,7 @@ namespace Katzebase.Engine.Functions.Scaler
     /// <summary>
     /// Contains all function protype defintions, function implementations and expression collapse functionality.
     /// </summary>
-    internal class QueryScalerFunctionImplementation
+    internal class ScalerFunctionImplementation
     {
         internal static string[] FunctionPrototypes = {
                 "Guid:",
@@ -115,7 +115,7 @@ namespace Katzebase.Engine.Functions.Scaler
 
         private static string? ExecuteFunction(string functionName, List<string?> parameters, Dictionary<string, string?> rowFields)
         {
-            var proc = QueryScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
+            var proc = ScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
             switch (functionName.ToLower())
             {

@@ -3,9 +3,9 @@ using Katzebase.PublicLibrary.Exceptions;
 
 namespace Katzebase.Engine.Functions.Scaler
 {
-    internal class QueryScalerFunctionParameterValueCollection
+    internal class ScalerFunctionParameterValueCollection
     {
-        public List<QueryScalerFunctionParameterValue> Values { get; set; } = new();
+        public List<ScalerFunctionParameterValue> Values { get; set; } = new();
 
         public T Get<T>(string name)
         {

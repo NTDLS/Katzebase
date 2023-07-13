@@ -302,7 +302,7 @@ namespace Katzebase.Engine.Query.Searchers
                     {
                         foreach (var row in resultingRows.Collection)
                         {
-                            var methodResult = QueryScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
                         }
                     }
@@ -311,7 +311,7 @@ namespace Katzebase.Engine.Query.Searchers
                     {
                         foreach (var row in resultingRows.Collection)
                         {
-                            var methodResult = QueryScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
                         }
                     }

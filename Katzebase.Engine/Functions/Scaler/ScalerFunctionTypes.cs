@@ -1,6 +1,6 @@
 ﻿namespace Katzebase.Engine.Functions.Scaler
 {
-    internal enum KbQueryScalerFunctionParameterType
+    internal enum KbScalerFunctionParameterType
     {
         Undefined,
         String,

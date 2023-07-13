@@ -188,7 +188,7 @@ namespace Katzebase.Engine.Documents.Management
                             //Execute functions
                             if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
                             {
-                                fieldValue = QueryScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, dictionary);
+                                fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, dictionary);
                             }
                             else if (updateValue.Value is FunctionConstantParameter)
                             {
