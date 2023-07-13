@@ -49,11 +49,12 @@ namespace Katzebase.Engine.Functions.Management
             {
                 physicalProcesure = new PhysicalProcedure()
                 {
+                    Id = Guid.NewGuid(),
                     Name = objectName,
                     Created = DateTime.UtcNow,
                     Modfied = DateTime.UtcNow,
                     Parameters = parameters,
-                    Body = body
+                    Body = body,
                 };
 
                 physicalProcedureCatalog.Add(physicalProcesure);
@@ -78,7 +79,21 @@ namespace Katzebase.Engine.Functions.Management
             return core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
         }
 
-        internal KbQueryResult ExecuteProcedure(FunctionParameterBase procedureCall)
+        internal PhysicalProcedure? Acquire(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation, string procedureName)
+        {
+            procedureName = procedureName.ToLower();
+
+            if (File.Exists(physicalSchema.ProcedureCatalogFilePath()) == false)
+            {
+                core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), new PhysicalProcedureCatalog());
+            }
+
+            var procedureCatalog = core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
+
+            return procedureCatalog.Collection.Where(o => o.Name.ToLower() == procedureName).FirstOrDefault();
+        }
+
+        internal KbQueryResult ExecuteProcedure(Transaction transaction, FunctionParameterBase procedureCall)
         {
             string procedureName = string.Empty;
 
@@ -88,13 +103,13 @@ namespace Katzebase.Engine.Functions.Management
             {
                 var procCall = (FunctionConstantParameter)procedureCall;
                 procedureName = procCall.Value;
-                proc = ProcedureCollection.ApplyProcedurePrototype(procCall.Value, new List<FunctionParameterBase>());
+                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, procCall.Value, new List<FunctionParameterBase>());
             }
             else if (procedureCall is FunctionWithParams)
             {
                 var procCall = (FunctionWithParams)procedureCall;
                 procedureName = procCall.Function;
-                proc = ProcedureCollection.ApplyProcedurePrototype(procCall.Function, procCall.Parameters);
+                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, procCall.Function, procCall.Parameters);
             }
             else
             {
@@ -201,9 +216,9 @@ namespace Katzebase.Engine.Functions.Management
 
                         result.AddField("ProcessId");
 
-                        foreach (var transaction in transactions)
+                        foreach (var tx in transactions)
                         {
-                            var blockedBy = transaction.CloneBlocks();
+                            var blockedBy = tx.CloneBlocks();
 
                             foreach (var block in blockedBy)
                             {
@@ -239,19 +254,19 @@ namespace Katzebase.Engine.Functions.Management
                             transactions = transactions.Where(o => o.ProcessId == processId).ToList();
                         }
 
-                        foreach (var transaction in transactions)
+                        foreach (var tx in transactions)
                         {
                             var values = new List<string?> {
-                                (transaction?.BlockedBy.Count > 0).ToString(),
-                                transaction?.ReferenceCount.ToString(),
-                                transaction?.StartTime.ToString(),
-                                transaction?.HeldLockKeys?.Count.ToString(),
-                                transaction?.GrantedLockCache?.Count.ToString(),
-                                transaction?.DeferredIOs?.Count().ToString(),
-                                (!(transaction?.IsComittedOrRolledBack == true)).ToString(),
-                                transaction?.IsDeadlocked.ToString(),
-                                transaction?.IsCancelled.ToString(),
-                                transaction?.IsUserCreated.ToString()
+                                (tx?.BlockedBy.Count > 0).ToString(),
+                                tx?.ReferenceCount.ToString(),
+                                tx?.StartTime.ToString(),
+                                tx?.HeldLockKeys?.Count.ToString(),
+                                tx?.GrantedLockCache?.Count.ToString(),
+                                tx?.DeferredIOs?.Count().ToString(),
+                                (!(tx?.IsComittedOrRolledBack == true)).ToString(),
+                                tx?.IsDeadlocked.ToString(),
+                                tx?.IsCancelled.ToString(),
+                                tx?.IsUserCreated.ToString()
                             };
                             result.AddRow(values);
                         }
@@ -288,23 +303,23 @@ namespace Katzebase.Engine.Functions.Management
 
                         foreach (var session in sessions)
                         {
-                            var transaction = transactions.Where(o => o.ProcessId == session.Value.ProcessId).FirstOrDefault();
+                            var tx = transactions.Where(o => o.ProcessId == session.Value.ProcessId).FirstOrDefault();
 
                             var values = new List<string?> {
                                 session.Key.ToString(),
                                 session.Value.ProcessId.ToString(),
                                 session.Value.LoginTime.ToString(),
                                 session.Value.LastCheckinTime.ToString(),
-                                (transaction?.BlockedBy.Count > 0).ToString(),
-                                transaction?.ReferenceCount.ToString(),
-                                transaction?.StartTime.ToString(),
-                                transaction?.HeldLockKeys?.Count.ToString(),
-                                transaction?.GrantedLockCache?.Count.ToString(),
-                                transaction?.DeferredIOs?.Count().ToString(),
-                                (!(transaction?.IsComittedOrRolledBack == true)).ToString(),
-                                transaction?.IsDeadlocked.ToString(),
-                                transaction?.IsCancelled.ToString(),
-                                transaction?.IsUserCreated.ToString()
+                                (tx?.BlockedBy.Count > 0).ToString(),
+                                tx?.ReferenceCount.ToString(),
+                                tx?.StartTime.ToString(),
+                                tx?.HeldLockKeys?.Count.ToString(),
+                                tx?.GrantedLockCache?.Count.ToString(),
+                                tx?.DeferredIOs?.Count().ToString(),
+                                (!(tx?.IsComittedOrRolledBack == true)).ToString(),
+                                tx?.IsDeadlocked.ToString(),
+                                tx?.IsCancelled.ToString(),
+                                tx?.IsUserCreated.ToString()
                             };
                             result.AddRow(values);
                         }

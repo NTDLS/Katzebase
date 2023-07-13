@@ -181,41 +181,41 @@ namespace Katzebase.Engine.Library
 
             if (typeof(T?) == typeof(string))
             {
-                return (T?)Convert.ChangeType(value, typeof(T?));
+                return (T)Convert.ChangeType(value, typeof(string));
             }
-            else if (typeof(T?) == typeof(int))
+            else if (typeof(T?) == typeof(int?))
             {
                 if (int.TryParse(value, out var parsedResult) == false)
                 {
                     throw new Exception($"Error converting value [{value}] to integer.");
                 }
-                return (T?)Convert.ChangeType(parsedResult, typeof(T?));
+                return (T)Convert.ChangeType(parsedResult, typeof(int));
             }
-            else if (typeof(T?) == typeof(ulong))
+            else if (typeof(T?) == typeof(ulong?))
             {
                 if (ulong.TryParse(value, out var parsedResult) == false)
                 {
                     throw new Exception($"Error converting value [{value}] to integer.");
                 }
-                return (T?)Convert.ChangeType(parsedResult, typeof(T?));
+                return (T)Convert.ChangeType(parsedResult, typeof(ulong));
             }
-            else if (typeof(T?) == typeof(float))
+            else if (typeof(T?) == typeof(float?))
             {
                 if (float.TryParse(value, out var parsedResult) == false)
                 {
                     throw new Exception($"Error converting value [{value}] to float.");
                 }
-                return (T?)Convert.ChangeType(parsedResult, typeof(T?));
+                return (T)Convert.ChangeType(parsedResult, typeof(float));
             }
-            else if (typeof(T?) == typeof(double))
+            else if (typeof(T?) == typeof(double?))
             {
-                if (double.TryParse(value, out var parsedResult) == false)
+                if (double.TryParse(value, out double parsedResult) == false)
                 {
                     throw new Exception($"Error converting value [{value}] to double.");
                 }
-                return (T?)Convert.ChangeType(parsedResult, typeof(T?));
+                return (T)Convert.ChangeType(parsedResult, typeof(double));
             }
-            else if (typeof(T?) == typeof(bool))
+            else if (typeof(T?) == typeof(bool?))
             {
                 value = value?.ToLower();
 
@@ -231,7 +231,7 @@ namespace Katzebase.Engine.Library
                 {
                     throw new Exception($"Error converting value [{value}] to boolean.");
                 }
-                return (T?)Convert.ChangeType(parsedResult, typeof(T?));
+                return (T)Convert.ChangeType(parsedResult, typeof(bool));
             }
             else
             {

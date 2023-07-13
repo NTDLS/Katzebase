@@ -125,6 +125,9 @@ namespace Katzebase.Engine.Functions
                 else if (char.IsLetterOrDigit(text[i]))
                 {
                 }
+                else if (text[i] == ':')
+                {
+                }
                 else if (text[i] == '.')
                 {
                 }

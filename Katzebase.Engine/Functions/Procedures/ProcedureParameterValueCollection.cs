@@ -71,7 +71,7 @@ namespace Katzebase.Engine.Functions.Procedures
                     return Helpers.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
                 }
 
-                return Helpers.ConvertTo<T>(parameter.Value);
+                return Helpers.ConvertToNullable<T>(parameter.Value);
             }
             catch
             {

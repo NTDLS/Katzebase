@@ -1,3 +1,4 @@
+/*
 CREATE PROCEDURE UpdateProductByColorAndGetItsName
 (
 	@ProductColor as string
@@ -18,10 +19,10 @@ CREATE PROCEDURE UpdateProductByColorAndGetItsName
 		Color = @ProductColor;
 )
 GO
+*/
 
---EXEC UpdateProductByColorAndGetItsName('Test-Color')
---GO
-
+EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+GO
 
 /*
 UPDATE

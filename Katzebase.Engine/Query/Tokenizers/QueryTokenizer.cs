@@ -24,7 +24,7 @@ namespace Katzebase.Engine.Query.Tokenizers
 
         public QueryTokenizer(string text)
         {
-            _text = text;
+            _text = text.Trim().TrimEnd(';').Trim();
             LiteralStrings = CleanQueryText(ref _text);
         }
 

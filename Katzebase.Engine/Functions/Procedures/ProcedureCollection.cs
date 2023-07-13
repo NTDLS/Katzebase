@@ -1,5 +1,7 @@
-﻿using Katzebase.Engine.Functions.Parameters;
+﻿using Katzebase.Engine.Atomicity;
+using Katzebase.Engine.Functions.Parameters;
 using Katzebase.PublicLibrary.Exceptions;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Functions.Procedures
 {
@@ -20,21 +22,41 @@ namespace Katzebase.Engine.Functions.Procedures
             }
         }
 
-        public static ProcedureParameterValueCollection ApplyProcedurePrototype(string procedureName, List<FunctionParameterBase> parameters)
+        public static ProcedureParameterValueCollection ApplyProcedurePrototype(Core core, Transaction transaction, string procedureName, List<FunctionParameterBase> parameters)
         {
             if (_systemProcedureProtypes == null)
             {
                 throw new KbFatalException("Procedure prototypes were not initialized.");
             }
 
-            var procedure = _systemProcedureProtypes.Where(o => o.Name.ToLower() == procedureName.ToLower()).FirstOrDefault();
+            var systemProcedure = _systemProcedureProtypes.Where(o => o.Name.ToLower() == procedureName.ToLower()).FirstOrDefault();
+            if (systemProcedure != null)
+            {
+                return systemProcedure.ApplyParameters(parameters);
+            }
 
-            if (procedure == null)
+            int paramStartIndex = procedureName.IndexOf('(');
+            paramStartIndex = paramStartIndex < 0 ? procedureName.Length : paramStartIndex;
+
+            string schemaName = string.Empty;
+
+            int endOfSchemaIndex = procedureName.Substring(0, paramStartIndex).LastIndexOf(':');
+            if(endOfSchemaIndex > 0)
+            {
+                schemaName = procedureName.Substring(0, endOfSchemaIndex);
+                procedureName = procedureName.Substring(endOfSchemaIndex + 1);
+            }
+
+            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+
+            var physicalProcedure = core.Procedures.Acquire(transaction, physicalSchema, LockOperation.Read, procedureName);
+            if (physicalProcedure == null)
             {
                 throw new KbFunctionException($"Undefined procedure: {procedureName}.");
             }
 
-            return procedure.ApplyParameters(parameters);
+
+            throw new KbNotImplementedException(procedureName);
         }
     }
 }
