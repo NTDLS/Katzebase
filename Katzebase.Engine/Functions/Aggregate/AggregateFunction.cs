@@ -27,7 +27,7 @@ namespace Katzebase.Engine.Functions.Aggregate
             foreach (var param in parameterStrings)
             {
                 var typeAndName = param.Split("/");
-                if (Enum.TryParse(typeAndName[0], true, out KbQueryAggregateFunctionParameterType paramType) == false)
+                if (Enum.TryParse(typeAndName[0], true, out KbAggregateFunctionParameterType paramType) == false)
                 {
                     throw new KbGenericException($"Unknown parameter type {typeAndName[0]}");
                 }

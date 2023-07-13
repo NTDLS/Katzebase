@@ -5,12 +5,12 @@
     /// </summary>
     internal class AggregateFunctionParameterPrototype
     {
-        public KbQueryAggregateFunctionParameterType Type { get; set; }
+        public KbAggregateFunctionParameterType Type { get; set; }
         public string Name { get; set; }
         public string? DefaultValue { get; set; }
         public bool HasDefault { get; set; }
 
-        public AggregateFunctionParameterPrototype(KbQueryAggregateFunctionParameterType type, string name)
+        public AggregateFunctionParameterPrototype(KbAggregateFunctionParameterType type, string name)
         {
             Type = type;
             Name = name;
@@ -18,7 +18,7 @@
 
         }
 
-        public AggregateFunctionParameterPrototype(KbQueryAggregateFunctionParameterType type, string name, string? defaultValue)
+        public AggregateFunctionParameterPrototype(KbAggregateFunctionParameterType type, string name, string? defaultValue)
         {
             Type = type;
             Name = name;

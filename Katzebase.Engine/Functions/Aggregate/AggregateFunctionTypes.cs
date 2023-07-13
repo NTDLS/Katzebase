@@ -1,6 +1,6 @@
 ﻿namespace Katzebase.Engine.Functions.Aggregate
 {
-    internal enum KbQueryAggregateFunctionParameterType
+    internal enum KbAggregateFunctionParameterType
     {
         Undefined,
         DecimalArray,
