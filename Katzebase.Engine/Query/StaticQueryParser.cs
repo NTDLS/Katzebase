@@ -4,9 +4,7 @@ using Katzebase.Engine.Functions.Procedures.Persistent;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
-using System.Data.SqlTypes;
 using System.Text.RegularExpressions;
-using static Katzebase.Engine.Functions.Procedures.Persistent.PhysicalProcedure;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.PublicLibrary.KbConstants;
 
@@ -231,7 +229,7 @@ namespace Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + queryText[asIndex] + "', expected: '('.");
                     }
 
-                    if (queryText[queryText.Length -1] != ')')
+                    if (queryText[queryText.Length - 1] != ')')
                     {
                         throw new KbParserException("Invalid query. Found '" + queryText[asIndex] + "', expected: ')'.");
                     }

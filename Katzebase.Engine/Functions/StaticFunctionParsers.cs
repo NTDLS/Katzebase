@@ -2,7 +2,6 @@
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
-using ProtoBuf;
 using System.Text;
 using System.Text.RegularExpressions;
 

@@ -2,16 +2,10 @@
 using Katzebase.Engine.Functions.Parameters;
 using Katzebase.Engine.Functions.Procedures;
 using Katzebase.Engine.Functions.Procedures.Persistent;
-using Katzebase.Engine.Indexes;
-using Katzebase.Engine.Library;
 using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using System.Collections.Generic;
-using System.Data.SqlTypes;
-using System.Security.AccessControl;
-using System.Web;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Functions.Management

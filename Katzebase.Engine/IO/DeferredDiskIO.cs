@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.IO
 {
