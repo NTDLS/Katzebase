@@ -22,7 +22,8 @@ namespace Katzebase.Engine.Functions.Procedures
             }
         }
 
-        public static ProcedureParameterValueCollection ApplyProcedurePrototype(Core core, Transaction transaction, string procedureName, List<FunctionParameterBase> parameters)
+
+        public static AppliedProcedurePrototype ApplyProcedurePrototype(Core core, Transaction transaction, string procedureName, List<FunctionParameterBase> parameters)
         {
             if (_systemProcedureProtypes == null)
             {
@@ -32,7 +33,12 @@ namespace Katzebase.Engine.Functions.Procedures
             var systemProcedure = _systemProcedureProtypes.Where(o => o.Name.ToLower() == procedureName.ToLower()).FirstOrDefault();
             if (systemProcedure != null)
             {
-                return systemProcedure.ApplyParameters(parameters);
+                return new AppliedProcedurePrototype()
+                {
+                    IsSystem = true,
+                    Name = procedureName,
+                    Parameters = systemProcedure.ApplyParameters(parameters)
+                };
             }
 
             int paramStartIndex = procedureName.IndexOf('(');
@@ -41,7 +47,7 @@ namespace Katzebase.Engine.Functions.Procedures
             string schemaName = string.Empty;
 
             int endOfSchemaIndex = procedureName.Substring(0, paramStartIndex).LastIndexOf(':');
-            if(endOfSchemaIndex > 0)
+            if (endOfSchemaIndex > 0)
             {
                 schemaName = procedureName.Substring(0, endOfSchemaIndex);
                 procedureName = procedureName.Substring(endOfSchemaIndex + 1);
@@ -55,7 +61,14 @@ namespace Katzebase.Engine.Functions.Procedures
                 throw new KbFunctionException($"Undefined procedure: {procedureName}.");
             }
 
-            throw new KbNotImplementedException(procedureName);
+            return new AppliedProcedurePrototype()
+            {
+                IsSystem = false,
+                Name = procedureName,
+                PhysicalSchema = physicalSchema,
+                PhysicalProcedure = physicalProcedure,
+                Parameters = physicalProcedure.ApplyParameters(parameters)
+            };
         }
     }
 }

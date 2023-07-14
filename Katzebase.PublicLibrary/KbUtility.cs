@@ -45,8 +45,6 @@ namespace Katzebase.PublicLibrary
 
             var batches = new List<string>();
 
-            //text = string.Join("\r\n", lines).Trim() + "\r\n";
-
             var batchText = new StringBuilder();
 
             foreach (var line in lines)

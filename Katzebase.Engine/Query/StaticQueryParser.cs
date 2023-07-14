@@ -4,6 +4,8 @@ using Katzebase.Engine.Functions.Procedures.Persistent;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
+using System.Data.SqlTypes;
+using System.Text.RegularExpressions;
 using static Katzebase.Engine.Functions.Procedures.Persistent.PhysicalProcedure;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.PublicLibrary.KbConstants;
@@ -202,7 +204,42 @@ namespace Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ')'.");
                     }
 
-                    result.AddAttribute(PreparedQuery.QueryAttribute.Body, query.Remainder());
+                    int IndexOfWithSurroundingWhitespace(string input, string find, int startingIndex = 0)
+                    {
+                        string pattern = @"\s*" + Regex.Escape(find.ToLower()) + @"\s*";
+
+                        Match match = Regex.Match(input.Substring(startingIndex).ToLower(), pattern);
+
+                        if (match.Success)
+                        {
+                            return match.Index + startingIndex;
+                        }
+                        return -1;
+                    }
+
+
+                    queryText = queryText.Trim();
+
+                    int onIndex = IndexOfWithSurroundingWhitespace(queryText, "on");
+                    int asIndex = IndexOfWithSurroundingWhitespace(queryText, "as", onIndex);
+
+                    while (char.IsWhiteSpace(queryText[asIndex])) asIndex++;
+                    asIndex += 2; //Skip "as".
+                    while (char.IsWhiteSpace(queryText[asIndex])) asIndex++;
+                    if (queryText[asIndex] != '(')
+                    {
+                        throw new KbParserException("Invalid query. Found '" + queryText[asIndex] + "', expected: '('.");
+                    }
+
+                    if (queryText[queryText.Length -1] != ')')
+                    {
+                        throw new KbParserException("Invalid query. Found '" + queryText[asIndex] + "', expected: ')'.");
+                    }
+
+                    string procedureBody = queryText.Substring(asIndex);
+                    procedureBody = procedureBody.Substring(1, procedureBody.Length - 2).Trim(); //Trim off the "("...")" and any whitespace.
+
+                    result.AddAttribute(PreparedQuery.QueryAttribute.Body, procedureBody);
 
                     query.SkipToEnd();
                 }

@@ -2,6 +2,7 @@
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
+using ProtoBuf;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -23,7 +24,7 @@ namespace Katzebase.Engine.Functions
             var preParsed = PreParseFunctionCall(query);
             if (preParsed != null)
             {
-                return ParseFunctionCall(preParsed.Text);
+                return ParseFunctionCall(preParsed.Text, query.LiteralStrings);
             }
 
             return new FunctionParameterBase();
@@ -39,7 +40,7 @@ namespace Katzebase.Engine.Functions
             {
                 if (field.IsComplex)
                 {
-                    var functionCall = ParseFunctionCall(field.Text);
+                    var functionCall = ParseFunctionCall(field.Text, query.LiteralStrings);
                     functionCall.Alias = field.Alias;
                     result.Add(functionCall);
                 }
@@ -66,7 +67,7 @@ namespace Katzebase.Engine.Functions
             {
                 if (field.IsComplex)
                 {
-                    var functionCall = ParseFunctionCall(field.Text);
+                    var functionCall = ParseFunctionCall(field.Text, query.LiteralStrings);
                     functionCall.Alias = field.Alias;
                     result.Add(functionCall);
                 }
@@ -93,7 +94,7 @@ namespace Katzebase.Engine.Functions
             {
                 if (field.Value.IsComplex)
                 {
-                    var functionCall = ParseFunctionCall(field.Value.Text);
+                    var functionCall = ParseFunctionCall(field.Value.Text, query.LiteralStrings);
                     functionCall.Alias = field.Value.Alias;
                     result.Add(field.Key, functionCall);
                 }
@@ -144,7 +145,7 @@ namespace Katzebase.Engine.Functions
             return false;
         }
 
-        private static FunctionExpression ParseMathExpression(string text)
+        private static FunctionExpression ParseMathExpression(string text, Dictionary<string, string> literalValues)
         {
             var expression = new FunctionExpression();
             string param = string.Empty;
@@ -185,7 +186,7 @@ namespace Katzebase.Engine.Functions
                                 string subParamText = text.Substring(startPosition, endPosition - startPosition + 1);
 
                                 string paramKey = $"{{p{paramCount++}}}";
-                                var mathParamParams = (FunctionWithParams)ParseFunctionCall(subParamText, paramKey);
+                                var mathParamParams = (FunctionWithParams)ParseFunctionCall(subParamText, literalValues, paramKey);
 
                                 expression.Parameters.Add(mathParamParams);
 
@@ -258,18 +259,18 @@ namespace Katzebase.Engine.Functions
             return expression;
         }
 
-        private static FunctionParameterBase ParseFunctionCall(string text, string expressionKey = "")
+        private static FunctionParameterBase ParseFunctionCall(string text, Dictionary<string, string> literalValues, string expressionKey = "")
         {
             char firstChar = text[0];
 
             if (char.IsNumber(firstChar))
             {
                 //Parse math expression.
-                return ParseMathExpression(text);
+                return ParseMathExpression(text, literalValues);
             }
             else if (char.IsLetter(firstChar) && IsNextNonIdentifier(text, 0, "+-/*!~^".ToCharArray()))
             {
-                return ParseMathExpression(text);
+                return ParseMathExpression(text, literalValues);
             }
             else if (char.IsLetter(firstChar) && IsNextNonIdentifier(text, 0, '('))
             {
@@ -282,7 +283,6 @@ namespace Katzebase.Engine.Functions
                 int parenIndex = text.IndexOf('(');
 
                 FunctionWithParams results;
-
 
                 if (expressionKey != string.Empty)
                 {
@@ -306,7 +306,7 @@ namespace Katzebase.Engine.Functions
                     if (parenScopeFellToZero && _mathChars.Contains(c))
                     {
                         //We have finished parsing a full (...) scope for a function and now we are finding math. Reset and just parse math.
-                        return ParseMathExpression(text);
+                        return ParseMathExpression(text, literalValues);
                     }
 
                     if (_mathChars.Contains(c) && !(c == '(' || c == ')'))
@@ -373,15 +373,15 @@ namespace Katzebase.Engine.Functions
                     {
                         if (parseMath)
                         {
-                            results.Parameters.Add(ParseMathExpression(param));
+                            results.Parameters.Add(ParseMathExpression(param, literalValues));
                         }
                         else if (isComplex)
                         {
-                            results.Parameters.Add(ParseFunctionCall(param));
+                            results.Parameters.Add(ParseFunctionCall(param, literalValues));
                         }
                         else if (param.StartsWith("$") && param.EndsWith("$"))
                         {
-                            results.Parameters.Add(new FunctionConstantParameter(param));
+                            results.Parameters.Add(new FunctionConstantParameter(literalValues[param]));
                         }
                         else
                         {

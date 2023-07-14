@@ -5,9 +5,11 @@ using Katzebase.Engine.Functions.Procedures.Persistent;
 using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Library;
 using Katzebase.Engine.Schemas;
+using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using System.Security.AccessControl;
+using System.Web;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Functions.Management
@@ -44,6 +46,8 @@ namespace Katzebase.Engine.Functions.Management
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             var physicalProcedureCatalog = Acquire(transaction, physicalSchema, LockOperation.Write);
 
+            var batches = KbUtility.SplitQueryTextIntoBatches(body, ";");
+
             var physicalProcesure = physicalProcedureCatalog.GetByName(objectName);
             if (physicalProcesure == null)
             {
@@ -54,7 +58,7 @@ namespace Katzebase.Engine.Functions.Management
                     Created = DateTime.UtcNow,
                     Modfied = DateTime.UtcNow,
                     Parameters = parameters,
-                    Body = body,
+                    Batches = batches,
                 };
 
                 physicalProcedureCatalog.Add(physicalProcesure);
@@ -64,7 +68,7 @@ namespace Katzebase.Engine.Functions.Management
             else
             {
                 physicalProcesure.Parameters = parameters;
-                physicalProcesure.Body = body;
+                physicalProcesure.Batches = batches;
                 physicalProcesure.Modfied = DateTime.UtcNow;
             }
         }
@@ -97,7 +101,7 @@ namespace Katzebase.Engine.Functions.Management
         {
             string procedureName = string.Empty;
 
-            ProcedureParameterValueCollection? proc = null;
+            AppliedProcedurePrototype? proc = null;
 
             if (procedureCall is FunctionConstantParameter)
             {
@@ -116,147 +120,149 @@ namespace Katzebase.Engine.Functions.Management
                 throw new KbNotImplementedException("Procedure call type is not implemented");
             }
 
-            //First check for system procedures:
-            switch (procedureName.ToLower())
+            if (proc.IsSystem)
             {
-                case "clearcache":
-                    {
-                        core.Cache.Clear();
-                        return new KbQueryResult();
-                    }
-                case "releasecacheallocations":
-                    {
-                        GC.Collect();
-                        return new KbQueryResult();
-                    }
-                case "showcachepartitions":
-                    {
-                        var result = new KbQueryResult();
-
-                        result.AddField("Partition");
-                        result.AddField("Allocations");
-
-                        var partitionAllocations = core.Cache.GetAllocations();
-
-                        int partition = 0;
-
-                        foreach (var partitionAllocation in partitionAllocations.PartitionAllocations)
+                //First check for system procedures:
+                switch (procedureName.ToLower())
+                {
+                    case "clearcache":
                         {
-                            var values = new List<string?> { partition++.ToString(), partitionAllocation.ToString() };
-
-                            result.AddRow(values);
+                            core.Cache.Clear();
+                            return new KbQueryResult();
                         }
-
-                        return result;
-                    }
-                case "showhealthcounters":
-                    {
-                        var result = new KbQueryResult();
-
-                        result.AddField("Counter");
-                        result.AddField("Instance");
-                        result.AddField("Value");
-
-                        var counters = core.Health.CloneCounters();
-
-                        foreach (var counter in counters)
+                    case "releasecacheallocations":
                         {
-                            var values = new List<string?> { counter.Key, counter.Value.Instance, counter.Value.Value.ToString() };
-
-                            result.AddRow(values);
+                            GC.Collect();
+                            return new KbQueryResult();
                         }
-
-                        return result;
-                    }
-                case "showwaitinglocks":
-                    {
-                        var waitingForLocks = core.Locking.Locks.CloneTransactionWaitingForLocks().ToList();
-
-                        var processId = proc.GetNullable<ulong?>("processId");
-                        if (processId != null)
+                    case "showcachepartitions":
                         {
-                            waitingForLocks = waitingForLocks.Where(o => o.Key.ProcessId == processId).ToList();
+                            var result = new KbQueryResult();
+
+                            result.AddField("Partition");
+                            result.AddField("Allocations");
+
+                            var partitionAllocations = core.Cache.GetAllocations();
+
+                            int partition = 0;
+
+                            foreach (var partitionAllocation in partitionAllocations.PartitionAllocations)
+                            {
+                                var values = new List<string?> { partition++.ToString(), partitionAllocation.ToString() };
+
+                                result.AddRow(values);
+                            }
+
+                            return result;
                         }
-
-                        var result = new KbQueryResult();
-
-                        result.AddField("ProcessId");
-                        result.AddField("LockType");
-                        result.AddField("Operation");
-                        result.AddField("ObjectName");
-
-                        foreach (var waitingForLock in waitingForLocks)
+                    case "showhealthcounters":
                         {
-                            var values = new List<string?> {
+                            var result = new KbQueryResult();
+
+                            result.AddField("Counter");
+                            result.AddField("Instance");
+                            result.AddField("Value");
+
+                            var counters = core.Health.CloneCounters();
+
+                            foreach (var counter in counters)
+                            {
+                                var values = new List<string?> { counter.Key, counter.Value.Instance, counter.Value.Value.ToString() };
+
+                                result.AddRow(values);
+                            }
+
+                            return result;
+                        }
+                    case "showwaitinglocks":
+                        {
+                            var waitingForLocks = core.Locking.Locks.CloneTransactionWaitingForLocks().ToList();
+
+                            var processId = proc.Parameters.GetNullable<ulong?>("processId");
+                            if (processId != null)
+                            {
+                                waitingForLocks = waitingForLocks.Where(o => o.Key.ProcessId == processId).ToList();
+                            }
+
+                            var result = new KbQueryResult();
+
+                            result.AddField("ProcessId");
+                            result.AddField("LockType");
+                            result.AddField("Operation");
+                            result.AddField("ObjectName");
+
+                            foreach (var waitingForLock in waitingForLocks)
+                            {
+                                var values = new List<string?> {
                                     waitingForLock.Key.ProcessId.ToString(),
                                     waitingForLock.Value.LockType.ToString(),
                                     waitingForLock.Value.Operation.ToString(),
                                     waitingForLock.Value.ObjectName.ToString(),
                                 };
-                            result.AddRow(values);
-                        }
-
-
-                        return result;
-                    }
-
-                case "showblocks":
-                    {
-                        var procCall = (FunctionWithParams)procedureCall;
-
-                        var transactions = core.Transactions.CloneTransactions();
-
-                        var processId = proc.GetNullable<ulong?>("processId");
-                        if (processId != null)
-                        {
-                            transactions = transactions.Where(o => o.ProcessId == processId).ToList();
-                        }
-
-                        var result = new KbQueryResult();
-
-                        result.AddField("ProcessId");
-
-                        foreach (var tx in transactions)
-                        {
-                            var blockedBy = tx.CloneBlocks();
-
-                            foreach (var block in blockedBy)
-                            {
-                                var values = new List<string?> {
-                                    block.ToString()
-                                };
                                 result.AddRow(values);
                             }
+
+
+                            return result;
                         }
 
-                        return result;
-                    }
-                case "showtransactions":
-                    {
-                        var result = new KbQueryResult();
-
-                        result.AddField("TxBlocked");
-                        result.AddField("TxReferences");
-                        result.AddField("TxStartTime");
-                        result.AddField("TxHeldLockKeys");
-                        result.AddField("TxGrantedLocks");
-                        result.AddField("TxDeferredIOs");
-                        result.AddField("TxActive");
-                        result.AddField("TxDeadlocked");
-                        result.AddField("TxCancelled");
-                        result.AddField("TxUserCreated");
-
-                        var transactions = core.Transactions.CloneTransactions();
-
-                        var processId = proc.GetNullable<ulong?>("processId");
-                        if (processId != null)
+                    case "showblocks":
                         {
-                            transactions = transactions.Where(o => o.ProcessId == processId).ToList();
+                            var procCall = (FunctionWithParams)procedureCall;
+
+                            var transactions = core.Transactions.CloneTransactions();
+
+                            var processId = proc.Parameters.GetNullable<ulong?>("processId");
+                            if (processId != null)
+                            {
+                                transactions = transactions.Where(o => o.ProcessId == processId).ToList();
+                            }
+
+                            var result = new KbQueryResult();
+
+                            result.AddField("ProcessId");
+
+                            foreach (var tx in transactions)
+                            {
+                                var blockedBy = tx.CloneBlocks();
+
+                                foreach (var block in blockedBy)
+                                {
+                                    var values = new List<string?> {
+                                    block.ToString()
+                                };
+                                    result.AddRow(values);
+                                }
+                            }
+
+                            return result;
                         }
-
-                        foreach (var tx in transactions)
+                    case "showtransactions":
                         {
-                            var values = new List<string?> {
+                            var result = new KbQueryResult();
+
+                            result.AddField("TxBlocked");
+                            result.AddField("TxReferences");
+                            result.AddField("TxStartTime");
+                            result.AddField("TxHeldLockKeys");
+                            result.AddField("TxGrantedLocks");
+                            result.AddField("TxDeferredIOs");
+                            result.AddField("TxActive");
+                            result.AddField("TxDeadlocked");
+                            result.AddField("TxCancelled");
+                            result.AddField("TxUserCreated");
+
+                            var transactions = core.Transactions.CloneTransactions();
+
+                            var processId = proc.Parameters.GetNullable<ulong?>("processId");
+                            if (processId != null)
+                            {
+                                transactions = transactions.Where(o => o.ProcessId == processId).ToList();
+                            }
+
+                            foreach (var tx in transactions)
+                            {
+                                var values = new List<string?> {
                                 (tx?.BlockedBy.Count > 0).ToString(),
                                 tx?.ReferenceCount.ToString(),
                                 tx?.StartTime.ToString(),
@@ -268,44 +274,44 @@ namespace Katzebase.Engine.Functions.Management
                                 tx?.IsCancelled.ToString(),
                                 tx?.IsUserCreated.ToString()
                             };
-                            result.AddRow(values);
+                                result.AddRow(values);
+                            }
+
+                            return result;
                         }
-
-                        return result;
-                    }
-                case "showprocesses":
-                    {
-                        var result = new KbQueryResult();
-
-                        result.AddField("SessionId");
-                        result.AddField("ProcessId");
-                        result.AddField("LoginTime");
-                        result.AddField("LastCheckinTime");
-                        result.AddField("TxBlocked");
-                        result.AddField("TxReferences");
-                        result.AddField("TxStartTime");
-                        result.AddField("TxHeldLockKeys");
-                        result.AddField("TxGrantedLocks");
-                        result.AddField("TxDeferredIOs");
-                        result.AddField("TxActive");
-                        result.AddField("TxDeadlocked");
-                        result.AddField("TxCancelled");
-                        result.AddField("TxUserCreated");
-
-                        var sessions = core.Sessions.CloneSessions();
-                        var transactions = core.Transactions.CloneTransactions();
-
-                        var processId = proc.GetNullable<ulong?>("processId");
-                        if (processId != null)
+                    case "showprocesses":
                         {
-                            transactions = transactions.Where(o => o.ProcessId == processId).ToList();
-                        }
+                            var result = new KbQueryResult();
 
-                        foreach (var session in sessions)
-                        {
-                            var tx = transactions.Where(o => o.ProcessId == session.Value.ProcessId).FirstOrDefault();
+                            result.AddField("SessionId");
+                            result.AddField("ProcessId");
+                            result.AddField("LoginTime");
+                            result.AddField("LastCheckinTime");
+                            result.AddField("TxBlocked");
+                            result.AddField("TxReferences");
+                            result.AddField("TxStartTime");
+                            result.AddField("TxHeldLockKeys");
+                            result.AddField("TxGrantedLocks");
+                            result.AddField("TxDeferredIOs");
+                            result.AddField("TxActive");
+                            result.AddField("TxDeadlocked");
+                            result.AddField("TxCancelled");
+                            result.AddField("TxUserCreated");
 
-                            var values = new List<string?> {
+                            var sessions = core.Sessions.CloneSessions();
+                            var transactions = core.Transactions.CloneTransactions();
+
+                            var processId = proc.Parameters.GetNullable<ulong?>("processId");
+                            if (processId != null)
+                            {
+                                transactions = transactions.Where(o => o.ProcessId == processId).ToList();
+                            }
+
+                            foreach (var session in sessions)
+                            {
+                                var tx = transactions.Where(o => o.ProcessId == session.Value.ProcessId).FirstOrDefault();
+
+                                var values = new List<string?> {
                                 session.Key.ToString(),
                                 session.Value.ProcessId.ToString(),
                                 session.Value.LoginTime.ToString(),
@@ -321,25 +327,36 @@ namespace Katzebase.Engine.Functions.Management
                                 tx?.IsCancelled.ToString(),
                                 tx?.IsUserCreated.ToString()
                             };
-                            result.AddRow(values);
+                                result.AddRow(values);
+                            }
+
+                            return result;
                         }
-
-                        return result;
-                    }
-                case "clearhealthcounters":
-                    {
-                        core.Health.ClearCounters();
-                        return new KbQueryResult();
-                    }
-                case "checkpointhealthcounters":
-                    {
-                        core.Health.Checkpoint();
-                        return new KbQueryResult();
-                    }
+                    case "clearhealthcounters":
+                        {
+                            core.Health.ClearCounters();
+                            return new KbQueryResult();
+                        }
+                    case "checkpointhealthcounters":
+                        {
+                            core.Health.Checkpoint();
+                            return new KbQueryResult();
+                        }
+                }
             }
+            else
+            {
+                KbUtility.EnsureNotNull(proc.PhysicalSchema);
+                KbUtility.EnsureNotNull(proc.PhysicalProcedure);
 
-            //TODO: Next check for user procedures in a schema:
-            //...
+
+                //var batches = KbUtility.SplitQueryTextIntoBatches(proc.PhysicalProcedure.Body, ";");
+
+
+
+                //TODO: Next check for user procedures in a schema:
+                //...
+            }
 
             throw new KbFunctionException($"Undefined procedure [{procedureName}].");
         }

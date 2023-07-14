@@ -1,4 +1,7 @@
-﻿namespace Katzebase.Engine.Functions.Procedures.Persistent
+﻿using Katzebase.Engine.Functions.Parameters;
+using Katzebase.PublicLibrary.Exceptions;
+
+namespace Katzebase.Engine.Functions.Procedures.Persistent
 {
     [Serializable]
     public class PhysicalProcedure
@@ -8,7 +11,7 @@
         public Guid Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime Modfied { get; set; }
-        public string Body { get; set; } = string.Empty;
+        public List<string> Batches { get; set; } = new List<string>();
 
         public PhysicalProcedure Clone()
         {
@@ -19,6 +22,70 @@
                 Created = Created,
                 Modfied = Modfied
             };
+        }
+
+        internal ProcedureParameterValueCollection ApplyParameters(List<FunctionParameterBase> values)
+        {
+            int requiredParameterCount = Parameters.Where(o => o.Type.ToString().ToLower().Contains("optional") == false).Count();
+
+            if (Parameters.Count < requiredParameterCount)
+            {
+                if (Parameters.Count > 0 && Parameters[0].Type == KbProcedureParameterType.Infinite_String)
+                {
+                    //The first parameter is infinite, we dont even check anything else.
+                }
+                else
+                {
+                    throw new KbFunctionException($"Incorrect number of parameter passed to {Name}.");
+                }
+            }
+
+            var result = new ProcedureParameterValueCollection();
+
+            if (Parameters.Count > 0 && Parameters[0].Type == KbProcedureParameterType.Infinite_String)
+            {
+                for (int i = 0; i < Parameters.Count; i++)
+                {
+                    if (values[i] is FunctionExpression)
+                    {
+                        var expression = (FunctionExpression)values[i];
+                        result.Values.Add(new ProcedureParameterValue(Parameters[0].ToProcedureParameterPrototype(), expression.Value));
+                    }
+                    else
+                    {
+                        throw new KbNotImplementedException($"Parameter type [{values[i].GetType()}] is not implemented.");
+                    }
+                }
+            }
+            else
+            {
+                for (int i = 0; i < Parameters.Count; i++)
+                {
+                    if (i >= values.Count)
+                    {
+                        result.Values.Add(new ProcedureParameterValue(Parameters[i].ToProcedureParameterPrototype()));
+                    }
+                    else
+                    {
+                        if (values[i] is FunctionExpression)
+                        {
+                            var expression = (FunctionExpression)values[i];
+                            result.Values.Add(new ProcedureParameterValue(Parameters[i].ToProcedureParameterPrototype(), expression.Value));
+                        }
+                        else if (values[i] is FunctionConstantParameter)
+                        {
+                            var expression = (FunctionConstantParameter)values[i];
+                            result.Values.Add(new ProcedureParameterValue(Parameters[i].ToProcedureParameterPrototype(), expression.Value));
+                        }
+                        else
+                        {
+                            throw new KbNotImplementedException($"Parameter type [{values[i].GetType()}] is not implemented.");
+                        }
+                    }
+                }
+            }
+
+            return result;
         }
     }
 }
