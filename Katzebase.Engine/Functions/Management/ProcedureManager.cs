@@ -8,6 +8,7 @@ using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using System.Data.SqlTypes;
 using System.Security.AccessControl;
 using System.Web;
 using static Katzebase.Engine.Library.EngineConstants;
@@ -353,12 +354,22 @@ namespace Katzebase.Engine.Functions.Management
                 KbUtility.EnsureNotNull(proc.PhysicalSchema);
                 KbUtility.EnsureNotNull(proc.PhysicalProcedure);
 
+                KbQueryResult finalResult = new KbQueryResult();
+
                 foreach (var batch in proc.PhysicalProcedure.Batches)
                 {
-                    var batchResult = core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batch);
+                    string batchText = batch;
+
+                    foreach (var param in proc.Parameters.Values)
+                    {
+                        batchText = batchText.Replace(param.Parameter.Name, param.Value, StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    //TODO: We need to at least have some way to aggregate the row counts from the multiple batches.
+                    finalResult = core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batchText);
                 }
 
-                return new KbQueryResult();
+                return finalResult;
             }
 
             throw new KbFunctionException($"Undefined procedure [{procedureName}].");

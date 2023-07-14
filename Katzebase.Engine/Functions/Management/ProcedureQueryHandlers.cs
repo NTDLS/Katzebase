@@ -28,13 +28,13 @@ namespace Katzebase.Engine.Functions.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
-                    var result = core.Procedures.ExecuteProcedure(transaction, preparedQuery.ProcedureCall);
+                    var result = core.Procedures.ExecuteProcedure(txRef.Transaction, preparedQuery.ProcedureCall);
 
-                    transaction.Commit();
+                    txRef.Commit();
                     result.RowCount = result.Rows.Count;
-                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;
                 }

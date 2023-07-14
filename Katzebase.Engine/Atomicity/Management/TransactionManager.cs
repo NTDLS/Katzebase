@@ -16,7 +16,7 @@ namespace Katzebase.Engine.Atomicity.Management
         public TransactiontAPIHandlers APIHandlers { get; set; }
         internal List<Transaction> Collection = new();
         private readonly Core core;
-        internal Transaction Acquire(ulong processId) => Acquire(processId, false);
+        internal TransactionReference Acquire(ulong processId) => Acquire(processId, false);
 
         internal List<Transaction> CloneTransactions()
         {
@@ -162,7 +162,7 @@ namespace Katzebase.Engine.Atomicity.Management
         /// </summary>
         /// <param name="processId"></param>
         /// <returns></returns>
-        internal Transaction Acquire(ulong processId, bool isUserCreated)
+        internal TransactionReference Acquire(ulong processId, bool isUserCreated)
         {
             var startTime = DateTime.UtcNow;
 
@@ -190,7 +190,7 @@ namespace Katzebase.Engine.Atomicity.Management
 
                     KbUtility.EnsureNotNull(transaction);
 
-                    return transaction;
+                    return new TransactionReference(transaction);
                 }
             }
             catch (Exception ex)

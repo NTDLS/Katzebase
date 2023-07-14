@@ -30,9 +30,9 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
-                    var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schemaName, LockOperation.Read);
 
                     var result = new KbActionResponseSchemaCollection();
 
@@ -41,16 +41,16 @@ namespace Katzebase.Engine.Schemas.Management
                         throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
                     }
 
-                    var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
+                    var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(txRef.Transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
 
                     foreach (var item in schemaCatalog.Collection)
                     {
                         result.Add(item.ToClientPayload());
                     }
 
-                    transaction.Commit();
+                    txRef.Commit();
                     result.RowCount = 0;
-                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;
                 }
@@ -71,7 +71,7 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponse();
                     var segments = schemaName.Split(':');
@@ -80,13 +80,13 @@ namespace Katzebase.Engine.Schemas.Management
                     foreach (string name in segments)
                     {
                         pathBuilder.Append(name);
-                        core.Schemas.CreateSingleSchema(transaction, pathBuilder.ToString());
+                        core.Schemas.CreateSingleSchema(txRef.Transaction, pathBuilder.ToString());
                         pathBuilder.Append(":");
                     }
 
-                    transaction.Commit();
+                    txRef.Commit();
                     result.RowCount = 0;
-                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;
                 }
@@ -106,7 +106,7 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponseBoolean();
                     var segments = schemaName.Split(':');
@@ -115,7 +115,7 @@ namespace Katzebase.Engine.Schemas.Management
                     foreach (string name in segments)
                     {
                         pathBuilder.Append(name);
-                        var schema = core.Schemas.AcquireVirtual(transaction, pathBuilder.ToString(), LockOperation.Read);
+                        var schema = core.Schemas.AcquireVirtual(txRef.Transaction, pathBuilder.ToString(), LockOperation.Read);
 
                         result.Value = schema != null && schema.Exists;
                         if (result.Value == false)
@@ -126,9 +126,9 @@ namespace Katzebase.Engine.Schemas.Management
                         pathBuilder.Append(":");
                     }
 
-                    transaction.Commit();
+                    txRef.Commit();
                     result.RowCount = 0;
-                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;
                 }
@@ -148,35 +148,35 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponseBoolean();
 
                     var segments = schemaName.Split(':');
                     var parentSchemaName = segments[segments.Count() - 1];
 
-                    var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-                    var parentPhysicalSchema = core.Schemas.AcquireParent(transaction, physicalSchema, LockOperation.Write);
+                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schemaName, LockOperation.Write);
+                    var parentPhysicalSchema = core.Schemas.AcquireParent(txRef.Transaction, physicalSchema, LockOperation.Write);
 
                     if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
                         throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
 
                     var parentSchemaCatalogFile = parentPhysicalSchema.SchemaCatalogFilePath();
-                    var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentSchemaCatalogFile, LockOperation.Write);
+                    var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(txRef.Transaction, parentSchemaCatalogFile, LockOperation.Write);
 
                     var nsItem = parentCatalog.Collection.FirstOrDefault(o => o.Name == parentSchemaName);
                     if (nsItem != null)
                     {
                         parentCatalog.Collection.Remove(nsItem);
 
-                        core.IO.DeletePath(transaction, physicalSchema.DiskPath);
+                        core.IO.DeletePath(txRef.Transaction, physicalSchema.DiskPath);
 
-                        core.IO.PutJson(transaction, parentSchemaCatalogFile, parentCatalog);
+                        core.IO.PutJson(txRef.Transaction, parentSchemaCatalogFile, parentCatalog);
                     }
 
-                    transaction.Commit();
+                    txRef.Commit();
                     result.RowCount = 0;
-                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     return result;
                 }
             }

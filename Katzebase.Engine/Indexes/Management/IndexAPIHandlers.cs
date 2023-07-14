@@ -28,19 +28,19 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponseIndexes();
 
-                    var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, schemaName, LockOperation.Read);
+                    var indexCatalog = core.Indexes.AcquireIndexCatalog(txRef.Transaction, schemaName, LockOperation.Read);
                     if (indexCatalog != null)
                     {
                         result.List.AddRange(indexCatalog.Collection.Select(o => PhysicalIndex.ToClientPayload(o)));
                     }
 
-                    transaction.Commit();
+                    txRef.Commit();
                     result.RowCount = 0;
-                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;
                 }
@@ -57,15 +57,15 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponseBoolean();
-                    var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, schemaName, LockOperation.Read);
+                    var indexCatalog = core.Indexes.AcquireIndexCatalog(txRef.Transaction, schemaName, LockOperation.Read);
                     result.Value = indexCatalog.GetByName(indexName) != null;
 
-                    transaction.Commit();
+                    txRef.Commit();
                     result.RowCount = 0;
-                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;
                 }
@@ -83,15 +83,15 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var physicalIndex = PhysicalIndex.FromClientPayload(index);
 
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponseGuid();
-                    core.Indexes.CreateIndex(transaction, schemaName, index, out Guid newId);
+                    core.Indexes.CreateIndex(txRef.Transaction, schemaName, index, out Guid newId);
                     result.Id = newId;
 
-                    transaction.Commit();
+                    txRef.Commit();
                     result.RowCount = 0;
-                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;
                 }
@@ -107,15 +107,15 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponse();
 
-                    core.Indexes.RebuildIndex(transaction, schemaName, indexName);
+                    core.Indexes.RebuildIndex(txRef.Transaction, schemaName, indexName);
 
-                    transaction.Commit();
+                    txRef.Commit();
                     result.RowCount = 0;
-                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;
                 }
@@ -131,15 +131,15 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponse();
 
-                    core.Indexes.DropIndex(transaction, schemaName, indexName);
+                    core.Indexes.DropIndex(txRef.Transaction, schemaName, indexName);
 
-                    transaction.Commit();
+                    txRef.Commit();
                     result.RowCount = 0;
-                    result.Metrics = transaction.PT?.ToCollection();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;
                 }

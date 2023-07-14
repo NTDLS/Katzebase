@@ -30,7 +30,7 @@ namespace Katzebase.Engine.Sessions.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponse();
 
@@ -38,8 +38,8 @@ namespace Katzebase.Engine.Sessions.Management
 
                     core.Sessions.CloseByProcessId(referencedProcessId);
 
-                    transaction.Commit();
-                    result.Metrics = transaction.PT?.ToCollection();
+                    txRef.Commit();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;
                 }
@@ -55,7 +55,7 @@ namespace Katzebase.Engine.Sessions.Management
         {
             try
             {
-                using (var transaction = core.Transactions.Acquire(processId))
+                using (var txRef = core.Transactions.Acquire(processId))
                 {
                     var result = new KbActionResponse();
                     var session = core.Sessions.ByProcessId(processId);
@@ -85,8 +85,8 @@ namespace Katzebase.Engine.Sessions.Management
 
                     }
 
-                    transaction.Commit();
-                    result.Metrics = transaction.PT?.ToCollection();
+                    txRef.Commit();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;
                 }

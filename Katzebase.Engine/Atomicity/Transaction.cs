@@ -560,7 +560,13 @@ namespace Katzebase.Engine.Atomicity
             }
         }
 
-        public void Commit()
+        /// <summary>
+        /// Dereferecnes a transaction, if the references fall to zero then the transaction should be disposed.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="KbTransactionCancelledException"></exception>
+        /// <exception cref="KbGenericException"></exception>
+        public bool Commit()
         {
             lock (SyncObject)
             {
@@ -571,7 +577,7 @@ namespace Katzebase.Engine.Atomicity
 
                 if (IsComittedOrRolledBack)
                 {
-                    return;
+                    return true;
                 }
 
                 try
@@ -601,16 +607,15 @@ namespace Katzebase.Engine.Atomicity
                             {
                                 ReleaseLocks();
                             }
+                            ptCommit?.StopAndAccumulate();
+                            PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
+                            return true;
                         }
                         else if (referenceCount < 0)
                         {
                             throw new KbGenericException("Transaction reference count fell below zero.");
                         }
                     }
-
-                    ptCommit?.StopAndAccumulate();
-
-                    PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
                 }
                 catch (Exception ex)
                 {
@@ -618,19 +623,21 @@ namespace Katzebase.Engine.Atomicity
                     throw;
                 }
             }
+
+            return false;
         }
 
         private void DeleteTemporarySchemas()
         {
             if (TemporarySchemas.Any())
             {
-                using (var ephemeralTx = core.Transactions.Acquire(ProcessId))
+                using (var ephemeralTxRef = core.Transactions.Acquire(ProcessId))
                 {
                     foreach (var tempSchema in TemporarySchemas)
                     {
-                        core.Schemas.Drop(ephemeralTx, tempSchema);
+                        core.Schemas.Drop(ephemeralTxRef.Transaction, tempSchema);
                     }
-                    ephemeralTx.Commit();
+                    ephemeralTxRef.Commit();
                 }
             }
         }

@@ -21,7 +21,7 @@
             }
         }
 
-        public Transaction Begin(ulong processId) => core.Transactions.Acquire(processId, true);
+        public TransactionReference Begin(ulong processId) => core.Transactions.Acquire(processId, true);
         public void Commit(ulong processId) => core.Transactions.Commit(processId);
         public void Rollback(ulong processId) => core.Transactions.Rollback(processId);
     }
