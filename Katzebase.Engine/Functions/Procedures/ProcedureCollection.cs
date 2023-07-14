@@ -55,7 +55,6 @@ namespace Katzebase.Engine.Functions.Procedures
                 throw new KbFunctionException($"Undefined procedure: {procedureName}.");
             }
 
-
             throw new KbNotImplementedException(procedureName);
         }
     }
