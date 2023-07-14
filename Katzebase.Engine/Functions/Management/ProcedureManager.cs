@@ -46,7 +46,7 @@ namespace Katzebase.Engine.Functions.Management
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             var physicalProcedureCatalog = Acquire(transaction, physicalSchema, LockOperation.Write);
 
-            var batches = KbUtility.SplitQueryTextIntoBatches(body, ";");
+            var batches = KbUtility.SplitQueryBatches(body);
 
             var physicalProcesure = physicalProcedureCatalog.GetByName(objectName);
             if (physicalProcesure == null)
@@ -70,6 +70,8 @@ namespace Katzebase.Engine.Functions.Management
                 physicalProcesure.Parameters = parameters;
                 physicalProcesure.Batches = batches;
                 physicalProcesure.Modfied = DateTime.UtcNow;
+
+                core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), physicalProcedureCatalog);
             }
         }
 
@@ -346,16 +348,17 @@ namespace Katzebase.Engine.Functions.Management
             }
             else
             {
+                //Next check for user procedures in a schema:
+
                 KbUtility.EnsureNotNull(proc.PhysicalSchema);
                 KbUtility.EnsureNotNull(proc.PhysicalProcedure);
 
+                foreach (var batch in proc.PhysicalProcedure.Batches)
+                {
+                    var batchResult = core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batch);
+                }
 
-                //var batches = KbUtility.SplitQueryTextIntoBatches(proc.PhysicalProcedure.Body, ";");
-
-
-
-                //TODO: Next check for user procedures in a schema:
-                //...
+                return new KbQueryResult();
             }
 
             throw new KbFunctionException($"Undefined procedure [{procedureName}].");

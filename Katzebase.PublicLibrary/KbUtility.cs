@@ -30,10 +30,27 @@ namespace Katzebase.PublicLibrary
             return noComments;
         }
 
-        public static List<string> SplitQueryTextIntoBatches(string text, string delimiter)
+        public static List<string> SplitQueryBatches(string text)
         {
-            delimiter = delimiter.ToLower();
+            text = KbUtility.RemoveComments(text);
 
+            var lines = text.Replace("\r\n", "\n").Split('\n').Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                lines[i] = lines[i].Trim();
+            }
+
+            text = string.Join("\r\n", lines).Trim() + "\r\n";
+
+            var batches = text.Split(";\r\n", StringSplitOptions.RemoveEmptyEntries)
+                .Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
+
+            return batches;
+        }
+
+        public static List<string> SplitQueryBatchesOnGO(string text)
+        {
             text = KbUtility.RemoveComments(text);
 
             var lines = text.Replace("\r\n", "\n").Split('\n').Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
@@ -49,7 +66,7 @@ namespace Katzebase.PublicLibrary
 
             foreach (var line in lines)
             {
-                if (line.ToLower() == delimiter)
+                if (line.ToLower() == "go")
                 {
                     if (batchText.Length > 0)
                     {
@@ -68,9 +85,6 @@ namespace Katzebase.PublicLibrary
                 batches.Add(batchText.ToString());
                 batchText.Clear();
             }
-
-            //var batches = text.Split(";\r\n", StringSplitOptions.RemoveEmptyEntries)
-            //    .Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
 
             return batches;
         }
