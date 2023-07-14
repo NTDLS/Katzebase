@@ -1,4 +1,5 @@
-﻿using static Katzebase.Engine.Library.EngineConstants;
+﻿using System.Collections.Generic;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.IO
 {
@@ -77,6 +78,35 @@ namespace Katzebase.Engine.IO
                 }
             }
             return default;
+        }
+
+        public void Remove(string key)
+        {
+            key = key.ToLower();
+            lock (this)
+            {
+                Collection.Remove(key);
+            }
+        }
+
+        public void RemoveItemsWithPrefix(string prefix)
+        {
+            prefix = prefix.ToLower();
+
+            if (prefix.EndsWith("\\") == false)
+            {
+                prefix += "\\";
+            }
+
+            lock (this)
+            {
+                var keysToRemove = Collection.Where(o => o.Key.StartsWith(prefix)).Select(o => o.Key).ToList();
+
+                foreach (var key in keysToRemove)
+                {
+                    Collection.Remove(key);
+                }
+            }
         }
 
         /// <summary>

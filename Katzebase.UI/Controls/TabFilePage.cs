@@ -3,9 +3,10 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using Katzebase.UI.Classes;
 using System.Text;
 
-namespace Katzebase.UI.Classes
+namespace Katzebase.UI.Controls
 {
     internal class TabFilePage : TabPage
     {
@@ -136,7 +137,6 @@ namespace Katzebase.UI.Classes
             return tabFilePage;
         }
 
-
         public void OpenFile(string filePath)
         {
             if (File.Exists(filePath))
@@ -239,7 +239,7 @@ namespace Katzebase.UI.Classes
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -260,7 +260,7 @@ namespace Katzebase.UI.Classes
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -292,7 +292,7 @@ namespace Katzebase.UI.Classes
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -340,9 +340,9 @@ namespace Katzebase.UI.Classes
                         foreach (var wt in result.Metrics.Where(o => o.Value >= 0.5).OrderBy(o => o.Value))
                         {
                             stringBuilder.Append($"\t{wt.Name} -> Total: {wt.Value:n0}");
-                            if (wt.MetricType == PublicLibrary.KbConstants.KbMetricType.Cumulative)
+                            if (wt.MetricType == KbConstants.KbMetricType.Cumulative)
                             {
-                                stringBuilder.Append($"    Count: {wt.Count:n0}    Average: {(wt.Value / wt.Count):n2}");
+                                stringBuilder.Append($"    Count: {wt.Count:n0}    Average: {wt.Value / wt.Count:n2}");
                             }
                             stringBuilder.AppendLine();
                         }
@@ -355,9 +355,19 @@ namespace Katzebase.UI.Classes
 
                     PopulateResultsGrid(result);
 
-                    if (string.IsNullOrWhiteSpace(result.Message) == false)
+                    foreach (var message in result.Messages)
                     {
-                        AppendToOutput($"{result.Message}", Color.Black);
+                        if (message.MessageType == KbConstants.KbMessageType.Verbose)
+                            AppendToOutput($"{message.Text}", Color.Black);
+                        else if (message.MessageType == KbConstants.KbMessageType.Warning)
+                            AppendToOutput($"{message.Text}", Color.DarkOrange);
+                        else if (message.MessageType == KbConstants.KbMessageType.Error)
+                            AppendToOutput($"{message.Text}", Color.DarkRed);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(result.ExceptionText) == false)
+                    {
+                        AppendToOutput($"{result.ExceptionText}", Color.DarkOrange);
                     }
 
                     batchNumber++;
@@ -419,7 +429,7 @@ namespace Katzebase.UI.Classes
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

@@ -1,4 +1,4 @@
-﻿using Katzebase.UI.Classes;
+﻿using Katzebase.UI.Controls;
 
 namespace Katzebase.UI
 {

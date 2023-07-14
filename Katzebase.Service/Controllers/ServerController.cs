@@ -36,7 +36,7 @@ namespace Katzebase.Service.Controllers
             {
                 return new KbActionResponsePing
                 {
-                    Message = ex.Message,
+                    ExceptionText = ex.Message,
                     Success = false
                 };
             }
@@ -72,7 +72,7 @@ namespace Katzebase.Service.Controllers
             {
                 return new KbActionResponsePing
                 {
-                    Message = ex.Message,
+                    ExceptionText = ex.Message,
                     Success = false
                 };
             }

@@ -124,7 +124,7 @@ namespace Katzebase.Engine.Documents.Management
                 {
                     var result = new KbDocumentCatalogCollection();
                     var documentPointers = core.Documents.AcquireDocumentPointers(txRef.Transaction, schemaName, LockOperation.Read).ToList();
-                    result.AddRange(documentPointers.Select(o => new KbDocumentCatalogItem(o.DocumentId)));
+                    result.Collection.AddRange(documentPointers.Select(o => new KbDocumentCatalogItem(o.DocumentId)));
 
                     txRef.Commit();
                     result.RowCount = documentPointers.Count;

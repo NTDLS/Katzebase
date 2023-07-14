@@ -27,7 +27,7 @@ namespace Katzebase.PublicLibrary.Client.Management
             var result = JsonConvert.DeserializeObject<KbActionResponsePing>(resultText);
             if (result == null || result.Success == false)
             {
-                throw new KbAPIResponseException(result == null ? "Invalid response" : result.Message);
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
             }
 
             client.ServerProcessId = result.ProcessId;
@@ -49,7 +49,7 @@ namespace Katzebase.PublicLibrary.Client.Management
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
             {
-                throw new KbAPIResponseException(result == null ? "Invalid response" : result.Message);
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
             }
 
             return result;

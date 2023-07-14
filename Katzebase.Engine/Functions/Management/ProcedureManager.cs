@@ -8,6 +8,7 @@ using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using System.Collections.Generic;
 using System.Data.SqlTypes;
 using System.Security.AccessControl;
 using System.Web;
@@ -350,11 +351,13 @@ namespace Katzebase.Engine.Functions.Management
             else
             {
                 //Next check for user procedures in a schema:
-
                 KbUtility.EnsureNotNull(proc.PhysicalSchema);
                 KbUtility.EnsureNotNull(proc.PhysicalProcedure);
+                KbQueryResult resultWithRows = new();
 
-                KbQueryResult finalResult = new KbQueryResult();
+                var messages = new List<KbQueryResultMessage>();
+
+                int batchNumber = 0;
 
                 foreach (var batch in proc.PhysicalProcedure.Batches)
                 {
@@ -365,11 +368,29 @@ namespace Katzebase.Engine.Functions.Management
                         batchText = batchText.Replace(param.Parameter.Name, param.Value, StringComparison.OrdinalIgnoreCase);
                     }
 
-                    //TODO: We need to at least have some way to aggregate the row counts from the multiple batches.
-                    finalResult = core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batchText);
+                    var batchStartTime = DateTime.UtcNow;
+                    var batchResults = core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batchText);
+                    var batchDuration = (DateTime.UtcNow - batchStartTime).TotalMilliseconds;
+
+                    if (batchResults.Success != true)
+                    {
+                        throw new KbEngineException("Procedure batch was unsuccessful.");
+                    }
+
+                    messages.AddRange(batchResults.Messages);
+
+                    messages.Add(new KbQueryResultMessage($"Procedure batch {batchNumber + 1} of {proc.PhysicalProcedure.Batches.Count} completed in {batchDuration:n0}ms.  ({batchResults.RowCount} rows affected)", KbConstants.KbMessageType.Verbose));
+
+                    if (batchResults.Rows != null && batchResults.Rows.Count > 0)
+                    {
+                        resultWithRows = batchResults;
+                    }
+                    batchNumber++;
                 }
 
-                return finalResult;
+                resultWithRows.Messages = messages;
+
+                return resultWithRows;
             }
 
             throw new KbFunctionException($"Undefined procedure [{procedureName}].");

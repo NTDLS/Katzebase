@@ -12,10 +12,16 @@ CREATE PROCEDURE UpdateProductByColorAndGetItsName
 	
 	SELECT
 		*
+	INTO
+		#TempTable
 	from
 		AdventureWorks2012:Production:Product
 	WHERE
 		Color = @ProductColor;
+		
+	SELECT * FROM #TempTable;
+	
+	DROP SCHEMA #TempTable
 )
 GO
 

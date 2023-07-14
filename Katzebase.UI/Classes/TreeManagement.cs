@@ -53,7 +53,7 @@ namespace Katzebase.UI.Classes
             nodeToPopulate.Nodes.Add(schemaFieldNode);
 
             var schemas = client.Schema.List(schema);
-            foreach (var item in schemas)
+            foreach (var item in schemas.Collection)
             {
                 var schemaNode = CreateSchemaNode(item.Name ?? "");
                 schemaNode.Nodes.Add(CreateTreeNotLoadedNode());

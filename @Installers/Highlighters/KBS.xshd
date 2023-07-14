@@ -29,7 +29,7 @@
 		</Rule>
 		
 		<Rule color="Punctuation">
-			[?,.;()\[\]{}+\-/%*&lt;&gt;^+~!|&amp;]+
+			[?,.;:#@()\[\]{}+\-/%*&lt;&gt;^+~!|&amp;]+
 		</Rule>
 
 		<Rule color="KbMarkup">
@@ -57,8 +57,11 @@
 		</Span>
 		
 		<Keywords color="KbConst">
-			<Word>true</Word>
-			<Word>false</Word>
+			<Word>True</Word>
+			<Word>False</Word>
+			<Word>String</Word>
+			<Word>Boolean</Word>
+			<Word>Numeric</Word>
 		</Keywords>
 
 		<Keywords color="KbConfig">
@@ -104,6 +107,7 @@
 		</Keywords>
 
 		<Keywords color="Keywords">
+			<Word>procedure</Word>
 			<Word>and</Word>
 			<Word>as</Word>
 			<Word>asc</Word>

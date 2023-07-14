@@ -301,7 +301,7 @@ namespace Katzebase.TestHarness
             client.Transaction.Begin();
 
             var documents = client.Document.Catalog(schemaPath);
-            foreach (var doc in documents)
+            foreach (var doc in documents.Collection)
             {
                 if (doc.Id.ToString().StartsWith("0") == false)
                 {
@@ -508,7 +508,7 @@ namespace Katzebase.TestHarness
                     #region Enum. Schemas.
                     //Console.WriteLine("Sales:People:");
                     var schemas = client.Schema.List("Sales:People");
-                    foreach (var schema in schemas)
+                    foreach (var schema in schemas.Collection)
                     {
                         //Console.WriteLine("\tNS: " + schema.Name);
                     }
@@ -542,7 +542,7 @@ namespace Katzebase.TestHarness
                     #region List/Delete Documents.
                     //Console.WriteLine("Students:CurrentYear");
                     var documents = client.Document.Catalog("Students:CurrentYear");
-                    foreach (var doc in documents)
+                    foreach (var doc in documents.Collection)
                     {
                         if (doc.Id.ToString().StartsWith("0") == false)
                         {

@@ -25,7 +25,7 @@ namespace Katzebase.PublicLibrary.Client.Management
             var result = JsonConvert.DeserializeObject<KbQueryResult>(resultText);
             if (result == null || result.Success == false)
             {
-                throw new KbAPIResponseException(result == null ? "Invalid response" : result.Message);
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
             }
             return result;
         }
@@ -41,7 +41,7 @@ namespace Katzebase.PublicLibrary.Client.Management
             var result = JsonConvert.DeserializeObject<KbQueryResult>(resultText);
             if (result == null || result.Success == false)
             {
-                throw new KbAPIResponseException(result == null ? "Invalid response" : result.Message);
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
             }
             return result;
         }
@@ -57,7 +57,7 @@ namespace Katzebase.PublicLibrary.Client.Management
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
             {
-                throw new KbAPIResponseException(result == null ? "Invalid response" : result.Message);
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
             }
             return result;
         }

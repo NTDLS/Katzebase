@@ -336,6 +336,8 @@ namespace Katzebase.Engine.Atomicity
 
                     var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
+                    DeferredIOs?.RemoveItemsWithPrefix(diskPath);
+
                     lock (Atoms)
                     {
                         if (IsFileAlreadyRecorded(diskPath))
@@ -378,6 +380,8 @@ namespace Katzebase.Engine.Atomicity
                     EnsureActive();
 
                     var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+
+                    DeferredIOs?.Remove(filePath);
 
                     lock (Atoms)
                     {

@@ -1,5 +1,6 @@
 using Katzebase.PublicLibrary;
 using Katzebase.UI.Classes;
+using Katzebase.UI.Controls;
 using Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;

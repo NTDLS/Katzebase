@@ -1,6 +1,7 @@
 ﻿using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Payloads;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace Katzebase.Service.Controllers
 {
@@ -28,7 +29,7 @@ namespace Katzebase.Service.Controllers
             {
                 return new KbActionResponseSchemaCollection
                 {
-                    Message = ex.Message,
+                    ExceptionText = ex.Message,
                     Success = false
                 };
             }
@@ -54,7 +55,7 @@ namespace Katzebase.Service.Controllers
             {
                 return new KbActionResponsePing
                 {
-                    Message = ex.Message,
+                    ExceptionText = ex.Message,
                     Success = false
                 };
             }
@@ -80,7 +81,7 @@ namespace Katzebase.Service.Controllers
             {
                 return new KbActionResponseBoolean
                 {
-                    Message = ex.Message,
+                    ExceptionText = ex.Message,
                     Success = false
                 };
             }
@@ -106,7 +107,7 @@ namespace Katzebase.Service.Controllers
             {
                 return new KbActionResponsePing
                 {
-                    Message = ex.Message,
+                    ExceptionText = ex.Message,
                     Success = false
                 };
             }

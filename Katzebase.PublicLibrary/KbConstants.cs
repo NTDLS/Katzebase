@@ -12,6 +12,13 @@
             Exception = 3 //An actual exception has been thrown.
         }
 
+        public enum KbMessageType
+        {
+            Verbose,
+            Warning,
+            Error
+        }
+
         public enum KbSortDirection
         {
             Ascending,

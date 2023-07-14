@@ -28,7 +28,7 @@ namespace Katzebase.Service.Controllers
             {
                 return new KbActionResponseGuid
                 {
-                    Message = ex.Message,
+                    ExceptionText = ex.Message,
                     Success = false
                 };
             }
@@ -54,7 +54,7 @@ namespace Katzebase.Service.Controllers
             {
                 return new KbActionResponseGuid
                 {
-                    Message = ex.Message,
+                    ExceptionText = ex.Message,
                     Success = false
                 };
             }
@@ -80,7 +80,7 @@ namespace Katzebase.Service.Controllers
             {
                 return new KbActionResponseGuid
                 {
-                    Message = ex.Message,
+                    ExceptionText = ex.Message,
                     Success = false
                 };
             }
@@ -106,7 +106,7 @@ namespace Katzebase.Service.Controllers
             {
                 return new KbActionResponseBoolean
                 {
-                    Message = ex.Message,
+                    ExceptionText = ex.Message,
                     Success = false
                 };
             }
@@ -132,7 +132,7 @@ namespace Katzebase.Service.Controllers
             {
                 return new KbActionResponseIndexes
                 {
-                    Message = ex.Message,
+                    ExceptionText = ex.Message,
                     Success = false
                 };
             }

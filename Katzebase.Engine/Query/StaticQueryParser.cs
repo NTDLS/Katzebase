@@ -795,6 +795,11 @@ namespace Katzebase.Engine.Query
                         result.SortFields.Add(fieldToken, sortDirection);
                     }
                 }
+
+                if (query.IsEnd() == false)
+                {
+                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                }
             }
             #endregion
 

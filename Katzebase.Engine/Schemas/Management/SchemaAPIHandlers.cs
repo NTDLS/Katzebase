@@ -45,7 +45,7 @@ namespace Katzebase.Engine.Schemas.Management
 
                     foreach (var item in schemaCatalog.Collection)
                     {
-                        result.Add(item.ToClientPayload());
+                        result.Collection.Add(item.ToClientPayload());
                     }
 
                     txRef.Commit();
