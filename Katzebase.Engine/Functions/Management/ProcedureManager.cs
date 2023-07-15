@@ -353,33 +353,38 @@ namespace Katzebase.Engine.Functions.Management
 
                 int batchNumber = 0;
 
-                foreach (var batch in proc.PhysicalProcedure.Batches)
+                //We create a "user transaction" so that we have a way to track and destroy temporary objects created by the procedure.
+                using (var txRef = core.Transactions.Acquire(transaction.ProcessId, true))
                 {
-                    string batchText = batch;
-
-                    foreach (var param in proc.Parameters.Values)
+                    foreach (var batch in proc.PhysicalProcedure.Batches)
                     {
-                        batchText = batchText.Replace(param.Parameter.Name, param.Value, StringComparison.OrdinalIgnoreCase);
+                        string batchText = batch;
+
+                        foreach (var param in proc.Parameters.Values)
+                        {
+                            batchText = batchText.Replace(param.Parameter.Name, param.Value, StringComparison.OrdinalIgnoreCase);
+                        }
+
+                        var batchStartTime = DateTime.UtcNow;
+                        var batchResults = core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batchText);
+                        var batchDuration = (DateTime.UtcNow - batchStartTime).TotalMilliseconds;
+
+                        if (batchResults.Success != true)
+                        {
+                            throw new KbEngineException("Procedure batch was unsuccessful.");
+                        }
+
+                        messages.AddRange(batchResults.Messages);
+
+                        messages.Add(new KbQueryResultMessage($"Procedure batch {batchNumber + 1} of {proc.PhysicalProcedure.Batches.Count} completed in {batchDuration:n0}ms.  ({batchResults.RowCount} rows affected)", KbConstants.KbMessageType.Verbose));
+
+                        if (batchResults.Rows != null && batchResults.Rows.Count > 0)
+                        {
+                            resultWithRows = batchResults;
+                        }
+                        batchNumber++;
                     }
-
-                    var batchStartTime = DateTime.UtcNow;
-                    var batchResults = core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batchText);
-                    var batchDuration = (DateTime.UtcNow - batchStartTime).TotalMilliseconds;
-
-                    if (batchResults.Success != true)
-                    {
-                        throw new KbEngineException("Procedure batch was unsuccessful.");
-                    }
-
-                    messages.AddRange(batchResults.Messages);
-
-                    messages.Add(new KbQueryResultMessage($"Procedure batch {batchNumber + 1} of {proc.PhysicalProcedure.Batches.Count} completed in {batchDuration:n0}ms.  ({batchResults.RowCount} rows affected)", KbConstants.KbMessageType.Verbose));
-
-                    if (batchResults.Rows != null && batchResults.Rows.Count > 0)
-                    {
-                        resultWithRows = batchResults;
-                    }
-                    batchNumber++;
+                    txRef.Commit();
                 }
 
                 resultWithRows.Messages = messages;
