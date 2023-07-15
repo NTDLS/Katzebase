@@ -184,6 +184,13 @@ namespace Katzebase.Engine.Atomicity.Management
                         Collection.Add(transaction);
                     }
 
+                    if (isUserCreated)
+                    {
+                        //We might be several transactions deep when we see the first user created transaction.
+                        //That means we need to conver this transaction to a user transaction.
+                        transaction.IsUserCreated = true;
+                    }
+
                     transaction.AddReference();
 
                     ptAcquireTransaction?.StopAndAccumulate((DateTime.UtcNow - startTime).TotalMilliseconds);
