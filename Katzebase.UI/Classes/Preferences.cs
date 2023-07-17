@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Katzebase.PublicLibrary;
+using Newtonsoft.Json;
 
 namespace Katzebase.UI.Classes
 {
@@ -9,29 +10,36 @@ namespace Katzebase.UI.Classes
         {
             get
             {
-                if (_instance == null)
-                {
-                    if (Directory.Exists(DirectoryPath) == false)
-                    {
-                        Directory.CreateDirectory(DirectoryPath);
-                    }
-
-                    if (File.Exists(FilePath) == false)
-                    {
-                        var dummy = new Preferences();
-                        var dummyJson = JsonConvert.SerializeObject(dummy);
-                        File.WriteAllText(FilePath, dummyJson);
-                    }
-
-                    _instance = JsonConvert.DeserializeObject<Preferences>(File.ReadAllText(FilePath));
-                    if (_instance == null)
-                    {
-                        _instance = new Preferences();
-                    }
-                }
+                EnsureInstanceIsCreated();
+                KbUtility.EnsureNotNull(_instance);
                 return _instance;
             }
         }
+
+        public static void EnsureInstanceIsCreated()
+        {
+            if (_instance == null)
+            {
+                if (Directory.Exists(DirectoryPath) == false)
+                {
+                    Directory.CreateDirectory(DirectoryPath);
+                }
+
+                if (File.Exists(FilePath) == false)
+                {
+                    var dummy = new Preferences();
+                    var dummyJson = JsonConvert.SerializeObject(dummy);
+                    File.WriteAllText(FilePath, dummyJson);
+                }
+
+                _instance = JsonConvert.DeserializeObject<Preferences>(File.ReadAllText(FilePath));
+                if (_instance == null)
+                {
+                    _instance = new Preferences();
+                }
+            }
+        }
+
 
         public List<string> RecentProjects { get; set; } = new List<string>();
 
@@ -48,6 +56,8 @@ namespace Katzebase.UI.Classes
 
         static public void Save()
         {
+            EnsureInstanceIsCreated();
+
             File.WriteAllText(FilePath, JsonConvert.SerializeObject(_instance));
         }
 
@@ -55,7 +65,7 @@ namespace Katzebase.UI.Classes
         {
             get
             {
-                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "SQL Workload Generator");
+                return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Katzebase");
             }
         }
 
