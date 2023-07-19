@@ -1,13 +1,20 @@
-﻿using Katzebase.PublicLibrary.Client;
+﻿using Katzebase.Engine;
+using Katzebase.Engine.Documents;
+using Katzebase.Engine.Locking;
+using Katzebase.Engine.Schemas;
+using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Payloads;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Reflection;
+using System.Text;
 
 namespace Katzebase.TestHarness
 {
     class Program
     {
-
         private static void ExportSQLServerDatabases()
         {
             var databasesNames = new string[]{
@@ -25,11 +32,89 @@ namespace Katzebase.TestHarness
             }
         }
 
+
+        static int perf1()
+        {
+            var text = File.ReadAllText(@"D:\InventoryPage.json");
+
+            var physicalDocumentPage = JsonConvert.DeserializeObject<PhysicalDocumentPage>(text);
+            KbUtility.EnsureNotNull(physicalDocumentPage);
+
+            for (int documentId = 1001; documentId < 2000; documentId++)
+            {
+                var documentPage = physicalDocumentPage.Documents.First(o => o.Key == documentId).Value;
+
+                var jContent = JObject.Parse(documentPage.Content);
+
+                var fields = new List<string>();
+                foreach (var jToken in jContent)
+                {
+                    fields.Add(jToken.Key);
+                }
+
+                var builder = new StringBuilder();
+                foreach (var field in fields)
+                {
+                    jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                    builder.Append(jToken);
+                }
+            }
+
+            return 0;
+        }
+
+
+        static int perf2()
+        {
+            var text = File.ReadAllText(@"D:\InventoryPage.json");
+
+            var physicalDocumentPage = JsonConvert.DeserializeObject<PhysicalDocumentPage>(text);
+            KbUtility.EnsureNotNull(physicalDocumentPage);
+
+            for (int documentId = 1001; documentId < 2000; documentId++)
+            {
+                var documentPage = physicalDocumentPage.Documents.First(o => o.Key == documentId).Value;
+                var jContent = JsonConvert.DeserializeObject<Dictionary<string, string>>(documentPage.Content);
+                KbUtility.EnsureNotNull(jContent);
+
+                var fields = new List<string>();
+                foreach (var jToken in jContent)
+                {
+                    fields.Add(jToken.Key);
+                }
+
+                var builder = new StringBuilder();
+                foreach (var field in fields)
+                {
+                    jContent.TryGetValue(field, out string? jToken);
+                    builder.Append(jToken);
+                }
+            }
+
+            return 0;
+        }
+
         static void Main(string[] args)
         {
             Assembly assembly = Assembly.GetExecutingAssembly();
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
-            Console.WriteLine("{0} v{1}", fileVersionInfo.FileDescription, fileVersionInfo.ProductVersion);
+            Console.WriteLine($"{fileVersionInfo.FileDescription} v{fileVersionInfo.ProductVersion}");
+
+            var startTime1 = DateTime.Now;
+            for (int i = 0; i < 10; i++)
+            {
+                perf1();
+            }
+            var duration1 = (DateTime.Now - startTime1).TotalMilliseconds;
+            Console.WriteLine($"ONE: {duration1}ms");
+
+            var startTime2 = DateTime.Now;
+            for (int i = 0; i < 10; i++)
+            {
+                perf2();
+            }
+            var duration2 = (DateTime.Now - startTime2).TotalMilliseconds;
+            Console.WriteLine($"TWO: {duration2}ms");
 
             //(new Thread(() => { TestThread("TopNotchERP:Address"); })).Start();
             //(new Thread(() => { TestThread("AdventureWorks2012:dbo:AWBuildVersion"); })).Start();

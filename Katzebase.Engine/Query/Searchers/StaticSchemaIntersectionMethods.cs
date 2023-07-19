@@ -340,17 +340,17 @@ namespace Katzebase.Engine.Query.Searchers
 
             var toplevelPhysicalDocument = param.Core.Documents.AcquireDocument(param.Transaction, topLevelSchemaMap.Value.PhysicalSchema, topLevelDocumentPointer.DocumentId, LockOperation.Read);
 
-            var jObjectToBeCachedContent = JObject.Parse(toplevelPhysicalDocument.Content);
+            var documentContentToBeCached = toplevelPhysicalDocument.ToDictonary();
 
-            var threadScopedContentCache = new Dictionary<string, JObject>
+            var threadScopedContentCache = new Dictionary<string, Dictionary<string, string>>
             {
-                { $"{topLevelSchemaMap.Key}:{topLevelDocumentPointer.Key}", jObjectToBeCachedContent }
+                { $"{topLevelSchemaMap.Key.ToLower()}:{topLevelDocumentPointer.Key.ToLower()}", documentContentToBeCached }
             };
 
             //This cache is used to store the content of all documents required for a single row join.
-            var joinScopedContentCache = new Dictionary<string, JObject>
+            var joinScopedContentCache = new Dictionary<string, Dictionary<string, string>>
             {
-                { topLevelSchemaMap.Key, jObjectToBeCachedContent }
+                { topLevelSchemaMap.Key.ToLower(), documentContentToBeCached }
             };
 
             var resultingRow = new SchemaIntersectionRow();
@@ -380,7 +380,7 @@ namespace Katzebase.Engine.Query.Searchers
 
         private static void IntersectAllSchemasRecursive(LookupThreadParam param,
             int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
-            ref Dictionary<string, JObject> threadScopedContentCache, ref Dictionary<string, JObject> joinScopedContentCache)
+            ref Dictionary<string, Dictionary<string, string>> threadScopedContentCache, ref Dictionary<string, Dictionary<string, string>> joinScopedContentCache)
         {
             var currentSchemaKVP = param.SchemaMap.Skip(skipSchemaCount).First();
             var currentSchemaMap = currentSchemaKVP.Value;
@@ -411,13 +411,13 @@ namespace Katzebase.Engine.Query.Searchers
                     //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
                     foreach (var condition in subset.Conditions)
                     {
-                        var jIndexContent = joinScopedContentCache[condition.Right?.Prefix ?? ""];
+                        var documentContent = joinScopedContentCache[condition.Right?.Prefix ?? ""];
 
-                        if (!jIndexContent.TryGetValue(condition.Right?.Value ?? "", StringComparison.CurrentCultureIgnoreCase, out JToken? conditionToken))
+                        if (!documentContent.TryGetValue(condition.Right?.Value ?? "", out string? documentValue))
                         {
                             throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
                         }
-                        keyValuePairs.Add(condition.Left?.Value ?? "", conditionToken?.ToString() ?? "");
+                        keyValuePairs.Add(condition.Left?.Value ?? "", documentValue?.ToString() ?? "");
                     }
 
                     //Match on values from the document.
@@ -460,14 +460,14 @@ namespace Katzebase.Engine.Query.Searchers
                 string threadScopedDocuemntCacheKey = $"{currentSchemaKVP.Key}:{documentPointer.Key}";
 
                 //Get the document content from the thread cache (or cache it).
-                if (threadScopedContentCache.TryGetValue(threadScopedDocuemntCacheKey, out JObject? jContentNextLevel) == false)
+                if (threadScopedContentCache.TryGetValue(threadScopedDocuemntCacheKey, out Dictionary<string, string>? documentContentNextLevel) == false)
                 {
                     var physicalDocumentNextLevel = param.Core.Documents.AcquireDocument(param.Transaction, currentSchemaMap.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
-                    jContentNextLevel = JObject.Parse(physicalDocumentNextLevel.Content);
-                    threadScopedContentCache.Add(threadScopedDocuemntCacheKey, jContentNextLevel);
+                    documentContentNextLevel = physicalDocumentNextLevel.ToDictonary();
+                    threadScopedContentCache.Add(threadScopedDocuemntCacheKey, documentContentNextLevel);
                 }
 
-                joinScopedContentCache.Add(currentSchemaKVP.Key, jContentNextLevel);
+                joinScopedContentCache.Add(currentSchemaKVP.Key.ToLower(), documentContentNextLevel);
 
                 SetSchemaIntersectionExpressionParameters(ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
 
@@ -513,23 +513,23 @@ namespace Katzebase.Engine.Query.Searchers
         /// <param name="expression"></param>
         /// <param name="conditions"></param>
         /// <param name="jContent"></param>
-        private static void SetSchemaIntersectionExpressionParameters(ref NCalc.Expression expression, Conditions conditions, Dictionary<string, JObject> jJoinScopedContentCache)
+        private static void SetSchemaIntersectionExpressionParameters(ref NCalc.Expression expression, Conditions conditions, Dictionary<string, Dictionary<string, string>> joinScopedContentCache)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditions.Root.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetSchemaIntersectionExpressionParametersRecursive(ref expression, conditions, subExpression, jJoinScopedContentCache);
+                SetSchemaIntersectionExpressionParametersRecursive(ref expression, conditions, subExpression, joinScopedContentCache);
             }
         }
 
-        private static void SetSchemaIntersectionExpressionParametersRecursive(ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, JObject> jJoinScopedContentCache)
+        private static void SetSchemaIntersectionExpressionParametersRecursive(ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, Dictionary<string, string>> joinScopedContentCache)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetSchemaIntersectionExpressionParametersRecursive(ref expression, conditions, subExpression, jJoinScopedContentCache);
+                SetSchemaIntersectionExpressionParametersRecursive(ref expression, conditions, subExpression, joinScopedContentCache);
             }
 
             foreach (var condition in conditionSubset.Conditions)
@@ -537,23 +537,21 @@ namespace Katzebase.Engine.Query.Searchers
                 KbUtility.EnsureNotNull(condition.Left.Value);
                 KbUtility.EnsureNotNull(condition.Right.Value);
 
-                var jContent = jJoinScopedContentCache[condition.Left.Prefix];
-
                 //Get the value of the condition:
-                if (!jContent.TryGetValue(condition.Left.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jLeftToken))
+                var documentContent = joinScopedContentCache[condition.Left.Prefix];
+                if (!documentContent.TryGetValue(condition.Left.Value, out string? leftDocumentValue))
                 {
                     throw new KbEngineException($"Field not found in document [{condition.Left.Value}].");
                 }
 
-                jContent = jJoinScopedContentCache[condition.Right.Prefix];
-
                 //Get the value of the condition:
-                if (!jContent.TryGetValue(condition.Right.Value, StringComparison.CurrentCultureIgnoreCase, out JToken? jRightToken))
+                documentContent = joinScopedContentCache[condition.Right.Prefix];
+                if (!documentContent.TryGetValue(condition.Right.Value, out string? reftDocumentValue))
                 {
                     throw new KbEngineException($"Field not found in document [{condition.Right.Value}].");
                 }
 
-                var singleConditionResult = Condition.IsMatch(jLeftToken.ToString().ToLower(), condition.LogicalQualifier, jRightToken.ToString());
+                var singleConditionResult = Condition.IsMatch(leftDocumentValue.ToLower(), condition.LogicalQualifier, reftDocumentValue);
 
                 expression.Parameters[condition.ConditionKey] = singleConditionResult;
             }
@@ -564,16 +562,16 @@ namespace Katzebase.Engine.Query.Searchers
         /// </summary>
         /// 
         private static void FillInSchemaResultDocumentValues(LookupThreadParam param, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, Dictionary<string, JObject> threadScopedContentCache)
+            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, Dictionary<string, Dictionary<string, string>> threadScopedContentCache)
         {
-            var jObject = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
+            var documentContent = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
 
             if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
                 var fields = new List<PrefixedField>();
-                foreach (var jField in jObject)
+                foreach (var documentValue in documentContent)
                 {
-                    fields.Add(new PrefixedField(schemaKey, jField.Key, jField.Key));
+                    fields.Add(new PrefixedField(schemaKey, documentValue.Key, documentValue.Key));
                 }
 
                 lock (param.Query.SelectFields)
@@ -600,45 +598,45 @@ namespace Katzebase.Engine.Query.Searchers
                 //Grab all of the selected fields from the document.
                 foreach (var selectField in param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
                 {
-                    if (jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
+                    if (documentContent.TryGetValue(selectField.Value.Field, out string? documentValue) == false)
                     {
                         //Field was not found, log warning which can be returned to the user.
                     }
-                    schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString());
+                    schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, documentValue);
                 }
             }
 
             foreach (var selectField in param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
             {
-                if (jObject.TryGetValue(selectField.Value.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
+                if (documentContent.TryGetValue(selectField.Value.Field, out string? documentValue) == false)
                 {
                     //Field was not found, log warning which can be returned to the user.
                 }
-                schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, token?.ToString());
+                schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, documentValue);
             }
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
             foreach (var methodField in param.Query.SelectFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())
             {
-                if (jObject.TryGetValue(methodField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
+                if (documentContent.TryGetValue(methodField.Field, out string? documentValue) == false)
                 {
                     //Field was not found, log warning which can be returned to the user.
                     //throw new KbEngineException($"Method field not found: {methodField.Key}.");
                 }
-                schemaResultRow.MethodFields.Add(methodField.Key, token?.ToString());
+                schemaResultRow.MethodFields.Add(methodField.Key, documentValue);
             }
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
             foreach (var methodField in param.Query.GroupFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())
             {
-                if (jObject.TryGetValue(methodField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
+                if (documentContent.TryGetValue(methodField.Field, out string? documentValue) == false)
                 {
                     //Field was not found, log warning which can be returned to the user.
                     //throw new KbEngineException($"Method field not found: {methodField.Key}.");
                 }
                 if (schemaResultRow.MethodFields.ContainsKey(methodField.Key) == false)
                 {
-                    schemaResultRow.MethodFields.Add(methodField.Key, token?.ToString());
+                    schemaResultRow.MethodFields.Add(methodField.Key, documentValue);
                 }
             }
 
@@ -648,14 +646,14 @@ namespace Katzebase.Engine.Query.Searchers
             //TODO: We could grab some of these from the field selector above to cut down on redundant json scanning.
             foreach (var conditionField in param.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey).Distinct())
             {
-                if (jObject.TryGetValue(conditionField.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? token) == false)
+                if (documentContent.TryGetValue(conditionField.Field, out string? documentValue) == false)
                 {
                     //Field was not found, log warning which can be returned to the user.
                     //throw new KbEngineException($"Condition field not found: {conditionField.Key}.");
                 }
                 if (schemaResultRow.ConditionFields.ContainsKey(conditionField.Key) == false)
                 {
-                    schemaResultRow.ConditionFields.Add(conditionField.Key, token?.ToString());
+                    schemaResultRow.ConditionFields.Add(conditionField.Key, documentValue);
                 }
             }
         }

@@ -8,6 +8,7 @@ using Katzebase.Engine.Threading;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static Katzebase.Engine.Library.EngineConstants;
@@ -418,10 +419,10 @@ namespace Katzebase.Engine.Indexes.Management
                 {
                     KbUtility.EnsureNotNull(indexAttribute.Field);
 
-                    var jsonContent = JObject.Parse(document.Content);
-                    if (jsonContent.TryGetValue(indexAttribute.Field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken))
+                    var documentContent = document.ToDictonary();
+                    if (documentContent.TryGetValue(indexAttribute.Field, out string? documentValue))
                     {
-                        result.Add(jToken.ToString().ToLower());
+                        result.Add(documentValue.ToString().ToLower());
                     }
                 }
 

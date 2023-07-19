@@ -3,6 +3,7 @@ using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query.Searchers.Mapping;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json.Linq;
+using System.Linq;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Query.Searchers
@@ -32,13 +33,13 @@ namespace Katzebase.Engine.Query.Searchers
                     var documentId = pageMap.DocumentIDs.ToArray()[documentIndex];
                     var physicalDocument = core.Documents.AcquireDocument(transaction, physicalSchema, documentId, LockOperation.Read);
 
-                    var jContent = JObject.Parse(physicalDocument.Content);
+                    var documentContentNextLevel = physicalDocument.ToDictonary();
 
                     if (i == 0)
                     {
-                        foreach (var jToken in jContent)
+                        foreach (var documentValue in documentContentNextLevel)
                         {
-                            result.Fields.Add(new KbQueryField(jToken.Key));
+                            result.Fields.Add(new KbQueryField(documentValue.Key));
                         }
                     }
 
@@ -47,7 +48,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                     foreach (var field in result.Fields.Skip(1))
                     {
-                        jContent.TryGetValue(field.Name, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                        documentContentNextLevel.TryGetValue(field.Name, out string? jToken);
                         resultRow.AddValue(jToken?.ToString() ?? string.Empty);
                     }
 
@@ -74,7 +75,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                 var persistDocument = core.Documents.AcquireDocument(transaction, physicalSchema, pageDocuent.DocumentId, LockOperation.Read);
 
-                var jContent = JObject.Parse(persistDocument.Content);
+                var jContent = persistDocument.ToDictonary();
 
                 if (i == 0)
                 {
@@ -87,7 +88,7 @@ namespace Katzebase.Engine.Query.Searchers
                 var resultRow = new KbQueryRow();
                 foreach (var field in result.Fields)
                 {
-                    jContent.TryGetValue(field.Name, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
+                    jContent.TryGetValue(field.Name, out string? jToken);
                     resultRow.AddValue(jToken?.ToString() ?? string.Empty);
                 }
 
