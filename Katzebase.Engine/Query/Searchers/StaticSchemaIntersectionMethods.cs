@@ -11,7 +11,6 @@ using Katzebase.Engine.Query.Sorting;
 using Katzebase.Engine.Threading;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
-using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.Documents.DocumentPointer;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;

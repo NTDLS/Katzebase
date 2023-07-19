@@ -8,8 +8,6 @@ using Katzebase.Engine.Threading;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using static Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
