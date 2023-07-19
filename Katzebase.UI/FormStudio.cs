@@ -957,10 +957,44 @@ namespace Katzebase.UI
             }
         }
 
-
         private void FormStudio_DragEnter(object sender, DragEventArgs e)
         {
             e.Effect = DragDropEffects.Copy;
+        }
+
+        private string GetDraggedItemPath(ServerTreeNode node)
+        {
+            if (node.NodeType == Constants.ServerNodeType.Schema)
+            {
+                string path = string.Empty;
+                while (node != null && node.NodeType != Constants.ServerNodeType.Server)
+                {
+                    path = $"{node.Text}:{path}";
+
+                    node = (ServerTreeNode)node.Parent;
+                }
+                return path.Trim(':');
+            }
+            else if (node.NodeType == Constants.ServerNodeType.Field
+                || node.NodeType == Constants.ServerNodeType.Index)
+            {
+                return node.Text;
+            }
+
+            return string.Empty;
+        }
+
+        private void treeViewProject_ItemDrag(object sender, ItemDragEventArgs e)
+        {
+            if (e.Item is TreeNode node)
+            {
+                string text = GetDraggedItemPath((ServerTreeNode)node);
+
+                if (string.IsNullOrEmpty(text) == false)
+                {
+                    treeViewProject.DoDragDrop(text, DragDropEffects.Copy);
+                }
+            }
         }
     }
 }

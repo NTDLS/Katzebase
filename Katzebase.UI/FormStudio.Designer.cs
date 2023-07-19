@@ -46,6 +46,7 @@
             toolStripSeparator1 = new ToolStripSeparator();
             toolStripButtonExplainPlan = new ToolStripButton();
             toolStripButtonExecuteScript = new ToolStripButton();
+            toolStripButtonStop = new ToolStripButton();
             toolStripSeparator2 = new ToolStripSeparator();
             toolStripButtonFind = new ToolStripButton();
             toolStripButtonReplace = new ToolStripButton();
@@ -82,7 +83,6 @@
             closeAllToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
-            toolStripButtonStop = new ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)splitContainerProject).BeginInit();
             splitContainerProject.Panel1.SuspendLayout();
             splitContainerProject.Panel2.SuspendLayout();
@@ -121,6 +121,7 @@
             treeViewProject.Name = "treeViewProject";
             treeViewProject.Size = new Size(256, 292);
             treeViewProject.TabIndex = 0;
+            treeViewProject.ItemDrag += treeViewProject_ItemDrag;
             treeViewProject.DragDrop += FormStudio_DragDrop;
             // 
             // splitContainerMacros
@@ -260,6 +261,16 @@
             toolStripButtonExecuteScript.Size = new Size(23, 22);
             toolStripButtonExecuteScript.Text = "Execute Script";
             toolStripButtonExecuteScript.Click += toolStripButtonExecuteScript_Click;
+            // 
+            // toolStripButtonStop
+            // 
+            toolStripButtonStop.DisplayStyle = ToolStripItemDisplayStyle.Image;
+            toolStripButtonStop.Image = Properties.Resources.ToolStop;
+            toolStripButtonStop.ImageTransparentColor = Color.Magenta;
+            toolStripButtonStop.Name = "toolStripButtonStop";
+            toolStripButtonStop.Size = new Size(23, 22);
+            toolStripButtonStop.Text = "Stop";
+            toolStripButtonStop.Click += toolStripButtonStop_Click;
             // 
             // toolStripSeparator2
             // 
@@ -539,16 +550,6 @@
             aboutToolStripMenuItem.Size = new Size(107, 22);
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
-            // 
-            // toolStripButtonStop
-            // 
-            toolStripButtonStop.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonStop.Image = Properties.Resources.ToolStop;
-            toolStripButtonStop.ImageTransparentColor = Color.Magenta;
-            toolStripButtonStop.Name = "toolStripButtonStop";
-            toolStripButtonStop.Size = new Size(23, 22);
-            toolStripButtonStop.Text = "Stop";
-            toolStripButtonStop.Click += toolStripButtonStop_Click;
             // 
             // FormStudio
             // 
