@@ -82,7 +82,10 @@
 		</Keywords>
 		
 		<Keywords color="KbFunction">
-			<Word>Guid</Word>
+			<Word>Min</Word>
+			<Word>Max</Word>
+			<Word>Avg</Word>
+			<Word>Count</Word>
 			<Word>Equals</Word>
 			<Word>DocumentUID</Word>
 			<Word>DocumentPage</Word>
