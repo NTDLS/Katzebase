@@ -557,12 +557,28 @@ namespace Katzebase.Engine.Query.Searchers
             }
         }
 
+        private static void FillInSchemaResultDocumentValues(LookupThreadParam param, string schemaKey,
+            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, Dictionary<string, Dictionary<string, string>> threadScopedContentCache)
+        {
+            if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
+            {
+                lock (param.Query.SelectFields)
+                {
+                    FillInSchemaResultDocumentValuesAtomic(param, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
+                }
+            }
+            else
+            {
+                FillInSchemaResultDocumentValuesAtomic(param, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
+            }
+        }
+
         /// <summary>
         /// Gets the values of all selected fields from document.
         /// </summary>
         /// 
-        private static void FillInSchemaResultDocumentValues(LookupThreadParam param, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, Dictionary<string, Dictionary<string, string>> threadScopedContentCache)
+        private static void FillInSchemaResultDocumentValuesAtomic(LookupThreadParam param, string schemaKey,
+        DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, Dictionary<string, Dictionary<string, string>> threadScopedContentCache)
         {
             var documentContent = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
 
@@ -574,18 +590,15 @@ namespace Katzebase.Engine.Query.Searchers
                     fields.Add(new PrefixedField(schemaKey, documentValue.Key, documentValue.Key));
                 }
 
-                lock (param.Query.SelectFields)
+                foreach (var field in fields)
                 {
-                    foreach (var field in fields)
+                    if (param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
                     {
-                        if (param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
+                        var newField = new FunctionDocumentFieldParameter(field.Key)
                         {
-                            var newField = new FunctionDocumentFieldParameter(field.Key)
-                            {
-                                Alias = field.Alias
-                            };
-                            param.Query.SelectFields.Add(newField);
-                        }
+                            Alias = field.Alias
+                        };
+                        param.Query.SelectFields.Add(newField);
                     }
                 }
             }

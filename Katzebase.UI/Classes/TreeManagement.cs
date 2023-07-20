@@ -65,7 +65,7 @@ namespace Katzebase.UI.Classes
 
         public static void PopulateSchemaNodeOnExpand(TreeView treeView, ServerTreeNode node)
         {
-            //We only populate of the node does not contain schemas.
+            //We only populate nodes that do not contain schemas.
             if (node.Nodes.OfType<ServerTreeNode>().Where(o => o.NodeType == ServerNodeType.Schema).Any())
             {
                 return;

@@ -63,6 +63,7 @@ namespace Katzebase.Engine.Schemas.Management
                     var physicalSchemaCatalog = new PhysicalSchemaCatalog();
                     physicalSchemaCatalog.Collection.Add(new PhysicalSchema()
                     {
+                        Name = "Temporary",
                         VirtualPath = "Temporary",
                         IsTemporary = false,
                         Id = Guid.NewGuid(),
@@ -78,7 +79,10 @@ namespace Katzebase.Engine.Schemas.Management
 
                 try
                 {
-                    Directory.Delete(temporarySchemaPath, true);
+                    if (Directory.Exists(temporarySchemaPath))
+                    {
+                        Directory.Delete(temporarySchemaPath, true);
+                    }
                 }
                 catch { }
 

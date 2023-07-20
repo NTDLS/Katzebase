@@ -151,7 +151,7 @@ namespace Katzebase.UI
                     if (string.IsNullOrEmpty(_firstLoadFilename))
                     {
                         var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName());
-                        tabFilePage.Editor.Text = "set TraceWaitTimes false;\r\n\r\n";
+                        tabFilePage.Editor.Text = "set TraceWaitTimes false;\r\nGO\r\n";
                         tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                         tabFilePage.IsSaved = true;
                     }
@@ -221,24 +221,30 @@ namespace Katzebase.UI
 
             popupMenu.Tag = e.Node as ServerTreeNode;
 
-            if (node.NodeType == Classes.Constants.ServerNodeType.Server)
+            if (node.NodeType == Constants.ServerNodeType.Server)
             {
                 popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
-            else if (node.NodeType == Classes.Constants.ServerNodeType.Schema)
+            else if (node.NodeType == Constants.ServerNodeType.Schema)
             {
                 popupMenu.Items.Add("Create Index", FormUtility.TransparentImage(Resources.Asset));
                 popupMenu.Items.Add("Select top n...", FormUtility.TransparentImage(Resources.Workload));
                 popupMenu.Items.Add("-");
                 popupMenu.Items.Add("Delete", FormUtility.TransparentImage(Resources.Asset));
+                popupMenu.Items.Add("-");
+                popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
-            else if (node.NodeType == Classes.Constants.ServerNodeType.IndexFolder)
+            else if (node.NodeType == Constants.ServerNodeType.IndexFolder)
             {
                 popupMenu.Items.Add("Create Index", FormUtility.TransparentImage(Resources.Asset));
+                popupMenu.Items.Add("-");
+                popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
-            else if (node.NodeType == Classes.Constants.ServerNodeType.Index)
+            else if (node.NodeType == Constants.ServerNodeType.Index)
             {
                 popupMenu.Items.Add("Delete Index", FormUtility.TransparentImage(Resources.Asset));
+                popupMenu.Items.Add("-");
+                popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
 
             popupMenu.Show(treeViewProject, e.Location);
@@ -260,7 +266,20 @@ namespace Katzebase.UI
 
                 if (e.ClickedItem?.Text == "Refresh")
                 {
-                    //TODO: Refresh schema?
+                    if (node.NodeType == Constants.ServerNodeType.Server)
+                    {
+                        node.Nodes.Clear();
+                        TreeManagement.PopulateServer(treeViewProject, node.ServerAddress);
+                        foreach (TreeNode expandNode in treeViewProject.Nodes)
+                        {
+                            expandNode.Expand();
+                        }
+                    }
+                    else if (node.NodeType == Constants.ServerNodeType.Schema)
+                    {
+                        node.Nodes.Clear();
+                        TreeManagement.PopulateSchemaNodeOnExpand(treeViewProject, node);
+                    }
                 }
                 else if (e.ClickedItem?.Text == "Delete")
                 {
@@ -276,7 +295,7 @@ namespace Katzebase.UI
                 {
                     var rootNode = TreeManagement.GetRootNode(node);
                     var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
-                    tabFilePage.Editor.Text = "set TraceWaitTimes false;\r\n\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\t" + TreeManagement.CalculateFullSchema(node) + "\r\n";
+                    tabFilePage.Editor.Text = "set TraceWaitTimes false;\r\nGO\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\t" + TreeManagement.CalculateFullSchema(node) + "\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                 }
             }
@@ -902,7 +921,7 @@ namespace Katzebase.UI
             try
             {
                 var tabFilePage = CreateNewTab();
-                tabFilePage.Editor.Text = "set TraceWaitTimes false;\r\n\r\n";
+                tabFilePage.Editor.Text = "set TraceWaitTimes false;\r\nGO\r\n";
                 tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
             }
             catch (Exception ex)
