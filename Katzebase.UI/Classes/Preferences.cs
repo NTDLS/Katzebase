@@ -40,7 +40,6 @@ namespace Katzebase.UI.Classes
             }
         }
 
-
         public List<string> RecentProjects { get; set; } = new List<string>();
 
         public void AddRecentProject(string projectFile)
@@ -77,6 +76,9 @@ namespace Katzebase.UI.Classes
             }
         }
 
-        public string LastProjectDirectory { get; set; } = string.Empty;
+        public int FormStudioWidth { get; set; } = 1200;
+        public int FormStudioHeight { get; set; } = 800;
+        public int ResultsSplitterDistance { get; set; } = 400;
+        public int ObjectExplorerSplitterDistance { get; set; } = 350;
     }
 }

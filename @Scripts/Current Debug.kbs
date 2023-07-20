@@ -1,3 +1,6 @@
+set TraceWaitTimes true
+GO
+
 select
 	IIF(Equals(tw.Text, 'Luna'), 'YES!', tw.Text) as 'Is Luna 2',
 

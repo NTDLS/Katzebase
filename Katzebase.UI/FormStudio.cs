@@ -33,10 +33,14 @@ namespace Katzebase.UI
         private void FormStudio_Load(object sender, EventArgs e)
         {
             treeViewProject.Dock = DockStyle.Fill;
-            splitContainerProject.Dock = DockStyle.Fill;
+            splitContainerObjectExplorer.Dock = DockStyle.Fill;
             splitContainerMacros.Dock = DockStyle.Fill;
             tabControlBody.Dock = DockStyle.Fill;
             treeViewMacros.Dock = DockStyle.Fill;
+
+            this.Width = Preferences.Instance.FormStudioWidth;
+            this.Height = Preferences.Instance.FormStudioHeight;
+            this.Height = Preferences.Instance.FormStudioHeight;
 
             _treeImages.ColorDepth = ColorDepth.Depth32Bit;
             _treeImages.Images.Add("Folder", Resources.TreeFolder);
@@ -48,7 +52,6 @@ namespace Katzebase.UI
             _treeImages.Images.Add("IndexFolder", Resources.TreeIndexFolder);
             _treeImages.Images.Add("TreeNotLoaded", Resources.TreeNotLoaded);
             treeViewProject.ImageList = _treeImages;
-
 
             treeViewProject.BeforeExpand += TreeViewProject_BeforeExpand;
             treeViewProject.NodeMouseClick += TreeViewProject_NodeMouseClick;
@@ -63,6 +66,8 @@ namespace Katzebase.UI
             tabControlBody.MouseUp += TabControlBody_MouseUp;
 
             splitContainerMacros.Panel2Collapsed = true;
+
+            splitContainerObjectExplorer.SplitterDistance = Preferences.Instance.ObjectExplorerSplitterDistance;
 
             _toolbarSyncTimer.Tick += _toolbarSyncTimer_Tick;
             _toolbarSyncTimer.Interval = 250;
@@ -799,7 +804,7 @@ namespace Katzebase.UI
 
         private void toolStripButtonProject_Click(object sender, EventArgs e)
         {
-            splitContainerProject.Panel1Collapsed = !splitContainerProject.Panel1Collapsed;
+            splitContainerObjectExplorer.Panel1Collapsed = !splitContainerObjectExplorer.Panel1Collapsed;
         }
 
         public void ShowReplace()
@@ -995,6 +1000,17 @@ namespace Katzebase.UI
                     treeViewProject.DoDragDrop(text, DragDropEffects.Copy);
                 }
             }
+        }
+
+        private void FormStudio_ResizeEnd(object sender, EventArgs e)
+        {
+            Preferences.Instance.FormStudioWidth = this.Width;
+            Preferences.Instance.FormStudioHeight = this.Height;
+        }
+
+        private void splitContainerProject_SplitterMoved(object sender, SplitterEventArgs e)
+        {
+            Preferences.Instance.ObjectExplorerSplitterDistance = splitContainerObjectExplorer.SplitterDistance;
         }
     }
 }

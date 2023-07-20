@@ -4,6 +4,7 @@ using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Katzebase.UI.Classes;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Katzebase.UI.Controls
@@ -67,7 +68,12 @@ namespace Katzebase.UI.Controls
 
         public TabPage OutputTab { get; private set; } = new("Output");
         public TabPage ResultsTab { get; private set; } = new("Results");
-        public RichTextBox OutputTextbox { get; private set; } = new() { Dock = DockStyle.Fill };
+        public RichTextBox OutputTextbox { get; private set; } = new()
+        {
+            Dock = DockStyle.Fill,
+            Font = new Font("Courier New", 10, FontStyle.Regular),
+            WordWrap = false,
+        };
         public DataGridView OutputGrid { get; private set; } = new()
         {
             Dock = DockStyle.Fill,
@@ -130,11 +136,23 @@ namespace Katzebase.UI.Controls
             tabFilePage.BottomTabControl.TabPages.Add(tabFilePage.ResultsTab); //Add results tab to bottom.
             tabFilePage.ResultsTab.Controls.Add(tabFilePage.OutputGrid);
 
+            tabFilePage.TabSplitContainer.SplitterMoved += TabSplitContainer_SplitterMoved;
+
+            tabFilePage.TabSplitContainer.SplitterDistance = Preferences.Instance.ResultsSplitterDistance;
+
             tabFilePage.Client?.Server.Ping();
 
             tabFilePage.Editor.Focus();
 
             return tabFilePage;
+        }
+
+        private static void TabSplitContainer_SplitterMoved(object? sender, SplitterEventArgs e)
+        {
+            if (sender is SplitContainer)
+            {
+                Preferences.Instance.ResultsSplitterDistance = ((SplitContainer)(sender)).SplitterDistance;
+            }
         }
 
         public void OpenFile(string filePath)
@@ -339,10 +357,10 @@ namespace Katzebase.UI.Controls
 
                         foreach (var wt in result.Metrics.Where(o => o.Value >= 0.5).OrderBy(o => o.Value))
                         {
-                            stringBuilder.Append($"\t{wt.Name} -> Total: {wt.Value:n0}");
+                            stringBuilder.Append($"  {wt.Name} -> Total: {wt.Value:n0}");
                             if (wt.MetricType == KbConstants.KbMetricType.Cumulative)
                             {
-                                stringBuilder.Append($"    Count: {wt.Count:n0}    Average: {wt.Value / wt.Count:n2}");
+                                stringBuilder.Append($", Count: {wt.Count:n0}, Average: {wt.Value / wt.Count:n2}");
                             }
                             stringBuilder.AppendLine();
                         }

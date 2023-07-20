@@ -16,16 +16,16 @@ namespace Katzebase.Engine.Query.Searchers
             var result = new KbQueryResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            var documentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Write);
+            var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Write);
 
-            if (documentPageCatalog.PageMappings.Count > 0)
+            if (physicalDocumentPageCatalog.PageMappings.Count > 0)
             {
                 var random = new Random(Environment.TickCount);
 
                 for (int i = 0; i < rowLimit; i++)
                 {
-                    int pageNumber = random.Next(0, documentPageCatalog.PageMappings.Count - 1);
-                    var pageMap = documentPageCatalog.PageMappings[pageNumber];
+                    int pageNumber = random.Next(0, physicalDocumentPageCatalog.PageMappings.Count - 1);
+                    var pageMap = physicalDocumentPageCatalog.PageMappings[pageNumber];
 
                     int documentIndex = random.Next(0, pageMap.DocumentIDs.Count - 1);
                     var documentId = pageMap.DocumentIDs.ToArray()[documentIndex];

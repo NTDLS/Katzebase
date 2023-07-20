@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormStudio));
-            splitContainerProject = new SplitContainer();
+            splitContainerObjectExplorer = new SplitContainer();
             treeViewProject = new TreeView();
             splitContainerMacros = new SplitContainer();
             tabControlBody = new TabControl();
@@ -83,10 +83,10 @@
             closeAllToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
-            ((System.ComponentModel.ISupportInitialize)splitContainerProject).BeginInit();
-            splitContainerProject.Panel1.SuspendLayout();
-            splitContainerProject.Panel2.SuspendLayout();
-            splitContainerProject.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainerObjectExplorer).BeginInit();
+            splitContainerObjectExplorer.Panel1.SuspendLayout();
+            splitContainerObjectExplorer.Panel2.SuspendLayout();
+            splitContainerObjectExplorer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainerMacros).BeginInit();
             splitContainerMacros.Panel1.SuspendLayout();
             splitContainerMacros.Panel2.SuspendLayout();
@@ -98,22 +98,23 @@
             // 
             // splitContainerProject
             // 
-            splitContainerProject.Dock = DockStyle.Fill;
-            splitContainerProject.FixedPanel = FixedPanel.Panel1;
-            splitContainerProject.Location = new Point(0, 49);
-            splitContainerProject.Name = "splitContainerProject";
+            splitContainerObjectExplorer.Dock = DockStyle.Fill;
+            splitContainerObjectExplorer.FixedPanel = FixedPanel.Panel1;
+            splitContainerObjectExplorer.Location = new Point(0, 49);
+            splitContainerObjectExplorer.Name = "splitContainerProject";
             // 
             // splitContainerProject.Panel1
             // 
-            splitContainerProject.Panel1.Controls.Add(treeViewProject);
+            splitContainerObjectExplorer.Panel1.Controls.Add(treeViewProject);
             // 
             // splitContainerProject.Panel2
             // 
-            splitContainerProject.Panel2.Controls.Add(splitContainerMacros);
-            splitContainerProject.Panel2.Controls.Add(statusStripDocument);
-            splitContainerProject.Size = new Size(1032, 597);
-            splitContainerProject.SplitterDistance = 320;
-            splitContainerProject.TabIndex = 0;
+            splitContainerObjectExplorer.Panel2.Controls.Add(splitContainerMacros);
+            splitContainerObjectExplorer.Panel2.Controls.Add(statusStripDocument);
+            splitContainerObjectExplorer.Size = new Size(1184, 712);
+            splitContainerObjectExplorer.SplitterDistance = 320;
+            splitContainerObjectExplorer.TabIndex = 0;
+            splitContainerObjectExplorer.SplitterMoved += splitContainerProject_SplitterMoved;
             // 
             // treeViewProject
             // 
@@ -160,9 +161,9 @@
             // 
             statusStripDocument.GripStyle = ToolStripGripStyle.Visible;
             statusStripDocument.Items.AddRange(new ToolStripItem[] { toolStripStatusLabelServerName, toolStripStatusLabelProcessId });
-            statusStripDocument.Location = new Point(0, 575);
+            statusStripDocument.Location = new Point(0, 690);
             statusStripDocument.Name = "statusStripDocument";
-            statusStripDocument.Size = new Size(708, 22);
+            statusStripDocument.Size = new Size(860, 22);
             statusStripDocument.TabIndex = 2;
             statusStripDocument.Text = "statusStripDocument";
             // 
@@ -183,7 +184,7 @@
             toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonNewFile, toolStripButtonOpen, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripButtonStop, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonUndo, toolStripButtonRedo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
             toolStrip1.Location = new Point(0, 24);
             toolStrip1.Name = "toolStrip1";
-            toolStrip1.Size = new Size(1032, 25);
+            toolStrip1.Size = new Size(1184, 25);
             toolStrip1.TabIndex = 1;
             toolStrip1.Text = "toolStrip1";
             // 
@@ -439,7 +440,7 @@
             menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, documentToolStripMenuItem, helpToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(1032, 24);
+            menuStrip1.Size = new Size(1184, 24);
             menuStrip1.TabIndex = 2;
             menuStrip1.Text = "menuStrip1";
             // 
@@ -556,8 +557,8 @@
             AllowDrop = true;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1032, 646);
-            Controls.Add(splitContainerProject);
+            ClientSize = new Size(1184, 761);
+            Controls.Add(splitContainerObjectExplorer);
             Controls.Add(toolStrip1);
             Controls.Add(menuStrip1);
             Icon = (Icon)resources.GetObject("$this.Icon");
@@ -565,13 +566,14 @@
             Name = "FormStudio";
             Text = "Katzebase";
             Load += FormStudio_Load;
+            ResizeEnd += FormStudio_ResizeEnd;
             DragDrop += FormStudio_DragDrop;
             DragEnter += FormStudio_DragEnter;
-            splitContainerProject.Panel1.ResumeLayout(false);
-            splitContainerProject.Panel2.ResumeLayout(false);
-            splitContainerProject.Panel2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)splitContainerProject).EndInit();
-            splitContainerProject.ResumeLayout(false);
+            splitContainerObjectExplorer.Panel1.ResumeLayout(false);
+            splitContainerObjectExplorer.Panel2.ResumeLayout(false);
+            splitContainerObjectExplorer.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainerObjectExplorer).EndInit();
+            splitContainerObjectExplorer.ResumeLayout(false);
             splitContainerMacros.Panel1.ResumeLayout(false);
             splitContainerMacros.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainerMacros).EndInit();
@@ -588,7 +590,7 @@
 
         #endregion
 
-        private SplitContainer splitContainerProject;
+        private SplitContainer splitContainerObjectExplorer;
         private TabControl tabControlBody;
         private ToolStrip toolStrip1;
         private TreeView treeViewProject;
