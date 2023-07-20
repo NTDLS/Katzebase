@@ -95,7 +95,7 @@ namespace Katzebase.Service
 
                 if (app.Environment.IsDevelopment())
                 {
-                    System.Diagnostics.Process.Start("explorer", $"{Configuration.BaseAddress}swagger/index.html");
+                    //System.Diagnostics.Process.Start("explorer", $"{Configuration.BaseAddress}swagger/index.html");
                 }
 
                 Core.Log.Write($"Listening on {Configuration.BaseAddress}.");
