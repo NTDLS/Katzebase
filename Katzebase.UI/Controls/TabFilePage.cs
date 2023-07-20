@@ -19,35 +19,6 @@ namespace Katzebase.UI.Controls
         public KatzebaseClient? Client { get; private set; }
         public bool IsFileOpen { get; private set; } = false;
 
-        #region IDisposable.
-
-        private bool disposed = false;
-        public new void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-            base.Dispose();
-        }
-
-        protected new virtual void Dispose(bool disposing)
-        {
-            if (disposed)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                Client?.Dispose();
-            }
-
-            disposed = true;
-            base.Dispose(disposing);
-        }
-
-        #endregion
-
-
         private bool _isSaved = false;
         public bool IsSaved
         {
@@ -122,6 +93,34 @@ namespace Katzebase.UI.Controls
         public TextEditor Editor { get; private set; }
         public FormFindText FindTextForm { get; private set; }
         public FormReplaceText ReplaceTextForm { get; private set; }
+
+        #endregion
+
+        #region IDisposable.
+
+        private bool disposed = false;
+        public new void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+            base.Dispose();
+        }
+
+        protected new virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                Client?.Dispose();
+            }
+
+            disposed = true;
+            base.Dispose(disposing);
+        }
 
         #endregion
 
