@@ -472,6 +472,7 @@ namespace Katzebase.UI
             if (tab != null)
             {
                 tabControlBody.TabPages.Remove(tab);
+                tab.Dispose();
             }
             SyncToolbarAndMenuStates();
         }

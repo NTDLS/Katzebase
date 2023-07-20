@@ -7,25 +7,27 @@ namespace Katzebase.UI.Classes
     {
         public static void PopulateServer(TreeView treeView, string serverAddress)
         {
-            var client = new KatzebaseClient(serverAddress);
-            if (client.Server.Ping().Success == false)
+            using (var client = new KatzebaseClient(serverAddress))
             {
-                throw new Exception("Could not api ping the server.");
+                if (client.Server.Ping().Success == false)
+                {
+                    throw new Exception("Could not api ping the server.");
+                }
+
+                string key = serverAddress.ToLower();
+
+                var foundNode = FindNodeOfType(treeView, ServerNodeType.Server, key);
+                if (foundNode != null)
+                {
+                    treeView.Nodes.Remove(foundNode);
+                }
+
+                var serverNode = CreateServerNode(key, serverAddress);
+
+                PopulateSchemaNode(serverNode, client, ":");
+
+                treeView.Nodes.Add(serverNode);
             }
-
-            string key = serverAddress.ToLower();
-
-            var foundNode = FindNodeOfType(treeView, ServerNodeType.Server, key);
-            if (foundNode != null)
-            {
-                treeView.Nodes.Remove(foundNode);
-            }
-
-            var serverNode = CreateServerNode(key, serverAddress);
-
-            PopulateSchemaNode(serverNode, client, ":");
-
-            treeView.Nodes.Add(serverNode);
         }
 
         /// <summary>
@@ -70,12 +72,14 @@ namespace Katzebase.UI.Classes
             }
 
             var rootNode = GetRootNode(node);
-            var client = new KatzebaseClient(rootNode.ServerAddress);
-            string schema = CalculateFullSchema(node);
+            using (var client = new KatzebaseClient(rootNode.ServerAddress))
+            {
+                string schema = CalculateFullSchema(node);
 
-            node.Nodes.Clear(); //Dont clear the node until we hear back from the server.
+                node.Nodes.Clear(); //Dont clear the node until we hear back from the server.
 
-            PopulateSchemaNode(node, client, schema);
+                PopulateSchemaNode(node, client, schema);
+            }
         }
 
         #region Tree node factories.

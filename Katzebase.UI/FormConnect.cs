@@ -26,18 +26,19 @@ namespace Katzebase.UI
         {
             try
             {
-                var client = new KatzebaseClient(ServerAddressURL);
-                if (client.Server.Ping().Success)
+                using (var client = new KatzebaseClient(ServerAddressURL))
                 {
-                    DialogResult = DialogResult.OK;
-                    this.Close();
+                    if (client.Server.Ping().Success)
+                    {
+                        DialogResult = DialogResult.OK;
+                        this.Close();
+                    }
                 }
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Unable to connect to the specified server: \"{ex.Message}\".", PublicLibrary.KbConstants.FriendlyName);
             }
-
         }
 
         private void buttonCancel_Click(object sender, EventArgs e)

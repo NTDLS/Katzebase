@@ -61,7 +61,13 @@
 
             while (disposed == false)
             {
-                Server.Ping(); //This keeps the connection alive on the server side.
+                try
+                {
+                    Server.Ping(); //This keeps the connection alive on the server side.
+                }
+                catch
+                {
+                }
 
                 for (int sleep = 0; disposed == false && sleep < (approximateSleepTimeMs + 10); sleep++)
                 {
@@ -90,7 +96,16 @@
             {
                 if (Connection != null)
                 {
-                    Transaction.Rollback();
+                    try
+                    {
+                        if (ServerProcessId != 0) //We have a ServerProcessId if we have ever had a successful ping.
+                        {
+                            Transaction.Rollback();
+                        }
+                    }
+                    catch
+                    {
+                    }
                     Connection.Dispose();
                 }
             }

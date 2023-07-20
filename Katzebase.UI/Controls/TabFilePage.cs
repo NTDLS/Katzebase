@@ -8,17 +8,44 @@ using System.Text;
 
 namespace Katzebase.UI.Controls
 {
-    internal class TabFilePage : TabPage
+    internal class TabFilePage : TabPage, IDisposable
     {
         #region Properties.
 
         public TabControl TabControlParent { get; private set; }
-
         public int ExecutionExceptionCount { get; private set; } = 0;
         public bool IsScriptExecuting { get; private set; } = false;
         public string ServerAddressURL { get; set; }
         public KatzebaseClient? Client { get; private set; }
         public bool IsFileOpen { get; private set; } = false;
+
+        #region IDisposable.
+
+        private bool disposed = false;
+        public new void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+            base.Dispose();
+        }
+
+        protected new virtual void Dispose(bool disposing)
+        {
+            if (disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                Client?.Dispose();
+            }
+
+            disposed = true;
+            base.Dispose(disposing);
+        }
+
+        #endregion
 
 
         private bool _isSaved = false;
@@ -75,6 +102,7 @@ namespace Katzebase.UI.Controls
             Font = new Font("Courier New", 10, FontStyle.Regular),
             WordWrap = false,
         };
+
         public DataGridView OutputGrid { get; private set; } = new()
         {
             Dock = DockStyle.Fill,
