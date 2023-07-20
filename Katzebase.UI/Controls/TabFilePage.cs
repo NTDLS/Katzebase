@@ -320,6 +320,14 @@ namespace Katzebase.UI.Controls
             }
         }
 
+        class MetricsTextItem
+        {
+            public string Value { get; set; } = string.Empty;
+            public string Average { get; set; } = string.Empty;
+            public string Count { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
+        }
+
         private void ExecuteCurrentScriptSync(KatzebaseClient client, string scriptText, bool justExplain)
         {
             WorkloadGroup group = new WorkloadGroup();
@@ -361,20 +369,52 @@ namespace Katzebase.UI.Controls
                         var stringBuilder = new StringBuilder();
                         stringBuilder.AppendLine("Metrics {");
 
+                        var metricsTextItems = new List<MetricsTextItem>();
+
                         foreach (var wt in result.Metrics.Where(o => o.Value >= 0.5).OrderBy(o => o.Value))
                         {
-                            stringBuilder.Append($"  {wt.Name} -> Total: {wt.Value:n0}");
                             if (wt.MetricType == KbConstants.KbMetricType.Cumulative)
                             {
-                                stringBuilder.Append($", Count: {wt.Count:n0}, Average: {wt.Value / wt.Count:n2}");
+                                metricsTextItems.Add(new MetricsTextItem()
+                                {
+                                    Name = wt.Name,
+                                    Value = $"Value: {wt.Value:n0}",
+                                    Average = $"Average: {wt.Value / wt.Count:n2}",
+                                    Count = $"Count: {wt.Count:n0}"
+                                });
                             }
-                            stringBuilder.AppendLine();
+                            else
+                            {
+                                metricsTextItems.Add(new MetricsTextItem() { Name = wt.Name, Value = $"Value: {wt.Value:n0}", });
+                            }
+                        }
+
+                        if (metricsTextItems.Count > 0)
+                        {
+                            int maxValueTength = metricsTextItems.Max(o => o.Value.Length);
+                            int maxAverageTength = metricsTextItems.Max(o => o.Average.Length);
+                            int maxCountTength = metricsTextItems.Max(o => o.Count.Length);
+
+                            foreach (var metricsTextItem in metricsTextItems)
+                            {
+                                int diff = (maxValueTength - metricsTextItem.Value.Length) + 1;
+                                string metricText = $"{metricsTextItem.Value}{new string(' ', diff)}";
+
+                                diff = (maxCountTength - metricsTextItem.Count.Length) + 1;
+                                metricText += $"{metricsTextItem.Count}{new string(' ', diff)}";
+
+                                diff = (maxAverageTength - metricsTextItem.Average.Length) + 1;
+                                metricText += $"{metricsTextItem.Average}{new string(' ', diff)}";
+
+                                metricText += metricsTextItem.Name;
+
+                                stringBuilder.AppendLine($"  {metricText}");
+                            }
                         }
 
                         stringBuilder.AppendLine($"}}");
 
                         AppendToOutput(stringBuilder.ToString(), Color.DarkBlue);
-
                     }
 
                     PopulateResultsGrid(result);
