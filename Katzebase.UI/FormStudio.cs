@@ -26,7 +26,7 @@ namespace Katzebase.UI
         public FormStudio(string firstLoadFilename)
         {
             InitializeComponent();
-            _editorFactory = new EditorFactory(this, this.tabControlBody);
+            _editorFactory = new EditorFactory(this, tabControlBody);
             _firstLoadFilename = firstLoadFilename;
         }
 
@@ -37,10 +37,6 @@ namespace Katzebase.UI
             splitContainerMacros.Dock = DockStyle.Fill;
             tabControlBody.Dock = DockStyle.Fill;
             treeViewMacros.Dock = DockStyle.Fill;
-
-            this.Width = Preferences.Instance.FormStudioWidth;
-            this.Height = Preferences.Instance.FormStudioHeight;
-            this.Height = Preferences.Instance.FormStudioHeight;
 
             _treeImages.ColorDepth = ColorDepth.Depth32Bit;
             _treeImages.Images.Add("Folder", Resources.TreeFolder);
@@ -60,14 +56,16 @@ namespace Katzebase.UI
             //treeViewMacros.Nodes.AddRange(...);
             treeViewMacros.ItemDrag += TreeViewMacros_ItemDrag;
 
-            this.Shown += FormStudio_Shown;
-            this.FormClosing += FormStudio_FormClosing;
+            Shown += FormStudio_Shown;
+            FormClosing += FormStudio_FormClosing;
 
             tabControlBody.MouseUp += TabControlBody_MouseUp;
 
             splitContainerMacros.Panel2Collapsed = true;
 
             splitContainerObjectExplorer.SplitterDistance = Preferences.Instance.ObjectExplorerSplitterDistance;
+            Width = Preferences.Instance.FormStudioWidth;
+            Height = Preferences.Instance.FormStudioHeight;
 
             _toolbarSyncTimer.Tick += _toolbarSyncTimer_Tick;
             _toolbarSyncTimer.Interval = 250;
@@ -461,14 +459,7 @@ namespace Katzebase.UI
                 serverAddress = _lastusedServerAddress;
             }
 
-            var tabFilePage = TabFilePage.Create(_editorFactory, tabText, serverAddress);
-
-            tabControlBody.TabPages.Add(tabFilePage);
-            tabControlBody.SelectedTab = tabFilePage;
-
-            tabFilePage.Editor.Focus();
-
-            return tabFilePage;
+            return TabFilePage.Create(_editorFactory, tabText, serverAddress);
         }
 
 
@@ -1004,8 +995,8 @@ namespace Katzebase.UI
 
         private void FormStudio_ResizeEnd(object sender, EventArgs e)
         {
-            Preferences.Instance.FormStudioWidth = this.Width;
-            Preferences.Instance.FormStudioHeight = this.Height;
+            Preferences.Instance.FormStudioWidth = Width;
+            Preferences.Instance.FormStudioHeight = Height;
         }
 
         private void splitContainerProject_SplitterMoved(object sender, SplitterEventArgs e)

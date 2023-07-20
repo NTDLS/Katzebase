@@ -4,7 +4,6 @@ using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Katzebase.UI.Classes;
-using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Katzebase.UI.Controls
@@ -12,6 +11,8 @@ namespace Katzebase.UI.Controls
     internal class TabFilePage : TabPage
     {
         #region Properties.
+
+        public TabControl TabControlParent { get; private set; }
 
         public int ExecutionExceptionCount { get; private set; } = 0;
         public bool IsScriptExecuting { get; private set; } = false;
@@ -96,9 +97,10 @@ namespace Katzebase.UI.Controls
 
         #endregion
 
-        public TabFilePage(string serverAddressURL, string tabText, TextEditor editor) :
+        public TabFilePage(TabControl tabControlParent, string serverAddressURL, string tabText, TextEditor editor) :
              base(tabText)
         {
+            TabControlParent = tabControlParent;
             Editor = editor;
             FindTextForm = new FormFindText(this);
             ReplaceTextForm = new FormReplaceText(this);
@@ -116,42 +118,36 @@ namespace Katzebase.UI.Controls
                 tabText = FormUtility.GetNextNewFileName();
             }
 
-            var tabFilePage = editorFactory.Create(serverAddress, tabText);
+            var newInstance = editorFactory.Create(serverAddress, tabText);
 
-            tabFilePage.Editor.KeyUp += tabFilePage.Editor_KeyUp;
+            newInstance.Editor.KeyUp += newInstance.Editor_KeyUp;
+            newInstance.Controls.Add(newInstance.TabSplitContainer);
 
-            tabFilePage.Controls.Add(tabFilePage.TabSplitContainer);
-
-            tabFilePage.TabSplitContainer.Panel1.Controls.Add(new System.Windows.Forms.Integration.ElementHost
+            newInstance.TabSplitContainer.Panel1.Controls.Add(new System.Windows.Forms.Integration.ElementHost
             {
                 Dock = DockStyle.Fill,
-                Child = tabFilePage.Editor
+                Child = newInstance.Editor
             });
 
-            tabFilePage.TabSplitContainer.Panel2.Controls.Add(tabFilePage.BottomTabControl);
+            newInstance.TabSplitContainer.Panel2.Controls.Add(newInstance.BottomTabControl);
+            newInstance.BottomTabControl.TabPages.Add(newInstance.OutputTab); //Add output tab to bottom.
+            newInstance.OutputTab.Controls.Add(newInstance.OutputTextbox);
+            newInstance.BottomTabControl.TabPages.Add(newInstance.ResultsTab); //Add results tab to bottom.
+            newInstance.ResultsTab.Controls.Add(newInstance.OutputGrid);
+            newInstance.TabSplitContainer.SplitterMoved += TabSplitContainer_SplitterMoved;
+            newInstance.TabSplitContainer.SplitterDistance = Preferences.Instance.ResultsSplitterDistance;
 
-            tabFilePage.BottomTabControl.TabPages.Add(tabFilePage.OutputTab); //Add output tab to bottom.
-            tabFilePage.OutputTab.Controls.Add(tabFilePage.OutputTextbox);
+            newInstance.Client?.Server.Ping();
+            newInstance.Editor.Focus();
 
-            tabFilePage.BottomTabControl.TabPages.Add(tabFilePage.ResultsTab); //Add results tab to bottom.
-            tabFilePage.ResultsTab.Controls.Add(tabFilePage.OutputGrid);
-
-            tabFilePage.TabSplitContainer.SplitterMoved += TabSplitContainer_SplitterMoved;
-
-            tabFilePage.TabSplitContainer.SplitterDistance = Preferences.Instance.ResultsSplitterDistance;
-
-            tabFilePage.Client?.Server.Ping();
-
-            tabFilePage.Editor.Focus();
-
-            return tabFilePage;
+            return newInstance;
         }
 
         private static void TabSplitContainer_SplitterMoved(object? sender, SplitterEventArgs e)
         {
-            if (sender is SplitContainer)
+            if (sender is SplitContainer container)
             {
-                Preferences.Instance.ResultsSplitterDistance = ((SplitContainer)(sender)).SplitterDistance;
+                Preferences.Instance.ResultsSplitterDistance = container.SplitterDistance;
             }
         }
 
@@ -275,6 +271,9 @@ namespace Katzebase.UI.Controls
                 ExecutionExceptionCount = 0;
 
                 TabSplitContainer.Panel2Collapsed = false;
+
+                tabFilePage.Text = $"{tabFilePage.Text} | (executing)";
+
             }
             catch (Exception ex)
             {
@@ -294,17 +293,24 @@ namespace Katzebase.UI.Controls
 
                 TabSplitContainer.Panel2Collapsed = false;
 
-                if (OutputGrid.RowCount > 0)
+                OutputGrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.DisplayedCells);
+
+                if (TabControlParent.SelectedTab == tabFilePage)
                 {
-                    BottomTabControl.SelectedTab = ResultsTab;
-                }
-                else
-                {
-                    BottomTabControl.SelectedTab = OutputTab;
+                    if (OutputGrid.RowCount > 0)
+                    {
+                        BottomTabControl.SelectedTab = ResultsTab;
+                    }
+                    else
+                    {
+                        BottomTabControl.SelectedTab = OutputTab;
+                    }
+
+                    tabFilePage.Focus();
+                    tabFilePage.Editor.Focus();
                 }
 
-                OutputGrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.DisplayedCells);
-                tabFilePage.Editor.Focus();
+                tabFilePage.Text = tabFilePage.Text.Replace(" | (executing)", "");
 
                 IsScriptExecuting = false;
             }

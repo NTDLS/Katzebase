@@ -15,13 +15,45 @@ namespace Katzebase.UI.Classes
         private static string sqlHighlighter => Path.Combine(Path.GetDirectoryName(Application.ExecutablePath) ?? "", "Highlighters", "KBS.xshd");
 #endif
 
-        private readonly TabControl _tabControl;
+        public TabControl TabControlParent { get; private set; }
         private readonly FormStudio _form;
 
         public EditorFactory(FormStudio form, TabControl tabControl)
         {
-            _tabControl = tabControl;
+            TabControlParent = tabControl;
+
+            TabControlParent.Click += TabControlParent_Click;
+            TabControlParent.TabIndexChanged += TabControlParent_TabIndexChanged;
+
             _form = form;
+        }
+
+        private void TabControlParent_TabIndexChanged(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (sender is TabControl tabControl)
+                {
+                    ((TabFilePage)tabControl.SelectedTab).Editor.Focus();
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private void TabControlParent_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (sender is TabControl tabControl)
+                {
+                    ((TabFilePage)tabControl.SelectedTab).Editor.Focus();
+                }
+            }
+            catch
+            {
+            }
         }
 
         public TabFilePage Create(string serverAddressURL, string tabText)
@@ -34,7 +66,7 @@ namespace Katzebase.UI.Classes
                 WordWrap = false,
             };
 
-            var tabFilePage = new TabFilePage(serverAddressURL, tabText, editor)
+            var tabFilePage = new TabFilePage(TabControlParent, serverAddressURL, tabText, editor)
             {
                 //..
             };
@@ -52,6 +84,9 @@ namespace Katzebase.UI.Classes
             editor.DragEnter += Editor_DragEnter;
             editor.Drop += Editor_Drop;
             editor.KeyUp += Editor_KeyUp;
+
+            TabControlParent.TabPages.Add(tabFilePage);
+            TabControlParent.SelectedTab = tabFilePage;
 
             return tabFilePage;
         }
@@ -100,7 +135,7 @@ namespace Katzebase.UI.Classes
 
         private TabFilePage? EditorToTab(TextEditor editor)
         {
-            foreach (TabFilePage tab in _tabControl.TabPages)
+            foreach (TabFilePage tab in TabControlParent.TabPages)
             {
                 if (tab.Editor == editor)
                 {
@@ -134,15 +169,14 @@ namespace Katzebase.UI.Classes
                 var draggedNode = e.Data.GetData(typeof(TreeNode)) as TreeNode;
                 if (draggedNode != null && draggedNode.Tag != null)
                 {
-                    string? text = draggedNode.Tag as string;
-                    if (text != null && sender is TextEditor editor)
+                    if (draggedNode.Tag is string text && sender is TextEditor editor)
                     {
                         var position = editor.GetPositionFromPoint(e.GetPosition(editor));
                         if (position == null)
                         {
                             position = new TextViewPosition(1, 1);
                         }
-                        if (position != null)
+                        else if (position != null)
                         {
                             var docLine = editor.Document.GetLineByNumber(position.Value.Line);
 

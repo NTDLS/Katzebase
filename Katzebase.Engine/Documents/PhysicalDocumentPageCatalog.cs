@@ -2,7 +2,7 @@
 {
     /// <summary>
     /// This is the master document page catalog, it is physically written to disk and
-    /// contains one entry per page, each of which contain the associated socumentIDs.
+    /// contains one entry per page, each of which contain the associated documentIDs.
     /// </summary>
     [Serializable]
     public class PhysicalDocumentPageCatalog
@@ -16,7 +16,6 @@
             NextDocumentId++;
             return NextDocumentId;
         }
-
 
         public int NextPageNumber() => PageMappings.Count;
 
