@@ -26,7 +26,7 @@ namespace Katzebase.UI
         {
             try
             {
-                using (var client = new KatzebaseClient(ServerAddressURL))
+                using (var client = new KbClient(ServerAddressURL))
                 {
                     if (client.Server.Ping().Success)
                     {

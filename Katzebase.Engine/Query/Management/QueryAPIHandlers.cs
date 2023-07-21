@@ -29,6 +29,11 @@ namespace Katzebase.Engine.Query.Management
             return core.Query.ExplainQuery(processId, preparedQuery);
         }
 
+        public KbQueryResult ExecuteStatementProcedure(ulong processId, KbProcedure procedure)
+        {
+            return core.Query.ExecureProcedure(processId, procedure);
+        }
+
         public KbQueryResult ExecuteStatementQuery(ulong processId, string statement)
         {
             var preparedQuery = StaticQueryParser.PrepareQuery(statement);

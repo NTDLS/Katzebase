@@ -29,6 +29,109 @@ namespace Katzebase.TestHarness
             }
         }
 
+        static void Main(string[] args)
+        {
+            Assembly assembly = Assembly.GetExecutingAssembly();
+            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+            Console.WriteLine($"{fileVersionInfo.FileDescription} v{fileVersionInfo.ProductVersion}");
+
+            //(new Thread(() => { TestThread("TopNotchERP:Address"); })).Start();
+            //(new Thread(() => { TestThread("AdventureWorks2012:dbo:AWBuildVersion"); })).Start();
+
+            //ExportSQLServerDatabases();
+
+            //TestSproc();
+
+            #region Misc. Tests & stuff.
+
+            //Handled:
+            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R' AND (a = 1)";
+            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R' AND (A = 10 AND B = 50)";
+            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)";
+            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)";
+            //string stmt = "SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)";
+            //var preparedQuery = ParserEngine.ParseQuery(stmt);
+            //return;
+
+
+            //TestIndexCreationProductInventory();
+
+            //using KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
+            //client.Query.ExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)");
+            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)");
+            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299 AND productid = 366");
+            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299");
+            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Missing, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)");
+            //client.Query.ExecuteQuery("SELECT TOP 10 a.ProductID FROM AdventureWorks2012:Production:ProductInventory as a");
+
+            //var result = client.Document.Sample("AdventureWorks2012:Production:Product", 10);
+
+            //TestIndexCreationProductInventory();
+
+            //Console.WriteLine(client.Query.ExplainQuery(query)?.Explanation);
+            //client.Query.ExecuteQuery("SET TraceWaitTimes ON");
+            //client.Query.ExecuteQuery(query);
+
+            //TestCreateAllAdventureWorks2012Indexes();
+            //TestServerStress();
+            //TestCreateIndexAddDocuments();
+            //TestAddDocumentsCreateIndex();
+            //TestIndexDocumentDeletion();
+
+            #endregion
+
+            Console.WriteLine("Press any key to continue.");
+            Console.ReadLine();
+        }
+
+        static void TestSproc()
+        {
+            using var client = new KbClient("http://localhost:6858/");
+
+            var procedure = new KbProcedure("AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName");
+            procedure.Parameters.Add("ProductColor", "Test-Color");
+            var result = client.Procedure.Execute(procedure);
+
+            if (result.Fields.Count > 0)
+            {
+                foreach (var field in result.Fields)
+                {
+                    Console.Write($"[{field.Name}] ");
+                }
+                Console.WriteLine();
+            }
+
+            if (result.Rows.Count > 0)
+            {
+                foreach (var row in result.Rows)
+                {
+                    foreach (var value in row.Values)
+                    {
+                        Console.Write($"'{value}' ");
+                    }
+                    Console.WriteLine();
+                }
+            }
+        }
+
+        static void Perf0()
+        {
+            var startTime1 = DateTime.Now;
+            for (int i = 0; i < 10; i++)
+            {
+                perf1();
+            }
+            var duration1 = (DateTime.Now - startTime1).TotalMilliseconds;
+            Console.WriteLine($"ONE: {duration1}ms");
+
+            var startTime2 = DateTime.Now;
+            for (int i = 0; i < 10; i++)
+            {
+                perf2();
+            }
+            var duration2 = (DateTime.Now - startTime2).TotalMilliseconds;
+            Console.WriteLine($"TWO: {duration2}ms");
+        }
 
         static int perf1()
         {
@@ -60,7 +163,6 @@ namespace Katzebase.TestHarness
             return 0;
         }
 
-
         static int perf2()
         {
             var text = File.ReadAllText(@"D:\InventoryPage.json");
@@ -91,79 +193,9 @@ namespace Katzebase.TestHarness
             return 0;
         }
 
-        static void Main(string[] args)
-        {
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
-            Console.WriteLine($"{fileVersionInfo.FileDescription} v{fileVersionInfo.ProductVersion}");
-
-            var startTime1 = DateTime.Now;
-            for (int i = 0; i < 10; i++)
-            {
-                perf1();
-            }
-            var duration1 = (DateTime.Now - startTime1).TotalMilliseconds;
-            Console.WriteLine($"ONE: {duration1}ms");
-
-            var startTime2 = DateTime.Now;
-            for (int i = 0; i < 10; i++)
-            {
-                perf2();
-            }
-            var duration2 = (DateTime.Now - startTime2).TotalMilliseconds;
-            Console.WriteLine($"TWO: {duration2}ms");
-
-            //(new Thread(() => { TestThread("TopNotchERP:Address"); })).Start();
-            //(new Thread(() => { TestThread("AdventureWorks2012:dbo:AWBuildVersion"); })).Start();
-
-            //ExportSQLServerDatabases();
-
-            #region Misc. Tests & stuff.
-
-            //Handled:
-            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R' AND (a = 1)";
-            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R' AND (A = 10 AND B = 50)";
-            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)";
-            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)";
-            //string stmt = "SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)";
-            //var preparedQuery = ParserEngine.ParseQuery(stmt);
-            //return;
-
-
-            //TestIndexCreationProductInventory();
-
-            //KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
-            //client.Query.ExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299 AND productid = 366");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Missing, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)");
-            //client.Query.ExecuteQuery("SELECT TOP 10 a.ProductID FROM AdventureWorks2012:Production:ProductInventory as a");
-
-            //var result = client.Document.Sample("AdventureWorks2012:Production:Product", 10);
-
-            //TestIndexCreationProductInventory();
-
-            //Console.WriteLine(client.Query.ExplainQuery(query)?.Explanation);
-            //client.Query.ExecuteQuery("SET TraceWaitTimes ON");
-            //client.Query.ExecuteQuery(query);
-
-            //TestCreateAllAdventureWorks2012Indexes();
-            //TestServerStress();
-            //TestCreateIndexAddDocuments();
-            //TestAddDocumentsCreateIndex();
-            //TestIndexDocumentDeletion();
-
-            #endregion
-
-            Console.WriteLine("Press any key to continue.");
-            Console.ReadLine();
-        }
-
-
         static void TestAllAPIs()
         {
-            var client = new KatzebaseClient("http://localhost:6858/");
+            using var client = new KbClient("http://localhost:6858/");
 
             client.Server.Ping();
 
@@ -219,7 +251,7 @@ namespace Katzebase.TestHarness
 
         private static KbQueryResult TestExecuteQuery(string queryText)
         {
-            var client = new KatzebaseClient("http://localhost:6858/");
+            using var client = new KbClient("http://localhost:6858/");
             return client.Query.ExecuteQuery(queryText);
         }
 
@@ -229,7 +261,7 @@ namespace Katzebase.TestHarness
 
         private static void TestIndexCreationProductInventory()
         {
-            var client = new KatzebaseClient("http://localhost:6858/");
+            using var client = new KbClient("http://localhost:6858/");
 
             string? schemaPath = "AdventureWorks2012:Production:ProductSubcategory";
 
@@ -255,7 +287,7 @@ namespace Katzebase.TestHarness
 
         private static void TestIndexCreationStateProvince()
         {
-            var client = new KatzebaseClient("http://localhost:6858/");
+            using var client = new KbClient("http://localhost:6858/");
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
             string? schemaPath = "AdventureWorks2012:Person:StateProvince";
@@ -284,7 +316,7 @@ namespace Katzebase.TestHarness
 
         private static void TestIndexCreationPerson()
         {
-            var client = new KatzebaseClient("http://localhost:6858/");
+            using var client = new KbClient("http://localhost:6858/");
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
             string? schemaPath = "AdventureWorks2012:Person:Person";
@@ -312,7 +344,7 @@ namespace Katzebase.TestHarness
         #region TestIndexDocumentDeletion.
         private static void TestIndexDocumentDeletion()
         {
-            KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
+            using var client = new KbClient("http://localhost:6858/");
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
             string? schemaPath = "Students:Indexing";
@@ -402,7 +434,7 @@ namespace Katzebase.TestHarness
         #region TestAddDocumentsCreateIndex.
         private static void TestAddDocumentsCreateIndex()
         {
-            KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
+            using var client = new KbClient("http://localhost:6858/");
 
             Console.WriteLine("Session Started: {0}", client.SessionId);
             string? schemaPath = "Students:Indexing";
@@ -483,7 +515,7 @@ namespace Katzebase.TestHarness
         #region TestCreateIndexAddDocuments.
         private static void TestCreateIndexAddDocuments()
         {
-            KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
+            using var client = new KbClient("http://localhost:6858/");
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
             string? schemaPath = "Students:Indexing";
@@ -567,7 +599,7 @@ namespace Katzebase.TestHarness
 
         static void StressTestThreadProc()
         {
-            KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
+            using var client = new KbClient("http://localhost:6858/");
 
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
@@ -652,7 +684,7 @@ namespace Katzebase.TestHarness
 
         static void TestCreateAllAdventureWorks2012Indexes()
         {
-            KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
+            using var client = new KbClient("http://localhost:6858/");
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
             client.Transaction.Begin();

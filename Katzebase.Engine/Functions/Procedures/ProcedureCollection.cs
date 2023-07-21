@@ -55,7 +55,7 @@ namespace Katzebase.Engine.Functions.Procedures
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
 
-            var physicalProcedure = core.Procedures.Acquire(transaction, physicalSchema, LockOperation.Read, procedureName);
+            var physicalProcedure = core.Procedures.Acquire(transaction, physicalSchema, procedureName, LockOperation.Read);
             if (physicalProcedure == null)
             {
                 throw new KbFunctionException($"Undefined procedure: {procedureName}.");

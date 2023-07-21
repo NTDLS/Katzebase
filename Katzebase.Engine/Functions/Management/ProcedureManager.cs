@@ -81,7 +81,7 @@ namespace Katzebase.Engine.Functions.Management
             return core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
         }
 
-        internal PhysicalProcedure? Acquire(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation, string procedureName)
+        internal PhysicalProcedure? Acquire(Transaction transaction, PhysicalSchema physicalSchema, string procedureName, LockOperation intendedOperation)
         {
             procedureName = procedureName.ToLower();
 

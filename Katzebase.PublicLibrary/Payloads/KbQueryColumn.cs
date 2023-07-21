@@ -1,4 +1,6 @@
-﻿namespace Katzebase.PublicLibrary.Payloads
+﻿using System.Xml.Linq;
+
+namespace Katzebase.PublicLibrary.Payloads
 {
     public class KbQueryField
     {
@@ -8,5 +10,7 @@
         {
             Name = name;
         }
+
+        public new string ToString() => Name;
     }
 }

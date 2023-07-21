@@ -1,7 +1,9 @@
 ﻿using Katzebase.Engine.Functions.Aggregate;
 using Katzebase.Engine.Functions.Scaler;
+using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using System.Text;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Query.Management
@@ -46,6 +48,40 @@ namespace Katzebase.Engine.Query.Management
             {
                 core.Log.Write($"Failed to explain query for process id {processId}.", ex);
                 throw;
+            }
+        }
+
+        internal KbQueryResult ExecureProcedure(ulong processId, KbProcedure procedure)
+        {
+            var statement = new StringBuilder($"EXEC {procedure.SchemaName}:{procedure.ProcedureName}");
+
+            using (var txRef = core.Transactions.Acquire(processId))
+            {
+                var physicalSchema = core.Schemas.Acquire(txRef.Transaction, procedure.SchemaName, LockOperation.Read);
+                var physicalProcedure = core.Procedures.Acquire(txRef.Transaction, physicalSchema, procedure.ProcedureName, LockOperation.Read);
+                if (physicalProcedure == null)
+                {
+                    throw new KbEngineException($"Procedure [{procedure.ProcedureName}] was not found in schema [{procedure.SchemaName}]");
+                }
+
+                if (physicalProcedure.Parameters.Count > 0)
+                {
+                    statement.Append('(');
+
+                    foreach (var parameter in physicalProcedure.Parameters)
+                    {
+                        if (procedure.Parameters.Collection.TryGetValue(parameter.Name.ToLower(), out var value) == false)
+                        {
+                            throw new KbEngineException($"Parameter [{parameter.Name}] was not passed when calling procedure [{procedure.ProcedureName}] in schema [{procedure.SchemaName}]");
+                        }
+                        statement.Append($"'{value}',");
+                    }
+                    statement.Length--; //Remove the trailing ','.
+                    statement.Append(')');
+                }
+
+                var preparedQuery = StaticQueryParser.PrepareQuery(statement.ToString());
+                return core.Procedures.QueryHandlers.ExecuteExec(processId, preparedQuery);
             }
         }
 

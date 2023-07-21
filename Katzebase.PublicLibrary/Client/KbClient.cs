@@ -1,14 +1,17 @@
-﻿namespace Katzebase.PublicLibrary.Client
+﻿using Katzebase.PublicLibrary.Client.Management;
+
+namespace Katzebase.PublicLibrary.Client
 {
-    public class KatzebaseClient : IDisposable
+    public class KbClient : IDisposable
     {
         public HttpClient Connection { get; private set; }
         public Guid SessionId { get; private set; }
-        public Management.Document Document { get; private set; }
-        public Management.Schema Schema { get; private set; }
-        public Management.Server Server { get; private set; }
-        public Management.Transaction Transaction { get; private set; }
-        public Management.Query Query { get; private set; }
+        public KbDocumentClient Document { get; private set; }
+        public KbSchemaClient Schema { get; private set; }
+        public KbServerClient Server { get; private set; }
+        public KbTransactionClient Transaction { get; private set; }
+        public KbQueryClient Query { get; private set; }
+        public KbProcedureClient Procedure { get; private set; }
 
         private readonly Thread keepAliveThread;
 
@@ -17,7 +20,7 @@
         /// </summary>
         public ulong ServerProcessId { get; set; }
 
-        public KatzebaseClient(string baseAddress)
+        public KbClient(string baseAddress)
         {
             SessionId = Guid.NewGuid();
             Connection = new HttpClient
@@ -26,17 +29,18 @@
                 Timeout = new TimeSpan(0, 8, 0, 0, 0)
             };
 
-            Document = new Management.Document(this);
-            Schema = new Management.Schema(this);
-            Server = new Management.Server(this);
-            Transaction = new Management.Transaction(this);
-            Query = new Management.Query(this);
+            Document = new KbDocumentClient(this);
+            Schema = new KbSchemaClient(this);
+            Server = new KbServerClient(this);
+            Transaction = new KbTransactionClient(this);
+            Query = new KbQueryClient(this);
+            Procedure = new KbProcedureClient(this);
 
             keepAliveThread = new Thread(KeepAliveThread);
             keepAliveThread.Start();
         }
 
-        public KatzebaseClient(string baseAddress, TimeSpan timeout)
+        public KbClient(string baseAddress, TimeSpan timeout)
         {
             SessionId = Guid.NewGuid();
             Connection = new HttpClient
@@ -45,11 +49,12 @@
                 Timeout = timeout
             };
 
-            Document = new Management.Document(this);
-            Schema = new Management.Schema(this);
-            Server = new Management.Server(this);
-            Transaction = new Management.Transaction(this);
-            Query = new Management.Query(this);
+            Document = new KbDocumentClient(this);
+            Schema = new KbSchemaClient(this);
+            Server = new KbServerClient(this);
+            Transaction = new KbTransactionClient(this);
+            Query = new KbQueryClient(this);
+            Procedure = new KbProcedureClient(this);
 
             keepAliveThread = new Thread(KeepAliveThread);
             keepAliveThread.Start();

@@ -7,7 +7,7 @@ namespace Katzebase.UI.Classes
     {
         public static void PopulateServer(TreeView treeView, string serverAddress)
         {
-            using (var client = new KatzebaseClient(serverAddress))
+            using (var client = new KbClient(serverAddress))
             {
                 if (client.Server.Ping().Success == false)
                 {
@@ -36,7 +36,7 @@ namespace Katzebase.UI.Classes
         /// <param name="client"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        private static void PopulateSchemaNode(ServerTreeNode nodeToPopulate, KatzebaseClient client, string schema)
+        private static void PopulateSchemaNode(ServerTreeNode nodeToPopulate, KbClient client, string schema)
         {
             var schemaIndexes = client.Schema.Indexes.List(schema);
             var schemaIndexesNode = CreateIndexFolderNode();
@@ -72,7 +72,7 @@ namespace Katzebase.UI.Classes
             }
 
             var rootNode = GetRootNode(node);
-            using (var client = new KatzebaseClient(rootNode.ServerAddress))
+            using (var client = new KbClient(rootNode.ServerAddress))
             {
                 string schema = CalculateFullSchema(node);
 

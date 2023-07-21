@@ -41,7 +41,7 @@ namespace Katzebase.TestHarness
 
         public static void ExportSQLServerTableToKatzebase(string sqlServer, string sqlServerDatabase, string sqlServerTable, string katzeBaseServerAdddress)
         {
-            var client = new KatzebaseClient(katzeBaseServerAdddress);
+            var client = new KbClient(katzeBaseServerAdddress);
 
             string kbSchema = $"{sqlServerDatabase}:{sqlServerTable.Replace("[", "").Replace("]", "").Replace("dbo.", "").Replace('.', ':')}";
 

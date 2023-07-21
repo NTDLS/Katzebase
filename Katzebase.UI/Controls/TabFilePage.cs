@@ -16,7 +16,7 @@ namespace Katzebase.UI.Controls
         public int ExecutionExceptionCount { get; private set; } = 0;
         public bool IsScriptExecuting { get; private set; } = false;
         public string ServerAddressURL { get; set; }
-        public KatzebaseClient? Client { get; private set; }
+        public KbClient? Client { get; private set; }
         public bool IsFileOpen { get; private set; } = false;
 
         private bool _isSaved = false;
@@ -134,7 +134,7 @@ namespace Katzebase.UI.Controls
             ServerAddressURL = serverAddressURL;
             if (string.IsNullOrEmpty(serverAddressURL) == false)
             {
-                Client = new KatzebaseClient(ServerAddressURL);
+                Client = new KbClient(ServerAddressURL);
             }
         }
 
@@ -355,7 +355,7 @@ namespace Katzebase.UI.Controls
             public string Name { get; set; } = string.Empty;
         }
 
-        private void ExecuteCurrentScriptSync(KatzebaseClient client, string scriptText, bool justExplain)
+        private void ExecuteCurrentScriptSync(KbClient client, string scriptText, bool justExplain)
         {
             WorkloadGroup group = new WorkloadGroup();
 
