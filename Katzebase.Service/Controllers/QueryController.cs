@@ -11,7 +11,7 @@ namespace Katzebase.Service.Controllers
     {
         [HttpPost]
         [Route("{sessionId}/ExplainQuery")]
-        public KbQueryResult ExplainQuery(Guid sessionId, [FromBody] string value)
+        public KbQueryResultCollection ExplainQuery(Guid sessionId, [FromBody] string value)
         {
             try
             {
@@ -25,7 +25,7 @@ namespace Katzebase.Service.Controllers
             }
             catch (Exception ex)
             {
-                return new KbQueryResult
+                return new KbQueryResultCollection
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -35,7 +35,7 @@ namespace Katzebase.Service.Controllers
 
         [HttpPost]
         [Route("{sessionId}/ExecuteQuery")]
-        public KbQueryResult ExecuteQuery(Guid sessionId, [FromBody] string value)
+        public KbQueryResultCollection ExecuteQuery(Guid sessionId, [FromBody] string value)
         {
             try
             {
@@ -49,7 +49,7 @@ namespace Katzebase.Service.Controllers
             }
             catch (Exception ex)
             {
-                return new KbQueryResult
+                return new KbQueryResultCollection
                 {
                     ExceptionText = ex.Message,
                     Success = false

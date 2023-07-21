@@ -108,9 +108,9 @@ namespace Katzebase.Engine.Indexes.Management
                         var objectName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.ObjectName);
                         var objectSchema = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Schema);
                         var parameters = preparedQuery.Attribute<List<PhysicalProcedureParameter>>(PreparedQuery.QueryAttribute.Parameters);
-                        var bodyText = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Body);
+                        var Batches = preparedQuery.Attribute<List<string>>(PreparedQuery.QueryAttribute.Batches);
 
-                        core.Procedures.CreateCustomProcedure(txRef.Transaction, objectSchema, objectName, parameters, bodyText);
+                        core.Procedures.CreateCustomProcedure(txRef.Transaction, objectSchema, objectName, parameters, Batches);
                     }
                     else if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                     {

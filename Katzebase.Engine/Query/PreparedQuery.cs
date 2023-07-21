@@ -20,7 +20,7 @@ namespace Katzebase.Engine.Query
             Schema,
             ObjectName,
             Parameters,
-            Body
+            Batches
         }
 
         public bool DynamicallyBuildSelectList { get; set; } = false;

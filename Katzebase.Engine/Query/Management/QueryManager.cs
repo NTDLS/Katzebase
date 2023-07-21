@@ -51,7 +51,7 @@ namespace Katzebase.Engine.Query.Management
             }
         }
 
-        internal KbQueryResult ExecureProcedure(ulong processId, KbProcedure procedure)
+        internal KbQueryResultCollection ExecureProcedure(ulong processId, KbProcedure procedure)
         {
             var statement = new StringBuilder($"EXEC {procedure.SchemaName}:{procedure.ProcedureName}");
 
@@ -80,22 +80,26 @@ namespace Katzebase.Engine.Query.Management
                     statement.Append(')');
                 }
 
-                var preparedQuery = StaticQueryParser.PrepareQuery(statement.ToString());
-                return core.Procedures.QueryHandlers.ExecuteExec(processId, preparedQuery);
+                var batch = StaticQueryParser.PrepareBatch(statement.ToString());
+                if (batch.Count > 1)
+                {
+                    throw new KbEngineException("Expected only one procedure call per batch.");
+                }
+                return core.Procedures.QueryHandlers.ExecuteExec(processId, batch.First());
             }
         }
 
-        internal KbQueryResult ExecuteQuery(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryResultCollection ExecuteQuery(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
                 if (preparedQuery.QueryType == QueryType.Select)
                 {
-                    return core.Documents.QueryHandlers.ExecuteSelect(processId, preparedQuery);
+                    return core.Documents.QueryHandlers.ExecuteSelect(processId, preparedQuery).ToCollection();
                 }
                 else if (preparedQuery.QueryType == QueryType.Sample)
                 {
-                    return core.Documents.QueryHandlers.ExecuteSample(processId, preparedQuery);
+                    return core.Documents.QueryHandlers.ExecuteSample(processId, preparedQuery).ToCollection();
                 }
                 else if (preparedQuery.QueryType == QueryType.Exec)
                 {
@@ -105,11 +109,11 @@ namespace Katzebase.Engine.Query.Management
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Documents)
                     {
-                        return core.Documents.QueryHandlers.ExecuteList(processId, preparedQuery);
+                        return core.Documents.QueryHandlers.ExecuteList(processId, preparedQuery).ToCollection();
                     }
                     else if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                     {
-                        return core.Schemas.QueryHandlers.ExecuteList(processId, preparedQuery);
+                        return core.Schemas.QueryHandlers.ExecuteList(processId, preparedQuery).ToCollection();
                     }
                     else
                     {
@@ -130,7 +134,7 @@ namespace Katzebase.Engine.Query.Management
                     || preparedQuery.QueryType == QueryType.Rollback)
                 {
                     //Reroute to non-query as appropriate:
-                    return KbQueryResult.FromActionResponse(ExecuteNonQuery(processId, preparedQuery));
+                    return KbQueryResult.FromActionResponse(ExecuteNonQuery(processId, preparedQuery)).ToCollection();
                 }
                 else
                 {

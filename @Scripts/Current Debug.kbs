@@ -1,6 +1,15 @@
-set TraceWaitTimes true
-GO
+EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+--EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+--EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+--EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 
+/*
+set TraceWaitTimes false
+EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+*/
+/*
 select
 	IIF(Equals(tw.Text, 'Luna'), 'YES!', tw.Text) as 'Is Luna 2',
 
@@ -57,6 +66,7 @@ where
 --order by
 	--sw.Text
 	--'Is Luna?' DESC
+*/
 /*
 CREATE PROCEDURE UpdateProductByColorAndGetItsName
 (

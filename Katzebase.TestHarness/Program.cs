@@ -249,7 +249,7 @@ namespace Katzebase.TestHarness
 
         #region TestQuery(text)
 
-        private static KbQueryResult TestExecuteQuery(string queryText)
+        private static KbQueryResultCollection TestExecuteQuery(string queryText)
         {
             using var client = new KbClient("http://localhost:6858/");
             return client.Query.ExecuteQuery(queryText);

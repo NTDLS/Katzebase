@@ -9,7 +9,6 @@ namespace Katzebase.PublicLibrary.Payloads
     {
         public List<KbQueryField> Fields { get; set; } = new();
         public List<KbQueryRow> Rows { get; set; } = new();
-        public List<KbQueryResultMessage> Messages { get; set; } = new();
 
         public void AddField(string name)
         {
@@ -36,6 +35,13 @@ namespace Katzebase.PublicLibrary.Payloads
                 Metrics = actionResponse.Metrics,
                 Explanation = actionResponse.Explanation,
             };
+        }
+
+        public KbQueryResultCollection ToCollection()
+        {
+            var result = new KbQueryResultCollection();
+            result.Add(this);
+            return result;
         }
     }
 }

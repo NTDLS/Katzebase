@@ -14,7 +14,7 @@ namespace Katzebase.PublicLibrary.Client.Management
             this.client = client;
         }
 
-        public KbQueryResult ExplainQuery(string statement)
+        public KbQueryResultCollection ExplainQuery(string statement)
         {
             string url = $"api/Query/{client.SessionId}/ExplainQuery";
 
@@ -22,7 +22,7 @@ namespace Katzebase.PublicLibrary.Client.Management
 
             using var response = client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
-            var result = JsonConvert.DeserializeObject<KbQueryResult>(resultText);
+            var result = JsonConvert.DeserializeObject<KbQueryResultCollection>(resultText);
             if (result == null || result.Success == false)
             {
                 throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
@@ -30,7 +30,7 @@ namespace Katzebase.PublicLibrary.Client.Management
             return result;
         }
 
-        public KbQueryResult ExecuteQuery(string statement)
+        public KbQueryResultCollection ExecuteQuery(string statement)
         {
             string url = $"api/Query/{client.SessionId}/ExecuteQuery";
 
@@ -38,7 +38,7 @@ namespace Katzebase.PublicLibrary.Client.Management
 
             using var response = client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
-            var result = JsonConvert.DeserializeObject<KbQueryResult>(resultText);
+            var result = JsonConvert.DeserializeObject<KbQueryResultCollection>(resultText);
             if (result == null || result.Success == false)
             {
                 throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
@@ -46,7 +46,7 @@ namespace Katzebase.PublicLibrary.Client.Management
             return result;
         }
 
-        public KbActionResponse ExecuteNonQuery(string statement)
+        public KbActionResponseCollection ExecuteNonQuery(string statement)
         {
             string url = $"api/Query/{client.SessionId}/ExecuteNonQuery";
 
@@ -54,7 +54,7 @@ namespace Katzebase.PublicLibrary.Client.Management
 
             using var response = client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
-            var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
+            var result = JsonConvert.DeserializeObject<KbActionResponseCollection>(resultText);
             if (result == null || result.Success == false)
             {
                 throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);

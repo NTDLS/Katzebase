@@ -67,26 +67,17 @@ namespace Katzebase.UI.Controls
 
         public TabPage OutputTab { get; private set; } = new("Output");
         public TabPage ResultsTab { get; private set; } = new("Results");
+        public Panel ResultsPanel { get; private set; } = new()
+        {
+            Dock = DockStyle.Fill,
+            AutoScroll = true,
+        };
+
         public RichTextBox OutputTextbox { get; private set; } = new()
         {
             Dock = DockStyle.Fill,
             Font = new Font("Courier New", 10, FontStyle.Regular),
             WordWrap = false,
-        };
-
-        public DataGridView OutputGrid { get; private set; } = new()
-        {
-            Dock = DockStyle.Fill,
-            AllowUserToAddRows = false,
-            AllowDrop = false,
-            AllowUserToDeleteRows = false,
-            ShowEditingIcon = false,
-            ShowCellErrors = false,
-            ShowCellToolTips = false,
-            ReadOnly = true,
-            AllowUserToOrderColumns = true,
-            AllowUserToResizeRows = true,
-            AllowUserToResizeColumns = true,
         };
 
         public TabControl BottomTabControl { get; private set; } = new() { Dock = DockStyle.Fill };
@@ -160,7 +151,9 @@ namespace Katzebase.UI.Controls
             newInstance.BottomTabControl.TabPages.Add(newInstance.OutputTab); //Add output tab to bottom.
             newInstance.OutputTab.Controls.Add(newInstance.OutputTextbox);
             newInstance.BottomTabControl.TabPages.Add(newInstance.ResultsTab); //Add results tab to bottom.
-            newInstance.ResultsTab.Controls.Add(newInstance.OutputGrid);
+
+            newInstance.ResultsTab.Controls.Add(newInstance.ResultsPanel);
+
             newInstance.TabSplitContainer.SplitterMoved += TabSplitContainer_SplitterMoved;
             newInstance.TabSplitContainer.SplitterDistance = Preferences.Instance.ResultsSplitterDistance;
 
@@ -260,8 +253,11 @@ namespace Katzebase.UI.Controls
 
                 PreExecuteEvent(this);
 
-                OutputGrid.Rows.Clear();
-                OutputGrid.Columns.Clear();
+                foreach (var dgv in ResultsPanel.Controls.OfType<DataGridView>().ToList())
+                {
+                    dgv.Dispose();
+                }
+                ResultsPanel.Controls.Clear();
 
                 string scriptText = Editor.Text;
 
@@ -320,11 +316,17 @@ namespace Katzebase.UI.Controls
 
                 TabSplitContainer.Panel2Collapsed = false;
 
-                OutputGrid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.DisplayedCells);
+                bool hasResults = false;
+
+                foreach (var dgv in ResultsPanel.Controls.OfType<DataGridView>())
+                {
+                    dgv.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.DisplayedCells);
+                    hasResults = true;
+                }
 
                 if (TabControlParent.SelectedTab == tabFilePage)
                 {
-                    if (OutputGrid.RowCount > 0)
+                    if (hasResults)
                     {
                         BottomTabControl.SelectedTab = ResultsTab;
                     }
@@ -372,7 +374,7 @@ namespace Katzebase.UI.Controls
                 {
                     DateTime startTime = DateTime.UtcNow;
 
-                    KbQueryResult result;
+                    KbQueryResultCollection result;
 
                     if (justExplain)
                     {
@@ -474,53 +476,129 @@ namespace Katzebase.UI.Controls
             }
         }
 
-        private void PopulateResultsGrid(KbQueryResult result)
+        private List<DataGridView> AddEvenlyDistributedDataGridViews(int numDataGridViews)
         {
-            try
+            var results = new List<DataGridView>();
+
+            foreach (var dgv in ResultsPanel.Controls.OfType<DataGridView>().ToList())
             {
-                if (result.Rows.Count == 0)
-                {
-                    return;
-                }
-
-                if (InvokeRequired)
-                {
-                    Invoke(new Action<KbQueryResult>(PopulateResultsGrid), result);
-                    return;
-                }
-
-                OutputGrid.SuspendLayout();
-
-                foreach (var field in result.Fields)
-                {
-                    OutputGrid.Columns.Add(field.Name, field.Name);
-                }
-
-                int maxRowsToLoad = 100;
-                foreach (var row in result.Rows)
-                {
-                    var rowValues = new List<string>();
-
-                    for (int fieldIndex = 0; fieldIndex < result.Fields.Count; fieldIndex++)
-                    {
-                        var fieldValue = row.Values[fieldIndex];
-                        rowValues.Add(fieldValue ?? string.Empty);
-                    }
-
-                    OutputGrid.Rows.Add(rowValues.ToArray());
-
-                    maxRowsToLoad--;
-                    if (maxRowsToLoad <= 0)
-                    {
-                        break;
-                    }
-                }
-
-                OutputGrid.ResumeLayout();
+                dgv.Dispose();
             }
-            catch (Exception ex)
+            ResultsPanel.Controls.Clear();
+
+            int spacing = 10;
+            int totalSpacing = (numDataGridViews - 1) * spacing;
+            int availableHeight = ResultsPanel.Height - totalSpacing;
+            int dataGridViewTop = 0;
+
+            int dataGridViewHeight = availableHeight / 2;
+
+            if (dataGridViewHeight < 100)
             {
-                MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                dataGridViewHeight = 100;
+            }
+
+            for (int i = 0; i < numDataGridViews; i++)
+            {
+                var dataGridView = new DataGridView()
+                {
+                    AllowUserToAddRows = false,
+                    AllowDrop = false,
+                    AllowUserToDeleteRows = false,
+                    ShowEditingIcon = false,
+                    ShowCellErrors = false,
+                    ShowCellToolTips = false,
+                    ReadOnly = true,
+                    AllowUserToOrderColumns = true,
+                    AllowUserToResizeRows = true,
+                    AllowUserToResizeColumns = true,
+                    Height = dataGridViewHeight
+                };
+
+                results.Add(dataGridView);
+
+                dataGridView.Width = ResultsPanel.Width;
+                dataGridView.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+
+                if (numDataGridViews > 1)
+                {
+                    dataGridView.Dock = DockStyle.Top;
+                }
+                else
+                {
+                    dataGridView.Dock = DockStyle.Fill;
+                }
+
+                // Add columns and data to the DataGridView (optional).
+                dataGridView.Columns.Add("Column1", "Column 1");
+                dataGridView.Columns.Add("Column2", "Column 2");
+                dataGridView.Rows.Add("Row 1 - " + i, "Value " + i);
+
+                ResultsPanel.Controls.Add(dataGridView);
+
+                dataGridViewTop += dataGridView.Height + spacing;
+            }
+
+            return results;
+        }
+
+        private void PopulateResultsGrid(KbQueryResultCollection resultCollection)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action<KbQueryResultCollection>(PopulateResultsGrid), resultCollection);
+                return;
+            }
+
+            var results = resultCollection.Collection.Where(o => o.Rows.Any()).ToList();
+
+            var outputGrids = AddEvenlyDistributedDataGridViews(results.Count());
+
+            for (int i = 0; i < results.Count; i++)
+            {
+                var result = results[i];
+                var outputGrid = outputGrids[i];
+
+                try
+                {
+                    if (result == null || result.Rows.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    outputGrid.SuspendLayout();
+
+                    foreach (var field in result.Fields)
+                    {
+                        outputGrid.Columns.Add(field.Name, field.Name);
+                    }
+
+                    int maxRowsToLoad = 100;
+                    foreach (var row in result.Rows)
+                    {
+                        var rowValues = new List<string>();
+
+                        for (int fieldIndex = 0; fieldIndex < result.Fields.Count; fieldIndex++)
+                        {
+                            var fieldValue = row.Values[fieldIndex];
+                            rowValues.Add(fieldValue ?? string.Empty);
+                        }
+
+                        outputGrid.Rows.Add(rowValues.ToArray());
+
+                        maxRowsToLoad--;
+                        if (maxRowsToLoad <= 0)
+                        {
+                            break;
+                        }
+                    }
+
+                    outputGrid.ResumeLayout();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 

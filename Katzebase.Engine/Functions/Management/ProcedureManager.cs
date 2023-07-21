@@ -37,12 +37,12 @@ namespace Katzebase.Engine.Functions.Management
             }
         }
 
-        internal void CreateCustomProcedure(Transaction transaction, string schemaName, string objectName, List<PhysicalProcedureParameter> parameters, string body)
+        internal void CreateCustomProcedure(Transaction transaction, string schemaName, string objectName, List<PhysicalProcedureParameter> parameters, List<string> Batches)
         {
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             var physicalProcedureCatalog = Acquire(transaction, physicalSchema, LockOperation.Write);
 
-            var batches = KbUtility.SplitQueryBatches(body);
+            //var batches = KbUtility.SplitQueryBatches(body);
 
             var physicalProcesure = physicalProcedureCatalog.GetByName(objectName);
             if (physicalProcesure == null)
@@ -54,7 +54,7 @@ namespace Katzebase.Engine.Functions.Management
                     Created = DateTime.UtcNow,
                     Modfied = DateTime.UtcNow,
                     Parameters = parameters,
-                    Batches = batches,
+                    Batches = Batches,
                 };
 
                 physicalProcedureCatalog.Add(physicalProcesure);
@@ -64,7 +64,7 @@ namespace Katzebase.Engine.Functions.Management
             else
             {
                 physicalProcesure.Parameters = parameters;
-                physicalProcesure.Batches = batches;
+                physicalProcesure.Batches = Batches;
                 physicalProcesure.Modfied = DateTime.UtcNow;
 
                 core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), physicalProcedureCatalog);
@@ -95,7 +95,7 @@ namespace Katzebase.Engine.Functions.Management
             return procedureCatalog.Collection.Where(o => o.Name.ToLower() == procedureName).FirstOrDefault();
         }
 
-        internal KbQueryResult ExecuteProcedure(Transaction transaction, FunctionParameterBase procedureCall)
+        internal KbQueryResultCollection ExecuteProcedure(Transaction transaction, FunctionParameterBase procedureCall)
         {
             string procedureName = string.Empty;
 
@@ -126,16 +126,17 @@ namespace Katzebase.Engine.Functions.Management
                     case "clearcache":
                         {
                             core.Cache.Clear();
-                            return new KbQueryResult();
+                            return new KbQueryResultCollection();
                         }
                     case "releasecacheallocations":
                         {
                             GC.Collect();
-                            return new KbQueryResult();
+                            return new KbQueryResultCollection();
                         }
                     case "showcachepartitions":
                         {
-                            var result = new KbQueryResult();
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
 
                             result.AddField("Partition");
                             result.AddField("Allocations");
@@ -151,11 +152,12 @@ namespace Katzebase.Engine.Functions.Management
                                 result.AddRow(values);
                             }
 
-                            return result;
+                            return collection;
                         }
                     case "showhealthcounters":
                         {
-                            var result = new KbQueryResult();
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
 
                             result.AddField("Counter");
                             result.AddField("Instance");
@@ -170,10 +172,18 @@ namespace Katzebase.Engine.Functions.Management
                                 result.AddRow(values);
                             }
 
-                            return result;
+                            return collection;
                         }
                     case "showwaitinglocks":
                         {
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
+
+                            result.AddField("ProcessId");
+                            result.AddField("LockType");
+                            result.AddField("Operation");
+                            result.AddField("ObjectName");
+
                             var waitingForLocks = core.Locking.Locks.CloneTransactionWaitingForLocks().ToList();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
@@ -181,13 +191,6 @@ namespace Katzebase.Engine.Functions.Management
                             {
                                 waitingForLocks = waitingForLocks.Where(o => o.Key.ProcessId == processId).ToList();
                             }
-
-                            var result = new KbQueryResult();
-
-                            result.AddField("ProcessId");
-                            result.AddField("LockType");
-                            result.AddField("Operation");
-                            result.AddField("ObjectName");
 
                             foreach (var waitingForLock in waitingForLocks)
                             {
@@ -201,13 +204,17 @@ namespace Katzebase.Engine.Functions.Management
                             }
 
 
-                            return result;
+                            return collection;
                         }
 
                     case "showblocks":
                         {
-                            var procCall = (FunctionWithParams)procedureCall;
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
 
+                            result.AddField("ProcessId");
+
+                            var procCall = (FunctionWithParams)procedureCall;
                             var transactions = core.Transactions.CloneTransactions();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
@@ -215,10 +222,6 @@ namespace Katzebase.Engine.Functions.Management
                             {
                                 transactions = transactions.Where(o => o.ProcessId == processId).ToList();
                             }
-
-                            var result = new KbQueryResult();
-
-                            result.AddField("ProcessId");
 
                             foreach (var tx in transactions)
                             {
@@ -233,11 +236,12 @@ namespace Katzebase.Engine.Functions.Management
                                 }
                             }
 
-                            return result;
+                            return collection;
                         }
                     case "showtransactions":
                         {
-                            var result = new KbQueryResult();
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
 
                             result.AddField("TxBlocked");
                             result.AddField("TxReferences");
@@ -275,11 +279,12 @@ namespace Katzebase.Engine.Functions.Management
                                 result.AddRow(values);
                             }
 
-                            return result;
+                            return collection;
                         }
                     case "showprocesses":
                         {
-                            var result = new KbQueryResult();
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
 
                             result.AddField("SessionId");
                             result.AddField("ProcessId");
@@ -328,17 +333,17 @@ namespace Katzebase.Engine.Functions.Management
                                 result.AddRow(values);
                             }
 
-                            return result;
+                            return collection;
                         }
                     case "clearhealthcounters":
                         {
                             core.Health.ClearCounters();
-                            return new KbQueryResult();
+                            return new KbQueryResultCollection();
                         }
                     case "checkpointhealthcounters":
                         {
                             core.Health.Checkpoint();
-                            return new KbQueryResult();
+                            return new KbQueryResultCollection();
                         }
                 }
             }
@@ -347,9 +352,7 @@ namespace Katzebase.Engine.Functions.Management
                 //Next check for user procedures in a schema:
                 KbUtility.EnsureNotNull(proc.PhysicalSchema);
                 KbUtility.EnsureNotNull(proc.PhysicalProcedure);
-                KbQueryResult resultWithRows = new();
-
-                var messages = new List<KbQueryResultMessage>();
+                KbQueryResultCollection collection = new();
 
                 int batchNumber = 0;
 
@@ -366,7 +369,7 @@ namespace Katzebase.Engine.Functions.Management
                         }
 
                         var batchStartTime = DateTime.UtcNow;
-                        var batchResults = core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batchText);
+                        var batchResults = core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batchText).Collection.Single();
                         var batchDuration = (DateTime.UtcNow - batchStartTime).TotalMilliseconds;
 
                         if (batchResults.Success != true)
@@ -374,22 +377,18 @@ namespace Katzebase.Engine.Functions.Management
                             throw new KbEngineException("Procedure batch was unsuccessful.");
                         }
 
-                        messages.AddRange(batchResults.Messages);
-
-                        messages.Add(new KbQueryResultMessage($"Procedure batch {batchNumber + 1} of {proc.PhysicalProcedure.Batches.Count} completed in {batchDuration:n0}ms.  ({batchResults.RowCount} rows affected)", KbConstants.KbMessageType.Verbose));
-
-                        if (batchResults.Rows != null && batchResults.Rows.Count > 0)
-                        {
-                            resultWithRows = batchResults;
-                        }
+                        batchResults.AddMessage($"Procedure batch {batchNumber + 1} of {proc.PhysicalProcedure.Batches.Count} completed in {batchDuration:n0}ms.  ({batchResults.RowCount} rows affected)", KbConstants.KbMessageType.Verbose);
                         batchNumber++;
+
+                        collection.Add(batchResults);
+
                     }
                     txRef.Commit();
                 }
 
-                resultWithRows.Messages = messages;
+                collection.Success = true;
 
-                return resultWithRows;
+                return collection;
             }
 
             throw new KbFunctionException($"Undefined procedure [{procedureName}].");

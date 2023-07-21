@@ -12,11 +12,23 @@ namespace Katzebase.Engine.Query
 {
     internal class StaticQueryParser
     {
-        static public PreparedQuery PrepareQuery(string queryText)
+        static public List<PreparedQuery> PrepareBatch(string queryText)
         {
-            PreparedQuery result = new PreparedQuery();
-
             var query = new QueryTokenizer(queryText);
+
+            var queries = new List<PreparedQuery>();
+
+            while (query.IsEnd() == false)
+            {
+                queries.Add(PrepareNextQuery(query));
+            }
+
+            return queries;
+        }
+
+        static public PreparedQuery PrepareNextQuery(QueryTokenizer query)
+        {
+            var result = new PreparedQuery();
 
             string token = query.GetNextToken().ToLower();
 
@@ -37,7 +49,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -59,7 +71,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -81,7 +93,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -103,7 +115,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -196,50 +208,36 @@ namespace Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: '('.");
                     }
 
-
                     if (query.Remainder().Last() != ')')
                     {
                         throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ')'.");
                     }
 
-                    int IndexOfWithSurroundingWhitespace(string input, string find, int startingIndex = 0)
+                    query.SkipNextChar(); // Skip the '('.
+
+                    var batches = new List<string>();
+
+                    int previousPosition = query.Position;
+
+                    while (query.IsEnd() == false)
                     {
-                        string pattern = @"\s*" + Regex.Escape(find.ToLower()) + @"\s*";
-
-                        Match match = Regex.Match(input.Substring(startingIndex).ToLower(), pattern);
-
-                        if (match.Success)
+                        if (query.NextCharacter == ')')
                         {
-                            return match.Index + startingIndex;
+                            query.SkipNextChar();
                         }
-                        return -1;
+                        else
+                        {
+                            _ = PrepareNextQuery(query);
+
+                            string queryText = query.Text.Substring(previousPosition, query.Position - previousPosition).Trim();
+                            batches.Add(queryText);
+
+                            previousPosition = query.Position;
+                            var nextToken = query.PeekNextToken();
+                        }
                     }
 
-
-                    queryText = queryText.Trim();
-
-                    int onIndex = IndexOfWithSurroundingWhitespace(queryText, "on");
-                    int asIndex = IndexOfWithSurroundingWhitespace(queryText, "as", onIndex);
-
-                    while (char.IsWhiteSpace(queryText[asIndex])) asIndex++;
-                    asIndex += 2; //Skip "as".
-                    while (char.IsWhiteSpace(queryText[asIndex])) asIndex++;
-                    if (queryText[asIndex] != '(')
-                    {
-                        throw new KbParserException("Invalid query. Found '" + queryText[asIndex] + "', expected: '('.");
-                    }
-
-                    if (queryText[queryText.Length - 1] != ')')
-                    {
-                        throw new KbParserException("Invalid query. Found '" + queryText[asIndex] + "', expected: ')'.");
-                    }
-
-                    string procedureBody = queryText.Substring(asIndex);
-                    procedureBody = procedureBody.Substring(1, procedureBody.Length - 2).Trim(); //Trim off the "("...")" and any whitespace.
-
-                    result.AddAttribute(PreparedQuery.QueryAttribute.Body, procedureBody);
-
-                    query.SkipToEnd();
+                    result.AddAttribute(PreparedQuery.QueryAttribute.Batches, batches);
                 }
                 else if (subQueryType == SubQueryType.Schema)
                 {
@@ -297,7 +295,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -343,7 +341,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -386,7 +384,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -423,8 +421,18 @@ namespace Katzebase.Engine.Query
 
                     while (true)
                     {
+                        var conditonToken = conditionTokenizer.PeekNextToken();
                         int previousTokenPosition = conditionTokenizer.Position;
-                        var conditonToken = conditionTokenizer.GetNextToken();
+
+                        if (Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        {
+                            //We found the beginning of a new statement, break here.
+                            conditionTokenizer.SetPosition(previousTokenPosition);
+                            query.SetPosition(previousTokenPosition);
+                            break;
+                        }
+
+                        conditionTokenizer.SkipNextToken();
 
                         if ((new string[] { "order", "group", "" }).Contains(conditonToken) && conditionTokenizer.IsNextToken("by"))
                         {
@@ -450,7 +458,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -487,7 +495,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -527,7 +535,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -670,7 +678,17 @@ namespace Katzebase.Engine.Query
                     while (true)
                     {
                         int previousTokenPosition = conditionTokenizer.Position;
-                        var conditonToken = conditionTokenizer.GetNextToken();
+                        var conditonToken = conditionTokenizer.PeekNextToken();
+
+                        if (Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        {
+                            //We found the beginning of a new statement, break here.
+                            conditionTokenizer.SetPosition(previousTokenPosition);
+                            query.SetPosition(previousTokenPosition);
+                            break;
+                        }
+
+                        conditionTokenizer.SkipNextToken();
 
                         if (((new string[] { "order", "group", "" }).Contains(conditonToken) && conditionTokenizer.IsNextToken("by"))
                             || conditonToken == string.Empty)
@@ -755,7 +773,15 @@ namespace Katzebase.Engine.Query
                     while (true)
                     {
                         int previousTokenPosition = query.Position;
-                        var fieldToken = query.GetNextToken();
+                        var fieldToken = query.PeekNextToken();
+
+                        if (Enum.TryParse(fieldToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        {
+                            //We found the beginning of a new statement, break here.
+                            break;
+                        }
+
+                        query.SkipNextToken();
 
                         if (result.SortFields.Count > 0)
                         {
@@ -796,7 +822,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -944,7 +970,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -952,7 +978,7 @@ namespace Katzebase.Engine.Query
             #region Kill -----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Kill)
             {
-                string referencedProcessId = query.Remainder();
+                string referencedProcessId = query.GetNextToken();
                 try
                 {
                     result.AddAttribute(PreparedQuery.QueryAttribute.ProcessId, ulong.Parse(referencedProcessId));
@@ -960,6 +986,11 @@ namespace Katzebase.Engine.Query
                 catch
                 {
                     throw new KbParserException("Invalid query. Found '" + referencedProcessId + "', expected: numeric process id.");
+                }
+
+                if (query.IsEnd() == false)
+                {
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion
@@ -969,8 +1000,13 @@ namespace Katzebase.Engine.Query
             {
                 //Variable 
                 string variableName = query.GetNextToken();
-                string variableValue = query.Remainder();
+                string variableValue = query.GetNextToken();
                 result.VariableValues.Add(new(variableName, variableValue));
+
+                if (query.IsEnd() == false)
+                {
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                }
             }
             #endregion
 
@@ -1054,7 +1090,7 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsEnd() == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
                 }
             }
             #endregion

@@ -794,7 +794,7 @@ namespace Katzebase.Engine.Functions
                         parenScope--;
                         continue;
                     }
-                    else if (query.NextCharacter == null && parenScope == 0)
+                    else if (parenScope == 0)
                     {
                         return new PreparseField { Text = param.ToString(), IsComplex = true };
                     }

@@ -24,7 +24,7 @@ namespace Katzebase.Engine.Functions.Management
             }
         }
 
-        internal KbQueryResult ExecuteExec(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryResultCollection ExecuteExec(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -33,7 +33,6 @@ namespace Katzebase.Engine.Functions.Management
                     var result = core.Procedures.ExecuteProcedure(txRef.Transaction, preparedQuery.ProcedureCall);
 
                     txRef.Commit();
-                    result.RowCount = result.Rows.Count;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
                     result.Success = true;
                     return result;

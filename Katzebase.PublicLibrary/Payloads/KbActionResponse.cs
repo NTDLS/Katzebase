@@ -7,6 +7,7 @@
         public KbMetricCollection? Metrics { get; set; }
         public string? Explanation { get; set; }
         public int RowCount { get; set; }
+        public List<KbQueryResultMessage> Messages { get; set; } = new();
 
         public KbActionResponse()
         {

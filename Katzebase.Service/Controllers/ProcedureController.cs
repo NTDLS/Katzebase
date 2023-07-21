@@ -11,7 +11,7 @@ namespace Katzebase.Service.Controllers
     {
         [HttpPost]
         [Route("{sessionId}/ExecuteProcedure")]
-        public KbQueryResult ExecuteProcedure(Guid sessionId, [FromBody] string value)
+        public KbQueryResultCollection ExecuteProcedure(Guid sessionId, [FromBody] string value)
         {
             try
             {
@@ -25,7 +25,7 @@ namespace Katzebase.Service.Controllers
             }
             catch (Exception ex)
             {
-                return new KbQueryResult
+                return new KbQueryResultCollection
                 {
                     ExceptionText = ex.Message,
                     Success = false

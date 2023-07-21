@@ -1,4 +1,5 @@
-﻿using Katzebase.PublicLibrary.Payloads;
+﻿using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
 
 namespace Katzebase.Engine.Query.Management
 {
@@ -23,27 +24,49 @@ namespace Katzebase.Engine.Query.Management
             }
         }
 
-        public KbQueryResult ExecuteStatementExplain(ulong processId, string statement)
+        public KbQueryResultCollection ExecuteStatementExplain(ulong processId, string statement)
         {
-            var preparedQuery = StaticQueryParser.PrepareQuery(statement);
-            return core.Query.ExplainQuery(processId, preparedQuery);
+            var results = new KbQueryResultCollection();
+            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
+            {
+                results.Add(core.Query.ExplainQuery(processId, preparedQuery));
+            }
+
+            results.Success = true;
+
+            return results;
         }
 
-        public KbQueryResult ExecuteStatementProcedure(ulong processId, KbProcedure procedure)
+        public KbQueryResultCollection ExecuteStatementProcedure(ulong processId, KbProcedure procedure)
         {
             return core.Query.ExecureProcedure(processId, procedure);
         }
 
-        public KbQueryResult ExecuteStatementQuery(ulong processId, string statement)
+        public KbQueryResultCollection ExecuteStatementQuery(ulong processId, string statement)
         {
-            var preparedQuery = StaticQueryParser.PrepareQuery(statement);
-            return core.Query.ExecuteQuery(processId, preparedQuery);
+            var results = new KbQueryResultCollection();
+
+            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
+            {
+                results.Add(core.Query.ExecuteQuery(processId, preparedQuery));
+            }
+
+            results.Success = true;
+
+            return results;
         }
 
-        public KbActionResponse ExecuteStatementNonQuery(ulong processId, string statement)
+        public KbActionResponseCollection ExecuteStatementNonQuery(ulong processId, string statement)
         {
-            var preparedQuery = StaticQueryParser.PrepareQuery(statement);
-            return core.Query.ExecuteNonQuery(processId, preparedQuery);
+            var results = new KbActionResponseCollection();
+            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
+            {
+                results.Add(core.Query.ExecuteNonQuery(processId, preparedQuery));
+            }
+
+            results.Success = true;
+
+            return results;
         }
     }
 }
