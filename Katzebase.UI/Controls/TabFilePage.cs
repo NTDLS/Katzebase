@@ -529,15 +529,12 @@ namespace Katzebase.UI.Controls
                     dataGridView.Dock = DockStyle.Fill;
                 }
 
-                // Add columns and data to the DataGridView (optional).
-                dataGridView.Columns.Add("Column1", "Column 1");
-                dataGridView.Columns.Add("Column2", "Column 2");
-                dataGridView.Rows.Add("Row 1 - " + i, "Value " + i);
-
                 ResultsPanel.Controls.Add(dataGridView);
 
                 dataGridViewTop += dataGridView.Height + spacing;
             }
+
+            results.Reverse();
 
             return results;
         }

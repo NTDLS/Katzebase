@@ -11,7 +11,7 @@
                 "ClearCache:",
                 "ReleaseCacheAllocations:",
                 "ShowCachePartitions:",
-                "ShowGealthCounters:",
+                "ShowhealthCounters:",
                 "ShowWaitingLocks:Numeric/processId=null",
                 "ShowBlocks:Numeric/processId=null",
                 "ShowTransactions:Numeric/processId=null",

@@ -34,7 +34,6 @@ namespace Katzebase.Engine.Functions.Management
 
                     txRef.Commit();
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
                     return result;
                 }
             }

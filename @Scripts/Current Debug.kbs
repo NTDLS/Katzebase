@@ -1,8 +1,23 @@
+set TraceWaitTimes true
+set MinQueryThreads 1
+set MaxQueryThreads 10
+set QueryThreadWeight 2.0
+
+exec ClearCache
+exec ReleaseCacheAllocations
+exec ShowCachePartitions
+exec ShowHealthCounters
+exec ClearHealthCounters
+exec CheckpointHealthCounters
+exec ShowBlocks(5)
+exec ShowTransactions
+exec ShowWaitingLocks
+
 EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
---EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
---EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
---EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 
 /*
 set TraceWaitTimes false

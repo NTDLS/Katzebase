@@ -11,7 +11,7 @@ namespace Katzebase.PublicLibrary.Payloads
         public new List<KbQueryResultMessage> Messages => Collection.SelectMany(o => o.Messages).ToList();
         public new int RowCount => Collection.Sum(o => o.RowCount);
 
-        private bool _success = false;
+        private bool _success = true;
         public new bool Success
         {
             get

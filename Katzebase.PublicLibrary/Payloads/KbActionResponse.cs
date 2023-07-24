@@ -2,7 +2,7 @@
 {
     public class KbActionResponse : KbIActionResponse
     {
-        public bool Success { get; set; }
+        public bool Success { get; set; } = true;
         public string? ExceptionText { get; set; }
         public KbMetricCollection? Metrics { get; set; }
         public string? Explanation { get; set; }

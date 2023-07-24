@@ -31,9 +31,6 @@ namespace Katzebase.Engine.Query.Management
             {
                 results.Add(core.Query.ExplainQuery(processId, preparedQuery));
             }
-
-            results.Success = true;
-
             return results;
         }
 
@@ -45,14 +42,10 @@ namespace Katzebase.Engine.Query.Management
         public KbQueryResultCollection ExecuteStatementQuery(ulong processId, string statement)
         {
             var results = new KbQueryResultCollection();
-
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
             {
                 results.Add(core.Query.ExecuteQuery(processId, preparedQuery));
             }
-
-            results.Success = true;
-
             return results;
         }
 
@@ -63,9 +56,6 @@ namespace Katzebase.Engine.Query.Management
             {
                 results.Add(core.Query.ExecuteNonQuery(processId, preparedQuery));
             }
-
-            results.Success = true;
-
             return results;
         }
     }

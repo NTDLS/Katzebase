@@ -22,7 +22,6 @@ namespace Katzebase.Engine.Functions.Procedures
             }
         }
 
-
         public static AppliedProcedurePrototype ApplyProcedurePrototype(Core core, Transaction transaction, string procedureName, List<FunctionParameterBase> parameters)
         {
             if (_systemProcedureProtypes == null)
