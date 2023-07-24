@@ -229,6 +229,7 @@ namespace Katzebase.UI
             {
                 popupMenu.Items.Add("Create Index", FormUtility.TransparentImage(Resources.Asset));
                 popupMenu.Items.Add("Select top n...", FormUtility.TransparentImage(Resources.Workload));
+                popupMenu.Items.Add("Sample", FormUtility.TransparentImage(Resources.Workload));
                 popupMenu.Items.Add("-");
                 popupMenu.Items.Add("Delete", FormUtility.TransparentImage(Resources.Asset));
                 popupMenu.Items.Add("-");
@@ -295,8 +296,17 @@ namespace Katzebase.UI
                 {
                     var rootNode = TreeManagement.GetRootNode(node);
                     var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
-                    tabFilePage.Editor.Text = "set TraceWaitTimes false;\r\nGO\r\nSELECT TOP 100\r\n\t*\r\nFROM\r\n\t" + TreeManagement.CalculateFullSchema(node) + "\r\n";
+                    tabFilePage.Editor.Text = $"SELECT TOP 100\r\n\t*\r\nFROM\r\n\t{TreeManagement.FullSchemaPath(node)}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
+                }
+                else if (e.ClickedItem?.Text == "Sample")
+                {
+                    var rootNode = TreeManagement.GetRootNode(node);
+                    var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                    tabFilePage.Editor.Text = $"SAMPLE {TreeManagement.FullSchemaPath(node)} 100\r\n";
+                    tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
+                    tabFilePage.TabSplitContainer.SplitterDistance = 60;
+                    tabFilePage.ExecuteCurrentScriptAsync(false);
                 }
             }
             catch (Exception ex)

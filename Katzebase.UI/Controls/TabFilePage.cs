@@ -359,7 +359,7 @@ namespace Katzebase.UI.Controls
 
         private void ExecuteCurrentScriptSync(KbClient client, string scriptText, bool justExplain)
         {
-            WorkloadGroup group = new WorkloadGroup();
+            var group = new WorkloadGroup();
 
             try
             {

@@ -4,6 +4,7 @@ using Katzebase.Engine.Functions.Procedures.Persistent;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
+using System.Net;
 using System.Text.RegularExpressions;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.PublicLibrary.KbConstants;
@@ -463,20 +464,53 @@ namespace Katzebase.Engine.Query
             }
             #endregion
 
-            #region Sample ---------------------------------------------------------------------------------------------
-            else if (queryType == QueryType.Sample)
+            #region Analyze ---------------------------------------------------------------------------------------------
+            else if (queryType == QueryType.Analyze)
             {
-                if (query.IsNextToken("documents") == false)
+                if (query.IsNextToken("index") == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'documents'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index'.");
                 }
 
                 token = query.GetNextToken();
                 if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'documents'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index'.");
                 }
+
                 result.SubQueryType = subQueryType;
+
+                token = query.GetNextToken();
+                if (token == string.Empty)
+                {
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: object name.");
+                }
+                result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
+
+                if (query.IsNextTokenConsume("on") == false)
+                {
+                    throw new KbParserException("Invalid query. Found '" + query.Breadcrumbs.Last() + "', expected: 'on'.");
+                }
+
+                token = query.GetNextToken();
+                if (token == string.Empty)
+                {
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
+                }
+
+                result.Schemas.Add(new QuerySchema(token));
+
+                if (query.IsEnd() == false)
+                {
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                }
+            }
+            #endregion
+
+            #region Sample ---------------------------------------------------------------------------------------------
+            else if (queryType == QueryType.Sample)
+            {
+                result.SubQueryType = SubQueryType.Documents;
 
                 token = query.GetNextToken();
                 if (token == string.Empty)

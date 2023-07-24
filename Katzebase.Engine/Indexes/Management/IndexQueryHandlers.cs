@@ -3,6 +3,7 @@ using Katzebase.Engine.Query;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.Library.EngineConstants;
+using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Indexes.Management
 {
@@ -60,6 +61,34 @@ namespace Katzebase.Engine.Indexes.Management
             catch (Exception ex)
             {
                 core.Log.Write($"Failed to execute index drop for process id {processId}.", ex);
+                throw;
+            }
+        }
+
+        internal KbActionResponse ExecuteAnalyze(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                var session = core.Sessions.ByProcessId(processId);
+
+                using (var txRef = core.Transactions.Acquire(processId))
+                {
+                    var result = new KbActionResponse();
+                    string schemaName = preparedQuery.Schemas.First().Name;
+
+                    var analysis = core.Indexes.AnalyzeIndex(txRef.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+
+                    result.Messages.Add(new KbQueryResultMessage(analysis, KbMessageType.Verbose));
+
+                    txRef.Commit();
+                    result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    result.Success = true;
+                    return result;
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to execute index rebuild for process id {processId}.", ex);
                 throw;
             }
         }

@@ -1,3 +1,39 @@
+--REBUILD INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
+ANALYZE INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
+
+/*
+rebuild index IX_Product on AdventureWorks2012:Production:Product
+rebuild index IX_Name on AdventureWorks2012:Production:Product
+rebuild index IX_FlatTranslate_English on WordList:FlatTranslate
+rebuild index IX_Word on WordList:word
+rebuild index IX_Word_Id on WordList:word
+rebuild index IX_Synonym_SourceWord on WordList:synonym
+*/
+
+/*
+ANALYZE INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
+ANALYZE index IX_Product on AdventureWorks2012:Production:Product
+ANALYZE index IX_Name on AdventureWorks2012:Production:Product
+ANALYZE index IX_FlatTranslate_English on WordList:FlatTranslate
+ANALYZE index IX_Word on WordList:word
+ANALYZE index IX_Word_Id on WordList:word
+ANALYZE index IX_Synonym_SourceWord on WordList:synonym
+*/
+
+--Compress
+
+
+/*
+SAMPLE TopNotchERP:Address 100
+
+CREATE INDEX IX_TopNotchERP_Address_ParentKey
+(
+	Parent_Key
+) ON TopNotchERP:Address
+
+*/
+
+/*
 set TraceWaitTimes true
 set MinQueryThreads 1
 set MaxQueryThreads 10
@@ -18,6 +54,7 @@ EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Te
 EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+*/
 
 /*
 set TraceWaitTimes false

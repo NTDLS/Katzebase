@@ -60,6 +60,7 @@
             Select,
             SelectInto,
             Sample,
+            Analyze,
             List,
             Alter,
             Insert,

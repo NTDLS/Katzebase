@@ -74,7 +74,7 @@ namespace Katzebase.UI.Classes
             var rootNode = GetRootNode(node);
             using (var client = new KbClient(rootNode.ServerAddress))
             {
-                string schema = CalculateFullSchema(node);
+                string schema = FullSchemaPath(node);
 
                 node.Nodes.Clear(); //Dont clear the node until we hear back from the server.
 
@@ -171,7 +171,7 @@ namespace Katzebase.UI.Classes
 
         #endregion
 
-        public static string CalculateFullSchema(ServerTreeNode node)
+        public static string FullSchemaPath(ServerTreeNode node)
         {
             string result = node.Text;
 

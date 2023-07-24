@@ -115,15 +115,13 @@ namespace Katzebase.Engine.Query.Management
                     {
                         return core.Schemas.QueryHandlers.ExecuteList(processId, preparedQuery).ToCollection();
                     }
-                    else
-                    {
-                        throw new KbEngineException("Invalid list query subtype.");
-                    }
+                    throw new KbEngineException("Invalid list query subtype.");
                 }
                 else if (preparedQuery.QueryType == QueryType.Delete
                     || preparedQuery.QueryType == QueryType.Rebuild
                     || preparedQuery.QueryType == QueryType.Create
                     || preparedQuery.QueryType == QueryType.Set
+                    || preparedQuery.QueryType == QueryType.Analyze
                     || preparedQuery.QueryType == QueryType.Kill
                     || preparedQuery.QueryType == QueryType.Drop
                     || preparedQuery.QueryType == QueryType.Begin
@@ -152,6 +150,14 @@ namespace Katzebase.Engine.Query.Management
         {
             try
             {
+                if (preparedQuery.QueryType == QueryType.Analyze)
+                {
+                    if (preparedQuery.SubQueryType == SubQueryType.Index)
+                    {
+                        return core.Indexes.QueryHandlers.ExecuteAnalyze(processId, preparedQuery);
+                    }
+                    throw new KbEngineException("Invalid analyze query subtype.");
+                }
                 if (preparedQuery.QueryType == QueryType.Insert)
                 {
                     return core.Documents.QueryHandlers.ExecuteInsert(processId, preparedQuery);

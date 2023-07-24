@@ -137,6 +137,7 @@
 			<Word>order</Word>
 			<Word>rebuild</Word>
 			<Word>rollback</Word>
+			<Word>analyze</Word>
 			<Word>sample</Word>
 			<Word>schema</Word>
 			<Word>select</Word>

@@ -8,6 +8,7 @@ using Katzebase.Engine.Threading;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using System.Text;
 using static Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
@@ -79,6 +80,64 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
+        internal string AnalyzeIndex(Transaction transaction, string schemaName, string indexName)
+        {
+            try
+            {
+                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
+                if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
+                {
+                    throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                }
+
+                var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
+                physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
+
+                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
+
+                double diskSize = core.IO.GetDecompressedSizeTracked(physicalIindex.DiskPath);
+                double decompressedSiskSize = (new FileInfo(physicalIindex.DiskPath)).Length;
+
+                var baseNodes = DistillIndexBaseNodes(physicalIndexPages.Root);
+
+                var builder = new StringBuilder();
+                builder.AppendLine("Index Analysis {");
+                builder.AppendLine($"    Schema            : {physicalSchema.Name}");
+                builder.AppendLine($"    Name              : {physicalIindex.Name}");
+                builder.AppendLine($"    Unique            : {physicalIindex.IsUnique}");
+                builder.AppendLine($"    Created           : {physicalIindex.Created}");
+                builder.AppendLine($"    Modified          : {physicalIindex.Modfied}");
+                builder.AppendLine($"    Id                : {physicalIindex.Id}");
+                builder.AppendLine($"    Disk Path         : {physicalIindex.DiskPath}");
+                builder.AppendLine($"    Pages Size        : {(diskSize / 1024.0):N2}k");
+                builder.AppendLine($"    Disk Size         : {(decompressedSiskSize / 1024.0):N2}k");
+                builder.AppendLine($"    Compression Ratio : {((decompressedSiskSize / diskSize) * 100.0):N2}");
+                builder.AppendLine($"    Root Node Count   : {physicalIndexPages.Root.Children.Count()}");
+                builder.AppendLine($"    Min. Node Density : {baseNodes.Min(o => o.Documents?.Count ?? 0):N0}");
+                builder.AppendLine($"    Max. Node Density : {baseNodes.Max(o => o.Documents?.Count ?? 0):N0}");
+                builder.AppendLine($"    Avg. Node Density : {baseNodes.Average(o => o.Documents?.Count ?? 0):N2}");
+                builder.AppendLine($"    Document Count    : {baseNodes.Sum(o => o.Documents?.Count ?? 0):N0}");
+
+                builder.AppendLine("    Attributes {");
+                foreach (var attri in physicalIindex.Attributes)
+                {
+                    builder.AppendLine($"        {attri.Field}");
+                }
+                builder.AppendLine("    }");
+
+
+                builder.AppendLine("}");
+
+                return builder.ToString();
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to analyze index for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
         internal void RebuildIndex(Transaction transaction, string schemaName, string indexName)
         {
             try
@@ -94,6 +153,10 @@ namespace Katzebase.Engine.Indexes.Management
                 physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
 
                 RebuildIndex(transaction, physicalSchema, physicalIindex);
+
+                physicalIindex.Modfied = DateTime.UtcNow;
+
+                core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
             }
             catch (Exception ex)
             {
@@ -310,6 +373,63 @@ namespace Katzebase.Engine.Indexes.Management
             catch (Exception ex)
             {
                 core.Log.Write($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        private List<PhysicalIndexLeaf> DistillIndexBaseNodes(List<PhysicalIndexLeaf> physicalIndexLeaves)
+        {
+            var result = new List<PhysicalIndexLeaf>();
+
+            foreach (var leaf in physicalIndexLeaves)
+            {
+                result.AddRange(DistillIndexBaseNodes(leaf));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Traverse to the bottom of the index tree (from whatever starting point is passed in) and return a list of all nodes containing documents.
+        /// </summary>
+        /// <param name="indexEntires"></param>
+        /// <returns></returns>
+        private List<PhysicalIndexLeaf> DistillIndexBaseNodes(PhysicalIndexLeaf physicalIndexLeaf)
+        {
+            try
+            {
+                var result = new List<PhysicalIndexLeaf>();
+
+                void DistillIndexBaseNodesRecursive(PhysicalIndexLeaf physicalIndexLeaf)
+                {
+                    foreach (var child in physicalIndexLeaf.Children)
+                    {
+                        DistillIndexBaseNodesRecursive(child.Value);
+                    }
+
+                    if (physicalIndexLeaf?.Documents?.Any() == true)
+                    {
+                        result.Add(physicalIndexLeaf);
+                    }
+                }
+
+                if (physicalIndexLeaf?.Documents?.Any() == true)
+                {
+                    result.Add(physicalIndexLeaf);
+                }
+                else if (physicalIndexLeaf?.Children != null)
+                {
+                    foreach (var child in physicalIndexLeaf.Children)
+                    {
+                        DistillIndexBaseNodesRecursive(child.Value);
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to distill index base nodes.", ex);
                 throw;
             }
         }

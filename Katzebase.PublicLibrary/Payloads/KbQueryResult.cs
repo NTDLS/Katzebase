@@ -29,6 +29,7 @@ namespace Katzebase.PublicLibrary.Payloads
         {
             return new KbQueryResult()
             {
+                Messages = actionResponse.Messages,
                 RowCount = actionResponse.RowCount,
                 Success = actionResponse.Success,
                 ExceptionText = actionResponse.ExceptionText,

@@ -42,13 +42,45 @@ namespace Katzebase.Engine.IO
             }
         }
 
+        public long GetDecompressedSizeTracked(string filePath)
+        {
+            try
+            {
+                if (core.Settings.UseCompression)
+                {
+                    var serializedData = Compression.Decompress(File.ReadAllBytes(filePath));
+                    return serializedData.ToArray().Length;
+                }
+                else
+                {
+                    return (new FileInfo(filePath)).Length;
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to get non-tracked file length for {filePath}.", ex);
+                throw;
+            }
+        }
+
         public T GetPBufNonTracked<T>(string filePath)
         {
             try
             {
-                using (var file = File.OpenRead(filePath))
+                if (core.Settings.UseCompression)
                 {
-                    return ProtoBuf.Serializer.Deserialize<T>(file);
+                    var serializedData = Compression.Decompress(File.ReadAllBytes(filePath));
+                    using (var input = new MemoryStream(serializedData))
+                    {
+                        return ProtoBuf.Serializer.Deserialize<T>(input);
+                    }
+                }
+                else
+                {
+                    using (var file = File.OpenRead(filePath))
+                    {
+                        return ProtoBuf.Serializer.Deserialize<T>(file);
+                    }
                 }
             }
             catch (Exception ex)
@@ -131,14 +163,22 @@ namespace Katzebase.Engine.IO
                     else if (format == IOFormat.PBuf)
                     {
                         var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
-                        using (var file = File.OpenRead(filePath))
+                        if (core.Settings.UseCompression)
                         {
-                            ptIORead?.StopAndAccumulate();
-                            var ptDeserialize = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.Deserialize);
-                            deserializedObject = ProtoBuf.Serializer.Deserialize<T>(file);
-                            ptDeserialize?.StopAndAccumulate();
-                            file.Close();
+                            var serializedData = Compression.Decompress(File.ReadAllBytes(filePath));
+                            using (var input = new MemoryStream(serializedData))
+                            {
+                                deserializedObject = ProtoBuf.Serializer.Deserialize<T>(input);
+                            }
                         }
+                        else
+                        {
+                            using (var file = File.OpenRead(filePath))
+                            {
+                                deserializedObject = ProtoBuf.Serializer.Deserialize<T>(file);
+                            }
+                        }
+                        ptIORead?.StopAndAccumulate();
                     }
                     else
                     {
@@ -193,9 +233,21 @@ namespace Katzebase.Engine.IO
         {
             try
             {
-                using (var file = File.Create(filePath))
+                if (core.Settings.UseCompression)
                 {
-                    ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                    using (var output = new MemoryStream())
+                    {
+                        ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                        var compressedPbuf = Compression.Compress(output.ToArray());
+                        File.WriteAllBytes(filePath, compressedPbuf);
+                    }
+                }
+                else
+                {
+                    using (var file = File.Create(filePath))
+                    {
+                        ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                    }
                 }
             }
             catch (Exception ex)
@@ -203,7 +255,6 @@ namespace Katzebase.Engine.IO
                 core.Log.Write($"Failed to put non-tracked pbuf for file {filePath}.", ex);
                 throw;
             }
-
         }
 
         internal void PutJson(Transaction transaction, string filePath, object deserializedObject)
@@ -269,13 +320,24 @@ namespace Katzebase.Engine.IO
                     }
                     else if (format == IOFormat.PBuf)
                     {
-                        using (var file = File.Create(filePath))
+                        var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
+                        if (core.Settings.UseCompression)
                         {
-                            var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
-                            ProtoBuf.Serializer.Serialize(file, deserializedObject);
-                            ptSerialize?.StopAndAccumulate();
-                            file.Close();
+                            using (var output = new MemoryStream())
+                            {
+                                ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                                var compressedPbuf = Compression.Compress(output.ToArray());
+                                File.WriteAllBytes(filePath, compressedPbuf);
+                            }
                         }
+                        else
+                        {
+                            using (var file = File.Create(filePath))
+                            {
+                                ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                            }
+                        }
+                        ptSerialize?.StopAndAccumulate();
                     }
                     else
                     {
