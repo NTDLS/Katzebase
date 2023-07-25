@@ -101,6 +101,17 @@ namespace Katzebase.Engine.Indexes.Management
 
                 var baseNodes = DistillIndexBaseNodes(physicalIndexPages.Root);
 
+                int minDocumentsPerNode = baseNodes.Min(o => o.Documents?.Count ?? 0);
+                int maxDocumentsPerNode = baseNodes.Max(o => o.Documents?.Count) ?? 0;
+                int documentCount = baseNodes.Sum(o => o.Documents?.Count ?? 0);
+                double avgDocumentsPerNode = baseNodes.Average(o => o.Documents?.Count) ?? 0;
+                double selectivityScore = 100.0;
+
+                if (documentCount > 0)
+                {
+                    selectivityScore = 100.0 - ((avgDocumentsPerNode / documentCount) * 100.0);
+                }
+
                 var builder = new StringBuilder();
                 builder.AppendLine("Index Analysis {");
                 builder.AppendLine($"    Schema            : {physicalSchema.Name}");
@@ -113,11 +124,13 @@ namespace Katzebase.Engine.Indexes.Management
                 builder.AppendLine($"    Pages Size        : {(diskSize / 1024.0):N2}k");
                 builder.AppendLine($"    Disk Size         : {(decompressedSiskSize / 1024.0):N2}k");
                 builder.AppendLine($"    Compression Ratio : {((decompressedSiskSize / diskSize) * 100.0):N2}");
-                builder.AppendLine($"    Root Node Count   : {physicalIndexPages.Root.Children.Count()}");
-                builder.AppendLine($"    Min. Node Density : {baseNodes.Min(o => o.Documents?.Count ?? 0):N0}");
-                builder.AppendLine($"    Max. Node Density : {baseNodes.Max(o => o.Documents?.Count ?? 0):N0}");
-                builder.AppendLine($"    Avg. Node Density : {baseNodes.Average(o => o.Documents?.Count ?? 0):N2}");
-                builder.AppendLine($"    Document Count    : {baseNodes.Sum(o => o.Documents?.Count ?? 0):N0}");
+                builder.AppendLine($"    Root Node Count   : {physicalIndexPages.Root.Children.Count:N0}");
+                builder.AppendLine($"    Node Level Count  : {physicalIindex.Attributes.Count:N0}");
+                builder.AppendLine($"    Min. Node Density : {minDocumentsPerNode:N0}");
+                builder.AppendLine($"    Max. Node Density : {maxDocumentsPerNode:N0}" + (maxDocumentsPerNode == 1 ? " (unique)" : ""));
+                builder.AppendLine($"    Avg. Node Density : {avgDocumentsPerNode:N2}");
+                builder.AppendLine($"    Document Count    : {documentCount:N0}");
+                builder.AppendLine($"    Selectivity Score : {selectivityScore:N4}%");
 
                 builder.AppendLine("    Attributes {");
                 foreach (var attri in physicalIindex.Attributes)
@@ -723,7 +736,7 @@ namespace Katzebase.Engine.Indexes.Management
             try
             {
                 var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
-                InsertDocumentIntoIndex(transaction, physicalIindex, document, documentPointer, physicalIndexPages, true);
+                InsertDocumentIntoIndex(transaction, physicalIindex, physicalIndexPages, document, documentPointer, true);
             }
             catch (Exception ex)
             {
@@ -735,8 +748,8 @@ namespace Katzebase.Engine.Indexes.Management
         /// <summary>
         /// Inserts an index entry for a single document into a single index using a long lived index page catalog.
         /// </summary>
-        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalIndex physicalIindex,
-            PhysicalDocument document, DocumentPointer documentPointer, PhysicalIndexPages physicalIndexPages, bool flushPageCatalog)
+        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalIndex physicalIindex, PhysicalIndexPages physicalIndexPages,
+            PhysicalDocument document, DocumentPointer documentPointer, bool flushPageCatalog)
         {
             try
             {
@@ -836,7 +849,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                     lock (param.SyncObject)
                     {
-                        InsertDocumentIntoIndex(param.Transaction, param.PhysicalIindex, PhysicalDocument, documentPointer, param.PhysicalIndexPages, false);
+                        InsertDocumentIntoIndex(param.Transaction, param.PhysicalIindex, param.PhysicalIndexPages, PhysicalDocument, documentPointer, false);
                     }
                 }
             }

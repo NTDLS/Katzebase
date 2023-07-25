@@ -18,9 +18,24 @@ ANALYZE index IX_FlatTranslate_English on WordList:FlatTranslate
 ANALYZE index IX_Word on WordList:word
 ANALYZE index IX_Word_Id on WordList:word
 ANALYZE index IX_Synonym_SourceWord on WordList:synonym
+ANALYZE index IX_TopNotchERP_State on TopNotchERP:Address
+ANALYZE index IX_TopNotchERP_Zip on TopNotchERP:Address
+ANALYZE index IX_TopNotchERP_Inventory_InvtId on TopNotchERP:Inventory
+ANALYZE index IX_TopNotchERP_Inventory_Descr on TopNotchERP:Inventory
+ANALYZE index IX_TopNotchERP_Inventory_ClassId on TopNotchERP:Inventory
+ANALYZE index IX_TopNotchERP_Inventory_Comm on TopNotchERP:Inventory
+ANALYZE index IX_TopNotchERP_Inventory_LotFlag on TopNotchERP:Inventory
 */
-
+TopNotchERP:Inventory
 --Compress
+
+CREATE INDEX IX_TopNotchERP_Inventory_LotFlag
+(
+	LotFlag
+) ON TopNotchERP:Inventory
+
+
+
 
 
 /*
