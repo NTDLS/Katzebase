@@ -51,7 +51,8 @@ namespace Katzebase.Engine.Schemas.Management
 
                     txRef.Commit();
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }

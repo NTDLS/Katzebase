@@ -448,6 +448,11 @@ namespace Katzebase.UI.Controls
 
                     PopulateResultsGrid(result);
 
+                    foreach (var warning in result.Warnings)
+                    {
+                        AppendToOutput($"Warning: {warning}", Color.DarkOrange);
+                    }
+
                     foreach (var message in result.Messages)
                     {
                         if (message.MessageType == KbConstants.KbMessageType.Verbose)

@@ -15,11 +15,6 @@ namespace Katzebase.PublicLibrary.Payloads
             Fields.Add(new KbQueryField(name));
         }
 
-        public void AddMessage(string text, KbMessageType type)
-        {
-            Messages.Add(new KbQueryResultMessage(text, type));
-        }
-
         public void AddRow(List<string?> values)
         {
             Rows.Add(new KbQueryRow(values));
@@ -29,7 +24,7 @@ namespace Katzebase.PublicLibrary.Payloads
         {
             return new KbQueryResult()
             {
-                Messages = actionResponse.Messages,
+                //Messages = actionResponse.Messages,
                 RowCount = actionResponse.RowCount,
                 Success = actionResponse.Success,
                 ExceptionText = actionResponse.ExceptionText,

@@ -4,7 +4,7 @@
     {
         public List<KbActionResponse> Collection { get; set; } = new();
 
-        public new List<KbQueryResultMessage> Messages => Collection.SelectMany(o => o.Messages).ToList();
+        //public new List<KbQueryResultMessage> Messages => Collection.SelectMany(o => o.Messages).ToList();
 
         private bool _success = false;
         public new bool Success

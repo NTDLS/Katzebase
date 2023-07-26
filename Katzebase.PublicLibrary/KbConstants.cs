@@ -12,6 +12,11 @@
             Exception = 3 //An actual exception has been thrown.
         }
 
+        public enum KbTransactionWarning
+        {
+            ResultDisqualifiedByNullValue
+        }
+
         public enum KbMessageType
         {
             Verbose,

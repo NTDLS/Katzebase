@@ -41,7 +41,8 @@ namespace Katzebase.Engine.Indexes.Management
                     txRef.Commit();
                     result.RowCount = 0;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -66,7 +67,8 @@ namespace Katzebase.Engine.Indexes.Management
                     txRef.Commit();
                     result.RowCount = 0;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -92,7 +94,8 @@ namespace Katzebase.Engine.Indexes.Management
                     txRef.Commit();
                     result.RowCount = 0;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -116,7 +119,8 @@ namespace Katzebase.Engine.Indexes.Management
                     txRef.Commit();
                     result.RowCount = 0;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -140,7 +144,8 @@ namespace Katzebase.Engine.Indexes.Management
                     txRef.Commit();
                     result.RowCount = 0;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }

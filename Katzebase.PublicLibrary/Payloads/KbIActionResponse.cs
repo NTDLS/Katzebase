@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.PublicLibrary.Payloads
 {
@@ -9,5 +10,7 @@ namespace Katzebase.PublicLibrary.Payloads
         public KbMetricCollection? Metrics { get; set; }
         public string? Explanation { get; set; }
         public int RowCount { get; set; }
+        public List<KbQueryResultMessage> Messages { get; set; }
+        public HashSet<KbTransactionWarning> Warnings { get; set; }
     }
 }

@@ -54,7 +54,8 @@ namespace Katzebase.Engine.Indexes.Management
 
                     txRef.Commit();
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -78,11 +79,12 @@ namespace Katzebase.Engine.Indexes.Management
 
                     var analysis = core.Indexes.AnalyzeIndex(txRef.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
 
-                    result.Messages.Add(new KbQueryResultMessage(analysis, KbMessageType.Verbose));
+                    txRef.Transaction.AddMessage(analysis, KbMessageType.Verbose);
 
                     txRef.Commit();
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -108,7 +110,8 @@ namespace Katzebase.Engine.Indexes.Management
 
                     txRef.Commit();
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -164,7 +167,8 @@ namespace Katzebase.Engine.Indexes.Management
 
                     txRef.Commit();
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }

@@ -521,11 +521,18 @@ namespace Katzebase.Engine.Query
                 result.Schemas.Add(new QuerySchema(token));
 
                 token = query.GetNextToken();
-                if (int.TryParse(token, out int topCount) == false)
+                if (token != string.Empty)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: numeric top count.");
+                    if (int.TryParse(token, out int topCount) == false)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: numeric top count.");
+                    }
+                    result.RowLimit = topCount;
                 }
-                result.RowLimit = topCount;
+                else
+                {
+                    result.RowLimit = 100;
+                }
 
                 if (query.IsEnd() == false)
                 {

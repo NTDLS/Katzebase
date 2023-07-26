@@ -374,7 +374,7 @@ namespace Katzebase.Engine.Query.Searchers
             if (param.Query.Conditions.AllFields.Any())
             {
                 //Filter the rows by the global conditions.
-                resultingRows.Collection = ApplyQueryGlobalConditions(param, resultingRows);
+                resultingRows.Collection = ApplyQueryGlobalConditions(param.Transaction, param, resultingRows);
             }
         }
 
@@ -469,7 +469,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                 joinScopedContentCache.Add(currentSchemaKVP.Key.ToLower(), documentContentNextLevel);
 
-                SetSchemaIntersectionExpressionParameters(ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
+                SetSchemaIntersectionExpressionParameters(param.Transaction, ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
 
                 var ptEvaluate = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
@@ -513,23 +513,23 @@ namespace Katzebase.Engine.Query.Searchers
         /// <param name="expression"></param>
         /// <param name="conditions"></param>
         /// <param name="jContent"></param>
-        private static void SetSchemaIntersectionExpressionParameters(ref NCalc.Expression expression, Conditions conditions, Dictionary<string, Dictionary<string, string>> joinScopedContentCache)
+        private static void SetSchemaIntersectionExpressionParameters(Transaction transaction, ref NCalc.Expression expression, Conditions conditions, Dictionary<string, Dictionary<string, string>> joinScopedContentCache)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditions.Root.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetSchemaIntersectionExpressionParametersRecursive(ref expression, conditions, subExpression, joinScopedContentCache);
+                SetSchemaIntersectionExpressionParametersRecursive(transaction, ref expression, conditions, subExpression, joinScopedContentCache);
             }
         }
 
-        private static void SetSchemaIntersectionExpressionParametersRecursive(ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, Dictionary<string, string>> joinScopedContentCache)
+        private static void SetSchemaIntersectionExpressionParametersRecursive(Transaction transaction, ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, Dictionary<string, string>> joinScopedContentCache)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetSchemaIntersectionExpressionParametersRecursive(ref expression, conditions, subExpression, joinScopedContentCache);
+                SetSchemaIntersectionExpressionParametersRecursive(transaction, ref expression, conditions, subExpression, joinScopedContentCache);
             }
 
             foreach (var condition in conditionSubset.Conditions)
@@ -551,7 +551,7 @@ namespace Katzebase.Engine.Query.Searchers
                     throw new KbEngineException($"Field not found in document [{condition.Right.Value}].");
                 }
 
-                var singleConditionResult = Condition.IsMatch(leftDocumentValue.ToLower(), condition.LogicalQualifier, reftDocumentValue);
+                var singleConditionResult = Condition.IsMatch(transaction, leftDocumentValue.ToLower(), condition.LogicalQualifier, reftDocumentValue);
 
                 expression.Parameters[condition.ConditionKey] = singleConditionResult;
             }
@@ -678,14 +678,14 @@ namespace Katzebase.Engine.Query.Searchers
         /// <summary>
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
-        private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(LookupThreadParam param, SchemaIntersectionRowCollection inputResults)
+        private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(Transaction transaction, LookupThreadParam param, SchemaIntersectionRowCollection inputResults)
         {
             var outputResults = new List<SchemaIntersectionRow>();
             var expression = new NCalc.Expression(param.Query.Conditions.HighLevelExpressionTree);
 
             foreach (var inputResult in inputResults.Collection)
             {
-                SetQueryGlobalConditionsExpressionParameters(ref expression, param.Query.Conditions, inputResult.ConditionFields);
+                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, param.Query.Conditions, inputResult.ConditionFields);
 
                 var ptEvaluate = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
@@ -703,28 +703,28 @@ namespace Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Sets the parameters for the WHERE clasue expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
-        private static void SetQueryGlobalConditionsExpressionParameters(
+        private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction,
             ref NCalc.Expression expression, Conditions conditions, Dictionary<string, string?> conditionField)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditions.Root.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetQueryGlobalConditionsExpressionParameters(ref expression, conditions, subExpression, conditionField);
+                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subExpression, conditionField);
             }
         }
 
         /// <summary>
         /// Sets the parameters for the WHERE clasue expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
-        private static void SetQueryGlobalConditionsExpressionParameters(ref NCalc.Expression expression,
+        private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction, ref NCalc.Expression expression,
             Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, string?> conditionField)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetQueryGlobalConditionsExpressionParameters(ref expression, conditions, subExpression, conditionField);
+                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subExpression, conditionField);
             }
 
             foreach (var condition in conditionSubset.Conditions)
@@ -738,7 +738,7 @@ namespace Katzebase.Engine.Query.Searchers
                     //throw new KbEngineException($"Field not found in document [{condition.Left.Key}].");
                 }
 
-                expression.Parameters[condition.ConditionKey] = condition.IsMatch(value?.ToLower());
+                expression.Parameters[condition.ConditionKey] = condition.IsMatch(transaction, value?.ToLower());
             }
         }
 

@@ -1,5 +1,14 @@
 --REBUILD INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
-ANALYZE INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
+--ANALYZE INDEX IX_TopNotchERP_Inventory_OnHandQty ON TopNotchERP:Inventory
+--CREATE INDEX IX_TopNotchERP_Inventory_OnHandQty
+--(
+--	OnHandQty
+--) ON TopNotchERP:Inventory
+
+--SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty >= 1000 AND OnHandQty <= 3000
+SELECT OnHandQty FROM TopNotchERP:Inventory WHERE On_HandQty between 1000 and 3000
+
+
 
 /*
 rebuild index IX_Product on AdventureWorks2012:Production:Product
@@ -26,17 +35,6 @@ ANALYZE index IX_TopNotchERP_Inventory_ClassId on TopNotchERP:Inventory
 ANALYZE index IX_TopNotchERP_Inventory_Comm on TopNotchERP:Inventory
 ANALYZE index IX_TopNotchERP_Inventory_LotFlag on TopNotchERP:Inventory
 */
-TopNotchERP:Inventory
---Compress
-
-CREATE INDEX IX_TopNotchERP_Inventory_LotFlag
-(
-	LotFlag
-) ON TopNotchERP:Inventory
-
-
-
-
 
 /*
 SAMPLE TopNotchERP:Address 100

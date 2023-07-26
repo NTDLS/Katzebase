@@ -7,8 +7,10 @@ namespace Katzebase.PublicLibrary.Payloads
     /// </summary>
     public class KbQueryResultCollection : KbActionResponse
     {
-        public List<KbQueryResult> Collection { get; set; } = new();
         public new List<KbQueryResultMessage> Messages => Collection.SelectMany(o => o.Messages).ToList();
+        public new HashSet<KbTransactionWarning> Warnings => Collection.SelectMany(o => o.Warnings).ToHashSet();
+
+        public List<KbQueryResult> Collection { get; set; } = new();
         public new int RowCount => Collection.Sum(o => o.RowCount);
 
         private bool _success = true;
@@ -39,11 +41,6 @@ namespace Katzebase.PublicLibrary.Payloads
         public void Add(KbQueryResult result)
         {
             Collection.Add(result);
-        }
-
-        public void AddMessage(string text, KbMessageType type)
-        {
-            Messages.Add(new KbQueryResultMessage(text, type));
         }
 
         public static KbQueryResult FromActionResponse(KbActionResponse actionResponse)

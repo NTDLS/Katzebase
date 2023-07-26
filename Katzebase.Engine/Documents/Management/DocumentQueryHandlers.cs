@@ -42,7 +42,8 @@ namespace Katzebase.Engine.Documents.Management
                     txRef.Commit();
                     result.RowCount = result.Rows.Count;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -96,7 +97,8 @@ namespace Katzebase.Engine.Documents.Management
                     txRef.Commit();
                     result.RowCount = result.Rows.Count;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -132,7 +134,8 @@ namespace Katzebase.Engine.Documents.Management
                     txRef.Commit();
                     result.RowCount = preparedQuery.UpsertValues.Count;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -220,7 +223,8 @@ namespace Katzebase.Engine.Documents.Management
                     txRef.Commit();
                     result.RowCount = documentPointers.Count();
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -243,7 +247,8 @@ namespace Katzebase.Engine.Documents.Management
                     txRef.Commit();
                     result.RowCount = result.Rows.Count;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -266,7 +271,8 @@ namespace Katzebase.Engine.Documents.Management
                     txRef.Commit();
                     result.RowCount = result.Rows.Count;
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }
@@ -293,8 +299,9 @@ namespace Katzebase.Engine.Documents.Management
                     transaction.Commit();
                     result.RowCount = 0;
                     result.Metrics = transaction.PT?.ToCollection();
-                    result.Success = true;
-                return result;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
+                    return result;
                 }
                 */
             }
@@ -331,7 +338,8 @@ namespace Katzebase.Engine.Documents.Management
                     txRef.Commit();
                     result.RowCount = documentPointers.Count();
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Success = true;
+                    result.Messages = txRef.Transaction.Messages;
+                    result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }

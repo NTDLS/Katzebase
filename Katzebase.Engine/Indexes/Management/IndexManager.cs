@@ -84,8 +84,8 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
-                var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
+                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+                var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
                 if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
                 {
                     throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
@@ -94,7 +94,7 @@ namespace Katzebase.Engine.Indexes.Management
                 var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
                 physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
 
-                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
+                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Read);
 
                 double diskSize = core.IO.GetDecompressedSizeTracked(physicalIindex.DiskPath);
                 double decompressedSiskSize = (new FileInfo(physicalIindex.DiskPath)).Length;
@@ -103,8 +103,8 @@ namespace Katzebase.Engine.Indexes.Management
 
                 int minDocumentsPerNode = baseNodes.Min(o => o.Documents?.Count ?? 0);
                 int maxDocumentsPerNode = baseNodes.Max(o => o.Documents?.Count) ?? 0;
-                int documentCount = baseNodes.Sum(o => o.Documents?.Count ?? 0);
                 double avgDocumentsPerNode = baseNodes.Average(o => o.Documents?.Count) ?? 0;
+                int documentCount = baseNodes.Sum(o => o.Documents?.Count ?? 0);
                 double selectivityScore = 100.0;
 
                 if (documentCount > 0)
@@ -116,10 +116,10 @@ namespace Katzebase.Engine.Indexes.Management
                 builder.AppendLine("Index Analysis {");
                 builder.AppendLine($"    Schema            : {physicalSchema.Name}");
                 builder.AppendLine($"    Name              : {physicalIindex.Name}");
+                builder.AppendLine($"    Id                : {physicalIindex.Id}");
                 builder.AppendLine($"    Unique            : {physicalIindex.IsUnique}");
                 builder.AppendLine($"    Created           : {physicalIindex.Created}");
                 builder.AppendLine($"    Modified          : {physicalIindex.Modfied}");
-                builder.AppendLine($"    Id                : {physicalIindex.Id}");
                 builder.AppendLine($"    Disk Path         : {physicalIindex.DiskPath}");
                 builder.AppendLine($"    Pages Size        : {(diskSize / 1024.0):N2}k");
                 builder.AppendLine($"    Disk Size         : {(decompressedSiskSize / 1024.0):N2}k");
@@ -138,8 +138,6 @@ namespace Katzebase.Engine.Indexes.Management
                     builder.AppendLine($"        {attri.Field}");
                 }
                 builder.AppendLine("    }");
-
-
                 builder.AppendLine("}");
 
                 return builder.ToString();
@@ -235,23 +233,23 @@ namespace Katzebase.Engine.Indexes.Management
                     var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch);
 
                     if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => w.Key == conditionValue).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => w.Key != conditionValue).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, conditionValue) == false).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThan)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterAsDecimal(w.Key, conditionValue) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreater(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterOrEqualAsDecimal(w.Key, conditionValue) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterOrEqual(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.LessThan)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserAsDecimal(w.Key, conditionValue) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesser(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.LessThanOrEqual)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqualAsDecimal(w.Key, conditionValue) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqual(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.Like)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionValue) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotLike)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionValue) == false).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, conditionValue) == false).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.Between)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {conditionField.LogicalQualifier}");
 
                     ptIndexSeek?.StopAndAccumulate();
@@ -330,23 +328,23 @@ namespace Katzebase.Engine.Indexes.Management
                     var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch);
 
                     if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => w.Key == conditionField.Right.Value).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => w.Key != conditionField.Right.Value).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThan)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterAsDecimal(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreater(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterOrEqualAsDecimal(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterOrEqual(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.LessThan)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserAsDecimal(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesser(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.LessThanOrEqual)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqualAsDecimal(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqual(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.Like)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotLike)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.Between)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {conditionField.LogicalQualifier}");
 
                     ptIndexSeek?.StopAndAccumulate();

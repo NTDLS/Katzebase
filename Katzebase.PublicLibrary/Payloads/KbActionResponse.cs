@@ -1,4 +1,6 @@
-﻿namespace Katzebase.PublicLibrary.Payloads
+﻿using static Katzebase.PublicLibrary.KbConstants;
+
+namespace Katzebase.PublicLibrary.Payloads
 {
     public class KbActionResponse : KbIActionResponse
     {
@@ -8,6 +10,7 @@
         public string? Explanation { get; set; }
         public int RowCount { get; set; }
         public List<KbQueryResultMessage> Messages { get; set; } = new();
+        public HashSet<KbTransactionWarning> Warnings { get; set; } = new();
 
         public KbActionResponse()
         {

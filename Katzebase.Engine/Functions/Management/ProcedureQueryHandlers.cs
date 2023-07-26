@@ -34,6 +34,9 @@ namespace Katzebase.Engine.Functions.Management
 
                     txRef.Commit();
                     result.Metrics = txRef.Transaction.PT?.ToCollection();
+                    //The KbQueryResultCollection is a collection of resutls, each will have their own warnings and messages.
+                    //result.Messages = txRef.Transaction.Messages;
+                    //result.Warnings = txRef.Transaction.Warnings;
                     return result;
                 }
             }

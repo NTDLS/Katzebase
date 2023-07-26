@@ -5,13 +5,18 @@ using Katzebase.Engine.Locking;
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
 using static Katzebase.Engine.Library.EngineConstants;
+using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {
+        public HashSet<KbTransactionWarning> Warnings { get; private set; } = new();
+        public List<KbQueryResultMessage> Messages { get; set; } = new();
+
         public List<Atom> Atoms = new();
         public ulong ProcessId { get; set; }
         public DateTime StartTime { get; set; }
@@ -58,6 +63,16 @@ namespace Katzebase.Engine.Atomicity
                     return referenceCount;
                 }
             }
+        }
+
+        public void AddWarning(KbTransactionWarning warning)
+        {
+            Warnings.Add(warning);
+        }
+
+        public void AddMessage(string text, KbMessageType type)
+        {
+            Messages.Add(new KbQueryResultMessage(text, type));
         }
 
         internal List<ulong> CloneBlocks()
@@ -109,7 +124,6 @@ namespace Katzebase.Engine.Atomicity
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
 
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)

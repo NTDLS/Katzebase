@@ -7,6 +7,7 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.Library.EngineConstants;
+using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Functions.Management
 {
@@ -377,7 +378,7 @@ namespace Katzebase.Engine.Functions.Management
                             throw new KbEngineException("Procedure batch was unsuccessful.");
                         }
 
-                        batchResults.AddMessage($"Procedure batch {batchNumber + 1} of {proc.PhysicalProcedure.Batches.Count} completed in {batchDuration:n0}ms.  ({batchResults.RowCount} rows affected)", KbConstants.KbMessageType.Verbose);
+                        txRef.Transaction.AddMessage($"Procedure batch {batchNumber + 1} of {proc.PhysicalProcedure.Batches.Count} completed in {batchDuration:n0}ms.  ({batchResults.RowCount} rows affected)", KbConstants.KbMessageType.Verbose);
                         batchNumber++;
 
                         collection.Add(batchResults);
