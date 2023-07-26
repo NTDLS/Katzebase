@@ -29,15 +29,9 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Acquire(processId))
-                {
-                    var result = StaticSearcherMethods.SampleSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
-
-                    txRef.Commit();
-                    result.RowCount = result.Rows.Count;
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    return result;
-                }
+                using var txRef = core.Transactions.Acquire(processId);
+                var result = StaticSearcherMethods.SampleSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
+                return txRef.CommitAndApplyMetricsToResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
@@ -57,17 +51,9 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Acquire(processId))
-                {
-                    var result = StaticSearcherMethods.ListSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
-
-                    txRef.Commit();
-                    result.RowCount = result.Rows.Count;
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Messages = txRef.Transaction.Messages;
-                    result.Warnings = txRef.Transaction.Warnings;
-                    return result;
-                }
+                using var txRef = core.Transactions.Acquire(processId);
+                var result = StaticSearcherMethods.ListSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
+                return txRef.CommitAndApplyMetricsToResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
@@ -88,20 +74,13 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Acquire(processId))
+                using var txRef = core.Transactions.Acquire(processId);
+                var result = new KbActionResponseUInt()
                 {
-                    var result = new KbActionResponseUInt()
-                    {
-                        Id = core.Documents.InsertDocument(txRef.Transaction, schemaName, document.Content).DocumentId,
-                    };
+                    Value = core.Documents.InsertDocument(txRef.Transaction, schemaName, document.Content).DocumentId,
+                };
 
-                    txRef.Commit();
-                    result.RowCount = 1;
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Messages = txRef.Transaction.Messages;
-                    result.Warnings = txRef.Transaction.Warnings;
-                    return result;
-                }
+                return txRef.CommitAndApplyMetricsToResults(result, 1);
             }
             catch (Exception ex)
             {
@@ -121,19 +100,12 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Acquire(processId))
-                {
-                    var result = new KbDocumentCatalogCollection();
-                    var documentPointers = core.Documents.AcquireDocumentPointers(txRef.Transaction, schemaName, LockOperation.Read).ToList();
-                    result.Collection.AddRange(documentPointers.Select(o => new KbDocumentCatalogItem(o.DocumentId)));
+                using var txRef = core.Transactions.Acquire(processId);
+                var result = new KbDocumentCatalogCollection();
+                var documentPointers = core.Documents.AcquireDocumentPointers(txRef.Transaction, schemaName, LockOperation.Read).ToList();
 
-                    txRef.Commit();
-                    result.RowCount = documentPointers.Count;
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Messages = txRef.Transaction.Messages;
-                    result.Warnings = txRef.Transaction.Warnings;
-                    return result;
-                }
+                result.Collection.AddRange(documentPointers.Select(o => new KbDocumentCatalogItem(o.DocumentId)));
+                return txRef.CommitAndApplyMetricsToResults(result, documentPointers.Count);
             }
             catch (Exception ex)
             {
@@ -149,21 +121,13 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Acquire(processId))
-                {
-                    var result = new KbActionResponse();
-                    var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schemaName, LockOperation.Write);
-                    var documentPointers = core.Documents.AcquireDocumentPointers(txRef.Transaction, physicalSchema, LockOperation.Write).ToList();
-                    var pointersToDelete = documentPointers.Where(o => o.DocumentId == documentId);
-                    core.Documents.DeleteDocuments(txRef.Transaction, physicalSchema, pointersToDelete);
+                using var txRef = core.Transactions.Acquire(processId);
+                var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schemaName, LockOperation.Write);
+                var documentPointers = core.Documents.AcquireDocumentPointers(txRef.Transaction, physicalSchema, LockOperation.Write).ToList();
+                var pointersToDelete = documentPointers.Where(o => o.DocumentId == documentId);
 
-                    txRef.Commit();
-                    result.RowCount = documentPointers.Count;
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Messages = txRef.Transaction.Messages;
-                    result.Warnings = txRef.Transaction.Warnings;
-                    return result;
-                }
+                core.Documents.DeleteDocuments(txRef.Transaction, physicalSchema, pointersToDelete);
+                return txRef.CommitAndApplyMetricsToResults(documentPointers.Count);
             }
             catch (Exception ex)
             {

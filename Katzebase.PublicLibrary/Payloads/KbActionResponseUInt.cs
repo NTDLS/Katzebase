@@ -1,7 +1,16 @@
 ﻿namespace Katzebase.PublicLibrary.Payloads
 {
-    public class KbActionResponseUInt : KbActionResponse
+    public class KbActionResponseUInt : KbBaseActionResponse
     {
-        public uint Id { get; set; }
+        public uint Value { get; set; }
+
+        public KbActionResponseUInt(uint value)
+        {
+            Value = value;
+        }
+
+        public KbActionResponseUInt()
+        {
+        }
     }
 }

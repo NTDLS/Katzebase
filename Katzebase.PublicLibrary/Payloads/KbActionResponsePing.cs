@@ -1,6 +1,6 @@
 ﻿namespace Katzebase.PublicLibrary.Payloads
 {
-    public class KbActionResponsePing : KbActionResponse
+    public class KbActionResponsePing : KbBaseActionResponse
     {
         public Guid SessionId { get; set; }
         public ulong ProcessId { get; set; }

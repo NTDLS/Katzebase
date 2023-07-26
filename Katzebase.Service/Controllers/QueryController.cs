@@ -59,7 +59,7 @@ namespace Katzebase.Service.Controllers
 
         [HttpPost]
         [Route("{sessionId}/ExecuteNonQuery")]
-        public KbActionResponse ExecuteNonQuery(Guid sessionId, [FromBody] string value)
+        public KbActionResponseCollection ExecuteNonQuery(Guid sessionId, [FromBody] string value)
         {
             try
             {
@@ -73,7 +73,7 @@ namespace Katzebase.Service.Controllers
             }
             catch (Exception ex)
             {
-                return new KbActionResponseBoolean
+                return new KbActionResponseCollection
                 {
                     ExceptionText = ex.Message,
                     Success = false

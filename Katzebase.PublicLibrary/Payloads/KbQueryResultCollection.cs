@@ -5,13 +5,13 @@ namespace Katzebase.PublicLibrary.Payloads
     /// <summary>
     /// KbQueryResult is used to return a field-set and the associated row values.
     /// </summary>
-    public class KbQueryResultCollection : KbActionResponse
+    public class KbQueryResultCollection : KbBaseActionResponse
     {
         public new List<KbQueryResultMessage> Messages => Collection.SelectMany(o => o.Messages).ToList();
         public new Dictionary<KbTransactionWarning, HashSet<string>> Warnings => Collection.SelectMany(o => o.Warnings).ToDictionary(o => o.Key, o => o.Value);
+        public new int RowCount => Collection.Sum(o => o.RowCount);
 
         public List<KbQueryResult> Collection { get; set; } = new();
-        public new int RowCount => Collection.Sum(o => o.RowCount);
 
         private bool _success = true;
         public new bool Success

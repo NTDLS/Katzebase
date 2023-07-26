@@ -1,8 +1,8 @@
 ﻿namespace Katzebase.PublicLibrary.Payloads
 {
-    public class KbActionResponseCollection : KbActionResponse
+    public class KbActionResponseCollection : KbBaseActionResponse
     {
-        public List<KbActionResponse> Collection { get; set; } = new();
+        public List<KbBaseActionResponse> Collection { get; set; } = new();
 
         //public new List<KbQueryResultMessage> Messages => Collection.SelectMany(o => o.Messages).ToList();
 
@@ -19,7 +19,7 @@
             }
         }
 
-        public void Add(KbActionResponse result)
+        public void Add(KbBaseActionResponse result)
         {
             Collection.Add(result);
         }

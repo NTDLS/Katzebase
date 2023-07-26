@@ -30,20 +30,11 @@ namespace Katzebase.Engine.Sessions.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Acquire(processId))
-                {
-                    var result = new KbActionResponse();
+                using var txRef = core.Transactions.Acquire(processId);
+                var referencedProcessId = preparedQuery.Attribute<ulong>(PreparedQuery.QueryAttribute.ProcessId);
 
-                    var referencedProcessId = preparedQuery.Attribute<ulong>(PreparedQuery.QueryAttribute.ProcessId);
-
-                    core.Sessions.CloseByProcessId(referencedProcessId);
-
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Messages = txRef.Transaction.Messages;
-                    result.Warnings = txRef.Transaction.Warnings;
-                    return result;
-                }
+                core.Sessions.CloseByProcessId(referencedProcessId);
+                return txRef.CommitAndApplyMetricsToResults();
             }
             catch (Exception ex)
             {
@@ -56,42 +47,35 @@ namespace Katzebase.Engine.Sessions.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Acquire(processId))
+                using var txRef = core.Transactions.Acquire(processId);
+                var session = core.Sessions.ByProcessId(processId);
+
+                foreach (var variable in preparedQuery.VariableValues)
                 {
-                    var result = new KbActionResponse();
-                    var session = core.Sessions.ByProcessId(processId);
-
-                    foreach (var variable in preparedQuery.VariableValues)
+                    if (Enum.TryParse(variable.Name, true, out KbConnectionSetting connectionSetting) == false
+                        || Enum.IsDefined(typeof(KbConnectionSetting), connectionSetting) == false)
                     {
-                        if (Enum.TryParse(variable.Name, true, out KbConnectionSetting connectionSetting) == false
-                            || Enum.IsDefined(typeof(KbConnectionSetting), connectionSetting) == false)
-                        {
-                            throw new KbGenericException($"Unknown system variable: {variable.Name}.");
-                        }
-
-                        switch (connectionSetting)
-                        {
-                            case KbConnectionSetting.TraceWaitTimes:
-                                session.UpsertConnectionSetting(connectionSetting, Boolean.Parse(variable.Value) ? 1 : 0);
-                                break;
-                            case KbConnectionSetting.MinQueryThreads:
-                            case KbConnectionSetting.MaxQueryThreads:
-                            case KbConnectionSetting.QueryThreadWeight:
-                                session.UpsertConnectionSetting(connectionSetting, double.Parse(variable.Value));
-                                break;
-
-                            default:
-                                throw new KbNotImplementedException();
-                        }
-
+                        throw new KbGenericException($"Unknown system variable: {variable.Name}.");
                     }
 
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Messages = txRef.Transaction.Messages;
-                    result.Warnings = txRef.Transaction.Warnings;
-                    return result;
+                    switch (connectionSetting)
+                    {
+                        case KbConnectionSetting.TraceWaitTimes:
+                            session.UpsertConnectionSetting(connectionSetting, Boolean.Parse(variable.Value) ? 1 : 0);
+                            break;
+                        case KbConnectionSetting.MinQueryThreads:
+                        case KbConnectionSetting.MaxQueryThreads:
+                        case KbConnectionSetting.QueryThreadWeight:
+                            session.UpsertConnectionSetting(connectionSetting, double.Parse(variable.Value));
+                            break;
+
+                        default:
+                            throw new KbNotImplementedException();
+                    }
+
                 }
+
+                return txRef.CommitAndApplyMetricsToResults();
             }
             catch (Exception ex)
             {

@@ -1,6 +1,6 @@
 ﻿namespace Katzebase.PublicLibrary.Payloads
 {
-    public class KbActionResponseIndexes : KbActionResponse
+    public class KbActionResponseIndexes : KbBaseActionResponse
     {
         public List<KbIndex> List { get; set; } = new List<KbIndex>();
 

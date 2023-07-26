@@ -1,8 +1,8 @@
 ﻿namespace Katzebase.PublicLibrary.Payloads
 {
-    public class KbActionResponseStrings : KbActionResponse
+    public class KbActionResponseStrings : KbBaseActionResponse
     {
-        public List<string> Values { get; set; } = new List<string>();
+        public List<string> Values { get; set; } = new();
 
         public void Add(string value)
         {

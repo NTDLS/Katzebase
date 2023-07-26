@@ -52,7 +52,7 @@ namespace Katzebase.Service.Controllers
             }
             catch (Exception ex)
             {
-                return new KbActionResponseGuid
+                return new KbActionResponse
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -78,7 +78,7 @@ namespace Katzebase.Service.Controllers
             }
             catch (Exception ex)
             {
-                return new KbActionResponseGuid
+                return new KbActionResponse
                 {
                     ExceptionText = ex.Message,
                     Success = false

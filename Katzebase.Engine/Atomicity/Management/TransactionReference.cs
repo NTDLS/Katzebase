@@ -1,4 +1,6 @@
-﻿namespace Katzebase.Engine.Atomicity.Management
+﻿using Katzebase.PublicLibrary.Payloads;
+
+namespace Katzebase.Engine.Atomicity.Management
 {
     public class TransactionReference : IDisposable
     {
@@ -32,6 +34,36 @@
                     Transaction.Dispose();
                 }
             }
+        }
+
+        public KbActionResponse CommitAndApplyMetricsToResults(int rowCount)
+        {
+            Commit();
+
+            var result = new KbActionResponse
+            {
+                RowCount = rowCount,
+                Metrics = Transaction.PT?.ToCollection(),
+                Messages = Transaction.Messages,
+                Warnings = Transaction.Warnings
+            };
+            return result;
+        }
+
+        public KbActionResponse CommitAndApplyMetricsToResults()
+        {
+            return CommitAndApplyMetricsToResults(0);
+        }
+
+        public T CommitAndApplyMetricsToResults<T>(T result, int rowCount) where T : KbIActionResponse
+        {
+            Commit();
+
+            result.RowCount = rowCount;
+            result.Metrics = Transaction.PT?.ToCollection();
+            result.Messages = Transaction.Messages;
+            result.Warnings = Transaction.Warnings;
+            return result;
         }
 
         internal TransactionReference(Transaction transaction)

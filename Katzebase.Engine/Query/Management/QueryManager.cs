@@ -146,7 +146,7 @@ namespace Katzebase.Engine.Query.Management
             }
         }
 
-        internal KbActionResponse ExecuteNonQuery(ulong processId, PreparedQuery preparedQuery)
+        internal KbBaseActionResponse ExecuteNonQuery(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {

@@ -28,17 +28,9 @@ namespace Katzebase.Engine.Functions.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Acquire(processId))
-                {
-                    var result = core.Procedures.ExecuteProcedure(txRef.Transaction, preparedQuery.ProcedureCall);
-
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    //The KbQueryResultCollection is a collection of resutls, each will have their own warnings and messages.
-                    //result.Messages = txRef.Transaction.Messages;
-                    //result.Warnings = txRef.Transaction.Warnings;
-                    return result;
-                }
+                using var txRef = core.Transactions.Acquire(processId);
+                var result = core.Procedures.ExecuteProcedure(txRef.Transaction, preparedQuery.ProcedureCall);
+                return txRef.CommitAndApplyMetricsToResults(result, 0);
             }
             catch (Exception ex)
             {

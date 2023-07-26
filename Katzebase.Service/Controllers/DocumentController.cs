@@ -129,7 +129,7 @@ namespace Katzebase.Service.Controllers
             }
             catch (Exception ex)
             {
-                return new KbActionResponseUInt
+                return new KbActionResponse
                 {
                     ExceptionText = ex.Message,
                     Success = false

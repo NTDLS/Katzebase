@@ -5,7 +5,7 @@ namespace Katzebase.PublicLibrary.Payloads
     /// <summary>
     /// KbQueryResult is used to return a field-set and the associated row values.
     /// </summary>
-    public class KbQueryResult : KbActionResponse
+    public class KbQueryResult : KbBaseActionResponse
     {
         public List<KbQueryField> Fields { get; set; } = new();
         public List<KbQueryRow> Rows { get; set; } = new();
@@ -20,7 +20,7 @@ namespace Katzebase.PublicLibrary.Payloads
             Rows.Add(new KbQueryRow(values));
         }
 
-        public static KbQueryResult FromActionResponse(KbActionResponse actionResponse)
+        public static KbQueryResult FromActionResponse(KbBaseActionResponse actionResponse)
         {
             return new KbQueryResult()
             {

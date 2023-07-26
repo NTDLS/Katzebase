@@ -31,30 +31,24 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Acquire(processId))
+                using var txRef = core.Transactions.Acquire(processId);
+                var result = new KbQueryResult();
+
+                if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                 {
-                    var result = new KbQueryResult();
+                    var schemaList = core.Schemas.GetListByPreparedQuery(txRef.Transaction, preparedQuery.Schemas.Single().Name, preparedQuery.RowLimit);
 
-                    if (preparedQuery.SubQueryType == SubQueryType.Schemas)
-                    {
-                        var schemaList = core.Schemas.GetListByPreparedQuery(txRef.Transaction, preparedQuery.Schemas.Single().Name, preparedQuery.RowLimit);
+                    result.Fields.Add(new KbQueryField("Name"));
+                    result.Fields.Add(new KbQueryField("Path"));
 
-                        result.Fields.Add(new KbQueryField("Name"));
-                        result.Fields.Add(new KbQueryField("Path"));
-
-                        result.Rows.AddRange(schemaList.Select(o => new KbQueryRow(new List<string?> { o.Item1, o.Item2 })));
-                    }
-                    else
-                    {
-                        throw new KbEngineException("Invalid list query subtype.");
-                    }
-
-                    txRef.Commit();
-                    result.Metrics = txRef.Transaction.PT?.ToCollection();
-                    result.Messages = txRef.Transaction.Messages;
-                    result.Warnings = txRef.Transaction.Warnings;
-                    return result;
+                    result.Rows.AddRange(schemaList.Select(o => new KbQueryRow(new List<string?> { o.Item1, o.Item2 })));
                 }
+                else
+                {
+                    throw new KbEngineException("Invalid list query subtype.");
+                }
+
+                return txRef.CommitAndApplyMetricsToResults(result, 0);
             }
             catch (Exception ex)
             {
