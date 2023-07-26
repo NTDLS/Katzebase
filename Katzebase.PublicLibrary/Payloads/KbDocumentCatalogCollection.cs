@@ -6,7 +6,7 @@ namespace Katzebase.PublicLibrary.Payloads
     {
         public List<KbDocumentCatalogItem> Collection { get; set; } = new();
         public List<KbQueryResultMessage> Messages { get; set; } = new();
-        public HashSet<KbTransactionWarning> Warnings { get; set; } = new();
+        public Dictionary<KbTransactionWarning, HashSet<string>> Warnings { get; set; } = new();
         public bool Success { get; set; } = true;
         public string? ExceptionText { get; set; }
         public KbMetricCollection? Metrics { get; set; }

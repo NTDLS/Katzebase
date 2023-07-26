@@ -11,6 +11,6 @@ namespace Katzebase.PublicLibrary.Payloads
         public string? Explanation { get; set; }
         public int RowCount { get; set; }
         public List<KbQueryResultMessage> Messages { get; set; }
-        public HashSet<KbTransactionWarning> Warnings { get; set; }
+        public Dictionary<KbTransactionWarning, HashSet<string>> Warnings { get; set; }
     }
 }

@@ -1,7 +1,6 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.PublicLibrary.Exceptions;
 using System.Text.RegularExpressions;
-using static Katzebase.Engine.Atomicity.Transaction;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.PublicLibrary.KbConstants;
 

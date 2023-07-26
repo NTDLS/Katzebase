@@ -8,7 +8,7 @@ namespace Katzebase.PublicLibrary.Payloads
     public class KbQueryResultCollection : KbActionResponse
     {
         public new List<KbQueryResultMessage> Messages => Collection.SelectMany(o => o.Messages).ToList();
-        public new HashSet<KbTransactionWarning> Warnings => Collection.SelectMany(o => o.Warnings).ToHashSet();
+        public new Dictionary<KbTransactionWarning, HashSet<string>> Warnings => Collection.SelectMany(o => o.Warnings).ToDictionary(o => o.Key, o => o.Value);
 
         public List<KbQueryResult> Collection { get; set; } = new();
         public new int RowCount => Collection.Sum(o => o.RowCount);

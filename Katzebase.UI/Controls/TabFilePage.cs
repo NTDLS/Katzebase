@@ -450,7 +450,11 @@ namespace Katzebase.UI.Controls
 
                     foreach (var warning in result.Warnings)
                     {
-                        AppendToOutput($"Warning: {warning}", Color.DarkOrange);
+                        AppendToOutput($"Warning: {warning.Key}", Color.DarkOrange);
+                        foreach (var message in warning.Value)
+                        {
+                            AppendToOutput($"    > {message}", Color.DarkOrange);
+                        }
                     }
 
                     foreach (var message in result.Messages)

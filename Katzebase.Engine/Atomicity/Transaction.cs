@@ -14,7 +14,7 @@ namespace Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {
-        public HashSet<KbTransactionWarning> Warnings { get; private set; } = new();
+        public Dictionary<KbTransactionWarning, HashSet<string>> Warnings { get; private set; } = new();
         public List<KbQueryResultMessage> Messages { get; set; } = new();
 
         public List<Atom> Atoms = new();
@@ -65,9 +65,29 @@ namespace Katzebase.Engine.Atomicity
             }
         }
 
-        public void AddWarning(KbTransactionWarning warning)
+        public void AddWarning(KbTransactionWarning warning, string message = "")
         {
-            Warnings.Add(warning);
+            lock (Warnings)
+            {
+                if (Warnings.ContainsKey(warning) == false)
+                {
+                    var messages = new HashSet<string>();
+                    if (string.IsNullOrEmpty(message) == false)
+                    {
+                        messages.Add(message);
+                    }
+                    Warnings.Add(warning, messages);
+                }
+                else
+                {
+                    var obj = Warnings[warning];
+                    //No need to duplicate or blank any messages.
+                    if (string.IsNullOrEmpty(message) == false && obj.Any(o => o == message) == false)
+                    {
+                        Warnings[warning].Add(message);
+                    }
+                }
+            }
         }
 
         public void AddMessage(string text, KbMessageType type)
