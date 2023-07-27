@@ -190,20 +190,21 @@ namespace Katzebase.Engine.Query.Searchers
             //Get a list of all the fields we need to sory by.
             if (query.SortFields.Any() && threadParam.Results.Collection.Any())
             {
-                var sortingColumns = new List<(int fieldIndex, KbSortDirection sortDirection)>();
+                var modelAuxiliaryFields = threadParam.Results.Collection.First().AuxiliaryFields;
+
+                var sortingColumns = new List<(string fieldName, KbSortDirection sortDirection)>();
                 foreach (var sortField in query.SortFields.OfType<SortField>())
                 {
-                    var field = query.SelectFields.Where(o => o.Alias == sortField.Alias).FirstOrDefault();
-                    if (field == null)
+                    if (modelAuxiliaryFields.ContainsKey(sortField.Key) == false)
                     {
                         throw new KbEngineException($"Sort field '{sortField.Alias}' was not found.");
                     }
-                    sortingColumns.Add(new(field.Ordinal, sortField.SortDirection));
+                    sortingColumns.Add(new(sortField.Key, sortField.SortDirection));
                 }
 
                 //Sort the results:
                 var ptSorting = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Sorting);
-                threadParam.Results.Collection = threadParam.Results.Collection.OrderBy(row => row.Values, new ResultValueComparer(sortingColumns)).ToList();
+                threadParam.Results.Collection = threadParam.Results.Collection.OrderBy(row => row.AuxiliaryFields, new ResultValueComparer(sortingColumns)).ToList();
 
                 ptSorting?.StopAndAccumulate();
             }

@@ -2,23 +2,23 @@
 
 namespace Katzebase.Engine.Query.Sorting
 {
-    public class ResultValueComparer : IComparer<List<string?>>
+    public class ResultValueComparer : IComparer<Dictionary<string, string?>>
     {
-        private readonly List<(int fieldIndex, KbSortDirection direction)> sortingColumns;
+        private readonly List<(string fieldName, KbSortDirection direction)> sortingColumns;
 
-        public ResultValueComparer(List<(int fieldIndex, KbSortDirection sortDirection)> sortingColumns)
+        public ResultValueComparer(List<(string fieldName, KbSortDirection sortDirection)> sortingColumns)
         {
             this.sortingColumns = sortingColumns;
         }
 
-        public int Compare(List<string?>? x, List<string?>? y)
+        public int Compare(Dictionary<string, string?>? x, Dictionary<string, string?>? y)
         {
-            foreach (var (fieldIndex, sortDirection) in sortingColumns)
+            foreach (var (fieldName, sortDirection) in sortingColumns)
             {
-                if (fieldIndex >= x?.Count || fieldIndex >= y?.Count)
-                    return 0;
+                //if (fieldName >= x?.Count || fieldName >= y?.Count)
+                //    return 0;
 
-                int result = string.Compare(x?[fieldIndex], y?[fieldIndex], StringComparison.OrdinalIgnoreCase);
+                int result = string.Compare(x?[fieldName], y?[fieldName], StringComparison.OrdinalIgnoreCase);
 
                 if (result != 0)
                 {

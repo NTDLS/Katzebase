@@ -14,9 +14,11 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
         /// </summary>
         public HashSet<string> SchemaKeys { get; set; } = new();
 
-        //TODO: Can probably combine these:
+
+        /// <summary>
+        /// Auxiliary fields are values that may be used for method calls, sorting, grouping, etc. where the fields value may not necessarily be returned directly in the results.
+        /// </summary>
         public Dictionary<string, string?> AuxiliaryFields { get; set; } = new();
-        //public Dictionary<string, string?> AuxiliaryFields { get; set; } = new();
 
         public void InsertValue(string fieldNameForException, int ordinal, string? value)
         {
