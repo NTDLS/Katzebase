@@ -3,7 +3,7 @@
 namespace Katzebase.PublicLibrary.Payloads
 {
     /// <summary>
-    /// KbQueryResult is used to return a field-set and the associated row values.
+    /// KbQueryResult is used to return a collection of field-sets and their associated row values.
     /// </summary>
     public class KbQueryResultCollection : KbBaseActionResponse
     {
