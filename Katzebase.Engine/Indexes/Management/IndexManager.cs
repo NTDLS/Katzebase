@@ -843,7 +843,7 @@ namespace Katzebase.Engine.Indexes.Management
                         throw new KbNullException($"Value should not be null {nameof(param.PhysicalSchema.DiskPath)}.");
                     }
 
-                    var PhysicalDocument = core.Documents.AcquireDocument(param.Transaction, param.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
+                    var PhysicalDocument = core.Documents.AcquireDocument(param.Transaction, param.PhysicalSchema, documentPointer, LockOperation.Read);
 
                     lock (param.SyncObject)
                     {

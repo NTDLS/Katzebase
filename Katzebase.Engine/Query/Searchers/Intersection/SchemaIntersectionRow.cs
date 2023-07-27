@@ -15,8 +15,8 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
         public HashSet<string> SchemaKeys { get; set; } = new();
 
         //TODO: Can probably combine these:
-        public Dictionary<string, string?> ConditionFields { get; set; } = new();
-        public Dictionary<string, string?> MethodFields { get; set; } = new();
+        public Dictionary<string, string?> AuxiliaryFields { get; set; } = new();
+        //public Dictionary<string, string?> AuxiliaryFields { get; set; } = new();
 
         public void InsertValue(string fieldNameForException, int ordinal, string? value)
         {
@@ -50,8 +50,7 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
 
             newRow.Values.AddRange(Values);
 
-            newRow.ConditionFields = ConditionFields.ToDictionary(entry => entry.Key, entry => entry.Value);
-            newRow.MethodFields = MethodFields.ToDictionary(entry => entry.Key, entry => entry.Value);
+            newRow.AuxiliaryFields = AuxiliaryFields.ToDictionary(entry => entry.Key, entry => entry.Value);
             newRow.SchemaDocumentPointers = SchemaDocumentPointers.ToDictionary(entry => entry.Key, entry => entry.Value);
 
             return newRow;

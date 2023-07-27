@@ -25,11 +25,11 @@ namespace Katzebase.Engine.Query.Searchers.Mapping
         /// </summary>
         /// <param name="key">The alias of the schema</param>
         /// <param name="physicalSchema">The associated schema meta-data.</param>
-        /// <param name="docuemntCatalog">The document catalog contained in the associated schema.</param>
+        /// <param name="documentCatalog">The document catalog contained in the associated schema.</param>
         /// <param name="conditions">The conditons used to join this schema mapping to the one before it.</param>
-        public void Add(string prefix, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog docuemntCatalog, Conditions? conditions)
+        public void Add(string prefix, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog documentCatalog, Conditions? conditions)
         {
-            Add(prefix, new QuerySchemaMapItem(core, Transaction, this, physicalSchema, docuemntCatalog, conditions, prefix));
+            Add(prefix, new QuerySchemaMapItem(core, Transaction, this, physicalSchema, documentCatalog, conditions, prefix));
         }
 
         public int TotalDocumentCount()

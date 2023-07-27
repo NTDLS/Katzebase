@@ -3,6 +3,7 @@
     public static class EngineConstants
     {
         public static string DocumentPageExtension { get; } = ".kbpage";
+        public static string DocumentPageDocumentIdExtension { get; } = ".kbmap";
         public static string SchemaCatalogFile { get; } = "@schemas.kbcat";
         public static string DocumentPageCatalogFile { get; } = "@pages.kbcat";
         public static string IndexCatalogFile { get; } = "@indexes.kbcat";

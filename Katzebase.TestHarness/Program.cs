@@ -15,8 +15,9 @@ namespace Katzebase.TestHarness
         private static void ExportSQLServerDatabases()
         {
             var databasesNames = new string[]{
+                    "StackOverflow",
                     "WordList",
-                    "AdventureWorks2012",
+                    "AdventureWorks",
                     "TopNotchERP"
                 };
 
@@ -38,7 +39,14 @@ namespace Katzebase.TestHarness
             //(new Thread(() => { TestThread("TopNotchERP:Address"); })).Start();
             //(new Thread(() => { TestThread("AdventureWorks2012:dbo:AWBuildVersion"); })).Start();
 
-            //ExportSQLServerDatabases();
+            /*
+            using (var client = new KbClient("http://localhost:6858/"))
+            {
+                client.Schema.DropIfExists("StackOverflow2010");
+            }
+            */
+
+            ExportSQLServerDatabases();
 
             //TestSproc();
 

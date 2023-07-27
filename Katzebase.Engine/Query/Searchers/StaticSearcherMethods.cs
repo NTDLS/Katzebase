@@ -9,27 +9,27 @@ namespace Katzebase.Engine.Query.Searchers
     internal class StaticSearcherMethods
     {
         /// <summary>
-        /// Returns a random sample of all docuemnt fields from a schema.
+        /// Returns a random sample of all document fields from a schema.
         /// </summary>
         internal static KbQueryResult SampleSchemaDocuments(Core core, Transaction transaction, string schemaName, int rowLimit = -1)
         {
             var result = new KbQueryResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Write);
+            var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
-            if (physicalDocumentPageCatalog.PageMappings.Count > 0)
+            if (physicalDocumentPageCatalog.Catalog.Count > 0)
             {
                 var random = new Random(Environment.TickCount);
 
                 for (int i = 0; i < rowLimit; i++)
                 {
-                    int pageNumber = random.Next(0, physicalDocumentPageCatalog.PageMappings.Count - 1);
-                    var pageMap = physicalDocumentPageCatalog.PageMappings[pageNumber];
-
-                    int documentIndex = random.Next(0, pageMap.DocumentIDs.Count - 1);
-                    var documentId = pageMap.DocumentIDs.ToArray()[documentIndex];
-                    var physicalDocument = core.Documents.AcquireDocument(transaction, physicalSchema, documentId, LockOperation.Read);
+                    int pageNumber = random.Next(0, physicalDocumentPageCatalog.Catalog.Count - 1);
+                    var pageCatalog = physicalDocumentPageCatalog.Catalog[pageNumber];
+                    int documentIndex = random.Next(0, pageCatalog.DocumentCount - 1);
+                    var physicalDocumentPageMap = core.Documents.AcquireDocumentPageMap(transaction, physicalSchema, pageNumber, LockOperation.Read);
+                    var documentId = physicalDocumentPageMap.DocumentIDs.ToArray()[documentIndex];
+                    var physicalDocument = core.Documents.AcquireDocument(transaction, physicalSchema, new DocumentPointer(pageNumber, documentId), LockOperation.Read);
 
                     var documentContentNextLevel = physicalDocument.ToDictonary();
 
@@ -58,7 +58,7 @@ namespace Katzebase.Engine.Query.Searchers
         }
 
         /// <summary>
-        /// Returns a top list of all docuemnt fields from a schema.
+        /// Returns a top list of all document fields from a schema.
         /// </summary>
         internal static KbQueryResult ListSchemaDocuments(Core core, Transaction transaction, string schemaName, int topCount)
         {
@@ -71,7 +71,7 @@ namespace Katzebase.Engine.Query.Searchers
             {
                 var pageDocuent = documentPointers[i];
 
-                var persistDocument = core.Documents.AcquireDocument(transaction, physicalSchema, pageDocuent.DocumentId, LockOperation.Read);
+                var persistDocument = core.Documents.AcquireDocument(transaction, physicalSchema, pageDocuent, LockOperation.Read);
 
                 var jContent = persistDocument.ToDictonary();
 

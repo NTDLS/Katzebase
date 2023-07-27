@@ -41,7 +41,9 @@ namespace Katzebase.TestHarness
 
         public static void ExportSQLServerTableToKatzebase(string sqlServer, string sqlServerDatabase, string sqlServerTable, string katzeBaseServerAdddress)
         {
-            var client = new KbClient(katzeBaseServerAdddress);
+            int rowsPerTransaction = 10000;
+
+            using var client = new KbClient(katzeBaseServerAdddress);
 
             string kbSchema = $"{sqlServerDatabase}:{sqlServerTable.Replace("[", "").Replace("]", "").Replace("dbo.", "").Replace('.', ':')}";
 
@@ -87,7 +89,7 @@ namespace Katzebase.TestHarness
                                     Console.WriteLine($"{kbSchema}: {rowCount}");
                                 }
 
-                                if (rowCount > 0 && (rowCount % 10000) == 0)
+                                if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
                                 {
                                     Console.WriteLine("Comitting...");
                                     client.Transaction.Commit();

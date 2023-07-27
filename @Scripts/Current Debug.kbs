@@ -1,3 +1,22 @@
+SELECT TOP 5
+	P.Name,
+	TH.TransactionId,
+	P.ProductNumber,
+	PSC.Name as Category
+FROM
+	AdventureWorks:Production:Product as p
+INNER JOIN AdventureWorks:Production:TransactionHistory as th
+	ON p.ProductID = th.ProductID
+    AND p.ListPrice = th.ActualCost
+INNER JOIN AdventureWorks:Production:ProductSubcategory as PSC
+	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
+WHERE
+	PSC.Name = 'Road Bikes'
+	and TH.TransactionId > 200000
+ORDER BY
+	P.ProductNumber asc,
+	TH.TransactionId desc
+	
 --REBUILD INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
 --ANALYZE INDEX IX_TopNotchERP_Inventory_OnHandQty ON TopNotchERP:Inventory
 --CREATE INDEX IX_TopNotchERP_Inventory_OnHandQty
@@ -6,14 +25,14 @@
 --) ON TopNotchERP:Inventory
 
 --SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty >= 1000 AND OnHandQty <= 3000
-SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty between 1000 and 3000
-GO
-SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty between 1000 and 3000
+--SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty between 1000 and 3000
+--GO
+--SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty between 1000 and 3000
 
 
 /*
-rebuild index IX_Product on AdventureWorks2012:Production:Product
-rebuild index IX_Name on AdventureWorks2012:Production:Product
+rebuild index IX_Product on AdventureWorks:Production:Product
+rebuild index IX_Name on AdventureWorks:Production:Product
 rebuild index IX_FlatTranslate_English on WordList:FlatTranslate
 rebuild index IX_Word on WordList:word
 rebuild index IX_Word_Id on WordList:word
@@ -22,8 +41,8 @@ rebuild index IX_Synonym_SourceWord on WordList:synonym
 
 /*
 ANALYZE INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
-ANALYZE index IX_Product on AdventureWorks2012:Production:Product
-ANALYZE index IX_Name on AdventureWorks2012:Production:Product
+ANALYZE index IX_Product on AdventureWorks:Production:Product
+ANALYZE index IX_Name on AdventureWorks:Production:Product
 ANALYZE index IX_FlatTranslate_English on WordList:FlatTranslate
 ANALYZE index IX_Word on WordList:word
 ANALYZE index IX_Word_Id on WordList:word
@@ -63,17 +82,17 @@ exec ShowBlocks(5)
 exec ShowTransactions
 exec ShowWaitingLocks
 
-EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
-EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
-EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
-EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
-EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 */
 
 /*
 set TraceWaitTimes false
-EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
-EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 */
 /*
 select
@@ -137,10 +156,10 @@ where
 CREATE PROCEDURE UpdateProductByColorAndGetItsName
 (
 	@ProductColor as string
-) ON AdventureWorks2012:Production:Product AS
+) ON AdventureWorks:Production:Product AS
 (
 	UPDATE
-		AdventureWorks2012:Production:Product
+		AdventureWorks:Production:Product
 	SET
 		Name = Guid()
 	WHERE
@@ -151,7 +170,7 @@ CREATE PROCEDURE UpdateProductByColorAndGetItsName
 	INTO
 		#TempTable
 	from
-		AdventureWorks2012:Production:Product
+		AdventureWorks:Production:Product
 	WHERE
 		Color = @ProductColor;
 		
@@ -159,19 +178,19 @@ CREATE PROCEDURE UpdateProductByColorAndGetItsName
 )
 GO
 
-EXEC AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
+EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 GO
 */
 /*
 UPDATE
-	AdventureWorks2012:Production:Product
+	AdventureWorks:Production:Product
 SET
 	Name = Guid()
 	--Color = 'Test-Color'
 WHERE
 	Color = 'Test-Color';
 
-select * from 	AdventureWorks2012:Production:Product
+select * from 	AdventureWorks:Production:Product
 WHERE
 	Color = 'Test-Color';
 */
@@ -460,11 +479,11 @@ CREATE INDEX IX_FlatTranslate_English
 
 
 delete from
-AdventureWorks2012:Production:Product
+AdventureWorks:Production:Product
 where ProductId > 9999
 
 select * from
-AdventureWorks2012:Production:Product
+AdventureWorks:Production:Product
 where ProductId < 9999
 
 
@@ -504,39 +523,39 @@ CREATE INDEX Test2_Num1_Num2 (Num1, Num2) on Test2;
 
 --SET TraceWaitTimes on;
 
-insert into AdventureWorks2012:Production:Product
+insert into AdventureWorks:Production:Product
 (ProductId = '10000', Name = 'API Test Product 1'),
 (ProductId = '10002', Name = 'API Test Product 2'),
 (ProductId = '10003', Name = 'API Test Product 3'),
 (ProductId = '10004', Name = 'API Test Product 4'),
 (ProductId = '10005', Name = 'API Test Product 5');
 
---select * from AdventureWorks2012:Production:Product where ProductId > 9999
---delete from AdventureWorks2012:Production:Product where ProductId > 9999
+--select * from AdventureWorks:Production:Product where ProductId > 9999
+--delete from AdventureWorks:Production:Product where ProductId > 9999
 
 select
 	*
 from
-	AdventureWorks2012:Production:Product
+	AdventureWorks:Production:Product
 where
 	ProductId = 10005
 
 
 
---rebuild index IX_Product_Name on AdventureWorks2012:Production:Product
+--rebuild index IX_Product_Name on AdventureWorks:Production:Product
 
 
---INSERT INTO AdventureWorks2012:dbo:AWBuildVersion(SystemInformationID = 'API Test Product');
---select * from AdventureWorks2012:dbo:AWBuildVersion where SystemInformationID = 'API Test Product';
---delete from AdventureWorks2012:dbo:AWBuildVersion where SystemInformationID = 'API Test Product';
+--INSERT INTO AdventureWorks:dbo:AWBuildVersion(SystemInformationID = 'API Test Product');
+--select * from AdventureWorks:dbo:AWBuildVersion where SystemInformationID = 'API Test Product';
+--delete from AdventureWorks:dbo:AWBuildVersion where SystemInformationID = 'API Test Product';
 
 
 DELETE th FROM
-	AdventureWorks2012:Production:Product as p
-INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
+	AdventureWorks:Production:Product as p
+INNER JOIN AdventureWorks:Production:TransactionHistory as th
 	ON p.ProductID = th.ProductID
     AND p.ListPrice = th.ActualCost
-INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
+INNER JOIN AdventureWorks:Production:ProductSubcategory as PSC
 	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
 WHERE
 	PSC.Name = 'Road Bikes'
@@ -545,29 +564,29 @@ WHERE
 	
 
 delete from
-	AdventureWorks2012:Production:Product as p
-INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
+	AdventureWorks:Production:Product as p
+INNER JOIN AdventureWorks:Production:ProductSubcategory as PSC
 	ON psc.ProductSubcategoryID = p.ProductSubcategoryID;
 
 
 
 DELETE FROM
-	AdventureWorks2012:Production:Product as p
-INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
+	AdventureWorks:Production:Product as p
+INNER JOIN AdventureWorks:Production:TransactionHistory as th
 	ON p.ProductID = th.ProductID
     AND p.ListPrice = th.ActualCost
-INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
+INNER JOIN AdventureWorks:Production:ProductSubcategory as PSC
 	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
 WHERE
 	PSC.Name = 'Road Bikes'
 	and TH.TransactionId > 200000
 	AND P.Name = 'Road-750 Black, 52'
 	
---delete from AdventureWorks2012:Production:Product as p
+--delete from AdventureWorks:Production:Product as p
 --where p.Name = 'Bearing Ball'
 
 
-INSERT INTO AdventureWorks2012:Production:Product
+INSERT INTO AdventureWorks:Production:Product
 (
 	ProductId = 'Test-ProductId',
 	Name = 'Test-Name',
@@ -584,11 +603,11 @@ SELECT --Should yeild 457 records
 	P.ProductNumber,
 	PSC.Name as Category
 FROM
-	AdventureWorks2012:Production:Product as p
-INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
+	AdventureWorks:Production:Product as p
+INNER JOIN AdventureWorks:Production:TransactionHistory as th
 	ON p.ProductID = th.ProductID
     AND p.ListPrice = th.ActualCost
-INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
+INNER JOIN AdventureWorks:Production:ProductSubcategory as PSC
 	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
 WHERE
 	PSC.Name = 'Road Bikes'
@@ -601,44 +620,42 @@ ORDER BY
 
 
 
-select * from AdventureWorks2012:Production:TransactionHistory as TH
+select * from AdventureWorks:Production:TransactionHistory as TH
 WHERE TH.ProductID = 820
 
 
 
 drop index IX_TransactionHistory_ProductID_ActualCost
-on AdventureWorks2012:Production:TransactionHistory
-
-
+on AdventureWorks:Production:TransactionHistory
 
 CREATE INDEX IX_Product_ProductId_Name
 (
 	ProductId,
 	Name
-) ON AdventureWorks2012:Production:Product;
+) ON AdventureWorks:Production:Product
 CREATE INDEX IX_Product_Name
 (
 	Name
-) ON AdventureWorks2012:Production:Product;
+) ON AdventureWorks:Production:Product
 CREATE INDEX IX_TransactionHistory_ProductID_ActualCost
 (
 	ProductID,
 	ActualCost
-) ON AdventureWorks2012:Production:TransactionHistory;
+) ON AdventureWorks:Production:TransactionHistory
 CREATE UNIQUEKEY IX_ProductSubcategory_ProductSubcategoryID
 (
 	ProductSubcategoryID
-) ON AdventureWorks2012:Production:ProductSubcategory;
+) ON AdventureWorks:Production:ProductSubcategory
 CREATE UNIQUEKEY IX_TransactionHistory_TransactionId
 (
 	TransactionId
-) ON AdventureWorks2012:Production:TransactionHistory
+) ON AdventureWorks:Production:TransactionHistory
 
-REBUILD INDEX IX_Product_ProductId_Name ON AdventureWorks2012:Production:Product;
-REBUILD INDEX IX_Product_Name ON AdventureWorks2012:Production:Product;
-REBUILD INDEX IX_TransactionHistory_ProductID_ActualCost ON AdventureWorks2012:Production:TransactionHistory;
-REBUILD UNIQUEKEY IX_ProductSubcategory_ProductSubcategoryID ON AdventureWorks2012:Production:ProductSubcategory;
-REBUILD UNIQUEKEY IX_TransactionHistory_TransactionId ON AdventureWorks2012:Production:TransactionHistory
+REBUILD INDEX IX_Product_ProductId_Name ON AdventureWorks:Production:Product;
+REBUILD INDEX IX_Product_Name ON AdventureWorks:Production:Product;
+REBUILD INDEX IX_TransactionHistory_ProductID_ActualCost ON AdventureWorks:Production:TransactionHistory;
+REBUILD UNIQUEKEY IX_ProductSubcategory_ProductSubcategoryID ON AdventureWorks:Production:ProductSubcategory;
+REBUILD UNIQUEKEY IX_TransactionHistory_TransactionId ON AdventureWorks:Production:TransactionHistory
 
 
 
@@ -652,11 +669,11 @@ SELECT TOP 5
 	P.ProductNumber,
 	PSC.Name as Category
 FROM
-	AdventureWorks2012:Production:Product as p
-INNER JOIN AdventureWorks2012:Production:TransactionHistory as th
+	AdventureWorks:Production:Product as p
+INNER JOIN AdventureWorks:Production:TransactionHistory as th
 	ON p.ProductID = th.ProductID
     AND p.ListPrice = th.ActualCost
-INNER JOIN AdventureWorks2012:Production:ProductSubcategory as PSC
+INNER JOIN AdventureWorks:Production:ProductSubcategory as PSC
 	ON psc.ProductSubcategoryID = p.ProductSubcategoryID
 WHERE
 	PSC.Name = 'Road Bikes'

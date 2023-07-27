@@ -40,13 +40,26 @@ namespace Katzebase.Engine.Schemas
         public string SchemaCatalogFilePath()
             => Path.Combine(DiskPath, EngineConstants.SchemaCatalogFile);
 
+        public string DocumentPageCatalogItemFilePath(int pageNumber)
+            => Path.Combine(DiskPath, $"{pageNumber}{EngineConstants.DocumentPageExtension}");
+
         public string DocumentPageCatalogItemFilePath(DocumentPointer documentPointer)
-            => Path.Combine(DiskPath, $"{documentPointer.PageNumber}{EngineConstants.DocumentPageExtension}");
+            => DocumentPageCatalogItemFilePath(documentPointer.PageNumber);
 
-        public string DocumentPageCatalogItemDiskPath(PhysicalDocumentPageMap documentPageCatalogItem)
-            => Path.Combine(DiskPath, $"{documentPageCatalogItem.PageNumber}{EngineConstants.DocumentPageExtension}");
+        public string DocumentPageCatalogItemDiskPath(PhysicalDocumentPageCatalogItem documentPageCatalogItem)
+            => DocumentPageCatalogItemDiskPath(documentPageCatalogItem.PageNumber);
 
+        public string DocumentPageCatalogItemDiskPath(int pageNumber)
+            => Path.Combine(DiskPath, $"{pageNumber}{EngineConstants.DocumentPageExtension}");
 
+        public string PhysicalDocumentPageMapFilePath(int pageNumber)
+            => Path.Combine(DiskPath, $"{pageNumber}{EngineConstants.DocumentPageDocumentIdExtension}");
+
+        public string PhysicalDocumentPageMapFilePath(DocumentPointer documentPointer)
+            => PhysicalDocumentPageMapFilePath(documentPointer.PageNumber);
+
+        public string PhysicalDocumentPageMapFilePath(PhysicalDocumentPageCatalogItem pageCatalogItem)
+            => PhysicalDocumentPageMapFilePath(pageCatalogItem.PageNumber);
 
         public PhysicalSchema Clone()
         {

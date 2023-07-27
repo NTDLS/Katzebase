@@ -27,7 +27,7 @@ namespace Katzebase.Engine.Functions.Aggregate
                 foreach (var subParam in ((FunctionWithParams)param).Parameters)
                 {
                     var specificParam = (FunctionDocumentFieldParameter)subParam;
-                    var values = group.SelectMany(o => o.MethodFields.Where(m => m.Key == specificParam.Value.Key)).Select(s => s.Value);
+                    var values = group.SelectMany(o => o.AuxiliaryFields.Where(m => m.Key == specificParam.Value.Key)).Select(s => s.Value);
                     subParams.Add(new AggregateDecimalArrayParameter() { Values = values.Select(o => decimal.Parse(o ?? "0")).ToList() });
                 }
 
@@ -42,9 +42,9 @@ namespace Katzebase.Engine.Functions.Aggregate
             {
                 var specificParam = (FunctionDocumentFieldParameter)param;
 
-                var debug = group.Select(o => o.MethodFields.Where(m => m.Key == specificParam.Value.Key)).ToList();
+                var debug = group.Select(o => o.AuxiliaryFields.Where(m => m.Key == specificParam.Value.Key)).ToList();
 
-                var methodValue = group.Select(o => o.MethodFields.Where(m => m.Key == specificParam.Value.Key)).Single().Select(o => o.Value).Single();
+                var methodValue = group.Select(o => o.AuxiliaryFields.Where(m => m.Key == specificParam.Value.Key)).Single().Select(o => o.Value).Single();
                 return methodValue;
             }
             */

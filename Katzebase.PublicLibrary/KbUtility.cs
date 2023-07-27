@@ -32,7 +32,7 @@ namespace Katzebase.PublicLibrary
 
         public static List<string> SplitQueryBatches(string text)
         {
-            text = KbUtility.RemoveComments(text);
+            text = RemoveComments(text);
 
             var lines = text.Replace("\r\n", "\n").Split('\n').Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
 
@@ -51,7 +51,7 @@ namespace Katzebase.PublicLibrary
 
         public static List<string> SplitQueryBatchesOnGO(string text)
         {
-            text = KbUtility.RemoveComments(text);
+            text = RemoveComments(text);
 
             var lines = text.Replace("\r\n", "\n").Split('\n').Where(o => string.IsNullOrWhiteSpace(o) == false).ToList();
 
@@ -96,13 +96,13 @@ namespace Katzebase.PublicLibrary
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void EnsureNotNull<T>([NotNull] T? value, string? message = null, [CallerArgumentExpression("value")] string strName = "")
+        public static void EnsureNotNull<T>([NotNull] T? value, string? message = null, [CallerArgumentExpression(nameof(value))] string strName = "")
         {
             if (value == null)
             {
                 if (message == null)
                 {
-                    throw new KbNullException($"Value should not be null {nameof(strName)}.");
+                    throw new KbNullException($"Value should not be null: '{strName}'.");
                 }
                 else
                 {
@@ -112,29 +112,29 @@ namespace Katzebase.PublicLibrary
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void EnsureNotNullOrEmpty([NotNull] Guid? value, [CallerArgumentExpression("value")] string strName = "")
+        public static void EnsureNotNullOrEmpty([NotNull] Guid? value, [CallerArgumentExpression(nameof(value))] string strName = "")
         {
             if (value == null || value == Guid.Empty)
             {
-                throw new KbNullException($"Value should not be null or empty {nameof(strName)}.");
+                throw new KbNullException($"Value should not be null or empty: '{strName}'.");
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void EnsureNotNullOrEmpty([NotNull] string? value, [CallerArgumentExpression("value")] string strName = "")
+        public static void EnsureNotNullOrEmpty([NotNull] string? value, [CallerArgumentExpression(nameof(value))] string strName = "")
         {
             if (string.IsNullOrEmpty(value))
             {
-                throw new KbNullException($"Value should not be null or empty {nameof(strName)}.");
+                throw new KbNullException($"Value should not be null or empty: '{strName}'.");
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void EnsureNotNullOrWhiteSpace([NotNull] string? value, [CallerArgumentExpression("value")] string strName = "")
+        public static void EnsureNotNullOrWhiteSpace([NotNull] string? value, [CallerArgumentExpression(nameof(value))] string strName = "")
         {
             if (string.IsNullOrWhiteSpace(value))
             {
-                throw new KbNullException($"Value should not be null or empty {nameof(strName)}.");
+                throw new KbNullException($"Value should not be null or empty: '{strName}'.");
             }
         }
 

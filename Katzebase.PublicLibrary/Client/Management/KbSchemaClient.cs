@@ -70,6 +70,20 @@ namespace Katzebase.PublicLibrary.Client.Management
         }
 
         /// <summary>
+        /// Drops a single schema or an entire schema path if it exists.
+        /// </summary>
+        /// <param name="schema"></param>
+        public bool DropIfExists(string schema)
+        {
+            if (Exists(schema))
+            {
+                Drop(schema);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Lists the existing schemas within a given schema.
         /// </summary>
         /// <param name="schema"></param>

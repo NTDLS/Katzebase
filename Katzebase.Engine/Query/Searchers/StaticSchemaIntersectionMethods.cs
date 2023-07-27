@@ -35,7 +35,9 @@ namespace Katzebase.Engine.Query.Searchers
             var topLevel = schemaMap.First();
             var topLevelMap = topLevel.Value;
 
-            var documentPointers = topLevelMap.DocumentPageCatalog.ConsolidatedDocumentPointers();
+            var documentPointers = core.Documents.AcquireDocumentPointers(transaction, topLevelMap.PhysicalSchema, LockOperation.Read);
+
+            //var documentPointers = topLevelMap.DocumentPageCatalog.ConsolidatedDocumentPointers();
 
             ConditionLookupOptimization? lookupOptimization = null;
 
@@ -131,7 +133,7 @@ namespace Katzebase.Engine.Query.Searchers
                 {
                     //Here we are going to build a grouping_key using the concatenated select fields.
                     groupedValues = threadParam.Results.Collection.GroupBy(arr =>
-                        string.Join("\t", query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => arr.MethodFields[groupFieldParam.Value.Key])));
+                        string.Join("\t", query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => arr.AuxiliaryFields[groupFieldParam.Value.Key])));
                 }
                 else
                 {
@@ -155,7 +157,7 @@ namespace Katzebase.Engine.Query.Searchers
                         if (field is FunctionDocumentFieldParameter)
                         {
                             var specific = (FunctionDocumentFieldParameter)field;
-                            var specificValue = group.First().MethodFields[specific.Value.Key];
+                            var specificValue = group.First().AuxiliaryFields[specific.Value.Key];
                             values.Add(specificValue);
                         }
                         else if (field is FunctionWithParams)
@@ -191,8 +193,11 @@ namespace Katzebase.Engine.Query.Searchers
                 var sortingColumns = new List<(int fieldIndex, KbSortDirection sortDirection)>();
                 foreach (var sortField in query.SortFields.OfType<SortField>())
                 {
-                    var field = query.SelectFields.Where(o => o.Alias == sortField.Key).FirstOrDefault();
-                    KbUtility.EnsureNotNull(field);
+                    var field = query.SelectFields.Where(o => o.Alias == sortField.Alias).FirstOrDefault();
+                    if (field == null)
+                    {
+                        throw new KbEngineException($"Sort field '{sortField.Alias}' was not found.");
+                    }
                     sortingColumns.Add(new(field.Ordinal, sortField.SortDirection));
                 }
 
@@ -302,7 +307,7 @@ namespace Katzebase.Engine.Query.Searchers
                     {
                         foreach (var row in resultingRows.Collection)
                         {
-                            var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.AuxiliaryFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
                         }
                     }
@@ -311,7 +316,7 @@ namespace Katzebase.Engine.Query.Searchers
                     {
                         foreach (var row in resultingRows.Collection)
                         {
-                            var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.MethodFields);
+                            var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.AuxiliaryFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
                         }
                     }
@@ -338,7 +343,7 @@ namespace Katzebase.Engine.Query.Searchers
         {
             var topLevelSchemaMap = param.SchemaMap.First();
 
-            var toplevelPhysicalDocument = param.Core.Documents.AcquireDocument(param.Transaction, topLevelSchemaMap.Value.PhysicalSchema, topLevelDocumentPointer.DocumentId, LockOperation.Read);
+            var toplevelPhysicalDocument = param.Core.Documents.AcquireDocument(param.Transaction, topLevelSchemaMap.Value.PhysicalSchema, topLevelDocumentPointer, LockOperation.Read);
 
             var documentContentToBeCached = toplevelPhysicalDocument.ToDictonary();
 
@@ -390,7 +395,7 @@ namespace Katzebase.Engine.Query.Searchers
             var expression = new NCalc.Expression(currentSchemaMap.Conditions.HighLevelExpressionTree);
 
             //Create a reference to the entire document catalog.
-            var limitedDocumentPointers = currentSchemaMap.DocumentPageCatalog.ConsolidatedDocumentPointers();
+            var limitedDocumentPointers = param.Core.Documents.AcquireDocumentPointers(param.Transaction, currentSchemaMap.PhysicalSchema, LockOperation.Read);
 
             #region Indexing to reduce the number of document pointers in "limitedDocumentPointers".
 
@@ -457,14 +462,14 @@ namespace Katzebase.Engine.Query.Searchers
 
             foreach (var documentPointer in limitedDocumentPointers)
             {
-                string threadScopedDocuemntCacheKey = $"{currentSchemaKVP.Key}:{documentPointer.Key}";
+                string threadScopeddocumentCacheKey = $"{currentSchemaKVP.Key}:{documentPointer.Key}";
 
                 //Get the document content from the thread cache (or cache it).
-                if (threadScopedContentCache.TryGetValue(threadScopedDocuemntCacheKey, out Dictionary<string, string>? documentContentNextLevel) == false)
+                if (threadScopedContentCache.TryGetValue(threadScopeddocumentCacheKey, out Dictionary<string, string>? documentContentNextLevel) == false)
                 {
-                    var physicalDocumentNextLevel = param.Core.Documents.AcquireDocument(param.Transaction, currentSchemaMap.PhysicalSchema, documentPointer.DocumentId, LockOperation.Read);
+                    var physicalDocumentNextLevel = param.Core.Documents.AcquireDocument(param.Transaction, currentSchemaMap.PhysicalSchema, documentPointer, LockOperation.Read);
                     documentContentNextLevel = physicalDocumentNextLevel.ToDictonary();
-                    threadScopedContentCache.Add(threadScopedDocuemntCacheKey, documentContentNextLevel);
+                    threadScopedContentCache.Add(threadScopeddocumentCacheKey, documentContentNextLevel);
                 }
 
                 joinScopedContentCache.Add(currentSchemaKVP.Key.ToLower(), documentContentNextLevel);
@@ -636,7 +641,7 @@ namespace Katzebase.Engine.Query.Searchers
                     //Field was not found, log warning which can be returned to the user.
                     //throw new KbEngineException($"Method field not found: {methodField.Key}.");
                 }
-                schemaResultRow.MethodFields.Add(methodField.Key, documentValue);
+                schemaResultRow.AuxiliaryFields.Add(methodField.Key, documentValue);
             }
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
@@ -647,13 +652,13 @@ namespace Katzebase.Engine.Query.Searchers
                     //Field was not found, log warning which can be returned to the user.
                     //throw new KbEngineException($"Method field not found: {methodField.Key}.");
                 }
-                if (schemaResultRow.MethodFields.ContainsKey(methodField.Key) == false)
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(methodField.Key) == false)
                 {
-                    schemaResultRow.MethodFields.Add(methodField.Key, documentValue);
+                    schemaResultRow.AuxiliaryFields.Add(methodField.Key, documentValue);
                 }
             }
 
-            schemaResultRow.MethodFields.Add($"{schemaKey}.$UID$", documentPointer.Key);
+            schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.$UID$", documentPointer.Key);
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.
             //TODO: We could grab some of these from the field selector above to cut down on redundant json scanning.
@@ -664,9 +669,9 @@ namespace Katzebase.Engine.Query.Searchers
                     //Field was not found, log warning which can be returned to the user.
                     //throw new KbEngineException($"Condition field not found: {conditionField.Key}.");
                 }
-                if (schemaResultRow.ConditionFields.ContainsKey(conditionField.Key) == false)
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(conditionField.Key) == false)
                 {
-                    schemaResultRow.ConditionFields.Add(conditionField.Key, documentValue);
+                    schemaResultRow.AuxiliaryFields.Add(conditionField.Key, documentValue);
                 }
             }
         }
@@ -685,7 +690,7 @@ namespace Katzebase.Engine.Query.Searchers
 
             foreach (var inputResult in inputResults.Collection)
             {
-                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, param.Query.Conditions, inputResult.ConditionFields);
+                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, param.Query.Conditions, inputResult.AuxiliaryFields);
 
                 var ptEvaluate = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
