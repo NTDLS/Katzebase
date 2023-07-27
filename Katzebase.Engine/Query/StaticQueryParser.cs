@@ -1186,7 +1186,7 @@ namespace Katzebase.Engine.Query
 
                 if (result.SelectFields.Any(o => o.Alias == field.Alias) == false)
                 {
-                    throw new KbParserException($"The order-by field [{field.Field}] was not found in the query.");
+                    //throw new KbParserException($"The order-by field [{field.Field}] was not found in the query.");
                 }
 
                 //if (result.SelectFields.Where(o => o.Key == field.Key).Any() == false && result.DynamicallyBuildSelectList == false)

@@ -1,3 +1,17 @@
+select
+	*
+from
+	StackOverflow:Users as U
+inner join Stackoverflow:Posts as P
+	ON P.OwnerUserId = U.Id
+where
+	U.DisplayName = 'NTDLS'
+order by
+	P.CreationDate
+
+
+
+/*
 SELECT TOP 5
 	P.Name,
 	TH.TransactionId,
@@ -16,6 +30,7 @@ WHERE
 ORDER BY
 	P.ProductNumber asc,
 	TH.TransactionId desc
+	*/
 	
 --REBUILD INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
 --ANALYZE INDEX IX_TopNotchERP_Inventory_OnHandQty ON TopNotchERP:Inventory
