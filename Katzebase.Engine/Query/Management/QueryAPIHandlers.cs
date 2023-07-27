@@ -49,6 +49,20 @@ namespace Katzebase.Engine.Query.Management
             return results;
         }
 
+        public KbQueryResultCollection ExecuteStatementQueries(ulong processId, List<string> statements)
+        {
+            var results = new KbQueryResultCollection();
+
+            foreach (var statement in statements)
+            {
+                foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
+                {
+                    results.Add(core.Query.ExecuteQuery(processId, preparedQuery));
+                }
+            }
+            return results;
+        }
+
         public KbActionResponseCollection ExecuteStatementNonQuery(ulong processId, string statement)
         {
             var results = new KbActionResponseCollection();

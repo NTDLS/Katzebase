@@ -1,4 +1,5 @@
 ﻿using Katzebase.PublicLibrary.Payloads;
+using ProtoBuf.WellKnownTypes;
 
 namespace Katzebase.Engine.Atomicity.Management
 {
@@ -45,7 +46,8 @@ namespace Katzebase.Engine.Atomicity.Management
                 RowCount = rowCount,
                 Metrics = Transaction.PT?.ToCollection(),
                 Messages = Transaction.Messages,
-                Warnings = Transaction.Warnings
+                Warnings = Transaction.Warnings,
+                Duration = (DateTime.UtcNow - Transaction.StartTime).Milliseconds
             };
         }
 
@@ -62,6 +64,7 @@ namespace Katzebase.Engine.Atomicity.Management
             result.Metrics = Transaction.PT?.ToCollection();
             result.Messages = Transaction.Messages;
             result.Warnings = Transaction.Warnings;
+            result.Duration = (DateTime.UtcNow - Transaction.StartTime).Milliseconds;
 
             return result;
         }
