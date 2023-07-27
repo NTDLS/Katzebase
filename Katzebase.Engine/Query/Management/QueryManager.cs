@@ -55,10 +55,10 @@ namespace Katzebase.Engine.Query.Management
         {
             var statement = new StringBuilder($"EXEC {procedure.SchemaName}:{procedure.ProcedureName}");
 
-            using (var txRef = core.Transactions.Acquire(processId))
+            using (var transactionReference = core.Transactions.Acquire(processId))
             {
-                var physicalSchema = core.Schemas.Acquire(txRef.Transaction, procedure.SchemaName, LockOperation.Read);
-                var physicalProcedure = core.Procedures.Acquire(txRef.Transaction, physicalSchema, procedure.ProcedureName, LockOperation.Read);
+                var physicalSchema = core.Schemas.Acquire(transactionReference.Transaction, procedure.SchemaName, LockOperation.Read);
+                var physicalProcedure = core.Procedures.Acquire(transactionReference.Transaction, physicalSchema, procedure.ProcedureName, LockOperation.Read);
                 if (physicalProcedure == null)
                 {
                     throw new KbEngineException($"Procedure [{procedure.ProcedureName}] was not found in schema [{procedure.SchemaName}]");

@@ -2,7 +2,7 @@
 
 namespace Katzebase.PublicLibrary.Payloads
 {
-    public class KbBaseActionResponse : KbIActionResponse
+    public class KbBaseActionResponse
     {
         public bool Success { get; set; } = true;
         public string? ExceptionText { get; set; }

@@ -30,11 +30,11 @@ namespace Katzebase.Engine.Sessions.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 var referencedProcessId = preparedQuery.Attribute<ulong>(PreparedQuery.QueryAttribute.ProcessId);
 
                 core.Sessions.CloseByProcessId(referencedProcessId);
-                return txRef.CommitAndApplyMetricsToResults();
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {
@@ -47,7 +47,7 @@ namespace Katzebase.Engine.Sessions.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 var session = core.Sessions.ByProcessId(processId);
 
                 foreach (var variable in preparedQuery.VariableValues)
@@ -75,7 +75,7 @@ namespace Katzebase.Engine.Sessions.Management
 
                 }
 
-                return txRef.CommitAndApplyMetricsToResults();
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {

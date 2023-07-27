@@ -358,7 +358,7 @@ namespace Katzebase.Engine.Functions.Management
                 int batchNumber = 0;
 
                 //We create a "user transaction" so that we have a way to track and destroy temporary objects created by the procedure.
-                using (var txRef = core.Transactions.Acquire(transaction.ProcessId, true))
+                using (var transactionReference = core.Transactions.Acquire(transaction.ProcessId, true))
                 {
                     foreach (var batch in proc.PhysicalProcedure.Batches)
                     {
@@ -378,13 +378,13 @@ namespace Katzebase.Engine.Functions.Management
                             throw new KbEngineException("Procedure batch was unsuccessful.");
                         }
 
-                        txRef.Transaction.AddMessage($"Procedure batch {batchNumber + 1} of {proc.PhysicalProcedure.Batches.Count} completed in {batchDuration:n0}ms.  ({batchResults.RowCount} rows affected)", KbConstants.KbMessageType.Verbose);
+                        transactionReference.Transaction.AddMessage($"Procedure batch {batchNumber + 1} of {proc.PhysicalProcedure.Batches.Count} completed in {batchDuration:n0}ms.  ({batchResults.RowCount} rows affected)", KbConstants.KbMessageType.Verbose);
                         batchNumber++;
 
                         collection.Add(batchResults);
 
                     }
-                    txRef.Commit();
+                    transactionReference.Commit();
                 }
 
                 collection.Success = true;

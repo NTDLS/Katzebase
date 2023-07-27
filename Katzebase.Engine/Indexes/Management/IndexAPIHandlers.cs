@@ -28,16 +28,16 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 var result = new KbActionResponseIndexes();
 
-                var indexCatalog = core.Indexes.AcquireIndexCatalog(txRef.Transaction, schemaName, LockOperation.Read);
+                var indexCatalog = core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, schemaName, LockOperation.Read);
                 if (indexCatalog != null)
                 {
                     result.List.AddRange(indexCatalog.Collection.Select(o => PhysicalIndex.ToClientPayload(o)));
                 }
 
-                return txRef.CommitAndApplyMetricsToResults(result, 0);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 0);
             }
             catch (Exception ex)
             {
@@ -51,10 +51,10 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
-                var indexCatalog = core.Indexes.AcquireIndexCatalog(txRef.Transaction, schemaName, LockOperation.Read);
+                using var transactionReference = core.Transactions.Acquire(processId);
+                var indexCatalog = core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, schemaName, LockOperation.Read);
                 bool value = indexCatalog.GetByName(indexName) != null;
-                return txRef.CommitAndApplyMetricsToResults(new KbActionResponseBoolean(value), 0);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbActionResponseBoolean(value), 0);
             }
             catch (Exception ex)
             {
@@ -67,9 +67,9 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
-                core.Indexes.CreateIndex(txRef.Transaction, schemaName, index, out Guid newId);
-                return txRef.CommitAndApplyMetricsToResults(new KbActionResponseGuid(newId), 0);
+                using var transactionReference = core.Transactions.Acquire(processId);
+                core.Indexes.CreateIndex(transactionReference.Transaction, schemaName, index, out Guid newId);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbActionResponseGuid(newId), 0);
             }
             catch (Exception ex)
             {
@@ -82,9 +82,9 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
-                core.Indexes.RebuildIndex(txRef.Transaction, schemaName, indexName);
-                return txRef.CommitAndApplyMetricsToResults();
+                using var transactionReference = core.Transactions.Acquire(processId);
+                core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {
@@ -97,9 +97,9 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
-                core.Indexes.DropIndex(txRef.Transaction, schemaName, indexName);
-                return txRef.CommitAndApplyMetricsToResults();
+                using var transactionReference = core.Transactions.Acquire(processId);
+                core.Indexes.DropIndex(transactionReference.Transaction, schemaName, indexName);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {

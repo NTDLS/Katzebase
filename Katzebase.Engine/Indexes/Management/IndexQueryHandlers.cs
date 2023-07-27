@@ -32,23 +32,23 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
-                    core.Schemas.Drop(txRef.Transaction, schemaName);
+                    core.Schemas.Drop(transactionReference.Transaction, schemaName);
                 }
                 else if (preparedQuery.SubQueryType == SubQueryType.Index)
                 {
-                    core.Indexes.DropIndex(txRef.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+                    core.Indexes.DropIndex(transactionReference.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
                 }
                 else
                 {
                     throw new KbNotImplementedException();
                 }
 
-                return txRef.CommitAndApplyMetricsToResults();
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {
@@ -61,12 +61,12 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.First().Name;
-                var analysis = core.Indexes.AnalyzeIndex(txRef.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+                var analysis = core.Indexes.AnalyzeIndex(transactionReference.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
 
-                txRef.Transaction.AddMessage(analysis, KbMessageType.Verbose);
-                return txRef.CommitAndApplyMetricsToResults();
+                transactionReference.Transaction.AddMessage(analysis, KbMessageType.Verbose);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {
@@ -79,11 +79,11 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
-                core.Indexes.RebuildIndex(txRef.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
-                return txRef.CommitAndApplyMetricsToResults();
+                core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {
@@ -96,12 +96,12 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
                     string schemaName = preparedQuery.Schemas.Single().Name;
-                    core.Schemas.CreateSingleSchema(txRef.Transaction, schemaName);
+                    core.Schemas.CreateSingleSchema(transactionReference.Transaction, schemaName);
                 }
                 else if (preparedQuery.SubQueryType == SubQueryType.Procedure)
                 {
@@ -110,7 +110,7 @@ namespace Katzebase.Engine.Indexes.Management
                     var parameters = preparedQuery.Attribute<List<PhysicalProcedureParameter>>(PreparedQuery.QueryAttribute.Parameters);
                     var Batches = preparedQuery.Attribute<List<string>>(PreparedQuery.QueryAttribute.Batches);
 
-                    core.Procedures.CreateCustomProcedure(txRef.Transaction, objectSchema, objectName, parameters, Batches);
+                    core.Procedures.CreateCustomProcedure(transactionReference.Transaction, objectSchema, objectName, parameters, Batches);
                 }
                 else if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
@@ -126,14 +126,14 @@ namespace Katzebase.Engine.Indexes.Management
                     }
 
                     string schemaName = preparedQuery.Schemas.Single().Name;
-                    core.Indexes.CreateIndex(txRef.Transaction, schemaName, index, out Guid indexId);
+                    core.Indexes.CreateIndex(transactionReference.Transaction, schemaName, index, out Guid indexId);
                 }
                 else
                 {
                     throw new KbNotImplementedException();
                 }
 
-                return txRef.CommitAndApplyMetricsToResults();
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {

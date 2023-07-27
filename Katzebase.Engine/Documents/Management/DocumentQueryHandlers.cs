@@ -35,11 +35,9 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using (var txRef = core.Transactions.Acquire(processId))
-                {
-                    var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
-                    return txRef.CommitAndApplyMetricsToResults(result, result.Rows.Count);
-                }
+                using var transactionReference = core.Transactions.Acquire(processId);
+                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, transactionReference.Transaction, preparedQuery);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
@@ -52,19 +50,19 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 var targetSchema = preparedQuery.Attributes[PreparedQuery.QueryAttribute.TargetSchema].ToString();
                 KbUtility.EnsureNotNull(targetSchema);
 
-                var physicalTargetSchema = core.Schemas.AcquireVirtual(txRef.Transaction, targetSchema, LockOperation.Write);
+                var physicalTargetSchema = core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write);
 
                 if (physicalTargetSchema.Exists == false)
                 {
-                    core.Schemas.CreateSingleSchema(txRef.Transaction, targetSchema);
-                    physicalTargetSchema = core.Schemas.AcquireVirtual(txRef.Transaction, targetSchema, LockOperation.Write);
+                    core.Schemas.CreateSingleSchema(transactionReference.Transaction, targetSchema);
+                    physicalTargetSchema = core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write);
                 }
 
-                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, txRef.Transaction, preparedQuery);
+                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, transactionReference.Transaction, preparedQuery);
 
                 var duplicateFields = result.Fields.GroupBy(o => o.Name).Where(o => o.Count() > 1).Select(o => o.Key).ToList();
 
@@ -84,10 +82,10 @@ namespace Katzebase.Engine.Documents.Management
                     }
                     string documentContent = JsonConvert.SerializeObject(document);
 
-                    core.Documents.InsertDocument(txRef.Transaction, physicalTargetSchema, documentContent);
+                    core.Documents.InsertDocument(transactionReference.Transaction, physicalTargetSchema, documentContent);
                 }
 
-                return txRef.CommitAndApplyMetricsToResults(result, result.Rows.Count);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
@@ -106,17 +104,17 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
-                var physicalSchema = core.Schemas.Acquire(txRef.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
+                using var transactionReference = core.Transactions.Acquire(processId);
+                var physicalSchema = core.Schemas.Acquire(transactionReference.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
 
                 foreach (var upsertValues in preparedQuery.UpsertValues)
                 {
                     var keyValuePairs = upsertValues.ToDictionary(o => o.Field.Field, o => o.Value.Value);
                     var documentContent = JsonConvert.SerializeObject(keyValuePairs);
-                    core.Documents.InsertDocument(txRef.Transaction, physicalSchema, documentContent);
+                    core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
                 }
 
-                return txRef.CommitAndApplyMetricsToResults(preparedQuery.UpsertValues.Count);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(preparedQuery.UpsertValues.Count);
             }
             catch (Exception ex)
             {
@@ -136,9 +134,9 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 var firstSchema = preparedQuery.Schemas.Single();
-                var physicalSchema = core.Schemas.Acquire(txRef.Transaction, firstSchema.Name, LockOperation.Read);
+                var physicalSchema = core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
 
                 var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
 
@@ -149,14 +147,14 @@ namespace Katzebase.Engine.Documents.Management
 
                 KbUtility.EnsureNotNull(getDocumentPointsForSchemaPrefix);
 
-                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, txRef.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
+                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
 
                 var updatedDocuments = new Dictionary<DocumentPointer, string>();
 
 
                 foreach (var documentPointer in documentPointers)
                 {
-                    var physicalDocument = core.Documents.AcquireDocument(txRef.Transaction, physicalSchema, documentPointer, LockOperation.Write);
+                    var physicalDocument = core.Documents.AcquireDocument(transactionReference.Transaction, physicalSchema, documentPointer, LockOperation.Write);
 
                     var dictionary = JsonConvert.DeserializeObject<Dictionary<string, string?>>(physicalDocument.Content);
                     KbUtility.EnsureNotNull(dictionary);
@@ -195,9 +193,9 @@ namespace Katzebase.Engine.Documents.Management
                 var listOfModifiedFields = preparedQuery.UpdateValues.Select(o => o.Key);
 
                 //We update all of the documents all at once so we dont have to keep opening/closing catalogs.
-                core.Documents.UpdateDocuments(txRef.Transaction, physicalSchema, updatedDocuments, listOfModifiedFields);
+                core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocuments, listOfModifiedFields);
 
-                return txRef.CommitAndApplyMetricsToResults(documentPointers.Count());
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
             }
             catch (Exception ex)
             {
@@ -210,11 +208,11 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.Single().Name;
-                var result = StaticSearcherMethods.SampleSchemaDocuments(core, txRef.Transaction, schemaName, preparedQuery.RowLimit);
+                var result = StaticSearcherMethods.SampleSchemaDocuments(core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
 
-                return txRef.CommitAndApplyMetricsToResults(result, result.Rows.Count);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
@@ -227,11 +225,11 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.Single().Name;
-                var result = StaticSearcherMethods.ListSchemaDocuments(core, txRef.Transaction, schemaName, preparedQuery.RowLimit);
+                var result = StaticSearcherMethods.ListSchemaDocuments(core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
 
-                return txRef.CommitAndApplyMetricsToResults(result, result.Rows.Count);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
@@ -252,7 +250,7 @@ namespace Katzebase.Engine.Documents.Management
                 var lookupOptimization = ConditionLookupOptimization.Build(core, transaction, physicalSchema, preparedQuery.Conditions);
                 result.Explanation = lookupOptimization.BuildFullVirtualExpression();
 
-                return txRef.CommitAndApplyMetricsToResults(result, result.Rows.Count);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
                 */
             }
             catch (Exception ex)
@@ -266,9 +264,9 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 var firstSchema = preparedQuery.Schemas.Single();
-                var physicalSchema = core.Schemas.Acquire(txRef.Transaction, firstSchema.Name, LockOperation.Read);
+                var physicalSchema = core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
                 var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
 
                 if (preparedQuery.Attributes.ContainsKey(PreparedQuery.QueryAttribute.SpecificSchemaPrefix))
@@ -278,9 +276,9 @@ namespace Katzebase.Engine.Documents.Management
 
                 KbUtility.EnsureNotNull(getDocumentPointsForSchemaPrefix);
 
-                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, txRef.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
-                core.Documents.DeleteDocuments(txRef.Transaction, physicalSchema, documentPointers.ToArray());
-                return txRef.CommitAndApplyMetricsToResults(documentPointers.Count());
+                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
+                core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, documentPointers.ToArray());
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
             }
             catch (Exception ex)
             {

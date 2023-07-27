@@ -28,9 +28,9 @@ namespace Katzebase.Engine.Functions.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
-                var result = core.Procedures.ExecuteProcedure(txRef.Transaction, preparedQuery.ProcedureCall);
-                return txRef.CommitAndApplyMetricsToResults(result, 0);
+                using var transactionReference = core.Transactions.Acquire(processId);
+                var result = core.Procedures.ExecuteProcedure(transactionReference.Transaction, preparedQuery.ProcedureCall);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 0);
             }
             catch (Exception ex)
             {

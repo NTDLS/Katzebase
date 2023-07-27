@@ -31,12 +31,12 @@ namespace Katzebase.Engine.Schemas.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 var result = new KbQueryResult();
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                 {
-                    var schemaList = core.Schemas.GetListByPreparedQuery(txRef.Transaction, preparedQuery.Schemas.Single().Name, preparedQuery.RowLimit);
+                    var schemaList = core.Schemas.GetListByPreparedQuery(transactionReference.Transaction, preparedQuery.Schemas.Single().Name, preparedQuery.RowLimit);
 
                     result.Fields.Add(new KbQueryField("Name"));
                     result.Fields.Add(new KbQueryField("Path"));
@@ -48,7 +48,7 @@ namespace Katzebase.Engine.Schemas.Management
                     throw new KbEngineException("Invalid list query subtype.");
                 }
 
-                return txRef.CommitAndApplyMetricsToResults(result, 0);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 0);
             }
             catch (Exception ex)
             {

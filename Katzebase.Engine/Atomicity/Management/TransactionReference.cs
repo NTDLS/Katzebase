@@ -36,26 +36,25 @@ namespace Katzebase.Engine.Atomicity.Management
             }
         }
 
-        public KbActionResponse CommitAndApplyMetricsToResults(int rowCount)
+        public KbActionResponse CommitAndApplyMetricsThenReturnResults(int rowCount)
         {
             Commit();
 
-            var result = new KbActionResponse
+            return new KbActionResponse
             {
                 RowCount = rowCount,
                 Metrics = Transaction.PT?.ToCollection(),
                 Messages = Transaction.Messages,
                 Warnings = Transaction.Warnings
             };
-            return result;
         }
 
-        public KbActionResponse CommitAndApplyMetricsToResults()
+        public KbActionResponse CommitAndApplyMetricsThenReturnResults()
         {
-            return CommitAndApplyMetricsToResults(0);
+            return CommitAndApplyMetricsThenReturnResults(0);
         }
 
-        public T CommitAndApplyMetricsToResults<T>(T result, int rowCount) where T : KbIActionResponse
+        public T CommitAndApplyMetricsThenReturnResults<T>(T result, int rowCount) where T : KbBaseActionResponse
         {
             Commit();
 
@@ -63,12 +62,13 @@ namespace Katzebase.Engine.Atomicity.Management
             result.Metrics = Transaction.PT?.ToCollection();
             result.Messages = Transaction.Messages;
             result.Warnings = Transaction.Warnings;
+
             return result;
         }
 
         internal TransactionReference(Transaction transaction)
         {
-            this.Transaction = transaction;
+            Transaction = transaction;
         }
 
         // Protected implementation of Dispose pattern.

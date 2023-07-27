@@ -29,9 +29,9 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
-                var result = StaticSearcherMethods.SampleSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
-                return txRef.CommitAndApplyMetricsToResults(result, result.Rows.Count);
+                using var transactionReference = core.Transactions.Acquire(processId);
+                var result = StaticSearcherMethods.SampleSchemaDocuments(core, transactionReference.Transaction, schemaName, rowLimit);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
@@ -51,9 +51,9 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
-                var result = StaticSearcherMethods.ListSchemaDocuments(core, txRef.Transaction, schemaName, rowLimit);
-                return txRef.CommitAndApplyMetricsToResults(result, result.Rows.Count);
+                using var transactionReference = core.Transactions.Acquire(processId);
+                var result = StaticSearcherMethods.ListSchemaDocuments(core, transactionReference.Transaction, schemaName, rowLimit);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
@@ -74,13 +74,13 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 var result = new KbActionResponseUInt()
                 {
-                    Value = core.Documents.InsertDocument(txRef.Transaction, schemaName, document.Content).DocumentId,
+                    Value = core.Documents.InsertDocument(transactionReference.Transaction, schemaName, document.Content).DocumentId,
                 };
 
-                return txRef.CommitAndApplyMetricsToResults(result, 1);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 1);
             }
             catch (Exception ex)
             {
@@ -100,12 +100,12 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
+                using var transactionReference = core.Transactions.Acquire(processId);
                 var result = new KbDocumentCatalogCollection();
-                var documentPointers = core.Documents.AcquireDocumentPointers(txRef.Transaction, schemaName, LockOperation.Read).ToList();
+                var documentPointers = core.Documents.AcquireDocumentPointers(transactionReference.Transaction, schemaName, LockOperation.Read).ToList();
 
                 result.Collection.AddRange(documentPointers.Select(o => new KbDocumentCatalogItem(o.DocumentId)));
-                return txRef.CommitAndApplyMetricsToResults(result, documentPointers.Count);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, documentPointers.Count);
             }
             catch (Exception ex)
             {
@@ -121,13 +121,13 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                using var txRef = core.Transactions.Acquire(processId);
-                var physicalSchema = core.Schemas.Acquire(txRef.Transaction, schemaName, LockOperation.Write);
-                var documentPointers = core.Documents.AcquireDocumentPointers(txRef.Transaction, physicalSchema, LockOperation.Write).ToList();
+                using var transactionReference = core.Transactions.Acquire(processId);
+                var physicalSchema = core.Schemas.Acquire(transactionReference.Transaction, schemaName, LockOperation.Write);
+                var documentPointers = core.Documents.AcquireDocumentPointers(transactionReference.Transaction, physicalSchema, LockOperation.Write).ToList();
                 var pointersToDelete = documentPointers.Where(o => o.DocumentId == documentId);
 
-                core.Documents.DeleteDocuments(txRef.Transaction, physicalSchema, pointersToDelete);
-                return txRef.CommitAndApplyMetricsToResults(documentPointers.Count);
+                core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, pointersToDelete);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count);
             }
             catch (Exception ex)
             {
