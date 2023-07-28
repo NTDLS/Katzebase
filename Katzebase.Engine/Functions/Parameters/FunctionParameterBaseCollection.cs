@@ -52,35 +52,38 @@ namespace Katzebase.Engine.Functions.Parameters
         /// Returns a list of document fields that are referenced by the field list.
         /// </summary>
         /// <returns></returns>
-        public List<PrefixedField> AllDocumentFields()
+        public List<PrefixedField> AllDocumentFields
         {
-            lock (this)
+            get
             {
-                if (_allFields == null)
+                lock (this)
                 {
-                    _allFields = new();
-
-                    _allFields.AddRange(this.OfType<FunctionDocumentFieldParameter>().Select(o => o.Value).ToList());
-
-                    var children = new List<FunctionParameterBase>();
-
-                    children.AddRange(this.OfType<FunctionExpression>());
-                    children.AddRange(this.OfType<FunctionWithParams>());
-
-                    foreach (var param in children)
+                    if (_allFields == null)
                     {
-                        if (param is FunctionExpression)
+                        _allFields = new();
+
+                        _allFields.AddRange(this.OfType<FunctionDocumentFieldParameter>().Select(o => o.Value).ToList());
+
+                        var children = new List<FunctionParameterBase>();
+
+                        children.AddRange(this.OfType<FunctionExpression>());
+                        children.AddRange(this.OfType<FunctionWithParams>());
+
+                        foreach (var param in children)
                         {
-                            GetAllFieldsRecursive(ref _allFields, ((FunctionExpression)param).Parameters);
-                        }
-                        if (param is FunctionWithParams)
-                        {
-                            GetAllFieldsRecursive(ref _allFields, ((FunctionWithParams)param).Parameters);
+                            if (param is FunctionExpression)
+                            {
+                                GetAllFieldsRecursive(ref _allFields, ((FunctionExpression)param).Parameters);
+                            }
+                            if (param is FunctionWithParams)
+                            {
+                                GetAllFieldsRecursive(ref _allFields, ((FunctionWithParams)param).Parameters);
+                            }
                         }
                     }
-                }
 
-                return _allFields;
+                    return _allFields;
+                }
             }
         }
 

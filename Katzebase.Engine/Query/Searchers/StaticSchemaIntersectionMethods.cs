@@ -310,6 +310,13 @@ namespace Katzebase.Engine.Query.Searchers
                         {
                             var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.AuxiliaryFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
+
+                            //Lets make the method results available for sorting, grouping, etc.
+                            var field = param.Query.SortFields.Where(o => o.Field == methodField.Alias).SingleOrDefault();
+                            if (field != null && row.AuxiliaryFields.ContainsKey(field.Alias) == false)
+                            {
+                                row.AuxiliaryFields.Add(field.Alias, methodResult);
+                            }
                         }
                     }
 
@@ -319,6 +326,13 @@ namespace Katzebase.Engine.Query.Searchers
                         {
                             var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.AuxiliaryFields);
                             row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
+
+                            //Lets make the method results available for sorting, grouping, etc.
+                            var field = param.Query.SortFields.Where(o => o.Alias == methodField.Alias).SingleOrDefault();
+                            if (field != null && row.AuxiliaryFields.ContainsKey(field.Alias) == false)
+                            {
+                                row.AuxiliaryFields.Add(field.Alias, methodResult);
+                            }
                         }
                     }
                 }
@@ -637,7 +651,7 @@ namespace Katzebase.Engine.Query.Searchers
             schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.$UID$", documentPointer.Key);
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var field in param.Query.SelectFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())
+            foreach (var field in param.Query.SelectFields.AllDocumentFields.Where(o => o.Prefix == schemaKey).Distinct())
             {
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
@@ -650,13 +664,13 @@ namespace Katzebase.Engine.Query.Searchers
             }
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var field in param.Query.GroupFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())
+            foreach (var field in param.Query.GroupFields.AllDocumentFields.Where(o => o.Prefix == schemaKey).Distinct())
             {
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
                     if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
                     {
-                        param.Transaction.AddWarning( KbTransactionWarning.GroupFieldNotFound, $"'{field.Key}' will be treated as null.");
+                        param.Transaction.AddWarning(KbTransactionWarning.GroupFieldNotFound, $"'{field.Key}' will be treated as null.");
                     }
                     schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
                 }

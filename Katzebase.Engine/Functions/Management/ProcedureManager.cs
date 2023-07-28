@@ -214,8 +214,8 @@ namespace Katzebase.Engine.Functions.Management
                             var result = collection.AddNew();
 
                             result.AddField("ProcessId");
+                            result.AddField("BlockedBy");
 
-                            var procCall = (FunctionWithParams)procedureCall;
                             var transactions = core.Transactions.CloneTransactions();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
@@ -230,9 +230,7 @@ namespace Katzebase.Engine.Functions.Management
 
                                 foreach (var block in blockedBy)
                                 {
-                                    var values = new List<string?> {
-                                    block.ToString()
-                                };
+                                    var values = new List<string?> { tx.ProcessId.ToString(), block.ToString() };
                                     result.AddRow(values);
                                 }
                             }
@@ -244,6 +242,7 @@ namespace Katzebase.Engine.Functions.Management
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
 
+                            result.AddField("ProcessId");
                             result.AddField("TxBlocked");
                             result.AddField("TxReferences");
                             result.AddField("TxStartTime");
@@ -266,6 +265,7 @@ namespace Katzebase.Engine.Functions.Management
                             foreach (var tx in transactions)
                             {
                                 var values = new List<string?> {
+                                tx.ProcessId.ToString(),
                                 (tx?.BlockedBy.Count > 0).ToString(),
                                 tx?.ReferenceCount.ToString(),
                                 tx?.StartTime.ToString(),

@@ -1168,7 +1168,7 @@ namespace Katzebase.Engine.Query
                 }
             }
 
-            foreach (var field in result.SelectFields.AllDocumentFields()) //Document related fields.
+            foreach (var field in result.SelectFields.AllDocumentFields) //Document related fields.
             {
                 if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
                 {
