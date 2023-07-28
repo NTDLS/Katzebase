@@ -6,7 +6,7 @@
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase\Service
  DefaultGroupName                 = NetworkDLS\Katzebase
  UninstallDisplayIcon             = {app}\Katzebase.Service.exe
- SetupIconFile                    = "../@Art\Catzebase.ico"
+ SetupIconFile                    = "..\@Art\Catzebase.ico"
  PrivilegesRequired               = admin
  Uninstallable                    = Yes
  MinVersion                       = 0.0,7.0
