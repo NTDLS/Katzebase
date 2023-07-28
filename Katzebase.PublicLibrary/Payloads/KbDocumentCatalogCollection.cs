@@ -1,6 +1,4 @@
-﻿using static Katzebase.PublicLibrary.KbConstants;
-
-namespace Katzebase.PublicLibrary.Payloads
+﻿namespace Katzebase.PublicLibrary.Payloads
 {
     public class KbDocumentCatalogCollection : KbBaseActionResponse
     {

@@ -1,6 +1,4 @@
-﻿using static Katzebase.PublicLibrary.KbConstants;
-
-namespace Katzebase.PublicLibrary.Payloads
+﻿namespace Katzebase.PublicLibrary.Payloads
 {
     /// <summary>
     /// KbQueryResult is used to return a field-set and the associated row values.

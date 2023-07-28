@@ -1,5 +1,4 @@
-﻿using Katzebase.PublicLibrary.Exceptions;
-using Katzebase.PublicLibrary.Payloads;
+﻿using Katzebase.PublicLibrary.Payloads;
 
 namespace Katzebase.Engine.Query.Management
 {

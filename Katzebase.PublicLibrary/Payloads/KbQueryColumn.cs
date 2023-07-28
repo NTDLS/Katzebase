@@ -1,6 +1,4 @@
-﻿using System.Xml.Linq;
-
-namespace Katzebase.PublicLibrary.Payloads
+﻿namespace Katzebase.PublicLibrary.Payloads
 {
     public class KbQueryField
     {

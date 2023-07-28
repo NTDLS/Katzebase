@@ -1,6 +1,5 @@
 ﻿using Katzebase.Engine.Functions.Aggregate;
 using Katzebase.Engine.Functions.Scaler;
-using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using System.Text;

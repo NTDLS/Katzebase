@@ -4,8 +4,6 @@ using Katzebase.Engine.Functions.Procedures.Persistent;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
-using System.Net;
-using System.Text.RegularExpressions;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.PublicLibrary.KbConstants;
 
