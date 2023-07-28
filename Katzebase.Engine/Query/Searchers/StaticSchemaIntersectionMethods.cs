@@ -615,64 +615,76 @@ namespace Katzebase.Engine.Query.Searchers
             if (schemaKey != string.Empty)
             {
                 //Grab all of the selected fields from the document.
-                foreach (var selectField in param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
+                foreach (var field in param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
                 {
-                    if (documentContent.TryGetValue(selectField.Value.Field, out string? documentValue) == false)
+                    if (documentContent.TryGetValue(field.Value.Field, out string? documentValue) == false)
                     {
-                        //Field was not found, log warning which can be returned to the user.
+                        param.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound, $"'{field.Value.Field}' will be treated as null.");
                     }
-                    schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, documentValue);
+                    schemaResultRow.InsertValue(field.Value.Field, field.Ordinal, documentValue);
                 }
             }
 
-            foreach (var selectField in param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
+            foreach (var field in param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
             {
-                if (documentContent.TryGetValue(selectField.Value.Field, out string? documentValue) == false)
+                if (documentContent.TryGetValue(field.Value.Field, out string? documentValue) == false)
                 {
-                    //Field was not found, log warning which can be returned to the user.
+                    param.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound, $"'{field.Value.Field}' will be treated as null.");
                 }
-                schemaResultRow.InsertValue(selectField.Value.Field, selectField.Ordinal, documentValue);
-            }
-
-            //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var methodField in param.Query.SelectFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())
-            {
-                if (documentContent.TryGetValue(methodField.Field, out string? documentValue) == false)
-                {
-                    //Field was not found, log warning which can be returned to the user.
-                    //throw new KbEngineException($"Method field not found: {methodField.Key}.");
-                }
-                schemaResultRow.AuxiliaryFields.Add(methodField.Key, documentValue);
-            }
-
-            //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var methodField in param.Query.GroupFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())
-            {
-                if (documentContent.TryGetValue(methodField.Field, out string? documentValue) == false)
-                {
-                    //Field was not found, log warning which can be returned to the user.
-                    //throw new KbEngineException($"Method field not found: {methodField.Key}.");
-                }
-                if (schemaResultRow.AuxiliaryFields.ContainsKey(methodField.Key) == false)
-                {
-                    schemaResultRow.AuxiliaryFields.Add(methodField.Key, documentValue);
-                }
+                schemaResultRow.InsertValue(field.Value.Field, field.Ordinal, documentValue);
             }
 
             schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.$UID$", documentPointer.Key);
 
-            //We have to make sure that we have all of the condition fields too so we can filter on them.
-            //TODO: We could grab some of these from the field selector above to cut down on redundant json scanning.
-            foreach (var conditionField in param.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey).Distinct())
+            //We have to make sure that we have all of the method fields too so we can use them for calling functions.
+            foreach (var field in param.Query.SelectFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())
             {
-                if (documentContent.TryGetValue(conditionField.Field, out string? documentValue) == false)
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
-                    //Field was not found, log warning which can be returned to the user.
-                    //throw new KbEngineException($"Condition field not found: {conditionField.Key}.");
+                    if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
+                    {
+                        param.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound, $"'{field.Key}' will be treated as null.");
+                    }
+                    schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
                 }
-                if (schemaResultRow.AuxiliaryFields.ContainsKey(conditionField.Key) == false)
+            }
+
+            //We have to make sure that we have all of the method fields too so we can use them for calling functions.
+            foreach (var field in param.Query.GroupFields.AllDocumentFields().Where(o => o.Prefix == schemaKey).Distinct())
+            {
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
-                    schemaResultRow.AuxiliaryFields.Add(conditionField.Key, documentValue);
+                    if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
+                    {
+                        param.Transaction.AddWarning( KbTransactionWarning.GroupFieldNotFound, $"'{field.Key}' will be treated as null.");
+                    }
+                    schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
+                }
+            }
+
+            //We have to make sure that we have all of the condition fields too so we can filter on them.
+            foreach (var field in param.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey).Distinct())
+            {
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
+                {
+                    if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
+                    {
+                        param.Transaction.AddWarning(KbTransactionWarning.ConditionFieldNotFound, $"'{field.Key}' will be treated as null.");
+                    }
+                    schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
+                }
+            }
+
+            //We have to make sure that we have all of the sort fields too so we can filter on them.
+            foreach (var field in param.Query.SortFields.Where(o => o.Prefix == schemaKey).Distinct())
+            {
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
+                {
+                    if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
+                    {
+                        param.Transaction.AddWarning(KbTransactionWarning.SortFieldNotFound, $"'{field.Key}' will be treated as null.");
+                    }
+                    schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
                 }
             }
         }

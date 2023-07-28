@@ -14,7 +14,12 @@
 
         public enum KbTransactionWarning
         {
-            ResultDisqualifiedByNullValue
+            ResultDisqualifiedByNullValue,
+            SelectFieldNotFound,
+            SortFieldNotFound,
+            MethodFieldNotFound,
+            GroupFieldNotFound,
+            ConditionFieldNotFound
         }
 
         public enum KbMessageType
