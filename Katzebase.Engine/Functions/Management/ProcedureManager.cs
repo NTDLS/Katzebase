@@ -7,7 +7,6 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.Library.EngineConstants;
-using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Functions.Management
 {
