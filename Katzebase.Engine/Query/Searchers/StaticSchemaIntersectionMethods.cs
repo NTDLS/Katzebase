@@ -59,9 +59,7 @@ namespace Katzebase.Engine.Query.Searchers
                     {
                         KbUtility.EnsureNotNull(subset.IndexSelection);
 
-                        var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-                        var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, physicalIndexPages, subset.IndexSelection, subset, topLevelMap.Prefix);
-
+                        var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, topLevelMap.PhysicalSchema, subset.IndexSelection, subset, topLevelMap.Prefix);
                         limitedDocumentPointers.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
 
@@ -424,8 +422,6 @@ namespace Katzebase.Engine.Query.Searchers
                 {
                     KbUtility.EnsureNotNull(subset.IndexSelection);
 
-                    var physicalIndexPages = param.Core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, subset.IndexSelection.Index.DiskPath, LockOperation.Read);
-
                     var keyValuePairs = new Dictionary<string, string>();
 
                     //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
@@ -441,7 +437,7 @@ namespace Katzebase.Engine.Query.Searchers
                     }
 
                     //Match on values from the document.
-                    var documentIds = param.Core.Indexes.MatchDocuments(param.Transaction, physicalIndexPages, subset.IndexSelection, subset, keyValuePairs);
+                    var documentIds = param.Core.Indexes.MatchDocuments(param.Transaction, currentSchemaMap.PhysicalSchema, subset.IndexSelection, subset, keyValuePairs);
 
                     furtherLimitedDocumentPointers.AddRange(documentIds.Values);
                 }

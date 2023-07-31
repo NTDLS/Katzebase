@@ -1,60 +1,7 @@
-select
-	IIF(Equals(tw.Text, 'Luna'), 'YES!', tw.Text) as 'Is Luna 2',
+--analyze INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
 
-	IIF(Equals(tw.Text, 'Luna'), 'YES!', '') as 'Is Luna?',
-	
-	DateTimeUTC(),
-	DateTimeUTC('hh-mm-ss'),
-	
-	Guid(),
-	
-	DocumentUID('tw'),
-	DocumentPage('tw'),
-	DocumentID('tw'),
+select top 100 * from TopNotchERP:Address where parent_key = 'AAAGEN01'
 
-	tw.Id + sw.Id + 10 as gg,
-	tw.Id,
-	sw.Id,
-	10 + tw.Id as gg,
-	Substring(sw.Text, 1, Length(sw.Text) - 1) as Length,
-	ToProper(concat(sw.Text, '->' ,tw.Text)) as Translation,
-	11+22*6 /3.5 as MAth,
-	Left('Hello World', 4),
-	Right('Hello World', 4),
-	IndexOf('l', 'Hello World'),
-	LastIndexOf('l', 'Hello World'),
-	Checksum(tw.Text.Name) as g,
-	Sha1(tw.Text.Name) as g,
-	Sha256(tw.Text.Name) as g,
-	10*10/2.6 as Ex,
-	SubString(tl.name, 2, Length(tl.name) - 3) as s,
-	
-	SubString(tl.Name, 0, Length(tl.Name) - 3),
-	
-	1 + Length(tl.Name) as g,
-	Length(tl.Name) + 1 as g,
-	
-	sw.Text as SourceWord,
-	sl.Name as SourceLanguage,
-	--S.TargetWordId,
-	tw.Text as TargetWord,
-	tl.Name as TargetLanguage
-	
-from
-	WordList:Word as sw
-inner join WordList:Synonym as s
-	on s.SourceWordId = sw.Id
-inner join WordList:Word as tw
-	ON tw.Id = S.TargetWordId
-inner join WordList:Language as tl
-	on tl.Id = tw.LanguageId
-inner join WordList:Language as sl
-	ON sl.Id = sw.LanguageId
-where
-	sw.Text = 'moon'
-order by
-	--sw.Text
-	'Is Luna?' DESC
 
 /*
 select

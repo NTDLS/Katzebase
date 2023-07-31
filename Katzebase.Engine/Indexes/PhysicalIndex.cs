@@ -1,4 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using Katzebase.Engine.Library;
+using Katzebase.Engine.Schemas;
+using Newtonsoft.Json;
+using System;
+using System.Text;
 
 namespace Katzebase.Engine.Indexes
 {
@@ -10,13 +14,28 @@ namespace Katzebase.Engine.Indexes
         public Guid Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime Modfied { get; set; }
+        public int Partitions { get; set; } = 1000;
         public bool IsUnique { get; set; } = false;
-
-        [JsonIgnore]
-        public string DiskPath { get; set; } = string.Empty;
+        public string GetPartitionPagesPath(PhysicalSchema physicalSchema) => Path.Combine(physicalSchema.DiskPath, $"@Index_{Helpers.MakeSafeFileName(Name)}");
+        public string GetPartitionPagesFileName(PhysicalSchema physicalSchema, int indexPartition) => Path.Combine(physicalSchema.DiskPath, $"@Index_{Helpers.MakeSafeFileName(Name)}", $"Page_{indexPartition}.PBuf");
 
         public PhysicalIndex()
         {
+        }
+
+        public int ComputePartition(string? value)
+        {
+            if (value == null)
+            {
+                return 0;
+            }
+            var buffer = Encoding.ASCII.GetBytes(value);
+            int sum = 0;
+            foreach (var b in buffer)
+            {
+                sum += (int)(sum ^ b);
+            }
+            return sum % Partitions;
         }
 
         public PhysicalIndex Clone()

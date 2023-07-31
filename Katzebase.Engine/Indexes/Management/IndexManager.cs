@@ -1,7 +1,6 @@
 ﻿using Katzebase.Engine.Atomicity;
 using Katzebase.Engine.Documents;
 using Katzebase.Engine.Indexes.Matching;
-using Katzebase.Engine.Library;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
 using Katzebase.Engine.Threading;
@@ -23,7 +22,6 @@ namespace Katzebase.Engine.Indexes.Management
         private readonly Core core;
         internal IndexQueryHandlers QueryHandlers { get; set; }
         public IndexAPIHandlers APIHandlers { get; set; }
-        private string MakeIndexFileName(string indexName) => $"@Index_{0}_Pages_{Helpers.MakeSafeFileName(indexName)}.PBuf";
 
         public IndexManager(Core core)
         {
@@ -66,8 +64,6 @@ namespace Katzebase.Engine.Indexes.Management
                 }
 
                 core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
-                physicalIndex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(index.Name));
-                core.IO.PutPBuf(transaction, physicalIndex.DiskPath, new PhysicalIndexPages());
 
                 RebuildIndex(transaction, physicalSchema, physicalIndex);
 
@@ -92,19 +88,28 @@ namespace Katzebase.Engine.Indexes.Management
                 }
 
                 var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
-                physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
 
-                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Read);
+                var physicalIndexPageMap = new Dictionary<int, PhysicalIndexPages>();
+                var physicalIndexPageMapDistilledLeaves = new List<List<PhysicalIndexLeaf>>();
 
-                double diskSize = core.IO.GetDecompressedSizeTracked(physicalIindex.DiskPath);
-                double decompressedSiskSize = (new FileInfo(physicalIindex.DiskPath)).Length;
+                double diskSize = 0;
+                double decompressedSiskSize = 0;
 
-                var baseNodes = DistillIndexBaseNodes(physicalIndexPages.Root);
+                for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
+                {
+                    string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                    physicalIndexPageMap[indexPartition] = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+                    diskSize += core.IO.GetDecompressedSizeTracked(pageDiskPath);
+                    decompressedSiskSize += (new FileInfo(pageDiskPath)).Length;
+                    physicalIndexPageMapDistilledLeaves.Add(DistillIndexBaseNodes(physicalIndexPageMap[indexPartition].Root));
+                }
 
-                int minDocumentsPerNode = baseNodes.Min(o => o.Documents?.Count ?? 0);
-                int maxDocumentsPerNode = baseNodes.Max(o => o.Documents?.Count) ?? 0;
-                double avgDocumentsPerNode = baseNodes.Average(o => o.Documents?.Count) ?? 0;
-                int documentCount = baseNodes.Sum(o => o.Documents?.Count ?? 0);
+                var combinedNodes = physicalIndexPageMapDistilledLeaves.SelectMany(o => o);
+
+                int minDocumentsPerNode = combinedNodes.Min(o => o.Documents?.Count ?? 0);
+                int maxDocumentsPerNode = combinedNodes.Max(o => o.Documents?.Count) ?? 0;
+                double avgDocumentsPerNode = combinedNodes.Average(o => o.Documents?.Count) ?? 0;
+                int documentCount = combinedNodes.Sum(o => o.Documents?.Count ?? 0);
                 double selectivityScore = 100.0;
 
                 if (documentCount > 0)
@@ -116,15 +121,16 @@ namespace Katzebase.Engine.Indexes.Management
                 builder.AppendLine("Index Analysis {");
                 builder.AppendLine($"    Schema            : {physicalSchema.Name}");
                 builder.AppendLine($"    Name              : {physicalIindex.Name}");
+                builder.AppendLine($"    Partitions        : {physicalIindex.Partitions}");
                 builder.AppendLine($"    Id                : {physicalIindex.Id}");
                 builder.AppendLine($"    Unique            : {physicalIindex.IsUnique}");
                 builder.AppendLine($"    Created           : {physicalIindex.Created}");
                 builder.AppendLine($"    Modified          : {physicalIindex.Modfied}");
-                builder.AppendLine($"    Disk Path         : {physicalIindex.DiskPath}");
+                builder.AppendLine($"    Disk Path         : {physicalIindex.GetPartitionPagesPath(physicalSchema)}");
                 builder.AppendLine($"    Pages Size        : {(diskSize / 1024.0):N2}k");
                 builder.AppendLine($"    Disk Size         : {(decompressedSiskSize / 1024.0):N2}k");
                 builder.AppendLine($"    Compression Ratio : {((decompressedSiskSize / diskSize) * 100.0):N2}");
-                builder.AppendLine($"    Root Node Count   : {physicalIndexPages.Root.Children.Count:N0}");
+                builder.AppendLine($"    Root Node Count   : {combinedNodes.Sum(o => o.Documents?.Count ?? 0):N0}");
                 builder.AppendLine($"    Node Level Count  : {physicalIindex.Attributes.Count:N0}");
                 builder.AppendLine($"    Min. Node Density : {minDocumentsPerNode:N0}");
                 builder.AppendLine($"    Max. Node Density : {maxDocumentsPerNode:N0}" + (maxDocumentsPerNode == 1 ? " (unique)" : ""));
@@ -161,7 +167,6 @@ namespace Katzebase.Engine.Indexes.Management
                 }
 
                 var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
-                physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
 
                 RebuildIndex(transaction, physicalSchema, physicalIindex);
 
@@ -190,9 +195,11 @@ namespace Katzebase.Engine.Indexes.Management
                 var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
                 indexCatalog.Remove(physicalIindex);
 
-                physicalIindex.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(physicalIindex.Name));
+                if (Path.Exists(physicalIindex.GetPartitionPagesPath(physicalSchema)))
+                {
+                    core.IO.DeletePath(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
+                }
 
-                core.IO.DeleteFile(transaction, physicalIindex.DiskPath);
                 core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
             }
             catch (Exception ex)
@@ -200,6 +207,15 @@ namespace Katzebase.Engine.Indexes.Management
                 core.Log.Write($"Failed to drop index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
+        }
+
+        internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalSchema physicalSchema,
+            IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
+        {
+            int indexPartition = indexSelection.Index.ComputePartition(conditionValues.First().Value);
+            string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
+            var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+            return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubset, conditionValues);
         }
 
         internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
@@ -291,6 +307,17 @@ namespace Katzebase.Engine.Indexes.Management
                 core.Log.Write($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
                 throw;
             }
+        }
+
+        internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction,
+                    PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
+        {
+            var firstValue = conditionSubset.Conditions.First().Right.Value;
+            KbUtility.EnsureNotNull(firstValue);
+            int indexPartition = indexSelection.Index.ComputePartition(firstValue);
+            string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
+            var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+            return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubset, workingSchemaPrefix);
         }
 
         /// <summary>
@@ -521,14 +548,7 @@ namespace Katzebase.Engine.Indexes.Management
             try
             {
                 var indexCatalog = core.IO.GetJson<PhysicalIndexCatalog>(transaction, physicalSchema.IndexCatalogFilePath(), intendedOperation);
-
                 indexCatalog.DiskPath = physicalSchema.IndexCatalogFilePath();
-
-                foreach (var index in indexCatalog.Collection)
-                {
-                    index.DiskPath = Path.Combine(physicalSchema.DiskPath, MakeIndexFileName(index.Name));
-                }
-
                 return indexCatalog;
             }
             catch (Exception ex)
@@ -584,7 +604,7 @@ namespace Katzebase.Engine.Indexes.Management
                     MatchType = IndexMatchType.None
                 };
 
-                if (physicalIndexPages.Root.Children.Count == 0)
+                if (physicalIndexPages.Root.Children == null || physicalIndexPages.Root.Children.Count == 0)
                 {
                     return result; //The index is empty.
                 }
@@ -638,8 +658,8 @@ namespace Katzebase.Engine.Indexes.Management
                 {
                     if (listOfModifiedFields == null || physicalIindex.Attributes.Where(o => listOfModifiedFields.Contains(o.Field)).Any())
                     {
-                        RemoveDocumentsFromIndex(transaction, physicalIindex, documents.Select(o => o.Key));
-                        InsertDocumentsIntoIndex(transaction, physicalIindex, documents);
+                        RemoveDocumentsFromIndex(transaction, physicalSchema, physicalIindex, documents.Select(o => o.Key));
+                        InsertDocumentsIntoIndex(transaction, physicalSchema, physicalIindex, documents);
                     }
                 }
             }
@@ -665,7 +685,7 @@ namespace Katzebase.Engine.Indexes.Management
                 //Loop though each index in the schema.
                 foreach (var physicalIindex in indexCatalog.Collection)
                 {
-                    InsertDocumentIntoIndex(transaction, physicalIindex, physicalDocument, documentPointer);
+                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, physicalDocument, documentPointer, true);
                 }
             }
             catch (Exception ex)
@@ -681,13 +701,13 @@ namespace Katzebase.Engine.Indexes.Management
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void InsertDocumentsIntoIndex(Transaction transaction, PhysicalIndex physicalIindex, Dictionary<DocumentPointer, PhysicalDocument> documents)
+        internal void InsertDocumentsIntoIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIindex, Dictionary<DocumentPointer, PhysicalDocument> documents)
         {
             try
             {
                 foreach (var document in documents)
                 {
-                    InsertDocumentIntoIndex(transaction, physicalIindex, document.Value, document.Key);
+                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document.Value, document.Key, true);
                 }
             }
             catch (Exception ex)
@@ -715,7 +735,7 @@ namespace Katzebase.Engine.Indexes.Management
                     //Loop though each index in the schema.
                     foreach (var physicalIindex in indexCatalog.Collection)
                     {
-                        InsertDocumentIntoIndex(transaction, physicalIindex, document.Value, document.Key);
+                        InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document.Value, document.Key, true);
                     }
                 }
             }
@@ -729,12 +749,24 @@ namespace Katzebase.Engine.Indexes.Management
         /// <summary>
         /// Inserts an index entry for a single document into a single index using the file name from the index object.
         /// </summary>
-        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalIndex physicalIindex, PhysicalDocument document, DocumentPointer documentPointer)
+        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIindex, PhysicalDocument document, DocumentPointer documentPointer, bool flushPageCatalog)
         {
             try
             {
-                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
-                InsertDocumentIntoIndex(transaction, physicalIindex, physicalIndexPages, document, documentPointer, true);
+                var documentField = physicalIindex.Attributes[0].Field;
+                KbUtility.EnsureNotNull(documentField);
+                document.ToDictonary().TryGetValue(documentField, out string? value);
+
+                int indexPartition = physicalIindex.ComputePartition(value);
+
+                string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
+
+                InsertDocumentIntoIndex(transaction, physicalIindex, physicalIndexPages, document, documentPointer, flushPageCatalog);
+
+                core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
+
+
             }
             catch (Exception ex)
             {
@@ -743,11 +775,12 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
+
         /// <summary>
         /// Inserts an index entry for a single document into a single index using a long lived index page catalog.
         /// </summary>
         private void InsertDocumentIntoIndex(Transaction transaction, PhysicalIndex physicalIindex, PhysicalIndexPages physicalIndexPages,
-            PhysicalDocument document, DocumentPointer documentPointer, bool flushPageCatalog)
+        PhysicalDocument document, DocumentPointer documentPointer, bool flushPageCatalog)
         {
             try
             {
@@ -790,7 +823,8 @@ namespace Katzebase.Engine.Indexes.Management
 
                 if (flushPageCatalog)
                 {
-                    core.IO.PutPBuf(transaction, physicalIindex.DiskPath, physicalIndexPages);
+                    throw new NotImplementedException();
+                    //core.IO.PutPBuf(transaction, physicalIindex.LegacyDiskPath, physicalIndexPages);
                 }
             }
             catch (Exception ex)
@@ -807,16 +841,16 @@ namespace Katzebase.Engine.Indexes.Management
             public Transaction Transaction { get; set; }
             public PhysicalSchema PhysicalSchema { get; set; }
             public PhysicalIndex PhysicalIindex { get; set; }
-            public PhysicalIndexPages PhysicalIndexPages { get; set; }
+            public Dictionary<int, PhysicalIndexPages> PhysicalIndexPageMap { get; set; }
             public object SyncObject { get; private set; } = new object();
 
             public RebuildIndexThreadParam(Transaction transaction, PhysicalSchema physicalSchema,
-                PhysicalIndexPages physicalIndexPages, PhysicalIndex physicalIindex)
+                Dictionary<int, PhysicalIndexPages> physicalIndexPageMap, PhysicalIndex physicalIindex)
             {
                 Transaction = transaction;
                 PhysicalSchema = physicalSchema;
                 PhysicalIindex = physicalIindex;
-                PhysicalIndexPages = physicalIndexPages;
+                PhysicalIndexPageMap = physicalIndexPageMap;
             }
         }
 
@@ -847,7 +881,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                     lock (param.SyncObject)
                     {
-                        InsertDocumentIntoIndex(param.Transaction, param.PhysicalIindex, param.PhysicalIndexPages, PhysicalDocument, documentPointer, false);
+                        InsertDocumentIntoIndex(param.Transaction, param.PhysicalSchema, param.PhysicalIindex, PhysicalDocument, documentPointer, false);
                     }
                 }
             }
@@ -870,13 +904,21 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
 
-                //Clear out the existing index pages.
-                core.IO.PutPBuf(transaction, physicalIindex.DiskPath, new PhysicalIndexPages());
+                var physicalIndexPageMap = new Dictionary<int, PhysicalIndexPages>();
+                for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
+                {
+                    physicalIndexPageMap.Add(indexPartition, new PhysicalIndexPages());
+                }
 
-                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
+                //Clear out the existing index pages.
+                if (Path.Exists(physicalIindex.GetPartitionPagesPath(physicalSchema)))
+                {
+                    core.IO.DeletePath(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
+                }
+                core.IO.CreateDirectory(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
 
                 var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
-                var threadParam = new RebuildIndexThreadParam(transaction, physicalSchema, physicalIndexPages, physicalIindex);
+                var threadParam = new RebuildIndexThreadParam(transaction, physicalSchema, physicalIndexPageMap, physicalIindex);
                 int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, documentPointers.Count);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                 var threadPool = ThreadPoolQueue<DocumentPointer, RebuildIndexThreadParam>
@@ -897,7 +939,10 @@ namespace Katzebase.Engine.Indexes.Management
                 threadPool.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
-                core.IO.PutPBuf(transaction, physicalIindex.DiskPath, physicalIndexPages);
+                for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
+                {
+                    core.IO.PutPBuf(transaction, physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPageMap[indexPartition]);
+                }
             }
             catch (Exception ex)
             {
@@ -921,7 +966,7 @@ namespace Katzebase.Engine.Indexes.Management
                 //Loop though each index in the schema.
                 foreach (var physicalIindex in indexCatalog.Collection)
                 {
-                    RemoveDocumentsFromIndex(transaction, physicalIindex, documentPointers);
+                    RemoveDocumentsFromIndex(transaction, physicalSchema, physicalIindex, documentPointers);
                 }
             }
             catch (Exception ex)
@@ -977,13 +1022,19 @@ namespace Katzebase.Engine.Indexes.Management
         /// <summary>
         /// Removes a collection of documents from an index. Locks the index page catalog for write.
         /// </summary>
-        private void RemoveDocumentsFromIndex(Transaction transaction, PhysicalIndex physicalIindex, IEnumerable<DocumentPointer> documentPointers)
+        private void RemoveDocumentsFromIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIindex, IEnumerable<DocumentPointer> documentPointers)
         {
             try
             {
-                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, physicalIindex.DiskPath, LockOperation.Write);
-                RemoveDocumentsFromLeaves(physicalIndexPages.Root, documentPointers);
-                core.IO.PutPBuf(transaction, physicalIindex.DiskPath, physicalIndexPages);
+                for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
+                {
+                    string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                    var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
+
+                    RemoveDocumentsFromLeaves(physicalIndexPages.Root, documentPointers);
+
+                    core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
+                }
             }
             catch (Exception ex)
             {

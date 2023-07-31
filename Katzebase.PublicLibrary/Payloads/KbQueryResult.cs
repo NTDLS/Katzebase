@@ -22,7 +22,7 @@
         {
             return new KbQueryResult()
             {
-                //Messages = actionResponse.Messages,
+                Messages = actionResponse.Messages,
                 RowCount = actionResponse.RowCount,
                 Success = actionResponse.Success,
                 ExceptionText = actionResponse.ExceptionText,
