@@ -427,7 +427,7 @@ namespace Katzebase.Engine.Query.Searchers
             var expression = new NCalc.Expression(currentSchemaMap.Conditions.HighLevelExpressionTree);
 
             //Create a reference to the entire document catalog.
-            var limitedDocumentPointers = param.Core.Documents.AcquireDocumentPointers(param.Transaction, currentSchemaMap.PhysicalSchema, LockOperation.Read);
+            IEnumerable<DocumentPointer>? limitedDocumentPointers = null;
 
             #region Indexing to reduce the number of document pointers in "limitedDocumentPointers".
 
@@ -482,6 +482,11 @@ namespace Katzebase.Engine.Query.Searchers
                 //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
                 //*
                 #endregion
+            }
+
+            if (limitedDocumentPointers == null)
+            {
+                limitedDocumentPointers = param.Core.Documents.AcquireDocumentPointers(param.Transaction, currentSchemaMap.PhysicalSchema, LockOperation.Read);
             }
 
             #endregion
