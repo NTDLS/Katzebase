@@ -1,15 +1,31 @@
---analyze INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
+set TraceWaitTimes true
 
---select top 100 * from TopNotchERP:Address where parent_key = 'ABBEY'
+insert into TopNotchERP:Address
+(
+	parent_key = 'ABBEY',
+	jtrax_module = 'JMP'
+), (
+	parent_key = 'ABBEY',
+	jtrax_module = 'PMJ'
+)
 
 delete from TopNotchERP:Address where parent_key = 'ABBEY'
 
+--analyze INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
 /*
 insert into TopNotchERP:Address
 (
 	parent_key = 'ABBEY',
 	jtrax_module = 'JMP'
+), (
+	parent_key = 'ABBEY',
+	jtrax_module = 'PMJ'
 )
+
+
+select top 100 * from TopNotchERP:Address where parent_key = 'ABBEY'
+
+delete from TopNotchERP:Address where parent_key = 'ABBEY'
 */
 
 

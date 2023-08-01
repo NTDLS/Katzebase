@@ -26,6 +26,7 @@ namespace Katzebase.Engine.Trace
             GetPBuf,
             ThreadCreation,
             ThreadQueue,
+            ThreadDeQueue,
             ThreadReady,
             ThreadCompletion,
             Sorting,

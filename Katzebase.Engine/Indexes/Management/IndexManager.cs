@@ -861,7 +861,9 @@ namespace Katzebase.Engine.Indexes.Management
                 {
                     param.Transaction.EnsureActive();
 
+                    var ptThreadDeQueue = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadDeQueue);
                     var documentPointer = pool.DequeueWorkItem();
+                    ptThreadDeQueue?.StopAndAccumulate();
                     if (documentPointer == null)
                     {
                         continue;
@@ -927,7 +929,9 @@ namespace Katzebase.Engine.Indexes.Management
                         break;
                     }
 
+                    var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
                     threadPool.EnqueueWorkItem(documentPointer);
+                    ptThreadQueue?.StopAndAccumulate();
                 }
 
                 var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
@@ -1014,6 +1018,8 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
+
+
         /// <summary>
         /// Removes a collection of documents from an index. Locks the index page catalog for write.
         /// </summary>
@@ -1021,19 +1027,102 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
+                bool singleThreadedIndexDeletion = true;
+
+                //TODO: We need to determine how large this job is going to be and use threads when we have huge indexes.
+                if (singleThreadedIndexDeletion)
                 {
-                    string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                    var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
+                    for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
+                    {
+                        string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                        var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
 
-                    RemoveDocumentsFromLeaves(physicalIndexPages.Root, documentPointers);
+                        if (RemoveDocumentsFromLeaves(physicalIndexPages.Root, documentPointers) > 0)
+                        {
+                            core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
+                        }
+                    }
+                }
+                else
+                {
+                    var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
+                    var threadParam = new RemoveDocumentsFromIndexThreadParam(transaction, physicalIindex, physicalSchema, documentPointers);
+                    int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, physicalIindex.Partitions /*TODO: Use the total document count contained in the index*/);
+                    transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
+                    var threadPool = ThreadPoolQueue<int?, RemoveDocumentsFromIndexThreadParam>
+                        .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", RemoveDocumentsFromIndexThreadProc, threadParam, threadCount);
+                    ptThreadCreation?.StopAndAccumulate();
 
-                    core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
+                    for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
+                    {
+                        if (threadPool.HasException)
+                        {
+                            break;
+                        }
+
+                        var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
+                        threadPool.EnqueueWorkItem(indexPartition);
+                        ptThreadQueue?.StopAndAccumulate();
+                    }
+
+                    var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
+                    threadPool.WaitForCompletion();
+                    ptThreadCompletion?.StopAndAccumulate();
                 }
             }
             catch (Exception ex)
             {
                 core.Log.Write($"Failed to remove documents from index for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        private class RemoveDocumentsFromIndexThreadParam
+        {
+            public Transaction Transaction { get; set; }
+            public PhysicalIndex PhysicalIindex { get; set; }
+            public PhysicalSchema PhysicalSchema { get; set; }
+            public IEnumerable<DocumentPointer> DocumentPointers { get; set; }
+
+            public RemoveDocumentsFromIndexThreadParam(Transaction transaction, PhysicalIndex physicalIindex, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
+            {
+                Transaction = transaction;
+                PhysicalIindex = physicalIindex;
+                PhysicalSchema = physicalSchema;
+                DocumentPointers = documentPointers;
+            }
+        }
+
+        private void RemoveDocumentsFromIndexThreadProc(ThreadPoolQueue<int?, RemoveDocumentsFromIndexThreadParam> pool, RemoveDocumentsFromIndexThreadParam? param)
+        {
+            try
+            {
+                KbUtility.EnsureNotNull(param);
+
+                while (pool.ContinueToProcessQueue)
+                {
+                    param.Transaction.EnsureActive();
+
+                    var ptThreadDeQueue = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadDeQueue);
+                    var indexPartition = pool.DequeueWorkItem();
+                    ptThreadDeQueue?.StopAndAccumulate();
+                    if (indexPartition == null)
+                    {
+                        continue;
+                    }
+
+                    string pageDiskPath = param.PhysicalIindex.GetPartitionPagesFileName(param.PhysicalSchema, (int)indexPartition);
+                    var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
+
+                    if (RemoveDocumentsFromLeaves(physicalIndexPages.Root, param.DocumentPointers) > 0)
+                    {
+                        core.IO.PutPBuf(param.Transaction, pageDiskPath, physicalIndexPages);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to delete from index by thread.", ex);
                 throw;
             }
         }

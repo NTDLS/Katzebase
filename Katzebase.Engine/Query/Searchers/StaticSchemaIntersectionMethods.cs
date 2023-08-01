@@ -112,7 +112,9 @@ namespace Katzebase.Engine.Query.Searchers
                     break;
                 }
 
+                var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
                 threadPool.EnqueueWorkItem(documentPointer);
+                ptThreadQueue?.StopAndAccumulate();
             }
 
             var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
@@ -279,7 +281,10 @@ namespace Katzebase.Engine.Query.Searchers
             {
                 param.Transaction.EnsureActive();
 
+                var ptThreadDeQueue = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadDeQueue);
                 var toplevelDocument = pool.DequeueWorkItem();
+                ptThreadDeQueue?.StopAndAccumulate();
+
                 if (toplevelDocument == null)
                 {
                     continue;
