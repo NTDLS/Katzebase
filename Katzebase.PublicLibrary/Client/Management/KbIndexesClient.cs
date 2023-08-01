@@ -57,11 +57,9 @@ namespace Katzebase.PublicLibrary.Client.Management
         /// <summary>
         /// Rebuilds a given index.
         /// </summary>
-        /// <param name="schema"></param>
-        /// <param name="document"></param>
-        public bool Rebuild(string schema, string indexName)
+        public bool Rebuild(string schema, string indexName, int newPartitionCount = 0)
         {
-            string url = $"api/Indexes/{client.SessionId}/{schema}/{indexName}/Rebuild";
+            string url = $"api/Indexes/{client.SessionId}/{schema}/{indexName}/{newPartitionCount}/Rebuild";
 
             using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;

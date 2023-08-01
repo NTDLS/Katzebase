@@ -4,7 +4,7 @@ namespace Katzebase.Engine.Indexes.Matching
 {
     public class IndexSelection
     {
-        public PhysicalIndex Index;
+        public PhysicalIndex PhysicalIndex;
         /// <summary>
         /// The names of the document fileds that are covered by the index.
         /// </summary>
@@ -15,7 +15,7 @@ namespace Katzebase.Engine.Indexes.Matching
         public IndexSelection(PhysicalIndex index, List<PrefixedField> coveredFields)
         {
             CoveredFields = coveredFields;
-            Index = index;
+            PhysicalIndex = index;
         }
     }
 }

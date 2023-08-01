@@ -78,12 +78,12 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
-        public KbActionResponse RebuildIndex(ulong processId, string schemaName, string indexName)
+        public KbActionResponse RebuildIndex(ulong processId, string schemaName, string indexName, uint newPartitionCount)
         {
             try
             {
                 using var transactionReference = core.Transactions.Acquire(processId);
-                core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName);
+                core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName, newPartitionCount);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)

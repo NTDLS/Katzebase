@@ -238,7 +238,7 @@ namespace Katzebase.Engine.Query.Constraints
                 foreach (var subsetKey in Conditions.Root.SubsetKeys)
                 {
                     var subset = Conditions.SubsetByKey(subsetKey);
-                    result.AppendLine($"  [{FriendlyExp(subset.Expression)}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.Index.Name + ")}" : " {non-Indexable}"));
+                    result.AppendLine($"  [{FriendlyExp(subset.Expression)}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
 
                     result.AppendLine("  (");
                     BuildFullVirtualExpression(ref result, subset, 1);
@@ -257,7 +257,7 @@ namespace Katzebase.Engine.Query.Constraints
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subset = Conditions.SubsetByKey(subsetKey);
-                result.AppendLine("".PadLeft(depth * 4, ' ') + $"[{FriendlyExp(subset.Expression)}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.Index.Name + ")}" : " {non-Indexable}"));
+                result.AppendLine("".PadLeft(depth * 4, ' ') + $"[{FriendlyExp(subset.Expression)}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
 
                 if (subset.Conditions.Count > 0)
                 {

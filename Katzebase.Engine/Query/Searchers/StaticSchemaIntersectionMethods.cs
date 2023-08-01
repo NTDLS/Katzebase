@@ -35,10 +35,7 @@ namespace Katzebase.Engine.Query.Searchers
             var topLevel = schemaMap.First();
             var topLevelMap = topLevel.Value;
 
-            var documentPointers = core.Documents.AcquireDocumentPointers(transaction, topLevelMap.PhysicalSchema, LockOperation.Read);
-
-            //var documentPointers = topLevelMap.DocumentPageCatalog.ConsolidatedDocumentPointers();
-
+            IEnumerable<DocumentPointer> ?documentPointers = null;
             ConditionLookupOptimization? lookupOptimization = null;
 
             //TODO: Here we should evaluate whatever conditions we can to early eliminate the top level document scans.
@@ -59,7 +56,7 @@ namespace Katzebase.Engine.Query.Searchers
                     {
                         KbUtility.EnsureNotNull(subset.IndexSelection);
 
-                        var indexMatchedDocuments = core.Indexes.MatchDocuments(transaction, topLevelMap.PhysicalSchema, subset.IndexSelection, subset, topLevelMap.Prefix);
+                        var indexMatchedDocuments = core.Indexes.MatchWorkingSchemaDocuments(transaction, topLevelMap.PhysicalSchema, subset.IndexSelection, subset, topLevelMap.Prefix);
                         limitedDocumentPointers.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
 
@@ -86,6 +83,10 @@ namespace Katzebase.Engine.Query.Searchers
                 }
             }
 
+            if (documentPointers == null)
+            {
+                documentPointers = core.Documents.AcquireDocumentPointers(transaction, topLevelMap.PhysicalSchema, LockOperation.Read);
+            }
 
             var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
             var threadParam = new LookupThreadParam(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
@@ -455,7 +456,7 @@ namespace Katzebase.Engine.Query.Searchers
                     }
 
                     //Match on values from the document.
-                    var documentIds = param.Core.Indexes.MatchDocuments(param.Transaction, currentSchemaMap.PhysicalSchema, subset.IndexSelection, subset, keyValuePairs);
+                    var documentIds = param.Core.Indexes.MatchConditionValuesDocuments(param.Transaction, currentSchemaMap.PhysicalSchema, subset.IndexSelection, subset, keyValuePairs);
 
                     furtherLimitedDocumentPointers.AddRange(documentIds.Values);
                 }

@@ -39,8 +39,8 @@ namespace Katzebase.Service.Controllers
         /// </summary>
         /// <param name="schema"></param>
         [HttpGet]
-        [Route("{sessionId}/{schema}/{name}/Rebuild")]
-        public KbActionResponse Rebuild(Guid sessionId, string schema, string name)
+        [Route("{sessionId}/{schema}/{name}/{newPartitionCount}/Rebuild")]
+        public KbActionResponse Rebuild(Guid sessionId, string schema, string name, uint newPartitionCount)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace Katzebase.Service.Controllers
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.RebuildIndex(processId, schema, name);
+                return Program.Core.Indexes.APIHandlers.RebuildIndex(processId, schema, name, newPartitionCount);
             }
             catch (Exception ex)
             {

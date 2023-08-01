@@ -20,7 +20,8 @@ namespace Katzebase.Engine.Query
             Schema,
             ObjectName,
             Parameters,
-            Batches
+            Batches,
+            PartitionCount
         }
 
         public bool DynamicallyBuildSelectList { get; set; } = false;
@@ -51,6 +52,15 @@ namespace Katzebase.Engine.Query
         public NamedFunctionParameterBaseCollection UpdateValues { get; set; } = new();
 
         public List<KbNameValuePair<string, string>> VariableValues { get; set; } = new();
+
+        public T Attribute<T>(QueryAttribute attribute, T defaultValue)
+        {
+            if (Attributes.ContainsKey(attribute))
+            {
+                return (T)Attributes[attribute];
+            }
+            return defaultValue;
+        }
 
         public T Attribute<T>(QueryAttribute attribute)
         {

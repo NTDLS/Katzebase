@@ -1,5 +1,56 @@
 set TraceWaitTimes true
 
+select
+	sw.Text as SourceWord
+	--S.TargetWordId,
+	--tw.Text as TargetWord,
+	--tl.Name as TargetLanguage
+from
+	WordList:Word as sw
+inner join WordList:Synonym as s
+	on s.SourceWordId = sw.Id
+--inner join WordList:Word as tw
+	--ON tw.Id = S.TargetWordId
+--inner join WordList:Language as tl
+	--on tl.Id = tw.LanguageId
+where
+	sw.Text like 'moon%'
+
+--SELECT top 1000 *
+--FROM WordList:Word
+--WHERE Id BETWEEN 578500 AND 578800
+
+/*
+CREATE INDEX IX_Word_LanguageId
+(
+	LanguageId
+) ON WordList:Word WITH (PARTITIONS = 10)
+
+drop INDEX IX_Word_Text ON WordList:Word WITH (PARTITIONS = 9)
+*/
+--REBUILD INDEX IX_Word_Text
+--ON WordList:Word WITH (PARTITIONS = 100)
+
+--SELECT w.Id, w.Text, w.LanguageId, w.SourceId, w.IsDirty, DocumentUID('w')
+--FROM WordList:Word as w WHERE w.Text = 'Fin'
+--order by w.Id
+
+/*
+CREATE INDEX IX_Synonym_TargetWordId
+(
+	TargetWordId
+) ON WordList:synonym
+CREATE INDEX IX_Synonym_SourceWordId
+(
+	SourceWordId
+) ON WordList:synonym
+*/
+
+--rebuild index IX_Synonym_TargetWordId on WordList:synonym
+
+/*
+set TraceWaitTimes true
+
 insert into TopNotchERP:Address
 (
 	parent_key = 'ABBEY',
@@ -10,7 +61,7 @@ insert into TopNotchERP:Address
 )
 
 delete from TopNotchERP:Address where parent_key = 'ABBEY'
-
+*/
 --analyze INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
 /*
 insert into TopNotchERP:Address
@@ -84,6 +135,7 @@ rebuild index IX_FlatTranslate_English on WordList:FlatTranslate
 rebuild index IX_Word on WordList:word
 rebuild index IX_Word_Id on WordList:word
 rebuild index IX_Synonym_SourceWord on WordList:synonym
+rebuild index IX_Synonym_TargetWordId on WordList:synonym
 */
 
 /*

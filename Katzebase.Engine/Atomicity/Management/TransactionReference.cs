@@ -46,7 +46,7 @@ namespace Katzebase.Engine.Atomicity.Management
                 Metrics = Transaction.PT?.ToCollection(),
                 Messages = Transaction.Messages,
                 Warnings = Transaction.Warnings,
-                Duration = (DateTime.UtcNow - Transaction.StartTime).Milliseconds
+                Duration = (DateTime.UtcNow - Transaction.StartTime).TotalMilliseconds
             };
         }
 
@@ -63,7 +63,7 @@ namespace Katzebase.Engine.Atomicity.Management
             result.Metrics = Transaction.PT?.ToCollection();
             result.Messages = Transaction.Messages;
             result.Warnings = Transaction.Warnings;
-            result.Duration = (DateTime.UtcNow - Transaction.StartTime).Milliseconds;
+            result.Duration = (DateTime.UtcNow - Transaction.StartTime).TotalMilliseconds;
 
             return result;
         }

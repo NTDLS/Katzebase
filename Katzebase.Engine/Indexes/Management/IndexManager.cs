@@ -89,13 +89,13 @@ namespace Katzebase.Engine.Indexes.Management
 
                 var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
 
-                var physicalIndexPageMap = new Dictionary<int, PhysicalIndexPages>();
+                var physicalIndexPageMap = new Dictionary<uint, PhysicalIndexPages>();
                 var physicalIndexPageMapDistilledLeaves = new List<List<PhysicalIndexLeaf>>();
 
                 double diskSize = 0;
                 double decompressedSiskSize = 0;
 
-                for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
+                for (uint indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
                 {
                     string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                     physicalIndexPageMap[indexPartition] = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
@@ -155,7 +155,7 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
-        internal void RebuildIndex(Transaction transaction, string schemaName, string indexName)
+        internal void RebuildIndex(Transaction transaction, string schemaName, string indexName, uint newPartitionCount = 0)
         {
             try
             {
@@ -167,6 +167,11 @@ namespace Katzebase.Engine.Indexes.Management
                 }
 
                 var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
+
+                if (newPartitionCount != 0)
+                {
+                    physicalIindex.Partitions = newPartitionCount;
+                }
 
                 RebuildIndex(transaction, physicalSchema, physicalIindex);
 
@@ -209,16 +214,115 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
-        internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalSchema physicalSchema,
+        internal Dictionary<uint, DocumentPointer> MatchConditionValuesDocuments(Transaction transaction, PhysicalSchema physicalSchema,
             IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
         {
-            int indexPartition = indexSelection.Index.ComputePartition(conditionValues.First().Value);
-            string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
-            var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-            return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubset, conditionValues);
+            var firstCondition = conditionSubset.Conditions.First();
+
+            if (firstCondition.LogicalQualifier == LogicalQualifier.Equals)
+            {
+                //Yay, we have an "equals" condition so we can eliminate all but one partition.
+                uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(conditionValues.First().Value);
+                string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+                return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubset, conditionValues);
+            }
+            else
+            {
+                //Unfortunately, we cant easily eliminate index partitions. Lets fire up some threads and scan all of the partitions.
+
+                var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
+                var threadParam = new MatchConditionValuesDocumentsThreadParam(transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, conditionValues);
+                int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, (int)indexSelection.PhysicalIndex.Partitions /*TODO: Use the total document count contained in the index*/);
+                transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
+                var threadPool = ThreadPoolQueue<int?, MatchConditionValuesDocumentsThreadParam>
+                    .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", MatchConditionValuesDocumentsThreadProc, threadParam, threadCount, (int)indexSelection.PhysicalIndex.Partitions);
+                ptThreadCreation?.StopAndAccumulate();
+
+                for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
+                {
+                    if (threadPool.HasException)
+                    {
+                        break;
+                    }
+
+                    var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
+                    threadPool.EnqueueWorkItem(indexPartition);
+                    ptThreadQueue?.StopAndAccumulate();
+                }
+
+                var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
+                threadPool.WaitForCompletion();
+                ptThreadCompletion?.StopAndAccumulate();
+
+                return threadParam.Results;
+            }
+
         }
 
-        internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
+        private class MatchConditionValuesDocumentsThreadParam
+        {
+            public Transaction Transaction { get; set; }
+            public PhysicalIndex PhysicalIindex { get; set; }
+            public PhysicalSchema PhysicalSchema { get; set; }
+            public IndexSelection IndexSelection { get; set; }
+            public ConditionSubset ConditionSubset { get; set; }
+            public Dictionary<string, string> ConditionValues { get; set; }
+            public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
+
+            public MatchConditionValuesDocumentsThreadParam(Transaction transaction, PhysicalIndex physicalIindex, PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
+            {
+                Transaction = transaction;
+                PhysicalIindex = physicalIindex;
+                PhysicalSchema = physicalSchema;
+                IndexSelection = indexSelection;
+                ConditionSubset = conditionSubset;
+                ConditionValues = conditionValues;
+            }
+        }
+
+        private void MatchConditionValuesDocumentsThreadProc(ThreadPoolQueue<int?, MatchConditionValuesDocumentsThreadParam> pool, MatchConditionValuesDocumentsThreadParam? param)
+        {
+            try
+            {
+                KbUtility.EnsureNotNull(param);
+
+                while (pool.ContinueToProcessQueue)
+                {
+                    param.Transaction.EnsureActive();
+
+                    var ptThreadDeQueue = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadDeQueue);
+                    var indexPartition = pool.DequeueWorkItem();
+                    ptThreadDeQueue?.StopAndAccumulate();
+                    if (indexPartition == null)
+                    {
+                        continue;
+                    }
+
+                    string pageDiskPath = param.PhysicalIindex.GetPartitionPagesFileName(param.PhysicalSchema, (uint)indexPartition);
+                    var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
+
+                    var results = MatchDocuments(param.Transaction, physicalIndexPages, param.IndexSelection, param.ConditionSubset, param.ConditionValues);
+                    if (results.Any())
+                    {
+                        lock (param.Results)
+                        {
+                            foreach (var kvp in results)
+                            {
+                                param.Results.Add(kvp.Key, kvp.Value);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to delete from index by thread.", ex);
+                throw;
+            }
+        }
+
+        private Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
             IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
         {
             try
@@ -226,7 +330,7 @@ namespace Katzebase.Engine.Indexes.Management
                 List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = new() { physicalIndexPages.Root };
                 bool foundAnything = false;
 
-                foreach (var attribute in indexSelection.Index.Attributes)
+                foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
                 {
                     KbUtility.EnsureNotNull(attribute.Field);
                     var conditionField = conditionSubset.Conditions.Where(o => o.Left.Value == attribute.Field.ToLowerInvariant()).FirstOrDefault();
@@ -309,31 +413,130 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
-        internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction,
+        internal Dictionary<uint, DocumentPointer> MatchWorkingSchemaDocuments(Transaction transaction,
                     PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
         {
-            var firstValue = conditionSubset.Conditions.First().Right.Value;
-            KbUtility.EnsureNotNull(firstValue);
-            int indexPartition = indexSelection.Index.ComputePartition(firstValue);
-            string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
-            var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-            return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubset, workingSchemaPrefix);
+            var firstCondition = conditionSubset.Conditions.First();
+
+            if (firstCondition.LogicalQualifier == LogicalQualifier.Equals)
+            {
+                //Yay, we have an "equals" condition so we can eliminate all but one partition.
+
+                var firstValue = firstCondition.Right.Value;
+
+                KbUtility.EnsureNotNull(firstValue);
+                uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(firstValue);
+                string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+                return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubset, workingSchemaPrefix);
+            }
+            else
+            {
+                //Unfortunately, we cant easily eliminate index partitions. Lets fire up some threads and scan all of the partitions.
+
+                var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
+                var threadParam = new MatchWorkingSchemaDocumentsThreadParam(transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, workingSchemaPrefix);
+                int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, (int)indexSelection.PhysicalIndex.Partitions /*TODO: Use the total document count contained in the index*/);
+                transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
+                var threadPool = ThreadPoolQueue<int?, MatchWorkingSchemaDocumentsThreadParam>
+                    .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", MatchWorkingSchemaDocumentsThreadProc, threadParam, threadCount, (int)indexSelection.PhysicalIndex.Partitions);
+                ptThreadCreation?.StopAndAccumulate();
+
+                for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
+                {
+                    if (threadPool.HasException)
+                    {
+                        break;
+                    }
+
+                    var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
+                    threadPool.EnqueueWorkItem(indexPartition);
+                    ptThreadQueue?.StopAndAccumulate();
+                }
+
+                var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
+                threadPool.WaitForCompletion();
+                ptThreadCompletion?.StopAndAccumulate();
+
+                return threadParam.Results;
+            }
+        }
+
+        private class MatchWorkingSchemaDocumentsThreadParam
+        {
+            public Transaction Transaction { get; set; }
+            public PhysicalIndex PhysicalIindex { get; set; }
+            public PhysicalSchema PhysicalSchema { get; set; }
+            public IndexSelection IndexSelection { get; set; }
+            public ConditionSubset ConditionSubset { get; set; }
+            public string WorkingSchemaPrefix { get; set; }
+            public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
+
+            public MatchWorkingSchemaDocumentsThreadParam(Transaction transaction, PhysicalIndex physicalIindex, PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
+            {
+                Transaction = transaction;
+                PhysicalIindex = physicalIindex;
+                PhysicalSchema = physicalSchema;
+                IndexSelection = indexSelection;
+                ConditionSubset = conditionSubset;
+                WorkingSchemaPrefix = workingSchemaPrefix;
+            }
+        }
+
+        private void MatchWorkingSchemaDocumentsThreadProc(ThreadPoolQueue<int?, MatchWorkingSchemaDocumentsThreadParam> pool, MatchWorkingSchemaDocumentsThreadParam? param)
+        {
+            try
+            {
+                KbUtility.EnsureNotNull(param);
+
+                while (pool.ContinueToProcessQueue)
+                {
+                    param.Transaction.EnsureActive();
+
+                    var ptThreadDeQueue = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadDeQueue);
+                    var indexPartition = pool.DequeueWorkItem();
+                    ptThreadDeQueue?.StopAndAccumulate();
+                    if (indexPartition == null)
+                    {
+                        continue;
+                    }
+
+                    string pageDiskPath = param.PhysicalIindex.GetPartitionPagesFileName(param.PhysicalSchema, (uint)indexPartition);
+                    var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
+
+                    var results = MatchDocuments(param.Transaction, physicalIndexPages, param.IndexSelection, param.ConditionSubset, param.WorkingSchemaPrefix);
+                    if (results.Any())
+                    {
+                        lock (param.Results)
+                        {
+                            foreach (var kvp in results)
+                            {
+                                param.Results.Add(kvp.Key, kvp.Value);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to delete from index by thread.", ex);
+                throw;
+            }
         }
 
         /// <summary>
         /// Finds document IDs given a set of conditions.
         /// </summary>
-        internal Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction,
+        private Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction,
                     PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
         {
             try
             {
                 List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = new() { physicalIndexPages.Root };
-                //List<PhysicalIndexLeaf> lastFoundPhysicalIndexLeaves = new();
 
                 bool foundAnything = false;
 
-                foreach (var attribute in indexSelection.Index.Attributes)
+                foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
                 {
                     KbUtility.EnsureNotNull(attribute.Field);
                     var conditionField = conditionSubset.Conditions
@@ -685,7 +888,7 @@ namespace Katzebase.Engine.Indexes.Management
                 //Loop though each index in the schema.
                 foreach (var physicalIindex in indexCatalog.Collection)
                 {
-                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, physicalDocument, documentPointer, true);
+                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, physicalDocument, documentPointer);
                 }
             }
             catch (Exception ex)
@@ -707,7 +910,7 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 foreach (var document in documents)
                 {
-                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document.Value, document.Key, true);
+                    InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document.Value, document.Key);
                 }
             }
             catch (Exception ex)
@@ -735,7 +938,7 @@ namespace Katzebase.Engine.Indexes.Management
                     //Loop though each index in the schema.
                     foreach (var physicalIindex in indexCatalog.Collection)
                     {
-                        InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document.Value, document.Key, true);
+                        InsertDocumentIntoIndex(transaction, physicalSchema, physicalIindex, document.Value, document.Key);
                     }
                 }
             }
@@ -749,7 +952,7 @@ namespace Katzebase.Engine.Indexes.Management
         /// <summary>
         /// Inserts an index entry for a single document into a single index using the file name from the index object.
         /// </summary>
-        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIindex, PhysicalDocument document, DocumentPointer documentPointer, bool flushPageCatalog)
+        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIindex, PhysicalDocument document, DocumentPointer documentPointer)
         {
             try
             {
@@ -757,17 +960,14 @@ namespace Katzebase.Engine.Indexes.Management
                 KbUtility.EnsureNotNull(documentField);
                 document.ToDictonary().TryGetValue(documentField, out string? value);
 
-                int indexPartition = physicalIindex.ComputePartition(value);
+                uint indexPartition = physicalIindex.ComputePartition(value);
 
                 string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                 var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
 
-                InsertDocumentIntoIndex(transaction, physicalIindex, physicalIndexPages, document, documentPointer);
+                InsertDocumentIntoIndexPages(transaction, physicalIindex, physicalIndexPages, document, documentPointer);
 
-                if (flushPageCatalog)
-                {
-                    core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
-                }
+                core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
             }
             catch (Exception ex)
             {
@@ -780,8 +980,7 @@ namespace Katzebase.Engine.Indexes.Management
         /// <summary>
         /// Inserts an index entry for a single document into a single index using a long lived index page catalog.
         /// </summary>
-        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalIndex physicalIindex, PhysicalIndexPages physicalIndexPages,
-        PhysicalDocument document, DocumentPointer documentPointer)
+        private void InsertDocumentIntoIndexPages(Transaction transaction, PhysicalIndex physicalIindex, PhysicalIndexPages physicalIndexPages, PhysicalDocument document, DocumentPointer documentPointer)
         {
             try
             {
@@ -836,12 +1035,19 @@ namespace Katzebase.Engine.Indexes.Management
             public Transaction Transaction { get; set; }
             public PhysicalSchema PhysicalSchema { get; set; }
             public PhysicalIndex PhysicalIindex { get; set; }
-            public Dictionary<int, PhysicalIndexPages> PhysicalIndexPageMap { get; set; }
-            public object SyncObject { get; private set; } = new object();
+            public Dictionary<uint, PhysicalIndexPages> PhysicalIndexPageMap { get; set; }
+            public object[] SyncObjects { get; private set; }
 
             public RebuildIndexThreadParam(Transaction transaction, PhysicalSchema physicalSchema,
-                Dictionary<int, PhysicalIndexPages> physicalIndexPageMap, PhysicalIndex physicalIindex)
+                Dictionary<uint, PhysicalIndexPages> physicalIndexPageMap, PhysicalIndex physicalIindex, uint indexPartitions)
             {
+                SyncObjects = new object[indexPartitions];
+
+                for (uint indexPartition = 0; indexPartition < indexPartitions; indexPartition++)
+                {
+                    SyncObjects[indexPartition] = new object();
+                }
+
                 Transaction = transaction;
                 PhysicalSchema = physicalSchema;
                 PhysicalIindex = physicalIindex;
@@ -874,11 +1080,27 @@ namespace Katzebase.Engine.Indexes.Management
                         throw new KbNullException($"Value should not be null {nameof(param.PhysicalSchema.DiskPath)}.");
                     }
 
-                    var PhysicalDocument = core.Documents.AcquireDocument(param.Transaction, param.PhysicalSchema, documentPointer, LockOperation.Read);
+                    var physicalDocument = core.Documents.AcquireDocument(param.Transaction, param.PhysicalSchema, documentPointer, LockOperation.Read);
 
-                    lock (param.SyncObject)
+                    try
                     {
-                        InsertDocumentIntoIndex(param.Transaction, param.PhysicalSchema, param.PhysicalIindex, PhysicalDocument, documentPointer, false);
+                        var documentField = param.PhysicalIindex.Attributes[0].Field;
+                        KbUtility.EnsureNotNull(documentField);
+                        physicalDocument.ToDictonary().TryGetValue(documentField, out string? value);
+
+                        uint indexPartition = param.PhysicalIindex.ComputePartition(value);
+
+                        lock (param.SyncObjects[indexPartition])
+                        {
+                            string pageDiskPath = param.PhysicalIindex.GetPartitionPagesFileName(param.PhysicalSchema, indexPartition);
+                            var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
+                            InsertDocumentIntoIndexPages(param.Transaction, param.PhysicalIindex, physicalIndexPages, physicalDocument, documentPointer);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        core.Log.Write($"Failed to insert document into index for process id {param.Transaction.ProcessId}.", ex);
+                        throw;
                     }
                 }
             }
@@ -901,12 +1123,6 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
 
-                var physicalIndexPageMap = new Dictionary<int, PhysicalIndexPages>();
-                for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
-                {
-                    physicalIndexPageMap.Add(indexPartition, new PhysicalIndexPages());
-                }
-
                 //Clear out the existing index pages.
                 if (Path.Exists(physicalIindex.GetPartitionPagesPath(physicalSchema)))
                 {
@@ -914,12 +1130,22 @@ namespace Katzebase.Engine.Indexes.Management
                 }
                 core.IO.CreateDirectory(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
 
+                var physicalIndexPageMap = new Dictionary<uint, PhysicalIndexPages>();
+                for (uint indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
+                {
+                    var physicalIndexPages = new PhysicalIndexPages();
+                    physicalIndexPageMap.Add(indexPartition, physicalIndexPages);
+                    core.IO.PutPBuf(transaction, physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPages);
+                }
+
                 var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
-                var threadParam = new RebuildIndexThreadParam(transaction, physicalSchema, physicalIndexPageMap, physicalIindex);
+                var threadParam = new RebuildIndexThreadParam(transaction, physicalSchema, physicalIndexPageMap, physicalIindex, physicalIindex.Partitions);
                 int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, documentPointers.Count);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
+
                 var threadPool = ThreadPoolQueue<DocumentPointer, RebuildIndexThreadParam>
                     .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", RebuildIndexThreadProc, threadParam, threadCount);
+
                 ptThreadCreation?.StopAndAccumulate();
 
                 foreach (var documentPointer in documentPointers)
@@ -938,7 +1164,7 @@ namespace Katzebase.Engine.Indexes.Management
                 threadPool.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
-                for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
+                for (uint indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
                 {
                     core.IO.PutPBuf(transaction, physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPageMap[indexPartition]);
                 }
@@ -1032,7 +1258,7 @@ namespace Katzebase.Engine.Indexes.Management
                 //TODO: We need to determine how large this job is going to be and use threads when we have huge indexes.
                 if (useMultiThreadedIndexDeletion == false)
                 {
-                    for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
+                    for (uint indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
                     {
                         string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                         var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
@@ -1047,10 +1273,10 @@ namespace Katzebase.Engine.Indexes.Management
                 {
                     var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
                     var threadParam = new RemoveDocumentsFromIndexThreadParam(transaction, physicalIindex, physicalSchema, documentPointers);
-                    int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, physicalIindex.Partitions /*TODO: Use the total document count contained in the index*/);
+                    int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, (int)physicalIindex.Partitions /*TODO: Use the total document count contained in the index*/);
                     transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                     var threadPool = ThreadPoolQueue<int?, RemoveDocumentsFromIndexThreadParam>
-                        .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", RemoveDocumentsFromIndexThreadProc, threadParam, threadCount, physicalIindex.Partitions);
+                        .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", RemoveDocumentsFromIndexThreadProc, threadParam, threadCount, (int)physicalIindex.Partitions);
                     ptThreadCreation?.StopAndAccumulate();
 
                     for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
@@ -1111,7 +1337,7 @@ namespace Katzebase.Engine.Indexes.Management
                         continue;
                     }
 
-                    string pageDiskPath = param.PhysicalIindex.GetPartitionPagesFileName(param.PhysicalSchema, (int)indexPartition);
+                    string pageDiskPath = param.PhysicalIindex.GetPartitionPagesFileName(param.PhysicalSchema, (uint)indexPartition);
                     var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
 
                     if (RemoveDocumentsFromLeaves(physicalIndexPages.Root, param.DocumentPointers) > 0)

@@ -58,6 +58,11 @@ namespace Katzebase.Engine.Query.Tokenizers
             }
         }
 
+        public char CurrentChar()
+        {
+            return (_text.Substring(_position, 1)[0]);
+        }
+
         public bool IsCurrentChar(char ch)
         {
             return (_text.Substring(_position, 1)[0] == ch);

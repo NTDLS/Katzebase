@@ -112,6 +112,7 @@
 		<Keywords color="Keywords">
 			<Word>go</Word>
 			<Word>procedure</Word>
+			<Word>between</Word>
 			<Word>and</Word>
 			<Word>as</Word>
 			<Word>asc</Word>
@@ -125,6 +126,8 @@
 			<Word>drop</Word>
 			<Word>from</Word>
 			<Word>index</Word>
+			<Word>with</Word>
+			<Word>partitions</Word>
 			<Word>inner</Word>
 			<Word>insert</Word>
 			<Word>into</Word>

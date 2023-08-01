@@ -33,6 +33,11 @@
         public bool UseCompression { get; set; }
 
         /// <summary>
+        /// The number of index partitions to create when the partition count is unspecified at index creation.
+        /// </summary>
+        public uint DefaultIndexPartitions { get; set; }
+
+        /// <summary>
         /// The maximum number of threads that can be used per query. This is enforced over the session maximum.
         /// </summary>
         public int MaxQueryThreads { get; set; }

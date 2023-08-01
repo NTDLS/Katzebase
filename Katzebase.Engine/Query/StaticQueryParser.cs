@@ -286,6 +286,45 @@ namespace Katzebase.Engine.Query
                     }
 
                     result.Schemas.Add(new QuerySchema(token));
+
+                    if (query.IsNextToken("with"))
+                    {
+                        query.SkipNextToken();
+
+                        if (query.IsCurrentChar('(') == false)
+                        {
+                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
+                        }
+                        query.SkipNextChar();
+
+                        token = query.GetNextToken().ToLower();
+                        if (token == "partitions")
+                        {
+                            if (query.IsCurrentChar('=') == false)
+                            {
+                                throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
+                            }
+                            query.SkipNextChar();
+
+                            token = query.GetNextToken().ToLower();
+                            if (UInt32.TryParse(token, out uint partitionCount) == false)
+                            {
+                                throw new KbParserException("Invalid query. Found '" + token + "', expected: partition count.");
+                            }
+
+                            result.AddAttribute(PreparedQuery.QueryAttribute.PartitionCount, partitionCount);
+                        }
+                        else
+                        {
+                            throw new KbParserException("Invalid query. Found '" + token + "', expected: 'partitions'.");
+                        }
+
+                        if (query.IsCurrentChar(')') == false)
+                        {
+                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
+                        }
+                        query.SkipNextChar();
+                    }
                 }
                 else
                 {
@@ -380,6 +419,45 @@ namespace Katzebase.Engine.Query
                 }
 
                 result.Schemas.Add(new QuerySchema(token));
+
+                if (query.IsNextToken("with"))
+                {
+                    query.SkipNextToken();
+
+                    if (query.IsCurrentChar('(') == false)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
+                    }
+                    query.SkipNextChar();
+
+                    token = query.GetNextToken().ToLower();
+                    if (token == "partitions")
+                    {
+                        if (query.IsCurrentChar('=') == false)
+                        {
+                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
+                        }
+                        query.SkipNextChar();
+
+                        token = query.GetNextToken().ToLower();
+                        if (UInt32.TryParse(token, out uint partitionCount) == false)
+                        {
+                            throw new KbParserException("Invalid query. Found '" + token + "', expected: partition count.");
+                        }
+
+                        result.AddAttribute(PreparedQuery.QueryAttribute.PartitionCount, partitionCount);
+                    }
+                    else
+                    {
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: 'partitions'.");
+                    }
+
+                    if (query.IsCurrentChar(')') == false)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
+                    }
+                    query.SkipNextChar();
+                }
 
                 if (query.IsEnd() == false)
                 {

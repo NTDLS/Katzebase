@@ -1,8 +1,5 @@
 ﻿using Katzebase.Engine.Library;
 using Katzebase.Engine.Schemas;
-using Newtonsoft.Json;
-using System;
-using System.Text;
 
 namespace Katzebase.Engine.Indexes
 {
@@ -14,28 +11,26 @@ namespace Katzebase.Engine.Indexes
         public Guid Id { get; set; }
         public DateTime Created { get; set; }
         public DateTime Modfied { get; set; }
-        public int Partitions { get; set; } = 1000;
+        public uint Partitions { get; set; } = 1000;
         public bool IsUnique { get; set; } = false;
         public string GetPartitionPagesPath(PhysicalSchema physicalSchema) => Path.Combine(physicalSchema.DiskPath, $"@Index_{Helpers.MakeSafeFileName(Name)}");
-        public string GetPartitionPagesFileName(PhysicalSchema physicalSchema, int indexPartition) => Path.Combine(physicalSchema.DiskPath, $"@Index_{Helpers.MakeSafeFileName(Name)}", $"Page_{indexPartition}.PBuf");
+        public string GetPartitionPagesFileName(PhysicalSchema physicalSchema, uint indexPartition) => Path.Combine(physicalSchema.DiskPath, $"@Index_{Helpers.MakeSafeFileName(Name)}", $"Page_{indexPartition}.PBuf");
 
         public PhysicalIndex()
         {
         }
 
-        public int ComputePartition(string? value)
+        public uint ComputePartition(string? value)
         {
-            if (value == null)
+            uint hash = 0;
+            if (string.IsNullOrEmpty(value))
+                return hash;
+            const uint seed = 131;
+            foreach (char c in value)
             {
-                return 0;
+                hash = hash * seed + c;
             }
-            var buffer = Encoding.ASCII.GetBytes(value.ToLower());
-            int sum = 0;
-            foreach (var b in buffer)
-            {
-                sum += (int)(sum ^ b);
-            }
-            return sum % Partitions;
+            return hash % Partitions;
         }
 
         public PhysicalIndex Clone()
@@ -70,7 +65,8 @@ namespace Katzebase.Engine.Indexes
                 Name = index.Name,
                 Created = index.Created,
                 Modfied = index.Modfied,
-                IsUnique = index.IsUnique
+                IsUnique = index.IsUnique,
+                Partitions = index.Partitions
             };
 
             foreach (var indexAttribute in index.Attributes)
