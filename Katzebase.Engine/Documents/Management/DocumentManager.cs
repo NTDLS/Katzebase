@@ -288,8 +288,11 @@ namespace Katzebase.Engine.Documents.Management
                 //Save the document page catalog:
                 core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
 
-                //Update all of the indexes that referecne the documents.
-                core.Indexes.RemoveDocumentsFromIndexes(transaction, physicalSchema, documentPointers);
+                if (documentPointers.Count() > 0)
+                {
+                    //Update all of the indexes that referecne the documents.
+                    core.Indexes.RemoveDocumentsFromIndexes(transaction, physicalSchema, documentPointers);
+                }
             }
             catch (Exception ex)
             {

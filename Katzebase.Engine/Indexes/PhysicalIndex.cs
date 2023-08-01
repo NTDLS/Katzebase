@@ -29,7 +29,7 @@ namespace Katzebase.Engine.Indexes
             {
                 return 0;
             }
-            var buffer = Encoding.ASCII.GetBytes(value);
+            var buffer = Encoding.ASCII.GetBytes(value.ToLower());
             int sum = 0;
             foreach (var b in buffer)
             {

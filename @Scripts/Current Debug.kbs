@@ -1,6 +1,16 @@
 --analyze INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
 
-select top 100 * from TopNotchERP:Address where parent_key = 'AAAGEN01'
+--select top 100 * from TopNotchERP:Address where parent_key = 'ABBEY'
+
+delete from TopNotchERP:Address where parent_key = 'ABBEY'
+
+/*
+insert into TopNotchERP:Address
+(
+	parent_key = 'ABBEY',
+	jtrax_module = 'JMP'
+)
+*/
 
 
 /*

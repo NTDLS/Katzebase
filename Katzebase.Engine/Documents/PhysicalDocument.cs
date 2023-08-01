@@ -1,4 +1,5 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
 
 namespace Katzebase.Engine.Documents
@@ -10,14 +11,14 @@ namespace Katzebase.Engine.Documents
     [Serializable]
     public class PhysicalDocument
     {
-        public Dictionary<string, string> ToDictonary()
+        public CaseInSensitiveDictionary<string> ToDictonary()
         {
-            var documentContent = JsonConvert.DeserializeObject<Dictionary<string, string>>(Content);
+            var documentContent = JsonConvert.DeserializeObject<CaseInSensitiveDictionary<string>>(Content);
             if (documentContent == null)
             {
-                throw new KbNullException("Document dictinary cannot be null.");
+                throw new KbNullException("Document dictonary cannot be null.");
             }
-            return documentContent.ToDictionary(o => o.Key.ToLower(), o => o.Value);
+            return documentContent;
         }
 
         public string Content { get; set; } = string.Empty;

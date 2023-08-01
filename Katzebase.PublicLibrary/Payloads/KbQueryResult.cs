@@ -28,6 +28,7 @@
                 ExceptionText = actionResponse.ExceptionText,
                 Metrics = actionResponse.Metrics,
                 Explanation = actionResponse.Explanation,
+                Duration = actionResponse.Duration,
             };
         }
 

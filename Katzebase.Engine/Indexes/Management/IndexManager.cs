@@ -762,11 +762,12 @@ namespace Katzebase.Engine.Indexes.Management
                 string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                 var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
 
-                InsertDocumentIntoIndex(transaction, physicalIindex, physicalIndexPages, document, documentPointer, flushPageCatalog);
+                InsertDocumentIntoIndex(transaction, physicalIindex, physicalIndexPages, document, documentPointer);
 
-                core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
-
-
+                if (flushPageCatalog)
+                {
+                    core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
+                }
             }
             catch (Exception ex)
             {
@@ -780,7 +781,7 @@ namespace Katzebase.Engine.Indexes.Management
         /// Inserts an index entry for a single document into a single index using a long lived index page catalog.
         /// </summary>
         private void InsertDocumentIntoIndex(Transaction transaction, PhysicalIndex physicalIindex, PhysicalIndexPages physicalIndexPages,
-        PhysicalDocument document, DocumentPointer documentPointer, bool flushPageCatalog)
+        PhysicalDocument document, DocumentPointer documentPointer)
         {
             try
             {
@@ -820,12 +821,6 @@ namespace Katzebase.Engine.Indexes.Management
 
                 //Add the document to the lowest index extent.
                 indexScanResult.Leaf.Documents.Add(new PhysicalIndexEntry(documentPointer.DocumentId, documentPointer.PageNumber));
-
-                if (flushPageCatalog)
-                {
-                    throw new NotImplementedException();
-                    //core.IO.PutPBuf(transaction, physicalIindex.LegacyDiskPath, physicalIndexPages);
-                }
             }
             catch (Exception ex)
             {

@@ -301,38 +301,16 @@ namespace Katzebase.Engine.Query.Searchers
                 }
 
                 //Execute functions
+                if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
                 {
-                    foreach (var methodField in param.Query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
+                    lock (param.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
                     {
-                        foreach (var row in resultingRows.Collection)
-                        {
-                            var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.AuxiliaryFields);
-                            row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
-
-                            //Lets make the method results available for sorting, grouping, etc.
-                            var field = param.Query.SortFields.Where(o => o.Field == methodField.Alias).SingleOrDefault();
-                            if (field != null && row.AuxiliaryFields.ContainsKey(field.Alias) == false)
-                            {
-                                row.AuxiliaryFields.Add(field.Alias, methodResult);
-                            }
-                        }
+                        ExecuteFunctions(param, resultingRows);
                     }
-
-                    foreach (var methodField in param.Query.SelectFields.OfType<FunctionExpression>())
-                    {
-                        foreach (var row in resultingRows.Collection)
-                        {
-                            var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.AuxiliaryFields);
-                            row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
-
-                            //Lets make the method results available for sorting, grouping, etc.
-                            var field = param.Query.SortFields.Where(o => o.Alias == methodField.Alias).SingleOrDefault();
-                            if (field != null && row.AuxiliaryFields.ContainsKey(field.Alias) == false)
-                            {
-                                row.AuxiliaryFields.Add(field.Alias, methodResult);
-                            }
-                        }
-                    }
+                }
+                else
+                {
+                    ExecuteFunctions(param, resultingRows);
                 }
 
                 lock (param.Results)
@@ -345,6 +323,41 @@ namespace Katzebase.Engine.Query.Searchers
                     else
                     {
                         param.DocumentPointers.AddRange(resultingRows.Collection.Select(o => o.SchemaDocumentPointers[param.GatherDocumentPointersForSchemaPrefix]));
+                    }
+                }
+            }
+        }
+
+        static void ExecuteFunctions(LookupThreadParam param, SchemaIntersectionRowCollection resultingRows)
+        {
+            foreach (var methodField in param.Query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
+            {
+                foreach (var row in resultingRows.Collection)
+                {
+                    var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.AuxiliaryFields);
+                    row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
+
+                    //Lets make the method results available for sorting, grouping, etc.
+                    var field = param.Query.SortFields.Where(o => o.Field == methodField.Alias).SingleOrDefault();
+                    if (field != null && row.AuxiliaryFields.ContainsKey(field.Alias) == false)
+                    {
+                        row.AuxiliaryFields.Add(field.Alias, methodResult);
+                    }
+                }
+            }
+
+            foreach (var methodField in param.Query.SelectFields.OfType<FunctionExpression>())
+            {
+                foreach (var row in resultingRows.Collection)
+                {
+                    var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.AuxiliaryFields);
+                    row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
+
+                    //Lets make the method results available for sorting, grouping, etc.
+                    var field = param.Query.SortFields.Where(o => o.Alias == methodField.Alias).SingleOrDefault();
+                    if (field != null && row.AuxiliaryFields.ContainsKey(field.Alias) == false)
+                    {
+                        row.AuxiliaryFields.Add(field.Alias, methodResult);
                     }
                 }
             }
@@ -578,7 +591,7 @@ namespace Katzebase.Engine.Query.Searchers
         {
             if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
-                lock (param.Query.SelectFields)
+                lock (param.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
                 {
                     FillInSchemaResultDocumentValuesAtomic(param, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
                 }
@@ -594,7 +607,7 @@ namespace Katzebase.Engine.Query.Searchers
         /// </summary>
         /// 
         private static void FillInSchemaResultDocumentValuesAtomic(LookupThreadParam param, string schemaKey,
-        DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, Dictionary<string, Dictionary<string, string>> threadScopedContentCache)
+            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, Dictionary<string, Dictionary<string, string>> threadScopedContentCache)
         {
             var documentContent = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
 
