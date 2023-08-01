@@ -14,7 +14,7 @@ namespace Katzebase.Engine.Indexes
         public uint Partitions { get; set; } = 1000;
         public bool IsUnique { get; set; } = false;
         public string GetPartitionPagesPath(PhysicalSchema physicalSchema) => Path.Combine(physicalSchema.DiskPath, $"@Index_{Helpers.MakeSafeFileName(Name)}");
-        public string GetPartitionPagesFileName(PhysicalSchema physicalSchema, uint indexPartition) => Path.Combine(physicalSchema.DiskPath, $"@Index_{Helpers.MakeSafeFileName(Name)}", $"Page_{indexPartition}.PBuf");
+        public string GetPartitionPagesFileName(PhysicalSchema physicalSchema, uint indexPartition) => Path.Combine(physicalSchema.DiskPath, $"@Index_{Helpers.MakeSafeFileName(Name)}", $"Page_{indexPartition}{EngineConstants.IndexPageExtension}");
 
         public PhysicalIndex()
         {

@@ -6,7 +6,7 @@ namespace Katzebase.Engine.Query.Tokenizers
 {
     public class QueryTokenizer
     {
-        static readonly char[] DefaultTokenDelimiters = new char[] { ',' };
+        static readonly char[] DefaultTokenDelimiters = new char[] { ',', '=' };
 
         private readonly string _text;
         private int _position = 0;
