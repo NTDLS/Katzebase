@@ -236,7 +236,7 @@ namespace Katzebase.Engine.Indexes.Management
                 int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, (int)indexSelection.PhysicalIndex.Partitions /*TODO: Use the total document count contained in the index*/);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                 var threadPool = ThreadPoolQueue<int?, MatchConditionValuesDocumentsThreadParam>
-                    .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", MatchConditionValuesDocumentsThreadProc, threadParam, threadCount, (int)indexSelection.PhysicalIndex.Partitions);
+                    .CreateAndStart($"MatchConditionValuesDocuments:{transaction.ProcessId}", MatchConditionValuesDocumentsThreadProc, threadParam, threadCount, (int)indexSelection.PhysicalIndex.Partitions);
                 ptThreadCreation?.StopAndAccumulate();
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
@@ -439,7 +439,7 @@ namespace Katzebase.Engine.Indexes.Management
                 int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, (int)indexSelection.PhysicalIndex.Partitions /*TODO: Use the total document count contained in the index*/);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                 var threadPool = ThreadPoolQueue<int?, MatchWorkingSchemaDocumentsThreadParam>
-                    .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", MatchWorkingSchemaDocumentsThreadProc, threadParam, threadCount, (int)indexSelection.PhysicalIndex.Partitions);
+                    .CreateAndStart($"MatchWorkingSchemaDocuments:{transaction.ProcessId}", MatchWorkingSchemaDocumentsThreadProc, threadParam, threadCount, (int)indexSelection.PhysicalIndex.Partitions);
                 ptThreadCreation?.StopAndAccumulate();
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
@@ -1144,7 +1144,7 @@ namespace Katzebase.Engine.Indexes.Management
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
 
                 var threadPool = ThreadPoolQueue<DocumentPointer, RebuildIndexThreadParam>
-                    .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", RebuildIndexThreadProc, threadParam, threadCount);
+                    .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", RebuildIndexThreadProc, threadParam, threadCount, (int)physicalIindex.Partitions);
 
                 ptThreadCreation?.StopAndAccumulate();
 
@@ -1276,7 +1276,7 @@ namespace Katzebase.Engine.Indexes.Management
                     int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, (int)physicalIindex.Partitions /*TODO: Use the total document count contained in the index*/);
                     transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                     var threadPool = ThreadPoolQueue<int?, RemoveDocumentsFromIndexThreadParam>
-                        .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", RemoveDocumentsFromIndexThreadProc, threadParam, threadCount, (int)physicalIindex.Partitions);
+                        .CreateAndStart($"RemoveDocumentsFromIndex:{transaction.ProcessId}", RemoveDocumentsFromIndexThreadProc, threadParam, threadCount, (int)physicalIindex.Partitions);
                     ptThreadCreation?.StopAndAccumulate();
 
                     for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
