@@ -112,6 +112,19 @@ namespace Katzebase.Engine.Threading
 
             return pool;
         }
+        public static ThreadPoolQueue<T, P> Create(string poolName, UserThreadThread userThreadProc, object userThreadParam, int threadCount, int queueSize)
+        {
+            var pool = new ThreadPoolQueue<T, P>(poolName, userThreadProc, userThreadParam, threadCount, queueSize);
+
+            return pool;
+        }
+
+        public static ThreadPoolQueue<T, P> CreateAndStart(string poolName, UserThreadThread userThreadProc, object userThreadParam, int threadCount, int queueSize)
+        {
+            var pool = new ThreadPoolQueue<T, P>(poolName, userThreadProc, userThreadParam, threadCount, queueSize);
+            pool.Start();
+            return pool;
+        }
 
         public static ThreadPoolQueue<T, P> CreateAndStart(string poolName, UserThreadThread userThreadProc, object userThreadParam, int threadCount)
         {

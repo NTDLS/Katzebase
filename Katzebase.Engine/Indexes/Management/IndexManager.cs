@@ -1027,10 +1027,10 @@ namespace Katzebase.Engine.Indexes.Management
         {
             try
             {
-                bool singleThreadedIndexDeletion = true;
+                bool useMultiThreadedIndexDeletion = true;
 
                 //TODO: We need to determine how large this job is going to be and use threads when we have huge indexes.
-                if (singleThreadedIndexDeletion)
+                if (useMultiThreadedIndexDeletion == false)
                 {
                     for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
                     {
@@ -1050,7 +1050,7 @@ namespace Katzebase.Engine.Indexes.Management
                     int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, physicalIindex.Partitions /*TODO: Use the total document count contained in the index*/);
                     transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                     var threadPool = ThreadPoolQueue<int?, RemoveDocumentsFromIndexThreadParam>
-                        .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", RemoveDocumentsFromIndexThreadProc, threadParam, threadCount);
+                        .CreateAndStart($"RebuildIndex:{transaction.ProcessId}", RemoveDocumentsFromIndexThreadProc, threadParam, threadCount, physicalIindex.Partitions);
                     ptThreadCreation?.StopAndAccumulate();
 
                     for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
