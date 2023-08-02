@@ -1,8 +1,10 @@
-﻿using System.Collections.Specialized;
-using System.Runtime.Caching;
+﻿using System.Runtime.Caching;
+using System.Threading;
 
 namespace Katzebase.Engine.Caching.Management
 {
+   
+
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to cache.
     /// </summary>
@@ -10,10 +12,7 @@ namespace Katzebase.Engine.Caching.Management
     {
         private readonly Core core;
         public int PartitionCount { get; private set; }
-        public int CachedItemCount => partitions.Sum(o => o.Count());
-
-        private readonly CacheItemPolicy cachePolicy;
-        private readonly MemoryCache[] partitions;
+        private readonly KbMemoryCache[] partitions;
 
         public CacheManager(Core core)
         {
@@ -23,24 +22,14 @@ namespace Katzebase.Engine.Caching.Management
             {
                 PartitionCount = core.Settings.CachePartitions > 0 ? core.Settings.CachePartitions : Environment.ProcessorCount;
 
-                partitions = new MemoryCache[PartitionCount];
+                partitions = new KbMemoryCache[PartitionCount];
 
                 int maxMemoryPerPartition = (int)(core.Settings.CacheMaxMemory / (double)PartitionCount);
                 maxMemoryPerPartition = maxMemoryPerPartition < 5 ? 5 : maxMemoryPerPartition;
 
-                cachePolicy = new CacheItemPolicy()
-                {
-                    SlidingExpiration = TimeSpan.FromSeconds(core.Settings.CacheSeconds)
-                };
-
-                var config = new NameValueCollection
-                {
-                    { "CacheMemoryLimitMegabytes", $"{maxMemoryPerPartition}" }
-                };
-
                 for (int i = 0; i < PartitionCount; i++)
                 {
-                    partitions[i] = new MemoryCache("CacheManager", config);
+                    partitions[i] = new KbMemoryCache(maxMemoryPerPartition, core.Settings.CacheScavengeInterval);
                 }
             }
             catch (Exception ex)
@@ -48,27 +37,15 @@ namespace Katzebase.Engine.Caching.Management
                 core.Log.Write("Failed to instanciate cache manager.", ex);
                 throw;
             }
-
         }
 
-        public void Upsert(string key, object value)
+        public void Upsert(string key, object value, int aproximateSizeInBytes = 0)
         {
             try
             {
                 key = key.ToLower();
                 int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
-
-                lock (partitions[partitionIndex])
-                {
-                    if (partitions[partitionIndex].Contains(key))
-                    {
-                        partitions[partitionIndex].Set(key, value, cachePolicy);
-                    }
-                    else
-                    {
-                        partitions[partitionIndex].Add(key, value, cachePolicy);
-                    }
-                }
+                partitions[partitionIndex].Upsert(key, value, aproximateSizeInBytes);
             }
             catch (Exception ex)
             {
@@ -83,14 +60,7 @@ namespace Katzebase.Engine.Caching.Management
             {
                 for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
                 {
-                    lock (partitions[partitionIndex])
-                    {
-                        var cacheKeys = partitions[partitionIndex].Select(x => x.Key);
-                        foreach (string cacheKey in cacheKeys)
-                        {
-                            partitions[partitionIndex].Remove(cacheKey);
-                        }
-                    }
+                    partitions[partitionIndex].Clear();
                 }
             }
             catch (Exception ex)
@@ -100,18 +70,11 @@ namespace Katzebase.Engine.Caching.Management
             }
         }
 
-        public class PartitionAllocationDetails
-        {
-            public int PartitionCount { get; set; }
-            public List<int> PartitionAllocations = new();
-        }
-
-
-        public PartitionAllocationDetails GetAllocations()
+        public PartitionAllocationsDetails GetAllocations()
         {
             try
             {
-                var result = new PartitionAllocationDetails
+                var result = new PartitionAllocationsDetails
                 {
                     PartitionCount = PartitionCount
                 };
@@ -120,7 +83,11 @@ namespace Katzebase.Engine.Caching.Management
                 {
                     lock (partitions[partitionIndex])
                     {
-                        result.PartitionAllocations.Add(partitions[partitionIndex].Count());
+                        result.Partitions.Add(new PartitionAllocationsDetails.PartitionAllocationDetails
+                        {
+                            Allocations = partitions[partitionIndex].Count(),
+                            SizeInKilobytes = partitions[partitionIndex].SizeInKilobytes()
+                        });
                     }
                 }
 
@@ -133,7 +100,26 @@ namespace Katzebase.Engine.Caching.Management
             }
         }
 
-        public object? Get(string key)
+        public object? TryGet(string key)
+        {
+            try
+            {
+                key = key.ToLower();
+                int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
+
+                lock (partitions[partitionIndex])
+                {
+                    return partitions[partitionIndex].TryGet(key);
+                }
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write("Failed to get cache object.", ex);
+                throw;
+            }
+        }
+
+        public object Get(string key)
         {
             try
             {
@@ -163,7 +149,7 @@ namespace Katzebase.Engine.Caching.Management
 
                 lock (partitions[partitionIndex])
                 {
-                    if (partitions[partitionIndex].Remove(key) != null)
+                    if (partitions[partitionIndex].Remove(key))
                     {
                         itemsEjected++;
                     }
@@ -187,10 +173,7 @@ namespace Katzebase.Engine.Caching.Management
                 {
                     lock (partitions[i])
                     {
-                        IEnumerable<string> keysToRemove = partitions[i]
-                        .Where(entry => entry.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-                        .Select(entry => entry.Key);
-
+                        var keysToRemove = partitions[i].Keys().Where(entry => entry.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList();
                         foreach (string key in keysToRemove)
                         {
                             partitions[i].Remove(key);

@@ -4,6 +4,7 @@ using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Katzebase.Engine.IO
 {
@@ -124,7 +125,7 @@ namespace Katzebase.Engine.IO
                     if (core.Settings.CacheEnabled)
                     {
                         var ptCacheRead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheRead);
-                        var cachedObject = core.Cache.Get(filePath);
+                        var cachedObject = core.Cache.TryGet(filePath);
                         ptCacheRead?.StopAndAccumulate();
 
                         if (cachedObject != null)
@@ -140,11 +141,11 @@ namespace Katzebase.Engine.IO
                     core.Log.Trace($"IO:Read:{transaction.ProcessId}->{filePath}");
 
                     T? deserializedObject;
+                    int aproximateSizeInBytes = 0;
 
                     if (format == IOFormat.JSON)
                     {
                         string text = string.Empty;
-
                         var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
                         if (core.Settings.UseCompression)
                         {
@@ -154,6 +155,7 @@ namespace Katzebase.Engine.IO
                         {
                             text = File.ReadAllText(filePath);
                         }
+                        aproximateSizeInBytes = text.Length;
                         ptIORead?.StopAndAccumulate();
 
                         var ptDeserialize = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.Deserialize);
@@ -166,6 +168,7 @@ namespace Katzebase.Engine.IO
                         if (core.Settings.UseCompression)
                         {
                             var serializedData = Compression.Decompress(File.ReadAllBytes(filePath));
+                            aproximateSizeInBytes = serializedData.Length;
                             using (var input = new MemoryStream(serializedData))
                             {
                                 deserializedObject = ProtoBuf.Serializer.Deserialize<T>(input);
@@ -175,6 +178,7 @@ namespace Katzebase.Engine.IO
                         {
                             using (var file = File.OpenRead(filePath))
                             {
+                                aproximateSizeInBytes = (int)file.Length;
                                 deserializedObject = ProtoBuf.Serializer.Deserialize<T>(file);
                             }
                         }
@@ -188,7 +192,7 @@ namespace Katzebase.Engine.IO
                     if (core.Settings.CacheEnabled && deserializedObject != null)
                     {
                         var ptCacheWrite = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheWrite);
-                        core.Cache.Upsert(filePath, deserializedObject);
+                        core.Cache.Upsert(filePath, deserializedObject, aproximateSizeInBytes);
                         ptCacheWrite?.StopAndAccumulate();
                         core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
                     }
@@ -303,11 +307,15 @@ namespace Katzebase.Engine.IO
 
                     core.Log.Trace($"IO:Write:{filePath}");
 
+                    int aproximateSizeInBytes = 0;
+
                     if (format == IOFormat.JSON)
                     {
                         var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
                         string text = JsonConvert.SerializeObject(deserializedObject);
                         ptSerialize?.StopAndAccumulate();
+
+                        aproximateSizeInBytes = text.Length;
 
                         if (core.Settings.UseCompression)
                         {
@@ -326,6 +334,7 @@ namespace Katzebase.Engine.IO
                             using (var output = new MemoryStream())
                             {
                                 ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                                aproximateSizeInBytes = (int)output.Length;
                                 var compressedPbuf = Compression.Compress(output.ToArray());
                                 File.WriteAllBytes(filePath, compressedPbuf);
                             }
@@ -334,6 +343,7 @@ namespace Katzebase.Engine.IO
                         {
                             using (var file = File.Create(filePath))
                             {
+                                aproximateSizeInBytes = (int)file.Length;
                                 ProtoBuf.Serializer.Serialize(file, deserializedObject);
                             }
                         }
@@ -347,7 +357,7 @@ namespace Katzebase.Engine.IO
                     if (core.Settings.CacheEnabled)
                     {
                         var ptCacheWrite = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
-                        core.Cache.Upsert(filePath, deserializedObject);
+                        core.Cache.Upsert(filePath, deserializedObject, aproximateSizeInBytes);
                         ptCacheWrite?.StopAndAccumulate();
                         core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
                     }

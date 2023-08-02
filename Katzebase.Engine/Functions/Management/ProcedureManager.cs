@@ -128,7 +128,7 @@ namespace Katzebase.Engine.Functions.Management
                             core.Cache.Clear();
                             return new KbQueryResultCollection();
                         }
-                    case "releasecacheallocations":
+                    case "releaseallocations":
                         {
                             GC.Collect();
                             return new KbQueryResultCollection();
@@ -140,14 +140,19 @@ namespace Katzebase.Engine.Functions.Management
 
                             result.AddField("Partition");
                             result.AddField("Allocations");
+                            result.AddField("Size (MB)");
 
-                            var partitionAllocations = core.Cache.GetAllocations();
+                            var cachePartitions = core.Cache.GetAllocations();
 
-                            int partition = 0;
+                            int partitionIndex = 0;
 
-                            foreach (var partitionAllocation in partitionAllocations.PartitionAllocations)
+                            foreach (var partition in cachePartitions.Partitions)
                             {
-                                var values = new List<string?> { partition++.ToString(), partitionAllocation.ToString() };
+                                var values = new List<string?> {
+                                    partitionIndex++.ToString(),
+                                    $"{partition.Allocations:n0}",
+                                    $"{partition.SizeInKilobytes:n2}"
+                                };
 
                                 result.AddRow(values);
                             }

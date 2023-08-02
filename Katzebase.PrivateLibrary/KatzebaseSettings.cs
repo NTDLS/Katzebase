@@ -17,6 +17,12 @@
         public int CachePartitions { get; set; }
 
         /// <summary>
+        /// The number of seconds between cache scavenge operations. This is when the cache manager enforces memory limits by ejecting
+        /// lesser used cache items.
+        /// </summary>
+        public int CacheScavengeInterval { get; set; }
+
+        /// <summary>
         /// The number of seconds to keep an item in cache (sliding expiration).
         /// </summary>
         public int CacheSeconds { get; set; }

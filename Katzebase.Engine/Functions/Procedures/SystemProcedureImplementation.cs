@@ -9,7 +9,7 @@
                 "ClearHealthCounters:",
                 "CheckpointHealthCounters:",
                 "ClearCache:",
-                "ReleaseCacheAllocations:",
+                "ReleaseAllocations:",
                 "ShowCachePartitions:",
                 "ShowhealthCounters:",
                 "ShowWaitingLocks:Numeric/processId=null",

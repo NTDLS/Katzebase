@@ -24,8 +24,8 @@ System functions:
 -ClearCache
 Cleares the internal memory cache. This does not release the memory, but leaves it allocated for further cache operations.
 
--ReleaseCacheAllocations
-Releases unused memory from the internal memory cache back to the operating system. Call ClearCache before calling ReleaseCacheAllocations to maximize the memory that will be released.
+-releaseallocations
+Releases unused memory from the internal memory cache back to the operating system. Call ClearCache before calling releaseallocations to maximize the memory that will be released.
 
 -ShowCachePartitions
 Shows the memory allocations by memory cache partition.
