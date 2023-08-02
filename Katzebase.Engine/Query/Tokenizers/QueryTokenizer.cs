@@ -18,7 +18,6 @@ namespace Katzebase.Engine.Query.Tokenizers
         public int StartPosition => _startPosition;
         public Dictionary<string, string> LiteralStrings { get; private set; }
         public List<string> Breadcrumbs { get; private set; } = new();
-
         public char? NextCharacter => _position < _text.Length ? _text[_position] : null;
         public bool IsEnd() => _position == _text.Length;
 
