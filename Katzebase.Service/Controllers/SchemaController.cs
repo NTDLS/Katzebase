@@ -39,8 +39,8 @@ namespace Katzebase.Service.Controllers
         /// </summary>
         /// <param name="schema"></param>
         [HttpGet]
-        [Route("{sessionId}/{schema}/Create")]
-        public KbActionResponse Create(Guid sessionId, string schema)
+        [Route("{sessionId}/{schema}/{pageSize}/Create")]
+        public KbActionResponse Create(Guid sessionId, string schema, uint pageSize)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace Katzebase.Service.Controllers
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Schemas.APIHandlers.CreateSchema(processId, schema);
+                return Program.Core.Schemas.APIHandlers.CreateSchema(processId, schema, pageSize);
             }
             catch (Exception ex)
             {

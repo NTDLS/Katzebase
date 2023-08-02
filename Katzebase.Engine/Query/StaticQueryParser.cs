@@ -119,6 +119,84 @@ namespace Katzebase.Engine.Query
             }
             #endregion
 
+            #region Alter ----------------------------------------------------------------------------------------------
+            else if (queryType == QueryType.Alter)
+            {
+                if (query.IsNextToken(new string[] { "schema" }) == false)
+                {
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected 'schema'.");
+                }
+
+                token = query.GetNextToken();
+                if (Enum.TryParse(token, true, out SubQueryType subQueryType) == false)
+                {
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'schema', 'index' or 'uniquekey'.");
+                }
+                result.SubQueryType = subQueryType;
+
+                result.AddAttribute(PreparedQuery.QueryAttribute.IsUnique, (subQueryType == SubQueryType.UniqueKey));
+
+                token = query.GetNextToken();
+                if (token == string.Empty)
+                {
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: object name.");
+                }
+
+                if (subQueryType == SubQueryType.Schema)
+                {
+                    result.Schemas.Add(new QuerySchema(token));
+
+                    if (query.IsNextToken("with"))
+                    {
+                        query.SkipNextToken();
+
+                        if (query.IsNextCharacter('(') == false)
+                        {
+                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
+                        }
+                        query.SkipNextCharacter();
+
+                        token = query.GetNextToken().ToLower();
+                        if (token == "pagesize")
+                        {
+                            if (query.IsNextCharacter('=') == false)
+                            {
+                                throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
+                            }
+                            query.SkipNextCharacter();
+
+                            token = query.GetNextToken().ToLower();
+                            if (UInt32.TryParse(token, out uint pageSize) == false)
+                            {
+                                throw new KbParserException("Invalid query. Found '" + token + "', expected: page size count.");
+                            }
+
+                            result.AddAttribute(PreparedQuery.QueryAttribute.PageSize, pageSize);
+                        }
+                        else
+                        {
+                            throw new KbParserException("Invalid query. Found '" + token + "', expected: 'PageSize'.");
+                        }
+
+                        if (query.IsNextCharacter(')') == false)
+                        {
+                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
+                        }
+                        query.SkipNextCharacter();
+                    }
+                }
+                else
+                {
+                    throw new KbNotImplementedException();
+                }
+
+                if (query.IsEnd() == false)
+                {
+                    //throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: end of statement.");
+                }
+            }
+            #endregion
+
             #region Create ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Create)
             {
@@ -150,7 +228,7 @@ namespace Katzebase.Engine.Query
 
                     if (query.NextCharacter == '(') //Parse paramaters
                     {
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
 
                         while (true)
                         {
@@ -175,10 +253,10 @@ namespace Katzebase.Engine.Query
                                 {
                                     throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ')'.");
                                 }
-                                query.SkipNextChar();
+                                query.SkipNextCharacter();
                                 break;
                             }
-                            query.SkipNextChar();
+                            query.SkipNextCharacter();
                         }
                     }
 
@@ -212,7 +290,7 @@ namespace Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ')'.");
                     }
 
-                    query.SkipNextChar(); // Skip the '('.
+                    query.SkipNextCharacter(); // Skip the '('.
 
                     var batches = new List<string>();
 
@@ -222,7 +300,7 @@ namespace Katzebase.Engine.Query
                     {
                         if (query.NextCharacter == ')')
                         {
-                            query.SkipNextChar();
+                            query.SkipNextCharacter();
                         }
                         else
                         {
@@ -241,6 +319,45 @@ namespace Katzebase.Engine.Query
                 else if (subQueryType == SubQueryType.Schema)
                 {
                     result.Schemas.Add(new QuerySchema(token));
+
+                    if (query.IsNextToken("with"))
+                    {
+                        query.SkipNextToken();
+
+                        if (query.IsNextCharacter('(') == false)
+                        {
+                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
+                        }
+                        query.SkipNextCharacter();
+
+                        token = query.GetNextToken().ToLower();
+                        if (token == "pagesize")
+                        {
+                            if (query.IsNextCharacter('=') == false)
+                            {
+                                throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
+                            }
+                            query.SkipNextCharacter();
+
+                            token = query.GetNextToken().ToLower();
+                            if (UInt32.TryParse(token, out uint pageSize) == false)
+                            {
+                                throw new KbParserException("Invalid query. Found '" + token + "', expected: page size count.");
+                            }
+
+                            result.AddAttribute(PreparedQuery.QueryAttribute.PageSize, pageSize);
+                        }
+                        else
+                        {
+                            throw new KbParserException("Invalid query. Found '" + token + "', expected: 'PageSize'.");
+                        }
+
+                        if (query.IsNextCharacter(')') == false)
+                        {
+                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
+                        }
+                        query.SkipNextCharacter();
+                    }
                 }
                 else if (subQueryType == SubQueryType.Index || subQueryType == SubQueryType.UniqueKey)
                 {
@@ -291,20 +408,20 @@ namespace Katzebase.Engine.Query
                     {
                         query.SkipNextToken();
 
-                        if (query.IsCurrentChar('(') == false)
+                        if (query.IsNextCharacter('(') == false)
                         {
                             throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
                         }
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
 
                         token = query.GetNextToken().ToLower();
                         if (token == "partitions")
                         {
-                            if (query.IsCurrentChar('=') == false)
+                            if (query.IsNextCharacter('=') == false)
                             {
                                 throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
                             }
-                            query.SkipNextChar();
+                            query.SkipNextCharacter();
 
                             token = query.GetNextToken().ToLower();
                             if (UInt32.TryParse(token, out uint partitionCount) == false)
@@ -319,11 +436,11 @@ namespace Katzebase.Engine.Query
                             throw new KbParserException("Invalid query. Found '" + token + "', expected: 'partitions'.");
                         }
 
-                        if (query.IsCurrentChar(')') == false)
+                        if (query.IsNextCharacter(')') == false)
                         {
                             throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
                         }
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
                     }
                 }
                 else
@@ -424,20 +541,20 @@ namespace Katzebase.Engine.Query
                 {
                     query.SkipNextToken();
 
-                    if (query.IsCurrentChar('(') == false)
+                    if (query.IsNextCharacter('(') == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
                     }
-                    query.SkipNextChar();
+                    query.SkipNextCharacter();
 
                     token = query.GetNextToken().ToLower();
                     if (token == "partitions")
                     {
-                        if (query.IsCurrentChar('=') == false)
+                        if (query.IsNextCharacter('=') == false)
                         {
                             throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
                         }
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
 
                         token = query.GetNextToken().ToLower();
                         if (UInt32.TryParse(token, out uint partitionCount) == false)
@@ -452,11 +569,11 @@ namespace Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: 'partitions'.");
                     }
 
-                    if (query.IsCurrentChar(')') == false)
+                    if (query.IsNextCharacter(')') == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
                     }
-                    query.SkipNextChar();
+                    query.SkipNextCharacter();
                 }
 
                 if (query.IsEnd() == false)
@@ -540,7 +657,7 @@ namespace Katzebase.Engine.Query
             }
             #endregion
 
-            #region Analyze ---------------------------------------------------------------------------------------------
+            #region Analyze --------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Analyze)
             {
                 if (query.IsNextToken("index") == false)
@@ -1159,10 +1276,11 @@ namespace Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + fieldName + "', expected: field name.");
                     }
 
-                    if (query.IsNextTokenConsume("=") == false)
+                    if (query.IsNextCharacter('=') == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + query.Breadcrumbs.Last() + "', expected: '='.");
                     }
+                    query.SkipNextCharacter();
 
                     string fieldValue = query.GetNextToken();
                     if (fieldName == string.Empty)

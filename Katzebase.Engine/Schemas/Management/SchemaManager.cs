@@ -98,10 +98,62 @@ namespace Katzebase.Engine.Schemas.Management
             }
         }
 
-        internal void CreateSingleSchema(Transaction transaction, string schemaName)
+
+        internal void Alter(Transaction transaction, string schemaName, uint pageSize = 0)
         {
             try
             {
+                if (pageSize == 0)
+                {
+                    pageSize = core.Settings.DefaultDocumentPageSize;
+                }
+
+                var physicalSchema = Acquire(transaction, schemaName, LockOperation.Write);
+                var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
+
+                core.IO.CreateDirectory(transaction, physicalSchema.DiskPath);
+                core.IO.PutJson(transaction, physicalSchema.SchemaCatalogFilePath(), new PhysicalSchemaCatalog());
+                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogFilePath(), new PhysicalDocumentPageCatalog());
+                core.IO.PutJson(transaction, physicalSchema.IndexCatalogFilePath(), new PhysicalIndexCatalog());
+
+                var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
+
+                var singleSchema = parentCatalog.GetByName(physicalSchema.Name);
+                if (singleSchema == null)
+                {
+                    throw new KbObjectNotFoundException($"Schema not found: '{physicalSchema.Name}'");
+                }
+                singleSchema.PageSize = pageSize;
+
+                core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
+
+                if (physicalSchema.IsTemporary)
+                {
+                    if (transaction.IsUserCreated)
+                    {
+                        //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
+                        transaction.TemporarySchemas.Add(physicalSchema.VirtualPath);
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to alter schema manager for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
+
+        internal void CreateSingleSchema(Transaction transaction, string schemaName, uint pageSize = 0)
+        {
+            try
+            {
+                if (pageSize == 0)
+                {
+                    pageSize = core.Settings.DefaultDocumentPageSize;
+                }
+
                 var physicalSchema = AcquireVirtual(transaction, schemaName, LockOperation.Write);
                 if (physicalSchema.Exists)
                 {
@@ -122,7 +174,8 @@ namespace Katzebase.Engine.Schemas.Management
                     parentCatalog.Add(new PhysicalSchema
                     {
                         Id = Guid.NewGuid(),
-                        Name = physicalSchema.Name
+                        Name = physicalSchema.Name,
+                        PageSize = pageSize
                     });
 
                     core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);

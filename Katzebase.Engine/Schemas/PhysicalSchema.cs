@@ -16,6 +16,8 @@ namespace Katzebase.Engine.Schemas
             public bool Exists { get; set; }
         }
 
+        public uint PageSize { get; set; }
+
         public string Name { get; set; } = string.Empty;
         public Guid Id { get; set; }
 
@@ -68,7 +70,9 @@ namespace Katzebase.Engine.Schemas
                 DiskPath = DiskPath,
                 Id = Id,
                 Name = Name,
-                VirtualPath = VirtualPath
+                VirtualPath = VirtualPath,
+                PageSize = PageSize,
+                IsTemporary = IsTemporary,
             };
         }
 
@@ -77,7 +81,8 @@ namespace Katzebase.Engine.Schemas
             return new KbSchemaItem()
             {
                 Id = Id,
-                Name = Name
+                Name = Name,
+                PageSize = PageSize                 
             };
         }
 
@@ -88,9 +93,10 @@ namespace Katzebase.Engine.Schemas
                 DiskPath = DiskPath,
                 Id = Id,
                 Name = Name,
-                VirtualPath = VirtualPath
+                VirtualPath = VirtualPath,
+                PageSize = PageSize,
+                IsTemporary = IsTemporary,
             };
         }
-
     }
 }

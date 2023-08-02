@@ -433,7 +433,7 @@ namespace Katzebase.Engine.Functions
                         {
                             throw new KbParserException($"Invalid query. Found [{query.NextCharacter}], expected: [=].");
                         }
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
                     }
 
                     var token = query.PeekNextToken(new char[] { ',', '(', ')' });
@@ -446,7 +446,7 @@ namespace Katzebase.Engine.Functions
                     if (token == string.Empty && query.NextCharacter == '(')
                     {
                         param.Append(query.NextCharacter);
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
                         isComplex = true;
                         parenScope++;
                         continue;
@@ -454,7 +454,7 @@ namespace Katzebase.Engine.Functions
                     else if (token == string.Empty && query.NextCharacter == ')')
                     {
                         param.Append(query.NextCharacter);
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
                         parenScope--;
                         continue;
                     }
@@ -568,7 +568,7 @@ namespace Katzebase.Engine.Functions
                     if (token == string.Empty && query.NextCharacter == '(')
                     {
                         param.Append(query.NextCharacter);
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
                         isComplex = true;
                         parenScope++;
                         continue;
@@ -576,7 +576,7 @@ namespace Katzebase.Engine.Functions
                     else if (token == string.Empty && query.NextCharacter == ')')
                     {
                         param.Append(query.NextCharacter);
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
                         parenScope--;
                         continue;
                     }
@@ -676,7 +676,7 @@ namespace Katzebase.Engine.Functions
                     if (token == string.Empty && query.NextCharacter == '(')
                     {
                         param.Append(query.NextCharacter);
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
                         isComplex = true;
                         parenScope++;
                         continue;
@@ -684,7 +684,7 @@ namespace Katzebase.Engine.Functions
                     else if (token == string.Empty && query.NextCharacter == ')')
                     {
                         param.Append(query.NextCharacter);
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
                         parenScope--;
                         continue;
                     }
@@ -783,14 +783,14 @@ namespace Katzebase.Engine.Functions
                     if (query.NextCharacter == '(')
                     {
                         param.Append(query.NextCharacter);
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
                         parenScope++;
                         continue;
                     }
                     else if (query.NextCharacter == ')')
                     {
                         param.Append(query.NextCharacter);
-                        query.SkipNextChar();
+                        query.SkipNextCharacter();
                         parenScope--;
                         continue;
                     }

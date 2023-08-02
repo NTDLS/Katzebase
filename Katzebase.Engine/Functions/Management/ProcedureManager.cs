@@ -2,6 +2,7 @@
 using Katzebase.Engine.Functions.Parameters;
 using Katzebase.Engine.Functions.Procedures;
 using Katzebase.Engine.Functions.Procedures.Persistent;
+using Katzebase.Engine.Query;
 using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;

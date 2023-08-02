@@ -54,7 +54,7 @@
         }
         */
 
-        public PhysicalDocumentPageCatalogItem? GetPageWithRoomForNewDocument(int pageSize)
+        public PhysicalDocumentPageCatalogItem? GetPageWithRoomForNewDocument(uint pageSize)
         {
             //TODO: Make the page size configurable.
             return Catalog.Where(o => o.DocumentCount < pageSize).FirstOrDefault();

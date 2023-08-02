@@ -4,13 +4,15 @@
     {
         public string? Name { get; set; }
         public Guid? Id { get; set; }
+        public uint PageSize { get; set; }
 
         public KbSchemaItem Clone()
         {
             return new KbSchemaItem
             {
-                Id = this.Id,
-                Name = this.Name
+                Id = Id,
+                Name = Name,
+                PageSize = PageSize
             };
         }
     }

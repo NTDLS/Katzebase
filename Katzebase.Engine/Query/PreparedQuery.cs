@@ -21,7 +21,8 @@ namespace Katzebase.Engine.Query
             ObjectName,
             Parameters,
             Batches,
-            PartitionCount
+            PartitionCount,
+            PageSize
         }
 
         public bool DynamicallyBuildSelectList { get; set; } = false;

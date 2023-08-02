@@ -20,9 +20,9 @@ namespace Katzebase.PublicLibrary.Client.Management
         /// Creates a single schema or an entire schema path.
         /// </summary>
         /// <param name="schema"></param>
-        public void Create(string schema)
+        public void Create(string schema, int pageSize = 0)
         {
-            string url = $"api/Schema/{client.SessionId}/{schema}/Create";
+            string url = $"api/Schema/{client.SessionId}/{schema}/{pageSize}/ Create";
 
             using var response = client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;

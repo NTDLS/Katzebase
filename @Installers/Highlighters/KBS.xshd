@@ -121,6 +121,7 @@
 			<Word>catalog</Word>
 			<Word>commit</Word>
 			<Word>create</Word>
+			<Word>alter</Word>
 			<Word>delete</Word>
 			<Word>desc</Word>
 			<Word>drop</Word>
@@ -128,6 +129,7 @@
 			<Word>index</Word>
 			<Word>with</Word>
 			<Word>partitions</Word>
+			<Word>pagesize</Word>
 			<Word>inner</Word>
 			<Word>insert</Word>
 			<Word>into</Word>

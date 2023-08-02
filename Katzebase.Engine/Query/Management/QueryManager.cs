@@ -119,6 +119,7 @@ namespace Katzebase.Engine.Query.Management
                 else if (preparedQuery.QueryType == QueryType.Delete
                     || preparedQuery.QueryType == QueryType.Rebuild
                     || preparedQuery.QueryType == QueryType.Create
+                    || preparedQuery.QueryType == QueryType.Alter
                     || preparedQuery.QueryType == QueryType.Set
                     || preparedQuery.QueryType == QueryType.Analyze
                     || preparedQuery.QueryType == QueryType.Kill
@@ -192,22 +193,39 @@ namespace Katzebase.Engine.Query.Management
                 }
                 else if (preparedQuery.QueryType == QueryType.Create)
                 {
-                    if (preparedQuery.SubQueryType == SubQueryType.Index
-                        || preparedQuery.SubQueryType == SubQueryType.UniqueKey
-                        || preparedQuery.SubQueryType == SubQueryType.Procedure
-                        || preparedQuery.SubQueryType == SubQueryType.Schema)
+                    if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                     {
                         return core.Indexes.QueryHandlers.ExecuteCreate(processId, preparedQuery);
+                    }
+                    else  if ( preparedQuery.SubQueryType == SubQueryType.Procedure)
+                    {
+                        return core.Procedures.QueryHandlers.ExecuteCreate(processId, preparedQuery);
+                    }
+                    else if (preparedQuery.SubQueryType == SubQueryType.Schema)
+                    {
+                        return core.Schemas.QueryHandlers.ExecuteCreate(processId, preparedQuery);
+                    }
+
+                    throw new NotImplementedException();
+                }
+                else if (preparedQuery.QueryType == QueryType.Alter)
+                {
+                    if (preparedQuery.SubQueryType == SubQueryType.Schema)
+                    {
+                        return core.Schemas.QueryHandlers.ExecuteAlter(processId, preparedQuery);
                     }
                     throw new NotImplementedException();
                 }
                 else if (preparedQuery.QueryType == QueryType.Drop)
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Index
-                        || preparedQuery.SubQueryType == SubQueryType.UniqueKey
-                        || preparedQuery.SubQueryType == SubQueryType.Schema)
+                        || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                     {
                         return core.Indexes.QueryHandlers.ExecuteDrop(processId, preparedQuery);
+                    }
+                    else if (preparedQuery.SubQueryType == SubQueryType.Schema)
+                    {
+                        return core.Schemas.QueryHandlers.ExecuteDrop(processId, preparedQuery);
                     }
                     throw new NotImplementedException();
                 }

@@ -58,7 +58,7 @@ namespace Katzebase.Engine.Documents.Management
 
                 if (physicalTargetSchema.Exists == false)
                 {
-                    core.Schemas.CreateSingleSchema(transactionReference.Transaction, targetSchema);
+                    core.Schemas.CreateSingleSchema(transactionReference.Transaction, targetSchema, core.Settings.DefaultDocumentPageSize);
                     physicalTargetSchema = core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write);
                 }
 

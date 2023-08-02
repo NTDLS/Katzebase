@@ -1,5 +1,8 @@
-﻿using Katzebase.Engine.Query;
+﻿using Katzebase.Engine.Functions.Procedures.Persistent;
+using Katzebase.Engine.Query;
+using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Functions.Management
 {
@@ -20,6 +23,35 @@ namespace Katzebase.Engine.Functions.Management
             catch (Exception ex)
             {
                 core.Log.Write($"Failed to instanciate procedures query handler.", ex);
+                throw;
+            }
+        }
+
+        internal KbActionResponse ExecuteCreate(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                using var transactionReference = core.Transactions.Acquire(processId);
+
+                if (preparedQuery.SubQueryType == SubQueryType.Procedure)
+                {
+                    var objectName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.ObjectName);
+                    var objectSchema = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Schema);
+                    var parameters = preparedQuery.Attribute<List<PhysicalProcedureParameter>>(PreparedQuery.QueryAttribute.Parameters);
+                    var Batches = preparedQuery.Attribute<List<string>>(PreparedQuery.QueryAttribute.Batches);
+
+                    core.Procedures.CreateCustomProcedure(transactionReference.Transaction, objectSchema, objectName, parameters, Batches);
+                }
+                else
+                {
+                    throw new KbNotImplementedException();
+                }
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to execute procedure create for process id {processId}.", ex);
                 throw;
             }
         }

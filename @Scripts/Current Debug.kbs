@@ -5,8 +5,17 @@
 --exec ShowCachePartitions
 
 --rebuild index IX_Posts_OwnerUserId on StackOverflow:Posts with (partitions=1000)
-rebuild index IX_Word_Text on WordList:Word
+--rebuild index IX_Word_Text on WordList:Word
+--create schema blah with (pagesize = 10)
+--alter schema blah with (pagesize = 400)
 
+/*
+insert into blah
+(b="ASDFGHJKLQWERTYUIOZXCVBNM"),(b="!@#$%^&*(%^&*@#$%"),(b="1234567890"),(b="098765432"),
+(b="jane"),(b="!@#$%^&*(%^&*@#$%"),(b="1234567890"),(b="098765432"),
+(b="ASDFGHJKLQWERTYUIOZXCVBNM"),(b="!@#$%^&*(%^&*@#$%"),(b="1234567890"),(b="098765432"),
+(b="ASDFGHJKLQWERTYUIOZXCVBNM"),(b="!@#$%^&*(%^&*@#$%"),(b="1234567890"),(b="098765432")
+*/
 
 /*
 rebuild index IX_Word_LanguageId on WordList:Word

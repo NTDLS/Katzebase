@@ -61,7 +61,7 @@ namespace Katzebase.Engine.Schemas.Management
         /// Creates a structure of schemas, denotaed by colons.
         /// </summary>
         /// <param name="schemaPath"></param>
-        public KbActionResponse CreateSchema(ulong processId, string schemaName)
+        public KbActionResponse CreateSchema(ulong processId, string schemaName, uint pageSize = 0)
         {
             try
             {
@@ -72,7 +72,7 @@ namespace Katzebase.Engine.Schemas.Management
                 foreach (string name in segments)
                 {
                     pathBuilder.Append(name);
-                    core.Schemas.CreateSingleSchema(transactionReference.Transaction, pathBuilder.ToString());
+                    core.Schemas.CreateSingleSchema(transactionReference.Transaction, pathBuilder.ToString(), pageSize);
                     pathBuilder.Append(":");
                 }
 

@@ -151,7 +151,7 @@ namespace Katzebase.Engine.Documents.Management
                 PhysicalDocumentPage documentPage;
 
                 //Find a page with some empty room:
-                var physicalPageCatalogItem = documentPageCatalog.GetPageWithRoomForNewDocument(core.Settings.DocumentPageSize);
+                var physicalPageCatalogItem = documentPageCatalog.GetPageWithRoomForNewDocument(physicalSchema.PageSize);
 
                 if (physicalPageCatalogItem == null)
                 {

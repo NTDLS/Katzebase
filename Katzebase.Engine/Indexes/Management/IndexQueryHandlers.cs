@@ -35,11 +35,7 @@ namespace Katzebase.Engine.Indexes.Management
                 using var transactionReference = core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
-                if (preparedQuery.SubQueryType == SubQueryType.Schema)
-                {
-                    core.Schemas.Drop(transactionReference.Transaction, schemaName);
-                }
-                else if (preparedQuery.SubQueryType == SubQueryType.Index)
+                if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
                     core.Indexes.DropIndex(transactionReference.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
                 }
@@ -101,21 +97,7 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 using var transactionReference = core.Transactions.Acquire(processId);
 
-                if (preparedQuery.SubQueryType == SubQueryType.Schema)
-                {
-                    string schemaName = preparedQuery.Schemas.Single().Name;
-                    core.Schemas.CreateSingleSchema(transactionReference.Transaction, schemaName);
-                }
-                else if (preparedQuery.SubQueryType == SubQueryType.Procedure)
-                {
-                    var objectName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.ObjectName);
-                    var objectSchema = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Schema);
-                    var parameters = preparedQuery.Attribute<List<PhysicalProcedureParameter>>(PreparedQuery.QueryAttribute.Parameters);
-                    var Batches = preparedQuery.Attribute<List<string>>(PreparedQuery.QueryAttribute.Batches);
-
-                    core.Procedures.CreateCustomProcedure(transactionReference.Transaction, objectSchema, objectName, parameters, Batches);
-                }
-                else if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
+                if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
                     var indexPartitions = preparedQuery.Attribute<uint>(PreparedQuery.QueryAttribute.PartitionCount, core.Settings.DefaultIndexPartitions);
 

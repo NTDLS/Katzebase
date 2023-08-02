@@ -62,7 +62,7 @@ namespace Katzebase.Engine.Query.Tokenizers
             return (_text.Substring(_position, 1)[0]);
         }
 
-        public bool IsCurrentChar(char ch)
+        public bool IsNextCharacter(char ch)
         {
             return (_text.Substring(_position, 1)[0] == ch);
         }
@@ -204,7 +204,7 @@ namespace Katzebase.Engine.Query.Tokenizers
             }
         }
 
-        public void SkipNextChar()
+        public void SkipNextCharacter()
         {
             _position++;
 
