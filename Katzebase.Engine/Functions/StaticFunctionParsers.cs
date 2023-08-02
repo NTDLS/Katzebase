@@ -83,6 +83,201 @@ namespace Katzebase.Engine.Functions
             return result;
         }
 
+        internal static List<NamedFunctionParameterBaseCollection> ParseInsertFields(QueryTokenizer query)
+        {
+            var result = new List<NamedFunctionParameterBaseCollection>();
+
+
+            while (true)
+            {
+                if (query.IsNextCharacter('('))
+                {
+                    query.SkipNextCharacter();
+                }
+                else
+                {
+                    throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: '('.");
+                }
+
+                var intermediateResult = new NamedFunctionParameterBaseCollection();
+
+                while (true)
+                {
+                    var preParsed = PreParseInsertFields(query);
+                    if (preParsed != null)
+                    {
+                        foreach (var field in preParsed)
+                        {
+                            if (field.Value.IsComplex)
+                            {
+                                var functionCall = ParseFunctionCall(field.Value.Text, query.LiteralStrings);
+                                functionCall.Alias = field.Value.Alias;
+                                intermediateResult.Add(field.Key, functionCall);
+                            }
+                            else
+                            {
+                                var newField = new FunctionConstantParameter(field.Value.Text)
+                                {
+                                    Alias = field.Value.Alias
+                                };
+                                intermediateResult.Add(field.Key, newField);
+                            }
+                        }
+                    }
+
+                    if (query.IsNextCharacter(','))
+                    {
+                        query.SkipNextCharacter();
+                    }
+                    else if (query.IsNextCharacter(')'))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        throw new KbParserException($"Invalid query. Found '{query.NextCharacter}', expected: insert expression.");
+                    }
+                }
+
+                result.Add(intermediateResult);
+
+                if (query.IsNextCharacter(')'))
+                {
+                    query.SkipNextCharacter();
+                }
+
+                if (query.IsNextCharacter(','))
+                {
+                    query.SkipNextCharacter();
+                }
+                else if (query.IsEnd())
+                {
+                    query.SkipNextCharacter();
+                    break;
+                }
+                else
+                {
+                    throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ')', ',' or end of statement.");
+                }
+            }
+
+            return result;
+        }
+
+        private static Dictionary<string, PreparseField> PreParseInsertFields(QueryTokenizer query)
+        {
+            var preparseFields = new Dictionary<string, PreparseField>();
+
+            var updateFieldName = string.Empty;
+            var param = new StringBuilder();
+            var alias = string.Empty;
+
+            int parenScope = 0;
+            bool isComplex = false;
+
+            while (true)
+            {
+                if (updateFieldName == string.Empty)
+                {
+                    updateFieldName = query.GetNextToken();
+
+                    if (string.IsNullOrEmpty(updateFieldName))
+                    {
+                        throw new KbParserException($"Invalid query. Found [{updateFieldName}], expected: update field name.");
+                    }
+
+                    if (query.NextCharacter != '=')
+                    {
+                        throw new KbParserException($"Invalid query. Found [{query.NextCharacter}], expected: [=].");
+                    }
+                    query.SkipNextCharacter();
+                }
+
+                var token = query.PeekNextToken(new char[] { ',', '(', ')' });
+
+                if (token != string.Empty && _mathChars.Contains(token[0]) && !(token[0] == '(' || token[0] == ')'))
+                {
+                    isComplex = true; //Found math token;
+                }
+
+                if (token == string.Empty && query.NextCharacter == '(')
+                {
+                    param.Append(query.NextCharacter);
+                    query.SkipNextCharacter();
+                    isComplex = true;
+                    parenScope++;
+                    continue;
+                }
+                else if (parenScope > 0 && token == string.Empty && query.NextCharacter == ')')
+                {
+                    param.Append(query.NextCharacter);
+                    query.SkipNextCharacter();
+                    parenScope--;
+                    continue;
+                }
+                else if (parenScope == 0 && (token == string.Empty || query.NextCharacter == ','))
+                {
+                    if (parenScope != 0)
+                    {
+                        throw new KbParserException("Invalid query. Found end of field while still in scope.");
+                    }
+
+                    if (param.Length == 0)
+                    {
+                        throw new KbParserException("Unexpected empty token found at end of statement.");
+                    }
+
+                    if (param.Length > 0 && char.IsDigit(param[0]))
+                    {
+                        isComplex = true;
+                    }
+
+                    if (alias == null || alias == string.Empty)
+                    {
+                        if (isComplex)
+                        {
+                            alias = $"Expression{preparseFields.Count + 1}";
+                        }
+                        else
+                        {
+                            alias = PrefixedField.Parse(param.ToString()).Alias;
+                        }
+                    }
+
+                    preparseFields.Add(updateFieldName.ToLower(), new PreparseField { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
+
+                    if (query.IsEnd() || (parenScope == 0 && (query.NextCharacter == ',' || query.NextCharacter == ')')))
+                    {
+                        return preparseFields;
+                    }
+                    else
+                    {
+                        throw new KbParserException($"Unexpected token found at: {token}.");
+                    }
+                }
+                else if (token == string.Empty && query.NextCharacter == ',')
+                {
+                    param.Append(query.NextCharacter);
+                    query.SkipWhile(',');
+                    continue;
+                }
+                else if (token.ToLower() == "as")
+                {
+                    throw new KbParserException($"Unexpected token found: {token}.");
+                }
+                else
+                {
+                    if (token == null || token == string.Empty)
+                    {
+                        throw new KbParserException("Unexpected empty token found.");
+                    }
+
+                    param.Append(query.GetNextToken());
+                }
+            }
+        }
+
+
         internal static NamedFunctionParameterBaseCollection ParseUpdateFields(QueryTokenizer query)
         {
             var preParsed = PreParseUpdateFields(query);

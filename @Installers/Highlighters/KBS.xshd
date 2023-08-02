@@ -102,6 +102,7 @@
 			<Word>Checksum</Word>
 			<Word>Sha1</Word>
 			<Word>IndexOf</Word>
+			<Word>Guid</Word>
 			<Word>LastIndexOf</Word>
 			<Word>Sha256</Word>
 			<Word>Right</Word>

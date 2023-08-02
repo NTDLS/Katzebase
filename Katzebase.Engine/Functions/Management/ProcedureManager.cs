@@ -2,7 +2,6 @@
 using Katzebase.Engine.Functions.Parameters;
 using Katzebase.Engine.Functions.Procedures;
 using Katzebase.Engine.Functions.Procedures.Persistent;
-using Katzebase.Engine.Query;
 using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
@@ -360,8 +359,6 @@ namespace Katzebase.Engine.Functions.Management
                 KbUtility.EnsureNotNull(proc.PhysicalProcedure);
                 KbQueryResultCollection collection = new();
 
-                int batchNumber = 0;
-
                 //We create a "user transaction" so that we have a way to track and destroy temporary objects created by the procedure.
                 using (var transactionReference = core.Transactions.Acquire(transaction.ProcessId, true))
                 {
@@ -383,11 +380,7 @@ namespace Katzebase.Engine.Functions.Management
                             throw new KbEngineException("Procedure batch was unsuccessful.");
                         }
 
-                        transactionReference.Transaction.AddMessage($"Procedure batch {batchNumber + 1} of {proc.PhysicalProcedure.Batches.Count} completed in {batchDuration:n0}ms.  ({batchResults.RowCount} rows affected)", KbConstants.KbMessageType.Verbose);
-                        batchNumber++;
-
                         collection.Add(batchResults);
-
                     }
                     transactionReference.Commit();
                 }

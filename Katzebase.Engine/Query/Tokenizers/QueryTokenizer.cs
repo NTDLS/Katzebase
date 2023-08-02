@@ -19,7 +19,7 @@ namespace Katzebase.Engine.Query.Tokenizers
         public Dictionary<string, string> LiteralStrings { get; private set; }
         public List<string> Breadcrumbs { get; private set; } = new();
         public char? NextCharacter => _position < _text.Length ? _text[_position] : null;
-        public bool IsEnd() => _position == _text.Length;
+        public bool IsEnd() => _position >= _text.Length;
 
         public QueryTokenizer(string text)
         {
@@ -59,11 +59,19 @@ namespace Katzebase.Engine.Query.Tokenizers
 
         public char CurrentChar()
         {
+            if (_position >= Length)
+            {
+                return '\0';
+            }
             return (_text.Substring(_position, 1)[0]);
         }
 
         public bool IsNextCharacter(char ch)
         {
+            if (_position >= Length)
+            {
+                return false;
+            }
             return (_text.Substring(_position, 1)[0] == ch);
         }
 

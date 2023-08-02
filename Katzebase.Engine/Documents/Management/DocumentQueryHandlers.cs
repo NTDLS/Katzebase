@@ -6,6 +6,7 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
+using System.Collections.Generic;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Documents.Management
@@ -109,7 +110,29 @@ namespace Katzebase.Engine.Documents.Management
 
                 foreach (var upsertValues in preparedQuery.UpsertValues)
                 {
-                    var keyValuePairs = upsertValues.ToDictionary(o => o.Field.Field, o => o.Value.Value);
+                    var keyValuePairs = new Dictionary<string, string?>();
+
+                    foreach (var updateValue in upsertValues)
+                    {
+                        string? fieldValue = string.Empty;
+
+                        //Execute functions
+                        if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
+                        {
+                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, new Dictionary<string, string?>());
+                        }
+                        else if (updateValue.Value is FunctionConstantParameter)
+                        {
+                            fieldValue = ((FunctionConstantParameter)updateValue.Value).Value;
+                        }
+                        else
+                        {
+                            throw new KbNotImplementedException($"The function type {updateValue.Value.GetType().Name} is not implemented.");
+                        }
+
+                        keyValuePairs.Add(updateValue.Key, fieldValue);
+                    }
+
                     var documentContent = JsonConvert.SerializeObject(keyValuePairs);
                     core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
                 }
@@ -122,7 +145,6 @@ namespace Katzebase.Engine.Documents.Management
                 throw;
             }
         }
-
 
         /// <summary>
         /// Updates a document in a schema.
@@ -151,7 +173,6 @@ namespace Katzebase.Engine.Documents.Management
 
                 var updatedDocuments = new Dictionary<DocumentPointer, string>();
 
-
                 foreach (var documentPointer in documentPointers)
                 {
                     var physicalDocument = core.Documents.AcquireDocument(transactionReference.Transaction, physicalSchema, documentPointer, LockOperation.Write);
@@ -174,7 +195,7 @@ namespace Katzebase.Engine.Documents.Management
                         }
                         else
                         {
-                            throw new KbEngineException("");
+                            throw new KbNotImplementedException($"The function type {updateValue.Value.GetType().Name} is not implemented.");
                         }
 
                         if (dictionary.ContainsKey(updateValue.Key))

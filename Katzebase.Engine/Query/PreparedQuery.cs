@@ -45,7 +45,8 @@ namespace Katzebase.Engine.Query
         /// <summary>
         /// List of key/values used for insert statements.
         /// </summary>
-        public List<UpsertKeyValues> UpsertValues { get; set; } = new();
+        //public List<UpsertKeyValues> UpsertValues { get; set; } = new();
+        public List<NamedFunctionParameterBaseCollection> UpsertValues { get; set; } = new();
 
         /// <summary>
         /// List of values for updates by field name.

@@ -1,4 +1,20 @@
+--exec AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('black')
 --rebuild index IX_Word_Id on WordList:Word
+
+insert into blah
+(
+	a = Guid(),
+	b = 'bbb',
+	c = 123
+),
+(
+	a = Guid(),
+	b = 'ccc',
+	c = 321
+)
+
+--select * from blah
+
 
 --exec ClearCache
 --exec ReleaseAllocations
@@ -301,7 +317,7 @@ CREATE PROCEDURE UpdateProductByColorAndGetItsName
 	SET
 		Name = Guid()
 	WHERE
-		Color = @ProductColor;
+		Color = @ProductColor
 	
 	SELECT
 		*
@@ -310,9 +326,9 @@ CREATE PROCEDURE UpdateProductByColorAndGetItsName
 	from
 		AdventureWorks:Production:Product
 	WHERE
-		Color = @ProductColor;
+		Color = @ProductColor
 		
-	SELECT * FROM #TempTable;
+	SELECT * FROM #TempTable
 )
 GO
 
