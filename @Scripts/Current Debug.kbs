@@ -13,7 +13,11 @@ insert into blah
 	c = 321
 )
 
---select * from blah
+select top 10 Guid() as a, Text as b into blah from WordList:Word
+
+select * from blah
+
+delete from blah where expression1 != ''
 
 
 --exec ClearCache

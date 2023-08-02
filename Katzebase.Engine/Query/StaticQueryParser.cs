@@ -31,7 +31,7 @@ namespace Katzebase.Engine.Query
 
             string token = query.GetNextToken().ToLower();
 
-            if (Enum.TryParse(token, true, out QueryType queryType) == false || Enum.IsDefined(typeof(QueryType), queryType) == false)
+            if (Enum.TryParse(token, true, out QueryType queryType) == false || Enum.IsDefined(typeof(QueryType), queryType) == false || int.TryParse(token, out _))
             {
                 string acceptibleValues = string.Join("', '", ((QueryType[])Enum.GetValues(typeof(QueryType))).Where(o => o != QueryType.None));
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptibleValues}'.");
@@ -578,7 +578,7 @@ namespace Katzebase.Engine.Query
                         var conditonToken = conditionTokenizer.PeekNextToken();
                         int previousTokenPosition = conditionTokenizer.Position;
 
-                        if (Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        if (int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
                             conditionTokenizer.SetPosition(previousTokenPosition);
@@ -854,7 +854,7 @@ namespace Katzebase.Engine.Query
                         int previousTokenPosition = conditionTokenizer.Position;
                         var conditonToken = conditionTokenizer.PeekNextToken();
 
-                        if (Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        if (int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
                             conditionTokenizer.SetPosition(previousTokenPosition);
@@ -949,7 +949,7 @@ namespace Katzebase.Engine.Query
                         int previousTokenPosition = query.Position;
                         var fieldToken = query.PeekNextToken();
 
-                        if (Enum.TryParse(fieldToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        if (int.TryParse(fieldToken, out _) == false && Enum.TryParse(fieldToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
                             break;

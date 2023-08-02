@@ -150,14 +150,9 @@ namespace Katzebase.Engine.Functions
                 {
                     query.SkipNextCharacter();
                 }
-                else if (query.IsEnd())
-                {
-                    query.SkipNextCharacter();
-                    break;
-                }
                 else
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.NextCharacter + "', expected: ')', ',' or end of statement.");
+                    break;
                 }
             }
 
