@@ -113,6 +113,32 @@ namespace Katzebase.Service.Controllers
         }
 
         /// <summary>
+        /// Gets an index from a specific schema.
+        /// </summary>
+        /// <param name="schema"></param>
+        [HttpGet]
+        [Route("{sessionId}/{schema}/{name}/Get")]
+        public KbActionResponseIndex Get(Guid sessionId, string schema, string name)
+        {
+            try
+            {
+                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
+                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+
+                return Program.Core.Indexes.APIHandlers.Get(processId, schema, name);
+            }
+            catch (Exception ex)
+            {
+                return new KbActionResponseIndex
+                {
+                    ExceptionText = ex.Message,
+                    Success = false
+                };
+            }
+        }
+
+        /// <summary>
         /// Lists the existing indexes within a given schema.
         /// </summary>
         /// <param name="schema"></param>

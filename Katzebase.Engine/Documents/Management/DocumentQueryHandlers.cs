@@ -6,7 +6,6 @@ using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
-using System.Collections.Generic;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Documents.Management

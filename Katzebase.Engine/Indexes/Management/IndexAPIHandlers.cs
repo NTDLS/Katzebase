@@ -24,6 +24,30 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
+        public KbActionResponseIndex Get(ulong processId, string schemaName, string indexName)
+        {
+            try
+            {
+                using var transactionReference = core.Transactions.Acquire(processId);
+                var indexCatalog = core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, schemaName, LockOperation.Read);
+
+                var physicalIndex = indexCatalog.GetByName(indexName);
+                KbIndex? indexPayload = null;
+
+                if (physicalIndex != null)
+                {
+                    indexPayload = PhysicalIndex.ToClientPayload(physicalIndex);
+                }
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbActionResponseIndex(indexPayload), 0);
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to create index for process {processId}.", ex);
+                throw;
+            }
+        }
+
         public KbActionResponseIndexes ListIndexes(ulong processId, string schemaName)
         {
             try
@@ -44,7 +68,6 @@ namespace Katzebase.Engine.Indexes.Management
                 core.Log.Write($"Failed to list indexes for process {processId}.", ex);
                 throw;
             }
-
         }
 
         public KbActionResponseBoolean DoesIndexExist(ulong processId, string schemaName, string indexName)

@@ -82,7 +82,7 @@ namespace Katzebase.Engine.Schemas
             {
                 Id = Id,
                 Name = Name,
-                PageSize = PageSize                 
+                PageSize = PageSize
             };
         }
 

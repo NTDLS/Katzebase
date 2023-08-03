@@ -1,9 +1,11 @@
 using Katzebase.PublicLibrary;
+using Katzebase.PublicLibrary.Client;
 using Katzebase.UI.Classes;
 using Katzebase.UI.Controls;
 using Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
+using System.Text;
 
 namespace Katzebase.UI
 {
@@ -243,7 +245,9 @@ namespace Katzebase.UI
             }
             else if (node.NodeType == Constants.ServerNodeType.Index)
             {
-                popupMenu.Items.Add("Delete Index", FormUtility.TransparentImage(Resources.Asset));
+                popupMenu.Items.Add("Script Index", FormUtility.TransparentImage(Resources.Asset));
+                popupMenu.Items.Add("Rebuild Index", FormUtility.TransparentImage(Resources.Asset));
+                popupMenu.Items.Add("Drop Index", FormUtility.TransparentImage(Resources.Asset));
                 popupMenu.Items.Add("-");
                 popupMenu.Items.Add("Refresh", FormUtility.TransparentImage(Resources.ToolFind));
             }
@@ -298,6 +302,7 @@ namespace Katzebase.UI
                     var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
                     tabFilePage.Editor.Text = $"SELECT TOP 100\r\n\t*\r\nFROM\r\n\t{TreeManagement.FullSchemaPath(node)}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
+                    tabFilePage.ExecuteCurrentScriptAsync(false);
                 }
                 else if (e.ClickedItem?.Text == "Sample")
                 {
@@ -307,6 +312,61 @@ namespace Katzebase.UI
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
                     tabFilePage.ExecuteCurrentScriptAsync(false);
+                }
+                else if (e.ClickedItem?.Text == "Drop Index")
+                {
+                    var rootNode = TreeManagement.GetRootNode(node);
+                    var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                    tabFilePage.Editor.Text = $"DROP INDEX {node.Text} ON {TreeManagement.FullSchemaPath(node)}\r\n";
+                    tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
+                    tabFilePage.TabSplitContainer.SplitterDistance = 60;
+                }
+                else if (e.ClickedItem?.Text == "Rebuild Index")
+                {
+                    var rootNode = TreeManagement.GetRootNode(node);
+                    using (var client = new KbClient(rootNode.ServerAddress))
+                    {
+                        var result = client.Schema.Indexes.Get(TreeManagement.FullSchemaPath(node), node.Text);
+                        if (result != null && result.Index != null)
+                        {
+                            var text = new StringBuilder("REBUILD ");
+                            text.Append(result.Index.IsUnique ? "UNIQUEKEY" : "INDEX");
+                            text.Append($" {result.Index.Name} ON {TreeManagement.FullSchemaPath(node)}");
+                            text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
+
+                            var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                            tabFilePage.Editor.Text = text.ToString();
+                            tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
+                            tabFilePage.TabSplitContainer.SplitterDistance = 60;
+                        }
+                    }
+                }
+                else if (e.ClickedItem?.Text == "Script Index")
+                {
+                    var rootNode = TreeManagement.GetRootNode(node);
+                    using (var client = new KbClient(rootNode.ServerAddress))
+                    {
+                        var result = client.Schema.Indexes.Get(TreeManagement.FullSchemaPath(node), node.Text);
+                        if (result != null && result.Index != null)
+                        {
+                            var text = new StringBuilder("CREATE ");
+                            text.Append(result.Index.IsUnique ? "UNIQUEKEY" : "INDEX");
+                            text.Append($" {result.Index.Name}");
+                            text.AppendLine("(");
+                            foreach (var attribute in result.Index.Attributes)
+                            {
+                                text.AppendLine($"    {attribute.Field},");
+                            }
+                            text.Length -= 3;//Remove trialing ",\r\n"
+                            text.Append($"\r\n) ON {TreeManagement.FullSchemaPath(node)}");
+                            text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
+
+                            var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                            tabFilePage.Editor.Text = text.ToString();
+                            tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
+                            tabFilePage.TabSplitContainer.SplitterDistance = 60;
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -579,7 +639,7 @@ namespace Katzebase.UI
             {
                 if (tab.IsSaved == false)
                 {
-                    var messageBoxResult = MessageBox.Show("Save " + tab.Text + " before closing?", "Save File?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                    var messageBoxResult = MessageBox.Show("Save \"" + tab.Text.Trim(new char[] { '*' }) + "\" before closing?", "Save File?", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
                     if (messageBoxResult == DialogResult.Yes)
                     {
                         if (SaveTab(tab) == false)

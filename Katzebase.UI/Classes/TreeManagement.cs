@@ -173,7 +173,17 @@ namespace Katzebase.UI.Classes
 
         public static string FullSchemaPath(ServerTreeNode node)
         {
-            string result = node.Text;
+            string result = string.Empty;
+
+            if ((node as ServerTreeNode)?.NodeType == ServerNodeType.Schema)
+            {
+                result = node.Text;
+            }
+
+            while (node.Parent != null && (node.Parent as ServerTreeNode)?.NodeType != ServerNodeType.Schema)
+            {
+                node = (ServerTreeNode)node.Parent;
+            }
 
             while (node.Parent != null && (node.Parent as ServerTreeNode)?.NodeType == ServerNodeType.Schema)
             {
@@ -181,7 +191,7 @@ namespace Katzebase.UI.Classes
                 result = $"{node.Text}:{result}";
             }
 
-            return result;
+            return result.Trim(new char[] { ':' });
         }
 
         public static ServerTreeNode GetRootNode(ServerTreeNode node)

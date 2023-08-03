@@ -1,5 +1,4 @@
-﻿using Katzebase.Engine.Functions.Procedures.Persistent;
-using Katzebase.Engine.Query;
+﻿using Katzebase.Engine.Query;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using static Katzebase.Engine.Library.EngineConstants;

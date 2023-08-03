@@ -85,7 +85,8 @@ namespace Katzebase.Engine.Indexes
                 Name = index.Name,
                 Created = index.Created,
                 Modfied = index.Modfied,
-                IsUnique = index.IsUnique
+                IsUnique = index.IsUnique,
+                Partitions= index.Partitions
             };
 
             foreach (var indexAttribute in index.Attributes)

@@ -3,7 +3,6 @@ using Katzebase.Engine.Documents;
 using Katzebase.Engine.Functions.Aggregate;
 using Katzebase.Engine.Functions.Parameters;
 using Katzebase.Engine.Functions.Scaler;
-using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Searchers.Intersection;
 using Katzebase.Engine.Query.Searchers.Mapping;
@@ -35,7 +34,7 @@ namespace Katzebase.Engine.Query.Searchers
             var topLevel = schemaMap.First();
             var topLevelMap = topLevel.Value;
 
-            IEnumerable<DocumentPointer> ?documentPointers = null;
+            IEnumerable<DocumentPointer>? documentPointers = null;
             ConditionLookupOptimization? lookupOptimization = null;
 
             //TODO: Here we should evaluate whatever conditions we can to early eliminate the top level document scans.

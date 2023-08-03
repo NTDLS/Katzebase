@@ -4,7 +4,6 @@ using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Katzebase.Engine.IO
 {

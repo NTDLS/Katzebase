@@ -197,7 +197,7 @@ namespace Katzebase.Engine.Query.Management
                     {
                         return core.Indexes.QueryHandlers.ExecuteCreate(processId, preparedQuery);
                     }
-                    else  if ( preparedQuery.SubQueryType == SubQueryType.Procedure)
+                    else if (preparedQuery.SubQueryType == SubQueryType.Procedure)
                     {
                         return core.Procedures.QueryHandlers.ExecuteCreate(processId, preparedQuery);
                     }

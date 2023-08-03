@@ -55,6 +55,26 @@ namespace Katzebase.PublicLibrary.Client.Management
         }
 
         /// <summary>
+        /// Gets an index from a specific schema.
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="document"></param>
+        public KbActionResponseIndex Get(string schema, string indexName)
+        {
+            string url = $"api/Indexes/{client.SessionId}/{schema}/{indexName}/Get";
+
+            using var response = client.Connection.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponseIndex>(resultText);
+            if (result == null || result.Success == false)
+            {
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Rebuilds a given index.
         /// </summary>
         public bool Rebuild(string schema, string indexName, int newPartitionCount = 0)
