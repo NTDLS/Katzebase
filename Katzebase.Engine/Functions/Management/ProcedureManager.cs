@@ -6,6 +6,7 @@ using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using System.Collections.Concurrent;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Functions.Management
@@ -133,6 +134,39 @@ namespace Katzebase.Engine.Functions.Management
                             GC.Collect();
                             return new KbQueryResultCollection();
                         }
+                    case "showcacheitems":
+                        {
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
+                            result.AddField("Partition");
+                            result.AddField("AproximateSizeInBytes");
+                            result.AddField("Created");
+                            result.AddField("GetCount");
+                            result.AddField("LastGetDate");
+                            result.AddField("SetCount");
+                            result.AddField("LastSetDate");
+                            result.AddField("Key");
+
+                            var cachePartitions = core.Cache.GetPartitionAllocationDetails();
+
+                            foreach (var partition in cachePartitions.Partitions)
+                            {
+                                var values = new List<string?> {
+                                    $"{partition.Partition:n0}",
+                                    $"{partition.AproximateSizeInBytes:n0}",
+                                    $"{partition.Created}",
+                                    $"{partition.GetCount:n0}",
+                                    $"{partition.LastGetDate}",
+                                    $"{partition.SetCount:n0}",
+                                    $"{partition.LastSetDate}",
+                                    $"{partition.Key}",
+                                };
+
+                                result.AddRow(values);
+                            }
+
+                            return collection;
+                        }
                     case "showcachepartitions":
                         {
                             var collection = new KbQueryResultCollection();
@@ -142,7 +176,7 @@ namespace Katzebase.Engine.Functions.Management
                             result.AddField("Allocations");
                             result.AddField("Size (MB)");
 
-                            var cachePartitions = core.Cache.GetAllocations();
+                            var cachePartitions = core.Cache.GetPartitionAllocationStatistics();
 
                             int partitionIndex = 0;
 

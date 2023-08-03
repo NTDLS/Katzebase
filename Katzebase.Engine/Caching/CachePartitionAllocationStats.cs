@@ -1,12 +1,12 @@
 ﻿namespace Katzebase.Engine.Caching
 {
-    public class PartitionAllocationsDetails
+    public class CachePartitionAllocationStats
     {
         public int PartitionCount { get; set; }
 
-        public List<PartitionAllocationDetails> Partitions { get; private set; } = new();
+        public List<CachePartitionAllocationStat> Partitions { get; private set; } = new();
 
-        public class PartitionAllocationDetails
+        public class CachePartitionAllocationStat
         {
             public int Allocations { get; set; }
             public double SizeInKilobytes { get; set; }

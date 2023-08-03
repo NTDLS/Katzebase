@@ -4,7 +4,7 @@
     {
         public int MaxMemoryMB { get; private set; }
 
-        private Dictionary<string, KbCacheItem> Collection = new();
+        public Dictionary<string, KbCacheItem> Collection { get; private set; } = new();
 
         private readonly Timer _timer;
 

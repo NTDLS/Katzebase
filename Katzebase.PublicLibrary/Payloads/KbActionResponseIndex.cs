@@ -8,7 +8,7 @@
         {
         }
 
-        public KbActionResponseIndex(KbIndex index)
+        public KbActionResponseIndex(KbIndex? index)
         {
             Index = index;
         }

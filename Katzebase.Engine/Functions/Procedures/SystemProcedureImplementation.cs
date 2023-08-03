@@ -10,6 +10,7 @@
                 "CheckpointHealthCounters:",
                 "ClearCache:",
                 "ReleaseAllocations:",
+                "ShowCacheItems:",
                 "ShowCachePartitions:",
                 "ShowhealthCounters:",
                 "ShowWaitingLocks:Numeric/processId=null",

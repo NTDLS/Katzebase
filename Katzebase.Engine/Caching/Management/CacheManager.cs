@@ -1,9 +1,6 @@
-﻿using System.Runtime.Caching;
-using System.Threading;
-
-namespace Katzebase.Engine.Caching.Management
+﻿namespace Katzebase.Engine.Caching.Management
 {
-   
+
 
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to cache.
@@ -70,11 +67,11 @@ namespace Katzebase.Engine.Caching.Management
             }
         }
 
-        public PartitionAllocationsDetails GetAllocations()
+        public CachePartitionAllocationStats GetPartitionAllocationStatistics()
         {
             try
             {
-                var result = new PartitionAllocationsDetails
+                var result = new CachePartitionAllocationStats
                 {
                     PartitionCount = PartitionCount
                 };
@@ -83,11 +80,49 @@ namespace Katzebase.Engine.Caching.Management
                 {
                     lock (partitions[partitionIndex])
                     {
-                        result.Partitions.Add(new PartitionAllocationsDetails.PartitionAllocationDetails
+                        result.Partitions.Add(new CachePartitionAllocationStats.CachePartitionAllocationStat
                         {
                             Allocations = partitions[partitionIndex].Count(),
                             SizeInKilobytes = partitions[partitionIndex].SizeInKilobytes()
                         });
+                    }
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write("Failed to clear cache.", ex);
+                throw;
+            }
+        }
+
+        public CachePartitionAllocationDetails GetPartitionAllocationDetails()
+        {
+            try
+            {
+                var result = new CachePartitionAllocationDetails
+                {
+                    PartitionCount = PartitionCount
+                };
+
+                for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
+                {
+                    lock (partitions[partitionIndex])
+                    {
+                        foreach (var item in partitions[partitionIndex].Collection)
+                        {
+                            result.Partitions.Add(new CachePartitionAllocationDetails.CachePartitionAllocationDetail(item.Key)
+                            {
+                                Partition = partitionIndex,
+                                AproximateSizeInBytes = item.Value.AproximateSizeInBytes,
+                                GetCount = item.Value.GetCount,
+                                SetCount = item.Value.SetCount,
+                                Created = item.Value.Created,
+                                LastSetDate = item.Value.LastSetDate,
+                                LastGetDate = item.Value.LastGetDate,
+                            });
+                        }
                     }
                 }
 
