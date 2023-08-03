@@ -41,7 +41,7 @@ namespace Katzebase.Engine.Functions.Scaler
         {
             if (param is FunctionConstantParameter)
             {
-                var value = ((FunctionConstantParameter)param).Value;
+                var value = ((FunctionConstantParameter)param).RawValue;
                 if (value.StartsWith('\'') && value.EndsWith('\''))
                 {
                     return value.Substring(1, value.Length - 2);

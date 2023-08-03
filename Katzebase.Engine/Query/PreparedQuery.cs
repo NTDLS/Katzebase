@@ -16,6 +16,7 @@ namespace Katzebase.Engine.Query
             IsUnique,
             ProcessId,
             SpecificSchemaPrefix,
+            IncludePhysicalPages,
             TargetSchema,
             Schema,
             ObjectName,

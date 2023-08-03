@@ -66,7 +66,7 @@ namespace Katzebase.Engine.Functions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document sample for process id {processId}.", ex);
+                core.Log.Write($"Failed to execute procedure for process id {processId}.", ex);
                 throw;
             }
         }

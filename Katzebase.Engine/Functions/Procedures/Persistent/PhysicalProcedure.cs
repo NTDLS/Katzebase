@@ -75,7 +75,7 @@ namespace Katzebase.Engine.Functions.Procedures.Persistent
                         else if (values[i] is FunctionConstantParameter)
                         {
                             var expression = (FunctionConstantParameter)values[i];
-                            result.Values.Add(new ProcedureParameterValue(Parameters[i].ToProcedureParameterPrototype(), expression.Value));
+                            result.Values.Add(new ProcedureParameterValue(Parameters[i].ToProcedureParameterPrototype(), expression.RawValue));
                         }
                         else
                         {

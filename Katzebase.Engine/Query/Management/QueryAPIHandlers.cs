@@ -56,7 +56,9 @@ namespace Katzebase.Engine.Query.Management
             {
                 foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
                 {
-                    results.Add(core.Query.ExecuteQuery(processId, preparedQuery));
+                    var intermediatResult = core.Query.ExecuteQuery(processId, preparedQuery);
+
+                    results.Add(intermediatResult);
                 }
             }
             return results;

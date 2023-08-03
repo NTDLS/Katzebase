@@ -27,6 +27,34 @@ namespace Katzebase.Engine.Schemas.Management
 
         }
 
+        internal KbQueryResult ExecuteAnalyze(ulong processId, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                using var transactionReference = core.Transactions.Acquire(processId);
+                string schemaName = preparedQuery.Schemas.First().Name;
+
+                var result = new KbQueryResult();
+
+                if (preparedQuery.SubQueryType == SubQueryType.Schema)
+                {
+                    var includePhysicalPages = preparedQuery.Attribute<bool>(PreparedQuery.QueryAttribute.IncludePhysicalPages, false);
+                    result = core.Schemas.AnalysePages(transactionReference.Transaction, schemaName, includePhysicalPages);
+                }
+                else
+                {
+                    throw new KbNotImplementedException();
+                }
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 0);
+            }
+            catch (Exception ex)
+            {
+                core.Log.Write($"Failed to execute schema drop for process id {processId}.", ex);
+                throw;
+            }
+        }
+
         internal KbActionResponse ExecuteDrop(ulong processId, PreparedQuery preparedQuery)
         {
             try

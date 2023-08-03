@@ -100,6 +100,11 @@ namespace Katzebase.Engine.Functions.Procedures
                             var expression = (FunctionExpression)values[i];
                             result.Values.Add(new ProcedureParameterValue(Parameters[i], expression.Value));
                         }
+                        else if (values[i] is FunctionConstantParameter)
+                        {
+                            var constant = (FunctionConstantParameter)values[i];
+                            result.Values.Add(new ProcedureParameterValue(Parameters[i], constant.RawValue));
+                        }
                         else
                         {
                             throw new KbNotImplementedException($"Parameter type [{values[i].GetType()}] is not implemented.");

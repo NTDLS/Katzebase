@@ -52,16 +52,20 @@ namespace Katzebase.Engine.Indexes.Management
             }
         }
 
-        internal KbActionResponse ExecuteAnalyze(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryResult ExecuteAnalyze(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
                 using var transactionReference = core.Transactions.Acquire(processId);
-                string schemaName = preparedQuery.Schemas.First().Name;
-                var analysis = core.Indexes.AnalyzeIndex(transactionReference.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+
+                var analysis = core.Indexes.AnalyzeIndex(transactionReference.Transaction,
+                    preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Schema),
+                    preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
 
                 transactionReference.Transaction.AddMessage(analysis, KbMessageType.Verbose);
-                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+
+                //TODO: Maybe we should return a table here too? Maybe more than one?
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryResult(), 0);
             }
             catch (Exception ex)
             {

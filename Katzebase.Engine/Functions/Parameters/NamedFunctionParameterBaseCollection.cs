@@ -23,7 +23,7 @@ namespace Katzebase.Engine.Functions.Parameters
                 {
                     foreach (var literal in literals)
                     {
-                        ((FunctionConstantParameter)param.Value).Value = ((FunctionConstantParameter)param.Value).Value.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
+                        ((FunctionConstantParameter)param.Value).RawValue = ((FunctionConstantParameter)param.Value).RawValue.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
                     }
                 }
                 else if (param.Value is FunctionExpression)
@@ -62,7 +62,7 @@ namespace Katzebase.Engine.Functions.Parameters
                 {
                     foreach (var literal in literals)
                     {
-                        ((FunctionConstantParameter)param).Value = ((FunctionConstantParameter)param).Value.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
+                        ((FunctionConstantParameter)param).RawValue = ((FunctionConstantParameter)param).RawValue.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
                     }
                 }
                 else if (param is FunctionExpression)

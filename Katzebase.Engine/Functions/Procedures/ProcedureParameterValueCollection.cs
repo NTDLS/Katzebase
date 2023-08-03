@@ -26,6 +26,11 @@ namespace Katzebase.Engine.Functions.Procedures
                     return Helpers.ConvertTo<T>(parameter.Parameter.DefaultValue);
                 }
 
+                if (typeof(T) == typeof(string) || (Nullable.GetUnderlyingType(typeof(T)) == typeof(string)))
+                {
+                    return Helpers.ConvertTo<T>(parameter.Value.Substring(1, parameter.Value.Length - 2));
+                }
+
                 return Helpers.ConvertTo<T>(parameter.Value);
             }
             catch
@@ -44,6 +49,11 @@ namespace Katzebase.Engine.Functions.Procedures
                     return defaultValue;
                 }
 
+                if (typeof(T) == typeof(string) || (Nullable.GetUnderlyingType(typeof(T)) == typeof(string)))
+                {
+                    return Helpers.ConvertTo<T>(value.Substring(1, value.Length - 2));
+                }
+
                 return Helpers.ConvertTo<T>(value);
             }
             catch
@@ -54,47 +64,43 @@ namespace Katzebase.Engine.Functions.Procedures
 
         public T? GetNullable<T>(string name)
         {
-            try
+            var parameter = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault();
+            if (parameter == null)
             {
-                var parameter = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault();
-                if (parameter == null)
-                {
-                    throw new KbGenericException($"Value for {name} cannot be null.");
-                }
-
-                if (parameter.Value == null)
-                {
-                    if (parameter.Parameter.HasDefault == false)
-                    {
-                        throw new KbGenericException($"Value for {name} is not optional.");
-                    }
-                    return Helpers.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
-                }
-
-                return Helpers.ConvertToNullable<T>(parameter.Value);
+                throw new KbGenericException($"Value for {name} cannot be null.");
             }
-            catch
+
+            if (parameter.Value == null)
             {
-                throw new KbGenericException($"Undefined parameter {name}.");
+                if (parameter.Parameter.HasDefault == false)
+                {
+                    throw new KbGenericException($"Value for {name} is not optional.");
+                }
+                return Helpers.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
             }
+
+            if (typeof(T) == typeof(string) || (Nullable.GetUnderlyingType(typeof(T)) == typeof(string)))
+            {
+                return Helpers.ConvertToNullable<T>(parameter.Value.Substring(1, parameter.Value.Length - 2));
+            }
+
+            return Helpers.ConvertToNullable<T>(parameter.Value);
         }
 
         public T? GetNullable<T>(string name, T? defaultValue)
         {
-            try
+            var value = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault()?.Value;
+            if (value == null)
             {
-                var value = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault()?.Value;
-                if (value == null)
-                {
-                    return defaultValue;
-                }
+                return defaultValue;
+            }
 
-                return Helpers.ConvertToNullable<T>(value);
-            }
-            catch
+            if (typeof(T) == typeof(string) || (Nullable.GetUnderlyingType(typeof(T)) == typeof(string)))
             {
-                throw new KbGenericException($"Undefined parameter {name}.");
+                return Helpers.ConvertToNullable<T>(value.Substring(1, value.Length - 2));
             }
+
+            return Helpers.ConvertToNullable<T>(value);
         }
     }
 }

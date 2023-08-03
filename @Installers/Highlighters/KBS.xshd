@@ -132,6 +132,7 @@
 			<Word>with</Word>
 			<Word>partitions</Word>
 			<Word>pagesize</Word>
+			<Word>IncludePhysicalPages</Word>
 			<Word>inner</Word>
 			<Word>insert</Word>
 			<Word>into</Word>

@@ -4,6 +4,9 @@ using Katzebase.Engine.Indexes;
 using Katzebase.Engine.Trace;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Payloads;
+using System.Collections.Concurrent;
+using System.Text;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Schemas.PhysicalSchema;
 using static Katzebase.Engine.Trace.PerformanceTrace;
@@ -110,12 +113,6 @@ namespace Katzebase.Engine.Schemas.Management
 
                 var physicalSchema = Acquire(transaction, schemaName, LockOperation.Write);
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
-
-                core.IO.CreateDirectory(transaction, physicalSchema.DiskPath);
-                core.IO.PutJson(transaction, physicalSchema.SchemaCatalogFilePath(), new PhysicalSchemaCatalog());
-                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogFilePath(), new PhysicalDocumentPageCatalog());
-                core.IO.PutJson(transaction, physicalSchema.IndexCatalogFilePath(), new PhysicalIndexCatalog());
-
                 var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
                 var singleSchema = parentCatalog.GetByName(physicalSchema.Name);
@@ -135,7 +132,6 @@ namespace Katzebase.Engine.Schemas.Management
                         transaction.TemporarySchemas.Add(physicalSchema.VirtualPath);
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -143,7 +139,6 @@ namespace Katzebase.Engine.Schemas.Management
                 throw;
             }
         }
-
 
         internal void CreateSingleSchema(Transaction transaction, string schemaName, uint pageSize = 0)
         {
@@ -468,6 +463,55 @@ namespace Katzebase.Engine.Schemas.Management
                 core.Log.Write($"Failed to get schema list for process id {transaction.ProcessId}.", ex);
                 throw;
             }
+        }
+
+        internal KbQueryResult AnalysePages(Transaction transaction, string schemaName, bool includePhysicalPages)
+        {
+            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+            var pageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
+
+            var message = new StringBuilder();
+
+            var result = new KbQueryResult();
+            result.AddField("CatalogPageNumber");
+            result.AddField("CatalogDocumentCount");
+            result.AddField("PageFullness");
+            if (includePhysicalPages)
+            {
+                result.AddField("PhysicalPageNumber");
+                result.AddField("PhysicalDocumentCount");
+                result.AddField("MinDocumentSoze");
+                result.AddField("MaxDocumentSoze");
+                result.AddField("AvgDocumentSoze");
+            }
+
+            foreach (var page in pageCatalog.Catalog)
+            {
+                double pageFullness = ((double)page.DocumentCount / (double)physicalSchema.PageSize) * 100.0;
+
+                message.AppendLine($"Page {page.PageNumber} ({pageFullness:n2}% full)");
+
+                transaction.EnsureActive();
+
+                var values = new List<string?> {
+                    $"{page.PageNumber:n0}",
+                    $"{page.DocumentCount:n0}",
+                    $"{pageFullness:n2}%" };
+
+                if (includePhysicalPages)
+                {
+                    var physicalDocumentPage = core.Documents.AcquireDocumentPage(transaction, physicalSchema, page.PageNumber, LockOperation.Read);
+
+                    values.Add($"{physicalDocumentPage.PageNumber}");
+                    values.Add($"{physicalDocumentPage.Documents.Count}");
+                    values.Add($"{physicalDocumentPage.Documents.Min(o => o.Value.Content.Length):n0}");
+                    values.Add($"{physicalDocumentPage.Documents.Max(o => o.Value.Content.Length):n0}");
+                    values.Add($"{physicalDocumentPage.Documents.Average(o => o.Value.Content.Length):n2}");
+                }
+
+                result.AddRow(values);
+            }
+            return result;
         }
 
     }

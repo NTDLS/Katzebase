@@ -1,6 +1,15 @@
+--EXEC ShowSchemaPages('AdventureWorks:Person:Address')
+
+--ALTER SCHEMA AdventureWorks:Production:WorkOrder WITH(PageSize = 1000)
+ANALYZE SCHEMA AdventureWorks:Production:WorkOrder with (includephysicalpages = true)
+--analyze INDEX IX_TransactionHistory_ProductID_ActualCost ON AdventureWorks:Production:TransactionHistory
+
+--select * from WordList:Word
+
 --exec AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('black')
 --rebuild index IX_Word_Id on WordList:Word
 
+/*
 insert into blah
 (
 	a = Guid(),
@@ -18,7 +27,7 @@ select top 10 Guid() as a, Text as b into blah from WordList:Word
 select * from blah
 
 delete from blah where expression1 != ''
-
+*/
 
 --exec ClearCache
 --exec ReleaseAllocations

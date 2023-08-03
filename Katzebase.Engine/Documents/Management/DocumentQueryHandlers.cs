@@ -122,7 +122,7 @@ namespace Katzebase.Engine.Documents.Management
                         }
                         else if (updateValue.Value is FunctionConstantParameter)
                         {
-                            fieldValue = ((FunctionConstantParameter)updateValue.Value).Value;
+                            fieldValue = ((FunctionConstantParameter)updateValue.Value).RawValue;
                         }
                         else
                         {
@@ -190,7 +190,7 @@ namespace Katzebase.Engine.Documents.Management
                         }
                         else if (updateValue.Value is FunctionConstantParameter)
                         {
-                            fieldValue = ((FunctionConstantParameter)updateValue.Value).Value;
+                            fieldValue = ((FunctionConstantParameter)updateValue.Value).RawValue;
                         }
                         else
                         {

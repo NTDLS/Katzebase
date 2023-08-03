@@ -35,7 +35,7 @@ namespace Katzebase.Engine.Functions.Aggregate
             }
             else if (param is FunctionConstantParameter)
             {
-                return ((FunctionConstantParameter)param).Value;
+                return ((FunctionConstantParameter)param).RawValue;
             }
             /*
             else if (param is FunctionDocumentFieldParameter)

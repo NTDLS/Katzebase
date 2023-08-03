@@ -6,7 +6,6 @@ using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using System.Collections.Concurrent;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Functions.Management
@@ -105,8 +104,8 @@ namespace Katzebase.Engine.Functions.Management
             if (procedureCall is FunctionConstantParameter)
             {
                 var procCall = (FunctionConstantParameter)procedureCall;
-                procedureName = procCall.Value;
-                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, procCall.Value, new List<FunctionParameterBase>());
+                procedureName = procCall.RawValue;
+                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, procCall.RawValue, new List<FunctionParameterBase>());
             }
             else if (procedureCall is FunctionWithParams)
             {
