@@ -145,7 +145,7 @@
 			<Word>or</Word>
 			<Word>order</Word>
 			<Word>rebuild</Word>
-			<Word>rollback</Word>
+			<Word>configuration</Word>
 			<Word>analyze</Word>
 			<Word>sample</Word>
 			<Word>schema</Word>
@@ -160,6 +160,30 @@
 			<Word>update</Word>
 			<Word>where</Word>
 			<Word>group</Word>
+			<!-- BEGIN CONFIGURATION ITEMS-->
+			<Word>BaseAddress</Word>
+			<Word>DataRootPath</Word>
+			<Word>TransactionDataPath</Word>
+			<Word>LogDirectory</Word>
+			<Word>FlushLog</Word>
+			<Word>DefaultDocumentPageSize</Word>
+			<Word>UseCompression</Word>
+			<Word>HealthMonitoringEnabled</Word>
+			<Word>HealthMonitoringChekpointSeconds</Word>
+			<Word>HealthMonitoringInstanceLevelEnabled</Word>
+			<Word>HealthMonitoringInstanceLevelTimeToLiveSeconds</Word>
+			<Word>MaxIdleConnectionSeconds</Word>
+			<Word>DefaultIndexPartitions</Word>
+			<Word>DeferredIOEnabled</Word>
+			<Word>WriteTraceData</Word>
+			<Word>CacheEnabled</Word>
+			<Word>CacheMaxMemory</Word>
+			<Word>CacheScavengeInterval</Word>
+			<Word>CachePartitions</Word>
+			<Word>CacheSeconds</Word>
+			<Word>MaxQueryThreads</Word>
+			<Word>MinQueryThreads</Word>
+			<!-- END CONFIGURATION ITEMS-->			
 		</Keywords>
 	</RuleSet>
 </SyntaxDefinition>

@@ -27,6 +27,7 @@ namespace Katzebase.Engine
         internal HeartbeatManager Heartbeat;
 
         public SchemaManager Schemas;
+        public EnvironmentManager Environment;
         public DocumentManager Documents;
         public TransactionManager Transactions;
         public LogManager Log;
@@ -56,6 +57,9 @@ namespace Katzebase.Engine
 
             Log.Write("Initializing health manager.");
             Health = new HealthManager(this);
+
+            Log.Write("Initializing environment manager.");
+            Environment = new EnvironmentManager(this);
 
             Log.Write("Initializing index manager.");
             Indexes = new IndexManager(this);

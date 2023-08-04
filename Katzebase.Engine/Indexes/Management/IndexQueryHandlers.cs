@@ -82,7 +82,7 @@ namespace Katzebase.Engine.Indexes.Management
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 var indexName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName);
-                var indexPartitions = preparedQuery.Attribute<uint>(PreparedQuery.QueryAttribute.PartitionCount, core.Settings.DefaultIndexPartitions);
+                var indexPartitions = preparedQuery.Attribute<uint>(PreparedQuery.QueryAttribute.Partitions, core.Settings.DefaultIndexPartitions);
 
                 core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName, indexPartitions);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
@@ -102,7 +102,7 @@ namespace Katzebase.Engine.Indexes.Management
 
                 if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
-                    var indexPartitions = preparedQuery.Attribute<uint>(PreparedQuery.QueryAttribute.PartitionCount, core.Settings.DefaultIndexPartitions);
+                    var indexPartitions = preparedQuery.Attribute<uint>(PreparedQuery.QueryAttribute.Partitions, core.Settings.DefaultIndexPartitions);
 
                     var index = new KbIndex
                     {

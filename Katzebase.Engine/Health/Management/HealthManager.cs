@@ -27,7 +27,7 @@ namespace Katzebase.Engine.Health.Management
                 string healthCounterDiskPath = Path.Combine(core.Settings.LogDirectory, HealthStatsFile);
                 if (File.Exists(healthCounterDiskPath))
                 {
-                    var physicalCounters = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath, true);
+                    var physicalCounters = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath, false);
 
                     if (physicalCounters == null || physicalCounters.Count == 0)
                     {
@@ -99,7 +99,7 @@ namespace Katzebase.Engine.Health.Management
                         }
                     }
 
-                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.LogDirectory, HealthStatsFile), physicalCounters, true);
+                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.LogDirectory, HealthStatsFile), physicalCounters, false);
                 }
             }
             catch (Exception ex)

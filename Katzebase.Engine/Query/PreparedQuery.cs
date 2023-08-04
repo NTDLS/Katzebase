@@ -22,8 +22,34 @@ namespace Katzebase.Engine.Query
             ObjectName,
             Parameters,
             Batches,
-            PartitionCount,
-            PageSize
+            Partitions,
+            PageSize,
+
+            //----------Configuration (BEGIN) ----------
+            BaseAddress,
+            DataRootPath,
+            TransactionDataPath,
+            LogDirectory,
+            FlushLog,
+            DefaultDocumentPageSize,
+            UseCompression,
+            HealthMonitoringEnabled,
+            HealthMonitoringChekpointSeconds,
+            HealthMonitoringInstanceLevelEnabled,
+            HealthMonitoringInstanceLevelTimeToLiveSeconds,
+            MaxIdleConnectionSeconds,
+            DefaultIndexPartitions,
+            DeferredIOEnabled,
+            WriteTraceData,
+            CacheEnabled,
+            CacheMaxMemory,
+            CacheScavengeInterval,
+            CachePartitions,
+            CacheSeconds,
+            MaxQueryThreads,
+            MinQueryThreads,
+            //----------Configuration (END)----------
+
         }
 
         public bool DynamicallyBuildSelectList { get; set; } = false;

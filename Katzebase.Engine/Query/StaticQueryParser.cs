@@ -4,7 +4,6 @@ using Katzebase.Engine.Functions.Procedures.Persistent;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
-using System.Runtime.Serialization;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.PublicLibrary.KbConstants;
 
@@ -103,67 +102,68 @@ namespace Katzebase.Engine.Query
             #region Alter ----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Alter)
             {
-                if (query.IsNextToken(new string[] { "schema" }) == false)
+                if (query.IsNextToken(new string[] { "schema", "configuration" }) == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected 'schema'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected 'schema' or 'configuration'.");
                 }
 
                 token = query.GetNextToken();
                 if (Enum.TryParse(token, true, out SubQueryType subQueryType) == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'schema', 'index' or 'uniquekey'.");
+                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'schema' or 'configuration'.");
                 }
                 result.SubQueryType = subQueryType;
 
-                result.AddAttribute(PreparedQuery.QueryAttribute.IsUnique, (subQueryType == SubQueryType.UniqueKey));
-
-                token = query.GetNextToken();
-                if (token == string.Empty)
+                if (result.SubQueryType == SubQueryType.Configuration)
                 {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: object name.");
+                    if (query.IsNextToken("with"))
+                    {
+                        var options = new ExpectedWithOptions
+                        {
+                            { "BaseAddress", typeof(string) },
+                            { "DataRootPath", typeof(string) },
+                            { "TransactionDataPath", typeof(string) },
+                            { "LogDirectory", typeof(string) },
+                            { "FlushLog", typeof(bool) },
+                            { "DefaultDocumentPageSize", typeof(int) },
+                            { "UseCompression", typeof(bool) },
+                            { "HealthMonitoringEnabled", typeof(bool) },
+                            { "HealthMonitoringChekpointSeconds", typeof(int) },
+                            { "HealthMonitoringInstanceLevelEnabled", typeof(bool) },
+                            { "HealthMonitoringInstanceLevelTimeToLiveSeconds", typeof(int) },
+                            { "MaxIdleConnectionSeconds", typeof(int) },
+                            { "DefaultIndexPartitions", typeof(int) },
+                            { "DeferredIOEnabled", typeof(bool) },
+                            { "WriteTraceData", typeof(bool) },
+                            { "CacheEnabled", typeof(bool) },
+                            { "CacheMaxMemory", typeof(int) },
+                            { "CacheScavengeInterval", typeof(int) },
+                            { "CachePartitions", typeof(int) },
+                            { "CacheSeconds", typeof(int) },
+                            { "MaxQueryThreads", typeof(int) },
+                            { "MinQueryThreads", typeof(int) }
+                        };
+                        StaticWithOptionsParser.ParseWithOptions(ref query, options, ref result);
+                    }
                 }
-
-                if (subQueryType == SubQueryType.Schema)
+                else if (result.SubQueryType == SubQueryType.Schema)
                 {
+                    result.AddAttribute(PreparedQuery.QueryAttribute.IsUnique, (subQueryType == SubQueryType.UniqueKey));
+
+                    token = query.GetNextToken();
+                    if (token == string.Empty)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected: object name.");
+                    }
                     result.Schemas.Add(new QuerySchema(token));
 
                     if (query.IsNextToken("with"))
                     {
-                        query.SkipNextToken();
-
-                        if (query.IsNextCharacter('(') == false)
+                        var options = new ExpectedWithOptions
                         {
-                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
-                        }
-                        query.SkipNextCharacter();
-
-                        token = query.GetNextToken().ToLower();
-                        if (token == "pagesize")
-                        {
-                            if (query.IsNextCharacter('=') == false)
-                            {
-                                throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
-                            }
-                            query.SkipNextCharacter();
-
-                            token = query.GetNextToken().ToLower();
-                            if (UInt32.TryParse(token, out uint pageSize) == false)
-                            {
-                                throw new KbParserException("Invalid query. Found '" + token + "', expected: page size count.");
-                            }
-
-                            result.AddAttribute(PreparedQuery.QueryAttribute.PageSize, pageSize);
-                        }
-                        else
-                        {
-                            throw new KbParserException("Invalid query. Found '" + token + "', expected: 'PageSize'.");
-                        }
-
-                        if (query.IsNextCharacter(')') == false)
-                        {
-                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
-                        }
-                        query.SkipNextCharacter();
+                            {"pagesize", typeof(uint) }
+                        };
+                        StaticWithOptionsParser.ParseWithOptions(ref query, options, ref result);
                     }
                 }
                 else
@@ -298,41 +298,11 @@ namespace Katzebase.Engine.Query
 
                     if (query.IsNextToken("with"))
                     {
-                        query.SkipNextToken();
-
-                        if (query.IsNextCharacter('(') == false)
+                        var options = new ExpectedWithOptions
                         {
-                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
-                        }
-                        query.SkipNextCharacter();
-
-                        token = query.GetNextToken().ToLower();
-                        if (token == "pagesize")
-                        {
-                            if (query.IsNextCharacter('=') == false)
-                            {
-                                throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
-                            }
-                            query.SkipNextCharacter();
-
-                            token = query.GetNextToken().ToLower();
-                            if (UInt32.TryParse(token, out uint pageSize) == false)
-                            {
-                                throw new KbParserException("Invalid query. Found '" + token + "', expected: page size count.");
-                            }
-
-                            result.AddAttribute(PreparedQuery.QueryAttribute.PageSize, pageSize);
-                        }
-                        else
-                        {
-                            throw new KbParserException("Invalid query. Found '" + token + "', expected: 'PageSize'.");
-                        }
-
-                        if (query.IsNextCharacter(')') == false)
-                        {
-                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
-                        }
-                        query.SkipNextCharacter();
+                            {"pagesize", typeof(uint) }
+                        };
+                        StaticWithOptionsParser.ParseWithOptions(ref query, options, ref result);
                     }
                 }
                 else if (subQueryType == SubQueryType.Index || subQueryType == SubQueryType.UniqueKey)
@@ -382,41 +352,11 @@ namespace Katzebase.Engine.Query
 
                     if (query.IsNextToken("with"))
                     {
-                        query.SkipNextToken();
-
-                        if (query.IsNextCharacter('(') == false)
+                        var options = new ExpectedWithOptions
                         {
-                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
-                        }
-                        query.SkipNextCharacter();
-
-                        token = query.GetNextToken().ToLower();
-                        if (token == "partitions")
-                        {
-                            if (query.IsNextCharacter('=') == false)
-                            {
-                                throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
-                            }
-                            query.SkipNextCharacter();
-
-                            token = query.GetNextToken().ToLower();
-                            if (UInt32.TryParse(token, out uint partitionCount) == false)
-                            {
-                                throw new KbParserException("Invalid query. Found '" + token + "', expected: partition count.");
-                            }
-
-                            result.AddAttribute(PreparedQuery.QueryAttribute.PartitionCount, partitionCount);
-                        }
-                        else
-                        {
-                            throw new KbParserException("Invalid query. Found '" + token + "', expected: 'partitions'.");
-                        }
-
-                        if (query.IsNextCharacter(')') == false)
-                        {
-                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
-                        }
-                        query.SkipNextCharacter();
+                            {"partitions", typeof(uint) }
+                        };
+                        StaticWithOptionsParser.ParseWithOptions(ref query, options, ref result);
                     }
                 }
                 else
@@ -505,41 +445,11 @@ namespace Katzebase.Engine.Query
 
                 if (query.IsNextToken("with"))
                 {
-                    query.SkipNextToken();
-
-                    if (query.IsNextCharacter('(') == false)
+                    var options = new ExpectedWithOptions
                     {
-                        throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
-                    }
-                    query.SkipNextCharacter();
-
-                    token = query.GetNextToken().ToLower();
-                    if (token == "partitions")
-                    {
-                        if (query.IsNextCharacter('=') == false)
-                        {
-                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
-                        }
-                        query.SkipNextCharacter();
-
-                        token = query.GetNextToken().ToLower();
-                        if (UInt32.TryParse(token, out uint partitionCount) == false)
-                        {
-                            throw new KbParserException("Invalid query. Found '" + token + "', expected: partition count.");
-                        }
-
-                        result.AddAttribute(PreparedQuery.QueryAttribute.PartitionCount, partitionCount);
-                    }
-                    else
-                    {
-                        throw new KbParserException("Invalid query. Found '" + token + "', expected: 'partitions'.");
-                    }
-
-                    if (query.IsNextCharacter(')') == false)
-                    {
-                        throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
-                    }
-                    query.SkipNextCharacter();
+                        {"partitions", typeof(uint) }
+                    };
+                    StaticWithOptionsParser.ParseWithOptions(ref query, options, ref result);
                 }
             }
             #endregion
@@ -663,43 +573,12 @@ namespace Katzebase.Engine.Query
 
                     if (query.IsNextToken("with"))
                     {
-                        query.SkipNextToken();
-
-                        if (query.IsNextCharacter('(') == false)
+                        var options = new ExpectedWithOptions
                         {
-                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
-                        }
-                        query.SkipNextCharacter();
-
-                        token = query.GetNextToken().ToLower();
-                        if (token == "includephysicalpages")
-                        {
-                            if (query.IsNextCharacter('=') == false)
-                            {
-                                throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
-                            }
-                            query.SkipNextCharacter();
-
-                            token = query.GetNextToken().ToLower();
-                            if (bool.TryParse(token, out bool includephysicalpages) == false)
-                            {
-                                throw new KbParserException("Invalid query. Found '" + token + "', expected: 'true' or 'false'.");
-                            }
-
-                            result.AddAttribute(PreparedQuery.QueryAttribute.IncludePhysicalPages, includephysicalpages);
-                        }
-                        else
-                        {
-                            throw new KbParserException("Invalid query. Found '" + token + "', expected: 'includephysicalpages'.");
-                        }
-
-                        if (query.IsNextCharacter(')') == false)
-                        {
-                            throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
-                        }
-                        query.SkipNextCharacter();
+                            {"includephysicalpages", typeof(bool) }
+                        };
+                        StaticWithOptionsParser.ParseWithOptions(ref query, options, ref result);
                     }
-
                 }
                 else
                 {
@@ -1342,6 +1221,8 @@ namespace Katzebase.Engine.Query
 
             return result;
         }
+
+
 
         /*
         private static UpsertKeyValues ParseUpsertKeyValues(string conditionsText, ref int position)

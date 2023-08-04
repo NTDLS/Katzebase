@@ -86,6 +86,7 @@
             Schemas,
             Documents,
             Transaction,
+            Configuration,
             Index,
             UniqueKey,
             Procedure

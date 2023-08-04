@@ -217,6 +217,10 @@ namespace Katzebase.Engine.Query.Management
                     {
                         return core.Schemas.QueryHandlers.ExecuteAlter(processId, preparedQuery);
                     }
+                    else if (preparedQuery.SubQueryType == SubQueryType.Configuration)
+                    {
+                        return core.Environment.QueryHandlers.ExecuteAlter(processId, preparedQuery);
+                    }
                     throw new NotImplementedException();
                 }
                 else if (preparedQuery.QueryType == QueryType.Drop)

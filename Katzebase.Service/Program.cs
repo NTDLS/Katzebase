@@ -28,6 +28,7 @@ namespace Katzebase.Service
                                  .AddEnvironmentVariables()
                                  .Build();
 
+
                     // Get values from the config given their key and their target type.
                     _settings = config.GetRequiredSection("Settings").Get<KatzebaseSettings>();
                     if (_settings == null)

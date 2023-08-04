@@ -1,10 +1,11 @@
 ﻿namespace Katzebase.Engine.Caching
 {
-    internal class KbMemoryCache: IDisposable
+    internal class KbMemoryCache : IDisposable
     {
-        internal int MaxMemoryMB { get; private set; }
         internal Dictionary<string, KbCacheItem> Collection { get; private set; } = new();
         private readonly Timer _timer;
+        private readonly Core _core;
+        private int _cachePartitions;
 
         #region IDisposable
 
@@ -42,16 +43,19 @@
             }
         }
 
-        public KbMemoryCache(int maxMemoryMB, int pollingInterval)
+        public KbMemoryCache(Core core)
         {
-            MaxMemoryMB = maxMemoryMB;
-            _timer = new Timer(TimerTickCallback, this, TimeSpan.FromSeconds(pollingInterval), TimeSpan.FromSeconds(pollingInterval));
+            _core = core;
+            _cachePartitions = _core.Settings.CachePartitions; //We save this because this is NOT changable while the server is running.
+            _timer = new Timer(TimerTickCallback, this, TimeSpan.FromSeconds(core.Settings.CacheScavengeInterval), TimeSpan.FromSeconds(core.Settings.CacheScavengeInterval));
         }
 
         private void TimerTickCallback(object? state)
         {
+            var maxMemoryMB = _core.Settings.CacheMaxMemory / _cachePartitions;
+
             var sizeInMegabytes = SizeInMegabytes();
-            if (sizeInMegabytes > MaxMemoryMB)
+            if (sizeInMegabytes > maxMemoryMB)
             {
                 if (Monitor.TryEnter(this, 50))
                 {
@@ -62,7 +66,7 @@
                     var itemsToRemove = new List<string>();
 
                     double objectSizeSummation = 0;
-                    double spaceNeededToClear = (sizeInMegabytes - MaxMemoryMB) * 1024.0 * 1024.0;
+                    double spaceNeededToClear = (sizeInMegabytes - maxMemoryMB) * 1024.0 * 1024.0;
 
                     foreach (var item in oldestGottenItems)
                     {

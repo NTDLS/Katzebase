@@ -1,13 +1,13 @@
 ﻿namespace Katzebase.Engine.Health.Management
 {
     /// <summary>
-    /// Public class methods for handling API requests related to health.
+    /// Public class methods for handling API requests related to configuration.
     /// </summary>
-    public class HealthAPIHandlers
+    public class EnvironmentAPIHandlers
     {
         private readonly Core core;
 
-        public HealthAPIHandlers(Core core)
+        public EnvironmentAPIHandlers(Core core)
         {
             this.core = core;
 
@@ -16,7 +16,7 @@
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate health API handlers.", ex);
+                core.Log.Write($"Failed to instanciate environment API handlers.", ex);
                 throw;
             }
         }

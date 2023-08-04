@@ -24,7 +24,7 @@
 
                 for (int i = 0; i < PartitionCount; i++)
                 {
-                    partitions[i] = new KbMemoryCache(maxMemoryPerPartition, core.Settings.CacheScavengeInterval);
+                    partitions[i] = new KbMemoryCache(core);
                 }
             }
             catch (Exception ex)
