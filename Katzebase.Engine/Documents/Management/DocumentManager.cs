@@ -169,7 +169,7 @@ namespace Katzebase.Engine.Documents.Management
                     documentPageCatalog.Catalog.Add(physicalPageCatalogItem);
 
                     //Create the new page, this will store the actual document contents.
-                    documentPage = new PhysicalDocumentPage(physicalPageCatalogItem.PageNumber);
+                    documentPage = new PhysicalDocumentPage();
 
                     //Add the given document to the page document.
                     documentPage.Documents.Add(physicalDocument.Id, physicalDocument);
@@ -200,7 +200,7 @@ namespace Katzebase.Engine.Documents.Management
                 //Save the document page catalog:
                 core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
 
-                var documentPointer = new DocumentPointer(documentPage.PageNumber, physicalDocument.Id);
+                var documentPointer = new DocumentPointer(physicalPageCatalogItem.PageNumber, physicalDocument.Id);
 
                 //Update all of the indexes that referecne the document.
                 core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, documentPointer);

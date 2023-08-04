@@ -7,13 +7,6 @@
     [Serializable]
     public class PhysicalDocumentPage
     {
-        public int PageNumber { get; private set; }
-
         public Dictionary<uint, PhysicalDocument> Documents { get; set; } = new();
-
-        public PhysicalDocumentPage(int pageNumber)
-        {
-            PageNumber = pageNumber;
-        }
     }
 }

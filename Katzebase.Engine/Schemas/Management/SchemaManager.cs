@@ -502,7 +502,7 @@ namespace Katzebase.Engine.Schemas.Management
                 {
                     var physicalDocumentPage = core.Documents.AcquireDocumentPage(transaction, physicalSchema, page.PageNumber, LockOperation.Read);
 
-                    values.Add($"{physicalDocumentPage.PageNumber}");
+                    values.Add($"{page.PageNumber}");
                     values.Add($"{physicalDocumentPage.Documents.Count}");
                     values.Add($"{physicalDocumentPage.Documents.Min(o => o.Value.Content.Length):n0}");
                     values.Add($"{physicalDocumentPage.Documents.Max(o => o.Value.Content.Length):n0}");
@@ -513,6 +513,5 @@ namespace Katzebase.Engine.Schemas.Management
             }
             return result;
         }
-
     }
 }
