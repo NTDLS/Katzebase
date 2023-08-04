@@ -6,18 +6,18 @@
     internal class SystemProcedureImplementation
     {
         internal static string[] SystemProcedurePrototypes = {
-                "ClearHealthCounters:",
                 "CheckpointHealthCounters:",
-                "ClearCache:",
-                "ReleaseAllocations:",
-                "ShowMemoryUtilization:",
+                "ClearCacheAllocations:",
+                "ClearHealthCounters:",
+                "ReleaseCacheAllocations:",
+                "ShowBlocks:Numeric/processId=null",
                 "ShowCacheAllocations:",
                 "ShowCachePartitions:",
-                "ShowhealthCounters:",
-                "ShowWaitingLocks:Numeric/processId=null",
-                "ShowBlocks:Numeric/processId=null",
-                "ShowTransactions:Numeric/processId=null",
+                "ShowHealthCounters:",
+                "ShowMemoryUtilization:",
                 "ShowProcesses:Numeric/processId=null",
+                "ShowTransactions:Numeric/processId=null",
+                "ShowWaitingLocks:Numeric/processId=null",
             };
     }
 }

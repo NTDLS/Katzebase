@@ -69,10 +69,10 @@
 			<Word>MinQueryThreads</Word>
 			<Word>MaxQueryThreads</Word>
 			<Word>QueryThreadWeight</Word>
-			<Word>ClearCache</Word>
+			<Word>ClearCacheAllocations</Word>
 			<Word>ShowMemoryUtilization</Word>
 			<Word>ShowCacheAllocations</Word>
-			<Word>ReleaseAllocations</Word>
+			<Word>ReleaseCacheAllocations</Word>
 			<Word>ShowCachePartitions</Word>
 			<Word>ShowHealthCounters</Word>
 			<Word>ClearHealthCounters</Word>

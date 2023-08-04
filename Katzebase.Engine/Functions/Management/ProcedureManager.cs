@@ -43,8 +43,6 @@ namespace Katzebase.Engine.Functions.Management
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             var physicalProcedureCatalog = Acquire(transaction, physicalSchema, LockOperation.Write);
 
-            //var batches = KbUtility.SplitQueryBatches(body);
-
             var physicalProcesure = physicalProcedureCatalog.GetByName(objectName);
             if (physicalProcesure == null)
             {
@@ -125,13 +123,13 @@ namespace Katzebase.Engine.Functions.Management
                 switch (procedureName.ToLower())
                 {
                     //---------------------------------------------------------------------------------------------------------------------------
-                    case "clearcache":
+                    case "clearcacheallocations":
                         {
                             core.Cache.Clear();
                             return new KbQueryResultCollection();
                         }
                     //---------------------------------------------------------------------------------------------------------------------------
-                    case "releaseallocations":
+                    case "releasecacheallocations":
                         {
                             GC.Collect();
                             return new KbQueryResultCollection();
