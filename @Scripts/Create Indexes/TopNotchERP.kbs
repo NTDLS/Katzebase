@@ -1,0 +1,7 @@
+CREATE INDEX IX_TopNotchERP_Address_ParentKey(
+    parent_key
+) ON TopNotchERP:Address WITH (PARTITIONS=10)
+
+CREATE INDEX IX_TopNotchERP_Inventory_OnHandQty(
+    onhandqty
+) ON TopNotchERP:Inventory WITH (PARTITIONS=100)

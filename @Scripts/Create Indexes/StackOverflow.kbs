@@ -1,0 +1,7 @@
+CREATE INDEX IX_Users(
+    displayname
+) ON StackOverflow:Users WITH (PARTITIONS=1000)
+
+CREATE INDEX IX_Posts_OwnerUserId(
+    owneruserid
+) ON StackOverflow:Posts WITH (PARTITIONS=1000)

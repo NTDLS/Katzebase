@@ -1,0 +1,23 @@
+CREATE INDEX IX_Text(
+    Text
+) ON WordList:Word WITH (PARTITIONS=100)
+
+CREATE INDEX IX_LanguageId(
+    LanguageId
+) ON WordList:Word WITH (PARTITIONS=100)
+
+CREATE UNIQUEKEY IX_Id(
+    Id
+) ON WordList:Word WITH (PARTITIONS=100)
+
+CREATE INDEX IX_Synonym_SourceWordId(
+    sourcewordid
+) ON WordList:Synonym WITH (PARTITIONS=1000)
+
+CREATE INDEX IX_FlatTranslate_English(
+    english
+) ON WordList:FlatTranslate WITH (PARTITIONS=100)
+
+CREATE INDEX IX_Synonym_TargetWordId(
+    targetwordid
+) ON WordList:Synonym WITH (PARTITIONS=1000)

@@ -1,0 +1,18 @@
+CREATE INDEX IX_Product_ProductId_Name(
+    productid,
+    name
+) ON AdventureWorks:Production:Product WITH (PARTITIONS=100)
+
+CREATE INDEX IX_Product_Name(
+    name
+) ON AdventureWorks:Production:Product WITH (PARTITIONS=100)
+
+CREATE INDEX IX_TransactionHistory_ProductID_ActualCost(
+    productid,
+    actualcost
+) ON AdventureWorks:Production:TransactionHistory WITH (PARTITIONS=100)
+
+CREATE UNIQUEKEY IX_TransactionHistory_TransactionId(
+    transactionid
+) ON AdventureWorks:Production:TransactionHistory WITH (PARTITIONS=100)
+
