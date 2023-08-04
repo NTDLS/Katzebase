@@ -1,13 +1,9 @@
-﻿using System.Collections.Concurrent;
-
-namespace Katzebase.Engine.Caching.Management
+﻿namespace Katzebase.Engine.Caching.Management
 {
-
-
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to cache.
     /// </summary>
-    public class CacheManager
+    internal class CacheManager
     {
         private readonly Core core;
         public int PartitionCount { get; private set; }
@@ -35,6 +31,14 @@ namespace Katzebase.Engine.Caching.Management
             {
                 core.Log.Write("Failed to instanciate cache manager.", ex);
                 throw;
+            }
+        }
+
+        public void Close()
+        {
+            for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
+            {
+                partitions[partitionIndex].Dispose();
             }
         }
 

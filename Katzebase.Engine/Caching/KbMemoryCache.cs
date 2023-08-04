@@ -1,12 +1,38 @@
 ﻿namespace Katzebase.Engine.Caching
 {
-    internal class KbMemoryCache
+    internal class KbMemoryCache: IDisposable
     {
-        public int MaxMemoryMB { get; private set; }
-
-        public Dictionary<string, KbCacheItem> Collection { get; private set; } = new();
-
+        internal int MaxMemoryMB { get; private set; }
+        internal Dictionary<string, KbCacheItem> Collection { get; private set; } = new();
         private readonly Timer _timer;
+
+        #region IDisposable
+
+        // This flag indicates whether Dispose has been called already
+        private bool disposed = false;
+
+        // Implement IDisposable.Dispose method
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        // Implement the actual cleanup logic in this method
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    Collection.Clear();
+                    _timer.Dispose();
+                }
+                disposed = true;
+            }
+        }
+
+        #endregion
 
         public List<string> Keys()
         {
@@ -19,7 +45,6 @@
         public KbMemoryCache(int maxMemoryMB, int pollingInterval)
         {
             MaxMemoryMB = maxMemoryMB;
-
             _timer = new Timer(TimerTickCallback, this, TimeSpan.FromSeconds(pollingInterval), TimeSpan.FromSeconds(pollingInterval));
         }
 

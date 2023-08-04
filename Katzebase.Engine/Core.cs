@@ -100,6 +100,7 @@ namespace Katzebase.Engine
         {
             Log.Write("Stopping the server.");
 
+            Cache.Close();
             Heartbeat.Stop();
             Health.Close();
             Log.Close();
