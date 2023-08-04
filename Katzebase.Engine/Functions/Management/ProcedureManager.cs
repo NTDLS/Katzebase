@@ -6,7 +6,6 @@ using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
-using System.Collections.Concurrent;
 using System.Diagnostics;
 using static Katzebase.Engine.Library.EngineConstants;
 
@@ -125,16 +124,19 @@ namespace Katzebase.Engine.Functions.Management
                 //First check for system procedures:
                 switch (procedureName.ToLower())
                 {
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "clearcache":
                         {
                             core.Cache.Clear();
                             return new KbQueryResultCollection();
                         }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "releaseallocations":
                         {
                             GC.Collect();
                             return new KbQueryResultCollection();
                         }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "showmemoryutilization":
                         {
                             var cachePartitions = core.Cache.GetPartitionAllocationDetails();
@@ -174,8 +176,8 @@ namespace Katzebase.Engine.Functions.Management
 
                             return collection;
                         }
-
-                    case "showcacheitems":
+                    //---------------------------------------------------------------------------------------------------------------------------
+                    case "showcacheallocations":
                         {
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
@@ -208,6 +210,7 @@ namespace Katzebase.Engine.Functions.Management
 
                             return collection;
                         }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "showcachepartitions":
                         {
                             var collection = new KbQueryResultCollection();
@@ -219,12 +222,10 @@ namespace Katzebase.Engine.Functions.Management
 
                             var cachePartitions = core.Cache.GetPartitionAllocationStatistics();
 
-                            int partitionIndex = 0;
-
                             foreach (var partition in cachePartitions.Partitions)
                             {
                                 var values = new List<string?> {
-                                    partitionIndex++.ToString(),
+                                    $"{partition.Partition:n0}",
                                     $"{partition.Allocations:n0}",
                                     $"{partition.SizeInKilobytes:n2}"
                                 };
@@ -234,6 +235,7 @@ namespace Katzebase.Engine.Functions.Management
 
                             return collection;
                         }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "showhealthcounters":
                         {
                             var collection = new KbQueryResultCollection();
@@ -254,6 +256,7 @@ namespace Katzebase.Engine.Functions.Management
 
                             return collection;
                         }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "showwaitinglocks":
                         {
                             var collection = new KbQueryResultCollection();
@@ -286,7 +289,7 @@ namespace Katzebase.Engine.Functions.Management
 
                             return collection;
                         }
-
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "showblocks":
                         {
                             var collection = new KbQueryResultCollection();
@@ -316,6 +319,7 @@ namespace Katzebase.Engine.Functions.Management
 
                             return collection;
                         }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "showtransactions":
                         {
                             var collection = new KbQueryResultCollection();
@@ -344,23 +348,24 @@ namespace Katzebase.Engine.Functions.Management
                             foreach (var tx in transactions)
                             {
                                 var values = new List<string?> {
-                                tx.ProcessId.ToString(),
-                                (tx?.BlockedBy.Count > 0).ToString(),
-                                tx?.ReferenceCount.ToString(),
-                                tx?.StartTime.ToString(),
-                                tx?.HeldLockKeys?.Count.ToString(),
-                                tx?.GrantedLockCache?.Count.ToString(),
-                                tx?.DeferredIOs?.Count().ToString(),
-                                (!(tx?.IsComittedOrRolledBack == true)).ToString(),
-                                tx?.IsDeadlocked.ToString(),
-                                tx?.IsCancelled.ToString(),
-                                tx?.IsUserCreated.ToString()
-                            };
+                                    tx.ProcessId.ToString(),
+                                    (tx?.BlockedBy.Count > 0).ToString(),
+                                    tx?.ReferenceCount.ToString(),
+                                    tx?.StartTime.ToString(),
+                                    tx?.HeldLockKeys?.Count.ToString(),
+                                    tx?.GrantedLockCache?.Count.ToString(),
+                                    tx?.DeferredIOs?.Count().ToString(),
+                                    (!(tx?.IsComittedOrRolledBack == true)).ToString(),
+                                    tx?.IsDeadlocked.ToString(),
+                                    tx?.IsCancelled.ToString(),
+                                    tx?.IsUserCreated.ToString()
+                                };
                                 result.AddRow(values);
                             }
 
                             return collection;
                         }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "showprocesses":
                         {
                             var collection = new KbQueryResultCollection();
@@ -395,31 +400,33 @@ namespace Katzebase.Engine.Functions.Management
                                 var tx = transactions.Where(o => o.ProcessId == session.Value.ProcessId).FirstOrDefault();
 
                                 var values = new List<string?> {
-                                session.Key.ToString(),
-                                session.Value.ProcessId.ToString(),
-                                session.Value.LoginTime.ToString(),
-                                session.Value.LastCheckinTime.ToString(),
-                                (tx?.BlockedBy.Count > 0).ToString(),
-                                tx?.ReferenceCount.ToString(),
-                                tx?.StartTime.ToString(),
-                                tx?.HeldLockKeys?.Count.ToString(),
-                                tx?.GrantedLockCache?.Count.ToString(),
-                                tx?.DeferredIOs?.Count().ToString(),
-                                (!(tx?.IsComittedOrRolledBack == true)).ToString(),
-                                tx?.IsDeadlocked.ToString(),
-                                tx?.IsCancelled.ToString(),
-                                tx?.IsUserCreated.ToString()
-                            };
+                                    session.Key.ToString(),
+                                    session.Value.ProcessId.ToString(),
+                                    session.Value.LoginTime.ToString(),
+                                    session.Value.LastCheckinTime.ToString(),
+                                    (tx?.BlockedBy.Count > 0).ToString(),
+                                    tx?.ReferenceCount.ToString(),
+                                    tx?.StartTime.ToString(),
+                                    tx?.HeldLockKeys?.Count.ToString(),
+                                    tx?.GrantedLockCache?.Count.ToString(),
+                                    tx?.DeferredIOs?.Count().ToString(),
+                                    (!(tx?.IsComittedOrRolledBack == true)).ToString(),
+                                    tx?.IsDeadlocked.ToString(),
+                                    tx?.IsCancelled.ToString(),
+                                    tx?.IsUserCreated.ToString()
+                                };
                                 result.AddRow(values);
                             }
 
                             return collection;
                         }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "clearhealthcounters":
                         {
                             core.Health.ClearCounters();
                             return new KbQueryResultCollection();
                         }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "checkpointhealthcounters":
                         {
                             core.Health.Checkpoint();

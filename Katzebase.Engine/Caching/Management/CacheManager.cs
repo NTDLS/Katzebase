@@ -1,4 +1,6 @@
-﻿namespace Katzebase.Engine.Caching.Management
+﻿using System.Collections.Concurrent;
+
+namespace Katzebase.Engine.Caching.Management
 {
 
 
@@ -82,6 +84,7 @@
                     {
                         result.Partitions.Add(new CachePartitionAllocationStats.CachePartitionAllocationStat
                         {
+                            Partition = partitionIndex,
                             Allocations = partitions[partitionIndex].Count(),
                             SizeInKilobytes = partitions[partitionIndex].SizeInKilobytes()
                         });
