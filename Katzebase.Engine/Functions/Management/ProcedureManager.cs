@@ -6,6 +6,8 @@ using Katzebase.Engine.Schemas;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Functions.Management
@@ -133,6 +135,46 @@ namespace Katzebase.Engine.Functions.Management
                             GC.Collect();
                             return new KbQueryResultCollection();
                         }
+                    case "showmemoryutilization":
+                        {
+                            var cachePartitions = core.Cache.GetPartitionAllocationDetails();
+                            long totalCacheSize = 0;
+                            foreach (var partition in cachePartitions.Partitions)
+                            {
+                                totalCacheSize += partition.AproximateSizeInBytes;
+                            }
+
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
+                            result.AddField("WorkingSet64");
+                            result.AddField("MinWorkingSet");
+                            result.AddField("MaxWorkingSet");
+                            result.AddField("PeakWorkingSet64");
+                            result.AddField("PagedMemorySize64");
+                            result.AddField("NonpagedSystemMemorySize64");
+                            result.AddField("PeakVirtualMemorySize64");
+                            result.AddField("VirtualMemorySize64");
+                            result.AddField("PrivateMemorySize64");
+                            result.AddField("totalCacheSize");
+
+                            var process = Process.GetCurrentProcess();
+                            var values = new List<string?> {
+                                    $"{process.WorkingSet64:n0}",
+                                    $"{process.MinWorkingSet:n0}",
+                                    $"{process.MaxWorkingSet:n0}",
+                                    $"{process.PeakWorkingSet64:n0}",
+                                    $"{process.PagedMemorySize64:n0}",
+                                    $"{process.NonpagedSystemMemorySize64:n0}",
+                                    $"{process.PeakPagedMemorySize64:n0}",
+                                    $"{process.PeakVirtualMemorySize64:n0}",
+                                    $"{process.VirtualMemorySize64:n0}",
+                                    $"{process.PrivateMemorySize64:n0}",
+                                    $"{totalCacheSize:n0}",
+                            };
+
+                            return collection;
+                        }
+
                     case "showcacheitems":
                         {
                             var collection = new KbQueryResultCollection();

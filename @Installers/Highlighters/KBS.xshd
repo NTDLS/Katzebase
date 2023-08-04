@@ -70,6 +70,7 @@
 			<Word>MaxQueryThreads</Word>
 			<Word>QueryThreadWeight</Word>
 			<Word>ClearCache</Word>
+			<Word>ShowMemoryUtilization</Word>
 			<Word>ShowCacheItems</Word>
 			<Word>ReleaseAllocations</Word>
 			<Word>ShowCachePartitions</Word>
