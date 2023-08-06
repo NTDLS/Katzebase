@@ -54,7 +54,7 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                return core.IO.GetJson<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemFilePath(pageNumber), lockIntention);
+                return core.IO.GetPBuf<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemFilePath(pageNumber), lockIntention);
             }
             catch (Exception ex)
             {
@@ -73,7 +73,7 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                var physicalDocumentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
+                var physicalDocumentPageCatalog = core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
 
                 var documentPointers = new List<DocumentPointer>();
 
@@ -96,7 +96,7 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                return core.IO.GetJson<PhysicalDocumentPageMap>(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(pageNumber), lockIntention);
+                return core.IO.GetPBuf<PhysicalDocumentPageMap>(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(pageNumber), lockIntention);
             }
             catch (Exception ex)
             {
@@ -109,7 +109,7 @@ namespace Katzebase.Engine.Documents.Management
         {
             try
             {
-                return core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
+                return core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
             }
             catch (Exception ex)
             {
@@ -136,7 +136,7 @@ namespace Katzebase.Engine.Documents.Management
             try
             {
                 //Open the document page catalog:
-                var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
+                var documentPageCatalog = core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
                 KbUtility.EnsureNotNull(documentPageCatalog);
 
                 var physicalDocument = new PhysicalDocument
@@ -192,13 +192,13 @@ namespace Katzebase.Engine.Documents.Management
                 }
 
                 //Save the document page map.
-                core.IO.PutJson(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(physicalPageCatalogItem.PageNumber), physicalDocumentPageMap);
+                core.IO.PutPBuf(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(physicalPageCatalogItem.PageNumber), physicalDocumentPageMap);
 
                 //Save the document page:
-                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageCatalogItem), documentPage);
+                core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageCatalogItem), documentPage);
 
                 //Save the document page catalog:
-                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
+                core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
 
                 var documentPointer = new DocumentPointer(physicalPageCatalogItem.PageNumber, physicalDocument.Id);
 
@@ -238,7 +238,7 @@ namespace Katzebase.Engine.Documents.Management
                     documentPage.Documents[document.Key.DocumentId] = physicalDocument;
 
                     //Save the document page:
-                    core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemFilePath(document.Key), documentPage);
+                    core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemFilePath(document.Key), documentPage);
 
                     physicalDocuments.Add(document.Key, physicalDocument);
                 }
@@ -264,7 +264,7 @@ namespace Katzebase.Engine.Documents.Management
             try
             {
                 //Open the document page catalog:
-                var documentPageCatalog = core.IO.GetJson<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
+                var documentPageCatalog = core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
                 KbUtility.EnsureNotNull(documentPageCatalog);
 
                 foreach (var documentPointer in documentPointers)
@@ -277,16 +277,16 @@ namespace Katzebase.Engine.Documents.Management
                     documentPage.Documents.Remove(documentPointer.DocumentId);
 
                     //Save the document page:
-                    core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
+                    core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
 
                     //Update the document page map.
                     var physicalDocumentPageMap = AcquireDocumentPageMap(transaction, physicalSchema, documentPointer.PageNumber, LockOperation.Write);
                     physicalDocumentPageMap.DocumentIDs.Remove(documentPointer.DocumentId);
-                    core.IO.PutJson(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(documentPointer.PageNumber), physicalDocumentPageMap);
+                    core.IO.PutPBuf(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(documentPointer.PageNumber), physicalDocumentPageMap);
                 }
 
                 //Save the document page catalog:
-                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
+                core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
 
                 if (documentPointers.Count() > 0)
                 {

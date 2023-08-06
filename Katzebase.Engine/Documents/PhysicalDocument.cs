@@ -1,6 +1,7 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
+using ProtoBuf;
 
 namespace Katzebase.Engine.Documents
 {
@@ -9,6 +10,7 @@ namespace Katzebase.Engine.Documents
     ///     virture of being contained in the collection in PhysicalDocumentPage
     /// </summary>
     [Serializable]
+    [ProtoContract]
     public class PhysicalDocument
     {
         public CaseInSensitiveDictionary<string> ToDictonary()
@@ -21,9 +23,13 @@ namespace Katzebase.Engine.Documents
             return documentContent;
         }
 
+        [ProtoMember(1)]
         public string Content { get; set; } = string.Empty;
+        [ProtoMember(2)] 
         public uint Id { get; set; }
+        [ProtoMember(3)] 
         public DateTime Created { get; set; }
+        [ProtoMember(4)] 
         public DateTime Modfied { get; set; }
 
         public PhysicalDocument Clone()

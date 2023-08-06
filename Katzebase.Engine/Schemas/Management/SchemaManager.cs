@@ -73,7 +73,7 @@ namespace Katzebase.Engine.Schemas.Management
                     });
 
                     core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile), physicalSchemaCatalog);
-                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
+                    core.IO.PutPBufNonTracked(Path.Combine(core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
                     core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
                 }
 
@@ -90,7 +90,7 @@ namespace Katzebase.Engine.Schemas.Management
 
                 Directory.CreateDirectory(temporarySchemaPath);
                 core.IO.PutJsonNonTracked(Path.Combine(temporarySchemaPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
-                core.IO.PutJsonNonTracked(Path.Combine(temporarySchemaPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
+                core.IO.PutPBufNonTracked(Path.Combine(temporarySchemaPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
                 core.IO.PutJsonNonTracked(Path.Combine(temporarySchemaPath, IndexCatalogFile), new PhysicalIndexCatalog());
             }
             catch (Exception ex)
@@ -158,7 +158,7 @@ namespace Katzebase.Engine.Schemas.Management
 
                 core.IO.CreateDirectory(transaction, physicalSchema.DiskPath);
                 core.IO.PutJson(transaction, physicalSchema.SchemaCatalogFilePath(), new PhysicalSchemaCatalog());
-                core.IO.PutJson(transaction, physicalSchema.DocumentPageCatalogFilePath(), new PhysicalDocumentPageCatalog());
+                core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), new PhysicalDocumentPageCatalog());
                 core.IO.PutJson(transaction, physicalSchema.IndexCatalogFilePath(), new PhysicalIndexCatalog());
 
                 var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);

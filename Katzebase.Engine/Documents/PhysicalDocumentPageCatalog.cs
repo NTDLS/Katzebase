@@ -1,14 +1,18 @@
-﻿namespace Katzebase.Engine.Documents
+﻿using ProtoBuf;
+
+namespace Katzebase.Engine.Documents
 {
     /// <summary>
     /// This is the master document page catalog, it is physically written to disk and
     /// contains one entry per page, each of which contain the associated documentIDs.
     /// </summary>
+    [ProtoContract]
     [Serializable]
     public class PhysicalDocumentPageCatalog
     {
+        [ProtoMember(1)]
         public List<PhysicalDocumentPageCatalogItem> Catalog { get; private set; } = new();
-
+        [ProtoMember(2)]
         public uint NextDocumentId { get; set; } = 0;
 
         public uint ConsumeNextDocumentId()
@@ -16,7 +20,6 @@
             NextDocumentId++;
             return NextDocumentId;
         }
-
         public int NextPageNumber() => Catalog.Count;
 
         public int TotalDocumentCount()

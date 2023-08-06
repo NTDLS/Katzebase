@@ -1,6 +1,17 @@
+select
+	*
+from
+	StackOverflow:Users as U
+inner join Stackoverflow:Posts as P
+	ON P.OwnerUserId = U.Id
+where
+	U.DisplayName = 'PAT'
+order by
+	P.CreationDate
+	
 --EXEC ShowSchemaPages('AdventureWorks:Person:Address')
 
---ALTER CONFIGURATION WITH (DeferredIOEnabled = true, CacheMaxMemory = 256)
+--ALTER CONFIGURATION WITH (DeferredIOEnabled = true, CacheMaxMemory = 1024)
 --ALTER SCHEMA AdventureWorks:Production:WorkOrder WITH(PageSize = 1000)
 --ANALYZE SCHEMA AdventureWorks:Production:WorkOrder with (includephysicalpages = true)
 --analyze INDEX IX_TransactionHistory_ProductID_ActualCost ON AdventureWorks:Production:TransactionHistory
@@ -30,9 +41,10 @@ select * from blah
 delete from blah where expression1 != ''
 */
 
---exec ClearCache
---exec ReleaseAllocations
+--exec ClearCacheAllocations
+--exec ReleaseCacheAllocations
 --exec ShowCachePartitions
+--exec ShowCacheAllocations
 
 --rebuild index IX_Posts_OwnerUserId on StackOverflow:Posts with (partitions=1000)
 --rebuild index IX_Word_Text on WordList:Word
@@ -129,6 +141,8 @@ insert into TopNotchERP:Address
 	jtrax_module = 'PMJ'
 )
 
+drop schema blah
+
 delete from TopNotchERP:Address where parent_key = 'ABBEY'
 */
 --analyze INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
@@ -143,7 +157,7 @@ insert into TopNotchERP:Address
 )
 
 
-select top 100 * from TopNotchERP:Address where parent_key = 'ABBEY'
+select top 100 * from TopNotchERP:Address where Parent_Key = '2BROS'
 
 delete from TopNotchERP:Address where parent_key = 'ABBEY'
 */

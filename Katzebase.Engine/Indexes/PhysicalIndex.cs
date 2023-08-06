@@ -25,6 +25,7 @@ namespace Katzebase.Engine.Indexes
             uint hash = 0;
             if (string.IsNullOrEmpty(value))
                 return hash;
+            value = value.ToLower();
             const uint seed = 131;
             foreach (char c in value)
             {
