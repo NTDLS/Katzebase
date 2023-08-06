@@ -62,26 +62,25 @@
                     //When we reach our set memory pressure, we will remove the least recently hit items from cache.
                     //TODO: since we have the hit count, update count, etc. maybe we can make this more intelligent?
 
-                    var oldestGottenItems = Collection.OrderBy(o => o.Value.LastGetDate);
-                    var itemsToRemove = new List<string>();
+                    var oldestGottenItems = Collection.OrderBy(o => o.Value.LastGetDate)
+                        .Select(o => new
+                            {
+                                o.Key,
+                                o.Value.AproximateSizeInBytes
+                            }
+                        ).ToList();
 
                     double objectSizeSummation = 0;
                     double spaceNeededToClear = (sizeInMegabytes - maxMemoryMB) * 1024.0 * 1024.0;
 
                     foreach (var item in oldestGottenItems)
                     {
-                        itemsToRemove.Add(item.Key);
-
-                        objectSizeSummation += item.Value.AproximateSizeInBytes;
+                        Remove(item.Key);
+                        objectSizeSummation += item.AproximateSizeInBytes;
                         if (objectSizeSummation >= spaceNeededToClear)
                         {
                             break;
                         }
-                    }
-
-                    foreach (var item in itemsToRemove)
-                    {
-                        Remove(item);
                     }
 
                     Monitor.Exit(this);
@@ -189,7 +188,7 @@
             }
         }
 
-        public void Upsert(string key, object obj, int aproximateSizeInBytes = 0)
+        public void Upsert(string key, object obj, int lengthOfUnserializedObject = 0)
         {
             Monitor.Enter(this);
             if (Collection.ContainsKey(key))
@@ -198,11 +197,12 @@
                 cacheItem.Value = obj;
                 cacheItem.SetCount++;
                 cacheItem.LastSetDate = DateTime.UtcNow;
-                cacheItem.AproximateSizeInBytes = aproximateSizeInBytes;
+                cacheItem.AproximateSizeInBytes = lengthOfUnserializedObject * sizeof(char);
+
             }
             else
             {
-                Collection.Add(key, new KbCacheItem(obj, aproximateSizeInBytes));
+                Collection.Add(key, new KbCacheItem(obj, lengthOfUnserializedObject * sizeof(char)));
             }
             Monitor.Exit(this);
         }
