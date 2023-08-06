@@ -26,17 +26,14 @@ namespace Katzebase.Engine.Documents
         [ProtoMember(1)]
         public string Content { get; set; } = string.Empty;
         [ProtoMember(2)] 
-        public uint Id { get; set; }
-        [ProtoMember(3)] 
         public DateTime Created { get; set; }
-        [ProtoMember(4)] 
+        [ProtoMember(3)] 
         public DateTime Modfied { get; set; }
 
         public PhysicalDocument Clone()
         {
             return new PhysicalDocument
             {
-                Id = Id,
                 Content = Content,
                 Created = Created,
                 Modfied = Modfied

@@ -42,7 +42,7 @@ namespace Katzebase.Engine.Query.Searchers
                     }
 
                     var resultRow = new KbQueryRow();
-                    resultRow.AddValue(physicalDocument.Id.ToString());
+                    resultRow.AddValue(documentId.ToString());
 
                     foreach (var field in result.Fields.Skip(1))
                     {

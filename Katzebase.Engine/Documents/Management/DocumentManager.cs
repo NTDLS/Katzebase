@@ -139,9 +139,10 @@ namespace Katzebase.Engine.Documents.Management
                 var documentPageCatalog = core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
                 KbUtility.EnsureNotNull(documentPageCatalog);
 
+                uint physicalDocumentId = documentPageCatalog.ConsumeNextDocumentId();
+
                 var physicalDocument = new PhysicalDocument
                 {
-                    Id = documentPageCatalog.ConsumeNextDocumentId(),
                     Content = pageContent,
                     Created = DateTime.UtcNow,
                     Modfied = DateTime.UtcNow,
@@ -163,7 +164,7 @@ namespace Katzebase.Engine.Documents.Management
                     //Create a new document page map.
                     physicalDocumentPageMap = new PhysicalDocumentPageMap();
                     //Insert into thr page map.
-                    physicalDocumentPageMap.DocumentIDs.Add(physicalDocument.Id);
+                    physicalDocumentPageMap.DocumentIDs.Add(physicalDocumentId);
 
                     //We created a new page item, add it to the catalog:
                     documentPageCatalog.Catalog.Add(physicalPageCatalogItem);
@@ -172,7 +173,7 @@ namespace Katzebase.Engine.Documents.Management
                     documentPage = new PhysicalDocumentPage();
 
                     //Add the given document to the page document.
-                    documentPage.Documents.Add(physicalDocument.Id, physicalDocument);
+                    documentPage.Documents.Add(physicalDocumentId, physicalDocument);
                 }
                 else
                 {
@@ -182,13 +183,13 @@ namespace Katzebase.Engine.Documents.Management
                     documentPage = AcquireDocumentPage(transaction, physicalSchema, physicalPageCatalogItem.PageNumber, LockOperation.Write);
 
                     //Add the given document to the page document.
-                    documentPage.Documents.Add(physicalDocument.Id, physicalDocument);
+                    documentPage.Documents.Add(physicalDocumentId, physicalDocument);
 
                     //Get the document page map.
                     physicalDocumentPageMap = AcquireDocumentPageMap(transaction, physicalSchema, physicalPageCatalogItem.PageNumber, LockOperation.Write);
 
                     //Insert into the page map.
-                    physicalDocumentPageMap.DocumentIDs.Add(physicalDocument.Id);
+                    physicalDocumentPageMap.DocumentIDs.Add(physicalDocumentId);
                 }
 
                 //Save the document page map.
@@ -200,7 +201,7 @@ namespace Katzebase.Engine.Documents.Management
                 //Save the document page catalog:
                 core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
 
-                var documentPointer = new DocumentPointer(physicalPageCatalogItem.PageNumber, physicalDocument.Id);
+                var documentPointer = new DocumentPointer(physicalPageCatalogItem.PageNumber, physicalDocumentId);
 
                 //Update all of the indexes that referecne the document.
                 core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, documentPointer);

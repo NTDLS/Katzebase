@@ -52,7 +52,7 @@
 
         private void TimerTickCallback(object? state)
         {
-            var maxMemoryMB = _core.Settings.CacheMaxMemory / _cachePartitions;
+            var maxMemoryMB = MaxSizeInMegabytes();
 
             var sizeInMegabytes = SizeInMegabytes();
             if (sizeInMegabytes > maxMemoryMB)
@@ -95,6 +95,15 @@
             var result = Collection.Sum(o => o.Value.AproximateSizeInBytes / 1024.0 / 1024.0);
             Monitor.Exit(this);
             return result;
+        }
+
+        public double MaxSizeInMegabytes()
+        {
+            return (_core.Settings.CacheMaxMemory / _cachePartitions);
+        }
+        public double MaxSizeInKilobytes()
+        {
+            return (_core.Settings.CacheMaxMemory / _cachePartitions) * 1024.0;
         }
 
         public double SizeInKilobytes()

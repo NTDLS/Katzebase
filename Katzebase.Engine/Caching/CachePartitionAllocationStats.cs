@@ -11,6 +11,7 @@
             public int Partition { get; set; }
             public int Allocations { get; set; }
             public double SizeInKilobytes { get; set; }
+            public double MaxSizeInKilobytes { get; set; }
         }
     }
 }

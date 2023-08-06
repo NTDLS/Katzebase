@@ -238,19 +238,14 @@ namespace Katzebase.Engine.IO
             {
                 if (core.Settings.UseCompression)
                 {
-                    using (var output = new MemoryStream())
-                    {
-                        ProtoBuf.Serializer.Serialize(output, deserializedObject);
-                        var compressedPbuf = Compression.Compress(output.ToArray());
-                        File.WriteAllBytes(filePath, compressedPbuf);
-                    }
+                    using var output = new MemoryStream();
+                    ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                    File.WriteAllBytes(filePath, Compression.Compress(output.ToArray()));
                 }
                 else
                 {
-                    using (var file = File.Create(filePath))
-                    {
-                        ProtoBuf.Serializer.Serialize(file, deserializedObject);
-                    }
+                    using var file = File.Create(filePath);
+                    ProtoBuf.Serializer.Serialize(file, deserializedObject);
                 }
             }
             catch (Exception ex)

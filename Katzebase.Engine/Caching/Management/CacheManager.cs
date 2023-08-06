@@ -90,7 +90,8 @@
                         {
                             Partition = partitionIndex,
                             Allocations = partitions[partitionIndex].Count(),
-                            SizeInKilobytes = partitions[partitionIndex].SizeInKilobytes()
+                            SizeInKilobytes = partitions[partitionIndex].SizeInKilobytes(),
+                            MaxSizeInKilobytes = partitions[partitionIndex].MaxSizeInKilobytes()
                         });
                     }
                 }

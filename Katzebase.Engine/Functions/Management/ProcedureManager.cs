@@ -216,7 +216,8 @@ namespace Katzebase.Engine.Functions.Management
 
                             result.AddField("Partition");
                             result.AddField("Allocations");
-                            result.AddField("Size (MB)");
+                            result.AddField("Size (KB)");
+                            result.AddField("MaxSize (KB)");
 
                             var cachePartitions = core.Cache.GetPartitionAllocationStatistics();
 
@@ -225,7 +226,8 @@ namespace Katzebase.Engine.Functions.Management
                                 var values = new List<string?> {
                                     $"{partition.Partition:n0}",
                                     $"{partition.Allocations:n0}",
-                                    $"{partition.SizeInKilobytes:n2}"
+                                    $"{partition.SizeInKilobytes:n2}",
+                                    $"{partition.MaxSizeInKilobytes:n2}"
                                 };
 
                                 result.AddRow(values);
