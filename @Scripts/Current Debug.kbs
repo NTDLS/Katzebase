@@ -1,19 +1,22 @@
+ANALYZE SCHEMA Stackoverflow:Posts with (IncludePhysicalPages = true)
+/*
 select
-	*
+	p.body
 from
 	StackOverflow:Users as U
 inner join Stackoverflow:Posts as P
 	ON P.OwnerUserId = U.Id
 where
-	U.DisplayName = 'PAT'
+	U.DisplayName = 'ntdls'
 order by
 	P.CreationDate
-	
+*/	
 --EXEC ShowSchemaPages('AdventureWorks:Person:Address')
 
 --ALTER CONFIGURATION WITH (DeferredIOEnabled = true, CacheMaxMemory = 1024)
 --ALTER SCHEMA AdventureWorks:Production:WorkOrder WITH(PageSize = 1000)
---ANALYZE SCHEMA AdventureWorks:Production:WorkOrder with (includephysicalpages = true)
+--ANALYZE SCHEMA Stackoverflow:Posts with (IncludePhysicalPages = true)
+--ANALYZE SCHEMA AdventureWorks:Production:WorkOrder with (IncludePhysicalPages = true)
 --analyze INDEX IX_TransactionHistory_ProductID_ActualCost ON AdventureWorks:Production:TransactionHistory
 
 --select * from WordList:Word

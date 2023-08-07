@@ -9,7 +9,7 @@ namespace Katzebase.Engine.Library
         {
             using var msi = new MemoryStream(bytes);
             using var mso = new MemoryStream();
-            using (var gs = new GZipStream(mso, CompressionMode.Compress))
+            using (var gs = new DeflateStream(mso, CompressionMode.Compress))
             {
                 msi.CopyTo(gs);
             }
@@ -20,7 +20,7 @@ namespace Katzebase.Engine.Library
         {
             using var msi = new MemoryStream(bytes);
             using var mso = new MemoryStream();
-            using (var gs = new GZipStream(msi, CompressionMode.Decompress))
+            using (var gs = new DeflateStream(msi, CompressionMode.Decompress))
             {
                 gs.CopyTo(mso);
             }

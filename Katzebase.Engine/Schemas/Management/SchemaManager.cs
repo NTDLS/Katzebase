@@ -479,9 +479,9 @@ namespace Katzebase.Engine.Schemas.Management
             {
                 result.AddField("PhysicalPageNumber");
                 result.AddField("PhysicalDocumentCount");
-                result.AddField("MinDocumentSoze");
-                result.AddField("MaxDocumentSoze");
-                result.AddField("AvgDocumentSoze");
+                result.AddField("MinDocumentSize (KB)");
+                result.AddField("MaxDocumentSize (KB)");
+                result.AddField("AvgDocumentSize (KB)");
             }
 
             foreach (var page in pageCatalog.Catalog)
@@ -503,9 +503,9 @@ namespace Katzebase.Engine.Schemas.Management
 
                     values.Add($"{page.PageNumber}");
                     values.Add($"{physicalDocumentPage.Documents.Count}");
-                    values.Add($"{physicalDocumentPage.Documents.Min(o => o.Value.Content.Length):n0}");
-                    values.Add($"{physicalDocumentPage.Documents.Max(o => o.Value.Content.Length):n0}");
-                    values.Add($"{physicalDocumentPage.Documents.Average(o => o.Value.Content.Length):n2}");
+                    values.Add($"{(physicalDocumentPage.Documents.Min(o => o.Value.Content.Length * sizeof(char)) / 1024.0):n2}");
+                    values.Add($"{(physicalDocumentPage.Documents.Max(o => o.Value.Content.Length * sizeof(char)) / 1024.0):n2}");
+                    values.Add($"{(physicalDocumentPage.Documents.Average(o => o.Value.Content.Length * sizeof(char)) / 1024.0):n2}");
                 }
 
                 result.AddRow(values);
