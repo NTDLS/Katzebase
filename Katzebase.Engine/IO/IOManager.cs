@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Atomicity;
+using Katzebase.Engine.Documents;
 using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
@@ -90,13 +91,13 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        internal T GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
-            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON);
+        internal T GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation, bool useCompression = true)
+            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON, useCompression);
 
-        internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
-            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf);
+        internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, bool useCompression = true)
+            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, useCompression);
 
-        internal T InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format)
+        internal T InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format, bool useCompression = true)
         {
             try
             {
@@ -146,7 +147,7 @@ namespace Katzebase.Engine.IO
                     {
                         string text = string.Empty;
                         var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
-                        if (core.Settings.UseCompression)
+                        if (core.Settings.UseCompression && useCompression)
                         {
                             text = Compression.DecompressString(File.ReadAllBytes(filePath));
                         }
@@ -164,7 +165,7 @@ namespace Katzebase.Engine.IO
                     else if (format == IOFormat.PBuf)
                     {
                         var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
-                        if (core.Settings.UseCompression)
+                        if (core.Settings.UseCompression && useCompression)
                         {
                             var serializedData = Compression.Decompress(File.ReadAllBytes(filePath));
                             aproximateSizeInBytes = serializedData.Length;
@@ -255,13 +256,16 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        internal void PutJson(Transaction transaction, string filePath, object deserializedObject)
-            => InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.JSON);
+        internal void PutJson(Transaction transaction, string filePath, object deserializedObject, bool useCompression = true)
+            => InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.JSON, useCompression);
 
-        internal void PutPBuf(Transaction transaction, string filePath, object deserializedObject)
-            => InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.PBuf);
+        internal void PutPBuf(Transaction transaction, string filePath, object deserializedObject, bool useCompression = true)
+            => InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.PBuf, useCompression);
 
-        private void InternalTrackedPut(Transaction transaction, string filePath, object deserializedObject, IOFormat format)
+        internal void PutPBuf(Transaction transaction, string filePath, PhysicalDocumentPage physicalDocumentPage)
+            => InternalTrackedPut(transaction, filePath, physicalDocumentPage, IOFormat.PBuf, false);
+
+        private void InternalTrackedPut(Transaction transaction, string filePath, object deserializedObject, IOFormat format, bool useCompression = true)
         {
             try
             {
@@ -311,7 +315,7 @@ namespace Katzebase.Engine.IO
 
                         aproximateSizeInBytes = text.Length;
 
-                        if (core.Settings.UseCompression)
+                        if (core.Settings.UseCompression && useCompression)
                         {
                             File.WriteAllBytes(filePath, Compression.Compress(text));
                         }
@@ -323,7 +327,7 @@ namespace Katzebase.Engine.IO
                     else if (format == IOFormat.PBuf)
                     {
                         var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
-                        if (core.Settings.UseCompression)
+                        if (core.Settings.UseCompression && useCompression)
                         {
                             using (var output = new MemoryStream())
                             {
