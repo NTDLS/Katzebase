@@ -31,11 +31,9 @@ namespace Katzebase.Engine.Query.Searchers
                     var documentId = physicalDocumentPageMap.DocumentIDs.ToArray()[documentIndex];
                     var physicalDocument = core.Documents.AcquireDocument(transaction, physicalSchema, new DocumentPointer(pageNumber, documentId), LockOperation.Read);
 
-                    var documentContentNextLevel = physicalDocument.ToDictonary();
-
                     if (i == 0)
                     {
-                        foreach (var documentValue in documentContentNextLevel)
+                        foreach (var documentValue in physicalDocument.Dictonary)
                         {
                             result.Fields.Add(new KbQueryField(documentValue.Key));
                         }
@@ -46,7 +44,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                     foreach (var field in result.Fields.Skip(1))
                     {
-                        documentContentNextLevel.TryGetValue(field.Name, out string? jToken);
+                        physicalDocument.Dictonary.TryGetValue(field.Name, out string? jToken);
                         resultRow.AddValue(jToken?.ToString() ?? string.Empty);
                     }
 
@@ -73,11 +71,9 @@ namespace Katzebase.Engine.Query.Searchers
 
                 var persistDocument = core.Documents.AcquireDocument(transaction, physicalSchema, pageDocuent, LockOperation.Read);
 
-                var jContent = persistDocument.ToDictonary();
-
                 if (i == 0)
                 {
-                    foreach (var jToken in jContent)
+                    foreach (var jToken in persistDocument.Dictonary)
                     {
                         result.Fields.Add(new KbQueryField(jToken.Key));
                     }
@@ -86,7 +82,7 @@ namespace Katzebase.Engine.Query.Searchers
                 var resultRow = new KbQueryRow();
                 foreach (var field in result.Fields)
                 {
-                    jContent.TryGetValue(field.Name, out string? jToken);
+                    persistDocument.Dictonary.TryGetValue(field.Name, out string? jToken);
                     resultRow.AddValue(jToken?.ToString() ?? string.Empty);
                 }
 

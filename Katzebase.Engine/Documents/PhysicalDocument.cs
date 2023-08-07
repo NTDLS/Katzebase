@@ -1,5 +1,4 @@
 ﻿using Katzebase.Engine.Library;
-using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
@@ -8,87 +7,72 @@ using ProtoBuf;
 namespace Katzebase.Engine.Documents
 {
     /// <summary>
-    /// This is the page document that is physically written to the disk by
-    ///     virture of being contained in the collection in PhysicalDocumentPage
+    /// This is the page document that is physically written to the disk by virture of being contained in the collection in PhysicalDocumentPage.
     /// </summary>
     [Serializable]
     [ProtoContract]
     public class PhysicalDocument
     {
-        public CaseInSensitiveDictionary<string> ToDictonary()
-        {
-            var documentContent = JsonConvert.DeserializeObject<CaseInSensitiveDictionary<string>>(Content);
-            if (documentContent == null)
-            {
-                throw new KbNullException("Document dictonary cannot be null.");
-            }
-            return documentContent;
-        }
+        [ProtoIgnore]
+        private KBCILookup<string?>? _dictonary = null;
 
         [ProtoIgnore]
-        private object _SetLock = new object();
+        public KBCILookup<string?> Dictonary
+        {
+            get
+            {
+                if (_dictonary == null)
+                {
+                    if (CompressedBytes == null)
+                    {
+                        throw new KbNullException("Document compressed bytes cannot be null.");
+                    }
+                    var serializedData = Compression.Decompress(CompressedBytes);
+                    AproximateSizeInBytes = serializedData.Length;
+                    using (var input = new MemoryStream(serializedData))
+                    {
+                        _dictonary = Serializer.Deserialize<KBCILookup<string?>>(input);
+                        if (_dictonary == null)
+                        {
+                            throw new KbNullException("Document dictonary cannot be null.");
+                        }
+                        //TODO: Maybe theres a more optimistic way to do this. Other than RAM, there is no need to NULL out the other property
+                        //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
+                        _compressedBytes = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
+                    }
+                }
+                return _dictonary;
+            }
+        }
+
+        public byte[]? _compressedBytes = null;
 
         [ProtoMember(1)]
-        public byte[]? _ContentBytes { get; set; } = null;
-
-        public byte[] ContentBytes
+        public byte[]? CompressedBytes
         {
             get
             {
-                lock (_SetLock)
+                if (_compressedBytes == null)
                 {
-                    if (_ContentBytes == null)
+                    using (var output = new MemoryStream())
                     {
-                        if (_Content == null)
-                        {
-                            throw new KbNullException("Document content string can not be NULL.");
-                        }
-                        _ContentBytes = Compression.Compress(_Content);
-                        _Content = null; //For memory purposes, we store EITHER the BYTES or the STRING - not both.
+                        Serializer.Serialize(output, _dictonary);
+                        AproximateSizeInBytes = (int)output.Length;
+                        _compressedBytes = Compression.Compress(output.ToArray());
+                        //TODO: Maybe theres a more optimistic way to do this. Other than RAM, there is no need to NULL out the other property
+                        //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
+                        _dictonary = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
                     }
-                    return _ContentBytes;
                 }
+
+                return _compressedBytes;
             }
             set
             {
-                lock (_SetLock)
-                {
-                    ContentLength = value.Length;
-                    _ContentBytes = value;
-                    _Content = null; //For memory purposes, we store EITHER the BYTES or the STRING - not both.
-                }
-            }
-        }
-
-        [ProtoIgnore]
-        private string? _Content = null;
-
-        [ProtoIgnore]
-        public string Content
-        {
-            get
-            {
-                lock (_SetLock)
-                {
-                    if (_Content == null) //Do we need to "materialize" the document string?
-                    {
-                        if (ContentBytes == null)
-                        {
-                            throw new KbNullException("Document content bytes can not be NULL.");
-                        }
-                        _Content = Compression.DecompressString(ContentBytes);
-                        _ContentBytes = null; //For memory purposes, we store EITHER the BYTES or the STRING - not both.
-                    }
-                    return _Content;
-                }
-            }
-            set
-            {
-                lock (_SetLock)
-                {
-                    ContentLength = value.Length;
-                    _ContentBytes = null; //For memory purposes, we store EITHER the BYTES or the STRING - not both.
-                }
+                _compressedBytes = value;
+                //TODO: Maybe theres a more optimistic way to do this. Other than RAM, there is no need to NULL out the other property
+                //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
+                _dictonary = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
             }
         }
 
@@ -99,13 +83,32 @@ namespace Katzebase.Engine.Documents
         public DateTime Modfied { get; set; }
 
         [ProtoMember(4)]
-        public int ContentLength { get; set; }
+        public int AproximateSizeInBytes { get; set; }
+
+        public PhysicalDocument()
+        {
+        }
+
+        public PhysicalDocument(KBCILookup<string?>? dictonary,  byte[]? compressedBytes)
+        {
+            _dictonary = dictonary;
+            _compressedBytes = compressedBytes;
+        }
+
+        public PhysicalDocument(string jsonString)
+        {
+            SetDictonaryByJson(jsonString);
+        }
+
+        public void SetDictonaryByJson(string jsonString)
+        {
+            _dictonary = JsonConvert.DeserializeObject<KBCILookup<string?>>(jsonString);
+        }
 
         public PhysicalDocument Clone()
         {
-            return new PhysicalDocument
+            return new PhysicalDocument(_dictonary, _compressedBytes)
             {
-                Content = Content,
                 Created = Created,
                 Modfied = Modfied
             };
