@@ -27,7 +27,7 @@ namespace Katzebase.Engine.IO
 
                 if (core.Settings.UseCompression && useCompression)
                 {
-                    result = JsonConvert.DeserializeObject<T>(Compression.DecompressString(File.ReadAllBytes(filePath)));
+                    result = JsonConvert.DeserializeObject<T>(Compression.DecompressToString(File.ReadAllBytes(filePath)));
                 }
                 else
                 {
@@ -143,7 +143,7 @@ namespace Katzebase.Engine.IO
                         var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
                         if (core.Settings.UseCompression && useCompression)
                         {
-                            text = Compression.DecompressString(File.ReadAllBytes(filePath));
+                            text = Compression.DecompressToString(File.ReadAllBytes(filePath));
                         }
                         else
                         {
