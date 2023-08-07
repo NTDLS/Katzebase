@@ -1,12 +1,7 @@
-﻿using Katzebase.Engine.Documents;
-using Katzebase.PublicLibrary;
-using Katzebase.PublicLibrary.Client;
+﻿using Katzebase.PublicLibrary.Client;
 using Katzebase.PublicLibrary.Payloads;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System.Diagnostics;
 using System.Reflection;
-using System.Text;
 
 namespace Katzebase.TestHarness
 {
@@ -16,9 +11,9 @@ namespace Katzebase.TestHarness
         {
             var databasesNames = new string[]{
                     "StackOverflow",
-                    "WordList",
-                    "AdventureWorks",
-                    "TopNotchERP"
+                    //"WordList",
+                    //"AdventureWorks",
+                    //"TopNotchERP"
                 };
 
             foreach (var databasesName in databasesNames)
@@ -122,85 +117,6 @@ namespace Katzebase.TestHarness
             }
         }
 
-        static void Perf0()
-        {
-            var startTime1 = DateTime.Now;
-            for (int i = 0; i < 10; i++)
-            {
-                perf1();
-            }
-            var duration1 = (DateTime.Now - startTime1).TotalMilliseconds;
-            Console.WriteLine($"ONE: {duration1}ms");
-
-            var startTime2 = DateTime.Now;
-            for (int i = 0; i < 10; i++)
-            {
-                perf2();
-            }
-            var duration2 = (DateTime.Now - startTime2).TotalMilliseconds;
-            Console.WriteLine($"TWO: {duration2}ms");
-        }
-
-        static int perf1()
-        {
-            var text = File.ReadAllText(@"D:\InventoryPage.json");
-
-            var physicalDocumentPage = JsonConvert.DeserializeObject<PhysicalDocumentPage>(text);
-            KbUtility.EnsureNotNull(physicalDocumentPage);
-
-            for (int documentId = 1001; documentId < 2000; documentId++)
-            {
-                var documentPage = physicalDocumentPage.Documents.First(o => o.Key == documentId).Value;
-
-                var jContent = JObject.Parse(documentPage.Content);
-
-                var fields = new List<string>();
-                foreach (var jToken in jContent)
-                {
-                    fields.Add(jToken.Key);
-                }
-
-                var builder = new StringBuilder();
-                foreach (var field in fields)
-                {
-                    jContent.TryGetValue(field, StringComparison.CurrentCultureIgnoreCase, out JToken? jToken);
-                    builder.Append(jToken);
-                }
-            }
-
-            return 0;
-        }
-
-        static int perf2()
-        {
-            var text = File.ReadAllText(@"D:\InventoryPage.json");
-
-            var physicalDocumentPage = JsonConvert.DeserializeObject<PhysicalDocumentPage>(text);
-            KbUtility.EnsureNotNull(physicalDocumentPage);
-
-            for (int documentId = 1001; documentId < 2000; documentId++)
-            {
-                var documentPage = physicalDocumentPage.Documents.First(o => o.Key == documentId).Value;
-                var jContent = JsonConvert.DeserializeObject<Dictionary<string, string>>(documentPage.Content);
-                KbUtility.EnsureNotNull(jContent);
-
-                var fields = new List<string>();
-                foreach (var jToken in jContent)
-                {
-                    fields.Add(jToken.Key);
-                }
-
-                var builder = new StringBuilder();
-                foreach (var field in fields)
-                {
-                    jContent.TryGetValue(field, out string? jToken);
-                    builder.Append(jToken);
-                }
-            }
-
-            return 0;
-        }
-
         static void TestAllAPIs()
         {
             using var client = new KbClient("http://localhost:6858/");
@@ -211,7 +127,6 @@ namespace Katzebase.TestHarness
             client.Schema.Create("TestAllAPIs:SubSchema");
             client.Schema.Exists("TestAllAPIs:SubSchema");
             client.Schema.Create("TestAllAPIs:SubSchema:Product");
-
 
             client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '10000', Name = 'API Test Product')");
             client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '20000', Name = 'API Test Product')");

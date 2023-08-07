@@ -49,8 +49,7 @@ namespace Katzebase.Engine.IO
             {
                 if (core.Settings.UseCompression)
                 {
-                    var serializedData = Compression.Decompress(File.ReadAllBytes(filePath));
-                    return serializedData.ToArray().Length;
+                    return Compression.Decompress(File.ReadAllBytes(filePath)).Length;
                 }
                 else
                 {
@@ -70,18 +69,13 @@ namespace Katzebase.Engine.IO
             {
                 if (core.Settings.UseCompression)
                 {
-                    var serializedData = Compression.Decompress(File.ReadAllBytes(filePath));
-                    using (var input = new MemoryStream(serializedData))
-                    {
-                        return ProtoBuf.Serializer.Deserialize<T>(input);
-                    }
+                    using var input = new MemoryStream(Compression.Decompress(File.ReadAllBytes(filePath)));
+                    return ProtoBuf.Serializer.Deserialize<T>(input);
                 }
                 else
                 {
-                    using (var file = File.OpenRead(filePath))
-                    {
-                        return ProtoBuf.Serializer.Deserialize<T>(file);
-                    }
+                    using var file = File.OpenRead(filePath);
+                    return ProtoBuf.Serializer.Deserialize<T>(file);
                 }
             }
             catch (Exception ex)
@@ -169,18 +163,14 @@ namespace Katzebase.Engine.IO
                         {
                             var serializedData = Compression.Decompress(File.ReadAllBytes(filePath));
                             aproximateSizeInBytes = serializedData.Length;
-                            using (var input = new MemoryStream(serializedData))
-                            {
-                                deserializedObject = ProtoBuf.Serializer.Deserialize<T>(input);
-                            }
+                            using var input = new MemoryStream(serializedData);
+                            deserializedObject = ProtoBuf.Serializer.Deserialize<T>(input);
                         }
                         else
                         {
-                            using (var file = File.OpenRead(filePath))
-                            {
-                                aproximateSizeInBytes = (int)file.Length;
-                                deserializedObject = ProtoBuf.Serializer.Deserialize<T>(file);
-                            }
+                            using var file = File.OpenRead(filePath);
+                            aproximateSizeInBytes = (int)file.Length;
+                            deserializedObject = ProtoBuf.Serializer.Deserialize<T>(file);
                         }
                         ptIORead?.StopAndAccumulate();
                     }

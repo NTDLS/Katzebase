@@ -7,6 +7,11 @@ namespace Katzebase.TestHarness
 {
     public static partial class Exporter
     {
+        private static List<double> PerfStasMetricsForAvg = new();
+        private static int PerfStasRowsExported = 0;
+        private static DateTime LastPerfStatDateTime = DateTime.MinValue;
+        private static object PerfStasLockObj = new object();
+
         public static void ExportSQLServerDatabaseToKatzebase(string sqlServer, string sqlServerDatabase, string katzeBaseServerAdddress, bool omitSQLSchemaName)
         {
             using (SqlConnection connection = new SqlConnection($"Server={sqlServer};Database={sqlServerDatabase};Trusted_Connection=True;"))
@@ -84,14 +89,31 @@ namespace Katzebase.TestHarness
                                     }
                                 }
 
-                                if (rowCount > 0 && (rowCount % 100) == 0)
+                                if ((DateTime.Now - LastPerfStatDateTime).TotalMilliseconds > 1000)
                                 {
-                                    Console.WriteLine($"{kbSchema}: {rowCount}");
+                                    lock (PerfStasLockObj)
+                                    {
+                                        double totalMilliseconds = (DateTime.Now - LastPerfStatDateTime).TotalMilliseconds;
+                                        if (totalMilliseconds > 1000) //Make sure we got the lock.
+                                        {
+                                            double rps = PerfStasRowsExported / (totalMilliseconds / 1000);
+                                            PerfStasMetricsForAvg.Add(rps);
+                                            Console.Write($" Current RPS: {rps:n2}/s, Avg RPS: {PerfStasMetricsForAvg.Average(o=>o):n2}, Total Rows: {rowCount:n0}   \r");
+
+                                            while (PerfStasMetricsForAvg.Count > 25)
+                                            {
+                                                PerfStasMetricsForAvg.Remove(PerfStasMetricsForAvg.First());
+                                            }
+
+                                            LastPerfStatDateTime = DateTime.Now;
+                                            PerfStasRowsExported = 0;
+                                        }
+                                    }
                                 }
 
                                 if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
                                 {
-                                    Console.WriteLine("Comitting...");
+                                    //Console.WriteLine("Comitting...");
                                     client.Transaction.Commit();
                                     client.Transaction.Begin();
                                 }
@@ -105,6 +127,7 @@ namespace Katzebase.TestHarness
                                     Console.WriteLine(ex.Message);
                                 }
 
+                                PerfStasRowsExported++;
                                 rowCount++;
                             }
                         }

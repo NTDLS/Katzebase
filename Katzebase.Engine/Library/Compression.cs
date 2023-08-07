@@ -3,6 +3,7 @@ using System.Text;
 
 namespace Katzebase.Engine.Library
 {
+
     public static class Compression
     {
         public static byte[] Compress(byte[] bytes) => LZ4Pickler.Pickle(bytes, LZ4Level.L00_FAST);
