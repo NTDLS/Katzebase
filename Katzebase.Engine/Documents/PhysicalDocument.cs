@@ -27,8 +27,9 @@ namespace Katzebase.Engine.Documents
                     {
                         throw new KbNullException("Document compressed bytes cannot be null.");
                     }
+
                     var serializedData = Compression.Decompress(CompressedBytes);
-                    AproximateSizeInBytes = serializedData.Length;
+                    ContentLength = serializedData.Length;
                     using (var input = new MemoryStream(serializedData))
                     {
                         _dictonary = Serializer.Deserialize<KBCILookup<string?>>(input);
@@ -57,7 +58,7 @@ namespace Katzebase.Engine.Documents
                     using (var output = new MemoryStream())
                     {
                         Serializer.Serialize(output, _dictonary);
-                        AproximateSizeInBytes = (int)output.Length;
+                        ContentLength = (int)output.Length;
                         _compressedBytes = Compression.Compress(output.ToArray());
                         //TODO: Maybe theres a more optimistic way to do this. Other than RAM, there is no need to NULL out the other property
                         //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
@@ -83,13 +84,13 @@ namespace Katzebase.Engine.Documents
         public DateTime Modfied { get; set; }
 
         [ProtoMember(4)]
-        public int AproximateSizeInBytes { get; set; }
+        public int ContentLength { get; set; }
 
         public PhysicalDocument()
         {
         }
 
-        public PhysicalDocument(KBCILookup<string?>? dictonary,  byte[]? compressedBytes)
+        public PhysicalDocument(KBCILookup<string?>? dictonary, byte[]? compressedBytes)
         {
             _dictonary = dictonary;
             _compressedBytes = compressedBytes;
