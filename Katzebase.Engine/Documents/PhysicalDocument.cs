@@ -39,8 +39,12 @@ namespace Katzebase.Engine.Documents
                 {
                     if (_ContentBytes == null)
                     {
-                        KbUtility.EnsureNotNull(_Content);
+                        if (_Content == null)
+                        {
+                            throw new KbNullException("Document content string can not be NULL.");
+                        }
                         _ContentBytes = Compression.Compress(_Content);
+                        _Content = null; //For memory purposes, we store EITHER the BYTES or the STRING - not both.
                     }
                     return _ContentBytes;
                 }
@@ -66,9 +70,12 @@ namespace Katzebase.Engine.Documents
             {
                 lock (_SetLock)
                 {
-                    if (_Content == null)
+                    if (_Content == null) //Do we need to "materialize" the document string?
                     {
-                        KbUtility.EnsureNotNull(ContentBytes);
+                        if (ContentBytes == null)
+                        {
+                            throw new KbNullException("Document content bytes can not be NULL.");
+                        }
                         _Content = Compression.DecompressString(ContentBytes);
                         _ContentBytes = null; //For memory purposes, we store EITHER the BYTES or the STRING - not both.
                     }
@@ -80,7 +87,7 @@ namespace Katzebase.Engine.Documents
                 lock (_SetLock)
                 {
                     ContentLength = value.Length;
-                    ContentBytes = Compression.Compress(value);
+                    _ContentBytes = null; //For memory purposes, we store EITHER the BYTES or the STRING - not both.
                 }
             }
         }

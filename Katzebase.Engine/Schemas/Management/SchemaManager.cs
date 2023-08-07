@@ -503,9 +503,14 @@ namespace Katzebase.Engine.Schemas.Management
 
                     values.Add($"{page.PageNumber}");
                     values.Add($"{physicalDocumentPage.Documents.Count}");
+
                     values.Add($"{(physicalDocumentPage.Documents.Min(o => o.Value.Content.Length * sizeof(char)) / 1024.0):n2}");
                     values.Add($"{(physicalDocumentPage.Documents.Max(o => o.Value.Content.Length * sizeof(char)) / 1024.0):n2}");
                     values.Add($"{(physicalDocumentPage.Documents.Average(o => o.Value.Content.Length * sizeof(char)) / 1024.0):n2}");
+
+                    //values.Add($"{(physicalDocumentPage.Documents.Min(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
+                    //values.Add($"{(physicalDocumentPage.Documents.Max(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
+                    //values.Add($"{(physicalDocumentPage.Documents.Average(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
                 }
 
                 result.AddRow(values);
