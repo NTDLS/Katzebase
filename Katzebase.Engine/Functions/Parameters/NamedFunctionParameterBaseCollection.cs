@@ -1,8 +1,9 @@
 ﻿using Katzebase.Engine.Query;
+using Katzebase.PublicLibrary.Types;
 
 namespace Katzebase.Engine.Functions.Parameters
 {
-    internal class NamedFunctionParameterBaseCollection : Dictionary<string, FunctionParameterBase>
+    internal class NamedFunctionParameterBaseCollection : KbInsensitiveDictionary<FunctionParameterBase>
     {
         public new void Add(string key, FunctionParameterBase param)
         {
@@ -10,12 +11,12 @@ namespace Katzebase.Engine.Functions.Parameters
             base.Add(key, param);
         }
 
-        public void RefillStringLiterals(Dictionary<string, string> literals)
+        public void RefillStringLiterals(KbInsensitiveDictionary<string> literals)
         {
             RefillStringLiterals(this, literals);
         }
 
-        private void RefillStringLiterals(Dictionary<string, FunctionParameterBase> list, Dictionary<string, string> literals)
+        private void RefillStringLiterals(KbInsensitiveDictionary<FunctionParameterBase> list, KbInsensitiveDictionary<string> literals)
         {
             foreach (var param in list)
             {
@@ -54,7 +55,7 @@ namespace Katzebase.Engine.Functions.Parameters
             }
         }
 
-        private void RefillStringLiterals(List<FunctionParameterBase> list, Dictionary<string, string> literals)
+        private void RefillStringLiterals(List<FunctionParameterBase> list, KbInsensitiveDictionary<string> literals)
         {
             foreach (var param in list)
             {

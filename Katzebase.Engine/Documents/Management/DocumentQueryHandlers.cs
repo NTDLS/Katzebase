@@ -5,6 +5,7 @@ using Katzebase.Engine.Query.Searchers;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using Katzebase.PublicLibrary.Types;
 using Newtonsoft.Json;
 using static Katzebase.Engine.Library.EngineConstants;
 
@@ -74,7 +75,7 @@ namespace Katzebase.Engine.Documents.Management
 
                 foreach (var row in result.Rows)
                 {
-                    var document = new Dictionary<string, string>();
+                    var document = new KbInsensitiveDictionary<string>();
 
                     for (int i = 0; i < result.Fields.Count; i++)
                     {
@@ -109,7 +110,7 @@ namespace Katzebase.Engine.Documents.Management
 
                 foreach (var upsertValues in preparedQuery.UpsertValues)
                 {
-                    var keyValuePairs = new Dictionary<string, string?>();
+                    var keyValuePairs = new KbInsensitiveDictionary<string?>();
 
                     foreach (var updateValue in upsertValues)
                     {
@@ -118,7 +119,7 @@ namespace Katzebase.Engine.Documents.Management
                         //Execute functions
                         if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
                         {
-                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, new Dictionary<string, string?>());
+                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, new KbInsensitiveDictionary<string?>());
                         }
                         else if (updateValue.Value is FunctionConstantParameter)
                         {
@@ -184,7 +185,7 @@ namespace Katzebase.Engine.Documents.Management
                         //Execute functions
                         if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
                         {
-                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, physicalDocument.Dictonary);
+                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, physicalDocument.Dictionary);
                         }
                         else if (updateValue.Value is FunctionConstantParameter)
                         {
@@ -195,13 +196,13 @@ namespace Katzebase.Engine.Documents.Management
                             throw new KbNotImplementedException($"The function type {updateValue.Value.GetType().Name} is not implemented.");
                         }
 
-                        if (physicalDocument.Dictonary.ContainsKey(updateValue.Key))
+                        if (physicalDocument.Dictionary.ContainsKey(updateValue.Key))
                         {
-                            physicalDocument.Dictonary[updateValue.Key] = fieldValue;
+                            physicalDocument.Dictionary[updateValue.Key] = fieldValue;
                         }
                         else
                         {
-                            physicalDocument.Dictonary.Add(updateValue.Key, fieldValue);
+                            physicalDocument.Dictionary.Add(updateValue.Key, fieldValue);
                         }
                     }
 

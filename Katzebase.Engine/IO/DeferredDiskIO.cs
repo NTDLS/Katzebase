@@ -1,4 +1,5 @@
-﻿using static Katzebase.Engine.Library.EngineConstants;
+﻿using Katzebase.PublicLibrary.Types;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.IO
 {
@@ -21,7 +22,7 @@ namespace Katzebase.Engine.IO
         }
 
         private readonly Core core;
-        private readonly Dictionary<string, DeferredDiskIOObject> Collection = new();
+        private readonly KbInsensitiveDictionary<DeferredDiskIOObject> Collection = new();
         public bool ContainsKey(string key) => Collection.ContainsKey(key);
 
         public DeferredDiskIO(Core core)

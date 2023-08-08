@@ -33,7 +33,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                     if (i == 0)
                     {
-                        foreach (var documentValue in physicalDocument.Dictonary)
+                        foreach (var documentValue in physicalDocument.Dictionary)
                         {
                             result.Fields.Add(new KbQueryField(documentValue.Key));
                         }
@@ -44,7 +44,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                     foreach (var field in result.Fields.Skip(1))
                     {
-                        physicalDocument.Dictonary.TryGetValue(field.Name, out string? jToken);
+                        physicalDocument.Dictionary.TryGetValue(field.Name, out string? jToken);
                         resultRow.AddValue(jToken?.ToString() ?? string.Empty);
                     }
 
@@ -73,7 +73,7 @@ namespace Katzebase.Engine.Query.Searchers
 
                 if (i == 0)
                 {
-                    foreach (var jToken in persistDocument.Dictonary)
+                    foreach (var jToken in persistDocument.Dictionary)
                     {
                         result.Fields.Add(new KbQueryField(jToken.Key));
                     }
@@ -82,7 +82,7 @@ namespace Katzebase.Engine.Query.Searchers
                 var resultRow = new KbQueryRow();
                 foreach (var field in result.Fields)
                 {
-                    persistDocument.Dictonary.TryGetValue(field.Name, out string? jToken);
+                    persistDocument.Dictionary.TryGetValue(field.Name, out string? jToken);
                     resultRow.AddValue(jToken?.ToString() ?? string.Empty);
                 }
 

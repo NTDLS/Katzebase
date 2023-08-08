@@ -1,4 +1,5 @@
 ﻿using Katzebase.Engine.Query;
+using Katzebase.PublicLibrary.Types;
 
 namespace Katzebase.Engine.Functions.Parameters
 {
@@ -10,12 +11,12 @@ namespace Katzebase.Engine.Functions.Parameters
             base.Add(param);
         }
 
-        public void RefillStringLiterals(Dictionary<string, string> literals)
+        public void RefillStringLiterals(KbInsensitiveDictionary<string> literals)
         {
             RefillStringLiterals(this, literals);
         }
 
-        private void RefillStringLiterals(List<FunctionParameterBase> list, Dictionary<string, string> literals)
+        private void RefillStringLiterals(List<FunctionParameterBase> list, KbInsensitiveDictionary<string> literals)
         {
             foreach (var param in list)
             {

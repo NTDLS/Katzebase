@@ -1,4 +1,5 @@
-﻿using ProtoBuf;
+﻿using Katzebase.PublicLibrary.Types;
+using ProtoBuf;
 
 namespace Katzebase.Engine.Indexes
 {
@@ -6,7 +7,7 @@ namespace Katzebase.Engine.Indexes
     internal class PhysicalIndexLeaf
     {
         [ProtoMember(1)]
-        public Dictionary<string, PhysicalIndexLeaf> Children { get; set; } = new();
+        public KbInsensitiveDictionary<PhysicalIndexLeaf> Children { get; set; } = new();
 
         [ProtoMember(2)]
         public List<PhysicalIndexEntry>? Documents { get; set; } = null;

@@ -1,11 +1,12 @@
 ﻿using Katzebase.PublicLibrary.Payloads;
+using Katzebase.PublicLibrary.Types;
 using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Trace
 {
     internal class PerformanceTrace
     {
-        internal Dictionary<string, KbMetric> Metrics { get; private set; } = new();
+        internal KbInsensitiveDictionary<KbMetric> Metrics { get; private set; } = new();
 
         internal enum PerformanceTraceCumulativeMetricType
         {

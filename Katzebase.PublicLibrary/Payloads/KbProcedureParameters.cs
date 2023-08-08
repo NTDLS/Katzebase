@@ -1,8 +1,10 @@
-﻿namespace Katzebase.PublicLibrary.Payloads
+﻿using Katzebase.PublicLibrary.Types;
+
+namespace Katzebase.PublicLibrary.Payloads
 {
     public class KbProcedureParameters
     {
-        public Dictionary<string, string> Collection { get; private set; } = new();
+        public KbInsensitiveDictionary<string> Collection { get; private set; } = new();
 
         public int Count => Collection.Count;
 

@@ -13,7 +13,7 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
 
     internal class DocumentPointerMatchCollection : Dictionary<uint, DocumentPointerMatch>
     {
-        //Add the first item to the dictonary when its constructed.
+        //Add the first item to the dictionary when its constructed.
         public DocumentPointerMatch Upsert(DocumentPointer documentPointer)
         {
             if (ContainsKey(documentPointer.DocumentId) == false)

@@ -1,8 +1,9 @@
-﻿using static Katzebase.PublicLibrary.KbConstants;
+﻿using Katzebase.PublicLibrary.Types;
+using static Katzebase.PublicLibrary.KbConstants;
 
 namespace Katzebase.Engine.Query.Sorting
 {
-    public class ResultValueComparer : IComparer<Dictionary<string, string?>>
+    public class ResultValueComparer : IComparer<KbInsensitiveDictionary<string?>>
     {
         private readonly List<(string fieldName, KbSortDirection direction)> sortingColumns;
 
@@ -11,7 +12,7 @@ namespace Katzebase.Engine.Query.Sorting
             this.sortingColumns = sortingColumns;
         }
 
-        public int Compare(Dictionary<string, string?>? x, Dictionary<string, string?>? y)
+        public int Compare(KbInsensitiveDictionary<string?>? x, KbInsensitiveDictionary<string?>? y)
         {
             foreach (var (fieldName, sortDirection) in sortingColumns)
             {

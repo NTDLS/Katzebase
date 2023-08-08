@@ -1,4 +1,5 @@
-﻿using static Katzebase.Engine.Library.EngineConstants;
+﻿using Katzebase.PublicLibrary.Types;
+using static Katzebase.Engine.Library.EngineConstants;
 
 namespace Katzebase.Engine.Health.Management
 {
@@ -7,7 +8,7 @@ namespace Katzebase.Engine.Health.Management
     /// </summary>
     public class HealthManager
     {
-        public Dictionary<string, HealthCounter> Counters;
+        public KbInsensitiveDictionary<HealthCounter> Counters = new();
 
         private readonly Core core;
         private DateTime lastCheckpoint = DateTime.MinValue;
@@ -27,20 +28,11 @@ namespace Katzebase.Engine.Health.Management
                 string healthCounterDiskPath = Path.Combine(core.Settings.LogDirectory, HealthStatsFile);
                 if (File.Exists(healthCounterDiskPath))
                 {
-                    var physicalCounters = core.IO.GetJsonNonTracked<List<HealthCounter>>(healthCounterDiskPath, false);
-
-                    if (physicalCounters == null || physicalCounters.Count == 0)
+                    var physicalCounters = core.IO.GetJsonNonTracked<KbInsensitiveDictionary<HealthCounter>>(healthCounterDiskPath, false);
+                    if (physicalCounters != null)
                     {
-                        Counters = new Dictionary<string, HealthCounter>();
+                        Counters = physicalCounters;
                     }
-                    else
-                    {
-                        Counters = physicalCounters.ToDictionary(o => o.Instance);
-                    }
-                }
-                else
-                {
-                    Counters = new Dictionary<string, HealthCounter>();
                 }
             }
             catch (Exception ex)
@@ -55,11 +47,11 @@ namespace Katzebase.Engine.Health.Management
             Checkpoint();
         }
 
-        public Dictionary<string, HealthCounter> CloneCounters()
+        public KbInsensitiveDictionary<HealthCounter> CloneCounters()
         {
             lock (Counters)
             {
-                return Counters.ToDictionary(o => o.Key, o => o.Value);
+                return Counters.Clone();
             }
         }
 

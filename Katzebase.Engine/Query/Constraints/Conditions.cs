@@ -2,6 +2,7 @@
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Types;
 using System.Text;
 using static Katzebase.Engine.Library.EngineConstants;
 
@@ -64,7 +65,7 @@ namespace Katzebase.Engine.Query.Constraints
             return _lastLetter;
         }
 
-        public static Conditions Create(string conditionsText, Dictionary<string, string> literalStrings, string leftHandAlias = "")
+        public static Conditions Create(string conditionsText, KbInsensitiveDictionary<string> literalStrings, string leftHandAlias = "")
         {
             var conditions = new Conditions();
             conditionsText = conditionsText.ToLowerInvariant();
@@ -75,7 +76,7 @@ namespace Katzebase.Engine.Query.Constraints
             return conditions;
         }
 
-        private void Parse(string conditionsText, Dictionary<string, string> literalStrings, string leftHandAlias)
+        private void Parse(string conditionsText, KbInsensitiveDictionary<string> literalStrings, string leftHandAlias)
         {
             //We parse by parentheses so wrap the expression in them if it is not already.
             if (conditionsText.StartsWith('(') == false || conditionsText.StartsWith(')') == false)
@@ -202,7 +203,7 @@ namespace Katzebase.Engine.Query.Constraints
             return clone;
         }
 
-        public void AddSubset(Dictionary<string, string> literalStrings, ConditionSubset subset, string leftHandAlias)
+        public void AddSubset(KbInsensitiveDictionary<string> literalStrings, ConditionSubset subset, string leftHandAlias)
         {
             var logicalConnector = LogicalConnector.None;
 

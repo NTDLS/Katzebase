@@ -10,7 +10,7 @@ using Katzebase.Engine.Query.Sorting;
 using Katzebase.Engine.Threading;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
-using Katzebase.PublicLibrary.Payloads;
+using Katzebase.PublicLibrary.Types;
 using static Katzebase.Engine.Documents.DocumentPointer;
 using static Katzebase.Engine.Library.EngineConstants;
 using static Katzebase.Engine.Trace.PerformanceTrace;
@@ -377,15 +377,15 @@ namespace Katzebase.Engine.Query.Searchers
 
             var toplevelPhysicalDocument = param.Core.Documents.AcquireDocument(param.Transaction, topLevelSchemaMap.Value.PhysicalSchema, topLevelDocumentPointer, LockOperation.Read);
 
-            var threadScopedContentCache = new KBCILookup<KBCILookup<string?>>
+            var threadScopedContentCache = new KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>
             {
-                { $"{topLevelSchemaMap.Key.ToLower()}:{topLevelDocumentPointer.Key.ToLower()}", toplevelPhysicalDocument.Dictonary }
+                { $"{topLevelSchemaMap.Key.ToLower()}:{topLevelDocumentPointer.Key.ToLower()}", toplevelPhysicalDocument.Dictionary }
             };
 
             //This cache is used to store the content of all documents required for a single row join.
-            var joinScopedContentCache = new KBCILookup<KBCILookup<string?>>
+            var joinScopedContentCache = new KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>
             {
-                { topLevelSchemaMap.Key.ToLower(), toplevelPhysicalDocument.Dictonary }
+                { topLevelSchemaMap.Key.ToLower(), toplevelPhysicalDocument.Dictionary }
             };
 
             var resultingRow = new SchemaIntersectionRow();
@@ -415,8 +415,8 @@ namespace Katzebase.Engine.Query.Searchers
 
         private static void IntersectAllSchemasRecursive(LookupThreadParam param,
             int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
-            ref KBCILookup<KBCILookup<string?>> threadScopedContentCache,
-            ref KBCILookup<KBCILookup<string?>> joinScopedContentCache)
+            ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
+            ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             var currentSchemaKVP = param.SchemaMap.Skip(skipSchemaCount).First();
             var currentSchemaMap = currentSchemaKVP.Value;
@@ -440,7 +440,7 @@ namespace Katzebase.Engine.Query.Searchers
                 {
                     KbUtility.EnsureNotNull(subset.IndexSelection);
 
-                    var keyValuePairs = new Dictionary<string, string>();
+                    var keyValuePairs = new KbInsensitiveDictionary<string>();
 
                     //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
                     foreach (var condition in subset.Conditions)
@@ -502,7 +502,7 @@ namespace Katzebase.Engine.Query.Searchers
                 if (threadScopedContentCache.TryGetValue(threadScopeddocumentCacheKey, out var documentContentNextLevel) == false)
                 {
                     var physicalDocumentNextLevel = param.Core.Documents.AcquireDocument(param.Transaction, currentSchemaMap.PhysicalSchema, documentPointer, LockOperation.Read);
-                    documentContentNextLevel = physicalDocumentNextLevel.Dictonary;
+                    documentContentNextLevel = physicalDocumentNextLevel.Dictionary;
                     threadScopedContentCache.Add(threadScopeddocumentCacheKey, documentContentNextLevel);
                 }
 
@@ -553,7 +553,7 @@ namespace Katzebase.Engine.Query.Searchers
         /// <param name="conditions"></param>
         /// <param name="jContent"></param>
         private static void SetSchemaIntersectionExpressionParameters(Transaction transaction,
-            ref NCalc.Expression expression, Conditions conditions, KBCILookup<KBCILookup<string?>> joinScopedContentCache)
+            ref NCalc.Expression expression, Conditions conditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditions.Root.SubsetKeys)
@@ -565,7 +565,7 @@ namespace Katzebase.Engine.Query.Searchers
 
         private static void SetSchemaIntersectionExpressionParametersRecursive(Transaction transaction,
             ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset,
-            KBCILookup<KBCILookup<string?>> joinScopedContentCache)
+            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
@@ -600,7 +600,7 @@ namespace Katzebase.Engine.Query.Searchers
         }
 
         private static void FillInSchemaResultDocumentValues(LookupThreadParam param, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, Dictionary<string, KBCILookup<string?>> threadScopedContentCache)
+            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
             if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
@@ -620,7 +620,7 @@ namespace Katzebase.Engine.Query.Searchers
         /// </summary>
         /// 
         private static void FillInSchemaResultDocumentValuesAtomic(LookupThreadParam param, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, Dictionary<string, KBCILookup<string?>> threadScopedContentCache)
+            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
             var documentContent = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
 
@@ -758,7 +758,7 @@ namespace Katzebase.Engine.Query.Searchers
         /// Sets the parameters for the WHERE clasue expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction,
-            ref NCalc.Expression expression, Conditions conditions, Dictionary<string, string?> conditionField)
+            ref NCalc.Expression expression, Conditions conditions, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditions.Root.SubsetKeys)
@@ -772,7 +772,7 @@ namespace Katzebase.Engine.Query.Searchers
         /// Sets the parameters for the WHERE clasue expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction, ref NCalc.Expression expression,
-            Conditions conditions, ConditionSubset conditionSubset, Dictionary<string, string?> conditionField)
+            Conditions conditions, ConditionSubset conditionSubset, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have subsets, then we need to satisify those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)

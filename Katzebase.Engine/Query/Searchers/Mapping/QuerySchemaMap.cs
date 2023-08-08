@@ -2,14 +2,15 @@
 using Katzebase.Engine.Documents;
 using Katzebase.Engine.Query.Constraints;
 using Katzebase.Engine.Schemas;
+using Katzebase.PublicLibrary.Types;
 
 namespace Katzebase.Engine.Query.Searchers.Mapping
 {
     /// <summary>
     /// This class maps the schema and documents to a query supplied schema alias.
-    /// The key to the dictonary is the schema alias (typically referenced by Condition.Prefix).
+    /// The key to the dictionary is the schema alias (typically referenced by Condition.Prefix).
     /// </summary>
-    internal class QuerySchemaMap : Dictionary<string, QuerySchemaMapItem>
+    internal class QuerySchemaMap : KbInsensitiveDictionary<QuerySchemaMapItem>
     {
         private readonly Core core;
         public Transaction Transaction { get; private set; }

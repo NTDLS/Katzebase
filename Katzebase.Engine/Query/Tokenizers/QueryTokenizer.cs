@@ -1,5 +1,6 @@
 ﻿using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Types;
 using System.Text.RegularExpressions;
 
 namespace Katzebase.Engine.Query.Tokenizers
@@ -16,7 +17,7 @@ namespace Katzebase.Engine.Query.Tokenizers
         public int Position => _position;
         public int Length => _text.Length;
         public int StartPosition => _startPosition;
-        public Dictionary<string, string> LiteralStrings { get; private set; }
+        public KbInsensitiveDictionary<string> LiteralStrings { get; private set; }
         public List<string> Breadcrumbs { get; private set; } = new();
         public char? NextCharacter => _position < _text.Length ? _text[_position] : null;
         public bool IsEnd() => _position >= _text.Length;
@@ -249,7 +250,7 @@ namespace Katzebase.Engine.Query.Tokenizers
         /// <param name="query"></param>
         /// <param name="swapLiteralsBackIn"></param>
         /// <returns></returns>
-        public static Dictionary<string, string> CleanQueryText(ref string query, bool swapLiteralsBackIn = false)
+        public static KbInsensitiveDictionary<string> CleanQueryText(ref string query, bool swapLiteralsBackIn = false)
         {
             query = KbUtility.RemoveComments(query);
 
@@ -276,9 +277,9 @@ namespace Katzebase.Engine.Query.Tokenizers
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public static Dictionary<string, string> SwapOutLiteralStrings(ref string query)
+        public static KbInsensitiveDictionary<string> SwapOutLiteralStrings(ref string query)
         {
-            var mappings = new Dictionary<string, string>();
+            var mappings = new KbInsensitiveDictionary<string>();
 
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
             var results = regex.Matches(query);
@@ -305,7 +306,7 @@ namespace Katzebase.Engine.Query.Tokenizers
             query = query.Replace("\r\n", " ");
         }
 
-        public static void SwapInLiteralStrings(ref string query, Dictionary<string, string> mappings)
+        public static void SwapInLiteralStrings(ref string query, KbInsensitiveDictionary<string> mappings)
         {
             foreach (var mapping in mappings)
             {

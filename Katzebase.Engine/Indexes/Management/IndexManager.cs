@@ -7,6 +7,7 @@ using Katzebase.Engine.Threading;
 using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
+using Katzebase.PublicLibrary.Types;
 using System.Text;
 using static Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static Katzebase.Engine.Library.EngineConstants;
@@ -215,7 +216,7 @@ namespace Katzebase.Engine.Indexes.Management
         }
 
         internal Dictionary<uint, DocumentPointer> MatchConditionValuesDocuments(Transaction transaction, PhysicalSchema physicalSchema,
-            IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
+            IndexSelection indexSelection, ConditionSubset conditionSubset, KbInsensitiveDictionary<string> conditionValues)
         {
             var firstCondition = conditionSubset.Conditions.First();
 
@@ -267,10 +268,10 @@ namespace Katzebase.Engine.Indexes.Management
             public PhysicalSchema PhysicalSchema { get; set; }
             public IndexSelection IndexSelection { get; set; }
             public ConditionSubset ConditionSubset { get; set; }
-            public Dictionary<string, string> ConditionValues { get; set; }
+            public KbInsensitiveDictionary<string> ConditionValues { get; set; }
             public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
 
-            public MatchConditionValuesDocumentsThreadParam(Transaction transaction, PhysicalIndex physicalIindex, PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
+            public MatchConditionValuesDocumentsThreadParam(Transaction transaction, PhysicalIndex physicalIindex, PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubset conditionSubset, KbInsensitiveDictionary<string> conditionValues)
             {
                 Transaction = transaction;
                 PhysicalIindex = physicalIindex;
@@ -323,7 +324,7 @@ namespace Katzebase.Engine.Indexes.Management
         }
 
         private Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
-            IndexSelection indexSelection, ConditionSubset conditionSubset, Dictionary<string, string> conditionValues)
+            IndexSelection indexSelection, ConditionSubset conditionSubset, KbInsensitiveDictionary<string> conditionValues)
         {
             try
             {
@@ -770,7 +771,7 @@ namespace Katzebase.Engine.Indexes.Management
                 foreach (var indexAttribute in physicalIindex.Attributes)
                 {
                     KbUtility.EnsureNotNull(indexAttribute.Field);
-                    if (document.Dictonary.TryGetValue(indexAttribute.Field, out string? documentValue))
+                    if (document.Dictionary.TryGetValue(indexAttribute.Field, out string? documentValue))
                     {
                         if (documentValue != null) //TODO: How do we handle indexed NULL values?
                         {
@@ -959,7 +960,7 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var documentField = physicalIindex.Attributes[0].Field;
                 KbUtility.EnsureNotNull(documentField);
-                document.Dictonary.TryGetValue(documentField, out string? value);
+                document.Dictionary.TryGetValue(documentField, out string? value);
 
                 uint indexPartition = physicalIindex.ComputePartition(value);
 
@@ -1087,7 +1088,7 @@ namespace Katzebase.Engine.Indexes.Management
                     {
                         var documentField = param.PhysicalIindex.Attributes[0].Field;
                         KbUtility.EnsureNotNull(documentField);
-                        physicalDocument.Dictonary.TryGetValue(documentField, out string? value);
+                        physicalDocument.Dictionary.TryGetValue(documentField, out string? value);
 
                         uint indexPartition = param.PhysicalIindex.ComputePartition(value);
 

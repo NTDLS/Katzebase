@@ -1,5 +1,6 @@
 ﻿using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Types;
 
 namespace Katzebase.Engine.Query
 {
@@ -17,9 +18,9 @@ namespace Katzebase.Engine.Query
         }
     }
 
-    internal class ExpectedWithOptions : Dictionary<string, Type>
+    internal class ExpectedWithOptions : KbInsensitiveDictionary<Type>
     {
-        public ExpectedWithOptions() : base(StringComparer.OrdinalIgnoreCase)
+        public ExpectedWithOptions()
         {
         }
 

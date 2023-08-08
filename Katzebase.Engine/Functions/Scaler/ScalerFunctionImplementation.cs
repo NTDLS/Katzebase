@@ -2,6 +2,7 @@
 using Katzebase.Engine.Functions.Parameters;
 using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Types;
 using System.Globalization;
 using System.Text;
 
@@ -37,7 +38,7 @@ namespace Katzebase.Engine.Functions.Scaler
                 "IIF:boolean/condition,string/whenTrue,string/whenFalse",
             };
 
-        internal static string? CollapseAllFunctionParameters(FunctionParameterBase param, Dictionary<string, string?> rowFields)
+        internal static string? CollapseAllFunctionParameters(FunctionParameterBase param, KbInsensitiveDictionary<string?> rowFields)
         {
             if (param is FunctionConstantParameter)
             {
@@ -118,7 +119,7 @@ namespace Katzebase.Engine.Functions.Scaler
         }
 
 
-        private static string? ExecuteFunction(string functionName, List<string?> parameters, Dictionary<string, string?> rowFields)
+        private static string? ExecuteFunction(string functionName, List<string?> parameters, KbInsensitiveDictionary<string?> rowFields)
         {
             var proc = ScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 

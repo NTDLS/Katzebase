@@ -4,7 +4,7 @@ namespace Katzebase.Engine.Documents
 {
     /// <summary>
     /// This is the actual file that gets saved for each document page. It contains the
-    ///     page number and a dictonary of the document IDs along with the actual document data.
+    ///     page number and a dictionary of the document IDs along with the actual document data.
     /// </summary>
     [ProtoContract]
     [Serializable]

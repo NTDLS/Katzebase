@@ -1,11 +1,12 @@
 ﻿using Katzebase.Engine.Documents;
 using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Types;
 
 namespace Katzebase.Engine.Query.Searchers.Intersection
 {
     internal class SchemaIntersectionRow
     {
-        public Dictionary<string, DocumentPointer> SchemaDocumentPointers = new();
+        public KbInsensitiveDictionary<DocumentPointer> SchemaDocumentPointers = new();
 
         public List<string?> Values { get; set; } = new();
 
@@ -18,7 +19,7 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
         /// <summary>
         /// Auxiliary fields are values that may be used for method calls, sorting, grouping, etc. where the fields value may not necessarily be returned directly in the results.
         /// </summary>
-        public Dictionary<string, string?> AuxiliaryFields { get; set; } = new();
+        public KbInsensitiveDictionary<string?> AuxiliaryFields { get; set; } = new();
 
         public void InsertValue(string fieldNameForException, int ordinal, string? value)
         {
@@ -52,8 +53,11 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
 
             newRow.Values.AddRange(Values);
 
-            newRow.AuxiliaryFields = AuxiliaryFields.ToDictionary(entry => entry.Key, entry => entry.Value);
-            newRow.SchemaDocumentPointers = SchemaDocumentPointers.ToDictionary(entry => entry.Key, entry => entry.Value);
+            newRow.AuxiliaryFields = AuxiliaryFields;
+            newRow.SchemaDocumentPointers = SchemaDocumentPointers;
+
+            //newRow.AuxiliaryFields = AuxiliaryFields.Clone();
+            //newRow.SchemaDocumentPointers = SchemaDocumentPointers.Clone();
 
             return newRow;
         }

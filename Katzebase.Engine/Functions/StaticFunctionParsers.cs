@@ -2,6 +2,7 @@
 using Katzebase.Engine.Query;
 using Katzebase.Engine.Query.Tokenizers;
 using Katzebase.PublicLibrary.Exceptions;
+using Katzebase.PublicLibrary.Types;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -159,9 +160,9 @@ namespace Katzebase.Engine.Functions
             return result;
         }
 
-        private static Dictionary<string, PreparseField> PreParseInsertFields(QueryTokenizer query)
+        private static KbInsensitiveDictionary<PreparseField> PreParseInsertFields(QueryTokenizer query)
         {
-            var preparseFields = new Dictionary<string, PreparseField>();
+            var preparseFields = new KbInsensitiveDictionary<PreparseField>();
 
             var updateFieldName = string.Empty;
             var param = new StringBuilder();
@@ -334,7 +335,7 @@ namespace Katzebase.Engine.Functions
             return false;
         }
 
-        private static FunctionExpression ParseMathExpression(string text, Dictionary<string, string> literalValues)
+        private static FunctionExpression ParseMathExpression(string text, KbInsensitiveDictionary<string> literalValues)
         {
             var expression = new FunctionExpression();
             string param = string.Empty;
@@ -448,7 +449,7 @@ namespace Katzebase.Engine.Functions
             return expression;
         }
 
-        private static FunctionParameterBase ParseFunctionCall(string text, Dictionary<string, string> literalValues, string expressionKey = "")
+        private static FunctionParameterBase ParseFunctionCall(string text, KbInsensitiveDictionary<string> literalValues, string expressionKey = "")
         {
             char firstChar = text[0];
 
@@ -595,9 +596,9 @@ namespace Katzebase.Engine.Functions
             }
         }
 
-        private static Dictionary<string, PreparseField> PreParseUpdateFields(QueryTokenizer query)
+        private static KbInsensitiveDictionary<PreparseField> PreParseUpdateFields(QueryTokenizer query)
         {
-            var preparseFields = new Dictionary<string, PreparseField>();
+            var preparseFields = new KbInsensitiveDictionary<PreparseField>();
 
             while (true)
             {
