@@ -9,12 +9,14 @@ namespace Katzebase.Engine.IO
             public string DiskPath { get; private set; }
             public object Reference { get; set; }
             public IOFormat Format { get; private set; }
+            public bool UseCompression { get; set; }
 
-            public DeferredDiskIOObject(string diskPath, object reference, IOFormat format)
+            public DeferredDiskIOObject(string diskPath, object reference, IOFormat format, bool useCompression)
             {
                 DiskPath = diskPath.ToLower();
                 Reference = reference;
                 Format = format;
+                UseCompression = useCompression;
             }
         }
 
@@ -42,17 +44,17 @@ namespace Katzebase.Engine.IO
         {
             lock (this)
             {
-                foreach (var deferred in Collection)
+                foreach (var obj in Collection)
                 {
-                    if (deferred.Value.Reference != null)
+                    if (obj.Value.Reference != null)
                     {
-                        if (deferred.Value.Format == IOFormat.JSON)
+                        if (obj.Value.Format == IOFormat.JSON)
                         {
-                            core.IO.PutJsonNonTracked(deferred.Value.DiskPath, deferred.Value.Reference);
+                            core.IO.PutJsonNonTracked(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
                         }
-                        else if (deferred.Value.Format == IOFormat.PBuf)
+                        else if (obj.Value.Format == IOFormat.PBuf)
                         {
-                            core.IO.PutPBufNonTracked(deferred.Value.DiskPath, deferred.Value.Reference);
+                            core.IO.PutPBufNonTracked(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
                         }
                         else
                         {
@@ -114,7 +116,7 @@ namespace Katzebase.Engine.IO
         /// <param name="key"></param>
         /// <param name="reference"></param>
         /// <returns></returns>
-        public void PutDeferredDiskIO(string key, string diskPath, object reference, IOFormat deferredFormat)
+        public void PutDeferredDiskIO(string key, string diskPath, object reference, IOFormat deferredFormat, bool useCompression)
         {
             key = key.ToLower();
 
@@ -126,7 +128,7 @@ namespace Katzebase.Engine.IO
                 }
                 else
                 {
-                    Collection.Add(key, new DeferredDiskIOObject(diskPath, reference, deferredFormat));
+                    Collection.Add(key, new DeferredDiskIOObject(diskPath, reference, deferredFormat, useCompression));
                 }
             }
         }

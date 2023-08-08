@@ -14,6 +14,7 @@ namespace Katzebase.TestHarness
                     "WordList",
                     "AdventureWorks",
                     "TopNotchERP"
+                    //"NetworkDLS_Com"
                 };
 
             foreach (var databasesName in databasesNames)

@@ -499,10 +499,11 @@ namespace Katzebase.Engine.Schemas.Management
 
                 if (includePhysicalPages)
                 {
+                    //This should not be compressed, right? I intended this to be a raw read.
                     var physicalDocumentPage = core.Documents.AcquireDocumentPage(transaction, physicalSchema, page.PageNumber, LockOperation.Read);
 
-                    values.Add($"{page.PageNumber}");
-                    values.Add($"{physicalDocumentPage.Documents.Count}");
+                    values.Add($"{page.PageNumber:n0}");
+                    values.Add($"{physicalDocumentPage.Documents.Count:n0}");
 
                     values.Add($"{(physicalDocumentPage.Documents.Min(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
                     values.Add($"{(physicalDocumentPage.Documents.Max(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");

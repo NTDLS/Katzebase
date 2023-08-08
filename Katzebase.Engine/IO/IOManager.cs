@@ -91,6 +91,11 @@ namespace Katzebase.Engine.IO
         internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, bool useCompression = true)
             => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, useCompression);
 
+        internal PhysicalDocumentPage GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation) where T : PhysicalDocumentPage
+        {
+            return InternalTrackedGet<PhysicalDocumentPage>(transaction, filePath, intendedOperation, IOFormat.PBuf, false);
+        }
+
         internal T InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format, bool useCompression = true)
         {
             try
@@ -223,11 +228,11 @@ namespace Katzebase.Engine.IO
             }
         }
 
-        internal void PutPBufNonTracked(string filePath, object deserializedObject)
+        internal void PutPBufNonTracked(string filePath, object deserializedObject, bool useCompression = true)
         {
             try
             {
-                if (core.Settings.UseCompression)
+                if (core.Settings.UseCompression && useCompression)
                 {
                     using var output = new MemoryStream();
                     ProtoBuf.Serializer.Serialize(output, deserializedObject);
@@ -284,7 +289,7 @@ namespace Katzebase.Engine.IO
 
                             KbUtility.EnsureNotNull(transaction.DeferredIOs);
                             var ptDeferredWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredWrite);
-                            transaction.DeferredIOs.PutDeferredDiskIO(filePath, filePath, deserializedObject, format);
+                            transaction.DeferredIOs.PutDeferredDiskIO(filePath, filePath, deserializedObject, format, useCompression);
                             ptDeferredWrite?.StopAndAccumulate();
 
                             core.Health.Increment(HealthCounterType.IODeferredIOWrites);
