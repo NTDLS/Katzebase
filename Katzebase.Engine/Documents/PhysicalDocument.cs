@@ -21,19 +21,14 @@ namespace Katzebase.Engine.Documents
         [ProtoMember(3)]
         public DateTime Modfied { get; set; }
 
-        [ProtoMember(4)]
-        public int ContentLength { get; set; }
+        [ProtoIgnore]
+        public int ContentLength => Dictonary.Sum(o => o.Key.Length + (o.Value?.Length ?? 0));
 
         public PhysicalDocument()
         {
         }
 
         public PhysicalDocument(string jsonString)
-        {
-            SetDictonaryByJson(jsonString);
-        }
-
-        public void SetDictonaryByJson(string jsonString)
         {
             var dictonary = JsonConvert.DeserializeObject<KBCILookup<string?>>(jsonString);
             KbUtility.EnsureNotNull(dictonary);

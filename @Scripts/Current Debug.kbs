@@ -2,7 +2,7 @@
 
 --ANALYZE SCHEMA TopNotchERP:Address with (IncludePhysicalPages = true)
 
-exec ClearCacheAllocations
+--exec ClearCacheAllocations
 
 ANALYZE SCHEMA Stackoverflow:Posts with (IncludePhysicalPages = true)
 /*

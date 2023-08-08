@@ -7,6 +7,6 @@
     [Serializable]
     public class KBCILookup<TValue> : Dictionary<string, TValue>
     {
-        public KBCILookup() : base(StringComparer.OrdinalIgnoreCase) { }
+        public KBCILookup() : base(StringComparer.InvariantCultureIgnoreCase) { }
     }
 }
