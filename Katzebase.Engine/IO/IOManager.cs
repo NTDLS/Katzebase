@@ -1,5 +1,4 @@
 ﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Documents;
 using Katzebase.Engine.Library;
 using Katzebase.PublicLibrary;
 using Newtonsoft.Json;
@@ -90,13 +89,6 @@ namespace Katzebase.Engine.IO
 
         internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, bool useCompression = true)
             => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, useCompression);
-
-        /*
-        internal PhysicalDocumentPage GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation) where T : PhysicalDocumentPage
-        {
-            return InternalTrackedGet<PhysicalDocumentPage>(transaction, filePath, intendedOperation, IOFormat.PBuf, false);
-        }
-        */
 
         internal T InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format, bool useCompression = true)
         {
@@ -258,11 +250,6 @@ namespace Katzebase.Engine.IO
 
         internal void PutPBuf(Transaction transaction, string filePath, object deserializedObject, bool useCompression = true)
             => InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.PBuf, useCompression);
-
-        /*
-        internal void PutPBuf(Transaction transaction, string filePath, PhysicalDocumentPage physicalDocumentPage)
-            => InternalTrackedPut(transaction, filePath, physicalDocumentPage, IOFormat.PBuf, false);
-        */
 
         private void InternalTrackedPut(Transaction transaction, string filePath, object deserializedObject, IOFormat format, bool useCompression = true)
         {
