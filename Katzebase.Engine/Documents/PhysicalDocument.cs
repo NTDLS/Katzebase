@@ -1,5 +1,4 @@
-﻿using Katzebase.Engine.Library;
-using Katzebase.PublicLibrary.Exceptions;
+﻿using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
 using ProtoBuf;
@@ -13,6 +12,9 @@ namespace Katzebase.Engine.Documents
     [ProtoContract]
     public class PhysicalDocument
     {
+        [ProtoMember(1)]
+        public KBCILookup<string?> Dictonary = new();
+        /*
         [ProtoIgnore]
         private KBCILookup<string?>? _dictonary = null;
 
@@ -76,6 +78,7 @@ namespace Katzebase.Engine.Documents
                 _dictonary = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
             }
         }
+        */
 
         [ProtoMember(2)]
         public DateTime Created { get; set; }
@@ -90,12 +93,6 @@ namespace Katzebase.Engine.Documents
         {
         }
 
-        public PhysicalDocument(KBCILookup<string?>? dictonary, byte[]? compressedBytes)
-        {
-            _dictonary = dictonary;
-            _compressedBytes = compressedBytes;
-        }
-
         public PhysicalDocument(string jsonString)
         {
             SetDictonaryByJson(jsonString);
@@ -103,13 +100,16 @@ namespace Katzebase.Engine.Documents
 
         public void SetDictonaryByJson(string jsonString)
         {
-            _dictonary = JsonConvert.DeserializeObject<KBCILookup<string?>>(jsonString);
+            var dictonary = JsonConvert.DeserializeObject<KBCILookup<string?>>(jsonString);
+            KbUtility.EnsureNotNull(dictonary);
+            Dictonary = dictonary;
         }
 
         public PhysicalDocument Clone()
         {
-            return new PhysicalDocument(_dictonary, _compressedBytes)
+            return new PhysicalDocument
             {
+                Dictonary = Dictonary,
                 Created = Created,
                 Modfied = Modfied
             };

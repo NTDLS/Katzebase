@@ -48,6 +48,11 @@ namespace Katzebase.TestHarness
         {
             int rowsPerTransaction = 10000;
 
+            if (System.Diagnostics.Debugger.IsAttached)
+            {
+                rowsPerTransaction = 100;
+            }
+
             using var client = new KbClient(katzeBaseServerAdddress);
 
             string kbSchema = $"{sqlServerDatabase}:{sqlServerTable.Replace("[", "").Replace("]", "").Replace("dbo.", "").Replace('.', ':')}";
