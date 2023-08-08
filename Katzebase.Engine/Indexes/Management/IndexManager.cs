@@ -770,11 +770,12 @@ namespace Katzebase.Engine.Indexes.Management
                 foreach (var indexAttribute in physicalIindex.Attributes)
                 {
                     KbUtility.EnsureNotNull(indexAttribute.Field);
-
-                    var documentContent = document.ToDictonary();
-                    if (documentContent.TryGetValue(indexAttribute.Field, out string? documentValue))
+                    if (document.Dictonary.TryGetValue(indexAttribute.Field, out string? documentValue))
                     {
-                        result.Add(documentValue.ToString().ToLower());
+                        if (documentValue != null) //TODO: How do we handle indexed NULL values?
+                        {
+                            result.Add(documentValue.ToLower());
+                        }
                     }
                 }
 
@@ -958,7 +959,7 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var documentField = physicalIindex.Attributes[0].Field;
                 KbUtility.EnsureNotNull(documentField);
-                document.ToDictonary().TryGetValue(documentField, out string? value);
+                document.Dictonary.TryGetValue(documentField, out string? value);
 
                 uint indexPartition = physicalIindex.ComputePartition(value);
 
@@ -1086,7 +1087,7 @@ namespace Katzebase.Engine.Indexes.Management
                     {
                         var documentField = param.PhysicalIindex.Attributes[0].Field;
                         KbUtility.EnsureNotNull(documentField);
-                        physicalDocument.ToDictonary().TryGetValue(documentField, out string? value);
+                        physicalDocument.Dictonary.TryGetValue(documentField, out string? value);
 
                         uint indexPartition = param.PhysicalIindex.ComputePartition(value);
 

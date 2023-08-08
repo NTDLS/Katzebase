@@ -3,6 +3,16 @@ using System.Text;
 
 namespace Katzebase.Engine.Library
 {
+    /*
+    public static class Compression
+    {
+        public static byte[] Compress(byte[] bytes, LZ4Level level = LZ4Level.L00_FAST) => LZ4Pickler.Pickle(bytes, level);
+        public static byte[] Decompress(byte[] bytes) => LZ4Pickler.Unpickle(bytes);
+        public static byte[] Compress(string str, LZ4Level level = LZ4Level.L00_FAST) => LZ4Pickler.Pickle(Encoding.UTF8.GetBytes(str), level);
+        public static string DecompressToString(byte[] bytes) => Encoding.UTF8.GetString(LZ4Pickler.Unpickle(bytes));
+        public static int DecompressedSize(byte[] bytes) => LZ4Pickler.UnpickledSize(bytes);
+    }
+    */
     public static class Compression
     {
         public static byte[] Compress(byte[] bytes)
@@ -28,6 +38,6 @@ namespace Katzebase.Engine.Library
         }
 
         public static byte[] Compress(string str) => Compress(Encoding.UTF8.GetBytes(str));
-        public static string DecompressString(byte[] bytes) => Encoding.UTF8.GetString(Decompress(bytes));
+        public static string DecompressToString(byte[] bytes) => Encoding.UTF8.GetString(Decompress(bytes));
     }
 }

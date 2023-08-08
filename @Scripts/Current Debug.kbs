@@ -1,3 +1,9 @@
+--select top 100 * from TopNotchERP:Address
+
+--ANALYZE SCHEMA TopNotchERP:Address with (IncludePhysicalPages = true)
+
+--exec ClearCacheAllocations
+
 ANALYZE SCHEMA Stackoverflow:Posts with (IncludePhysicalPages = true)
 /*
 select

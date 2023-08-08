@@ -170,14 +170,12 @@ namespace Katzebase.Engine.Documents.Management
 
                 var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
 
-                var updatedDocuments = new Dictionary<DocumentPointer, string>();
+                var updatedDocumentPointers = new List<DocumentPointer>();
 
                 foreach (var documentPointer in documentPointers)
                 {
                     var physicalDocument = core.Documents.AcquireDocument(transactionReference.Transaction, physicalSchema, documentPointer, LockOperation.Write);
-
-                    var dictionary = JsonConvert.DeserializeObject<Dictionary<string, string?>>(physicalDocument.Content);
-                    KbUtility.EnsureNotNull(dictionary);
+                    KbUtility.EnsureNotNull(physicalDocument);
 
                     foreach (var updateValue in preparedQuery.UpdateValues)
                     {
@@ -186,7 +184,7 @@ namespace Katzebase.Engine.Documents.Management
                         //Execute functions
                         if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
                         {
-                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, dictionary);
+                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, physicalDocument.Dictonary);
                         }
                         else if (updateValue.Value is FunctionConstantParameter)
                         {
@@ -197,23 +195,23 @@ namespace Katzebase.Engine.Documents.Management
                             throw new KbNotImplementedException($"The function type {updateValue.Value.GetType().Name} is not implemented.");
                         }
 
-                        if (dictionary.ContainsKey(updateValue.Key))
+                        if (physicalDocument.Dictonary.ContainsKey(updateValue.Key))
                         {
-                            dictionary[updateValue.Key] = fieldValue;
+                            physicalDocument.Dictonary[updateValue.Key] = fieldValue;
                         }
                         else
                         {
-                            dictionary.Add(updateValue.Key, fieldValue);
+                            physicalDocument.Dictonary.Add(updateValue.Key, fieldValue);
                         }
                     }
 
-                    updatedDocuments.Add(documentPointer, JsonConvert.SerializeObject(dictionary));
+                    updatedDocumentPointers.Add(documentPointer);
                 }
 
                 var listOfModifiedFields = preparedQuery.UpdateValues.Select(o => o.Key);
 
                 //We update all of the documents all at once so we dont have to keep opening/closing catalogs.
-                core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocuments, listOfModifiedFields);
+                core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocumentPointers, listOfModifiedFields);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
             }

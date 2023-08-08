@@ -141,9 +141,8 @@ namespace Katzebase.Engine.Documents.Management
 
                 uint physicalDocumentId = documentPageCatalog.ConsumeNextDocumentId();
 
-                var physicalDocument = new PhysicalDocument
+                var physicalDocument = new PhysicalDocument(pageContent)
                 {
-                    Content = pageContent,
                     Created = DateTime.UtcNow,
                     Modfied = DateTime.UtcNow,
                 };
@@ -223,25 +222,24 @@ namespace Katzebase.Engine.Documents.Management
         /// <param name="documents">List of dovuemtn pointers and their new content.</param>
         /// <param name="listOfModifiedFields">A list of the fields that were modified so that we can filter the indexes we need to update.</param>
         internal void UpdateDocuments(Transaction transaction, PhysicalSchema physicalSchema,
-            Dictionary<DocumentPointer, string> documents, IEnumerable<string>? listOfModifiedFields = null)
+            List<DocumentPointer> updatedDocumentPointers, IEnumerable<string>? listOfModifiedFields = null)
         {
             try
             {
                 var physicalDocuments = new Dictionary<DocumentPointer, PhysicalDocument>();
 
-                foreach (var document in documents)
+                foreach (var documentPointer in updatedDocumentPointers)
                 {
-                    var documentPage = AcquireDocumentPage(transaction, physicalSchema, document.Key.PageNumber, LockOperation.Write);
+                    var documentPage = AcquireDocumentPage(transaction, physicalSchema, documentPointer.PageNumber, LockOperation.Write);
 
-                    var physicalDocument = documentPage.Documents[document.Key.DocumentId];
-                    physicalDocument.Content = document.Value;
+                    var physicalDocument = documentPage.Documents[documentPointer.DocumentId];
                     physicalDocument.Modfied = DateTime.UtcNow;
-                    documentPage.Documents[document.Key.DocumentId] = physicalDocument;
+                    documentPage.Documents[documentPointer.DocumentId] = physicalDocument;
 
                     //Save the document page:
-                    core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemFilePath(document.Key), documentPage);
+                    core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
 
-                    physicalDocuments.Add(document.Key, physicalDocument);
+                    physicalDocuments.Add(documentPointer, physicalDocument);
                 }
 
                 //Update all of the indexes that referecne the document.

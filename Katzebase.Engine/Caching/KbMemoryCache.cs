@@ -64,10 +64,10 @@
 
                     var oldestGottenItems = Collection.OrderBy(o => o.Value.LastGetDate)
                         .Select(o => new
-                            {
-                                o.Key,
-                                o.Value.AproximateSizeInBytes
-                            }
+                        {
+                            o.Key,
+                            o.Value.AproximateSizeInBytes
+                        }
                         ).ToList();
 
                     double objectSizeSummation = 0;
