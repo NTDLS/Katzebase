@@ -71,6 +71,7 @@ namespace Katzebase.Engine.Health.Management
                 lock (Counters)
                 {
                     lastCheckpoint = DateTime.UtcNow;
+                    /* TODO: Cleanup the counters - can't keep them forever.
                     var physicalCounters = Counters.Values.Where(o => o.Value > 0).ToList();
 
                     //All counters have a non-null instance because we use it for a key, but the ones that are really per-instance
@@ -90,8 +91,9 @@ namespace Katzebase.Engine.Health.Management
                             Counters.Remove(itemToRemove.Instance);
                         }
                     }
+                    */
 
-                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.LogDirectory, HealthStatsFile), physicalCounters, false);
+                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.LogDirectory, HealthStatsFile), Counters, false);
                 }
             }
             catch (Exception ex)

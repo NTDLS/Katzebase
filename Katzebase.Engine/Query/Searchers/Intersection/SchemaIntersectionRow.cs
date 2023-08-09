@@ -53,11 +53,8 @@ namespace Katzebase.Engine.Query.Searchers.Intersection
 
             newRow.Values.AddRange(Values);
 
-            newRow.AuxiliaryFields = AuxiliaryFields;
-            newRow.SchemaDocumentPointers = SchemaDocumentPointers;
-
-            //newRow.AuxiliaryFields = AuxiliaryFields.Clone();
-            //newRow.SchemaDocumentPointers = SchemaDocumentPointers.Clone();
+            newRow.AuxiliaryFields = AuxiliaryFields.Clone();
+            newRow.SchemaDocumentPointers = SchemaDocumentPointers.Clone();
 
             return newRow;
         }
