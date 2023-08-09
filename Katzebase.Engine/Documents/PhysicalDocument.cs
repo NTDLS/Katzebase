@@ -1,5 +1,4 @@
-﻿using Katzebase.Engine.Library;
-using Katzebase.PublicLibrary;
+﻿using Katzebase.PublicLibrary;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Types;
 using Newtonsoft.Json;
@@ -17,34 +16,30 @@ namespace Katzebase.Engine.Documents
         [ProtoIgnore]
         private KbInsensitiveDictionary<string?>? _dictionary = null;
 
-        [ProtoIgnore]
-        public KbInsensitiveDictionary<string?> Dictionary
+        public KbInsensitiveDictionary<string?> Materialize()
         {
-            get
+            if (_dictionary == null)
             {
-                if (_dictionary == null)
+                if (CompressedBytes == null)
                 {
-                    if (CompressedBytes == null)
-                    {
-                        throw new KbNullException("Document compressed bytes cannot be null.");
-                    }
-
-                    var serializedData = Compression.Decompress(CompressedBytes);
-                    ContentLength = serializedData.Length;
-                    using (var input = new MemoryStream(serializedData))
-                    {
-                        _dictionary = Serializer.Deserialize<KbInsensitiveDictionary<string?>>(input);
-                        if (_dictionary == null)
-                        {
-                            throw new KbNullException("Document dictionary cannot be null.");
-                        }
-                        //TODO: Maybe theres a more optimistic way to do this. Other than RAM, there is no need to NULL out the other property
-                        //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
-                        _compressedBytes = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
-                    }
+                    throw new KbNullException("Document compressed bytes cannot be null.");
                 }
-                return _dictionary;
+
+                var serializedData = Library.Compression.Deflate.Decompress(CompressedBytes);
+                ContentLength = serializedData.Length;
+                using (var input = new MemoryStream(serializedData))
+                {
+                    _dictionary = Serializer.Deserialize<KbInsensitiveDictionary<string?>>(input);
+                    if (_dictionary == null)
+                    {
+                        throw new KbNullException("Document dictionary cannot be null.");
+                    }
+                    //TODO: Maybe theres a more optimistic way to do this. Other than RAM, there is no need to NULL out the other property
+                    //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
+                    _compressedBytes = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
+                }
             }
+            return _dictionary;
         }
 
         public byte[]? _compressedBytes = null;
@@ -60,7 +55,7 @@ namespace Katzebase.Engine.Documents
                     {
                         Serializer.Serialize(output, _dictionary);
                         ContentLength = (int)output.Length;
-                        _compressedBytes = Compression.Compress(output.ToArray());
+                        _compressedBytes = Library.Compression.Deflate.Compress(output.ToArray());
                         //TODO: Maybe theres a more optimistic way to do this. Other than RAM, there is no need to NULL out the other property
                         //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
                         _dictionary = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.

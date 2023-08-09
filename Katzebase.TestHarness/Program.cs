@@ -11,9 +11,9 @@ namespace Katzebase.TestHarness
         {
             var databasesNames = new string[]{
                     "StackOverflow",
-                    "WordList",
-                    "AdventureWorks",
-                    "TopNotchERP"
+                    //"WordList",
+                    //"AdventureWorks",
+                    //"TopNotchERP"
                     //"NetworkDLS_Com"
                 };
 

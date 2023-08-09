@@ -198,15 +198,18 @@ namespace Katzebase.Engine.Indexes.Management
                     throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
                 }
 
-                var physicalIindex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
-                indexCatalog.Remove(physicalIindex);
-
-                if (Path.Exists(physicalIindex.GetPartitionPagesPath(physicalSchema)))
+                var physicalIindex = indexCatalog.GetByName(indexName);
+                if (physicalIindex != null)
                 {
-                    core.IO.DeletePath(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
-                }
+                    indexCatalog.Remove(physicalIindex);
 
-                core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
+                    if (Path.Exists(physicalIindex.GetPartitionPagesPath(physicalSchema)))
+                    {
+                        core.IO.DeletePath(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
+                    }
+
+                    core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
+                }
             }
             catch (Exception ex)
             {
@@ -771,7 +774,7 @@ namespace Katzebase.Engine.Indexes.Management
                 foreach (var indexAttribute in physicalIindex.Attributes)
                 {
                     KbUtility.EnsureNotNull(indexAttribute.Field);
-                    if (document.Dictionary.TryGetValue(indexAttribute.Field, out string? documentValue))
+                    if (document.Materialize().TryGetValue(indexAttribute.Field, out string? documentValue))
                     {
                         if (documentValue != null) //TODO: How do we handle indexed NULL values?
                         {
@@ -960,7 +963,7 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var documentField = physicalIindex.Attributes[0].Field;
                 KbUtility.EnsureNotNull(documentField);
-                document.Dictionary.TryGetValue(documentField, out string? value);
+                document.Materialize().TryGetValue(documentField, out string? value);
 
                 uint indexPartition = physicalIindex.ComputePartition(value);
 
@@ -1088,7 +1091,7 @@ namespace Katzebase.Engine.Indexes.Management
                     {
                         var documentField = param.PhysicalIindex.Attributes[0].Field;
                         KbUtility.EnsureNotNull(documentField);
-                        physicalDocument.Dictionary.TryGetValue(documentField, out string? value);
+                        physicalDocument.Materialize().TryGetValue(documentField, out string? value);
 
                         uint indexPartition = param.PhysicalIindex.ComputePartition(value);
 

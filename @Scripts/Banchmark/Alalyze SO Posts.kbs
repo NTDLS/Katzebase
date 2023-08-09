@@ -1,2 +1,0 @@
-EXEC ClearCacheAllocations
-ANALYZE SCHEMA Stackoverflow:Posts with (IncludePhysicalPages = true)

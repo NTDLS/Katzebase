@@ -8,7 +8,7 @@
         //public new List<KbQueryResultMessage> Messages => Collection.SelectMany(o => o.Messages).ToList();
         //public new Dictionary<KbTransactionWarning, HashSet<string>> Warnings => Collection.SelectMany(o => o.Warnings).ToDictionary(o => o.Key, o => o.Value);
         //public new int RowCount => Collection.Sum(o => o.RowCount);
-        //public new double Duration => Collection.Sum(o => o.Duration);
+        public new double Duration => Collection.Sum(o => o.Duration);
 
         public List<KbQueryResult> Collection { get; set; } = new();
 

@@ -1,0 +1,3 @@
+EXEC ClearCacheAllocations
+
+REBUILD INDEX IX_Payload_tx100000_01_1000 ON Benchmarking:Payload_100000 WITH (Partitions = 100)

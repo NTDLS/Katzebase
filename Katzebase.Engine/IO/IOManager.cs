@@ -27,7 +27,7 @@ namespace Katzebase.Engine.IO
 
                 if (core.Settings.UseCompression && useCompression)
                 {
-                    result = JsonConvert.DeserializeObject<T>(Compression.DecompressToString(File.ReadAllBytes(filePath)));
+                    result = JsonConvert.DeserializeObject<T>(Library.Compression.Deflate.DecompressToString(File.ReadAllBytes(filePath)));
                 }
                 else
                 {
@@ -49,7 +49,7 @@ namespace Katzebase.Engine.IO
             {
                 if (core.Settings.UseCompression)
                 {
-                    return Compression.Decompress(File.ReadAllBytes(filePath)).Length;
+                    return Library.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)).Length;
                 }
                 else
                 {
@@ -69,7 +69,7 @@ namespace Katzebase.Engine.IO
             {
                 if (core.Settings.UseCompression)
                 {
-                    using var input = new MemoryStream(Compression.Decompress(File.ReadAllBytes(filePath)));
+                    using var input = new MemoryStream(Library.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)));
                     return ProtoBuf.Serializer.Deserialize<T>(input);
                 }
                 else
@@ -148,7 +148,7 @@ namespace Katzebase.Engine.IO
                         var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
                         if (core.Settings.UseCompression && useCompression)
                         {
-                            text = Compression.DecompressToString(File.ReadAllBytes(filePath));
+                            text = Library.Compression.Deflate.DecompressToString(File.ReadAllBytes(filePath));
                         }
                         else
                         {
@@ -166,7 +166,7 @@ namespace Katzebase.Engine.IO
                         var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
                         if (core.Settings.UseCompression && useCompression)
                         {
-                            var serializedData = Compression.Decompress(File.ReadAllBytes(filePath));
+                            var serializedData = Library.Compression.Deflate.Decompress(File.ReadAllBytes(filePath));
                             aproximateSizeInBytes = serializedData.Length;
                             using var input = new MemoryStream(serializedData);
                             deserializedObject = ProtoBuf.Serializer.Deserialize<T>(input);
@@ -214,7 +214,7 @@ namespace Katzebase.Engine.IO
             {
                 if (core.Settings.UseCompression && useCompression)
                 {
-                    File.WriteAllBytes(filePath, Compression.Compress(JsonConvert.SerializeObject(deserializedObject)));
+                    File.WriteAllBytes(filePath, Library.Compression.Deflate.Compress(JsonConvert.SerializeObject(deserializedObject)));
                 }
                 else
                 {
@@ -236,7 +236,7 @@ namespace Katzebase.Engine.IO
                 {
                     using var output = new MemoryStream();
                     ProtoBuf.Serializer.Serialize(output, deserializedObject);
-                    File.WriteAllBytes(filePath, Compression.Compress(output.ToArray()));
+                    File.WriteAllBytes(filePath, Library.Compression.Deflate.Compress(output.ToArray()));
                 }
                 else
                 {
@@ -312,7 +312,7 @@ namespace Katzebase.Engine.IO
 
                         if (core.Settings.UseCompression && useCompression)
                         {
-                            File.WriteAllBytes(filePath, Compression.Compress(text));
+                            File.WriteAllBytes(filePath, Library.Compression.Deflate.Compress(text));
                         }
                         else
                         {
@@ -328,7 +328,7 @@ namespace Katzebase.Engine.IO
                             {
                                 ProtoBuf.Serializer.Serialize(output, deserializedObject);
                                 aproximateSizeInBytes = (int)output.Length;
-                                var compressedPbuf = Compression.Compress(output.ToArray());
+                                var compressedPbuf = Library.Compression.Deflate.Compress(output.ToArray());
                                 File.WriteAllBytes(filePath, compressedPbuf);
                             }
                         }

@@ -379,13 +379,13 @@ namespace Katzebase.Engine.Query.Searchers
 
             var threadScopedContentCache = new KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>
             {
-                { $"{topLevelSchemaMap.Key.ToLower()}:{topLevelDocumentPointer.Key.ToLower()}", toplevelPhysicalDocument.Dictionary }
+                { $"{topLevelSchemaMap.Key.ToLower()}:{topLevelDocumentPointer.Key.ToLower()}", toplevelPhysicalDocument.Materialize() }
             };
 
             //This cache is used to store the content of all documents required for a single row join.
             var joinScopedContentCache = new KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>
             {
-                { topLevelSchemaMap.Key.ToLower(), toplevelPhysicalDocument.Dictionary }
+                { topLevelSchemaMap.Key.ToLower(), toplevelPhysicalDocument.Materialize() }
             };
 
             var resultingRow = new SchemaIntersectionRow();
@@ -502,7 +502,7 @@ namespace Katzebase.Engine.Query.Searchers
                 if (threadScopedContentCache.TryGetValue(threadScopeddocumentCacheKey, out var documentContentNextLevel) == false)
                 {
                     var physicalDocumentNextLevel = param.Core.Documents.AcquireDocument(param.Transaction, currentSchemaMap.PhysicalSchema, documentPointer, LockOperation.Read);
-                    documentContentNextLevel = physicalDocumentNextLevel.Dictionary;
+                    documentContentNextLevel = physicalDocumentNextLevel.Materialize();
                     threadScopedContentCache.Add(threadScopeddocumentCacheKey, documentContentNextLevel);
                 }
 

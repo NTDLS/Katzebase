@@ -66,17 +66,20 @@ namespace Katzebase.PublicLibrary.Client
 
             while (disposed == false)
             {
-                try
-                {
-                    Server.Ping(); //This keeps the connection alive on the server side.
-                }
-                catch
-                {
-                }
-
                 for (int sleep = 0; disposed == false && sleep < (approximateSleepTimeMs + 10); sleep++)
                 {
                     Thread.Sleep(10);
+                }
+
+                if (disposed == false)
+                {
+                    try
+                    {
+                        Server.Ping(); //This keeps the connection alive on the server side.
+                    }
+                    catch
+                    {
+                    }
                 }
             }
         }

@@ -1,0 +1,14 @@
+EXEC ClearCacheAllocations
+select
+	*
+from
+	WordList:Word as sw
+inner join WordList:Synonym as s
+	on s.SourceWordId = sw.Id
+inner join WordList:Word as tw
+	ON tw.Id = S.TargetWordId
+inner join WordList:Language as tl
+	on tl.Id = tw.LanguageId
+where
+	sw.Text = 'green'
+	and tl.Name = 'Portuguese'

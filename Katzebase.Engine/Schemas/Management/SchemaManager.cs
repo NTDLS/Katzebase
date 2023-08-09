@@ -508,6 +508,13 @@ namespace Katzebase.Engine.Schemas.Management
                     values.Add($"{(physicalDocumentPage.Documents.Min(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
                     values.Add($"{(physicalDocumentPage.Documents.Max(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
                     values.Add($"{(physicalDocumentPage.Documents.Average(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
+
+                    /*
+                    foreach (var document in physicalDocumentPage.Documents)
+                    {
+                        var content = document.Value.Materialize();
+                    }
+                    */
                 }
 
                 result.AddRow(values);

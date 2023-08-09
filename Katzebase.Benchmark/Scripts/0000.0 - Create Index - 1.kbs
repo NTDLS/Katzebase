@@ -1,0 +1,7 @@
+EXEC ClearCacheAllocations
+
+DROP INDEX IX_Payload_tx100000_01_1000 ON Benchmarking:Payload_100000
+
+CREATE INDEX IX_Payload_tx100000_01_1000(
+    Score,
+) ON Benchmarking:Payload_100000 WITH (PARTITIONS=1000)
