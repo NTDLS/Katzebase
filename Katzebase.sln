@@ -21,7 +21,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Katzebase.PrivateLibrary", "Katzebase.PrivateLibrary\Katzebase.PrivateLibrary.csproj", "{C09AC89E-A946-425C-9660-5A332916F496}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Katzebase.Benchmark", "Katzebase.Benchmark\Katzebase.Benchmark.csproj", "{D5E65B9B-4B9F-4257-97C5-4F865D95F102}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Katzebase.Benchmark", "Katzebase.Benchmark\Katzebase.Benchmark.csproj", "{54CD3D29-E0EA-439E-BA74-D9912A7B08D8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -53,10 +53,10 @@ Global
 		{C09AC89E-A946-425C-9660-5A332916F496}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C09AC89E-A946-425C-9660-5A332916F496}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C09AC89E-A946-425C-9660-5A332916F496}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D5E65B9B-4B9F-4257-97C5-4F865D95F102}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D5E65B9B-4B9F-4257-97C5-4F865D95F102}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D5E65B9B-4B9F-4257-97C5-4F865D95F102}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D5E65B9B-4B9F-4257-97C5-4F865D95F102}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54CD3D29-E0EA-439E-BA74-D9912A7B08D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54CD3D29-E0EA-439E-BA74-D9912A7B08D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54CD3D29-E0EA-439E-BA74-D9912A7B08D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54CD3D29-E0EA-439E-BA74-D9912A7B08D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -24,11 +24,11 @@ namespace Katzebase.TestHarness
 
                 if (omitSQLSchemaName)
                 {
-                    tSQL = "select '[' + name + ']' as ObjectName from sys.tables where name = 'Posts' and type = 'u' order by OBJECT_SCHEMA_NAME(object_id) + '.' + name";
+                    tSQL = "select '[' + name + ']' as ObjectName from sys.tables where type = 'u' order by OBJECT_SCHEMA_NAME(object_id) + '.' + name";
                 }
                 else
                 {
-                    tSQL = "select '[' + OBJECT_SCHEMA_NAME(object_id) + '].[' + name + ']' as ObjectName from sys.tables where name = 'Posts' and type = 'u' order by OBJECT_SCHEMA_NAME(object_id) + '.' + name";
+                    tSQL = "select '[' + OBJECT_SCHEMA_NAME(object_id) + '].[' + name + ']' as ObjectName from sys.tables where type = 'u' order by OBJECT_SCHEMA_NAME(object_id) + '.' + name";
                 }
 
                 using (var command = new SqlCommand(tSQL, connection))
