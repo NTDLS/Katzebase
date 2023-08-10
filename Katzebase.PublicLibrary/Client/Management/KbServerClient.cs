@@ -1,6 +1,7 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
+using System.Threading;
 
 namespace Katzebase.PublicLibrary.Client.Management
 {
@@ -20,19 +21,22 @@ namespace Katzebase.PublicLibrary.Client.Management
         /// <exception cref="KbAPIResponseException"></exception>
         public KbActionResponsePing Ping()
         {
-            string url = $"api/Server/{client.SessionId}/Ping";
-
-            using var response = client.Connection.GetAsync(url);
-            string resultText = response.Result.Content.ReadAsStringAsync().Result;
-            var result = JsonConvert.DeserializeObject<KbActionResponsePing>(resultText);
-            if (result == null || result.Success == false)
+            lock (client.PingLock)
             {
-                throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
+                string url = $"api/Server/{client.SessionId}/Ping";
+
+                using var response = client.Connection.GetAsync(url);
+                string resultText = response.Result.Content.ReadAsStringAsync().Result;
+                var result = JsonConvert.DeserializeObject<KbActionResponsePing>(resultText);
+                if (result == null || result.Success == false)
+                {
+                    throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
+                }
+
+                client.ServerProcessId = result.ProcessId;
+
+                return result;
             }
-
-            client.ServerProcessId = result.ProcessId;
-
-            return result;
         }
 
         /// <summary>

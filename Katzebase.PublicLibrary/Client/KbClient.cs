@@ -14,6 +14,7 @@ namespace Katzebase.PublicLibrary.Client
         public KbProcedureClient Procedure { get; private set; }
 
         private readonly Thread keepAliveThread;
+        internal object PingLock { get; set; } = new();
 
         /// <summary>
         /// This is the process id of the session on the server. This is populated with each call to Client.Server.Ping().
@@ -66,20 +67,23 @@ namespace Katzebase.PublicLibrary.Client
 
             while (disposed == false)
             {
+                lock (PingLock)
+                {
+                    if (disposed == false)
+                    {
+                        try
+                        {
+                            Server.Ping(); //This keeps the connection alive on the server side.
+                        }
+                        catch
+                        {
+                        }
+                    }
+                }
+
                 for (int sleep = 0; disposed == false && sleep < (approximateSleepTimeMs + 10); sleep++)
                 {
                     Thread.Sleep(10);
-                }
-
-                if (disposed == false)
-                {
-                    try
-                    {
-                        Server.Ping(); //This keeps the connection alive on the server side.
-                    }
-                    catch
-                    {
-                    }
                 }
             }
         }
@@ -95,30 +99,33 @@ namespace Katzebase.PublicLibrary.Client
 
         protected virtual void Dispose(bool disposing)
         {
-            if (disposed)
+            lock (PingLock)
             {
-                return;
-            }
-
-            if (disposing)
-            {
-                if (Connection != null)
+                if (disposed)
                 {
-                    try
-                    {
-                        if (ServerProcessId != 0) //We have a ServerProcessId if we have ever had a successful ping.
-                        {
-                            Transaction.Rollback();
-                        }
-                    }
-                    catch
-                    {
-                    }
-                    Connection.Dispose();
+                    return;
                 }
-            }
 
-            disposed = true;
+                if (disposing)
+                {
+                    if (Connection != null)
+                    {
+                        try
+                        {
+                            if (ServerProcessId != 0) //We have a ServerProcessId if we have ever had a successful ping.
+                            {
+                                Transaction.Rollback();
+                            }
+                        }
+                        catch
+                        {
+                        }
+                        Connection.Dispose();
+                    }
+                }
+
+                disposed = true;
+            }
         }
 
         #endregion
