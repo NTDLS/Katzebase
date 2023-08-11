@@ -30,6 +30,15 @@ namespace Katzebase.Engine.Query
             {
                 try
                 {
+                    if (resultType.BaseType?.Name?.ToLower() == "enum")
+                    {
+                        if (Enum.TryParse(resultType, value, true, out var enumValue) == false)
+                        {
+                            throw new KbParserException($"Invaild value passed to with option '{name}'.");
+                        }
+                        return Convert.ChangeType(enumValue, resultType);
+                    }
+
                     var resultingValue = Convert.ChangeType(value, resultType);
                     if (resultingValue == null)
                     {
@@ -77,6 +86,12 @@ namespace Katzebase.Engine.Query
                     {
                         var expectedValues = "'" + string.Join("','", expectedOptions.Select(o => o.Key)) + "'";
                         throw new KbParserException($"Invalid query. Found '{name}', expected {expectedValues}.");
+                    }
+
+                    if (query.LiteralStrings.ContainsKey(value))
+                    {
+                        value = query.LiteralStrings[value];
+                        value = value.Substring(1, value.Length - 2);
                     }
 
                     var convertedValue = expectedOptions.ValidateAndConvert(name, value);
