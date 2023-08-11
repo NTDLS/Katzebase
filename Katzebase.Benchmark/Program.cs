@@ -21,8 +21,8 @@ namespace Katzebase.Benchmark
         {
             File.AppendAllText(OutputFileName, "StartDate\tTest\tIteration\tDurationMs\tPeakMemory\tCpuTime\r\n");
 
-            //Console.WriteLine("Creating payloads:");
-            //CreatePayloadData();
+            Console.WriteLine("Creating payloads:");
+            CreatePayloadData();
 
             Console.WriteLine("Executing scripts:");
             ExecuteBenchamark_Scripts();

@@ -1,0 +1,4 @@
+EXEC ClearCacheAllocations
+begin transaction
+delete from Benchmarking:Payload_100000 where Id = 4
+rollback transaction

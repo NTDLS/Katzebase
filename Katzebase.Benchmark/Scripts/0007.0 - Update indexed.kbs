@@ -1,0 +1,8 @@
+EXEC ClearCacheAllocations
+update
+	Benchmarking:Payload_100000
+Set
+	Title = Guid(),
+	Tags = 'This is an update'
+where
+	Id = 32417
