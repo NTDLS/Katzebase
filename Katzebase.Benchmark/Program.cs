@@ -273,7 +273,7 @@ namespace Katzebase.Benchmark
 
         static void WriteMetrics(string name, int iteration, double durationMs, double peakMemory, double cpuTime)
         {
-            File.AppendAllText(OutputFileName, $"{StartDateTime}\t{name}\t{iteration}\t{durationMs}\t{(peakMemory/1024.0/1024.0)}\t{cpuTime}\r\n");
+            File.AppendAllText(OutputFileName, $"{StartDateTime}\t{name}\t{iteration}\t{durationMs}\t{(peakMemory / 1024.0 / 1024.0)}\t{cpuTime}\r\n");
             Console.WriteLine($"{name}\t{iteration}\t{durationMs}\t{(peakMemory / 1024.0 / 1024.0)}\t{cpuTime}");
         }
     }

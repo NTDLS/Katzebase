@@ -1,7 +1,6 @@
 ﻿using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Payloads;
 using Newtonsoft.Json;
-using System.Threading;
 
 namespace Katzebase.PublicLibrary.Client.Management
 {
