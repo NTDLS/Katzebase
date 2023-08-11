@@ -1053,7 +1053,14 @@ namespace Katzebase.Engine.Query
                         int previousTokenPosition = conditionTokenizer.Position;
                         var conditonToken = conditionTokenizer.GetNextToken();
 
-                        if ((new string[] { "order", "group", "" }).Contains(conditonToken) && conditionTokenizer.IsNextToken("by"))
+                        if (int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        {
+                            //We found the beginning of a new statement, break here.
+                            conditionTokenizer.SetPosition(previousTokenPosition);
+                            query.SetPosition(previousTokenPosition);
+                            break;
+                        }
+                        else if ((new string[] { "order", "group", "" }).Contains(conditonToken) && conditionTokenizer.IsNextToken("by"))
                         {
                             throw new KbParserException("Invalid query. Found '" + conditonToken + "', expected: end of statement.");
                         }

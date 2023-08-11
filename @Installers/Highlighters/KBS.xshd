@@ -123,6 +123,7 @@
 			<Word>by</Word>
 			<Word>catalog</Word>
 			<Word>commit</Word>
+			<Word>rollback</Word>
 			<Word>create</Word>
 			<Word>alter</Word>
 			<Word>delete</Word>
