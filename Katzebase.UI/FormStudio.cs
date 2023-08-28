@@ -164,7 +164,7 @@ namespace Katzebase.UI
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
 
@@ -371,7 +371,7 @@ namespace Katzebase.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -390,7 +390,7 @@ namespace Katzebase.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -585,7 +585,7 @@ namespace Katzebase.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show(ex.Message, PublicLibrary.KbConstants.FriendlyName);
+                MessageBox.Show(ex.Message, KbConstants.FriendlyName);
             }
 
             return false;
@@ -705,7 +705,6 @@ namespace Katzebase.UI
         {
             OpenTab();
         }
-
 
         private void toolStripButtonStop_Click(object sender, EventArgs e)
         {
@@ -996,7 +995,7 @@ namespace Katzebase.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error: {ex.Message}", PublicLibrary.KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error: {ex.Message}", KbConstants.FriendlyName, MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
