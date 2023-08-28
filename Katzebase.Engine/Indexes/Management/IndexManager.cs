@@ -774,7 +774,7 @@ namespace Katzebase.Engine.Indexes.Management
                 foreach (var indexAttribute in physicalIindex.Attributes)
                 {
                     KbUtility.EnsureNotNull(indexAttribute.Field);
-                    if (document.Materialize().TryGetValue(indexAttribute.Field, out string? documentValue))
+                    if (document.Elements.TryGetValue(indexAttribute.Field, out string? documentValue))
                     {
                         if (documentValue != null) //TODO: How do we handle indexed NULL values?
                         {
@@ -963,7 +963,7 @@ namespace Katzebase.Engine.Indexes.Management
             {
                 var documentField = physicalIindex.Attributes[0].Field;
                 KbUtility.EnsureNotNull(documentField);
-                document.Materialize().TryGetValue(documentField, out string? value);
+                document.Elements.TryGetValue(documentField, out string? value);
 
                 uint indexPartition = physicalIindex.ComputePartition(value);
 
@@ -1091,7 +1091,7 @@ namespace Katzebase.Engine.Indexes.Management
                     {
                         var documentField = param.PhysicalIindex.Attributes[0].Field;
                         KbUtility.EnsureNotNull(documentField);
-                        physicalDocument.Materialize().TryGetValue(documentField, out string? value);
+                        physicalDocument.Elements.TryGetValue(documentField, out string? value);
 
                         uint indexPartition = param.PhysicalIindex.ComputePartition(value);
 

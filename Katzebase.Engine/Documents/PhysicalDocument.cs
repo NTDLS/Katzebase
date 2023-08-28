@@ -16,30 +16,31 @@ namespace Katzebase.Engine.Documents
         [ProtoIgnore]
         private KbInsensitiveDictionary<string?>? _dictionary = null;
 
-        public KbInsensitiveDictionary<string?> Materialize()
+        public KbInsensitiveDictionary<string?> Elements
         {
-            if (_dictionary == null)
+            get
             {
-                if (CompressedBytes == null)
+                if (_dictionary == null)
                 {
-                    throw new KbNullException("Document compressed bytes cannot be null.");
-                }
-
-                var serializedData = Library.Compression.Deflate.Decompress(CompressedBytes);
-                ContentLength = serializedData.Length;
-                using (var input = new MemoryStream(serializedData))
-                {
-                    _dictionary = Serializer.Deserialize<KbInsensitiveDictionary<string?>>(input);
-                    if (_dictionary == null)
+                    if (CompressedBytes == null)
                     {
-                        throw new KbNullException("Document dictionary cannot be null.");
+                        throw new KbNullException("Document compressed bytes cannot be null.");
                     }
-                    //TODO: Maybe theres a more optimistic way to do this. Other than RAM, there is no need to NULL out the other property
-                    //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
-                    _compressedBytes = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
+
+                    var serializedData = Library.Compression.Deflate.Decompress(CompressedBytes);
+                    ContentLength = serializedData.Length;
+                    using (var input = new MemoryStream(serializedData))
+                    {
+                        _dictionary = Serializer.Deserialize<KbInsensitiveDictionary<string?>>(input);
+                        if (_dictionary == null)
+                        {
+                            throw new KbNullException("Document dictionary cannot be null.");
+                        }
+                        _compressedBytes = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
+                    }
                 }
+                return _dictionary;
             }
-            return _dictionary;
         }
 
         public byte[]? _compressedBytes = null;
@@ -88,10 +89,10 @@ namespace Katzebase.Engine.Documents
 
         public PhysicalDocument(string jsonString)
         {
-            SetDictionaryByJson(jsonString);
+            SetElementsByJson(jsonString);
         }
 
-        public void SetDictionaryByJson(string jsonString)
+        public void SetElementsByJson(string jsonString)
         {
             var dictionary = JsonConvert.DeserializeObject<KbInsensitiveDictionary<string?>>(jsonString);
             KbUtility.EnsureNotNull(dictionary);

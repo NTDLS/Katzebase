@@ -512,7 +512,7 @@ namespace Katzebase.Engine.Schemas.Management
                     /*
                     foreach (var document in physicalDocumentPage.Documents)
                     {
-                        var content = document.Value.Materialize();
+                        var content = document.Value.Elements;
                     }
                     */
                 }

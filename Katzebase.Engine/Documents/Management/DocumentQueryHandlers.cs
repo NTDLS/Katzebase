@@ -185,7 +185,7 @@ namespace Katzebase.Engine.Documents.Management
                         //Execute functions
                         if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
                         {
-                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, physicalDocument.Materialize());
+                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, physicalDocument.Elements);
                         }
                         else if (updateValue.Value is FunctionConstantParameter)
                         {
@@ -196,13 +196,13 @@ namespace Katzebase.Engine.Documents.Management
                             throw new KbNotImplementedException($"The function type {updateValue.Value.GetType().Name} is not implemented.");
                         }
 
-                        if (physicalDocument.Materialize().ContainsKey(updateValue.Key))
+                        if (physicalDocument.Elements.ContainsKey(updateValue.Key))
                         {
-                            physicalDocument.Materialize()[updateValue.Key] = fieldValue;
+                            physicalDocument.Elements[updateValue.Key] = fieldValue;
                         }
                         else
                         {
-                            physicalDocument.Materialize().Add(updateValue.Key, fieldValue);
+                            physicalDocument.Elements.Add(updateValue.Key, fieldValue);
                         }
                     }
 
