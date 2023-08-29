@@ -1,8 +1,13 @@
+select * from TopNotchERP:Address WHERE ID NOT BETWEEN 1 AND 10000
+--select * from TopNotchERP:Inventory where OnHandQty between 100 and 110
+
+
+/*
 begin transaction
 delete from Benchmarking:Payload_100000 where Id = 4
 rollback transaction
 
-/*
+
 delete from Benchmarking:Payload_Insertion_tx100 where Id = 4
 delete from Benchmarking:Payload_Insertion_tx100 where Id = 18
 delete from Benchmarking:Payload_Insertion_tx100 where Id = 76468
@@ -10,16 +15,16 @@ delete from Benchmarking:Payload_Insertion_tx100 where Id = 76468
 delete from Benchmarking:Payload_100000 where Id = 4
 delete from Benchmarking:Payload_100000 where Id = 18
 delete from Benchmarking:Payload_100000 where Id = 76468
-*/
 
---select top 100 * from TopNotchERP:Address
 
---ANALYZE SCHEMA TopNotchERP:Address with (IncludePhysicalPages = true)
+select top 100 * from TopNotchERP:Address
 
---exec ClearCacheAllocations
+ANALYZE SCHEMA TopNotchERP:Address with (IncludePhysicalPages = true)
 
---ANALYZE SCHEMA Stackoverflow:Posts with (IncludePhysicalPages = true)
-/*
+exec ClearCacheAllocations
+
+ANALYZE SCHEMA Stackoverflow:Posts with (IncludePhysicalPages = true)
+
 select
 	p.body
 from
@@ -30,21 +35,20 @@ where
 	U.DisplayName = 'ntdls'
 order by
 	P.CreationDate
-*/	
---EXEC ShowSchemaPages('AdventureWorks:Person:Address')
 
---ALTER CONFIGURATION WITH (DeferredIOEnabled = true, CacheMaxMemory = 1024)
---ALTER SCHEMA AdventureWorks:Production:WorkOrder WITH(PageSize = 1000)
---ANALYZE SCHEMA Stackoverflow:Posts with (IncludePhysicalPages = true)
---ANALYZE SCHEMA AdventureWorks:Production:WorkOrder with (IncludePhysicalPages = true)
---analyze INDEX IX_TransactionHistory_ProductID_ActualCost ON AdventureWorks:Production:TransactionHistory
+EXEC ShowSchemaPages('AdventureWorks:Person:Address')
 
---select * from WordList:Word
+ALTER CONFIGURATION WITH (DeferredIOEnabled = true, CacheMaxMemory = 1024)
+ALTER SCHEMA AdventureWorks:Production:WorkOrder WITH(PageSize = 1000)
+ANALYZE SCHEMA Stackoverflow:Posts with (IncludePhysicalPages = true)
+ANALYZE SCHEMA AdventureWorks:Production:WorkOrder with (IncludePhysicalPages = true)
+analyze INDEX IX_TransactionHistory_ProductID_ActualCost ON AdventureWorks:Production:TransactionHistory
 
---exec AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('black')
---rebuild index IX_Word_Id on WordList:Word
+select * from WordList:Word
 
-/*
+exec AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('black')
+rebuild index IX_Word_Id on WordList:Word
+
 insert into blah
 (
 	a = Guid(),
@@ -62,27 +66,23 @@ select top 10 Guid() as a, Text as b into blah from WordList:Word
 select * from blah
 
 delete from blah where expression1 != ''
-*/
 
---exec ClearCacheAllocations
---exec ReleaseCacheAllocations
---exec ShowCachePartitions
---exec ShowCacheAllocations
+exec ClearCacheAllocations
+exec ReleaseCacheAllocations
+exec ShowCachePartitions
+exec ShowCacheAllocations
 
---rebuild index IX_Posts_OwnerUserId on StackOverflow:Posts with (partitions=1000)
---rebuild index IX_Word_Text on WordList:Word
---create schema blah with (pagesize = 10)
---alter schema blah with (pagesize = 400)
+rebuild index IX_Posts_OwnerUserId on StackOverflow:Posts with (partitions=1000)
+rebuild index IX_Word_Text on WordList:Word
+create schema blah with (pagesize = 10)
+alter schema blah with (pagesize = 400)
 
-/*
 insert into blah
 (b="ASDFGHJKLQWERTYUIOZXCVBNM"),(b="!@#$%^&*(%^&*@#$%"),(b="1234567890"),(b="098765432"),
 (b="jane"),(b="!@#$%^&*(%^&*@#$%"),(b="1234567890"),(b="098765432"),
 (b="ASDFGHJKLQWERTYUIOZXCVBNM"),(b="!@#$%^&*(%^&*@#$%"),(b="1234567890"),(b="098765432"),
 (b="ASDFGHJKLQWERTYUIOZXCVBNM"),(b="!@#$%^&*(%^&*@#$%"),(b="1234567890"),(b="098765432")
-*/
 
-/*
 rebuild index IX_Word_LanguageId on WordList:Word
 rebuild index IX_Word_Text on WordList:Word
 
@@ -99,9 +99,7 @@ CREATE INDEX IX_TopNotchERP_Inventory_OnHandQty
 )on TopNotchERP:Inventory
 
 select * from TopNotchERP:Inventory where OnHandQty between 100 and 110
-*/
 
-/*
 set TraceWaitTimes true
 
 select
@@ -119,27 +117,25 @@ inner join WordList:Language as tl
 	on tl.Id = tw.LanguageId
 where
 	sw.Text like 'moon%'
-*/
---SELECT top 1000 *
---FROM WordList:Word
---WHERE Id BETWEEN 578500 AND 578800
 
-/*
+SELECT top 1000 *
+FROM WordList:Word
+WHERE Id BETWEEN 578500 AND 578800
+
 CREATE INDEX IX_Word_LanguageId
 (
 	LanguageId
 ) ON WordList:Word WITH (PARTITIONS = 10)
 
 drop INDEX IX_Word_Text ON WordList:Word WITH (PARTITIONS = 9)
-*/
---REBUILD INDEX IX_Word_Text
---ON WordList:Word WITH (PARTITIONS = 100)
 
---SELECT w.Id, w.Text, w.LanguageId, w.SourceId, w.IsDirty, DocumentUID('w')
---FROM WordList:Word as w WHERE w.Text = 'Fin'
---order by w.Id
+REBUILD INDEX IX_Word_Text
+ON WordList:Word WITH (PARTITIONS = 100)
 
-/*
+SELECT w.Id, w.Text, w.LanguageId, w.SourceId, w.IsDirty, DocumentUID('w')
+FROM WordList:Word as w WHERE w.Text = 'Fin'
+order by w.Id
+
 CREATE INDEX IX_Synonym_TargetWordId
 (
 	TargetWordId
@@ -148,11 +144,9 @@ CREATE INDEX IX_Synonym_SourceWordId
 (
 	SourceWordId
 ) ON WordList:synonym
-*/
 
---rebuild index IX_Synonym_TargetWordId on WordList:synonym
+rebuild index IX_Synonym_TargetWordId on WordList:synonym
 
-/*
 set TraceWaitTimes true
 
 insert into TopNotchERP:Address
@@ -167,9 +161,9 @@ insert into TopNotchERP:Address
 drop schema blah
 
 delete from TopNotchERP:Address where parent_key = 'ABBEY'
-*/
---analyze INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
-/*
+
+analyze INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
+
 insert into TopNotchERP:Address
 (
 	parent_key = 'ABBEY',
@@ -179,14 +173,10 @@ insert into TopNotchERP:Address
 	jtrax_module = 'PMJ'
 )
 
-
 select top 100 * from TopNotchERP:Address where Parent_Key = '2BROS'
 
 delete from TopNotchERP:Address where parent_key = 'ABBEY'
-*/
 
-
-/*
 select
 	*
 from
@@ -197,10 +187,7 @@ where
 	U.DisplayName = 'NTDLS'
 order by
 	P.CreationDate
-*/
 
-
-/*
 SELECT TOP 5
 	P.Name,
 	TH.TransactionId,
@@ -219,22 +206,19 @@ WHERE
 ORDER BY
 	P.ProductNumber asc,
 	TH.TransactionId desc
-	*/
 	
---REBUILD INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
---ANALYZE INDEX IX_TopNotchERP_Inventory_OnHandQty ON TopNotchERP:Inventory
---CREATE INDEX IX_TopNotchERP_Inventory_OnHandQty
---(
---	OnHandQty
---) ON TopNotchERP:Inventory
+REBUILD INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
+ANALYZE INDEX IX_TopNotchERP_Inventory_OnHandQty ON TopNotchERP:Inventory
+CREATE INDEX IX_TopNotchERP_Inventory_OnHandQty
+(
+	OnHandQty
+) ON TopNotchERP:Inventory
 
---SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty >= 1000 AND OnHandQty <= 3000
---SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty between 1000 and 3000
---GO
---SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty between 1000 and 3000
+SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty >= 1000 AND OnHandQty <= 3000
+SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty between 1000 and 3000
+GO
+SELECT OnHandQty FROM TopNotchERP:Inventory WHERE OnHandQty between 1000 and 3000
 
-
-/*
 rebuild index IX_Product on AdventureWorks:Production:Product
 rebuild index IX_Name on AdventureWorks:Production:Product
 rebuild index IX_FlatTranslate_English on WordList:FlatTranslate
@@ -242,9 +226,7 @@ rebuild index IX_Word on WordList:word
 rebuild index IX_Word_Id on WordList:word
 rebuild index IX_Synonym_SourceWord on WordList:synonym
 rebuild index IX_Synonym_TargetWordId on WordList:synonym
-*/
 
-/*
 ANALYZE INDEX IX_TopNotchERP_Address_ParentKey ON TopNotchERP:Address
 ANALYZE index IX_Product on AdventureWorks:Production:Product
 ANALYZE index IX_Name on AdventureWorks:Production:Product
@@ -259,9 +241,7 @@ ANALYZE index IX_TopNotchERP_Inventory_Descr on TopNotchERP:Inventory
 ANALYZE index IX_TopNotchERP_Inventory_ClassId on TopNotchERP:Inventory
 ANALYZE index IX_TopNotchERP_Inventory_Comm on TopNotchERP:Inventory
 ANALYZE index IX_TopNotchERP_Inventory_LotFlag on TopNotchERP:Inventory
-*/
 
-/*
 SAMPLE TopNotchERP:Address 100
 
 CREATE INDEX IX_TopNotchERP_Address_ParentKey
@@ -269,9 +249,6 @@ CREATE INDEX IX_TopNotchERP_Address_ParentKey
 	Parent_Key
 ) ON TopNotchERP:Address
 
-*/
-
-/*
 set TraceWaitTimes true
 set MinQueryThreads 1
 set MaxQueryThreads 10
@@ -292,14 +269,11 @@ EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-C
 EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
-*/
 
-/*
 set TraceWaitTimes false
 EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
-*/
-/*
+
 select
 	IIF(Equals(tw.Text, 'Luna'), 'YES!', tw.Text) as 'Is Luna 2',
 
@@ -356,8 +330,7 @@ where
 --order by
 	--sw.Text
 	--'Is Luna?' DESC
-*/
-/*
+
 CREATE PROCEDURE UpdateProductByColorAndGetItsName
 (
 	@ProductColor as string
@@ -385,8 +358,7 @@ GO
 
 EXEC AdventureWorks:Production:Product:UpdateProductByColorAndGetItsName('Test-Color')
 GO
-*/
-/*
+
 UPDATE
 	AdventureWorks:Production:Product
 SET
@@ -398,8 +370,7 @@ WHERE
 select * from 	AdventureWorks:Production:Product
 WHERE
 	Color = 'Test-Color';
-*/
-/*
+
 begin transaction;
 
 select
@@ -417,12 +388,10 @@ where
 	
 SELECT * FROM #WordList:Stats;
 
---drop schema #WordList:Stats;
+drop schema #WordList:Stats;
 
 commit transaction;
-*/
 
-/*
 select top 10
 	SourceWordId,
 	Min(TargetWordId) as Min,
@@ -434,11 +403,10 @@ from
 	WordList:Synonym 
 group by
 	SourceWordId
-*/
+
 --order by
 	--SourceWord
 
-/*
 select
 	--Count(),
 	Min(s.TargetWordId) as Min,
@@ -466,9 +434,9 @@ group by
 	tw.Text
 --order by
 	--SourceWord
-*/
 
-/*
+
+
 select
 	sw.*
 --into
@@ -483,8 +451,8 @@ inner join WordList:Language as tl
 	on tl.Id = tw.LanguageId
 where
 	sw.Text like 'moon%'
-*/
-/*
+
+
 set TraceWaitTimes true;
 set MinQueryThreads 1;
 set MaxQueryThreads 10;
@@ -499,12 +467,12 @@ exec CheckpointHealthCounters;
 exec ShowBlocks(5)
 exec ShowTransactions;
 exec ShowWaitingLocks
-*/
+
 
 
 --select DateTimeUTC('aaa', 'bbb', 'ccc') from Test
 
-/*
+
 create schema Test;
 
 insert into Test
@@ -527,9 +495,9 @@ insert into Test
 (Name = '5-3', Num1 = 5, Num2 = 1, IsVIP = 2);
 
 select * from Test where isvip = null
-*/
 
-/*
+
+
 SELECT
 	x,
 	IIF(Equals(sw.Text, 'moonwort'), '---!!YES!!---',
@@ -540,8 +508,8 @@ inner join WordList:Word as tw
 	on tw.Id = sw.Id
 WHERE
 	sw.Text like 'moon%'
-*/
-/*
+
+
 SELECT
 	IIF(Equals(sw.Text, 'moonwort'), '---!!YES!!---',
 		Concat('Nope, its just [', tw.Text, ']...')) as 'Is Moonwart'
@@ -553,17 +521,17 @@ WHERE
 	sw.Text like 'moon%'
 ORDER BY
 	'Is Moonwart'
-*/
 
-/*
+
+
 SELECT
 	Text
 FROM
 	WordList:Word as sw
 WHERE
 	sw.Text like 'moon%';
-*/
-/*
+
+
 select
 	IIF(Equals(tw.Text, 'Luna'), 'YES!', tw.Text) as 'Is Luna 2',
 
@@ -621,9 +589,9 @@ where
 order by
 	--sw.Text
 	'Is Luna?' DESC
-*/
 
-/*
+
+
 select
 	sw.Text as SourceWord,
 	S.TargetWordId,
@@ -639,9 +607,9 @@ inner join WordList:Language as tl
 	on tl.Id = tw.LanguageId
 where
 	sw.Text like 'moon%'
-*/
 
-/*
+
+
 --You'll have to cancel this badboy, figure out indexing.
 select
 	sw.Text as SourceWord,
@@ -655,24 +623,24 @@ inner join WordList:Word as tw
 	ON tw.Id = S.TargetWordId
 where
 	sw.Text = 'moon'
-*/	
+	
 
 --select * from WordList:Synonym where SourceWordId = 583273
 
 
-/*
+
 DROP INDEX IX_FlatTranslate_English ON WordList:FlatTranslate
 
 CREATE UniqueKey IX_Word_Id
 (
 	Id
 ) ON WordList:Word
-*/
+
 
 --select * from WordList:Synonym where SourceWordId = 583273
 
 
-/*
+
 select * from WordList:FlatTranslate
 where English like 'apple%'
 

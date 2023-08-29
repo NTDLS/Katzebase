@@ -107,6 +107,7 @@
             NotEquals,
             NotLike,
             Between,
+            NotBetween,
             LessThan,
             GreaterThan,
             LessThanOrEqual,

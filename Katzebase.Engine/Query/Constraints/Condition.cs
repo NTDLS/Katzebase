@@ -197,6 +197,10 @@ namespace Katzebase.Engine.Query.Constraints
             {
                 return IsMatchBetween(transaction, leftString, rightString) == true;
             }
+            else if (logicalQualifier == LogicalQualifier.NotBetween)
+            {
+                return IsMatchBetween(transaction, leftString, rightString) == false;
+            }
             else
             {
                 throw new KbParserException("Unsupprted condition type.");

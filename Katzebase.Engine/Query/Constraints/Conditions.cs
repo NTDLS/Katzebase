@@ -255,7 +255,7 @@ namespace Katzebase.Engine.Query.Constraints
                         token += " " + conditionTokenizer.GetNextToken().ToLower();
                     }
 
-                    LogicalQualifier logicalQualifier = ConditionTokenizer.ParseLogicalQualifier(token);
+                    var logicalQualifier = ConditionTokenizer.ParseLogicalQualifier(token);
 
                     //Righthand value:
                     string right = conditionTokenizer.GetNextToken().ToLower();
@@ -267,7 +267,7 @@ namespace Katzebase.Engine.Query.Constraints
 
                     int endPosition = conditionTokenizer.Position;
 
-                    if (logicalQualifier == LogicalQualifier.Between)
+                    if (logicalQualifier == LogicalQualifier.Between || logicalQualifier == LogicalQualifier.NotBetween)
                     {
                         string and = conditionTokenizer.GetNextToken().ToLower();
                         if (and != "and")
@@ -283,10 +283,8 @@ namespace Katzebase.Engine.Query.Constraints
                     }
 
                     if (right.StartsWith($"{leftHandAlias}."))
-                    {//Swap the left and right.
-                        string temp = left;
-                        left = right;
-                        right = temp;
+                    {
+                        (left, right) = (right, left); //Swap the left and right.
                     }
 
                     var condition = new Condition(subset.SubsetKey, conditionKey, logicalConnector, left, logicalQualifier, right);

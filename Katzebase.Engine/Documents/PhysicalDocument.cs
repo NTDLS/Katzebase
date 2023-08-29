@@ -16,6 +16,7 @@ namespace Katzebase.Engine.Documents
         [ProtoIgnore]
         private KbInsensitiveDictionary<string?>? _dictionary = null;
 
+        [ProtoIgnore]
         public KbInsensitiveDictionary<string?> Elements
         {
             get
@@ -43,7 +44,8 @@ namespace Katzebase.Engine.Documents
             }
         }
 
-        public byte[]? _compressedBytes = null;
+        [ProtoIgnore]
+        private byte[]? _compressedBytes = null;
 
         [ProtoMember(1)]
         public byte[]? CompressedBytes
