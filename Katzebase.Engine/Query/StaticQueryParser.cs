@@ -649,6 +649,10 @@ namespace Katzebase.Engine.Query
                     }
                     result.RowLimit = topCount;
                 }
+                else
+                {
+                    result.RowLimit = 100;
+                }
             }
             #endregion
 

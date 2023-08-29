@@ -155,7 +155,7 @@ namespace Katzebase.Engine.Functions.Management
                             result.AddField("PeakVirtualMemorySize64");
                             result.AddField("VirtualMemorySize64");
                             result.AddField("PrivateMemorySize64");
-                            result.AddField("totalCacheSize");
+                            result.AddField("TotalCacheSize");
 
                             var process = Process.GetCurrentProcess();
                             var values = new List<string?> {
@@ -171,6 +171,8 @@ namespace Katzebase.Engine.Functions.Management
                                     $"{process.PrivateMemorySize64:n0}",
                                     $"{totalCacheSize:n0}",
                             };
+
+                            result.AddRow(values);
 
                             return collection;
                         }

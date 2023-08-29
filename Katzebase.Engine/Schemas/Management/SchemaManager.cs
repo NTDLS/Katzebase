@@ -441,7 +441,7 @@ namespace Katzebase.Engine.Schemas.Management
             try
             {
                 var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-                var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Read);
+                var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
 
                 var result = new List<Tuple<string, string>>();
 

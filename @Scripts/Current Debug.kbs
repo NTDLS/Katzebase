@@ -1,4 +1,9 @@
-select * from TopNotchERP:Address WHERE ID NOT BETWEEN 1 AND 10000
+LIST Documents WordList:Language 100
+
+
+--select top 10 * from WordList:Language
+
+--select * from TopNotchERP:Address WHERE ID NOT BETWEEN 1 AND 10000
 --select * from TopNotchERP:Inventory where OnHandQty between 100 and 110
 
 
@@ -16,7 +21,7 @@ delete from Benchmarking:Payload_100000 where Id = 4
 delete from Benchmarking:Payload_100000 where Id = 18
 delete from Benchmarking:Payload_100000 where Id = 76468
 
-
+sampl
 select top 100 * from TopNotchERP:Address
 
 ANALYZE SCHEMA TopNotchERP:Address with (IncludePhysicalPages = true)
@@ -242,7 +247,7 @@ ANALYZE index IX_TopNotchERP_Inventory_ClassId on TopNotchERP:Inventory
 ANALYZE index IX_TopNotchERP_Inventory_Comm on TopNotchERP:Inventory
 ANALYZE index IX_TopNotchERP_Inventory_LotFlag on TopNotchERP:Inventory
 
-SAMPLE TopNotchERP:Address 100
+SAMPLE TopNotchERP:Address 5
 
 CREATE INDEX IX_TopNotchERP_Address_ParentKey
 (
