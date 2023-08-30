@@ -483,13 +483,17 @@ namespace Katzebase.Engine.Query
                 if (token.ToLower() == "where")
                 {
                     var conditionTokenizer = new ConditionTokenizer(query.Text, query.Position);
+                    int parenthesisScope = 0;
 
                     while (true)
                     {
-                        var conditonToken = conditionTokenizer.PeekNextToken();
                         int previousTokenPosition = conditionTokenizer.Position;
+                        var conditonToken = conditionTokenizer.PeekNextToken();
 
-                        if (int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        if (conditonToken == "(") parenthesisScope++;
+                        if (conditonToken == ")") parenthesisScope--;
+
+                        if (parenthesisScope < 0 || int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
                             conditionTokenizer.SetPosition(previousTokenPosition);
@@ -790,13 +794,17 @@ namespace Katzebase.Engine.Query
                     query.SkipNextToken();
 
                     var conditionTokenizer = new ConditionTokenizer(query.Text, query.Position);
+                    int parenthesisScope = 0;
 
                     while (true)
                     {
                         int previousTokenPosition = conditionTokenizer.Position;
                         var conditonToken = conditionTokenizer.PeekNextToken();
 
-                        if (int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        if (conditonToken == "(") parenthesisScope++;
+                        if (conditonToken == ")") parenthesisScope--;
+
+                        if (parenthesisScope < 0 || int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
                             conditionTokenizer.SetPosition(previousTokenPosition);
@@ -1051,13 +1059,17 @@ namespace Katzebase.Engine.Query
                 if (token.ToLower() == "where")
                 {
                     var conditionTokenizer = new ConditionTokenizer(query.Text, query.Position);
+                    int parenthesisScope = 0;
 
                     while (true)
                     {
                         int previousTokenPosition = conditionTokenizer.Position;
                         var conditonToken = conditionTokenizer.GetNextToken();
 
-                        if (int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        if (conditonToken == "(") parenthesisScope++;
+                        if (conditonToken == ")") parenthesisScope--;
+
+                        if (parenthesisScope < 0 || int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
                             conditionTokenizer.SetPosition(previousTokenPosition);

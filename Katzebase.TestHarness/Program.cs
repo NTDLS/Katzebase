@@ -10,10 +10,10 @@ namespace Katzebase.TestHarness
         private static void ExportSQLServerDatabases()
         {
             var databasesNames = new string[]{
-                    "StackOverflow",
+                    //"StackOverflow",
                     "WordList",
-                    "AdventureWorks",
-                    "TopNotchERP"
+                    //"AdventureWorks",
+                    //"TopNotchERP"
                     //"NetworkDLS_Com"
                 };
 

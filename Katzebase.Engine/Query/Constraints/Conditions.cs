@@ -81,14 +81,11 @@ namespace Katzebase.Engine.Query.Constraints
             //We parse by parentheses so wrap the expression in them if it is not already.
             if (conditionsText.StartsWith('(') == false || conditionsText.StartsWith(')') == false)
             {
-                if (conditionsText.Contains('(') == false && conditionsText.Contains(')') == false)
-                {
-                    //If we have no sub-expressions at all, push the conditions one group deeper since we want to process all expreessions as groups.
-                    conditionsText = $"({conditionsText})";
-                }
-
                 conditionsText = $"({conditionsText})";
             }
+
+            //Push the conditions one group deeper since we want to process all expreessions as groups and leave no chace for conditions at the root level.
+            conditionsText = $"({conditionsText})";
 
             while (true)
             {

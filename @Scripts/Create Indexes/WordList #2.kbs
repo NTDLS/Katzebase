@@ -1,0 +1,5 @@
+CREATE INDEX IX_Translation
+(
+    SourceLanguageId,
+    TargetLanguageId,
+) ON WordList:Translation WITH (PARTITIONS = 1000)

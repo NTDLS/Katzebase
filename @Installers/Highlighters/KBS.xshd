@@ -89,6 +89,7 @@
 			<Word>Avg</Word>
 			<Word>Count</Word>
 			<Word>Equals</Word>
+			<Word>NotEquals</Word>
 			<Word>DocumentUID</Word>
 			<Word>DocumentPage</Word>
 			<Word>DocumentID</Word>

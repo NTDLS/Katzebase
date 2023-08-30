@@ -16,6 +16,7 @@ namespace Katzebase.Engine.Functions.Scaler
         internal static string[] FunctionPrototypes = {
                 "Guid:",
                 "Equals:string/text1,string/text2",
+                "NotEquals:string/text1,string/text2",
                 "DocumentUID:string/schemaAlias",
                 "DocumentPage:string/schemaAlias",
                 "DocumentID:string/schemaAlias",
@@ -151,6 +152,8 @@ namespace Katzebase.Engine.Functions.Scaler
 
                 case "equals":
                     return (proc.Get<string>("text1") == proc.Get<string>("text2")).ToString();
+                case "notequals":
+                    return (proc.Get<string>("text1") != proc.Get<string>("text2")).ToString();
 
                 case "guid":
                     return Guid.NewGuid().ToString();

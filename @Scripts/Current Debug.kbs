@@ -1,4 +1,48 @@
-LIST Documents WordList:Language 100
+select * FROM WordList:Word WHERE Text like 'Catfish'
+select * FROM WordList:Word WHERE Text = 'Catboat'
+select * FROM WordList:Word WHERE Text = 'Cat'
+
+catboat
+
+SELECT
+	*
+FROM
+	WordList:Word
+WHERE
+	Text LIKE 'Cat%'
+	AND (LanguageId = 3 OR LanguageId = 5)
+
+SELECT TOP 10 * FROM WordList:Word
+
+
+/*
+SELECT
+    Id, Text, LanguageId
+FROM
+    WordList:Word
+WHERE
+    Text = 'Summary'
+ORDER BY
+    LanguageId ASC,
+    Text DESC
+
+
+SELECT * FROM WordList:Word WHERE Text LIKE '%cat'
+*/
+/*
+
+INSERT INTO WordList:Word
+(
+	Id = 0,
+	Text = 'Sarah',
+	LanguageId = 1
+),
+(
+	Id = 1,
+	Text = 'Brightman'
+)
+*/
+--LIST Documents WordList:Language 100
 
 
 --select top 10 * from WordList:Language
@@ -339,7 +383,7 @@ where
 CREATE PROCEDURE UpdateProductByColorAndGetItsName
 (
 	@ProductColor as string
-) ON AdventureWorks:Production:Product AS
+) ON Wordlist:Word AS
 (
 	UPDATE
 		AdventureWorks:Production:Product

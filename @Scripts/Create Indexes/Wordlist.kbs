@@ -10,14 +10,14 @@ CREATE UNIQUEKEY IX_Id(
     Id
 ) ON WordList:Word WITH (PARTITIONS=100)
 
-CREATE INDEX IX_Synonym_SourceWordId(
-    sourcewordid
+CREATE INDEX IX_SourceWordId(
+    SourcewordId
 ) ON WordList:Synonym WITH (PARTITIONS=1000)
 
-CREATE INDEX IX_FlatTranslate_English(
-    english
+CREATE INDEX IX_English(
+    English
 ) ON WordList:FlatTranslate WITH (PARTITIONS=100)
 
-CREATE INDEX IX_Synonym_TargetWordId(
-    targetwordid
+CREATE INDEX IX_TargetWordId(
+    TargetwordId
 ) ON WordList:Synonym WITH (PARTITIONS=1000)
