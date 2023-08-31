@@ -88,8 +88,17 @@
 			<Word>Max</Word>
 			<Word>Avg</Word>
 			<Word>Count</Word>
-			<Word>Equals</Word>
-			<Word>NotEquals</Word>
+			<Word>Coalesce</Word>
+			<Word>IsGreater</Word>
+			<Word>IsLess</Word>
+			<Word>IsGreaterOrEqual</Word>
+			<Word>IsLessOrEqual</Word>
+			<Word>IsBetween</Word>
+			<Word>IsNotBetween</Word>
+			<Word>IsEqual</Word>
+			<Word>IsNotEqual</Word>
+			<Word>IsLike</Word>
+			<Word>IsNotLike</Word>
 			<Word>DocumentUID</Word>
 			<Word>DocumentPage</Word>
 			<Word>DocumentID</Word>

@@ -50,6 +50,26 @@ namespace Katzebase.Engine.Query.Constraints
             return IsMatch(transaction, passedValue, LogicalQualifier, Right.Value);
         }
 
+        public static bool? IsMatchGreaterOrEqual(Transaction transaction, double? left, double? right)
+        {
+            if (left != null && right != null)
+            {
+                return left >= right;
+            }
+            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
+            return null;
+        }
+
+        public static bool? IsMatchLesserOrEqual(Transaction transaction, double? left, double? right)
+        {
+            if (left != null && right != null)
+            {
+                return left <= right;
+            }
+            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
+            return null;
+        }
+
         public static bool? IsMatchGreaterOrEqual(Transaction transaction, string? left, string? right)
         {
             if (left != null && right != null && int.TryParse(left, out var iLeft))
@@ -78,6 +98,26 @@ namespace Katzebase.Engine.Query.Constraints
             return null;
         }
 
+        public static bool? IsMatchGreater(Transaction transaction, double? left, double? right)
+        {
+            if (left != null && right != null)
+            {
+                return left > right;
+            }
+            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
+            return null;
+        }
+
+        public static bool? IsMatchLesser(Transaction transaction, double? left, double? right)
+        {
+            if (left != null && right != null)
+            {
+                return left < right;
+            }
+            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
+            return null;
+        }
+
         public static bool? IsMatchGreater(Transaction transaction, string? left, string? right)
         {
             if (left != null && right != null && int.TryParse(left, out var iLeft))
@@ -100,7 +140,6 @@ namespace Katzebase.Engine.Query.Constraints
                 {
                     return iLeft < iRight;
                 }
-
             }
             transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
             return null;
@@ -116,6 +155,16 @@ namespace Katzebase.Engine.Query.Constraints
 
             string regexPattern = "^" + Regex.Escape(pattern).Replace("%", ".*").Replace("_", ".") + "$";
             return Regex.IsMatch(input, regexPattern);
+        }
+
+        public static bool? IsMatchBetween(Transaction transaction, double? value, double? rangeLow, double? rangeHigh)
+        {
+            if (value == null || rangeLow == null || rangeHigh == null)
+            {
+                transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
+            }
+
+            return value >= rangeLow && value <= rangeHigh;
         }
 
         public static bool? IsMatchBetween(Transaction transaction, string? input, string? pattern)

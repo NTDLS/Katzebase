@@ -311,12 +311,12 @@ namespace Katzebase.Engine.Query.Searchers
                 {
                     lock (param.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
                     {
-                        ExecuteFunctions(param, resultingRows);
+                        ExecuteFunctions(param.Transaction, param, resultingRows);
                     }
                 }
                 else
                 {
-                    ExecuteFunctions(param, resultingRows);
+                    ExecuteFunctions(param.Transaction, param, resultingRows);
                 }
 
                 lock (param.Results)
@@ -334,13 +334,13 @@ namespace Katzebase.Engine.Query.Searchers
             }
         }
 
-        static void ExecuteFunctions(LookupThreadParam param, SchemaIntersectionRowCollection resultingRows)
+        static void ExecuteFunctions(Transaction transaction, LookupThreadParam param, SchemaIntersectionRowCollection resultingRows)
         {
             foreach (var methodField in param.Query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
             {
                 foreach (var row in resultingRows.Collection)
                 {
-                    var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.AuxiliaryFields);
+                    var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(transaction, methodField, row.AuxiliaryFields);
                     row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
 
                     //Lets make the method results available for sorting, grouping, etc.
@@ -356,7 +356,7 @@ namespace Katzebase.Engine.Query.Searchers
             {
                 foreach (var row in resultingRows.Collection)
                 {
-                    var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(methodField, row.AuxiliaryFields);
+                    var methodResult = ScalerFunctionImplementation.CollapseAllFunctionParameters(transaction, methodField, row.AuxiliaryFields);
                     row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
 
                     //Lets make the method results available for sorting, grouping, etc.

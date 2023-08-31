@@ -1,6 +1,8 @@
-﻿using Katzebase.Engine.Documents;
+﻿using Katzebase.Engine.Atomicity;
+using Katzebase.Engine.Documents;
 using Katzebase.Engine.Functions.Parameters;
 using Katzebase.Engine.Library;
+using Katzebase.Engine.Query.Constraints;
 using Katzebase.PublicLibrary.Exceptions;
 using Katzebase.PublicLibrary.Types;
 using System.Globalization;
@@ -15,8 +17,16 @@ namespace Katzebase.Engine.Functions.Scaler
     {
         internal static string[] FunctionPrototypes = {
                 "Guid:",
-                "Equals:string/text1,string/text2",
-                "NotEquals:string/text1,string/text2",
+                "IsGreater:numeric/value1,numeric/value2",
+                "IsLess:numeric/value1,numeric/value2",
+                "IsGreaterOrEqual:numeric/value1,numeric/value2",
+                "IsLessOrEqual:numeric/value1,numeric/value2",
+                "IsBetween:numeric/value,numeric/rangeLow,numeric/rangeHigh",
+                "IsNotBetween:numeric/value,numeric/rangeLow,numeric/rangeHigh",
+                "IsEqual:string/text1,string/text2",
+                "IsNotEqual:string/text1,string/text2",
+                "IsLike:string/text,string/pattern",
+                "IsNotLike:string/text,string/pattern",
                 "DocumentUID:string/schemaAlias",
                 "DocumentPage:string/schemaAlias",
                 "DocumentID:string/schemaAlias",
@@ -27,7 +37,8 @@ namespace Katzebase.Engine.Functions.Scaler
                 "ToUpper:string/text",
                 "Length:string/text",
                 "SubString:string/text,numeric/startIndex,numeric/length",
-                "ConCat:infinite_string/text",
+                "Coalesce:infinite_string/text",
+                "Concat:infinite_string/text",
                 "Trim:string/text",
                 "Checksum:string/text",
                 "Sha1:string/text",
@@ -39,7 +50,7 @@ namespace Katzebase.Engine.Functions.Scaler
                 "IIF:boolean/condition,string/whenTrue,string/whenFalse",
             };
 
-        internal static string? CollapseAllFunctionParameters(FunctionParameterBase param, KbInsensitiveDictionary<string?> rowFields)
+        internal static string? CollapseAllFunctionParameters(Transaction transaction, FunctionParameterBase param, KbInsensitiveDictionary<string?> rowFields)
         {
             if (param is FunctionConstantParameter)
             {
@@ -70,7 +81,7 @@ namespace Katzebase.Engine.Functions.Scaler
                     if (subParam is FunctionWithParams)
                     {
                         string variable = ((FunctionNamedWithParams)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
-                        var value = CollapseAllFunctionParameters(subParam, rowFields);
+                        var value = CollapseAllFunctionParameters(transaction, subParam, rowFields);
                         if (value != null)
                         {
                             expression.Parameters.Add(variable, decimal.Parse(value));
@@ -107,10 +118,10 @@ namespace Katzebase.Engine.Functions.Scaler
 
                 foreach (var subParam in ((FunctionWithParams)param).Parameters)
                 {
-                    subParams.Add(CollapseAllFunctionParameters(subParam, rowFields));
+                    subParams.Add(CollapseAllFunctionParameters(transaction, subParam, rowFields));
                 }
 
-                return ExecuteFunction(((FunctionWithParams)param).Function, subParams, rowFields);
+                return ExecuteFunction(transaction, ((FunctionWithParams)param).Function, subParams, rowFields);
             }
             else
             {
@@ -120,7 +131,7 @@ namespace Katzebase.Engine.Functions.Scaler
         }
 
 
-        private static string? ExecuteFunction(string functionName, List<string?> parameters, KbInsensitiveDictionary<string?> rowFields)
+        private static string? ExecuteFunction(Transaction transaction, string functionName, List<string?> parameters, KbInsensitiveDictionary<string?> rowFields)
         {
             var proc = ScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
@@ -150,10 +161,26 @@ namespace Katzebase.Engine.Functions.Scaler
                         return DocumentPointer.Parse(rowId.Value).PageNumber.ToString();
                     }
 
-                case "equals":
-                    return (proc.Get<string>("text1") == proc.Get<string>("text2")).ToString();
-                case "notequals":
-                    return (proc.Get<string>("text1") != proc.Get<string>("text2")).ToString();
+                case "isgreater":
+                    return (Condition.IsMatchGreater(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
+                case "isless":
+                    return (Condition.IsMatchLesser(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
+                case "isgreaterorequal":
+                    return (Condition.IsMatchGreater(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
+                case "islessorequal":
+                    return (Condition.IsMatchLesserOrEqual(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
+                case "isbetween":
+                    return (Condition.IsMatchBetween(transaction, proc.Get<int>("value"), proc.Get<int>("rangeLow"), proc.Get<int>("rangeHigh")) == true).ToString();
+                case "isnotbetween":
+                    return (Condition.IsMatchBetween(transaction, proc.Get<int>("value"), proc.Get<int>("rangeLow"), proc.Get<int>("rangeHigh")) == false).ToString();
+                case "isequal":
+                    return (Condition.IsMatchEqual(transaction, proc.Get<string>("text1"), proc.Get<string>("text2")) == true).ToString();
+                case "isnotequal":
+                    return (Condition.IsMatchEqual(transaction, proc.Get<string>("text1"), proc.Get<string>("text2")) == false).ToString();
+                case "islike":
+                    return (Condition.IsMatchLike(transaction, proc.Get<string>("text"), proc.Get<string>("pattern")) == true).ToString();
+                case "isnotlike":
+                    return (Condition.IsMatchLike(transaction, proc.Get<string>("text"), proc.Get<string>("pattern")) == false).ToString();
 
                 case "guid":
                     return Guid.NewGuid().ToString();
@@ -204,6 +231,18 @@ namespace Katzebase.Engine.Functions.Scaler
                         }
                         return builder.ToString();
                     }
+                case "coalesce":
+                    {
+                        foreach (var p in parameters)
+                        {
+                            if (p != null)
+                            {
+                                return p;
+                            }
+                        }
+                        return null;
+                    }
+
             }
 
             throw new KbFunctionException($"Undefined function: {functionName}.");

@@ -1,19 +1,22 @@
-select * FROM WordList:Word WHERE Text like 'Catfish'
-select * FROM WordList:Word WHERE Text = 'Catboat'
-select * FROM WordList:Word WHERE Text = 'Cat'
+select TOP 200
+	Id,
+	Text,
 
-catboat
+	IsGreater(Id, 750000) as IsGreater,
+	IsLess(Id, 750000) as IsLess,
+	IsGreaterOrEqual(Id, 750000) as IsGreaterOrEqual,
+	IsLessOrEqual(Id, 750000) as IsLessOrEqual,
 
-SELECT
-	*
-FROM
+	IsBetween(Id, 750000, 850000) as IsBetween,
+	IsNotBetween(Id, 750000, 850000) as IsNotBetween,
+	IsEqual(Text, 'rouge-gorge') as IsEqual,
+	IsNotEqual(Text, 'rouge-gorge') as IsNotEqual,
+	IsLike(Text, '%rouge%') as IsLike,
+	IsNotLike(Text, '%rouge%') as IsNotLike
+from
 	WordList:Word
 WHERE
-	Text LIKE 'Cat%'
-	AND (LanguageId = 3 OR LanguageId = 5)
-
-SELECT TOP 10 * FROM WordList:Word
-
+	Text LIKE '%-gorge'
 
 /*
 SELECT

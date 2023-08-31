@@ -119,7 +119,7 @@ namespace Katzebase.Engine.Documents.Management
                         //Execute functions
                         if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
                         {
-                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, new KbInsensitiveDictionary<string?>());
+                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(transactionReference.Transaction, updateValue.Value, new KbInsensitiveDictionary<string?>());
                         }
                         else if (updateValue.Value is FunctionConstantParameter)
                         {
@@ -185,7 +185,7 @@ namespace Katzebase.Engine.Documents.Management
                         //Execute functions
                         if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
                         {
-                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(updateValue.Value, physicalDocument.Elements);
+                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(transactionReference.Transaction, updateValue.Value, physicalDocument.Elements);
                         }
                         else if (updateValue.Value is FunctionConstantParameter)
                         {
