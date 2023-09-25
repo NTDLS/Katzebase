@@ -1,6 +1,6 @@
-﻿using Katzebase.UI.Controls;
+﻿using NTDLS.Katzebase.UI.Controls;
 
-namespace Katzebase.UI
+namespace NTDLS.Katzebase.UI
 {
     internal partial class FormReplaceText : Form
     {

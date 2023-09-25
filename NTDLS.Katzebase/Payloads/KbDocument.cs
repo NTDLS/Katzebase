@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Katzebase.Payloads
+namespace NTDLS.Katzebase.Payloads
 {
     public class KbDocument
     {

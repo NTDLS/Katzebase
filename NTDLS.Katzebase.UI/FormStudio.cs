@@ -1,13 +1,13 @@
-using Katzebase;
-using Katzebase.Client;
-using Katzebase.UI.Classes;
-using Katzebase.UI.Controls;
-using Katzebase.UI.Properties;
+using NTDLS.Katzebase;
+using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.UI.Classes;
+using NTDLS.Katzebase.UI.Controls;
+using NTDLS.Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
 using System.Text;
 
-namespace Katzebase.UI
+namespace NTDLS.Katzebase.UI
 {
     public partial class FormStudio : Form
     {

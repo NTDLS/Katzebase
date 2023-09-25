@@ -1,9 +1,9 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Functions.Parameters;
-using Katzebase.Exceptions;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Functions.Parameters;
+using NTDLS.Katzebase.Exceptions;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Functions.Procedures
+namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
     internal static class ProcedureCollection
     {

@@ -1,6 +1,6 @@
-﻿using Katzebase.Engine.Library;
+﻿using NTDLS.Katzebase.Engine.Library;
 
-namespace Katzebase.Engine.Sessions
+namespace NTDLS.Katzebase.Engine.Sessions
 {
     public class SessionState
     {

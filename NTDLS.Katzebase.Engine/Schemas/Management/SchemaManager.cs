@@ -1,16 +1,16 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Documents;
-using Katzebase.Engine.Indexes;
-using Katzebase.Engine.Trace;
-using Katzebase;
-using Katzebase.Exceptions;
-using Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Indexes;
+using NTDLS.Katzebase.Engine.Trace;
+using NTDLS.Katzebase;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
 using System.Text;
-using static Katzebase.Engine.Library.EngineConstants;
-using static Katzebase.Engine.Schemas.PhysicalSchema;
-using static Katzebase.Engine.Trace.PerformanceTrace;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Schemas.PhysicalSchema;
+using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace Katzebase.Engine.Schemas.Management
+namespace NTDLS.Katzebase.Engine.Schemas.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to schemas.

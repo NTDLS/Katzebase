@@ -1,6 +1,6 @@
-﻿using Katzebase.Client.Management;
+﻿using NTDLS.Katzebase.Client.Management;
 
-namespace Katzebase.Client
+namespace NTDLS.Katzebase.Client
 {
     public class KbClient : IDisposable
     {

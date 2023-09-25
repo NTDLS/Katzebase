@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Caching.Management
+﻿namespace NTDLS.Katzebase.Engine.Caching.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to cache.

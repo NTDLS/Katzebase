@@ -1,10 +1,10 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Documents;
-using Katzebase.Engine.Query.Searchers.Mapping;
-using Katzebase.Payloads;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
+using NTDLS.Katzebase.Payloads;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Query.Searchers
+namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
     internal class StaticSearcherMethods
     {

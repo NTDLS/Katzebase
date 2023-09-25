@@ -1,9 +1,9 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Schemas;
-using Katzebase;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Documents.Management
+namespace NTDLS.Katzebase.Engine.Documents.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to documents.

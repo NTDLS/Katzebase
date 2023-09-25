@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Query
+﻿namespace NTDLS.Katzebase.Engine.Query
 {
     public class PrefixedField
     {

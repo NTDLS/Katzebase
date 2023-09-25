@@ -1,14 +1,14 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Documents;
-using Katzebase.Engine.Functions.Parameters;
-using Katzebase.Engine.Library;
-using Katzebase.Engine.Query.Constraints;
-using Katzebase.Exceptions;
-using Katzebase.Types;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Functions.Parameters;
+using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Query.Constraints;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Types;
 using System.Globalization;
 using System.Text;
 
-namespace Katzebase.Engine.Functions.Scaler
+namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
     /// <summary>
     /// Contains all function protype defintions, function implementations and expression collapse functionality.

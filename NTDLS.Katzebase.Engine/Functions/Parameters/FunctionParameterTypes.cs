@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Functions.Parameters
+﻿namespace NTDLS.Katzebase.Engine.Functions.Parameters
 {
     internal static class FunctionParameterTypes
     {

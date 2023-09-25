@@ -1,7 +1,7 @@
-﻿using Katzebase.Engine.Functions.Procedures.Persistent;
-using Katzebase.Engine.Schemas;
+﻿using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
+using NTDLS.Katzebase.Engine.Schemas;
 
-namespace Katzebase.Engine.Functions.Procedures
+namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
     internal class AppliedProcedurePrototype
     {

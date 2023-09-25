@@ -1,22 +1,22 @@
-﻿using Katzebase.Engine.Atomicity.Management;
-using Katzebase.Engine.Caching.Management;
-using Katzebase.Engine.Documents.Management;
-using Katzebase.Engine.Functions.Management;
-using Katzebase.Engine.Health.Management;
-using Katzebase.Engine.Heartbeat.Management;
-using Katzebase.Engine.Indexes.Management;
-using Katzebase.Engine.IO;
-using Katzebase.Engine.Locking;
-using Katzebase.Engine.Logging;
-using Katzebase.Engine.Query.Management;
-using Katzebase.Engine.Schemas.Management;
-using Katzebase.Engine.Sessions.Management;
-using Katzebase.Shared;
+﻿using NTDLS.Katzebase.Engine.Atomicity.Management;
+using NTDLS.Katzebase.Engine.Caching.Management;
+using NTDLS.Katzebase.Engine.Documents.Management;
+using NTDLS.Katzebase.Engine.Functions.Management;
+using NTDLS.Katzebase.Engine.Health.Management;
+using NTDLS.Katzebase.Engine.Heartbeat.Management;
+using NTDLS.Katzebase.Engine.Indexes.Management;
+using NTDLS.Katzebase.Engine.IO;
+using NTDLS.Katzebase.Engine.Locking;
+using NTDLS.Katzebase.Engine.Logging;
+using NTDLS.Katzebase.Engine.Query.Management;
+using NTDLS.Katzebase.Engine.Schemas.Management;
+using NTDLS.Katzebase.Engine.Sessions.Management;
+using NTDLS.Katzebase.Shared;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.Caching;
 
-namespace Katzebase.Engine
+namespace NTDLS.Katzebase.Engine
 {
     public class Core
     {

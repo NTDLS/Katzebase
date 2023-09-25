@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Functions.Procedures.Persistent
+﻿namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
 {
     public class PhysicalProcedureParameter
     {

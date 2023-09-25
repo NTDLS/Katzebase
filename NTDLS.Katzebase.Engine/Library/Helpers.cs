@@ -1,8 +1,8 @@
-﻿using Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Exceptions;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Katzebase.Engine.Library
+namespace NTDLS.Katzebase.Engine.Library
 {
     public static class Helpers
     {

@@ -1,7 +1,7 @@
-﻿using Katzebase.Engine.Query;
-using Katzebase.Types;
+﻿using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Types;
 
-namespace Katzebase.Engine.Functions.Parameters
+namespace NTDLS.Katzebase.Engine.Functions.Parameters
 {
     internal class NamedFunctionParameterBaseCollection : KbInsensitiveDictionary<FunctionParameterBase>
     {

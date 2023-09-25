@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Shared
+﻿namespace NTDLS.Katzebase.Shared
 {
     public class KatzebaseSettings
     {

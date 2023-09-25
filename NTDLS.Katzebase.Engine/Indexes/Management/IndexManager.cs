@@ -1,19 +1,19 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Documents;
-using Katzebase.Engine.Indexes.Matching;
-using Katzebase.Engine.Query.Constraints;
-using Katzebase.Engine.Schemas;
-using Katzebase.Engine.Threading;
-using Katzebase;
-using Katzebase.Exceptions;
-using Katzebase.Payloads;
-using Katzebase.Types;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Indexes.Matching;
+using NTDLS.Katzebase.Engine.Query.Constraints;
+using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.Engine.Threading;
+using NTDLS.Katzebase;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
+using NTDLS.Katzebase.Types;
 using System.Text;
-using static Katzebase.Engine.Indexes.Matching.IndexConstants;
-using static Katzebase.Engine.Library.EngineConstants;
-using static Katzebase.Engine.Trace.PerformanceTrace;
+using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace Katzebase.Engine.Indexes.Management
+namespace NTDLS.Katzebase.Engine.Indexes.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to indexes.

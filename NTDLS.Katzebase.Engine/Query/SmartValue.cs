@@ -1,6 +1,6 @@
-﻿using Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Exceptions;
 
-namespace Katzebase.Engine.Query
+namespace NTDLS.Katzebase.Engine.Query
 {
     public class SmartValue
     {

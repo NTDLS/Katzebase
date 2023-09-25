@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace Katzebase.Engine.Documents
+namespace NTDLS.Katzebase.Engine.Documents
 {
     /// <summary>
     /// This is the master document page catalog, it is physically written to disk and

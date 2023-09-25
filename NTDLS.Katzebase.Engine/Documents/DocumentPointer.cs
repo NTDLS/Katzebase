@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Documents
+﻿namespace NTDLS.Katzebase.Engine.Documents
 {
     /// <summary>
     /// This is a simple class that contains a document page number as well as the page ID.

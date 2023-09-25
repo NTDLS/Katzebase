@@ -1,10 +1,10 @@
-﻿using Katzebase.Engine.Query;
-using Katzebase.Exceptions;
-using Katzebase.Payloads;
-using static Katzebase.Engine.Library.EngineConstants;
-using static Katzebase.KbConstants;
+﻿using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Engine.Indexes.Management
+namespace NTDLS.Katzebase.Engine.Indexes.Management
 {
     /// <summary>
     /// Internal class methods for handling query requests related to indexes.

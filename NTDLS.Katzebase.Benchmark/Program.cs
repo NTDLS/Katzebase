@@ -1,11 +1,11 @@
-﻿using Katzebase;
-using Katzebase.Client;
-using Katzebase.Payloads;
+﻿using NTDLS.Katzebase;
+using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Payloads;
 using System.Diagnostics;
 using System.IO.Compression;
 using System.Text;
 
-namespace Katzebase.Benchmark
+namespace NTDLS.Katzebase.Benchmark
 {
     internal class Program
     {

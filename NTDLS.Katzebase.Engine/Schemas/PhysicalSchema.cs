@@ -1,9 +1,9 @@
-﻿using Katzebase.Engine.Documents;
-using Katzebase.Engine.Library;
-using Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Payloads;
 using Newtonsoft.Json;
 
-namespace Katzebase.Engine.Schemas
+namespace NTDLS.Katzebase.Engine.Schemas
 {
     public class PhysicalSchema
     {

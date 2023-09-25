@@ -1,6 +1,6 @@
-﻿using static Katzebase.KbConstants;
+﻿using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Exceptions
+namespace NTDLS.Katzebase.Exceptions
 {
     public class KbExceptionBase : Exception
     {

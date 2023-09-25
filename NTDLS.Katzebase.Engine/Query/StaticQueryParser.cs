@@ -1,13 +1,13 @@
-﻿using Katzebase.Engine.Functions;
-using Katzebase.Engine.Functions.Procedures;
-using Katzebase.Engine.Functions.Procedures.Persistent;
-using Katzebase.Engine.Query.Constraints;
-using Katzebase.Engine.Query.Tokenizers;
-using Katzebase.Exceptions;
-using static Katzebase.Engine.Library.EngineConstants;
-using static Katzebase.KbConstants;
+﻿using NTDLS.Katzebase.Engine.Functions;
+using NTDLS.Katzebase.Engine.Functions.Procedures;
+using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
+using NTDLS.Katzebase.Engine.Query.Constraints;
+using NTDLS.Katzebase.Engine.Query.Tokenizers;
+using NTDLS.Katzebase.Exceptions;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Engine.Query
+namespace NTDLS.Katzebase.Engine.Query
 {
     internal class StaticQueryParser
     {

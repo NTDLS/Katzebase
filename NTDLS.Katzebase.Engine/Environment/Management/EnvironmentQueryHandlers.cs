@@ -1,9 +1,9 @@
-﻿using Katzebase.Engine.Query;
-using Katzebase.Exceptions;
-using Katzebase.Payloads;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Health.Management
+namespace NTDLS.Katzebase.Engine.Health.Management
 {
     /// <summary>
     /// Internal class methods for handling query requests related to configuration.

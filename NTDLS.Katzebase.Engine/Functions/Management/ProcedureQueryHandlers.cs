@@ -1,10 +1,10 @@
-﻿using Katzebase.Engine.Functions.Procedures.Persistent;
-using Katzebase.Engine.Query;
-using Katzebase.Exceptions;
-using Katzebase.Payloads;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
+using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Functions.Management
+namespace NTDLS.Katzebase.Engine.Functions.Management
 {
     /// <summary>
     /// Internal class methods for handling query requests related to procedures.

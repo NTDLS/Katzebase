@@ -1,9 +1,9 @@
-﻿using Katzebase;
-using Katzebase.Exceptions;
-using Katzebase.Types;
+﻿using NTDLS.Katzebase;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Types;
 using System.Text.RegularExpressions;
 
-namespace Katzebase.Engine.Query.Tokenizers
+namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 {
     public class QueryTokenizer
     {

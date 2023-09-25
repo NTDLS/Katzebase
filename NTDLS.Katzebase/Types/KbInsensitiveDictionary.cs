@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Types
+﻿namespace NTDLS.Katzebase.Types
 {
     /// <summary>
     /// The katzebase Case-insensitive lookup.

@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Schemas
+﻿namespace NTDLS.Katzebase.Engine.Schemas
 {
     public class PhysicalSchemaCatalog
     {

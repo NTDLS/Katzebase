@@ -1,6 +1,6 @@
-using Katzebase.UI.Classes;
+using NTDLS.Katzebase.UI.Classes;
 
-namespace Katzebase.UI
+namespace NTDLS.Katzebase.UI
 {
     internal static class Program
     {

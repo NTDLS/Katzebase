@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace Katzebase.Engine.Documents
+namespace NTDLS.Katzebase.Engine.Documents
 {
     /// <summary>
     /// This is the actual file that gets saved for each document page. It contains the

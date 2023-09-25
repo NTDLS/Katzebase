@@ -1,6 +1,6 @@
-﻿using Katzebase.Client;
+﻿using NTDLS.Katzebase.Client;
 
-namespace Katzebase.UI
+namespace NTDLS.Katzebase.UI
 {
     public partial class FormConnect : Form
     {

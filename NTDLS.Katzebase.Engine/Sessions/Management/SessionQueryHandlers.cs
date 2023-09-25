@@ -1,9 +1,9 @@
-﻿using Katzebase.Engine.Query;
-using Katzebase.Exceptions;
-using Katzebase.Payloads;
-using static Katzebase.Engine.Sessions.SessionState;
+﻿using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
+using static NTDLS.Katzebase.Engine.Sessions.SessionState;
 
-namespace Katzebase.Engine.Sessions.Management
+namespace NTDLS.Katzebase.Engine.Sessions.Management
 {
     /// <summary>
     /// Internal class methods for handling query requests related to sessions.

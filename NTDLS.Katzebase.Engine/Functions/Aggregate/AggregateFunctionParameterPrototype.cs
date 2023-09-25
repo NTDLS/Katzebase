@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Functions.Aggregate
+﻿namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
     /// <summary>
     /// A parsed function parameter prototype

@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Query.Searchers
+﻿namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
     public class DocumentLookupResult
     {

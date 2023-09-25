@@ -1,6 +1,6 @@
-﻿using Katzebase.Engine.Documents;
+﻿using NTDLS.Katzebase.Engine.Documents;
 
-namespace Katzebase.Engine.Query.Searchers.Intersection
+namespace NTDLS.Katzebase.Engine.Query.Searchers.Intersection
 {
     internal class DocumentPointerMatch : DocumentPointer
     {

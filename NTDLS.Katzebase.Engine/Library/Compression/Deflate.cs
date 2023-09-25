@@ -1,7 +1,7 @@
 ﻿using System.IO.Compression;
 using System.Text;
 
-namespace Katzebase.Engine.Library.Compression
+namespace NTDLS.Katzebase.Engine.Library.Compression
 {
     public static class Deflate
     {

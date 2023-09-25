@@ -1,8 +1,8 @@
-﻿using Katzebase.Exceptions;
-using Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
 using Newtonsoft.Json;
 
-namespace Katzebase.Client.Management
+namespace NTDLS.Katzebase.Client.Management
 {
     public class KbSchemaClient
     {

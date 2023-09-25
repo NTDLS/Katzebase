@@ -1,12 +1,12 @@
-﻿using Katzebase.Engine.Library;
-using Katzebase.Engine.Query.Tokenizers;
-using Katzebase;
-using Katzebase.Exceptions;
-using Katzebase.Types;
+﻿using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Query.Tokenizers;
+using NTDLS.Katzebase;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Types;
 using System.Text;
-using static Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Query.Constraints
+namespace NTDLS.Katzebase.Engine.Query.Constraints
 {
     internal class Conditions
     {

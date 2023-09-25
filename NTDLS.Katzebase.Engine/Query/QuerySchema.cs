@@ -1,6 +1,6 @@
-﻿using Katzebase.Engine.Query.Constraints;
+﻿using NTDLS.Katzebase.Engine.Query.Constraints;
 
-namespace Katzebase.Engine.Query
+namespace NTDLS.Katzebase.Engine.Query
 {
     internal class QuerySchema
     {

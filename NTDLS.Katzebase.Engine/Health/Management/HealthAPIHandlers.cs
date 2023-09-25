@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Health.Management
+﻿namespace NTDLS.Katzebase.Engine.Health.Management
 {
     /// <summary>
     /// Public class methods for handling API requests related to health.

@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Atomicity.Management
+﻿namespace NTDLS.Katzebase.Engine.Atomicity.Management
 {
     /// <summary>
     /// Public class methods for handling API requests related to transactions.

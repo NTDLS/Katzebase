@@ -1,6 +1,6 @@
-﻿using static Katzebase.Engine.Library.EngineConstants;
+﻿using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Indexes.Matching
+namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
     public class IndexKeyMatch
     {

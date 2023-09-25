@@ -1,12 +1,12 @@
 ﻿using ICSharpCode.AvalonEdit;
-using Katzebase;
-using Katzebase.Client;
-using Katzebase.Exceptions;
-using Katzebase.Payloads;
-using Katzebase.UI.Classes;
+using NTDLS.Katzebase;
+using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
+using NTDLS.Katzebase.UI.Classes;
 using System.Text;
 
-namespace Katzebase.UI.Controls
+namespace NTDLS.Katzebase.UI.Controls
 {
     internal class TabFilePage : TabPage, IDisposable
     {

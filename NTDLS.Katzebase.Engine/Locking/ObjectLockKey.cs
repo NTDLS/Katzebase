@@ -1,6 +1,6 @@
-﻿using static Katzebase.Engine.Library.EngineConstants;
+﻿using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Locking
+namespace NTDLS.Katzebase.Engine.Locking
 {
     internal class ObjectLockKey
     {

@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace Katzebase.Engine.Indexes
+namespace NTDLS.Katzebase.Engine.Indexes
 {
     [ProtoContract]
     public class PhysicalIndexEntry

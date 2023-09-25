@@ -1,10 +1,10 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Library;
-using Katzebase;
-using Katzebase.Exceptions;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase;
+using NTDLS.Katzebase.Exceptions;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Locking
+namespace NTDLS.Katzebase.Engine.Locking
 {
     internal class ObjectLocks
     {

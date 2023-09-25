@@ -1,6 +1,6 @@
-﻿using static Katzebase.KbConstants;
+﻿using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Payloads
+namespace NTDLS.Katzebase.Payloads
 {
     public class KbQueryResultMessage
     {

@@ -1,7 +1,7 @@
-﻿using Katzebase.Types;
-using static Katzebase.KbConstants;
+﻿using NTDLS.Katzebase.Types;
+using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Engine.Query.Sorting
+namespace NTDLS.Katzebase.Engine.Query.Sorting
 {
     public class ResultValueComparer : IComparer<KbInsensitiveDictionary<string?>>
     {

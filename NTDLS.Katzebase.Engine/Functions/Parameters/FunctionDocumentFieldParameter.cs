@@ -1,6 +1,6 @@
-﻿using Katzebase.Engine.Query;
+﻿using NTDLS.Katzebase.Engine.Query;
 
-namespace Katzebase.Engine.Functions.Parameters
+namespace NTDLS.Katzebase.Engine.Functions.Parameters
 {
     internal class FunctionDocumentFieldParameter : FunctionParameterBase
     {

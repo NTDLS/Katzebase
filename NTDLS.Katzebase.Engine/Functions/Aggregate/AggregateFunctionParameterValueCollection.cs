@@ -1,8 +1,8 @@
-﻿using Katzebase.Engine.Functions.Aggregate.Parameters;
-using Katzebase.Engine.Library;
-using Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
+using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Exceptions;
 
-namespace Katzebase.Engine.Functions.Aggregate
+namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
     internal class AggregateFunctionParameterValueCollection
     {

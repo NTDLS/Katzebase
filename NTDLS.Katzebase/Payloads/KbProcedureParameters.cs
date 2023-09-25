@@ -1,6 +1,6 @@
-﻿using Katzebase.Types;
+﻿using NTDLS.Katzebase.Types;
 
-namespace Katzebase.Payloads
+namespace NTDLS.Katzebase.Payloads
 {
     public class KbProcedureParameters
     {

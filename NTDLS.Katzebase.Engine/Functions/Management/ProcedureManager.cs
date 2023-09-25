@@ -1,17 +1,17 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Functions.Parameters;
-using Katzebase.Engine.Functions.Procedures;
-using Katzebase.Engine.Functions.Procedures.Persistent;
-using Katzebase.Engine.Functions.Scaler;
-using Katzebase.Engine.Schemas;
-using Katzebase;
-using Katzebase.Exceptions;
-using Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Functions.Parameters;
+using NTDLS.Katzebase.Engine.Functions.Procedures;
+using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
+using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
 using System.Diagnostics;
 using System.Text;
-using static Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Functions.Management
+namespace NTDLS.Katzebase.Engine.Functions.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to procedures.

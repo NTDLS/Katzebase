@@ -1,7 +1,7 @@
-﻿using Katzebase.Types;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Types;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Health.Management
+namespace NTDLS.Katzebase.Engine.Health.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to health.

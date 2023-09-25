@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Functions.Procedures
+﻿namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
     internal class ProcedureParameterValue
     {

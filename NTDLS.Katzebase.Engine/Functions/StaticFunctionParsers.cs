@@ -1,12 +1,12 @@
-﻿using Katzebase.Engine.Functions.Parameters;
-using Katzebase.Engine.Query;
-using Katzebase.Engine.Query.Tokenizers;
-using Katzebase.Exceptions;
-using Katzebase.Types;
+﻿using NTDLS.Katzebase.Engine.Functions.Parameters;
+using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Query.Tokenizers;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Types;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Katzebase.Engine.Functions
+namespace NTDLS.Katzebase.Engine.Functions
 {
     internal class StaticFunctionParsers
     {

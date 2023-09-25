@@ -1,11 +1,11 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Shared;
-using Katzebase;
-using Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Shared;
+using NTDLS.Katzebase;
+using NTDLS.Katzebase.Exceptions;
 using System.Text.Json;
-using static Katzebase.Engine.Query.PreparedQuery;
+using static NTDLS.Katzebase.Engine.Query.PreparedQuery;
 
-namespace Katzebase.Engine.Health.Management
+namespace NTDLS.Katzebase.Engine.Health.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to configuration.

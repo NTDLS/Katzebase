@@ -1,4 +1,4 @@
-﻿namespace Katzebase.UI
+﻿namespace NTDLS.Katzebase.UI
 {
     partial class FormConnect
     {

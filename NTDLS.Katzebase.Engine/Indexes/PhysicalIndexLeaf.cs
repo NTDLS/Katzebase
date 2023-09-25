@@ -1,7 +1,7 @@
-﻿using Katzebase.Types;
+﻿using NTDLS.Katzebase.Types;
 using ProtoBuf;
 
-namespace Katzebase.Engine.Indexes
+namespace NTDLS.Katzebase.Engine.Indexes
 {
     [ProtoContract]
     internal class PhysicalIndexLeaf

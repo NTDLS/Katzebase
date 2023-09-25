@@ -1,9 +1,9 @@
-﻿using Katzebase;
-using Katzebase.Payloads;
+﻿using NTDLS.Katzebase;
+using NTDLS.Katzebase.Payloads;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 
-namespace Katzebase.Service.Controllers
+namespace NTDLS.Katzebase.Service.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

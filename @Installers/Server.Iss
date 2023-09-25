@@ -5,8 +5,8 @@
  AppCopyright                     = Copyright © 1995-2023 NetworkDLS.
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase\Service
  DefaultGroupName                 = NetworkDLS\Katzebase
- UninstallDisplayIcon             = {app}\Katzebase.Service.exe
- SetupIconFile                    = "..\@Art\Catzebase.ico"
+ UninstallDisplayIcon             = {app}\NTDLS.Katzebase.Service.exe
+ SetupIconFile                    = "..\@Art\Katzebase.ico"
  PrivilegesRequired               = admin
  Uninstallable                    = Yes
  MinVersion                       = 0.0,7.0
@@ -22,11 +22,11 @@
  AppVersion      = 1.0.0.0
 
 [Files]
- Source: "..\Katzebase.Service\bin\Release\net7.0\runtimes\*.*";  DestDir: "{app}\runtimes"; Flags: IgnoreVersion recursesubdirs;
- Source: "..\Katzebase.Service\bin\Release\net7.0\*.exe";         DestDir: "{app}";          Flags: IgnoreVersion;
- Source: "..\Katzebase.Service\bin\Release\net7.0\*.dll";         DestDir: "{app}";          Flags: IgnoreVersion;
- Source: "..\Katzebase.Service\bin\Release\net7.0\*.json";        DestDir: "{app}";          Flags: IgnoreVersion;
- Source: "ServerSettings\*.*";                                    DestDir: "{app}";          Flags: IgnoreVersion;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\runtimes\*.*";  DestDir: "{app}\runtimes"; Flags: IgnoreVersion recursesubdirs;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.exe";         DestDir: "{app}";          Flags: IgnoreVersion;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.dll";         DestDir: "{app}";          Flags: IgnoreVersion;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.json";        DestDir: "{app}";          Flags: IgnoreVersion;
+ Source: "ServerSettings\*.*";                                          DestDir: "{app}";          Flags: IgnoreVersion;
 
 [Registry]
  Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Service";                                                             Flags: uninsdeletekey noerror;
@@ -38,8 +38,9 @@
 ; Name: DesktopIcon\User;   Description: "For the current user only"; GroupDescription: "Additional icons:"; Components: SSUI; Flags: exclusive unchecked
 
 [Run]
- Filename: "{app}\Katzebase.Service.exe"; Parameters: "install"; Flags: runhidden; StatusMsg: "Installing service..."
- Filename: "{app}\Katzebase.Service.exe"; Parameters: "start"; Flags: runhidden; StatusMsg: "Starting service..."
+ Filename: "{app}\NTDLS.Katzebase.Service.exe"; Parameters: "install"; Flags: runhidden; StatusMsg: "Installing service..."
+ Filename: "{app}\NTDLS.Katzebase.Service.exe"; Parameters: "start"; Flags: runhidden; StatusMsg: "Starting service..."
 
 [UninstallRun]
- Filename: "{app}\Katzebase.Service.exe"; Parameters: "uninstall"; Flags: runhidden; StatusMsg: "Installing service..."
+ Filename: "{app}\NTDLS.Katzebase.Service.exe"; Parameters: "uninstall"; Flags: runhidden; StatusMsg: "Installing service..."; RunOnceId: "ServiceRemoval"
+ 

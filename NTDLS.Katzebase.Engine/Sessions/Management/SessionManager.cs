@@ -1,6 +1,6 @@
-﻿using Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Exceptions;
 
-namespace Katzebase.Engine.Sessions.Management
+namespace NTDLS.Katzebase.Engine.Sessions.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to sessions.

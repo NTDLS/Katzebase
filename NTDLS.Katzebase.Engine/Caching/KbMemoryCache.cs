@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Caching
+﻿namespace NTDLS.Katzebase.Engine.Caching
 {
     internal class KbMemoryCache : IDisposable
     {

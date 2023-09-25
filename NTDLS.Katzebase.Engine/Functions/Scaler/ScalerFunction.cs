@@ -1,6 +1,6 @@
-﻿using Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Exceptions;
 
-namespace Katzebase.Engine.Functions.Scaler
+namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
     /// <summary>
     /// Contains a parsed function prototype.

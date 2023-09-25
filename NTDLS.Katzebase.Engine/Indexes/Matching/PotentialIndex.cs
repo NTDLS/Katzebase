@@ -1,6 +1,6 @@
-﻿using Katzebase.Engine.Query;
+﻿using NTDLS.Katzebase.Engine.Query;
 
-namespace Katzebase.Engine.Indexes.Matching
+namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
     public class PotentialIndex
     {

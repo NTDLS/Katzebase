@@ -1,6 +1,6 @@
-﻿using static Katzebase.KbConstants;
+﻿using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Engine.Query
+namespace NTDLS.Katzebase.Engine.Query
 {
     public class SortField : PrefixedField
     {

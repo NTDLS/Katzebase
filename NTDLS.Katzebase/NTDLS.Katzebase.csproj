@@ -7,9 +7,9 @@
     <Nullable>enable</Nullable>
     <Company>NetworkDLS</Company>
     <Copyright>Copyright © 2023 NetworkDLS</Copyright>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>1.0.0</FileVersion>
-    <VersionPrefix>1.0.0</VersionPrefix>
+    <AssemblyVersion>1.0.1</AssemblyVersion>
+    <FileVersion>1.0.1</FileVersion>
+    <VersionPrefix>1.0.1</VersionPrefix>
     <Authors>NetworkDLS</Authors>
     <ApplicationIcon>NTDLS.Katzebase.ico</ApplicationIcon>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -21,7 +21,7 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.Katzebase</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>database;nosql;rdbms;webapi;unstructured-data</PackageTags>
-    <PackageReleaseNotes>Initial release</PackageReleaseNotes>
+    <PackageReleaseNotes>Chanegd namespace.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 

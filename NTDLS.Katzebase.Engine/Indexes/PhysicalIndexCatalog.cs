@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Katzebase.Engine.Indexes
+namespace NTDLS.Katzebase.Engine.Indexes
 {
     [Serializable]
     public class PhysicalIndexCatalog

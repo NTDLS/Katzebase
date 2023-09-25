@@ -1,12 +1,12 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Indexes.Matching;
-using Katzebase.Engine.Schemas;
-using Katzebase;
-using Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Indexes.Matching;
+using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase;
+using NTDLS.Katzebase.Exceptions;
 using System.Text;
-using static Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Query.Constraints
+namespace NTDLS.Katzebase.Engine.Query.Constraints
 {
     internal class ConditionLookupOptimization
     {

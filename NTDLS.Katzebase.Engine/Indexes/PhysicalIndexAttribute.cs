@@ -1,6 +1,6 @@
-﻿using Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Payloads;
 
-namespace Katzebase.Engine.Indexes
+namespace NTDLS.Katzebase.Engine.Indexes
 {
     public class PhysicalIndexAttribute
     {

@@ -1,16 +1,16 @@
-﻿using Katzebase.Engine.Atomicity.Management;
-using Katzebase.Engine.IO;
-using Katzebase.Engine.Library;
-using Katzebase.Engine.Locking;
-using Katzebase.Engine.Trace;
-using Katzebase;
-using Katzebase.Exceptions;
-using Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Engine.Atomicity.Management;
+using NTDLS.Katzebase.Engine.IO;
+using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Locking;
+using NTDLS.Katzebase.Engine.Trace;
+using NTDLS.Katzebase;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
 using Newtonsoft.Json;
-using static Katzebase.Engine.Library.EngineConstants;
-using static Katzebase.KbConstants;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Engine.Atomicity
+namespace NTDLS.Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {

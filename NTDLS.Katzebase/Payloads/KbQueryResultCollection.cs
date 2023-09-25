@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Payloads
+﻿namespace NTDLS.Katzebase.Payloads
 {
     /// <summary>
     /// KbQueryResult is used to return a collection of field-sets and their associated row values.

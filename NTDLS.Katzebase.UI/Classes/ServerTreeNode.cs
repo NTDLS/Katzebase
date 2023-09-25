@@ -1,6 +1,6 @@
-﻿using static Katzebase.UI.Classes.Constants;
+﻿using static NTDLS.Katzebase.UI.Classes.Constants;
 
-namespace Katzebase.UI.Classes
+namespace NTDLS.Katzebase.UI.Classes
 {
     public class ServerTreeNode : TreeNode
     {

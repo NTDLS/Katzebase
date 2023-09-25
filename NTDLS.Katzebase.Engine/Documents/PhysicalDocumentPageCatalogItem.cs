@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace Katzebase.Engine.Documents
+namespace NTDLS.Katzebase.Engine.Documents
 {
     /// <summary>
     /// This is the collection item that is physically written to disk via PhysicalDocumentPageCatalog. It contains the

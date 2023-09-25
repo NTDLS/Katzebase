@@ -1,8 +1,8 @@
-﻿using Katzebase.Engine.Documents;
-using Katzebase.Exceptions;
-using Katzebase.Types;
+﻿using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Types;
 
-namespace Katzebase.Engine.Query.Searchers.Intersection
+namespace NTDLS.Katzebase.Engine.Query.Searchers.Intersection
 {
     internal class SchemaIntersectionRow
     {

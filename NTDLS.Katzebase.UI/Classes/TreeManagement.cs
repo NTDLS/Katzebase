@@ -1,7 +1,7 @@
-﻿using Katzebase.Client;
-using static Katzebase.UI.Classes.Constants;
+﻿using NTDLS.Katzebase.Client;
+using static NTDLS.Katzebase.UI.Classes.Constants;
 
-namespace Katzebase.UI.Classes
+namespace NTDLS.Katzebase.UI.Classes
 {
     public static class TreeManagement
     {

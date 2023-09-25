@@ -1,8 +1,8 @@
-﻿using Katzebase.Engine.Query.Tokenizers;
-using Katzebase.Exceptions;
-using Katzebase.Types;
+﻿using NTDLS.Katzebase.Engine.Query.Tokenizers;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Types;
 
-namespace Katzebase.Engine.Query
+namespace NTDLS.Katzebase.Engine.Query
 {
     internal class WithOption
     {

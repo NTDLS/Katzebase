@@ -1,6 +1,6 @@
-﻿using static Katzebase.Engine.Trace.PerformanceTrace;
+﻿using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace Katzebase.Engine.Trace
+namespace NTDLS.Katzebase.Engine.Trace
 {
     internal class PerformanceTraceDurationTracker
     {

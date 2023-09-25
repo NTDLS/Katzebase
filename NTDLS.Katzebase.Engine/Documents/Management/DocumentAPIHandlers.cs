@@ -1,8 +1,8 @@
-﻿using Katzebase.Engine.Query.Searchers;
-using Katzebase.Payloads;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Engine.Query.Searchers;
+using NTDLS.Katzebase.Payloads;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Documents.Management
+namespace NTDLS.Katzebase.Engine.Documents.Management
 {
     /// <summary>
     /// Public class methods for handling API requests related to documents.

@@ -1,9 +1,9 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Documents;
-using Katzebase.Engine.Query.Constraints;
-using Katzebase.Engine.Schemas;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Query.Constraints;
+using NTDLS.Katzebase.Engine.Schemas;
 
-namespace Katzebase.Engine.Query.Searchers.Mapping
+namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
 {
     /// <summary>
     /// This class maps the schema and documents to a query supplied schema alias.

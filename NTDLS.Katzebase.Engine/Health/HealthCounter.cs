@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
-using static Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Health
+namespace NTDLS.Katzebase.Engine.Health
 {
     public class HealthCounter
     {

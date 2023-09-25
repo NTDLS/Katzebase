@@ -1,6 +1,6 @@
-﻿using static Katzebase.KbConstants;
+﻿using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Engine.Logging
+namespace NTDLS.Katzebase.Engine.Logging
 {
     public class LogEntry
     {

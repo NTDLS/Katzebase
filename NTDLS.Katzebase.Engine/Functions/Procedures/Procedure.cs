@@ -1,7 +1,7 @@
-﻿using Katzebase.Engine.Functions.Parameters;
-using Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Engine.Functions.Parameters;
+using NTDLS.Katzebase.Exceptions;
 
-namespace Katzebase.Engine.Functions.Procedures
+namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
     /// <summary>
     /// Contains a parsed procedure prototype.

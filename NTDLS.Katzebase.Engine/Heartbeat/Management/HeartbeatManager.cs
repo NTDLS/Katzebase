@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Heartbeat.Management
+﻿namespace NTDLS.Katzebase.Engine.Heartbeat.Management
 {
     internal class HeartbeatManager
     {

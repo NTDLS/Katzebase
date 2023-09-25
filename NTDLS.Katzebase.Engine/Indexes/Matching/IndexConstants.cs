@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Indexes.Matching
+﻿namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
     internal class IndexConstants
     {

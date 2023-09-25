@@ -1,9 +1,9 @@
-﻿using Katzebase.Engine.Functions.Parameters;
-using Katzebase.Engine.Library;
-using Katzebase.Engine.Query.Constraints;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Engine.Functions.Parameters;
+using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Query.Constraints;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Query
+namespace NTDLS.Katzebase.Engine.Query
 {
     /// <summary>
     /// Contains a parsed query via StaticQueryParser.PrepareQuery();

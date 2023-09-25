@@ -1,11 +1,11 @@
-﻿using Katzebase.Engine.Trace;
-using Katzebase;
+﻿using NTDLS.Katzebase.Engine.Trace;
+using NTDLS.Katzebase;
 using Newtonsoft.Json;
-using static Katzebase.Engine.Library.EngineConstants;
-using static Katzebase.Engine.Trace.PerformanceTrace;
-using static Katzebase.KbConstants;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
+using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Engine.Atomicity.Management
+namespace NTDLS.Katzebase.Engine.Atomicity.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to transactions.

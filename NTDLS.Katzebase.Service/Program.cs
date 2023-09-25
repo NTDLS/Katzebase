@@ -1,8 +1,8 @@
-using Katzebase.Engine;
-using Katzebase.Shared;
+using NTDLS.Katzebase.Engine;
+using NTDLS.Katzebase.Shared;
 using Topshelf;
 
-namespace Katzebase.Service
+namespace NTDLS.Katzebase.Service
 {
     public class Program
     {

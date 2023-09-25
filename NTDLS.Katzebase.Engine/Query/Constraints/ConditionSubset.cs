@@ -1,6 +1,6 @@
-﻿using Katzebase.Engine.Indexes.Matching;
+﻿using NTDLS.Katzebase.Engine.Indexes.Matching;
 
-namespace Katzebase.Engine.Query.Constraints
+namespace NTDLS.Katzebase.Engine.Query.Constraints
 {
     internal class ConditionSubset
     {

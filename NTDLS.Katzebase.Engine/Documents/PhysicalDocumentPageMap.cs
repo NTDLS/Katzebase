@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace Katzebase.Engine.Documents
+namespace NTDLS.Katzebase.Engine.Documents
 {
     /// <summary>
     /// Contains the list of document IDs that exist in a page.

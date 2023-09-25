@@ -1,7 +1,7 @@
-﻿using Katzebase.Types;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Types;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.IO
+namespace NTDLS.Katzebase.Engine.IO
 {
     internal class DeferredDiskIO
     {

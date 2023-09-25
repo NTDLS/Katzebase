@@ -1,8 +1,8 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Sessions;
-using Katzebase;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Sessions;
+using NTDLS.Katzebase;
 
-namespace Katzebase.Engine.Threading
+namespace NTDLS.Katzebase.Engine.Threading
 {
     public static class ThreadPoolHelper
     {

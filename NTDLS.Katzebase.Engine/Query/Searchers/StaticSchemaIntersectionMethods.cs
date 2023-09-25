@@ -1,22 +1,22 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Documents;
-using Katzebase.Engine.Functions.Aggregate;
-using Katzebase.Engine.Functions.Parameters;
-using Katzebase.Engine.Functions.Scaler;
-using Katzebase.Engine.Query.Constraints;
-using Katzebase.Engine.Query.Searchers.Intersection;
-using Katzebase.Engine.Query.Searchers.Mapping;
-using Katzebase.Engine.Query.Sorting;
-using Katzebase.Engine.Threading;
-using Katzebase;
-using Katzebase.Exceptions;
-using Katzebase.Types;
-using static Katzebase.Engine.Documents.DocumentPointer;
-using static Katzebase.Engine.Library.EngineConstants;
-using static Katzebase.Engine.Trace.PerformanceTrace;
-using static Katzebase.KbConstants;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Functions.Aggregate;
+using NTDLS.Katzebase.Engine.Functions.Parameters;
+using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Query.Constraints;
+using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
+using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
+using NTDLS.Katzebase.Engine.Query.Sorting;
+using NTDLS.Katzebase.Engine.Threading;
+using NTDLS.Katzebase;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Types;
+using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
+using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Engine.Query.Searchers
+namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
     internal static class StaticSchemaIntersectionMethods
     {

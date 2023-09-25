@@ -1,7 +1,7 @@
-﻿using Katzebase.Engine.Library;
-using Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Exceptions;
 
-namespace Katzebase.Engine.Functions.Procedures
+namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
     internal class ProcedureParameterValueCollection
     {

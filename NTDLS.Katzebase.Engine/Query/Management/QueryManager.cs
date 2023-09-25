@@ -1,11 +1,11 @@
-﻿using Katzebase.Engine.Functions.Aggregate;
-using Katzebase.Engine.Functions.Scaler;
-using Katzebase.Exceptions;
-using Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Engine.Functions.Aggregate;
+using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
 using System.Text;
-using static Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Query.Management
+namespace NTDLS.Katzebase.Engine.Query.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to queries.

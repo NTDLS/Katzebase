@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace Katzebase.Engine.Query.Tokenizers
+namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 {
     public class TokenHelpers
     {

@@ -1,12 +1,12 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Engine.Documents;
-using Katzebase.Engine.Library;
-using Katzebase;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase;
 using Newtonsoft.Json;
-using static Katzebase.Engine.Library.EngineConstants;
-using static Katzebase.Engine.Trace.PerformanceTrace;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace Katzebase.Engine.IO
+namespace NTDLS.Katzebase.Engine.IO
 {
     //Internal core class methods for locking, reading, writing and managing tasks related to disk I/O.
     internal class IOManager

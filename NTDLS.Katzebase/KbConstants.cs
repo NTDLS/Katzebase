@@ -1,4 +1,4 @@
-﻿namespace Katzebase
+﻿namespace NTDLS.Katzebase
 {
     public static class KbConstants
     {

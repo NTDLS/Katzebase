@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Payloads
+﻿namespace NTDLS.Katzebase.Payloads
 {
     public class KbDocumentCatalogCollection : KbBaseActionResponse
     {

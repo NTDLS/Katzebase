@@ -1,7 +1,7 @@
-﻿using Katzebase.Engine.Library;
-using Katzebase.Engine.Schemas;
+﻿using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Schemas;
 
-namespace Katzebase.Engine.Indexes
+namespace NTDLS.Katzebase.Engine.Indexes
 {
     [Serializable]
     public class PhysicalIndex

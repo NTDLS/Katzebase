@@ -1,10 +1,10 @@
-﻿using Katzebase;
-using Katzebase.Exceptions;
-using Katzebase.Types;
+﻿using NTDLS.Katzebase;
+using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Types;
 using Newtonsoft.Json;
 using ProtoBuf;
 
-namespace Katzebase.Engine.Documents
+namespace NTDLS.Katzebase.Engine.Documents
 {
     /// <summary>
     /// This is the page document that is physically written to the disk by virture of being contained in the collection in PhysicalDocumentPage.

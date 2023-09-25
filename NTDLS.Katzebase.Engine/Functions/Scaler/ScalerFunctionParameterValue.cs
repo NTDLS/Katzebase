@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Functions.Scaler
+﻿namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
     internal class ScalerFunctionParameterValue
     {

@@ -1,9 +1,9 @@
-﻿using Katzebase.Engine.Functions.Aggregate.Parameters;
-using Katzebase.Engine.Functions.Parameters;
-using Katzebase.Engine.Query.Searchers.Intersection;
-using Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
+using NTDLS.Katzebase.Engine.Functions.Parameters;
+using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
+using NTDLS.Katzebase.Exceptions;
 
-namespace Katzebase.Engine.Functions.Aggregate
+namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
     /// <summary>
     /// Contains all function protype defintions, function implementations and expression collapse functionality.

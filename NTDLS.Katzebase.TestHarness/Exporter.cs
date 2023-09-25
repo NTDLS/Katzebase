@@ -1,11 +1,11 @@
-﻿using Katzebase.Client;
-using Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Payloads;
 using System.Data.SqlClient;
 using System.Dynamic;
 using System.IO.Compression;
 using System.Text;
 
-namespace Katzebase.TestHarness
+namespace NTDLS.Katzebase.TestHarness
 {
     public static partial class Exporter
     {

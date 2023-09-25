@@ -1,8 +1,8 @@
-﻿using Katzebase.Engine.Library;
-using Katzebase.Exceptions;
-using static Katzebase.Engine.Functions.Parameters.FunctionParameterTypes;
+﻿using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Exceptions;
+using static NTDLS.Katzebase.Engine.Functions.Parameters.FunctionParameterTypes;
 
-namespace Katzebase.Engine.Functions.Parameters
+namespace NTDLS.Katzebase.Engine.Functions.Parameters
 {
     internal class FunctionWithParams : FunctionParameterBase
     {

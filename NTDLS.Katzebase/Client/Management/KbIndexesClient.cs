@@ -1,9 +1,9 @@
-﻿using Katzebase.Exceptions;
-using Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Exceptions;
+using NTDLS.Katzebase.Payloads;
 using Newtonsoft.Json;
 using System.Text;
 
-namespace Katzebase.Client.Management
+namespace NTDLS.Katzebase.Client.Management
 {
     public class KbIndexesClient
     {

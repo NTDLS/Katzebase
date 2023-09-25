@@ -1,8 +1,8 @@
-﻿using Katzebase.Payloads;
-using Katzebase.Types;
-using static Katzebase.KbConstants;
+﻿using NTDLS.Katzebase.Payloads;
+using NTDLS.Katzebase.Types;
+using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Engine.Trace
+namespace NTDLS.Katzebase.Engine.Trace
 {
     internal class PerformanceTrace
     {

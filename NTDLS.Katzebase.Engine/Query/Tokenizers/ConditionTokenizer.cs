@@ -1,7 +1,7 @@
-﻿using Katzebase.Exceptions;
-using static Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Exceptions;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace Katzebase.Engine.Query.Tokenizers
+namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 {
     public class ConditionTokenizer
     {

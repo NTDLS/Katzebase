@@ -1,7 +1,7 @@
-﻿using Katzebase.Engine.Documents;
-using Katzebase.Engine.Query.Searchers.Intersection;
+﻿using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 
-namespace Katzebase.Engine.Query.Searchers
+namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
     internal class DocumentLookupResults
     {

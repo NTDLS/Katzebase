@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Query.Searchers.Intersection
+﻿namespace NTDLS.Katzebase.Engine.Query.Searchers.Intersection
 {
     internal class SchemaIntersectionRowCollection
     {

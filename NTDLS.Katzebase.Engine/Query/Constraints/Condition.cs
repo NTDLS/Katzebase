@@ -1,10 +1,10 @@
-﻿using Katzebase.Engine.Atomicity;
-using Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Exceptions;
 using System.Text.RegularExpressions;
-using static Katzebase.Engine.Library.EngineConstants;
-using static Katzebase.KbConstants;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.KbConstants;
 
-namespace Katzebase.Engine.Query.Constraints
+namespace NTDLS.Katzebase.Engine.Query.Constraints
 {
     internal class Condition
     {

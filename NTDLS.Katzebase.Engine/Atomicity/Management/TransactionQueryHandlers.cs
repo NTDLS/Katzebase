@@ -1,4 +1,4 @@
-﻿namespace Katzebase.Engine.Atomicity.Management
+﻿namespace NTDLS.Katzebase.Engine.Atomicity.Management
 {
     /// <summary>
     /// Internal class methods for handling query requests related to transactions.
