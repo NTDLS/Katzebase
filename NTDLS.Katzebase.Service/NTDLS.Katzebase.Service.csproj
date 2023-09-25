@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Company>NetworkDLS</Company>
+    <Copyright>Copyright © 2023 NetworkDLS</Copyright>
+    <Version>1.0.0.0</Version>
+    <Authors>NetworkDLS</Authors>
+    <ApplicationIcon>NTDLS.Katzebase.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="NTDLS.Katzebase.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.9" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <PackageReference Include="Topshelf" Version="4.3.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NTDLS.Katzebase.Engine\NTDLS.Katzebase.Engine.csproj" />
+    <ProjectReference Include="..\NTDLS.Katzebase.Shared\NTDLS.Katzebase.Shared.csproj" />
+    <ProjectReference Include="..\NTDLS.Katzebase\NTDLS.Katzebase.csproj" />
+  </ItemGroup>
+
+</Project>

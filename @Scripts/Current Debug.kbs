@@ -1,4 +1,31 @@
-select TOP 200
+select
+	sw.Text as SourceWord,
+	S.TargetWordId,
+	tw.Text as TargetWord
+from
+	WordList:Synonym as s
+inner join WordList:Word as sw
+	on s.SourceWordId = sw.Id
+inner join WordList:Word as tw
+	ON tw.Id = S.TargetWordId
+where
+	sw.Text = 'moon'
+	
+--EXEC SystemScalerFunctions
+
+--select * from WordList:Language where fff = 'f'
+
+/*
+SELECT
+	Text,
+	IndexOf('go', Text) as 'Index'
+FROM
+	WordList:Word
+WHERE
+	Text LIKE '%-gorge'
+*/
+/*
+SELECT TOP 200
 	Id,
 	Text,
 
@@ -13,11 +40,11 @@ select TOP 200
 	IsNotEqual(Text, 'rouge-gorge') as IsNotEqual,
 	IsLike(Text, '%rouge%') as IsLike,
 	IsNotLike(Text, '%rouge%') as IsNotLike
-from
+FROM
 	WordList:Word
 WHERE
 	Text LIKE '%-gorge'
-
+*/
 /*
 SELECT
     Id, Text, LanguageId
