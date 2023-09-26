@@ -9,15 +9,16 @@ namespace NTDLS.Katzebase.Engine.Sessions.Management
     /// </summary>
     public class SessionManager
     {
-        private readonly Core core;
-        internal SessionAPIHandlers APIHandlers { get; set; }
-        internal SessionQueryHandlers QueryHandlers { get; set; }
-        private ulong nextProcessId = 1;
-        internal Dictionary<Guid, SessionState> Collection { get; set; } = new();
+        private readonly Core _core;
+        private ulong _nextProcessId = 1;
+
+        internal SessionAPIHandlers APIHandlers { get; private set; }
+        internal SessionQueryHandlers QueryHandlers { get; private set; }
+        internal Dictionary<Guid, SessionState> Collection { get; private set; } = new();
 
         public SessionManager(Core core)
         {
-            this.core = core;
+            _core = core;
             try
             {
                 APIHandlers = new SessionAPIHandlers(core);
@@ -44,7 +45,7 @@ namespace NTDLS.Katzebase.Engine.Sessions.Management
             lock (Collection)
             {
                 var sessions = Collection.Where(o => (DateTime.UtcNow - o.Value.LastCheckinTime)
-                    .TotalSeconds > core.Settings.MaxIdleConnectionSeconds).Select(o => o.Value).ToList();
+                    .TotalSeconds > _core.Settings.MaxIdleConnectionSeconds).Select(o => o.Value).ToList();
 
                 return sessions;
             }
@@ -66,7 +67,7 @@ namespace NTDLS.Katzebase.Engine.Sessions.Management
                     }
                     else
                     {
-                        ulong processId = nextProcessId++;
+                        ulong processId = _nextProcessId++;
                         Collection.Add(sessionId, new SessionState(processId, sessionId));
                         return processId;
                     }
@@ -74,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Sessions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to upsert session for session {sessionId}.", ex);
+                _core.Log.Write($"Failed to upsert session for session {sessionId}.", ex);
                 throw;
             }
         }
@@ -89,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.Sessions.Management
             {
                 lock (Collection)
                 {
-                    core.Transactions.CloseByProcessIDs(processIDs);
+                    _core.Transactions.CloseByProcessIDs(processIDs);
 
                     var expiredSessions = Collection.Where(o => processIDs.Contains(o.Value.ProcessId)).ToList();
 
@@ -101,7 +102,7 @@ namespace NTDLS.Katzebase.Engine.Sessions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to remove sessions by processIDs.", ex);
+                _core.Log.Write($"Failed to remove sessions by processIDs.", ex);
                 throw;
             }
         }
@@ -116,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Sessions.Management
             {
                 lock (Collection)
                 {
-                    core.Transactions.CloseByProcessIDs(new List<ulong> { processId });
+                    _core.Transactions.CloseByProcessIDs(new List<ulong> { processId });
 
                     var session = Collection.Where(o => o.Value.ProcessId == processId).FirstOrDefault().Value;
                     if (session != null)
@@ -128,7 +129,7 @@ namespace NTDLS.Katzebase.Engine.Sessions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to remove sessions by processIDs.", ex);
+                _core.Log.Write($"Failed to remove sessions by processIDs.", ex);
                 throw;
             }
         }
@@ -149,7 +150,7 @@ namespace NTDLS.Katzebase.Engine.Sessions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to get session state by process id for process id {processId}.", ex);
+                _core.Log.Write($"Failed to get session state by process id for process id {processId}.", ex);
                 throw;
             }
         }

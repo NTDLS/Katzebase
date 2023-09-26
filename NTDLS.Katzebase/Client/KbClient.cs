@@ -13,13 +13,14 @@ namespace NTDLS.Katzebase.Client
         public KbQueryClient Query { get; private set; }
         public KbProcedureClient Procedure { get; private set; }
 
-        private readonly Thread keepAliveThread;
-        internal object PingLock { get; set; } = new();
+        private readonly Thread _keepAliveThread;
+
+        internal object PingLock { get; private set; } = new();
 
         /// <summary>
         /// This is the process id of the session on the server. This is populated with each call to Client.Server.Ping().
         /// </summary>
-        public ulong ServerProcessId { get; set; }
+        public ulong ServerProcessId { get; internal set; }
 
         public KbClient(string baseAddress)
         {
@@ -37,8 +38,8 @@ namespace NTDLS.Katzebase.Client
             Query = new KbQueryClient(this);
             Procedure = new KbProcedureClient(this);
 
-            keepAliveThread = new Thread(KeepAliveThread);
-            keepAliveThread.Start();
+            _keepAliveThread = new Thread(KeepAliveThread);
+            _keepAliveThread.Start();
         }
 
         public KbClient(string baseAddress, TimeSpan timeout)
@@ -57,8 +58,8 @@ namespace NTDLS.Katzebase.Client
             Query = new KbQueryClient(this);
             Procedure = new KbProcedureClient(this);
 
-            keepAliveThread = new Thread(KeepAliveThread);
-            keepAliveThread.Start();
+            _keepAliveThread = new Thread(KeepAliveThread);
+            _keepAliveThread.Start();
         }
 
         private void KeepAliveThread()

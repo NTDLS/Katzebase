@@ -7,14 +7,14 @@ namespace NTDLS.Katzebase.Client.Management
 {
     public class KbProcedureClient
     {
-        private readonly KbClient client;
+        private readonly KbClient _client;
 
         public KbIndexesClient Indexes { get; set; }
 
         public KbProcedureClient(KbClient client)
         {
-            this.client = client;
-            this.Indexes = new KbIndexesClient(client);
+            _client = client;
+            Indexes = new KbIndexesClient(client);
         }
 
         /// <summary>
@@ -25,11 +25,11 @@ namespace NTDLS.Katzebase.Client.Management
         /// <exception cref="KbAPIResponseException"></exception>
         public KbQueryResult Execute(KbProcedure procedure)
         {
-            string url = $"api/Procedure/{client.SessionId}/ExecuteProcedure";
+            string url = $"api/Procedure/{_client.SessionId}/ExecuteProcedure";
 
             var postContent = new StringContent(JsonConvert.SerializeObject(procedure), Encoding.UTF8);
 
-            using var response = client.Connection.PostAsync(url, postContent);
+            using var response = _client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbQueryResult>(resultText);
             if (result == null || result.Success == false)

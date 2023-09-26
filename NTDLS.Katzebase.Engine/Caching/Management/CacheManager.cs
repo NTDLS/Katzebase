@@ -5,26 +5,26 @@
     /// </summary>
     internal class CacheManager
     {
-        private readonly Core core;
+        private readonly Core _core;
         public int PartitionCount { get; private set; }
-        private readonly KbMemoryCache[] partitions;
+        private readonly KbMemoryCache[] _partitions;
 
         public CacheManager(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
                 PartitionCount = core.Settings.CachePartitions > 0 ? core.Settings.CachePartitions : Environment.ProcessorCount;
 
-                partitions = new KbMemoryCache[PartitionCount];
+                _partitions = new KbMemoryCache[PartitionCount];
 
                 int maxMemoryPerPartition = (int)(core.Settings.CacheMaxMemory / (double)PartitionCount);
                 maxMemoryPerPartition = maxMemoryPerPartition < 5 ? 5 : maxMemoryPerPartition;
 
                 for (int i = 0; i < PartitionCount; i++)
                 {
-                    partitions[i] = new KbMemoryCache(core);
+                    _partitions[i] = new KbMemoryCache(core);
                 }
             }
             catch (Exception ex)
@@ -38,7 +38,7 @@
         {
             for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
             {
-                partitions[partitionIndex].Dispose();
+                _partitions[partitionIndex].Dispose();
             }
         }
 
@@ -48,11 +48,11 @@
             {
                 key = key.ToLower();
                 int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
-                partitions[partitionIndex].Upsert(key, value, aproximateSizeInBytes);
+                _partitions[partitionIndex].Upsert(key, value, aproximateSizeInBytes);
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to upsert cache object.", ex);
+                _core.Log.Write("Failed to upsert cache object.", ex);
                 throw;
             }
         }
@@ -63,12 +63,12 @@
             {
                 for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
                 {
-                    partitions[partitionIndex].Clear();
+                    _partitions[partitionIndex].Clear();
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to clear cache.", ex);
+                _core.Log.Write("Failed to clear cache.", ex);
                 throw;
             }
         }
@@ -84,14 +84,14 @@
 
                 for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
                 {
-                    lock (partitions[partitionIndex])
+                    lock (_partitions[partitionIndex])
                     {
                         result.Partitions.Add(new CachePartitionAllocationStats.CachePartitionAllocationStat
                         {
                             Partition = partitionIndex,
-                            Allocations = partitions[partitionIndex].Count(),
-                            SizeInKilobytes = partitions[partitionIndex].SizeInKilobytes(),
-                            MaxSizeInKilobytes = partitions[partitionIndex].MaxSizeInKilobytes()
+                            Allocations = _partitions[partitionIndex].Count(),
+                            SizeInKilobytes = _partitions[partitionIndex].SizeInKilobytes(),
+                            MaxSizeInKilobytes = _partitions[partitionIndex].MaxSizeInKilobytes()
                         });
                     }
                 }
@@ -100,7 +100,7 @@
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to clear cache.", ex);
+                _core.Log.Write("Failed to clear cache.", ex);
                 throw;
             }
         }
@@ -116,9 +116,9 @@
 
                 for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
                 {
-                    lock (partitions[partitionIndex])
+                    lock (_partitions[partitionIndex])
                     {
-                        foreach (var item in partitions[partitionIndex].Collection)
+                        foreach (var item in _partitions[partitionIndex].Collection)
                         {
                             result.Partitions.Add(new CachePartitionAllocationDetails.CachePartitionAllocationDetail(item.Key)
                             {
@@ -138,7 +138,7 @@
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to clear cache.", ex);
+                _core.Log.Write("Failed to clear cache.", ex);
                 throw;
             }
         }
@@ -150,14 +150,14 @@
                 key = key.ToLower();
                 int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
 
-                lock (partitions[partitionIndex])
+                lock (_partitions[partitionIndex])
                 {
-                    return partitions[partitionIndex].TryGet(key);
+                    return _partitions[partitionIndex].TryGet(key);
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to get cache object.", ex);
+                _core.Log.Write("Failed to get cache object.", ex);
                 throw;
             }
         }
@@ -169,14 +169,14 @@
                 key = key.ToLower();
                 int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
 
-                lock (partitions[partitionIndex])
+                lock (_partitions[partitionIndex])
                 {
-                    return partitions[partitionIndex].Get(key);
+                    return _partitions[partitionIndex].Get(key);
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to get cache object.", ex);
+                _core.Log.Write("Failed to get cache object.", ex);
                 throw;
             }
         }
@@ -190,9 +190,9 @@
 
                 int itemsEjected = 0;
 
-                lock (partitions[partitionIndex])
+                lock (_partitions[partitionIndex])
                 {
-                    if (partitions[partitionIndex].Remove(key))
+                    if (_partitions[partitionIndex].Remove(key))
                     {
                         itemsEjected++;
                     }
@@ -202,7 +202,7 @@
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to remove cache object.", ex);
+                _core.Log.Write("Failed to remove cache object.", ex);
                 throw;
             }
         }
@@ -214,19 +214,19 @@
                 prefix = prefix.ToLower();
                 for (int i = 0; i < PartitionCount; i++)
                 {
-                    lock (partitions[i])
+                    lock (_partitions[i])
                     {
-                        var keysToRemove = partitions[i].Keys().Where(entry => entry.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList();
+                        var keysToRemove = _partitions[i].Keys().Where(entry => entry.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList();
                         foreach (string key in keysToRemove)
                         {
-                            partitions[i].Remove(key);
+                            _partitions[i].Remove(key);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to remove cache prefixed-object.", ex);
+                _core.Log.Write("Failed to remove cache prefixed-object.", ex);
                 throw;
             }
         }

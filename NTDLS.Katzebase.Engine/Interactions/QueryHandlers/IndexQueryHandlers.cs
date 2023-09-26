@@ -11,11 +11,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class IndexQueryHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public IndexQueryHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -31,12 +31,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
-                    core.Indexes.DropIndex(transactionReference.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+                    _core.Indexes.DropIndex(transactionReference.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
                 }
                 else
                 {
@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute index drop for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute index drop for process id {processId}.", ex);
                 throw;
             }
         }
@@ -56,9 +56,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
 
-                var analysis = core.Indexes.AnalyzeIndex(transactionReference.Transaction,
+                var analysis = _core.Indexes.AnalyzeIndex(transactionReference.Transaction,
                     preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Schema),
                     preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
 
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute index rebuild for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute index rebuild for process id {processId}.", ex);
                 throw;
             }
         }
@@ -78,18 +78,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 var indexName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName);
-                var indexPartitions = preparedQuery.Attribute(PreparedQuery.QueryAttribute.Partitions, core.Settings.DefaultIndexPartitions);
+                var indexPartitions = preparedQuery.Attribute(PreparedQuery.QueryAttribute.Partitions, _core.Settings.DefaultIndexPartitions);
 
-                core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName, indexPartitions);
+                _core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName, indexPartitions);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute index rebuild for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute index rebuild for process id {processId}.", ex);
                 throw;
             }
         }
@@ -98,11 +98,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
-                    var indexPartitions = preparedQuery.Attribute(PreparedQuery.QueryAttribute.Partitions, core.Settings.DefaultIndexPartitions);
+                    var indexPartitions = preparedQuery.Attribute(PreparedQuery.QueryAttribute.Partitions, _core.Settings.DefaultIndexPartitions);
 
                     var index = new KbIndex
                     {
@@ -117,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     }
 
                     string schemaName = preparedQuery.Schemas.Single().Name;
-                    core.Indexes.CreateIndex(transactionReference.Transaction, schemaName, index, out Guid indexId);
+                    _core.Indexes.CreateIndex(transactionReference.Transaction, schemaName, index, out Guid indexId);
                 }
                 else
                 {
@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute index create for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute index create for process id {processId}.", ex);
                 throw;
             }
         }

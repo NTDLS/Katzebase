@@ -5,11 +5,11 @@
     /// </summary>
     public class HealthAPIHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public HealthAPIHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {

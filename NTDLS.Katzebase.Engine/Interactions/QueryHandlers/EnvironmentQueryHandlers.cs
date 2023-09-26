@@ -10,11 +10,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class EnvironmentQueryHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public EnvironmentQueryHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -30,11 +30,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Configuration)
                 {
-                    core.Environment.Alter(transactionReference.Transaction, preparedQuery.Attributes);
+                    _core.Environment.Alter(transactionReference.Transaction, preparedQuery.Attributes);
                 }
                 else
                 {
@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute environment alter for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute environment alter for process id {processId}.", ex);
                 throw;
             }
         }

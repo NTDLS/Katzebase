@@ -10,7 +10,6 @@ namespace NTDLS.Katzebase.ClientTest
             {
                 if (client.Schema.Exists("ClientTest") == false)
                 {
-
                     client.Query.ExecuteNonQuery("CREATE SCHEMA ClientTest");
                 }
             }

@@ -19,13 +19,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
     /// </summary>
     public class ProcedureManager
     {
-        private readonly Core core;
-        internal ProcedureQueryHandlers QueryHandlers { get; set; }
-        public ProcedureAPIHandlers APIHandlers { get; set; }
+        private readonly Core _core;
+        internal ProcedureQueryHandlers QueryHandlers { get; private set; }
+        public ProcedureAPIHandlers APIHandlers { get; private set; }
 
         public ProcedureManager(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
 
         internal void CreateCustomProcedure(Transaction transaction, string schemaName, string objectName, List<PhysicalProcedureParameter> parameters, List<string> Batches)
         {
-            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             var physicalProcedureCatalog = Acquire(transaction, physicalSchema, LockOperation.Write);
 
             var physicalProcesure = physicalProcedureCatalog.GetByName(objectName);
@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
 
                 physicalProcedureCatalog.Add(physicalProcesure);
 
-                core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), physicalProcedureCatalog);
+                _core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), physicalProcedureCatalog);
             }
             else
             {
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                 physicalProcesure.Batches = Batches;
                 physicalProcesure.Modfied = DateTime.UtcNow;
 
-                core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), physicalProcedureCatalog);
+                _core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), physicalProcedureCatalog);
             }
         }
 
@@ -77,10 +77,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
         {
             if (File.Exists(physicalSchema.ProcedureCatalogFilePath()) == false)
             {
-                core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), new PhysicalProcedureCatalog());
+                _core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), new PhysicalProcedureCatalog());
             }
 
-            return core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
+            return _core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
         }
 
         internal PhysicalProcedure? Acquire(Transaction transaction, PhysicalSchema physicalSchema, string procedureName, LockOperation intendedOperation)
@@ -89,10 +89,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
 
             if (File.Exists(physicalSchema.ProcedureCatalogFilePath()) == false)
             {
-                core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), new PhysicalProcedureCatalog());
+                _core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), new PhysicalProcedureCatalog());
             }
 
-            var procedureCatalog = core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
+            var procedureCatalog = _core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
 
             return procedureCatalog.Collection.Where(o => o.Name.ToLower() == procedureName).FirstOrDefault();
         }
@@ -107,13 +107,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
             {
                 var procCall = (FunctionConstantParameter)procedureCall;
                 procedureName = procCall.RawValue;
-                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, procCall.RawValue, new List<FunctionParameterBase>());
+                proc = ProcedureCollection.ApplyProcedurePrototype(_core, transaction, procCall.RawValue, new List<FunctionParameterBase>());
             }
             else if (procedureCall is FunctionWithParams)
             {
                 var procCall = (FunctionWithParams)procedureCall;
                 procedureName = procCall.Function;
-                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, procCall.Function, procCall.Parameters);
+                proc = ProcedureCollection.ApplyProcedurePrototype(_core, transaction, procCall.Function, procCall.Parameters);
             }
             else
             {
@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                     //---------------------------------------------------------------------------------------------------------------------------
                     case "clearcacheallocations":
                         {
-                            core.Cache.Clear();
+                            _core.Cache.Clear();
                             return new KbQueryResultCollection();
                         }
                     //---------------------------------------------------------------------------------------------------------------------------
@@ -140,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                     //---------------------------------------------------------------------------------------------------------------------------
                     case "showmemoryutilization":
                         {
-                            var cachePartitions = core.Cache.GetPartitionAllocationDetails();
+                            var cachePartitions = _core.Cache.GetPartitionAllocationDetails();
                             long totalCacheSize = 0;
                             foreach (var partition in cachePartitions.Partitions)
                             {
@@ -193,7 +193,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                             result.AddField("LastSetDate");
                             result.AddField("Key");
 
-                            var cachePartitions = core.Cache.GetPartitionAllocationDetails();
+                            var cachePartitions = _core.Cache.GetPartitionAllocationDetails();
 
                             foreach (var partition in cachePartitions.Partitions)
                             {
@@ -224,7 +224,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                             result.AddField("Size (KB)");
                             result.AddField("MaxSize (KB)");
 
-                            var cachePartitions = core.Cache.GetPartitionAllocationStatistics();
+                            var cachePartitions = _core.Cache.GetPartitionAllocationStatistics();
 
                             foreach (var partition in cachePartitions.Partitions)
                             {
@@ -250,7 +250,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                             result.AddField("Instance");
                             result.AddField("Value");
 
-                            var counters = core.Health.CloneCounters();
+                            var counters = _core.Health.CloneCounters();
 
                             foreach (var counter in counters)
                             {
@@ -272,7 +272,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                             result.AddField("Operation");
                             result.AddField("ObjectName");
 
-                            var waitingForLocks = core.Locking.Locks.CloneTransactionWaitingForLocks().ToList();
+                            var waitingForLocks = _core.Locking.Locks.CloneTransactionWaitingForLocks().ToList();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
                             if (processId != null)
@@ -302,7 +302,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                             result.AddField("ProcessId");
                             result.AddField("BlockedBy");
 
-                            var transactions = core.Transactions.CloneTransactions();
+                            var transactions = _core.Transactions.CloneTransactions();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
                             if (processId != null)
@@ -341,7 +341,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                             result.AddField("TxCancelled");
                             result.AddField("TxUserCreated");
 
-                            var transactions = core.Transactions.CloneTransactions();
+                            var transactions = _core.Transactions.CloneTransactions();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
                             if (processId != null)
@@ -390,8 +390,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                             result.AddField("TxCancelled");
                             result.AddField("TxUserCreated");
 
-                            var sessions = core.Sessions.CloneSessions();
-                            var transactions = core.Transactions.CloneTransactions();
+                            var sessions = _core.Sessions.CloneSessions();
+                            var transactions = _core.Transactions.CloneTransactions();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
                             if (processId != null)
@@ -427,13 +427,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                     //---------------------------------------------------------------------------------------------------------------------------
                     case "clearhealthcounters":
                         {
-                            core.Health.ClearCounters();
+                            _core.Health.ClearCounters();
                             return new KbQueryResultCollection();
                         }
                     //---------------------------------------------------------------------------------------------------------------------------
                     case "checkpointhealthcounters":
                         {
-                            core.Health.Checkpoint();
+                            _core.Health.Checkpoint();
                             return new KbQueryResultCollection();
                         }
                     case "systemscalerfunctions":
@@ -513,7 +513,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                 KbQueryResultCollection collection = new();
 
                 //We create a "user transaction" so that we have a way to track and destroy temporary objects created by the procedure.
-                using (var transactionReference = core.Transactions.Acquire(transaction.ProcessId, true))
+                using (var transactionReference = _core.Transactions.Acquire(transaction.ProcessId, true))
                 {
                     foreach (var batch in proc.PhysicalProcedure.Batches)
                     {
@@ -525,7 +525,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
                         }
 
                         var batchStartTime = DateTime.UtcNow;
-                        var batchResults = core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batchText).Collection.Single();
+                        var batchResults = _core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batchText).Collection.Single();
                         var batchDuration = (DateTime.UtcNow - batchStartTime).TotalMilliseconds;
 
                         if (batchResults.Success != true)

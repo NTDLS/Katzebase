@@ -7,13 +7,13 @@ namespace NTDLS.Katzebase.Engine.Locking
 {
     internal class ObjectLocks
     {
-        private readonly List<ObjectLock> collection = new();
-        private readonly Dictionary<Transaction, LockIntention> transactionWaitingForLocks = new();
+        private readonly List<ObjectLock> _collection = new();
+        private readonly Dictionary<Transaction, LockIntention> _transactionWaitingForLocks = new();
+        private readonly Core _core;
 
-        private readonly Core core;
         public ObjectLocks(Core core)
         {
-            this.core = core;
+            _core = core;
         }
 
         public void Remove(ObjectLock objectLock)
@@ -22,12 +22,12 @@ namespace NTDLS.Katzebase.Engine.Locking
             {
                 lock (CentralCriticalSections.AcquireLock)
                 {
-                    collection.Remove(objectLock);
+                    _collection.Remove(objectLock);
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to remove lock.", ex);
+                _core.Log.Write("Failed to remove lock.", ex);
                 throw;
             }
         }
@@ -41,12 +41,12 @@ namespace NTDLS.Katzebase.Engine.Locking
                 if (lockType == LockType.File)
                 {
                     //See if there are any other locks on this file:
-                    lockedObjects.AddRange(collection.Where(o => o.LockType == LockType.File && o.DiskPath == diskPath));
+                    lockedObjects.AddRange(_collection.Where(o => o.LockType == LockType.File && o.DiskPath == diskPath));
                 }
 
                 //See if there are any other locks on the directory containig this file (or directory) or any of its parents.
                 //When we lock a directory, we intend all lower directories to be locked too.
-                lockedObjects.AddRange(collection.Where(o => o.LockType == LockType.Directory && diskPath.StartsWith(o.DiskPath)));
+                lockedObjects.AddRange(_collection.Where(o => o.LockType == LockType.Directory && diskPath.StartsWith(o.DiskPath)));
 
                 return lockedObjects;
             }
@@ -54,9 +54,9 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         internal Dictionary<Transaction, LockIntention> CloneTransactionWaitingForLocks()
         {
-            lock (transactionWaitingForLocks)
+            lock (_transactionWaitingForLocks)
             {
-                return transactionWaitingForLocks.ToDictionary(o => o.Key, o => o.Value);
+                return _transactionWaitingForLocks.ToDictionary(o => o.Key, o => o.Value);
             }
         }
 
@@ -85,9 +85,9 @@ namespace NTDLS.Katzebase.Engine.Locking
                 //We keep track of all transactions that are waiting on locks for a few reasons:
                 // (1) When we suspect a deadlock we know what all transactions are potentially involved
                 // (2) We are safe to poke around those transaction's properties because we know their threda are in this method.
-                lock (transactionWaitingForLocks)
+                lock (_transactionWaitingForLocks)
                 {
-                    transactionWaitingForLocks.Add(transaction, intention);
+                    _transactionWaitingForLocks.Add(transaction, intention);
                 }
 
                 DateTime startTime = DateTime.UtcNow;
@@ -103,8 +103,8 @@ namespace NTDLS.Katzebase.Engine.Locking
                         if (lockedObjects.Count == 0)
                         {
                             //No locks on the object exist - so add one to the local and class collections.
-                            var lockedObject = new ObjectLock(core, intention);
-                            collection.Add(lockedObject);
+                            var lockedObject = new ObjectLock(_core, intention);
+                            _collection.Add(lockedObject);
                             lockedObjects.Add(lockedObject);
                         }
 
@@ -133,8 +133,8 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 }
 
                                 var lockWaitTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                                core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                                core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                                _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
+                                _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
                                 return;
                             }
@@ -168,8 +168,8 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 }
 
                                 var lockWaitTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
-                                core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                                core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                                _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
+                                _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
                                 return;
                             }
@@ -182,9 +182,9 @@ namespace NTDLS.Katzebase.Engine.Locking
                     }
 
                     //Deadlock Search.
-                    lock (transactionWaitingForLocks)
+                    lock (_transactionWaitingForLocks)
                     {
-                        var actualWaiters = transactionWaitingForLocks.Keys.Where(o => o.IsDeadlocked == false).ToList();
+                        var actualWaiters = _transactionWaitingForLocks.Keys.Where(o => o.IsDeadlocked == false).ToList();
                         if (actualWaiters.Count > 1) //Cant deadlock if there is only 1 transaction.
                         {
                             foreach (var waiter in actualWaiters)
@@ -199,7 +199,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                         transaction.IsDeadlocked = true;
                                         transaction.Rollback();
 
-                                        core.Health.Increment(HealthCounterType.DeadlockCount);
+                                        _core.Health.Increment(HealthCounterType.DeadlockCount);
                                         throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.");
                                     }
                                 }
@@ -212,14 +212,14 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire lock for process {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire lock for process {transaction.ProcessId}.", ex);
                 throw;
             }
             finally
             {
-                lock (transactionWaitingForLocks)
+                lock (_transactionWaitingForLocks)
                 {
-                    transactionWaitingForLocks.Remove(transaction);
+                    _transactionWaitingForLocks.Remove(transaction);
                 }
             }
         }

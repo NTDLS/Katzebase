@@ -21,13 +21,13 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
     /// </summary>
     public class IndexManager
     {
-        private readonly Core core;
-        internal IndexQueryHandlers QueryHandlers { get; set; }
-        public IndexAPIHandlers APIHandlers { get; set; }
+        private readonly Core _core;
+        internal IndexQueryHandlers QueryHandlers { get; private set; }
+        public IndexAPIHandlers APIHandlers { get; private set; }
 
         public IndexManager(Core core)
         {
-            this.core = core;
+            _core = core;
             try
             {
                 QueryHandlers = new IndexQueryHandlers(core);
@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                 physicalIndex.Created = DateTime.UtcNow;
                 physicalIndex.Modfied = DateTime.UtcNow;
 
-                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
                 var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
 
                 if (indexCatalog.GetByName(index.Name) != null)
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                     throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
                 }
 
-                core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
+                _core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
 
                 RebuildIndex(transaction, physicalSchema, physicalIndex);
 
@@ -73,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create index for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to create index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -82,7 +82,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
                 var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
                 if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
                 {
@@ -100,8 +100,8 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                 for (uint indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
                 {
                     string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                    physicalIndexPageMap[indexPartition] = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                    diskSize += core.IO.GetDecompressedSizeTracked(pageDiskPath);
+                    physicalIndexPageMap[indexPartition] = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+                    diskSize += _core.IO.GetDecompressedSizeTracked(pageDiskPath);
                     decompressedSiskSize += (new FileInfo(pageDiskPath)).Length;
                     physicalIndexPageMapDistilledLeaves.Add(DistillIndexBaseNodes(physicalIndexPageMap[indexPartition].Root));
                 }
@@ -152,7 +152,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to analyze index for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to analyze index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -161,7 +161,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
                 var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
                 if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
                 {
@@ -179,11 +179,11 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
 
                 physicalIindex.Modfied = DateTime.UtcNow;
 
-                core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
+                _core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to rebuild index for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to rebuild index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -192,7 +192,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
                 var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
                 if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
                 {
@@ -206,15 +206,15 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
 
                     if (Path.Exists(physicalIindex.GetPartitionPagesPath(physicalSchema)))
                     {
-                        core.IO.DeletePath(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
+                        _core.IO.DeletePath(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
                     }
 
-                    core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
+                    _core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to drop index for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to drop index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -229,7 +229,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                 //Yay, we have an "equals" condition so we can eliminate all but one partition.
                 uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(conditionValues.First().Value);
                 string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
                 return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubset, conditionValues);
             }
             else
@@ -238,7 +238,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
 
                 var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
                 var threadParam = new MatchConditionValuesDocumentsThreadParam(transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, conditionValues);
-                int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, (int)indexSelection.PhysicalIndex.Partitions /*TODO: Use the total document count contained in the index*/);
+                int threadCount = ThreadPoolHelper.CalculateThreadCount(_core, transaction, (int)indexSelection.PhysicalIndex.Partitions /*TODO: Use the total document count contained in the index*/);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                 var threadPool = ThreadPoolQueue<int?, MatchConditionValuesDocumentsThreadParam>
                     .CreateAndStart($"MatchConditionValuesDocuments:{transaction.ProcessId}", MatchConditionValuesDocumentsThreadProc, threadParam, threadCount, (int)indexSelection.PhysicalIndex.Partitions);
@@ -305,7 +305,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                     }
 
                     string pageDiskPath = param.PhysicalIindex.GetPartitionPagesFileName(param.PhysicalSchema, (uint)indexPartition);
-                    var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
+                    var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
 
                     var results = MatchDocuments(param.Transaction, physicalIndexPages, param.IndexSelection, param.ConditionSubset, param.ConditionValues);
                     if (results.Any())
@@ -322,7 +322,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete from index by thread.", ex);
+                _core.Log.Write($"Failed to delete from index by thread.", ex);
                 throw;
             }
         }
@@ -415,7 +415,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -434,7 +434,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                 KbUtility.EnsureNotNull(firstValue);
                 uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(firstValue);
                 string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
                 return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubset, workingSchemaPrefix);
             }
             else
@@ -443,7 +443,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
 
                 var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
                 var threadParam = new MatchWorkingSchemaDocumentsThreadParam(transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, workingSchemaPrefix);
-                int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, (int)indexSelection.PhysicalIndex.Partitions /*TODO: Use the total document count contained in the index*/);
+                int threadCount = ThreadPoolHelper.CalculateThreadCount(_core, transaction, (int)indexSelection.PhysicalIndex.Partitions /*TODO: Use the total document count contained in the index*/);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                 var threadPool = ThreadPoolQueue<int?, MatchWorkingSchemaDocumentsThreadParam>
                     .CreateAndStart($"MatchWorkingSchemaDocuments:{transaction.ProcessId}", MatchWorkingSchemaDocumentsThreadProc, threadParam, threadCount, (int)indexSelection.PhysicalIndex.Partitions);
@@ -509,7 +509,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                     }
 
                     string pageDiskPath = param.PhysicalIindex.GetPartitionPagesFileName(param.PhysicalSchema, (uint)indexPartition);
-                    var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
+                    var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
 
                     var results = MatchDocuments(param.Transaction, physicalIndexPages, param.IndexSelection, param.ConditionSubset, param.WorkingSchemaPrefix);
                     if (results.Any())
@@ -526,7 +526,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete from index by thread.", ex);
+                _core.Log.Write($"Failed to delete from index by thread.", ex);
                 throw;
             }
         }
@@ -622,7 +622,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -679,7 +679,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to distill index base nodes.", ex);
+                _core.Log.Write($"Failed to distill index base nodes.", ex);
                 throw;
             }
         }
@@ -736,7 +736,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to distill index leaves.", ex);
+                _core.Log.Write($"Failed to distill index leaves.", ex);
                 throw;
             }
         }
@@ -745,12 +745,12 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, intendedOperation);
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, intendedOperation);
                 return AcquireIndexCatalog(transaction, physicalSchema, intendedOperation);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -759,13 +759,13 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var indexCatalog = core.IO.GetJson<PhysicalIndexCatalog>(transaction, physicalSchema.IndexCatalogFilePath(), intendedOperation);
+                var indexCatalog = _core.IO.GetJson<PhysicalIndexCatalog>(transaction, physicalSchema.IndexCatalogFilePath(), intendedOperation);
                 indexCatalog.DiskPath = physicalSchema.IndexCatalogFilePath();
                 return indexCatalog;
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -792,7 +792,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to get index search tokens for process {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to get index search tokens for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -849,7 +849,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to locate index extent for process {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to locate index extent for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -878,7 +878,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to update document into indexes for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to update document into indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -903,7 +903,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -925,7 +925,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -954,7 +954,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -973,15 +973,15 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                 uint indexPartition = physicalIindex.ComputePartition(value);
 
                 string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
+                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
 
                 InsertDocumentIntoIndexPages(transaction, physicalIindex, physicalIndexPages, document, documentPointer);
 
-                core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
+                _core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -1033,7 +1033,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -1090,7 +1090,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                         throw new KbNullException($"Value should not be null {nameof(param.PhysicalSchema.DiskPath)}.");
                     }
 
-                    var physicalDocument = core.Documents.AcquireDocument(param.Transaction, param.PhysicalSchema, documentPointer, LockOperation.Read);
+                    var physicalDocument = _core.Documents.AcquireDocument(param.Transaction, param.PhysicalSchema, documentPointer, LockOperation.Read);
 
                     try
                     {
@@ -1103,20 +1103,20 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                         lock (param.SyncObjects[indexPartition])
                         {
                             string pageDiskPath = param.PhysicalIindex.GetPartitionPagesFileName(param.PhysicalSchema, indexPartition);
-                            var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
+                            var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
                             InsertDocumentIntoIndexPages(param.Transaction, param.PhysicalIindex, physicalIndexPages, physicalDocument, documentPointer);
                         }
                     }
                     catch (Exception ex)
                     {
-                        core.Log.Write($"Failed to insert document into index for process id {param.Transaction.ProcessId}.", ex);
+                        _core.Log.Write($"Failed to insert document into index for process id {param.Transaction.ProcessId}.", ex);
                         throw;
                     }
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to rebuild index by thread.", ex);
+                _core.Log.Write($"Failed to rebuild index by thread.", ex);
                 throw;
             }
         }
@@ -1131,26 +1131,26 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
         {
             try
             {
-                var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
+                var documentPointers = _core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
 
                 //Clear out the existing index pages.
                 if (Path.Exists(physicalIindex.GetPartitionPagesPath(physicalSchema)))
                 {
-                    core.IO.DeletePath(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
+                    _core.IO.DeletePath(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
                 }
-                core.IO.CreateDirectory(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
+                _core.IO.CreateDirectory(transaction, physicalIindex.GetPartitionPagesPath(physicalSchema));
 
                 var physicalIndexPageMap = new Dictionary<uint, PhysicalIndexPages>();
                 for (uint indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
                 {
                     var physicalIndexPages = new PhysicalIndexPages();
                     physicalIndexPageMap.Add(indexPartition, physicalIndexPages);
-                    core.IO.PutPBuf(transaction, physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPages);
+                    _core.IO.PutPBuf(transaction, physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPages);
                 }
 
                 var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
                 var threadParam = new RebuildIndexThreadParam(transaction, physicalSchema, physicalIndexPageMap, physicalIindex, physicalIindex.Partitions);
-                int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, documentPointers.Count);
+                int threadCount = ThreadPoolHelper.CalculateThreadCount(_core, transaction, documentPointers.Count);
                 transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
 
                 var threadPool = ThreadPoolQueue<DocumentPointer, RebuildIndexThreadParam>
@@ -1176,12 +1176,12 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
 
                 for (uint indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
                 {
-                    core.IO.PutPBuf(transaction, physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPageMap[indexPartition]);
+                    _core.IO.PutPBuf(transaction, physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPageMap[indexPartition]);
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to rebuild index for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to rebuild index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -1206,7 +1206,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete document from indexes for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to delete document from indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -1249,7 +1249,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to remove documents from index leaves.", ex);
+                _core.Log.Write($"Failed to remove documents from index leaves.", ex);
                 throw;
             }
         }
@@ -1271,11 +1271,11 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                     for (uint indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)
                     {
                         string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                        var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
+                        var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
 
                         if (RemoveDocumentsFromLeaves(physicalIndexPages.Root, documentPointers) > 0)
                         {
-                            core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
+                            _core.IO.PutPBuf(transaction, pageDiskPath, physicalIndexPages);
                         }
                     }
                 }
@@ -1283,7 +1283,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                 {
                     var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
                     var threadParam = new RemoveDocumentsFromIndexThreadParam(transaction, physicalIindex, physicalSchema, documentPointers);
-                    int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, (int)physicalIindex.Partitions /*TODO: Use the total document count contained in the index*/);
+                    int threadCount = ThreadPoolHelper.CalculateThreadCount(_core, transaction, (int)physicalIindex.Partitions /*TODO: Use the total document count contained in the index*/);
                     transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
                     var threadPool = ThreadPoolQueue<int?, RemoveDocumentsFromIndexThreadParam>
                         .CreateAndStart($"RemoveDocumentsFromIndex:{transaction.ProcessId}", RemoveDocumentsFromIndexThreadProc, threadParam, threadCount, (int)physicalIindex.Partitions);
@@ -1308,7 +1308,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to remove documents from index for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to remove documents from index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -1348,17 +1348,17 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                     }
 
                     string pageDiskPath = param.PhysicalIindex.GetPartitionPagesFileName(param.PhysicalSchema, (uint)indexPartition);
-                    var physicalIndexPages = core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
+                    var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(param.Transaction, pageDiskPath, LockOperation.Write);
 
                     if (RemoveDocumentsFromLeaves(physicalIndexPages.Root, param.DocumentPointers) > 0)
                     {
-                        core.IO.PutPBuf(param.Transaction, pageDiskPath, physicalIndexPages);
+                        _core.IO.PutPBuf(param.Transaction, pageDiskPath, physicalIndexPages);
                     }
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete from index by thread.", ex);
+                _core.Log.Write($"Failed to delete from index by thread.", ex);
                 throw;
             }
         }

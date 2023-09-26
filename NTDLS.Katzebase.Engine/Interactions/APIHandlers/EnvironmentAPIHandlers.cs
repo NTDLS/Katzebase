@@ -5,11 +5,11 @@
     /// </summary>
     public class EnvironmentAPIHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public EnvironmentAPIHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {

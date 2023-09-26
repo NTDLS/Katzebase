@@ -5,11 +5,11 @@
     /// </summary>
     internal class HealthQueryHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public HealthQueryHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {

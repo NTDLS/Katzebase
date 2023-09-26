@@ -6,18 +6,18 @@ namespace NTDLS.Katzebase.Client.Management
 {
     public class KbTransactionClient
     {
-        private readonly KbClient client;
+        private readonly KbClient _client;
 
         public KbTransactionClient(KbClient client)
         {
-            this.client = client;
+            _client = client;
         }
 
         public void Begin()
         {
-            string url = $"api/Transaction/{client.SessionId}/Begin";
+            string url = $"api/Transaction/{_client.SessionId}/Begin";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -28,9 +28,9 @@ namespace NTDLS.Katzebase.Client.Management
 
         public void Commit()
         {
-            string url = $"api/Transaction/{client.SessionId}/Commit";
+            string url = $"api/Transaction/{_client.SessionId}/Commit";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -41,9 +41,9 @@ namespace NTDLS.Katzebase.Client.Management
 
         public void Rollback()
         {
-            string url = $"api/Transaction/{client.SessionId}/Rollback";
+            string url = $"api/Transaction/{_client.SessionId}/Rollback";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)

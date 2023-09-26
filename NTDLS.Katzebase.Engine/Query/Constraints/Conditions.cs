@@ -171,11 +171,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         {
             var clone = new Conditions()
             {
-                RootSubsetKey = this.RootSubsetKey,
-                HighLevelExpressionTree = this.HighLevelExpressionTree
+                RootSubsetKey = RootSubsetKey,
+                HighLevelExpressionTree = HighLevelExpressionTree
             };
 
-            clone.AllFields.AddRange(this.AllFields);
+            clone.AllFields.AddRange(AllFields);
 
             foreach (var subset in Subsets)
             {

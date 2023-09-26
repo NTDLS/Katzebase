@@ -12,12 +12,12 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
     /// </summary>
     internal class QuerySchemaMap : KbInsensitiveDictionary<QuerySchemaMapItem>
     {
-        private readonly Core core;
+        private readonly Core _core;
         public Transaction Transaction { get; private set; }
 
         public QuerySchemaMap(Core core, Transaction transaction)
         {
-            this.core = core;
+            _core = core;
             Transaction = transaction;
         }
 
@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
         /// <param name="conditions">The conditons used to join this schema mapping to the one before it.</param>
         public void Add(string prefix, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog documentCatalog, Conditions? conditions)
         {
-            Add(prefix, new QuerySchemaMapItem(core, Transaction, this, physicalSchema, documentCatalog, conditions, prefix));
+            Add(prefix, new QuerySchemaMapItem(_core, Transaction, this, physicalSchema, documentCatalog, conditions, prefix));
         }
 
         public int TotalDocumentCount()

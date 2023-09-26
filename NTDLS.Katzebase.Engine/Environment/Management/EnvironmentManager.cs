@@ -13,14 +13,14 @@ namespace NTDLS.Katzebase.Engine.Health.Management
     /// </summary>
     public class EnvironmentManager
     {
-        private readonly Core core;
+        private readonly Core _core;
 
-        internal EnvironmentQueryHandlers QueryHandlers { get; set; }
-        public EnvironmentAPIHandlers APIHandlers { get; set; }
+        internal EnvironmentQueryHandlers QueryHandlers { get; private set; }
+        public EnvironmentAPIHandlers APIHandlers { get; private set; }
 
         public EnvironmentManager(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
                             if (attributes.TryGetValue(optionType, out var value))
                             {
                                 UpdateSettingProperty(settings, settingElement.Name, value); //Save the value in the JSON settings file.
-                                UpdateSettingProperty(core.Settings, settingElement.Name, value); //Save the setting in the live core.
+                                UpdateSettingProperty(_core.Settings, settingElement.Name, value); //Save the setting in the live core.
                             }
                         }
                     }
@@ -103,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to alter environment manager for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to alter environment manager for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }

@@ -32,15 +32,15 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         public bool IsObjectEqual(LockIntention intention)
         {
-            return (intention.LockType == this.LockType
-                && intention.DiskPath == this.DiskPath);
+            return (intention.LockType == LockType
+                && intention.DiskPath == DiskPath);
         }
 
         public bool IsEqual(LockIntention intention)
         {
-            return (intention.LockType == this.LockType
-                && intention.Operation == this.Operation
-                && intention.DiskPath == this.DiskPath);
+            return (intention.LockType == LockType
+                && intention.Operation == Operation
+                && intention.DiskPath == DiskPath);
         }
     }
 }

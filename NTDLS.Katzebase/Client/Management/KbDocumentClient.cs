@@ -7,11 +7,11 @@ namespace NTDLS.Katzebase.Client.Management
 {
     public class KbDocumentClient
     {
-        private readonly KbClient client;
+        private readonly KbClient _client;
 
         public KbDocumentClient(KbClient client)
         {
-            this.client = client;
+            _client = client;
         }
 
         /// <summary>
@@ -21,11 +21,11 @@ namespace NTDLS.Katzebase.Client.Management
         /// <param name="document"></param>
         public void Store(string schema, Payloads.KbDocument document)
         {
-            string url = $"api/Document/{client.SessionId}/{schema}/Store";
+            string url = $"api/Document/{_client.SessionId}/{schema}/Store";
 
             var postContent = new StringContent(JsonConvert.SerializeObject(document), Encoding.UTF8, "text/plain");
 
-            using var response = client.Connection.PostAsync(url, postContent);
+            using var response = _client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -41,11 +41,11 @@ namespace NTDLS.Katzebase.Client.Management
         /// <param name="document"></param>
         public void Store(string schema, object document)
         {
-            string url = $"api/Document/{client.SessionId}/{schema}/Store";
+            string url = $"api/Document/{_client.SessionId}/{schema}/Store";
 
             var postContent = new StringContent(JsonConvert.SerializeObject(new KbDocument(document)), Encoding.UTF8, "text/plain");
 
-            using var response = client.Connection.PostAsync(url, postContent);
+            using var response = _client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -61,9 +61,9 @@ namespace NTDLS.Katzebase.Client.Management
         /// <param name="document"></param>
         public void DeleteById(string schema, uint id)
         {
-            string url = $"api/Document/{client.SessionId}/{schema}/{id}/DeleteById";
+            string url = $"api/Document/{_client.SessionId}/{schema}/{id}/DeleteById";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -78,9 +78,9 @@ namespace NTDLS.Katzebase.Client.Management
         /// <param name="schema"></param>
         public KbDocumentCatalogCollection Catalog(string schema)
         {
-            string url = $"api/Document/{client.SessionId}/{schema}/Catalog";
+            string url = $"api/Document/{_client.SessionId}/{schema}/Catalog";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbDocumentCatalogCollection>(resultText) ?? new KbDocumentCatalogCollection();
             if (result == null || result.Success == false)
@@ -97,9 +97,9 @@ namespace NTDLS.Katzebase.Client.Management
         /// <param name="schema"></param>
         public KbQueryResult List(string schema, int count = -1)
         {
-            string url = $"api/Document/{client.SessionId}/{schema}/List/{count}";
+            string url = $"api/Document/{_client.SessionId}/{schema}/List/{count}";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbQueryResult>(resultText) ?? new KbQueryResult();
             if (result == null || result.Success == false)
@@ -116,9 +116,9 @@ namespace NTDLS.Katzebase.Client.Management
         /// <param name="schema"></param>
         public KbQueryResult Sample(string schema, int count)
         {
-            string url = $"api/Document/{client.SessionId}/{schema}/Sample/{count}";
+            string url = $"api/Document/{_client.SessionId}/{schema}/Sample/{count}";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbQueryResult>(resultText) ?? new KbQueryResult();
             if (result == null || result.Success == false)

@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.IO
             public string DiskPath { get; private set; }
             public object Reference { get; set; }
             public IOFormat Format { get; private set; }
-            public bool UseCompression { get; set; }
+            public bool UseCompression { get; private set; }
 
             public DeferredDiskIOObject(string diskPath, object reference, IOFormat format, bool useCompression)
             {
@@ -21,20 +21,20 @@ namespace NTDLS.Katzebase.Engine.IO
             }
         }
 
-        private readonly Core core;
-        private readonly KbInsensitiveDictionary<DeferredDiskIOObject> Collection = new();
-        public bool ContainsKey(string key) => Collection.ContainsKey(key);
+        private readonly Core _core;
+        private readonly KbInsensitiveDictionary<DeferredDiskIOObject> _collection = new();
+        public bool ContainsKey(string key) => _collection.ContainsKey(key);
 
         public DeferredDiskIO(Core core)
         {
-            this.core = core;
+            _core = core;
         }
 
         public int Count()
         {
             lock (this)
             {
-                return Collection.Count;
+                return _collection.Count;
             }
         }
 
@@ -45,17 +45,17 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             lock (this)
             {
-                foreach (var obj in Collection)
+                foreach (var obj in _collection)
                 {
                     if (obj.Value.Reference != null)
                     {
                         if (obj.Value.Format == IOFormat.JSON)
                         {
-                            core.IO.PutJsonNonTracked(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
+                            _core.IO.PutJsonNonTracked(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
                         }
                         else if (obj.Value.Format == IOFormat.PBuf)
                         {
-                            core.IO.PutPBufNonTracked(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
+                            _core.IO.PutPBufNonTracked(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
                         }
                         else
                         {
@@ -64,7 +64,7 @@ namespace NTDLS.Katzebase.Engine.IO
                     }
                 }
 
-                Collection.Clear();
+                _collection.Clear();
             }
         }
 
@@ -74,9 +74,9 @@ namespace NTDLS.Katzebase.Engine.IO
 
             lock (this)
             {
-                if (Collection.ContainsKey(key))
+                if (_collection.ContainsKey(key))
                 {
-                    return (T)Collection[key].Reference;
+                    return (T)_collection[key].Reference;
                 }
             }
             return default;
@@ -87,7 +87,7 @@ namespace NTDLS.Katzebase.Engine.IO
             key = key.ToLower();
             lock (this)
             {
-                Collection.Remove(key);
+                _collection.Remove(key);
             }
         }
 
@@ -102,11 +102,11 @@ namespace NTDLS.Katzebase.Engine.IO
 
             lock (this)
             {
-                var keysToRemove = Collection.Where(o => o.Key.StartsWith(prefix)).Select(o => o.Key).ToList();
+                var keysToRemove = _collection.Where(o => o.Key.StartsWith(prefix)).Select(o => o.Key).ToList();
 
                 foreach (var key in keysToRemove)
                 {
-                    Collection.Remove(key);
+                    _collection.Remove(key);
                 }
             }
         }
@@ -123,13 +123,13 @@ namespace NTDLS.Katzebase.Engine.IO
 
             lock (this)
             {
-                if (Collection.ContainsKey(key))
+                if (_collection.ContainsKey(key))
                 {
-                    Collection[key].Reference = reference;
+                    _collection[key].Reference = reference;
                 }
                 else
                 {
-                    Collection.Add(key, new DeferredDiskIOObject(diskPath, reference, deferredFormat, useCompression));
+                    _collection.Add(key, new DeferredDiskIOObject(diskPath, reference, deferredFormat, useCompression));
                 }
             }
         }

@@ -9,11 +9,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// </summary>
     public class DocumentAPIHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public DocumentAPIHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -29,13 +29,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                var result = StaticSearcherMethods.SampleSchemaDocuments(core, transactionReference.Transaction, schemaName, rowLimit);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                var result = StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, schemaName, rowLimit);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document sample for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document sample for process id {processId}.", ex);
                 throw;
             }
         }
@@ -51,13 +51,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                var result = StaticSearcherMethods.ListSchemaDocuments(core, transactionReference.Transaction, schemaName, rowLimit);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                var result = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, schemaName, rowLimit);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document list for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document list for process id {processId}.", ex);
                 throw;
             }
         }
@@ -74,17 +74,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 var result = new KbActionResponseUInt()
                 {
-                    Value = core.Documents.InsertDocument(transactionReference.Transaction, schemaName, document.Content).DocumentId,
+                    Value = _core.Documents.InsertDocument(transactionReference.Transaction, schemaName, document.Content).DocumentId,
                 };
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 1);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document store for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document store for process id {processId}.", ex);
                 throw;
             }
         }
@@ -100,16 +100,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 var result = new KbDocumentCatalogCollection();
-                var documentPointers = core.Documents.AcquireDocumentPointers(transactionReference.Transaction, schemaName, LockOperation.Read).ToList();
+                var documentPointers = _core.Documents.AcquireDocumentPointers(transactionReference.Transaction, schemaName, LockOperation.Read).ToList();
 
                 result.Collection.AddRange(documentPointers.Select(o => new KbDocumentCatalogItem(o.DocumentId)));
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, documentPointers.Count);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document catalog for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document catalog for process id {processId}.", ex);
                 throw;
             }
         }
@@ -121,17 +121,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                var physicalSchema = core.Schemas.Acquire(transactionReference.Transaction, schemaName, LockOperation.Write);
-                var documentPointers = core.Documents.AcquireDocumentPointers(transactionReference.Transaction, physicalSchema, LockOperation.Write).ToList();
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schemaName, LockOperation.Write);
+                var documentPointers = _core.Documents.AcquireDocumentPointers(transactionReference.Transaction, physicalSchema, LockOperation.Write).ToList();
                 var pointersToDelete = documentPointers.Where(o => o.DocumentId == documentId);
 
-                core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, pointersToDelete);
+                _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, pointersToDelete);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document delete for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document delete for process id {processId}.", ex);
                 throw;
             }
         }

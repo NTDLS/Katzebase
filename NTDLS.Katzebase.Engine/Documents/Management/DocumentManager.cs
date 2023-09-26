@@ -11,13 +11,13 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
     /// </summary>
     public class DocumentManager
     {
-        private readonly Core core;
-        internal DocumentQueryHandlers QueryHandlers { get; set; }
-        public DocumentAPIHandlers APIHandlers { get; set; }
+        private readonly Core _core;
+        internal DocumentQueryHandlers QueryHandlers { get; private set; }
+        public DocumentAPIHandlers APIHandlers { get; private set; }
 
         public DocumentManager(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire document for process {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire document for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -55,18 +55,18 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
         {
             try
             {
-                return core.IO.GetPBuf<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemFilePath(pageNumber), lockIntention);
+                return _core.IO.GetPBuf<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemFilePath(pageNumber), lockIntention);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire document page for process {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire document page for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
 
         internal IEnumerable<DocumentPointer> AcquireDocumentPointers(Transaction transaction, string schemaName, LockOperation lockIntention)
         {
-            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             return AcquireDocumentPointers(transaction, physicalSchema, lockIntention);
         }
 
@@ -74,7 +74,7 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
         {
             try
             {
-                var physicalDocumentPageCatalog = core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
+                var physicalDocumentPageCatalog = _core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
 
                 var documentPointers = new List<DocumentPointer>();
 
@@ -88,7 +88,7 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire document pointers for process {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire document pointers for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -97,11 +97,11 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
         {
             try
             {
-                return core.IO.GetPBuf<PhysicalDocumentPageMap>(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(pageNumber), lockIntention);
+                return _core.IO.GetPBuf<PhysicalDocumentPageMap>(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(pageNumber), lockIntention);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire document page map for process {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire document page map for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -110,11 +110,11 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
         {
             try
             {
-                return core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
+                return _core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire document page catalog for process {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire document page catalog for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -124,7 +124,7 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
         /// </summary>
         internal DocumentPointer InsertDocument(Transaction transaction, string schemaName, string pageContent)
         {
-            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             return InsertDocument(transaction, physicalSchema, pageContent);
 
         }
@@ -137,7 +137,7 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
             try
             {
                 //Open the document page catalog:
-                var documentPageCatalog = core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
+                var documentPageCatalog = _core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
                 KbUtility.EnsureNotNull(documentPageCatalog);
 
                 uint physicalDocumentId = documentPageCatalog.ConsumeNextDocumentId();
@@ -193,24 +193,24 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
                 }
 
                 //Save the document page map.
-                core.IO.PutPBuf(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(physicalPageCatalogItem.PageNumber), physicalDocumentPageMap);
+                _core.IO.PutPBuf(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(physicalPageCatalogItem.PageNumber), physicalDocumentPageMap);
 
                 //Save the document page:
-                core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageCatalogItem), documentPage);
+                _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemDiskPath(physicalPageCatalogItem), documentPage);
 
                 //Save the document page catalog:
-                core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
+                _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
 
                 var documentPointer = new DocumentPointer(physicalPageCatalogItem.PageNumber, physicalDocumentId);
 
                 //Update all of the indexes that referecne the document.
-                core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, documentPointer);
+                _core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, documentPointer);
 
                 return documentPointer;
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to insert document for process {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to insert document for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -238,17 +238,17 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
                     documentPage.Documents[documentPointer.DocumentId] = physicalDocument;
 
                     //Save the document page:
-                    core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
+                    _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
 
                     physicalDocuments.Add(documentPointer, physicalDocument);
                 }
 
                 //Update all of the indexes that referecne the document.
-                core.Indexes.UpdateDocumentsIntoIndexes(transaction, physicalSchema, physicalDocuments, listOfModifiedFields);
+                _core.Indexes.UpdateDocumentsIntoIndexes(transaction, physicalSchema, physicalDocuments, listOfModifiedFields);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to update document for process {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to update document for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -264,7 +264,7 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
             try
             {
                 //Open the document page catalog:
-                var documentPageCatalog = core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
+                var documentPageCatalog = _core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
                 KbUtility.EnsureNotNull(documentPageCatalog);
 
                 foreach (var documentPointer in documentPointers)
@@ -277,26 +277,26 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
                     documentPage.Documents.Remove(documentPointer.DocumentId);
 
                     //Save the document page:
-                    core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
+                    _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogItemFilePath(documentPointer), documentPage);
 
                     //Update the document page map.
                     var physicalDocumentPageMap = AcquireDocumentPageMap(transaction, physicalSchema, documentPointer.PageNumber, LockOperation.Write);
                     physicalDocumentPageMap.DocumentIDs.Remove(documentPointer.DocumentId);
-                    core.IO.PutPBuf(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(documentPointer.PageNumber), physicalDocumentPageMap);
+                    _core.IO.PutPBuf(transaction, physicalSchema.PhysicalDocumentPageMapFilePath(documentPointer.PageNumber), physicalDocumentPageMap);
                 }
 
                 //Save the document page catalog:
-                core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
+                _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
 
                 if (documentPointers.Count() > 0)
                 {
                     //Update all of the indexes that referecne the documents.
-                    core.Indexes.RemoveDocumentsFromIndexes(transaction, physicalSchema, documentPointers);
+                    _core.Indexes.RemoveDocumentsFromIndexes(transaction, physicalSchema, documentPointers);
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete documents for process {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to delete documents for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }

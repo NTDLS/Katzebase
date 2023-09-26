@@ -5,11 +5,11 @@
     /// </summary>
     public class SessionAPIHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public SessionAPIHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {

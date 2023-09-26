@@ -11,11 +11,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// </summary>
     public class SchemaAPIHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public SchemaAPIHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -31,8 +31,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                var physicalSchema = core.Schemas.Acquire(transactionReference.Transaction, schemaName, LockOperation.Read);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schemaName, LockOperation.Read);
 
                 var result = new KbActionResponseSchemaCollection();
 
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
                 }
 
-                var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transactionReference.Transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
+                var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transactionReference.Transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
 
                 foreach (var item in schemaCatalog.Collection)
                 {
@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to get schema list for process {processId}.", ex);
+                _core.Log.Write($"Failed to get schema list for process {processId}.", ex);
                 throw;
             }
         }
@@ -66,14 +66,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 var segments = schemaName.Split(':');
                 var pathBuilder = new StringBuilder();
 
                 foreach (string name in segments)
                 {
                     pathBuilder.Append(name);
-                    core.Schemas.CreateSingleSchema(transactionReference.Transaction, pathBuilder.ToString(), pageSize);
+                    _core.Schemas.CreateSingleSchema(transactionReference.Transaction, pathBuilder.ToString(), pageSize);
                     pathBuilder.Append(":");
                 }
 
@@ -81,7 +81,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create schema lineage for process {processId}.", ex);
+                _core.Log.Write($"Failed to create schema lineage for process {processId}.", ex);
                 throw;
             }
         }
@@ -94,7 +94,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 var segments = schemaName.Split(':');
                 var pathBuilder = new StringBuilder();
                 bool schemaExists = false;
@@ -102,7 +102,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 foreach (string name in segments)
                 {
                     pathBuilder.Append(name);
-                    var schema = core.Schemas.AcquireVirtual(transactionReference.Transaction, pathBuilder.ToString(), LockOperation.Read);
+                    var schema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, pathBuilder.ToString(), LockOperation.Read);
 
                     schemaExists = schema != null && schema.Exists;
                     if (schemaExists == false)
@@ -117,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to confirm schema for process {processId}.", ex);
+                _core.Log.Write($"Failed to confirm schema for process {processId}.", ex);
                 throw;
             }
         }
@@ -130,34 +130,34 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 var segments = schemaName.Split(':');
                 var parentSchemaName = segments[segments.Count() - 1];
 
-                var physicalSchema = core.Schemas.Acquire(transactionReference.Transaction, schemaName, LockOperation.Write);
-                var parentPhysicalSchema = core.Schemas.AcquireParent(transactionReference.Transaction, physicalSchema, LockOperation.Write);
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schemaName, LockOperation.Write);
+                var parentPhysicalSchema = _core.Schemas.AcquireParent(transactionReference.Transaction, physicalSchema, LockOperation.Write);
 
                 if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
                     throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
 
                 var parentSchemaCatalogFile = parentPhysicalSchema.SchemaCatalogFilePath();
-                var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transactionReference.Transaction, parentSchemaCatalogFile, LockOperation.Write);
+                var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transactionReference.Transaction, parentSchemaCatalogFile, LockOperation.Write);
 
                 var nsItem = parentCatalog.Collection.FirstOrDefault(o => o.Name == parentSchemaName);
                 if (nsItem != null)
                 {
                     parentCatalog.Collection.Remove(nsItem);
 
-                    core.IO.DeletePath(transactionReference.Transaction, physicalSchema.DiskPath);
+                    _core.IO.DeletePath(transactionReference.Transaction, physicalSchema.DiskPath);
 
-                    core.IO.PutJson(transactionReference.Transaction, parentSchemaCatalogFile, parentCatalog);
+                    _core.IO.PutJson(transactionReference.Transaction, parentSchemaCatalogFile, parentCatalog);
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to drop schema for process {processId}.", ex);
+                _core.Log.Write($"Failed to drop schema for process {processId}.", ex);
                 throw;
             }
         }

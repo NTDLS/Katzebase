@@ -6,7 +6,7 @@
 
         public void Add(PhysicalSchema schema)
         {
-            this.Collection.Add(schema);
+            Collection.Add(schema);
         }
 
         public bool ContainsName(string name)

@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine
 
         public Core(KatzebaseSettings settings)
         {
-            this.Settings = settings;
+            Settings = settings;
 
             Log = new LogManager(this);
 

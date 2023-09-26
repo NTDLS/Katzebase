@@ -18,22 +18,22 @@ namespace NTDLS.Katzebase.UI
 
             if (showInTaskbar)
             {
-                this.ShowInTaskbar = true;
-                this.StartPosition = FormStartPosition.CenterScreen;
-                this.TopMost = true;
+                ShowInTaskbar = true;
+                StartPosition = FormStartPosition.CenterScreen;
+                TopMost = true;
             }
             else
             {
-                this.ShowInTaskbar = false;
-                this.StartPosition = FormStartPosition.CenterParent;
-                this.TopMost = false;
+                ShowInTaskbar = false;
+                StartPosition = FormStartPosition.CenterParent;
+                TopMost = false;
             }
         }
 
         private void FormAbout_Load(object sender, EventArgs e)
         {
-            this.AcceptButton = cmdOk;
-            this.CancelButton = cmdOk;
+            AcceptButton = cmdOk;
+            CancelButton = cmdOk;
 
             if (assembly == null || assembly.Location == null)
             {

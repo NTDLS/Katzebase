@@ -11,11 +11,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class ProcedureQueryHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public ProcedureQueryHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Procedure)
                 {
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     var parameters = preparedQuery.Attribute<List<PhysicalProcedureParameter>>(PreparedQuery.QueryAttribute.Parameters);
                     var Batches = preparedQuery.Attribute<List<string>>(PreparedQuery.QueryAttribute.Batches);
 
-                    core.Procedures.CreateCustomProcedure(transactionReference.Transaction, objectSchema, objectName, parameters, Batches);
+                    _core.Procedures.CreateCustomProcedure(transactionReference.Transaction, objectSchema, objectName, parameters, Batches);
                 }
                 else
                 {
@@ -51,7 +51,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute procedure create for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute procedure create for process id {processId}.", ex);
                 throw;
             }
         }
@@ -60,13 +60,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                var result = core.Procedures.ExecuteProcedure(transactionReference.Transaction, preparedQuery.ProcedureCall);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                var result = _core.Procedures.ExecuteProcedure(transactionReference.Transaction, preparedQuery.ProcedureCall);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 0);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute procedure for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute procedure for process id {processId}.", ex);
                 throw;
             }
         }

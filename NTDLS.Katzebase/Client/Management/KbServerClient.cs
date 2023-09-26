@@ -6,11 +6,11 @@ namespace NTDLS.Katzebase.Client.Management
 {
     public class KbServerClient
     {
-        private readonly KbClient client;
+        private readonly KbClient _client;
 
         public KbServerClient(KbClient client)
         {
-            this.client = client;
+            _client = client;
         }
 
         /// <summary>
@@ -20,11 +20,11 @@ namespace NTDLS.Katzebase.Client.Management
         /// <exception cref="KbAPIResponseException"></exception>
         public KbActionResponsePing Ping()
         {
-            lock (client.PingLock)
+            lock (_client.PingLock)
             {
-                string url = $"api/Server/{client.SessionId}/Ping";
+                string url = $"api/Server/{_client.SessionId}/Ping";
 
-                using var response = client.Connection.GetAsync(url);
+                using var response = _client.Connection.GetAsync(url);
                 string resultText = response.Result.Content.ReadAsStringAsync().Result;
                 var result = JsonConvert.DeserializeObject<KbActionResponsePing>(resultText);
                 if (result == null || result.Success == false)
@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Client.Management
                     throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
                 }
 
-                client.ServerProcessId = result.ProcessId;
+                _client.ServerProcessId = result.ProcessId;
 
                 return result;
             }
@@ -45,9 +45,9 @@ namespace NTDLS.Katzebase.Client.Management
         /// <exception cref="KbAPIResponseException"></exception>
         public KbActionResponse TerminateProcess(ulong processId)
         {
-            string url = $"api/Server/{client.SessionId}/TerminateProcess/{processId}";
+            string url = $"api/Server/{_client.SessionId}/TerminateProcess/{processId}";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)

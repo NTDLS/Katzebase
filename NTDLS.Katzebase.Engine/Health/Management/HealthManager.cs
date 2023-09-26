@@ -12,15 +12,15 @@ namespace NTDLS.Katzebase.Engine.Health.Management
     {
         public KbInsensitiveDictionary<HealthCounter> Counters = new();
 
-        private readonly Core core;
+        private readonly Core _core;
         private DateTime lastCheckpoint = DateTime.MinValue;
 
-        internal HealthQueryHandlers QueryHandlers { get; set; }
-        public HealthAPIHandlers APIHandlers { get; set; }
+        internal HealthQueryHandlers QueryHandlers { get; private set; }
+        public HealthAPIHandlers APIHandlers { get; private set; }
 
         public HealthManager(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -95,12 +95,12 @@ namespace NTDLS.Katzebase.Engine.Health.Management
                     }
                     */
 
-                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.LogDirectory, HealthStatsFile), Counters, false);
+                    _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.LogDirectory, HealthStatsFile), Counters, false);
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to checkpoint health manager.", ex);
+                _core.Log.Write("Failed to checkpoint health manager.", ex);
                 throw;
             }
 
@@ -115,7 +115,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
         {
             try
             {
-                if (value == 0 || core.Settings.HealthMonitoringEnabled == false)
+                if (value == 0 || _core.Settings.HealthMonitoringEnabled == false)
                 {
                     return;
                 }
@@ -141,7 +141,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
                         });
                     }
 
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= core.Settings.HealthMonitoringChekpointSeconds)
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= _core.Settings.HealthMonitoringChekpointSeconds)
                     {
                         Checkpoint();
                     }
@@ -149,7 +149,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to increment health counter.", ex);
+                _core.Log.Write("Failed to increment health counter.", ex);
                 throw;
             }
         }
@@ -163,7 +163,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
         {
             try
             {
-                if (value == 0 || core.Settings.HealthMonitoringEnabled == false || core.Settings.HealthMonitoringInstanceLevelEnabled == false)
+                if (value == 0 || _core.Settings.HealthMonitoringEnabled == false || _core.Settings.HealthMonitoringInstanceLevelEnabled == false)
                 {
                     return;
                 }
@@ -189,7 +189,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
                         });
                     }
 
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringChekpointSeconds)
                     {
                         Checkpoint();
                     }
@@ -197,7 +197,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to increment health counter.", ex);
+                _core.Log.Write("Failed to increment health counter.", ex);
                 throw;
             }
         }
@@ -223,7 +223,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
         {
             try
             {
-                if (core.Settings.HealthMonitoringEnabled == false)
+                if (_core.Settings.HealthMonitoringEnabled == false)
                 {
                     return;
                 }
@@ -249,7 +249,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
                         });
                     }
 
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringChekpointSeconds)
                     {
                         Checkpoint();
                     }
@@ -257,7 +257,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to set health counter.", ex);
+                _core.Log.Write("Failed to set health counter.", ex);
                 throw;
             }
         }
@@ -271,7 +271,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
         {
             try
             {
-                if (value == 0 || core.Settings.HealthMonitoringEnabled == false || core.Settings.HealthMonitoringInstanceLevelEnabled == false)
+                if (value == 0 || _core.Settings.HealthMonitoringEnabled == false || _core.Settings.HealthMonitoringInstanceLevelEnabled == false)
                 {
                     return;
                 }
@@ -297,7 +297,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
                         });
                     }
 
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > core.Settings.HealthMonitoringChekpointSeconds)
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringChekpointSeconds)
                     {
                         Checkpoint();
                     }
@@ -305,7 +305,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to set health counter.", ex);
+                _core.Log.Write("Failed to set health counter.", ex);
                 throw;
             }
         }

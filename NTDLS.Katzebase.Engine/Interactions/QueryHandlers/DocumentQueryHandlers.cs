@@ -16,11 +16,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class DocumentQueryHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public DocumentQueryHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -36,13 +36,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, transactionReference.Transaction, preparedQuery);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document select for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document select for process id {processId}.", ex);
                 throw;
             }
         }
@@ -51,19 +51,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 var targetSchema = preparedQuery.Attributes[PreparedQuery.QueryAttribute.TargetSchema].ToString();
                 KbUtility.EnsureNotNull(targetSchema);
 
-                var physicalTargetSchema = core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write);
+                var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write);
 
                 if (physicalTargetSchema.Exists == false)
                 {
-                    core.Schemas.CreateSingleSchema(transactionReference.Transaction, targetSchema, core.Settings.DefaultDocumentPageSize);
-                    physicalTargetSchema = core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write);
+                    _core.Schemas.CreateSingleSchema(transactionReference.Transaction, targetSchema, _core.Settings.DefaultDocumentPageSize);
+                    physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write);
                 }
 
-                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(core, transactionReference.Transaction, preparedQuery);
+                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
 
                 var duplicateFields = result.Fields.GroupBy(o => o.Name).Where(o => o.Count() > 1).Select(o => o.Key).ToList();
 
@@ -83,14 +83,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     }
                     string documentContent = JsonConvert.SerializeObject(document);
 
-                    core.Documents.InsertDocument(transactionReference.Transaction, physicalTargetSchema, documentContent);
+                    _core.Documents.InsertDocument(transactionReference.Transaction, physicalTargetSchema, documentContent);
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document select for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document select for process id {processId}.", ex);
                 throw;
             }
         }
@@ -105,8 +105,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                var physicalSchema = core.Schemas.Acquire(transactionReference.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
 
                 foreach (var upsertValues in preparedQuery.UpsertValues)
                 {
@@ -134,14 +134,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     }
 
                     var documentContent = JsonConvert.SerializeObject(keyValuePairs);
-                    core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
+                    _core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(preparedQuery.UpsertValues.Count);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document insert for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document insert for process id {processId}.", ex);
                 throw;
             }
         }
@@ -156,9 +156,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 var firstSchema = preparedQuery.Schemas.Single();
-                var physicalSchema = core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
 
                 var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
 
@@ -169,13 +169,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 KbUtility.EnsureNotNull(getDocumentPointsForSchemaPrefix);
 
-                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
+                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(_core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
 
                 var updatedDocumentPointers = new List<DocumentPointer>();
 
                 foreach (var documentPointer in documentPointers)
                 {
-                    var physicalDocument = core.Documents.AcquireDocument(transactionReference.Transaction, physicalSchema, documentPointer, LockOperation.Write);
+                    var physicalDocument = _core.Documents.AcquireDocument(transactionReference.Transaction, physicalSchema, documentPointer, LockOperation.Write);
                     KbUtility.EnsureNotNull(physicalDocument);
 
                     foreach (var updateValue in preparedQuery.UpdateValues)
@@ -212,13 +212,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 var listOfModifiedFields = preparedQuery.UpdateValues.Select(o => o.Key);
 
                 //We update all of the documents all at once so we dont have to keep opening/closing catalogs.
-                core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocumentPointers, listOfModifiedFields);
+                _core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocumentPointers, listOfModifiedFields);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document update for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document update for process id {processId}.", ex);
                 throw;
             }
         }
@@ -227,15 +227,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.Single().Name;
-                var result = StaticSearcherMethods.SampleSchemaDocuments(core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
+                var result = StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document sample for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document sample for process id {processId}.", ex);
                 throw;
             }
         }
@@ -244,15 +244,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.Single().Name;
-                var result = StaticSearcherMethods.ListSchemaDocuments(core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
+                var result = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document list for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document list for process id {processId}.", ex);
                 throw;
             }
         }
@@ -274,7 +274,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document explain for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document explain for process id {processId}.", ex);
                 throw;
             }
         }
@@ -283,9 +283,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 var firstSchema = preparedQuery.Schemas.Single();
-                var physicalSchema = core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
                 var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
 
                 if (preparedQuery.Attributes.ContainsKey(PreparedQuery.QueryAttribute.SpecificSchemaPrefix))
@@ -295,13 +295,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 KbUtility.EnsureNotNull(getDocumentPointsForSchemaPrefix);
 
-                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
-                core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, documentPointers.ToArray());
+                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(_core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
+                _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, documentPointers.ToArray());
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute document delete for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document delete for process id {processId}.", ex);
                 throw;
             }
         }

@@ -7,20 +7,20 @@ namespace NTDLS.Katzebase.Client.Management
 {
     public class KbQueryClient
     {
-        private readonly KbClient client;
+        private readonly KbClient _client;
 
         public KbQueryClient(KbClient client)
         {
-            this.client = client;
+            _client = client;
         }
 
         public KbQueryResultCollection ExplainQuery(string statement)
         {
-            string url = $"api/Query/{client.SessionId}/ExplainQuery";
+            string url = $"api/Query/{_client.SessionId}/ExplainQuery";
 
             var postContent = new StringContent(JsonConvert.SerializeObject(statement), Encoding.UTF8);
 
-            using var response = client.Connection.PostAsync(url, postContent);
+            using var response = _client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbQueryResultCollection>(resultText);
             if (result == null || result.Success == false)
@@ -32,11 +32,11 @@ namespace NTDLS.Katzebase.Client.Management
 
         public KbQueryResultCollection ExecuteQuery(string statement)
         {
-            string url = $"api/Query/{client.SessionId}/ExecuteQuery";
+            string url = $"api/Query/{_client.SessionId}/ExecuteQuery";
 
             var postContent = new StringContent(JsonConvert.SerializeObject(statement), Encoding.UTF8);
 
-            using var response = client.Connection.PostAsync(url, postContent);
+            using var response = _client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbQueryResultCollection>(resultText);
             if (result == null || result.Success == false)
@@ -48,11 +48,11 @@ namespace NTDLS.Katzebase.Client.Management
 
         public KbQueryResultCollection ExecuteQueries(List<string> statements)
         {
-            string url = $"api/Query/{client.SessionId}/ExecuteQueries";
+            string url = $"api/Query/{_client.SessionId}/ExecuteQueries";
 
             var postContent = new StringContent(JsonConvert.SerializeObject(statements), Encoding.UTF8);
 
-            using var response = client.Connection.PostAsync(url, postContent);
+            using var response = _client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbQueryResultCollection>(resultText);
             if (result == null || result.Success == false)
@@ -64,11 +64,11 @@ namespace NTDLS.Katzebase.Client.Management
 
         public KbActionResponseCollection ExecuteNonQuery(string statement)
         {
-            string url = $"api/Query/{client.SessionId}/ExecuteNonQuery";
+            string url = $"api/Query/{_client.SessionId}/ExecuteNonQuery";
 
             var postContent = new StringContent(JsonConvert.SerializeObject(statement), Encoding.UTF8);
 
-            using var response = client.Connection.PostAsync(url, postContent);
+            using var response = _client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponseCollection>(resultText);
             if (result == null || result.Success == false)

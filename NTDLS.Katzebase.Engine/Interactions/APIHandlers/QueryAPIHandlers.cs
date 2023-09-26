@@ -8,11 +8,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// </summary>
     public class QueryAPIHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public QueryAPIHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -29,14 +29,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var results = new KbQueryResultCollection();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
             {
-                results.Add(core.Query.ExplainQuery(processId, preparedQuery));
+                results.Add(_core.Query.ExplainQuery(processId, preparedQuery));
             }
             return results;
         }
 
         public KbQueryResultCollection ExecuteStatementProcedure(ulong processId, KbProcedure procedure)
         {
-            return core.Query.ExecureProcedure(processId, procedure);
+            return _core.Query.ExecureProcedure(processId, procedure);
         }
 
         public KbQueryResultCollection ExecuteStatementQuery(ulong processId, string statement)
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var results = new KbQueryResultCollection();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
             {
-                results.Add(core.Query.ExecuteQuery(processId, preparedQuery));
+                results.Add(_core.Query.ExecuteQuery(processId, preparedQuery));
             }
             return results;
         }
@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
                 {
-                    var intermediatResult = core.Query.ExecuteQuery(processId, preparedQuery);
+                    var intermediatResult = _core.Query.ExecuteQuery(processId, preparedQuery);
 
                     results.Add(intermediatResult);
                 }
@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var results = new KbActionResponseCollection();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
             {
-                results.Add(core.Query.ExecuteNonQuery(processId, preparedQuery));
+                results.Add(_core.Query.ExecuteNonQuery(processId, preparedQuery));
             }
             return results;
         }

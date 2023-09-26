@@ -10,11 +10,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class SchemaQueryHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public SchemaQueryHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 var result = new KbQueryResult();
@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
                     var includePhysicalPages = preparedQuery.Attribute(PreparedQuery.QueryAttribute.IncludePhysicalPages, false);
-                    result = core.Schemas.AnalysePages(transactionReference.Transaction, schemaName, includePhysicalPages);
+                    result = _core.Schemas.AnalysePages(transactionReference.Transaction, schemaName, includePhysicalPages);
                 }
                 else
                 {
@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute schema drop for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute schema drop for process id {processId}.", ex);
                 throw;
             }
         }
@@ -59,12 +59,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
-                    core.Schemas.Drop(transactionReference.Transaction, schemaName);
+                    _core.Schemas.Drop(transactionReference.Transaction, schemaName);
                 }
                 else
                 {
@@ -75,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute schema drop for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute schema drop for process id {processId}.", ex);
                 throw;
             }
         }
@@ -84,13 +84,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
-                    var pageSize = preparedQuery.Attribute(PreparedQuery.QueryAttribute.PageSize, core.Settings.DefaultDocumentPageSize);
+                    var pageSize = preparedQuery.Attribute(PreparedQuery.QueryAttribute.PageSize, _core.Settings.DefaultDocumentPageSize);
                     string schemaName = preparedQuery.Schemas.Single().Name;
-                    core.Schemas.Alter(transactionReference.Transaction, schemaName, pageSize);
+                    _core.Schemas.Alter(transactionReference.Transaction, schemaName, pageSize);
                 }
                 else
                 {
@@ -101,7 +101,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute schema alter for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute schema alter for process id {processId}.", ex);
                 throw;
             }
         }
@@ -110,13 +110,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
-                    var pageSize = preparedQuery.Attribute(PreparedQuery.QueryAttribute.PageSize, core.Settings.DefaultDocumentPageSize);
+                    var pageSize = preparedQuery.Attribute(PreparedQuery.QueryAttribute.PageSize, _core.Settings.DefaultDocumentPageSize);
                     string schemaName = preparedQuery.Schemas.Single().Name;
-                    core.Schemas.CreateSingleSchema(transactionReference.Transaction, schemaName, pageSize);
+                    _core.Schemas.CreateSingleSchema(transactionReference.Transaction, schemaName, pageSize);
                 }
                 else
                 {
@@ -127,7 +127,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute schema create for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute schema create for process id {processId}.", ex);
                 throw;
             }
         }
@@ -136,12 +136,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 var result = new KbQueryResult();
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                 {
-                    var schemaList = core.Schemas.GetListByPreparedQuery(transactionReference.Transaction, preparedQuery.Schemas.Single().Name, preparedQuery.RowLimit);
+                    var schemaList = _core.Schemas.GetListByPreparedQuery(transactionReference.Transaction, preparedQuery.Schemas.Single().Name, preparedQuery.RowLimit);
 
                     result.Fields.Add(new KbQueryField("Name"));
                     result.Fields.Add(new KbQueryField("Path"));
@@ -157,7 +157,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute schema list for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute schema list for process id {processId}.", ex);
                 throw;
             }
         }

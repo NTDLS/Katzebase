@@ -18,11 +18,13 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
     /// </summary>
     public class SchemaManager
     {
-        private readonly Core core;
-        private readonly string rootCatalogFile;
-        private PhysicalSchema? rootPhysicalSchema = null;
-        internal SchemaQueryHandlers QueryHandlers { get; set; }
-        public SchemaAPIHandlers APIHandlers { get; set; }
+        private readonly Core _core;
+        private readonly string _rootCatalogFile;
+        private PhysicalSchema? _rootPhysicalSchema = null;
+
+        internal SchemaQueryHandlers QueryHandlers { get; private set; }
+
+        public SchemaAPIHandlers APIHandlers { get; private set; }
 
         public PhysicalSchema RootPhysicalSchema
         {
@@ -30,18 +32,18 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
             {
                 try
                 {
-                    rootPhysicalSchema ??= new PhysicalSchema()
+                    _rootPhysicalSchema ??= new PhysicalSchema()
                     {
                         Id = RootSchemaGUID,
-                        DiskPath = core.Settings.DataRootPath,
+                        DiskPath = _core.Settings.DataRootPath,
                         VirtualPath = string.Empty,
                         Name = string.Empty,
                     };
-                    return rootPhysicalSchema;
+                    return _rootPhysicalSchema;
                 }
                 catch (Exception ex)
                 {
-                    core.Log.Write($"Failed to obtain root schema.", ex);
+                    _core.Log.Write($"Failed to obtain root schema.", ex);
                     throw;
                 }
             }
@@ -49,17 +51,17 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
 
         public SchemaManager(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
                 QueryHandlers = new SchemaQueryHandlers(core);
                 APIHandlers = new SchemaAPIHandlers(core);
 
-                rootCatalogFile = Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile);
+                _rootCatalogFile = Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile);
 
                 //If the catalog doesnt exist, create a new empty one.
-                if (File.Exists(rootCatalogFile) == false)
+                if (File.Exists(_rootCatalogFile) == false)
                 {
                     Directory.CreateDirectory(core.Settings.DataRootPath);
 
@@ -108,12 +110,12 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
             {
                 if (pageSize == 0)
                 {
-                    pageSize = core.Settings.DefaultDocumentPageSize;
+                    pageSize = _core.Settings.DefaultDocumentPageSize;
                 }
 
                 var physicalSchema = Acquire(transaction, schemaName, LockOperation.Write);
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
-                var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
+                var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
                 var singleSchema = parentCatalog.GetByName(physicalSchema.Name);
                 if (singleSchema == null)
@@ -122,7 +124,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
                 }
                 singleSchema.PageSize = pageSize;
 
-                core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
+                _core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
 
                 if (physicalSchema.IsTemporary)
                 {
@@ -135,7 +137,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to alter schema manager for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to alter schema manager for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -146,7 +148,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
             {
                 if (pageSize == 0)
                 {
-                    pageSize = core.Settings.DefaultDocumentPageSize;
+                    pageSize = _core.Settings.DefaultDocumentPageSize;
                 }
 
                 var physicalSchema = AcquireVirtual(transaction, schemaName, LockOperation.Write);
@@ -157,12 +159,12 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
 
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
 
-                core.IO.CreateDirectory(transaction, physicalSchema.DiskPath);
-                core.IO.PutJson(transaction, physicalSchema.SchemaCatalogFilePath(), new PhysicalSchemaCatalog());
-                core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), new PhysicalDocumentPageCatalog());
-                core.IO.PutJson(transaction, physicalSchema.IndexCatalogFilePath(), new PhysicalIndexCatalog());
+                _core.IO.CreateDirectory(transaction, physicalSchema.DiskPath);
+                _core.IO.PutJson(transaction, physicalSchema.SchemaCatalogFilePath(), new PhysicalSchemaCatalog());
+                _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), new PhysicalDocumentPageCatalog());
+                _core.IO.PutJson(transaction, physicalSchema.IndexCatalogFilePath(), new PhysicalIndexCatalog());
 
-                var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
+                var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
                 if (parentCatalog.ContainsName(physicalSchema.Name) == false)
                 {
@@ -173,7 +175,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
                         PageSize = pageSize
                     });
 
-                    core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
+                    _core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
 
                     if (physicalSchema.IsTemporary)
                     {
@@ -187,7 +189,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -204,17 +206,17 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
 
                 var parentPhysicalSchema = AcquireParent(transaction, physicalSchema, LockOperation.Write);
 
-                core.IO.DeletePath(transaction, physicalSchema.DiskPath);
+                _core.IO.DeletePath(transaction, physicalSchema.DiskPath);
 
-                var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
+                var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
                 parentCatalog.Collection.RemoveAll(o => o.Name.ToLower() == physicalSchema.Name.ToLower());
 
-                core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
+                _core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -226,9 +228,9 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
                 var schemas = new List<PhysicalSchema>();
 
 
-                if (core.IO.FileExists(transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation))
+                if (_core.IO.FileExists(transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation))
                 {
-                    var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation);
+                    var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation);
 
                     foreach (var catalogItem in schemaCatalog.Collection)
                     {
@@ -246,7 +248,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire schema children for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire schema children for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -272,7 +274,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire parent schema for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire parent schema for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -289,7 +291,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
                 bool isTemporary = false;
                 if (schemaName.StartsWith('#'))
                 {
-                    var session = core.Sessions.ByProcessId(transaction.ProcessId);
+                    var session = _core.Sessions.ByProcessId(transaction.ProcessId);
                     schemaName = $"Temporary:{schemaName.Substring(1).Replace(':', '_')}_{session.SessionId}";
                     isTemporary = true;
                 }
@@ -306,18 +308,18 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
                     var segments = schemaName.Split(':');
                     var parentSchemaame = segments[segments.Count() - 1];
 
-                    var schemaDiskPath = Path.Combine(core.Settings.DataRootPath, string.Join("\\", segments));
+                    var schemaDiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join("\\", segments));
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
                     KbUtility.EnsureNotNull(parentSchemaDiskPath);
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, SchemaCatalogFile);
 
-                    if (core.IO.FileExists(transaction, parentCatalogDiskPath, intendedOperation) == false)
+                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, intendedOperation) == false)
                     {
                         throw new KbObjectNotFoundException($"The schema [{schemaName}] does not exist.");
                     }
 
-                    var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
+                    var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
                         Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), intendedOperation);
 
                     var physicalSchema = parentCatalog.GetByName(parentSchemaame);
@@ -340,7 +342,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire schema for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire schema for process id {transaction.ProcessId}.", ex);
                 throw;
             }
             finally
@@ -361,7 +363,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
                 bool isTemporary = false;
                 if (schemaName.StartsWith('#'))
                 {
-                    var session = core.Sessions.ByProcessId(transaction.ProcessId);
+                    var session = _core.Sessions.ByProcessId(transaction.ProcessId);
                     schemaName = $"Temporary:{schemaName.Substring(1).Replace(':', '_')}_{session.SessionId}";
                     isTemporary = true;
                 }
@@ -378,18 +380,18 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
                     var segments = schemaName.Split(':');
                     var parentSchemaName = segments[segments.Count() - 1];
 
-                    var schemaDiskPath = Path.Combine(core.Settings.DataRootPath, string.Join("\\", segments));
+                    var schemaDiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join("\\", segments));
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
                     KbUtility.EnsureNotNull(parentSchemaDiskPath);
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, SchemaCatalogFile);
 
-                    if (core.IO.FileExists(transaction, parentCatalogDiskPath, intendedOperation) == false)
+                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, intendedOperation) == false)
                     {
                         throw new KbObjectNotFoundException($"The schema [{schemaName}] does not exist.");
                     }
 
-                    var parentCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
+                    var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
                         Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), intendedOperation);
 
                     var virtualSchema = parentCatalog.GetByName(parentSchemaName)?.ToVirtual();
@@ -407,7 +409,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
                         virtualSchema = new VirtualSchema()
                         {
                             Name = parentSchemaName,
-                            DiskPath = core.Settings.DataRootPath + "\\" + schemaName.Replace(':', '\\'),
+                            DiskPath = _core.Settings.DataRootPath + "\\" + schemaName.Replace(':', '\\'),
                             VirtualPath = schemaName,
                             Exists = false,
                             IsTemporary = isTemporary
@@ -422,7 +424,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire virtual schema for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to acquire virtual schema for process id {transaction.ProcessId}.", ex);
                 throw;
             }
             finally
@@ -433,16 +435,16 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
 
         internal PhysicalSchemaCatalog AcquireCatalog(Transaction transaction, string schemaName, LockOperation intendedOperation)
         {
-            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, intendedOperation);
-            return core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), intendedOperation);
+            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, intendedOperation);
+            return _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), intendedOperation);
         }
 
         internal List<Tuple<string, string>> GetListByPreparedQuery(Transaction transaction, string schemaName, int rowLimit)
         {
             try
             {
-                var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-                var schemaCatalog = core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
+                var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+                var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
 
                 var result = new List<Tuple<string, string>>();
 
@@ -460,15 +462,15 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to get schema list for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to get schema list for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
 
         internal KbQueryResult AnalysePages(Transaction transaction, string schemaName, bool includePhysicalPages)
         {
-            var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            var pageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
+            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
+            var pageCatalog = _core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
             var message = new StringBuilder();
 
@@ -501,7 +503,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
                 if (includePhysicalPages)
                 {
                     //This should not be compressed, right? I intended this to be a raw read.
-                    var physicalDocumentPage = core.Documents.AcquireDocumentPage(transaction, physicalSchema, page.PageNumber, LockOperation.Read);
+                    var physicalDocumentPage = _core.Documents.AcquireDocumentPage(transaction, physicalSchema, page.PageNumber, LockOperation.Read);
 
                     values.Add($"{page.PageNumber:n0}");
                     values.Add($"{physicalDocumentPage.Documents.Count:n0}");

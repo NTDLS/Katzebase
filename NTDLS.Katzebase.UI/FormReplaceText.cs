@@ -18,13 +18,13 @@ namespace NTDLS.Katzebase.UI
             _projectTabPage = projectTabPage;
 
             textBoxFindText.TextChanged += TextBoxFindText_TextChanged;
-            this.FormClosing += FormReplace_FormClosing;
+            FormClosing += FormReplace_FormClosing;
         }
 
         private void FormReplace_FormClosing(object? sender, FormClosingEventArgs e)
         {
             e.Cancel = true;
-            this.Hide();
+            Hide();
         }
 
         private void TextBoxFindText_TextChanged(object? sender, EventArgs e)
@@ -91,7 +91,7 @@ namespace NTDLS.Katzebase.UI
 
         private void buttonClose_Click(object sender, EventArgs e)
         {
-            this.Hide();
+            Hide();
         }
 
         private void buttonReplace_Click(object sender, EventArgs e)

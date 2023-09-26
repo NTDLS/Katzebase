@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 {
     internal class ObjectLock
     {
-        private readonly Core core;
+        private readonly Core _core;
         public string DiskPath { get; private set; }
         public LockType LockType { get; private set; }
         public List<ObjectLockKey> Keys = new();
@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         public ObjectLock(Core core, LockIntention intention)
         {
-            this.core = core;
+            _core = core;
             DiskPath = intention.DiskPath;
             LockType = intention.LockType;
 
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             {
                 lock (CentralCriticalSections.AcquireLock)
                 {
-                    var key = new ObjectLockKey(core, this, transaction.ProcessId, lockIntention.Operation);
+                    var key = new ObjectLockKey(_core, this, transaction.ProcessId, lockIntention.Operation);
                     Keys.Add(key);
 
                     return key;
@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to issue single use lock key.", ex);
+                _core.Log.Write("Failed to issue single use lock key.", ex);
                 throw;
             }
         }
@@ -64,13 +64,13 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                     if (Keys.Count == 0)
                     {
-                        core.Locking.Remove(key.ObjectLock);
+                        _core.Locking.Remove(key.ObjectLock);
                     }
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to put turn in lock key.", ex);
+                _core.Log.Write("Failed to put turn in lock key.", ex);
                 throw;
             }
         }

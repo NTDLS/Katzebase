@@ -13,10 +13,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
     /// </summary>
     public class TransactionManager
     {
-        internal TransactionQueryHandlers QueryHandlers { get; set; }
-        public TransactiontAPIHandlers APIHandlers { get; set; }
+        internal TransactionQueryHandlers QueryHandlers { get; private set; }
+        public TransactiontAPIHandlers APIHandlers { get; private set; }
         internal List<Transaction> Collection = new();
-        private readonly Core core;
+        private readonly Core _core;
         internal TransactionReference Acquire(ulong processId) => Acquire(processId, false);
 
         internal List<Transaction> CloneTransactions()
@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
 
         public TransactionManager(Core core)
         {
-            this.core = core;
+            _core = core;
             try
             {
                 QueryHandlers = new TransactionQueryHandlers(core);
@@ -56,7 +56,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to get transaction by process id for process id {processId}.", ex);
+                _core.Log.Write($"Failed to get transaction by process id for process id {processId}.", ex);
                 throw;
             }
         }
@@ -76,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to remove transaction by process id for process {processId}.", ex);
+                _core.Log.Write($"Failed to remove transaction by process id for process {processId}.", ex);
                 throw;
             }
         }
@@ -104,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to remove transactions by processIDs.", ex);
+                _core.Log.Write($"Failed to remove transactions by processIDs.", ex);
                 throw;
             }
         }
@@ -113,12 +113,12 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
         {
             try
             {
-                Directory.CreateDirectory(core.Settings.TransactionDataPath);
+                Directory.CreateDirectory(_core.Settings.TransactionDataPath);
 
-                var transactionFiles = Directory.EnumerateFiles(core.Settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories).ToList();
+                var transactionFiles = Directory.EnumerateFiles(_core.Settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories).ToList();
                 if (transactionFiles.Any())
                 {
-                    core.Log.Write($"Found {transactionFiles.Count()} open transactions.", KbLogSeverity.Warning);
+                    _core.Log.Write($"Found {transactionFiles.Count()} open transactions.", KbLogSeverity.Warning);
                 }
 
                 foreach (string transactionFile in transactionFiles)
@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
 
                     ulong processId = ulong.Parse(processIdString);
 
-                    var transaction = new Transaction(core, this, processId, true);
+                    var transaction = new Transaction(_core, this, processId, true);
 
                     var atoms = File.ReadLines(transactionFile).ToList();
                     foreach (var atom in atoms)
@@ -138,7 +138,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
                         transaction.Atoms.Add(ra);
                     }
 
-                    core.Log.Write($"Rolling back session {transaction.ProcessId} with {transaction.Atoms.Count} actions.", KbLogSeverity.Warning);
+                    _core.Log.Write($"Rolling back session {transaction.ProcessId} with {transaction.Atoms.Count} actions.", KbLogSeverity.Warning);
 
                     try
                     {
@@ -146,13 +146,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
                     }
                     catch (Exception ex)
                     {
-                        core.Log.Write($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
+                        _core.Log.Write($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to recover uncomitted transations.", ex);
+                _core.Log.Write("Failed to recover uncomitted transations.", ex);
                 throw;
             }
         }
@@ -175,7 +175,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
                     var transaction = GetByProcessId(processId);
                     if (transaction == null)
                     {
-                        transaction = new Transaction(core, this, processId, false)
+                        transaction = new Transaction(_core, this, processId, false)
                         {
                             IsUserCreated = isUserCreated
                         };
@@ -203,7 +203,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to acquire transaction for process {processId}.", ex);
+                _core.Log.Write($"Failed to acquire transaction for process {processId}.", ex);
                 throw;
             }
         }
@@ -216,7 +216,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to commit transaction for process {processId}.", ex);
+                _core.Log.Write($"Failed to commit transaction for process {processId}.", ex);
                 throw;
             }
         }
@@ -229,7 +229,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to rollback transaction for process {processId}.", ex);
+                _core.Log.Write($"Failed to rollback transaction for process {processId}.", ex);
                 throw;
             }
         }

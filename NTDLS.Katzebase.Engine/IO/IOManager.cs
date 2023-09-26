@@ -10,10 +10,10 @@ namespace NTDLS.Katzebase.Engine.IO
     //Internal core class methods for locking, reading, writing and managing tasks related to disk I/O.
     internal class IOManager
     {
-        private readonly Core core;
+        private readonly Core _core;
         public IOManager(Core core)
         {
-            this.core = core;
+            _core = core;
         }
 
         #region Getters.
@@ -24,7 +24,7 @@ namespace NTDLS.Katzebase.Engine.IO
             {
                 T? result;
 
-                if (core.Settings.UseCompression && useCompression)
+                if (_core.Settings.UseCompression && useCompression)
                 {
                     result = JsonConvert.DeserializeObject<T>(Library.Compression.Deflate.DecompressToString(File.ReadAllBytes(filePath)));
                 }
@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to get non-tracked json for file {filePath}.", ex);
+                _core.Log.Write($"Failed to get non-tracked json for file {filePath}.", ex);
                 throw;
             }
         }
@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             try
             {
-                if (core.Settings.UseCompression)
+                if (_core.Settings.UseCompression)
                 {
                     return Library.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)).Length;
                 }
@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to get non-tracked file length for {filePath}.", ex);
+                _core.Log.Write($"Failed to get non-tracked file length for {filePath}.", ex);
                 throw;
             }
         }
@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             try
             {
-                if (core.Settings.UseCompression)
+                if (_core.Settings.UseCompression)
                 {
                     using var input = new MemoryStream(Library.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)));
                     return ProtoBuf.Serializer.Deserialize<T>(input);
@@ -79,7 +79,7 @@ namespace NTDLS.Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to get non-tracked pbuf for file {filePath}.", ex);
+                _core.Log.Write($"Failed to get non-tracked pbuf for file {filePath}.", ex);
                 throw;
             }
         }
@@ -105,7 +105,7 @@ namespace NTDLS.Katzebase.Engine.IO
 
                     transaction.LockFile(intendedOperation, filePath);
 
-                    if (core.Settings.DeferredIOEnabled)
+                    if (_core.Settings.DeferredIOEnabled)
                     {
                         KbUtility.EnsureNotNull(transaction.DeferredIOs);
                         var ptDeferredWriteRead = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredRead);
@@ -114,29 +114,29 @@ namespace NTDLS.Katzebase.Engine.IO
 
                         if (deferredIOObject != null)
                         {
-                            core.Health.Increment(HealthCounterType.IODeferredIOReads);
-                            core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
+                            _core.Health.Increment(HealthCounterType.IODeferredIOReads);
+                            _core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
                             return deferredIOObject;
                         }
                     }
 
-                    if (core.Settings.CacheEnabled)
+                    if (_core.Settings.CacheEnabled)
                     {
                         var ptCacheRead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheRead);
-                        var cachedObject = core.Cache.TryGet(filePath);
+                        var cachedObject = _core.Cache.TryGet(filePath);
                         ptCacheRead?.StopAndAccumulate();
 
                         if (cachedObject != null)
                         {
-                            core.Health.Increment(HealthCounterType.IOCacheReadHits);
-                            core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
+                            _core.Health.Increment(HealthCounterType.IOCacheReadHits);
+                            _core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
                             return (T)cachedObject;
                         }
                     }
 
-                    core.Health.Increment(HealthCounterType.IOCacheReadMisses);
+                    _core.Health.Increment(HealthCounterType.IOCacheReadMisses);
 
-                    core.Log.Trace($"IO:Read:{transaction.ProcessId}->{filePath}");
+                    _core.Log.Trace($"IO:Read:{transaction.ProcessId}->{filePath}");
 
                     T? deserializedObject;
                     int aproximateSizeInBytes = 0;
@@ -145,7 +145,7 @@ namespace NTDLS.Katzebase.Engine.IO
                     {
                         string text = string.Empty;
                         var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
-                        if (core.Settings.UseCompression && useCompression)
+                        if (_core.Settings.UseCompression && useCompression)
                         {
                             text = Library.Compression.Deflate.DecompressToString(File.ReadAllBytes(filePath));
                         }
@@ -163,7 +163,7 @@ namespace NTDLS.Katzebase.Engine.IO
                     else if (format == IOFormat.PBuf)
                     {
                         var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
-                        if (core.Settings.UseCompression && useCompression)
+                        if (_core.Settings.UseCompression && useCompression)
                         {
                             var serializedData = Library.Compression.Deflate.Decompress(File.ReadAllBytes(filePath));
                             aproximateSizeInBytes = serializedData.Length;
@@ -183,12 +183,12 @@ namespace NTDLS.Katzebase.Engine.IO
                         throw new NotImplementedException();
                     }
 
-                    if (core.Settings.CacheEnabled && deserializedObject != null)
+                    if (_core.Settings.CacheEnabled && deserializedObject != null)
                     {
                         var ptCacheWrite = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheWrite);
-                        core.Cache.Upsert(filePath, deserializedObject, aproximateSizeInBytes);
+                        _core.Cache.Upsert(filePath, deserializedObject, aproximateSizeInBytes);
                         ptCacheWrite?.StopAndAccumulate();
-                        core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
+                        _core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
                     }
 
                     KbUtility.EnsureNotNull(deserializedObject);
@@ -198,7 +198,7 @@ namespace NTDLS.Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to get tracked file for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to get tracked file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -211,7 +211,7 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             try
             {
-                if (core.Settings.UseCompression && useCompression)
+                if (_core.Settings.UseCompression && useCompression)
                 {
                     File.WriteAllBytes(filePath, Library.Compression.Deflate.Compress(JsonConvert.SerializeObject(deserializedObject)));
                 }
@@ -222,7 +222,7 @@ namespace NTDLS.Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to put non-tracked json for file {filePath}.", ex);
+                _core.Log.Write($"Failed to put non-tracked json for file {filePath}.", ex);
                 throw;
             }
         }
@@ -231,7 +231,7 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             try
             {
-                if (core.Settings.UseCompression && useCompression)
+                if (_core.Settings.UseCompression && useCompression)
                 {
                     using var output = new MemoryStream();
                     ProtoBuf.Serializer.Serialize(output, deserializedObject);
@@ -245,7 +245,7 @@ namespace NTDLS.Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to put non-tracked pbuf for file {filePath}.", ex);
+                _core.Log.Write($"Failed to put non-tracked pbuf for file {filePath}.", ex);
                 throw;
             }
         }
@@ -282,22 +282,22 @@ namespace NTDLS.Katzebase.Engine.IO
                             transaction.RecordFileAlter(filePath);
                         }
 
-                        if (core.Settings.DeferredIOEnabled)
+                        if (_core.Settings.DeferredIOEnabled)
                         {
-                            core.Log.Trace($"IO:Write-Deferred:{filePath}");
+                            _core.Log.Trace($"IO:Write-Deferred:{filePath}");
 
                             KbUtility.EnsureNotNull(transaction.DeferredIOs);
                             var ptDeferredWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredWrite);
                             transaction.DeferredIOs.PutDeferredDiskIO(filePath, filePath, deserializedObject, format, useCompression);
                             ptDeferredWrite?.StopAndAccumulate();
 
-                            core.Health.Increment(HealthCounterType.IODeferredIOWrites);
+                            _core.Health.Increment(HealthCounterType.IODeferredIOWrites);
 
                             return; //We can skip caching because we write this to the deferred IO cache - which is infinitely more deterministic than the memory cache auto-ejections.
                         }
                     }
 
-                    core.Log.Trace($"IO:Write:{filePath}");
+                    _core.Log.Trace($"IO:Write:{filePath}");
 
                     int aproximateSizeInBytes = 0;
 
@@ -309,7 +309,7 @@ namespace NTDLS.Katzebase.Engine.IO
 
                         aproximateSizeInBytes = text.Length;
 
-                        if (core.Settings.UseCompression && useCompression)
+                        if (_core.Settings.UseCompression && useCompression)
                         {
                             File.WriteAllBytes(filePath, Library.Compression.Deflate.Compress(text));
                         }
@@ -321,7 +321,7 @@ namespace NTDLS.Katzebase.Engine.IO
                     else if (format == IOFormat.PBuf)
                     {
                         var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
-                        if (core.Settings.UseCompression && useCompression)
+                        if (_core.Settings.UseCompression && useCompression)
                         {
                             using (var output = new MemoryStream())
                             {
@@ -346,18 +346,18 @@ namespace NTDLS.Katzebase.Engine.IO
                         throw new NotImplementedException();
                     }
 
-                    if (core.Settings.CacheEnabled)
+                    if (_core.Settings.CacheEnabled)
                     {
                         var ptCacheWrite = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
-                        core.Cache.Upsert(filePath, deserializedObject, aproximateSizeInBytes);
+                        _core.Cache.Upsert(filePath, deserializedObject, aproximateSizeInBytes);
                         ptCacheWrite?.StopAndAccumulate();
-                        core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
+                        _core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
                     }
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to put internal tracked file for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to put internal tracked file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -370,13 +370,13 @@ namespace NTDLS.Katzebase.Engine.IO
             {
                 transaction.LockDirectory(intendedOperation, diskPath);
 
-                core.Log.Trace($"IO:Exists-Directory:{transaction.ProcessId}->{diskPath}");
+                _core.Log.Trace($"IO:Exists-Directory:{transaction.ProcessId}->{diskPath}");
 
                 return Directory.Exists(diskPath);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to verify directory for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to verify directory for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -394,7 +394,7 @@ namespace NTDLS.Katzebase.Engine.IO
 
                 bool doesFileExist = Directory.Exists(diskPath);
 
-                core.Log.Trace($"IO:Create-Directory:{transaction.ProcessId}->{diskPath}");
+                _core.Log.Trace($"IO:Create-Directory:{transaction.ProcessId}->{diskPath}");
 
                 if (doesFileExist == false)
                 {
@@ -404,7 +404,7 @@ namespace NTDLS.Katzebase.Engine.IO
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create directory for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to create directory for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -424,13 +424,13 @@ namespace NTDLS.Katzebase.Engine.IO
 
                 transaction.LockFile(intendedOperation, lowerFilePath);
 
-                core.Log.Trace($"IO:Exits-File:{transaction.ProcessId}->{filePath}");
+                _core.Log.Trace($"IO:Exits-File:{transaction.ProcessId}->{filePath}");
 
                 return File.Exists(filePath);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to verify file for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to verify file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -442,23 +442,23 @@ namespace NTDLS.Katzebase.Engine.IO
                 string cacheKey = filePath.ToLower();
                 transaction.LockFile(LockOperation.Write, cacheKey);
 
-                if (core.Settings.CacheEnabled)
+                if (_core.Settings.CacheEnabled)
                 {
                     var ptCacheWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
-                    core.Cache.Remove(cacheKey);
+                    _core.Cache.Remove(cacheKey);
                     ptCacheWrite?.StopAndAccumulate();
                 }
 
                 transaction.RecordFileDelete(filePath);
 
-                core.Log.Trace($"IO:Delete-File:{transaction.ProcessId}->{filePath}");
+                _core.Log.Trace($"IO:Delete-File:{transaction.ProcessId}->{filePath}");
 
                 File.Delete(filePath);
                 Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(filePath));
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete file for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to delete file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -469,22 +469,22 @@ namespace NTDLS.Katzebase.Engine.IO
             {
                 transaction.LockDirectory(LockOperation.Write, diskPath);
 
-                if (core.Settings.CacheEnabled)
+                if (_core.Settings.CacheEnabled)
                 {
                     var ptCacheWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
-                    core.Cache.RemoveItemsWithPrefix(diskPath);
+                    _core.Cache.RemoveItemsWithPrefix(diskPath);
                     ptCacheWrite?.StopAndAccumulate();
                 }
 
                 transaction.RecordPathDelete(diskPath);
 
-                core.Log.Trace($"IO:Delete-Directory:{transaction.ProcessId}->{diskPath}");
+                _core.Log.Trace($"IO:Delete-Directory:{transaction.ProcessId}->{diskPath}");
 
                 Directory.Delete(diskPath, true);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to delete path for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to delete path for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }

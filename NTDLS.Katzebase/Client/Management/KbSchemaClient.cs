@@ -6,14 +6,14 @@ namespace NTDLS.Katzebase.Client.Management
 {
     public class KbSchemaClient
     {
-        private readonly KbClient client;
+        private readonly KbClient _client;
 
         public KbIndexesClient Indexes { get; set; }
 
         public KbSchemaClient(KbClient client)
         {
-            this.client = client;
-            this.Indexes = new KbIndexesClient(client);
+            _client = client;
+            Indexes = new KbIndexesClient(client);
         }
 
         /// <summary>
@@ -22,9 +22,9 @@ namespace NTDLS.Katzebase.Client.Management
         /// <param name="schema"></param>
         public void Create(string schema, int pageSize = 0)
         {
-            string url = $"api/Schema/{client.SessionId}/{schema}/{pageSize}/Create";
+            string url = $"api/Schema/{_client.SessionId}/{schema}/{pageSize}/Create";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -39,9 +39,9 @@ namespace NTDLS.Katzebase.Client.Management
         /// <param name="schema"></param>
         public bool Exists(string schema)
         {
-            string url = $"api/Schema/{client.SessionId}/{schema}/Exists";
+            string url = $"api/Schema/{_client.SessionId}/{schema}/Exists";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponseBoolean>(resultText);
             if (result == null || result.Success == false)
@@ -58,9 +58,9 @@ namespace NTDLS.Katzebase.Client.Management
         /// <param name="schema"></param>
         public void Drop(string schema)
         {
-            string url = $"api/Schema/{client.SessionId}/{schema}/Drop";
+            string url = $"api/Schema/{_client.SessionId}/{schema}/Drop";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
             if (result == null || result.Success == false)
@@ -89,9 +89,9 @@ namespace NTDLS.Katzebase.Client.Management
         /// <param name="schema"></param>
         public KbActionResponseSchemaCollection List(string schema)
         {
-            string url = $"api/Schema/{client.SessionId}/{schema}/List";
+            string url = $"api/Schema/{_client.SessionId}/{schema}/List";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponseSchemaCollection>(resultText) ?? new KbActionResponseSchemaCollection();
             if (result == null || result.Success == false)
@@ -107,9 +107,9 @@ namespace NTDLS.Katzebase.Client.Management
         /// <param name="schema"></param>
         public KbActionResponseSchemaCollection List()
         {
-            string url = $"api/Schema/{client.SessionId}/:/List";
+            string url = $"api/Schema/{_client.SessionId}/:/List";
 
-            using var response = client.Connection.GetAsync(url);
+            using var response = _client.Connection.GetAsync(url);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;
             var result = JsonConvert.DeserializeObject<KbActionResponseSchemaCollection>(resultText) ?? new KbActionResponseSchemaCollection();
             if (result == null || result.Success == false)

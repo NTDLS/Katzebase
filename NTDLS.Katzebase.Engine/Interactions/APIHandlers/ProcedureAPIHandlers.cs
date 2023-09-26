@@ -5,11 +5,11 @@
     /// </summary>
     public class ProcedureAPIHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public ProcedureAPIHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {

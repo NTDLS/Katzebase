@@ -138,8 +138,8 @@ namespace NTDLS.Katzebase.UI
                 if (e?.Node?.Tag != null)
                 {
                     SelectedSnippetText = File.ReadAllText((string)e.Node.Tag).Trim();
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
+                    DialogResult = DialogResult.OK;
+                    Close();
                 }
             }
             catch { }

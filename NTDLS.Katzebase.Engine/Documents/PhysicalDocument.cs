@@ -58,7 +58,7 @@ namespace NTDLS.Katzebase.Engine.Documents
                         Serializer.Serialize(output, _dictionary);
                         ContentLength = (int)output.Length;
                         _compressedBytes = Library.Compression.Deflate.Compress(output.ToArray());
-                        //TODO: Maybe theres a more optimistic way to do this. Other than RAM, there is no need to NULL out the other property
+                        //TODO: Maybe theres a more optimistic way to do  Other than RAM, there is no need to NULL out the other property
                         //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
                         _dictionary = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
                     }
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Documents
             set
             {
                 _compressedBytes = value;
-                //TODO: Maybe theres a more optimistic way to do this. Other than RAM, there is no need to NULL out the other property
+                //TODO: Maybe theres a more optimistic way to do  Other than RAM, there is no need to NULL out the other property
                 //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
                 _dictionary = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
             }

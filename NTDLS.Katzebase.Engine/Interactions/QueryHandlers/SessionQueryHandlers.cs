@@ -10,11 +10,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class SessionQueryHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public SessionQueryHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -30,15 +30,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 var referencedProcessId = preparedQuery.Attribute<ulong>(PreparedQuery.QueryAttribute.ProcessId);
 
-                core.Sessions.CloseByProcessId(referencedProcessId);
+                _core.Sessions.CloseByProcessId(referencedProcessId);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute variable set for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute variable set for process id {processId}.", ex);
                 throw;
             }
         }
@@ -47,8 +47,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                var session = core.Sessions.ByProcessId(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                var session = _core.Sessions.ByProcessId(processId);
 
                 foreach (var variable in preparedQuery.VariableValues)
                 {
@@ -79,7 +79,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to execute variable set for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute variable set for process id {processId}.", ex);
                 throw;
             }
         }

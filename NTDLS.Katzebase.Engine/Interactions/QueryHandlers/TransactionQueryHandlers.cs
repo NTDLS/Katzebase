@@ -7,11 +7,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class TransactionQueryHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public TransactionQueryHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -23,8 +23,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        public TransactionReference Begin(ulong processId) => core.Transactions.Acquire(processId, true);
-        public void Commit(ulong processId) => core.Transactions.Commit(processId);
-        public void Rollback(ulong processId) => core.Transactions.Rollback(processId);
+        public TransactionReference Begin(ulong processId) => _core.Transactions.Acquire(processId, true);
+        public void Commit(ulong processId) => _core.Transactions.Commit(processId);
+        public void Rollback(ulong processId) => _core.Transactions.Rollback(processId);
     }
 }

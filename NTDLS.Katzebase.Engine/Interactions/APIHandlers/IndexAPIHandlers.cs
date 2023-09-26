@@ -9,11 +9,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// </summary>
     public class IndexAPIHandlers
     {
-        private readonly Core core;
+        private readonly Core _core;
 
         public IndexAPIHandlers(Core core)
         {
-            this.core = core;
+            _core = core;
 
             try
             {
@@ -29,8 +29,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                var indexCatalog = core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, schemaName, LockOperation.Read);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, schemaName, LockOperation.Read);
 
                 var physicalIndex = indexCatalog.GetByName(indexName);
                 KbIndex? indexPayload = null;
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create index for process {processId}.", ex);
+                _core.Log.Write($"Failed to create index for process {processId}.", ex);
                 throw;
             }
         }
@@ -53,10 +53,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
                 var result = new KbActionResponseIndexes();
 
-                var indexCatalog = core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, schemaName, LockOperation.Read);
+                var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, schemaName, LockOperation.Read);
                 if (indexCatalog != null)
                 {
                     result.List.AddRange(indexCatalog.Collection.Select(o => PhysicalIndex.ToClientPayload(o)));
@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to list indexes for process {processId}.", ex);
+                _core.Log.Write($"Failed to list indexes for process {processId}.", ex);
                 throw;
             }
         }
@@ -75,14 +75,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                var indexCatalog = core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, schemaName, LockOperation.Read);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, schemaName, LockOperation.Read);
                 bool value = indexCatalog.GetByName(indexName) != null;
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbActionResponseBoolean(value), 0);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create index for process {processId}.", ex);
+                _core.Log.Write($"Failed to create index for process {processId}.", ex);
                 throw;
             }
         }
@@ -91,13 +91,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                core.Indexes.CreateIndex(transactionReference.Transaction, schemaName, index, out Guid newId);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                _core.Indexes.CreateIndex(transactionReference.Transaction, schemaName, index, out Guid newId);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbActionResponseGuid(newId), 0);
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create index for process {processId}.", ex);
+                _core.Log.Write($"Failed to create index for process {processId}.", ex);
                 throw;
             }
         }
@@ -106,13 +106,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName, newPartitionCount);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                _core.Indexes.RebuildIndex(transactionReference.Transaction, schemaName, indexName, newPartitionCount);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create index for process {processId}.", ex);
+                _core.Log.Write($"Failed to create index for process {processId}.", ex);
                 throw;
             }
         }
@@ -121,13 +121,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                using var transactionReference = core.Transactions.Acquire(processId);
-                core.Indexes.DropIndex(transactionReference.Transaction, schemaName, indexName);
+                using var transactionReference = _core.Transactions.Acquire(processId);
+                _core.Indexes.DropIndex(transactionReference.Transaction, schemaName, indexName);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to create index for process {processId}.", ex);
+                _core.Log.Write($"Failed to create index for process {processId}.", ex);
                 throw;
             }
         }

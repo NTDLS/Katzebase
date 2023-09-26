@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.UI
         public FormStudio()
         {
             InitializeComponent();
-            _editorFactory = new EditorFactory(this, this.tabControlBody);
+            _editorFactory = new EditorFactory(this, tabControlBody);
         }
 
         public FormStudio(string firstLoadFilename)
@@ -485,7 +485,7 @@ namespace NTDLS.Katzebase.UI
                 var tabsToClose = new List<TabFilePage>();
 
                 //Minimize the number of "SelectedIndexChanged" events that get fired.
-                //We get a big ol' thread exception when we dont do this. Looks like an internal control exception.
+                //We get a big ol' thread exception when we dont do  Looks like an internal control exception.
                 tabControlBody.SelectedTab = clickedTab;
                 System.Windows.Forms.Application.DoEvents(); //Make sure the message pump can actually select the tab before we start closing.
 
@@ -605,7 +605,7 @@ namespace NTDLS.Katzebase.UI
         bool CloseAllTabs()
         {
             //Minimize the number of "SelectedIndexChanged" events that get fired.
-            //We get a big ol' thread exception when we dont do this. Looks like an internal control exception.
+            //We get a big ol' thread exception when we dont do  Looks like an internal control exception.
             tabControlBody.SelectedIndex = 0;
             Application.DoEvents(); //Make sure the message pump can actually select the tab before we start closing.
 

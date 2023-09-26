@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.UI
                     if (client.Server.Ping().Success)
                     {
                         DialogResult = DialogResult.OK;
-                        this.Close();
+                        Close();
                     }
                 }
             }
@@ -43,8 +43,8 @@ namespace NTDLS.Katzebase.UI
 
         private void buttonCancel_Click(object sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.Cancel;
-            this.Close();
+            DialogResult = DialogResult.Cancel;
+            Close();
         }
     }
 }

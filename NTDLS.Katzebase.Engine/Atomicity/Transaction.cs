@@ -14,16 +14,16 @@ namespace NTDLS.Katzebase.Engine.Atomicity
     internal class Transaction : IDisposable
     {
         public Dictionary<KbTransactionWarning, HashSet<string>> Warnings { get; private set; } = new();
-        public List<KbQueryResultMessage> Messages { get; set; } = new();
+        public List<KbQueryResultMessage> Messages { get; private set; } = new();
 
         public List<Atom> Atoms = new();
-        public ulong ProcessId { get; set; }
-        public DateTime StartTime { get; set; }
-        public List<ulong> BlockedBy { get; set; }
+        public ulong ProcessId { get; private set; }
+        public DateTime StartTime { get; private set; }
+        public List<ulong> BlockedBy { get; private set; }
         public bool IsDeadlocked { get; set; }
-        public List<ObjectLockKey>? HeldLockKeys { get; set; }
+        public List<ObjectLockKey>? HeldLockKeys { get; private set; }
         public PerformanceTrace? PT { get; private set; } = null;
-        public HashSet<string> TemporarySchemas { get; set; } = new();
+        public HashSet<string> TemporarySchemas { get; private set; } = new();
 
         /// <summary>
         /// Used for general locking, if any.
@@ -34,17 +34,17 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// We keep a hashset of locks granted to this transaction by the LockIntention.Key so that we
         ///     do not have to perform blocking or deadlock checks again for the life of this transaction.
         /// </summary>
-        public HashSet<string> GrantedLockCache { get; set; } = new HashSet<string>();
+        public HashSet<string> GrantedLockCache { get; private set; } = new HashSet<string>();
 
         /// <summary>
         /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
         /// </summary>
         public bool IsUserCreated { get; set; }
-        public DeferredDiskIO? DeferredIOs { get; set; }
+        public DeferredDiskIO? DeferredIOs { get; private set; }
 
-        private readonly Core core;
-        private TransactionManager transactionManager;
-        private StreamWriter? transactionLogHandle = null;
+        private readonly Core _core;
+        private TransactionManager _transactionManager;
+        private StreamWriter? _transactionLogHandle = null;
         public bool IsComittedOrRolledBack { get; private set; } = false;
         public bool IsCancelled { get; private set; } = false;
 
@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             lock (CentralCriticalSections.AcquireLock)
             {
                 var clone = new List<ulong>();
-                clone.AddRange(this.BlockedBy);
+                clone.AddRange(BlockedBy);
                 return clone;
             }
         }
@@ -185,14 +185,14 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     lock (HeldLockKeys)
                     {
                         var lockIntention = new LockIntention(diskpath, LockType.File, lockOperation);
-                        core.Locking.Locks.Acquire(this, lockIntention);
+                        _core.Locking.Locks.Acquire(this, lockIntention);
                     }
                     ptLock?.StopAndAccumulate();
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to acquire file lock.", ex);
+                _core.Log.Write("Failed to acquire file lock.", ex);
                 throw;
             }
         }
@@ -214,7 +214,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     lock (HeldLockKeys)
                     {
                         var lockIntention = new LockIntention(diskpath, LockType.Directory, lockOperation);
-                        core.Locking.Locks.Acquire(this, lockIntention);
+                        _core.Locking.Locks.Acquire(this, lockIntention);
                     }
 
                     ptLock?.StopAndAccumulate();
@@ -222,7 +222,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to acquire file lock.", ex);
+                _core.Log.Write("Failed to acquire file lock.", ex);
                 throw;
             }
         }
@@ -231,14 +231,14 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void SetManager(TransactionManager transactionManager)
         {
-            this.transactionManager = transactionManager;
+            _transactionManager = transactionManager;
         }
 
         public string TransactionPath
         {
             get
             {
-                return Path.Combine(core.Settings.TransactionDataPath, ProcessId.ToString());
+                return Path.Combine(_core.Settings.TransactionDataPath, ProcessId.ToString());
             }
         }
 
@@ -252,10 +252,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public Transaction(Core core, TransactionManager transactionManager, ulong processId, bool isRecovery)
         {
-            this.core = core;
+            _core = core;
             StartTime = DateTime.UtcNow;
             ProcessId = processId;
-            this.transactionManager = transactionManager;
+            _transactionManager = transactionManager;
             BlockedBy = new List<ulong>();
 
             if (isRecovery == false)
@@ -271,12 +271,12 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 Directory.CreateDirectory(TransactionPath);
 
-                transactionLogHandle = new StreamWriter(TransactionLogFilePath)
+                _transactionLogHandle = new StreamWriter(TransactionLogFilePath)
                 {
                     AutoFlush = true
                 };
 
-                KbUtility.EnsureNotNull(transactionLogHandle);
+                KbUtility.EnsureNotNull(_transactionLogHandle);
             }
         }
 
@@ -307,9 +307,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                         Atoms.Add(atom);
 
-                        KbUtility.EnsureNotNull(transactionLogHandle);
+                        KbUtility.EnsureNotNull(_transactionLogHandle);
 
-                        transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                        _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
 
                     ptRecording?.StopAndAccumulate();
@@ -317,7 +317,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to record file creation for process {ProcessId}.", ex);
+                _core.Log.Write($"Failed to record file creation for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -345,16 +345,16 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                         Atoms.Add(atom);
 
-                        KbUtility.EnsureNotNull(transactionLogHandle);
+                        KbUtility.EnsureNotNull(_transactionLogHandle);
 
-                        transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                        _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
                     ptRecording?.StopAndAccumulate();
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to record file creation for process {ProcessId}.", ex);
+                _core.Log.Write($"Failed to record file creation for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -390,16 +390,16 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                         Atoms.Add(atom);
 
-                        KbUtility.EnsureNotNull(transactionLogHandle);
+                        KbUtility.EnsureNotNull(_transactionLogHandle);
 
-                        transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                        _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
                     ptRecording?.StopAndAccumulate();
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to record file deletion for for process {ProcessId}.", ex);
+                _core.Log.Write($"Failed to record file deletion for for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -434,16 +434,16 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                         Atoms.Add(atom);
 
-                        KbUtility.EnsureNotNull(transactionLogHandle);
+                        KbUtility.EnsureNotNull(_transactionLogHandle);
 
-                        transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                        _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
                     ptRecording?.StopAndAccumulate();
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to record file deletion for for process {ProcessId}.", ex);
+                _core.Log.Write($"Failed to record file deletion for for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -476,16 +476,16 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                         Atoms.Add(atom);
 
-                        KbUtility.EnsureNotNull(transactionLogHandle);
+                        KbUtility.EnsureNotNull(_transactionLogHandle);
 
-                        transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                        _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                     }
                     ptRecording?.StopAndAccumulate();
                 }
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to record file alteration for for process {ProcessId}.", ex);
+                _core.Log.Write($"Failed to record file alteration for for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -522,7 +522,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                         foreach (var record in rollbackActions)
                         {
                             //We need to eject the rolled back item from the cache since its last known state has changed.
-                            core.Cache.Remove(record.OriginalPath);
+                            _core.Cache.Remove(record.OriginalPath);
 
                             if (record.Action == ActionType.FileCreate)
                             {
@@ -572,7 +572,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             //Discard.
                         }
 
-                        transactionManager.RemoveByProcessId(ProcessId);
+                        _transactionManager.RemoveByProcessId(ProcessId);
                         DeleteTemporarySchemas();
 
                     }
@@ -591,7 +591,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 }
                 catch (Exception ex)
                 {
-                    core.Log.Write($"Failed to rollback transaction for for process {ProcessId}.", ex);
+                    _core.Log.Write($"Failed to rollback transaction for for process {ProcessId}.", ex);
                     throw;
                 }
             }
@@ -633,7 +633,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                 KbUtility.EnsureNotNull(DeferredIOs);
                                 DeferredIOs.CommitDeferredDiskIO();
                                 CleanupTransaction();
-                                transactionManager.RemoveByProcessId(ProcessId);
+                                _transactionManager.RemoveByProcessId(ProcessId);
                                 DeleteTemporarySchemas();
                             }
                             catch
@@ -656,7 +656,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 }
                 catch (Exception ex)
                 {
-                    core.Log.Write($"Failed to commit transaction for for process {ProcessId}.", ex);
+                    _core.Log.Write($"Failed to commit transaction for for process {ProcessId}.", ex);
                     throw;
                 }
             }
@@ -668,11 +668,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             if (TemporarySchemas.Any())
             {
-                using (var ephemeralTxRef = core.Transactions.Acquire(ProcessId))
+                using (var ephemeralTxRef = _core.Transactions.Acquire(ProcessId))
                 {
                     foreach (var tempSchema in TemporarySchemas)
                     {
-                        core.Schemas.Drop(ephemeralTxRef.Transaction, tempSchema);
+                        _core.Schemas.Drop(ephemeralTxRef.Transaction, tempSchema);
                     }
                     ephemeralTxRef.Commit();
                 }
@@ -683,11 +683,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             try
             {
-                if (transactionLogHandle != null)
+                if (_transactionLogHandle != null)
                 {
-                    transactionLogHandle.Close();
-                    transactionLogHandle.Dispose();
-                    transactionLogHandle = null;
+                    _transactionLogHandle.Close();
+                    _transactionLogHandle.Dispose();
+                    _transactionLogHandle = null;
                 }
 
                 foreach (var record in Atoms)
@@ -710,7 +710,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to cleanup transaction for for process {ProcessId}.", ex);
+                _core.Log.Write($"Failed to cleanup transaction for for process {ProcessId}.", ex);
                 throw;
             }
         }

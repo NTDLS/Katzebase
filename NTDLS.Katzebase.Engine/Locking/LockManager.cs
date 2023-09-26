@@ -7,12 +7,12 @@ namespace NTDLS.Katzebase.Engine.Locking
     /// </summary>
     internal class LockManager
     {
-        internal ObjectLocks Locks { get; set; }
-        private readonly Core core;
+        internal ObjectLocks Locks { get; private set; }
+        private readonly Core _core;
 
         internal LockManager(Core core)
         {
-            this.core = core;
+            _core = core;
             try
             {
                 Locks = new ObjectLocks(core);
@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to remove lock.", ex);
+                _core.Log.Write($"Failed to remove lock.", ex);
                 throw;
             }
         }

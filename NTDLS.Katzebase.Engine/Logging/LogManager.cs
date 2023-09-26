@@ -10,13 +10,13 @@ namespace NTDLS.Katzebase.Engine.Logging
     /// </summary>
     public class LogManager
     {
-        private readonly Core core;
-        private StreamWriter? fileHandle = null;
-        private DateTime recycledTime = DateTime.MinValue;
+        private readonly Core _core;
+        private StreamWriter? _fileHandle = null;
+        private DateTime _recycledTime = DateTime.MinValue;
 
         public LogManager(Core core)
         {
-            this.core = core;
+            _core = core;
             CycleLog();
         }
 
@@ -39,11 +39,11 @@ namespace NTDLS.Katzebase.Engine.Logging
         {
             lock (this)
             {
-                if (fileHandle != null)
+                if (_fileHandle != null)
                 {
                     try
                     {
-                        fileHandle.Flush();
+                        _fileHandle.Flush();
                     }
                     catch (Exception ex)
                     {
@@ -58,7 +58,7 @@ namespace NTDLS.Katzebase.Engine.Logging
         {
             try
             {
-                if (entry.Severity == KbLogSeverity.Trace && core.Settings.WriteTraceData == false)
+                if (entry.Severity == KbLogSeverity.Trace && _core.Settings.WriteTraceData == false)
                 {
                     return;
                 }
@@ -75,11 +75,11 @@ namespace NTDLS.Katzebase.Engine.Logging
                 {
                     if (entry.Severity == KbLogSeverity.Warning)
                     {
-                        core.Health.Increment(HealthCounterType.Warnings);
+                        _core.Health.Increment(HealthCounterType.Warnings);
                     }
                     else if (entry.Severity == KbLogSeverity.Exception)
                     {
-                        core.Health.Increment(HealthCounterType.Exceptions);
+                        _core.Health.Increment(HealthCounterType.Exceptions);
                     }
 
                     CycleLog();
@@ -141,13 +141,13 @@ namespace NTDLS.Katzebase.Engine.Logging
 
                     Console.ForegroundColor = ConsoleColor.Gray;
 
-                    KbUtility.EnsureNotNull(fileHandle);
+                    KbUtility.EnsureNotNull(_fileHandle);
 
-                    fileHandle.WriteLine(message.ToString());
+                    _fileHandle.WriteLine(message.ToString());
 
-                    if (core.Settings.FlushLog)
+                    if (_core.Settings.FlushLog)
                     {
-                        fileHandle.Flush();
+                        _fileHandle.Flush();
                     }
                 }
             }
@@ -201,14 +201,14 @@ namespace NTDLS.Katzebase.Engine.Logging
             {
                 lock (this)
                 {
-                    if (recycledTime.Date != DateTime.Now)
+                    if (_recycledTime.Date != DateTime.Now)
                     {
                         Close();
 
-                        recycledTime = DateTime.Now;
-                        string fileName = core.Settings.LogDirectory + "\\" + $"{recycledTime.Year}_{recycledTime.Month:00}_{recycledTime.Day:00}.txt";
-                        Directory.CreateDirectory(core.Settings.LogDirectory);
-                        fileHandle = new StreamWriter(fileName, true);
+                        _recycledTime = DateTime.Now;
+                        string fileName = _core.Settings.LogDirectory + "\\" + $"{_recycledTime.Year}_{_recycledTime.Month:00}_{_recycledTime.Day:00}.txt";
+                        Directory.CreateDirectory(_core.Settings.LogDirectory);
+                        _fileHandle = new StreamWriter(fileName, true);
                     }
                 }
             }
@@ -223,10 +223,10 @@ namespace NTDLS.Katzebase.Engine.Logging
         {
             try
             {
-                if (fileHandle != null)
+                if (_fileHandle != null)
                 {
-                    fileHandle.Close();
-                    fileHandle.Dispose();
+                    _fileHandle.Close();
+                    _fileHandle.Dispose();
                 }
             }
             catch (Exception ex)
