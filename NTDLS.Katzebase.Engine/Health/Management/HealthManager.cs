@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Health.Management
     /// </summary>
     public class HealthManager
     {
-        public KbInsensitiveDictionary<HealthCounter> Counters = new();
+        public KbInsensitiveDictionary<HealthCounter> Counters { get; private set; } = new();
 
         private readonly Core _core;
         private DateTime lastCheckpoint = DateTime.MinValue;

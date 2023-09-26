@@ -2,8 +2,8 @@
 {
     internal class ScalerFunctionParameterValue
     {
-        public ScalerFunctionParameterPrototype Parameter { get; set; }
-        public string? Value { get; set; } = null;
+        public ScalerFunctionParameterPrototype Parameter { get; private set; }
+        public string? Value { get; private set; } = null;
 
         public ScalerFunctionParameterValue(ScalerFunctionParameterPrototype parameter, string? value)
         {

@@ -4,7 +4,7 @@ namespace NTDLS.Katzebase.Engine.Query
 {
     public class SortFields : PrefixedFields
     {
-        public KbSortDirection SortDirection { get; set; }
+        public KbSortDirection SortDirection { get; private set; }
 
         public SortField Add(string key, KbSortDirection sortDirection)
         {

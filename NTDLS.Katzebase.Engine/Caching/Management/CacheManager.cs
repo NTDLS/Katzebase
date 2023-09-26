@@ -6,8 +6,9 @@
     internal class CacheManager
     {
         private readonly Core _core;
-        public int PartitionCount { get; private set; }
         private readonly KbMemoryCache[] _partitions;
+
+        public int PartitionCount { get; private set; }
 
         public CacheManager(Core core)
         {

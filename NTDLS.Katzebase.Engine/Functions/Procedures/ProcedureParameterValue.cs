@@ -2,8 +2,8 @@
 {
     internal class ProcedureParameterValue
     {
-        public ProcedureParameterPrototype Parameter { get; set; }
-        public string? Value { get; set; } = null;
+        public ProcedureParameterPrototype Parameter { get; private set; }
+        public string? Value { get; private set; } = null;
 
         public ProcedureParameterValue(ProcedureParameterPrototype parameter, string? value)
         {

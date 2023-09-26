@@ -5,12 +5,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
     internal class DocumentLookupResults
     {
-        public List<DocumentLookupResult> Collection { get; set; } = new();
+        public List<DocumentLookupResult> Collection { get; private set; } = new();
 
         /// <summary>
         /// This is only used when we just want to return a list of document pointers and no fields.
         /// </summary>
-        public List<DocumentPointer> DocumentPointers { get; set; } = new();
+        public List<DocumentPointer> DocumentPointers { get; private set; } = new();
+
+        public DocumentLookupResults()
+        {
+        }
 
         public void Add(DocumentLookupResult result)
         {

@@ -45,21 +45,22 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         private readonly Core _core;
         private TransactionManager _transactionManager;
         private StreamWriter? _transactionLogHandle = null;
+
         public bool IsComittedOrRolledBack { get; private set; } = false;
         public bool IsCancelled { get; private set; } = false;
 
-        private int referenceCount = 0;
+        private int _referenceCount = 0;
         public int ReferenceCount
         {
             set
             {
-                referenceCount = value;
+                _referenceCount = value;
             }
             get
             {
                 lock (this)
                 {
-                    return referenceCount;
+                    return _referenceCount;
                 }
             }
         }
@@ -496,7 +497,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             lock (this)
             {
-                referenceCount++;
+                _referenceCount++;
             }
         }
 
@@ -622,9 +623,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     var ptCommit = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Commit);
                     lock (this)
                     {
-                        referenceCount--;
+                        _referenceCount--;
 
-                        if (referenceCount == 0)
+                        if (_referenceCount == 0)
                         {
                             IsComittedOrRolledBack = true;
 
@@ -648,7 +649,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
                             return true;
                         }
-                        else if (referenceCount < 0)
+                        else if (_referenceCount < 0)
                         {
                             throw new KbGenericException("Transaction reference count fell below zero.");
                         }

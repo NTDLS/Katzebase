@@ -4,7 +4,7 @@ namespace NTDLS.Katzebase.Engine.Trace
 {
     internal class PerformanceTraceDurationTracker
     {
-        public string Key { get; set; }
+        public string Key { get; private set; }
         public PerformanceTrace Owner { get; private set; }
         public PerformanceTraceCumulativeMetricType Type { get; private set; }
         public DateTime BeginTime { get; private set; }

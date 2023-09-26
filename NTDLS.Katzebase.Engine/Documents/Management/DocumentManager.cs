@@ -12,6 +12,7 @@ namespace NTDLS.Katzebase.Engine.Documents.Management
     public class DocumentManager
     {
         private readonly Core _core;
+
         internal DocumentQueryHandlers QueryHandlers { get; private set; }
         public DocumentAPIHandlers APIHandlers { get; private set; }
 

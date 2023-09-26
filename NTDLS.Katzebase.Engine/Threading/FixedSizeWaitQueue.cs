@@ -5,9 +5,10 @@ namespace NTDLS.Katzebase.Engine.Threading
     public class FixedSizeWaitQueue<T>
     {
         private readonly ConcurrentQueue<T> _queue = new();
-        public int MaxSize { get; private set; }
         private bool _keepRunning = true;
         private readonly AutoResetEvent _queued = new(false);
+
+        public int MaxSize { get; private set; }
         public int Count => _queue.Count;
         public ulong CumulativeQueuedCount { get; private set; } = 0;
         public ulong CumulativeDequeuedCount { get; private set; } = 0;

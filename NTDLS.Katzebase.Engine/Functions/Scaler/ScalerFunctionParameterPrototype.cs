@@ -5,10 +5,10 @@
     /// </summary>
     internal class ScalerFunctionParameterPrototype
     {
-        public KbScalerFunctionParameterType Type { get; set; }
-        public string Name { get; set; }
-        public string? DefaultValue { get; set; }
-        public bool HasDefault { get; set; }
+        public KbScalerFunctionParameterType Type { get; private set; }
+        public string Name { get; private set; }
+        public string? DefaultValue { get; private set; }
+        public bool HasDefault { get; private set; }
 
         public ScalerFunctionParameterPrototype(KbScalerFunctionParameterType type, string name)
         {

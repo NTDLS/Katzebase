@@ -13,18 +13,20 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
     /// </summary>
     public class TransactionManager
     {
+        private readonly Core _core;
+        private readonly List<Transaction> _collection = new();
+
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactiontAPIHandlers APIHandlers { get; private set; }
-        internal List<Transaction> Collection = new();
-        private readonly Core _core;
+
         internal TransactionReference Acquire(ulong processId) => Acquire(processId, false);
 
         internal List<Transaction> CloneTransactions()
         {
-            lock (Collection)
+            lock (_collection)
             {
                 var clone = new List<Transaction>();
-                clone.AddRange(Collection);
+                clone.AddRange(_collection);
                 return clone;
             }
         }
@@ -48,9 +50,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
         {
             try
             {
-                lock (Collection)
+                lock (_collection)
                 {
-                    var transaction = (from o in Collection where o.ProcessId == processId select o).FirstOrDefault();
+                    var transaction = (from o in _collection where o.ProcessId == processId select o).FirstOrDefault();
                     return transaction;
                 }
             }
@@ -65,12 +67,12 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
         {
             try
             {
-                lock (Collection)
+                lock (_collection)
                 {
                     var transaction = GetByProcessId(processId);
                     if (transaction != null)
                     {
-                        Collection.Remove(transaction);
+                        _collection.Remove(transaction);
                     }
                 }
             }
@@ -89,7 +91,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
         {
             try
             {
-                lock (Collection)
+                lock (_collection)
                 {
                     foreach (var processId in processIDs)
                     {
@@ -97,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
                         if (transaction != null)
                         {
                             transaction.Rollback();
-                            Collection.Remove(transaction);
+                            _collection.Remove(transaction);
                         }
                     }
                 }
@@ -169,7 +171,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
 
             try
             {
-                lock (Collection)
+                lock (_collection)
                 {
                     PerformanceTraceDurationTracker? ptAcquireTransaction = null;
                     var transaction = GetByProcessId(processId);
@@ -182,7 +184,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
 
                         ptAcquireTransaction = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
 
-                        Collection.Add(transaction);
+                        _collection.Add(transaction);
                     }
 
                     if (isUserCreated)

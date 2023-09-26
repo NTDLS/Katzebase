@@ -5,10 +5,15 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
     public class PotentialIndex
     {
         public List<PrefixedField> CoveredFields { get; private set; }
-        public PhysicalIndex Index { get; set; }
-        public bool Tried { get; set; }
+        public PhysicalIndex Index { get; private set; }
+        public bool Tried { get; private set; }
         public string CoveredHash => string.Join(":", CoveredFields.OrderBy(o => o)).ToLowerInvariant();
         public Guid SourceSubsetUID { get; private set; }
+
+        public void SetTried()
+        {
+            Tried = true;
+        }
 
         public PotentialIndex(PhysicalIndex index, List<PrefixedField> coveredFields)
         {

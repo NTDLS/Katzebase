@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
     /// </summary>
     internal class Procedure
     {
-        public string Name { get; set; }
+        public string Name { get; private set; }
         public List<ProcedureParameterPrototype> Parameters { get; private set; } = new();
 
         public Procedure(string name, List<ProcedureParameterPrototype> parameters)

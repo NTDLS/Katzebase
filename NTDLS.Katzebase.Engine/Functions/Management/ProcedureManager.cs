@@ -20,6 +20,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Management
     public class ProcedureManager
     {
         private readonly Core _core;
+
         internal ProcedureQueryHandlers QueryHandlers { get; private set; }
         public ProcedureAPIHandlers APIHandlers { get; private set; }
 

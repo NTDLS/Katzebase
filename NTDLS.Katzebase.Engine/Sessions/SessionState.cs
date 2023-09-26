@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// <summary>
         /// Settings associated with the connection.
         /// </summary>
-        public List<KbNameValuePair<KbConnectionSetting, double>> Variables { get; set; } = new();
+        public List<KbNameValuePair<KbConnectionSetting, double>> Variables { get; private set; } = new();
 
         //public bool? TraceWaitTimesEnabled { get; set; }
         //public int? MinQueryThreads { get; set; } = null;

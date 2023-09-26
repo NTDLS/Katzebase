@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
     internal class ProcedureParameterValueCollection
     {
-        public List<ProcedureParameterValue> Values { get; set; } = new();
+        public List<ProcedureParameterValue> Values { get; private set; } = new();
 
         public T Get<T>(string name)
         {

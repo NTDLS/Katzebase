@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
     internal class AggregateFunctionParameterValueCollection
     {
-        public List<AggregateFunctionParameterValue> Values { get; set; } = new();
+        public List<AggregateFunctionParameterValue> Values { get; private set; } = new();
 
         public T Get<T>(string name)
         {

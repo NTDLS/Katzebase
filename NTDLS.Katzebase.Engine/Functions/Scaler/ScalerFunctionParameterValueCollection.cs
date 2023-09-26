@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
     internal class ScalerFunctionParameterValueCollection
     {
-        public List<ScalerFunctionParameterValue> Values { get; set; } = new();
+        public List<ScalerFunctionParameterValue> Values { get; private set; } = new();
 
         public T Get<T>(string name)
         {

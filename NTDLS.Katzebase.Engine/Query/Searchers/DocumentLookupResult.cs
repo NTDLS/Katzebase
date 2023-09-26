@@ -2,9 +2,9 @@
 {
     public class DocumentLookupResult
     {
-        public List<string?> Values { get; set; } = new();
+        public List<string?> Values { get; private set; } = new();
 
-        public List<string?> AggregateFields { get; set; } = new();
+        public List<string?> AggregateFields { get; private set; } = new();
 
         public DocumentLookupResult(List<string?> values)
         {

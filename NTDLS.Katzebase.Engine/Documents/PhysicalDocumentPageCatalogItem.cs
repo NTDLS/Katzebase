@@ -12,6 +12,7 @@ namespace NTDLS.Katzebase.Engine.Documents
     {
         [ProtoMember(1)]
         public int PageNumber { get; set; }
+
         [ProtoMember(2)]
         public int DocumentCount { get; set; }
 

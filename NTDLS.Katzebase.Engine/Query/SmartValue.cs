@@ -4,26 +4,25 @@ namespace NTDLS.Katzebase.Engine.Query
 {
     public class SmartValue
     {
+        private string? _value = null;
+
         /// <summary>
         /// This value is a constant string.
         /// </summary>
-        public bool IsString { get; set; }
+        public bool IsString { get; private set; }
         /// <summary>
         /// This value is a constant (string or numeric). If false, then this value is a field name.
         /// </summary>
-        public bool IsConstant { get; set; }
+        public bool IsConstant { get; private set; }
         /// <summary>
         /// This value is numeric and does not contain string characters.
         /// </summary>
-        public bool IsNumeric { get; set; }
+        public bool IsNumeric { get; private set; }
         /// <summary>
         /// This value has been set.
         /// </summary>
         public bool IsSet { get; private set; }
-
-        private string? _value = null;
-
-        public string Prefix { get; set; } = string.Empty;
+        public string Prefix { get; private set; } = string.Empty;
 
         public string Key => string.IsNullOrEmpty(Prefix) ? (_value ?? "") : $"{Prefix}.{_value}";
 

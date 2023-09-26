@@ -239,11 +239,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 }
             }
 
-            var results = new DocumentLookupResults()
-            {
-                DocumentPointers = threadParam.DocumentPointers
-            };
+            var results = new DocumentLookupResults();
 
+            results.DocumentPointers.AddRange(threadParam.DocumentPointers);
             results.AddRange(threadParam.Results);
 
             return results;

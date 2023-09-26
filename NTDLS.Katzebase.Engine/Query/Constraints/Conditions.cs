@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
     {
         private string _lastLetter = string.Empty;
 
-        public List<ConditionSubset> Subsets = new();
+        public List<ConditionSubset> Subsets { get; private set; } = new();
 
         /// Every condition instance starts with a single root node that all others poaint back to given some lineage. This is the name of the root node.
         public string RootSubsetKey { get; private set; } = string.Empty;

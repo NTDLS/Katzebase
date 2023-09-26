@@ -6,9 +6,9 @@ namespace NTDLS.Katzebase.Engine.Query
 {
     internal class WithOption
     {
-        public string Name { get; set; }
-        public object Value { get; set; }
-        public Type ValueType { get; set; }
+        public string Name { get; private set; }
+        public object Value { get; private set; }
+        public Type ValueType { get; private set; }
 
         public WithOption(string name, object value, Type valueType)
         {

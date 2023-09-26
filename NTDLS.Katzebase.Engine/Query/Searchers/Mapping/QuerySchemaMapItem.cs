@@ -10,12 +10,12 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
     /// </summary>
     internal class QuerySchemaMapItem
     {
-        public string Prefix { get; set; }
-        public PhysicalSchema PhysicalSchema { get; set; }
-        public PhysicalDocumentPageCatalog DocumentPageCatalog { get; set; }
-        public Conditions? Conditions { get; set; }
+        public string Prefix { get; private set; }
+        public PhysicalSchema PhysicalSchema { get; private set; }
+        public PhysicalDocumentPageCatalog DocumentPageCatalog { get; private set; }
+        public Conditions? Conditions { get; private set; }
 
-        public ConditionLookupOptimization? Optimization { get; set; }
+        public ConditionLookupOptimization? Optimization { get; private set; }
 
         public QuerySchemaMapItem(Core core, Transaction transaction, QuerySchemaMap schemaMap, PhysicalSchema physicalSchema,
             PhysicalDocumentPageCatalog documentPageCatalog, Conditions? conditions, string prefix)

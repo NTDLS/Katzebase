@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             int indexOfNameEnd = prototype.IndexOf(':');
             string functionName = prototype.Substring(0, indexOfNameEnd);
             var parameterStrings = prototype.Substring(indexOfNameEnd + 1).Split(',', StringSplitOptions.RemoveEmptyEntries);
-            List<AggregateFunctionParameterPrototype> parameters = new();
+            var parameters = new List<AggregateFunctionParameterPrototype>();
 
             foreach (var param in parameterStrings)
             {

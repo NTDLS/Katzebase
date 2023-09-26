@@ -44,19 +44,13 @@ namespace NTDLS.Katzebase.Engine.Trace
         }
 
         internal PerformanceTraceDurationTracker CreateDurationTracker(PerformanceTraceCumulativeMetricType type)
-        {
-            return new PerformanceTraceDurationTracker(this, type, $"{type}");
-        }
+            => new(this, type, $"{type}");
 
         internal PerformanceTraceDurationTracker CreateDurationTracker(PerformanceTraceCumulativeMetricType type, string supplementalType)
-        {
-            return new PerformanceTraceDurationTracker(this, type, $"{type}:{supplementalType}");
-        }
+            => new(this, type, $"{type}:{supplementalType}");
 
         internal PerformanceTraceDurationTracker CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType type)
-        {
-            return new PerformanceTraceDurationTracker(this, type, $"{type}:{typeof(T).Name}");
-        }
+            => new(this, type, $"{type}:{typeof(T).Name}");
 
         public void AccumulateDuration(PerformanceTraceDurationTracker item)
         {
@@ -102,9 +96,7 @@ namespace NTDLS.Katzebase.Engine.Trace
         internal KbMetricCollection ToCollection()
         {
             var result = new KbMetricCollection();
-
             result.AddRange(Metrics.Select(o => o.Value));
-
             return result;
         }
     }

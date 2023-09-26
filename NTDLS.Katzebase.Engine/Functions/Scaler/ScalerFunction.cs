@@ -7,8 +7,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
     /// </summary>
     internal class ScalerFunction
     {
-        public string Name { get; set; }
-        public KbScalerFunctionParameterType ReturnType { get; set; }
+        public string Name { get; private set; }
+        public KbScalerFunctionParameterType ReturnType { get; private set; }
         public List<ScalerFunctionParameterPrototype> Parameters { get; private set; } = new();
 
         public ScalerFunction(string name, string returnTypeName, List<ScalerFunctionParameterPrototype> parameters)

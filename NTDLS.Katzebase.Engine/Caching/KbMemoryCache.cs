@@ -5,12 +5,12 @@
         internal Dictionary<string, KbCacheItem> Collection { get; private set; } = new();
         private readonly Timer _timer;
         private readonly Core _core;
-        private int _cachePartitions;
+        private readonly int _cachePartitions;
 
         #region IDisposable
 
         // This flag indicates whether Dispose has been called already
-        private bool disposed = false;
+        private bool _disposed = false;
 
         // Implement IDisposable.Dispose method
         public void Dispose()
@@ -22,14 +22,14 @@
         // Implement the actual cleanup logic in this method
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposed)
+            if (!_disposed)
             {
                 if (disposing)
                 {
                     Collection.Clear();
                     _timer.Dispose();
                 }
-                disposed = true;
+                _disposed = true;
             }
         }
 

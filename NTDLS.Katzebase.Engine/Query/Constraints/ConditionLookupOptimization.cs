@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// <summary>
         /// A list of the indexes that have been selected by the optimizer for the specified conditions.
         /// </summary>
-        public List<IndexSelection> IndexSelection { get; set; } = new();
+        public List<IndexSelection> IndexSelection { get; private set; } = new();
 
         /// <summary>
         /// A clone of the conditions that this set of index selections was built for. Also contains the indexes associated with each subset of conditions.
@@ -137,7 +137,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                             handledKey.CoveredByIndex = true;
                         }
 
-                        firstIndex.Tried = true;
+                        firstIndex.SetTried();
 
                         var indexSelection = new IndexSelection(firstIndex.Index, firstIndex.CoveredFields);
 

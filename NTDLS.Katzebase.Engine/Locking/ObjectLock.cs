@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         private readonly Core _core;
         public string DiskPath { get; private set; }
         public LockType LockType { get; private set; }
-        public List<ObjectLockKey> Keys = new();
+        public List<ObjectLockKey> Keys { get; private set; } = new();
 
         /// <summary>
         /// The total number of times we attmepted to lock this object.

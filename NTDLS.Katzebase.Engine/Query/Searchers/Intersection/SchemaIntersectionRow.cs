@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Intersection
 {
     internal class SchemaIntersectionRow
     {
-        public KbInsensitiveDictionary<DocumentPointer> SchemaDocumentPointers = new();
+        public KbInsensitiveDictionary<DocumentPointer> SchemaDocumentPointers { get; private set; } = new();
 
         public List<string?> Values { get; set; } = new();
 
@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Intersection
         /// <summary>
         /// Auxiliary fields are values that may be used for method calls, sorting, grouping, etc. where the fields value may not necessarily be returned directly in the results.
         /// </summary>
-        public KbInsensitiveDictionary<string?> AuxiliaryFields { get; set; } = new();
+        public KbInsensitiveDictionary<string?> AuxiliaryFields { get; private set; } = new();
 
         public void InsertValue(string fieldNameForException, int ordinal, string? value)
         {

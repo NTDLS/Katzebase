@@ -4,8 +4,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Intersection
 {
     internal class DocumentPointerMatch : DocumentPointer
     {
-        public string? DebugSource { get; set; }
-
         public DocumentPointerMatch(int pageNumber, uint documentId) : base(pageNumber, documentId)
         {
         }

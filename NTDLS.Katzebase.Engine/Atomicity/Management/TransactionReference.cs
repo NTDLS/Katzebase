@@ -6,9 +6,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
     {
         internal Transaction Transaction { get; private set; }
 
-        private bool isComittedOrRolledBack = false;
+        private bool _isComittedOrRolledBack = false;
+        private bool _disposed = false;
 
-        private bool disposed = false;
         public void Dispose()
         {
             Dispose(true);
@@ -17,18 +17,18 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
 
         public void Rollback()
         {
-            if (isComittedOrRolledBack == false)
+            if (_isComittedOrRolledBack == false)
             {
-                isComittedOrRolledBack = true;
+                _isComittedOrRolledBack = true;
                 Transaction.Rollback();
             }
         }
 
         public void Commit()
         {
-            if (isComittedOrRolledBack == false)
+            if (_isComittedOrRolledBack == false)
             {
-                isComittedOrRolledBack = true;
+                _isComittedOrRolledBack = true;
                 if (Transaction.Commit())
                 {
                     Transaction.Dispose();
@@ -76,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
         // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
-            if (disposed)
+            if (_disposed)
             {
                 return;
             }
@@ -84,14 +84,14 @@ namespace NTDLS.Katzebase.Engine.Atomicity.Management
             if (disposing)
             {
                 //Rollback Transaction if its still open:
-                if (isComittedOrRolledBack == false)
+                if (_isComittedOrRolledBack == false)
                 {
-                    isComittedOrRolledBack = true;
+                    _isComittedOrRolledBack = true;
                     Transaction.Rollback();
                 }
             }
 
-            disposed = true;
+            _disposed = true;
         }
     }
 

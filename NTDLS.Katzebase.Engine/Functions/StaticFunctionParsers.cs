@@ -422,9 +422,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                             string subParamText = text.Substring(startPosition, endPosition - startPosition + 1);
 
                             string paramKey = $"{{p{paramCount++}}}";
-                            var mathParamParams = new FunctionDocumentFieldParameter(subParamText);
-
-                            mathParamParams.ExpressionKey = paramKey;
+                            var mathParamParams = new FunctionDocumentFieldParameter(subParamText, paramKey);
 
                             expression.Parameters.Add(mathParamParams);
 

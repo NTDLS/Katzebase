@@ -12,6 +12,7 @@ namespace NTDLS.Katzebase.Engine.Documents
     {
         [ProtoMember(1)]
         public List<PhysicalDocumentPageCatalogItem> Catalog { get; private set; } = new();
+
         [ProtoMember(2)]
         public uint NextDocumentId { get; set; } = 0;
 

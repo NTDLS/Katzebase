@@ -54,8 +54,8 @@ namespace NTDLS.Katzebase.Engine.Query
 
         public bool DynamicallyBuildSelectList { get; set; } = false;
 
-        public Dictionary<QueryAttribute, object> Attributes { get; set; } = new();
-        public List<QuerySchema> Schemas { get; set; } = new();
+        public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
+        public List<QuerySchema> Schemas { get; private set; } = new();
         public int RowLimit { get; set; }
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }

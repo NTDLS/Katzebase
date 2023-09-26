@@ -7,8 +7,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
     internal class FunctionWithParams : FunctionParameterBase
     {
 
-        public string Function { get; set; } = string.Empty;
-        public List<FunctionParameterBase> Parameters { get; set; } = new();
+        public string Function { get; private set; } = string.Empty;
+        public List<FunctionParameterBase> Parameters { get; private set; } = new();
 
         public FunctionType FunctionType { get; set; }
 

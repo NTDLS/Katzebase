@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// <summary>
         /// The names of the document fileds that are covered by the index.
         /// </summary>
-        public List<PrefixedField> CoveredFields { get; set; }
+        public List<PrefixedField> CoveredFields { get; private set; }
 
         public string CoveredHash => string.Join(":", CoveredFields.OrderBy(o => o)).ToLowerInvariant();
 

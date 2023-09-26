@@ -9,12 +9,12 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
     internal class Condition
     {
         public bool CoveredByIndex { get; set; } = false;
-        public string SubsetKey { get; set; }
-        public string ConditionKey { get; set; }
-        public SmartValue Left { get; set; } = new();
-        public SmartValue Right { get; set; } = new();
-        public LogicalConnector LogicalConnector { get; set; } = LogicalConnector.None;
-        public LogicalQualifier LogicalQualifier { get; set; } = LogicalQualifier.None;
+        public string SubsetKey { get; private set; }
+        public string ConditionKey { get; private set; }
+        public SmartValue Left { get; private set; } = new();
+        public SmartValue Right { get; private set; } = new();
+        public LogicalConnector LogicalConnector { get; private set; } = LogicalConnector.None;
+        public LogicalQualifier LogicalQualifier { get; private set; } = LogicalQualifier.None;
 
         public Condition(string subsetKey, string conditionKey, LogicalConnector logicalConnector, string left, LogicalQualifier logicalQualifier, string right)
         {
