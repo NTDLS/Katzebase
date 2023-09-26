@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
+using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Schemas;
-using NTDLS.Katzebase;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Documents.Management

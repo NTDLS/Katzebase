@@ -3,7 +3,7 @@ using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Payloads;
 using static NTDLS.Katzebase.Engine.Sessions.SessionState;
 
-namespace NTDLS.Katzebase.Engine.Sessions.Management
+namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
     /// <summary>
     /// Internal class methods for handling query requests related to sessions.
@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Engine.Sessions.Management
                     switch (connectionSetting)
                     {
                         case KbConnectionSetting.TraceWaitTimes:
-                            session.UpsertConnectionSetting(connectionSetting, Boolean.Parse(variable.Value) ? 1 : 0);
+                            session.UpsertConnectionSetting(connectionSetting, bool.Parse(variable.Value) ? 1 : 0);
                             break;
                         case KbConnectionSetting.MinQueryThreads:
                         case KbConnectionSetting.MaxQueryThreads:

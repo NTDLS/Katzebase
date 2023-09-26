@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.Katzebase;
 
 namespace NTDLS.Katzebase.Engine.Threading
 {

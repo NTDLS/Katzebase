@@ -1,7 +1,8 @@
-﻿using NTDLS.Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Engine.Indexes;
+using NTDLS.Katzebase.Payloads;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Indexes.Management
+namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
     /// <summary>
     /// Public class methods for handling API requests related to indexes.

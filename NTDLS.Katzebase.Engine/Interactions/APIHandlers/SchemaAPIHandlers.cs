@@ -1,9 +1,10 @@
-﻿using NTDLS.Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Payloads;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Schemas.Management
+namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
     /// <summary>
     /// Public class methods for handling API requests related to schema.

@@ -1,6 +1,7 @@
-﻿using NTDLS.Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Payloads;
 
-namespace NTDLS.Katzebase.Engine.Query.Management
+namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
     /// <summary>
     /// Public class methods for handling API requests related to queries.

@@ -1,10 +1,11 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
+using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
+using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading;
-using NTDLS.Katzebase;
 using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Payloads;
 using NTDLS.Katzebase.Types;

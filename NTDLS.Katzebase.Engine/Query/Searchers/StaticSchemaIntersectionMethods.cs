@@ -8,7 +8,6 @@ using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
 using NTDLS.Katzebase.Engine.Threading;
-using NTDLS.Katzebase;
 using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Types;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;

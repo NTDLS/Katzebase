@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Payloads;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Documents.Management
+namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
     /// <summary>
     /// Public class methods for handling API requests related to documents.

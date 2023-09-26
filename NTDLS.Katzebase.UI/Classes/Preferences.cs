@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
 
 namespace NTDLS.Katzebase.UI.Classes
 {

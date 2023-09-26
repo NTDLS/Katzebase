@@ -1,6 +1,6 @@
-﻿using NTDLS.Katzebase.Exceptions;
+﻿using Newtonsoft.Json;
+using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Payloads;
-using Newtonsoft.Json;
 
 namespace NTDLS.Katzebase.Client.Management
 {

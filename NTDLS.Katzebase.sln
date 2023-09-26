@@ -11,7 +11,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.TestHarness
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.UI", "NTDLS.Katzebase.UI\NTDLS.Katzebase.UI.csproj", "{756AADB6-D503-4FAD-878F-0D166099ABD7}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NTDLS.Solution Items", "Solution Items", "{E50043F1-790B-47D4-AA7A-81EA6578E81D}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E50043F1-790B-47D4-AA7A-81EA6578E81D}"
 	ProjectSection(SolutionItems) = preProject
 		Functions and Variables.txt = Functions and Variables.txt
 		Notes.txt = Notes.txt
@@ -19,13 +19,15 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NTDLS.Solution Items", "Sol
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Benchmark", "NTDLS.Katzebase.Benchmark\NTDLS.Katzebase.Benchmark.csproj", "{54CD3D29-E0EA-439E-BA74-D9912A7B08D8}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NTDLS.Library", "NTDLS.Library", "{30F5D013-1C84-4ACF-B75F-5A326B1C732E}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Library", "Library", "{30F5D013-1C84-4ACF-B75F-5A326B1C732E}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "NTDLS.Tools", "NTDLS.Tools", "{8E1D5CDE-C39E-4144-8782-C42F894D9E11}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{8E1D5CDE-C39E-4144-8782-C42F894D9E11}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Shared", "NTDLS.Katzebase.Shared\NTDLS.Katzebase.Shared.csproj", "{2EF323CE-ACC9-4266-9A5E-C9047F41E4B5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase", "NTDLS.Katzebase\NTDLS.Katzebase.csproj", "{1E0532A7-3A71-46F5-8227-01C6FD19DBA0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NTDLS.Katzebase.ClientTest", "NTDLS.Katzebase.ClientTest\NTDLS.Katzebase.ClientTest.csproj", "{EC2AE6A2-A023-49FC-99E8-FD77BA7576CF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -61,6 +63,10 @@ Global
 		{1E0532A7-3A71-46F5-8227-01C6FD19DBA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E0532A7-3A71-46F5-8227-01C6FD19DBA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E0532A7-3A71-46F5-8227-01C6FD19DBA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC2AE6A2-A023-49FC-99E8-FD77BA7576CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC2AE6A2-A023-49FC-99E8-FD77BA7576CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC2AE6A2-A023-49FC-99E8-FD77BA7576CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC2AE6A2-A023-49FC-99E8-FD77BA7576CF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -70,6 +76,7 @@ Global
 		{54CD3D29-E0EA-439E-BA74-D9912A7B08D8} = {8E1D5CDE-C39E-4144-8782-C42F894D9E11}
 		{2EF323CE-ACC9-4266-9A5E-C9047F41E4B5} = {30F5D013-1C84-4ACF-B75F-5A326B1C732E}
 		{1E0532A7-3A71-46F5-8227-01C6FD19DBA0} = {30F5D013-1C84-4ACF-B75F-5A326B1C732E}
+		{EC2AE6A2-A023-49FC-99E8-FD77BA7576CF} = {8E1D5CDE-C39E-4144-8782-C42F894D9E11}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16ADDA6D-28A3-4730-94D0-61E6D3E723B0}

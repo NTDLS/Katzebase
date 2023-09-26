@@ -1,6 +1,5 @@
-﻿using NTDLS.Katzebase;
+﻿using Microsoft.AspNetCore.Mvc;
 using NTDLS.Katzebase.Payloads;
-using Microsoft.AspNetCore.Mvc;
 
 namespace NTDLS.Katzebase.Service.Controllers
 {

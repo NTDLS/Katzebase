@@ -1,15 +1,15 @@
-﻿using NTDLS.Katzebase.Engine.Functions.Parameters;
+﻿using Newtonsoft.Json;
+using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Searchers;
-using NTDLS.Katzebase;
 using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Payloads;
 using NTDLS.Katzebase.Types;
-using Newtonsoft.Json;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Documents.Management
+namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
     /// <summary>
     /// Internal class methods for handling query requests related to documents.

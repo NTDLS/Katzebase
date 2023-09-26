@@ -1,7 +1,6 @@
-﻿using NTDLS.Katzebase;
-using NTDLS.Katzebase.Payloads;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using NTDLS.Katzebase.Payloads;
 
 namespace NTDLS.Katzebase.Service.Controllers
 {

@@ -1,4 +1,4 @@
-﻿namespace NTDLS.Katzebase.Engine.Sessions.Management
+﻿namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
     /// <summary>
     /// Public class methods for handling API requests related to sessions.

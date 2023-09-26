@@ -1,8 +1,9 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Indexes;
+using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
+using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Trace;
-using NTDLS.Katzebase;
 using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Payloads;
 using System.Text;

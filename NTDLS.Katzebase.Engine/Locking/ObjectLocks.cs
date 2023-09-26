@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Library;
-using NTDLS.Katzebase;
 using NTDLS.Katzebase.Exceptions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 

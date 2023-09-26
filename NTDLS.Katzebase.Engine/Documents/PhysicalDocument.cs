@@ -1,7 +1,6 @@
-﻿using NTDLS.Katzebase;
+﻿using Newtonsoft.Json;
 using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Types;
-using Newtonsoft.Json;
 using ProtoBuf;
 
 namespace NTDLS.Katzebase.Engine.Documents

@@ -1,4 +1,3 @@
-using NTDLS.Katzebase;
 using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.UI.Classes;
 using NTDLS.Katzebase.UI.Controls;

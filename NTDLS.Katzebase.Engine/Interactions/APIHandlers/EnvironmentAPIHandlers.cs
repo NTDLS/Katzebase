@@ -1,4 +1,4 @@
-﻿namespace NTDLS.Katzebase.Engine.Health.Management
+﻿namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
     /// <summary>
     /// Public class methods for handling API requests related to configuration.

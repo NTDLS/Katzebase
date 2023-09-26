@@ -3,7 +3,7 @@ using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Payloads;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Schemas.Management
+namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
     /// <summary>
     /// Internal class methods for handling query requests related to schemas.
@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
-                    var includePhysicalPages = preparedQuery.Attribute<bool>(PreparedQuery.QueryAttribute.IncludePhysicalPages, false);
+                    var includePhysicalPages = preparedQuery.Attribute(PreparedQuery.QueryAttribute.IncludePhysicalPages, false);
                     result = core.Schemas.AnalysePages(transactionReference.Transaction, schemaName, includePhysicalPages);
                 }
                 else
@@ -88,7 +88,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
-                    var pageSize = preparedQuery.Attribute<uint>(PreparedQuery.QueryAttribute.PageSize, core.Settings.DefaultDocumentPageSize);
+                    var pageSize = preparedQuery.Attribute(PreparedQuery.QueryAttribute.PageSize, core.Settings.DefaultDocumentPageSize);
                     string schemaName = preparedQuery.Schemas.Single().Name;
                     core.Schemas.Alter(transactionReference.Transaction, schemaName, pageSize);
                 }
@@ -114,7 +114,7 @@ namespace NTDLS.Katzebase.Engine.Schemas.Management
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
-                    var pageSize = preparedQuery.Attribute<uint>(PreparedQuery.QueryAttribute.PageSize, core.Settings.DefaultDocumentPageSize);
+                    var pageSize = preparedQuery.Attribute(PreparedQuery.QueryAttribute.PageSize, core.Settings.DefaultDocumentPageSize);
                     string schemaName = preparedQuery.Schemas.Single().Name;
                     core.Schemas.CreateSingleSchema(transactionReference.Transaction, schemaName, pageSize);
                 }

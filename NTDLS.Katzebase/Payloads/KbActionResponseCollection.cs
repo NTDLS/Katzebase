@@ -4,9 +4,7 @@
     {
         public List<KbBaseActionResponse> Collection { get; set; } = new();
 
-        //public new List<KbQueryResultMessage> Messages => Collection.SelectMany(o => o.Messages).ToList();
-
-        private bool _success = false;
+        private bool _success = true;
         public new bool Success
         {
             get
@@ -30,6 +28,7 @@
 
         public KbActionResponseCollection(Exception ex)
         {
+            _success = false;
             ExceptionText = ex.Message;
         }
     }

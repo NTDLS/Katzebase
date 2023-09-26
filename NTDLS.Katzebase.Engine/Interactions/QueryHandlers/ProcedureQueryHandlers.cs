@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Payloads;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Functions.Management
+namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
     /// <summary>
     /// Internal class methods for handling query requests related to procedures.

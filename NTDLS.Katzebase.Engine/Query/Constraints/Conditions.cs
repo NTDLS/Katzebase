@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
-using NTDLS.Katzebase;
 using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Types;
 using System.Text;

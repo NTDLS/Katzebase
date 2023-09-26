@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase;
-using NTDLS.Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Types;
 using System.Text.RegularExpressions;
 

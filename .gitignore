@@ -69,3 +69,7 @@ NTDLS.Katzebase.Benchmark/obj/
 NTDLS.Katzebase/bin/
 
 NTDLS.Katzebase/obj/
+
+NTDLS.Katzebase.ClientTest/bin/
+
+NTDLS.Katzebase.ClientTest/obj/

@@ -1,5 +1,4 @@
 ﻿using ICSharpCode.AvalonEdit;
-using NTDLS.Katzebase;
 using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Payloads;
