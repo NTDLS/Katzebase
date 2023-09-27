@@ -1,8 +1,8 @@
 ﻿using ICSharpCode.AvalonEdit;
-using NTDLS.Katzebase.Client.UI.Classes;
+using NTDLS.Katzebase.UI.Classes;
 using System.Diagnostics;
 
-namespace NTDLS.Katzebase.Client.UI
+namespace NTDLS.Katzebase.UI
 {
     public partial class FormSnippets : Form
     {

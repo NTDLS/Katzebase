@@ -1,10 +1,10 @@
 ﻿using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
-using NTDLS.Katzebase.Client.UI.Controls;
+using NTDLS.Katzebase.UI.Controls;
 using System.Xml;
 
-namespace NTDLS.Katzebase.Client.UI.Classes
+namespace NTDLS.Katzebase.UI.Classes
 {
     internal class EditorFactory
     {

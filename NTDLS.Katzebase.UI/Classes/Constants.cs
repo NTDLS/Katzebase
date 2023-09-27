@@ -1,4 +1,4 @@
-﻿namespace NTDLS.Katzebase.Client.UI.Classes
+﻿namespace NTDLS.Katzebase.UI.Classes
 {
     public static class Constants
     {

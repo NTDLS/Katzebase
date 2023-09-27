@@ -1,6 +1,7 @@
-﻿using static NTDLS.Katzebase.Client.UI.Classes.Constants;
+﻿using NTDLS.Katzebase.Client;
+using static NTDLS.Katzebase.UI.Classes.Constants;
 
-namespace NTDLS.Katzebase.Client.UI.Classes
+namespace NTDLS.Katzebase.UI.Classes
 {
     public static class TreeManagement
     {
@@ -71,7 +72,7 @@ namespace NTDLS.Katzebase.Client.UI.Classes
             }
 
             var rootNode = GetRootNode(node);
-            using (var client = new KbClient(rootNode.ServerAddress, "Katzebase.UI"))
+            using (var client = new KbClient(rootNode.ServerAddress))
             {
                 string schema = FullSchemaPath(node);
 

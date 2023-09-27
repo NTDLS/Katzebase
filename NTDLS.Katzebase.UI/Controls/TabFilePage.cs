@@ -1,10 +1,11 @@
 ﻿using ICSharpCode.AvalonEdit;
+using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
-using NTDLS.Katzebase.Client.UI.Classes;
+using NTDLS.Katzebase.UI.Classes;
 using System.Text;
 
-namespace NTDLS.Katzebase.Client.UI.Controls
+namespace NTDLS.Katzebase.UI.Controls
 {
     internal class TabFilePage : TabPage, IDisposable
     {
@@ -123,7 +124,7 @@ namespace NTDLS.Katzebase.Client.UI.Controls
             ServerAddressURL = serverAddressURL;
             if (string.IsNullOrEmpty(serverAddressURL) == false)
             {
-                Client = new KbClient(ServerAddressURL, "Katzebase.UI");
+                Client = new KbClient(ServerAddressURL);
             }
         }
 

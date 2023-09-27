@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Management;
+using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Client
 {
@@ -30,6 +31,10 @@ namespace NTDLS.Katzebase.Client
         public KbClient(string baseAddress, string clientName = "")
         {
             ClientName = clientName;
+            if (string.IsNullOrWhiteSpace(ClientName))
+            {
+                ClientName = Process.GetCurrentProcess().ProcessName;
+            }
 
             SessionId = Guid.NewGuid();
             Connection = new HttpClient
@@ -58,6 +63,10 @@ namespace NTDLS.Katzebase.Client
         public KbClient(string baseAddress, TimeSpan timeout, string clientName = "")
         {
             ClientName = clientName;
+            if (string.IsNullOrWhiteSpace(ClientName))
+            {
+                ClientName = Process.GetCurrentProcess().ProcessName;
+            }
 
             SessionId = Guid.NewGuid();
             Connection = new HttpClient

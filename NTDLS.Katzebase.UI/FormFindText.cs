@@ -1,6 +1,6 @@
-﻿using NTDLS.Katzebase.Client.UI.Controls;
+﻿using NTDLS.Katzebase.UI.Controls;
 
-namespace NTDLS.Katzebase.Client.UI
+namespace NTDLS.Katzebase.UI
 {
     internal partial class FormFindText : Form
     {

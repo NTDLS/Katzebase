@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Payloads;
 
 namespace NTDLS.Katzebase.ClientTest
 {
@@ -6,9 +7,17 @@ namespace NTDLS.Katzebase.ClientTest
     {
         static void Main()
         {
-            (new Thread(InsertUsingAPI)).Start();
-            Thread.Sleep(100);
-            (new Thread(InsertUsingQueries)).Start();
+            var threads = new List<Thread>()
+            {
+                new Thread(InsertUsingAPI),
+                new Thread(InsertUsingQueries),
+            };
+
+            threads.ForEach(t => t.Start());
+            threads.ForEach(t => t.Join());
+
+            Console.WriteLine("Complete.");
+
             Console.ReadLine();
         }
 
@@ -26,7 +35,7 @@ namespace NTDLS.Katzebase.ClientTest
 
             for (int s = 0; s < 10; s++)
             {
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < 100; i++)
                 {
                     Console.WriteLine($"InsertUsingAPI: {id}");
 
@@ -37,14 +46,13 @@ namespace NTDLS.Katzebase.ClientTest
                         SegmentB = s,
                         UUID = Guid.NewGuid()
                     });
-                    //Thread.Sleep(1000);
                 }
             }
             client.Transaction.Commit();
 
-            client.Schema.Indexes.Create(schemaName, new Payloads.KbUniqueKey("IX_UUID", "UUID"));
-            client.Schema.Indexes.Create(schemaName, new Payloads.KbUniqueKey("IX_ID", "Id"));
-            client.Schema.Indexes.Create(schemaName, new Payloads.KbIndex("IX_Segments", "SegmentA,SegmentB"));
+            client.Schema.Indexes.Create(schemaName, new KbUniqueKey("IX_UUID", "UUID"));
+            client.Schema.Indexes.Create(schemaName, new KbUniqueKey("IX_ID", "Id"));
+            client.Schema.Indexes.Create(schemaName, new KbIndex("IX_Segments", "SegmentA,SegmentB"));
         }
 
         public static void InsertUsingQueries()
@@ -59,11 +67,10 @@ namespace NTDLS.Katzebase.ClientTest
             client.Transaction.Begin();
             for (int s = 0; s < 10; s++)
             {
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < 100; i++)
                 {
                     Console.WriteLine($"InsertUsingQueries: {id}");
                     client.Query.ExecuteQuery($"INSERT INTO {schemaName} (Id = {id++}, SegmentA = {i}, SegmentB = {s}, UUID = '{Guid.NewGuid()}')");
-                    //Thread.Sleep(1000);
                 }
             }
             client.Transaction.Commit();

@@ -1,11 +1,12 @@
-using NTDLS.Katzebase.Client.UI.Classes;
-using NTDLS.Katzebase.Client.UI.Controls;
-using NTDLS.Katzebase.Client.UI.Properties;
+using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.UI.Classes;
+using NTDLS.Katzebase.UI.Controls;
+using NTDLS.Katzebase.UI.Properties;
 using System.Data;
 using System.Diagnostics;
 using System.Text;
 
-namespace NTDLS.Katzebase.Client.UI
+namespace NTDLS.Katzebase.UI
 {
     public partial class FormStudio : Form
     {
@@ -322,7 +323,7 @@ namespace NTDLS.Katzebase.Client.UI
                 else if (e.ClickedItem?.Text == "Rebuild Index")
                 {
                     var rootNode = TreeManagement.GetRootNode(node);
-                    using (var client = new KbClient(rootNode.ServerAddress, "Katzebase.UI"))
+                    using (var client = new KbClient(rootNode.ServerAddress))
                     {
                         var result = client.Schema.Indexes.Get(TreeManagement.FullSchemaPath(node), node.Text);
                         if (result != null && result.Index != null)
@@ -342,7 +343,7 @@ namespace NTDLS.Katzebase.Client.UI
                 else if (e.ClickedItem?.Text == "Script Index")
                 {
                     var rootNode = TreeManagement.GetRootNode(node);
-                    using (var client = new KbClient(rootNode.ServerAddress, "Katzebase.UI"))
+                    using (var client = new KbClient(rootNode.ServerAddress))
                     {
                         var result = client.Schema.Indexes.Get(TreeManagement.FullSchemaPath(node), node.Text);
                         if (result != null && result.Index != null)

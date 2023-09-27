@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 
-namespace NTDLS.Katzebase.Client.UI
+namespace NTDLS.Katzebase.UI
 {
     public class WorkloadGroup
     {

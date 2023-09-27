@@ -1,4 +1,4 @@
-﻿namespace NTDLS.Katzebase.Client.UI
+﻿namespace NTDLS.Katzebase.UI
 {
     partial class FormFindText
     {

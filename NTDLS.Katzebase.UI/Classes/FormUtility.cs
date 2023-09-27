@@ -1,4 +1,4 @@
-﻿namespace NTDLS.Katzebase.Client.UI.Classes
+﻿namespace NTDLS.Katzebase.UI.Classes
 {
     internal static class FormUtility
     {
