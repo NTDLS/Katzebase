@@ -315,13 +315,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, SchemaCatalogFile);
 
-                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, intendedOperation) == false)
+                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Read) == false)
                     {
                         throw new KbObjectNotFoundException($"The schema [{schemaName}] does not exist.");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
-                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), intendedOperation);
+                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Read);
 
                     var physicalSchema = parentCatalog.GetByName(parentSchemaame);
                     if (physicalSchema != null)

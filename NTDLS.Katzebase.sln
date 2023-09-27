@@ -11,9 +11,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.TestHarness
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.UI", "NTDLS.Katzebase.UI\NTDLS.Katzebase.UI.csproj", "{756AADB6-D503-4FAD-878F-0D166099ABD7}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E50043F1-790B-47D4-AA7A-81EA6578E81D}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{E50043F1-790B-47D4-AA7A-81EA6578E81D}"
 	ProjectSection(SolutionItems) = preProject
-		Functions and Variables.txt = Functions and Variables.txt
 		Notes.txt = Notes.txt
 	EndProjectSection
 EndProject

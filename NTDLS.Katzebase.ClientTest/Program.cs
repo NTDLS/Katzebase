@@ -25,8 +25,8 @@ namespace NTDLS.Katzebase.ClientTest
             string schemaName = "ClientTest:B";
             int id = 0;
 
-            client.Schema.DropIfExists(schemaName);
-            client.Schema.Create(schemaName);
+            //client.Schema.DropIfExists(schemaName);
+            //client.Schema.Create(schemaName);
 
             client.Transaction.Begin();
 
@@ -46,11 +46,11 @@ namespace NTDLS.Katzebase.ClientTest
                     //Thread.Sleep(1000);
                 }
             }
-            client.Transaction.Commit();
+            //client.Transaction.Commit();
 
-            client.Schema.Indexes.Create(schemaName, new Payloads.KbUniqueKey("IX_UUID", "UUID"));
-            client.Schema.Indexes.Create(schemaName, new Payloads.KbUniqueKey("IX_ID", "Id"));
-            client.Schema.Indexes.Create(schemaName, new Payloads.KbIndex("IX_Segments", "SegmentA,SegmentB"));
+            //client.Schema.Indexes.Create(schemaName, new Payloads.KbUniqueKey("IX_UUID", "UUID"));
+            //client.Schema.Indexes.Create(schemaName, new Payloads.KbUniqueKey("IX_ID", "Id"));
+            //client.Schema.Indexes.Create(schemaName, new Payloads.KbIndex("IX_Segments", "SegmentA,SegmentB"));
         }
 
         public static void InsertUsingQueries()
@@ -59,8 +59,8 @@ namespace NTDLS.Katzebase.ClientTest
             string schemaName = "ClientTest:A";
             int id = 0;
 
-            client.Schema.DropIfExists(schemaName);
-            client.Schema.Create(schemaName);
+            //client.Schema.DropIfExists(schemaName);
+            //client.Schema.Create(schemaName);
 
             client.Transaction.Begin();
             for (int s = 0; s < 1000; s++)
@@ -74,9 +74,9 @@ namespace NTDLS.Katzebase.ClientTest
             }
             client.Transaction.Commit();
 
-            client.Query.ExecuteQuery($"CREATE UniqueKey IX_UUID ON {schemaName} (UUID)");
-            client.Query.ExecuteQuery($"CREATE UniqueKey IX_ID ON {schemaName} (Id)");
-            client.Query.ExecuteQuery($"CREATE INDEX IX_Segments ON {schemaName} (SegmentA, SegmentB)");
+            //client.Query.ExecuteQuery($"CREATE UniqueKey IX_UUID ON {schemaName} (UUID)");
+            //client.Query.ExecuteQuery($"CREATE UniqueKey IX_ID ON {schemaName} (Id)");
+            //client.Query.ExecuteQuery($"CREATE INDEX IX_Segments ON {schemaName} (SegmentA, SegmentB)");
         }
     }
 }
