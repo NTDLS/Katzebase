@@ -26,7 +26,8 @@
         {
             Verbose,
             Warning,
-            Error
+            Error,
+            Deadlock
         }
 
         public enum KbSortDirection

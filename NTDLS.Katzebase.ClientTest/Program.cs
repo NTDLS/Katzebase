@@ -23,61 +23,75 @@ namespace NTDLS.Katzebase.ClientTest
 
         public static void InsertUsingAPI()
         {
-            using var client = new KbClient("http://localhost:6858");
-
-            string schemaName = "ClientTest:B";
-            int id = 0;
-
-            client.Schema.DropIfExists(schemaName);
-            client.Schema.Create(schemaName);
-
-            client.Transaction.Begin();
-
-            for (int s = 0; s < 10; s++)
+            try
             {
-                for (int i = 0; i < 100; i++)
+                using var client = new KbClient("http://localhost:6858");
+
+                string schemaName = "ClientTest:B";
+                int id = 0;
+
+                var result = client.Schema.DropIfExists(schemaName);
+                client.Schema.Create(schemaName);
+
+                client.Transaction.Begin();
+
+                for (int s = 0; s < 10; s++)
                 {
-                    Console.WriteLine($"InsertUsingAPI: {id}");
-
-                    client.Document.Store(schemaName, new
+                    for (int i = 0; i < 100; i++)
                     {
-                        Id = id++,
-                        SegmentA = i,
-                        SegmentB = s,
-                        UUID = Guid.NewGuid()
-                    });
-                }
-            }
-            client.Transaction.Commit();
+                        Console.WriteLine($"InsertUsingAPI: {id}");
 
-            client.Schema.Indexes.Create(schemaName, new KbUniqueKey("IX_UUID", "UUID"));
-            client.Schema.Indexes.Create(schemaName, new KbUniqueKey("IX_ID", "Id"));
-            client.Schema.Indexes.Create(schemaName, new KbIndex("IX_Segments", "SegmentA,SegmentB"));
+                        client.Document.Store(schemaName, new
+                        {
+                            Id = id++,
+                            SegmentA = i,
+                            SegmentB = s,
+                            UUID = Guid.NewGuid()
+                        });
+                    }
+                }
+                client.Transaction.Commit();
+
+                client.Schema.Indexes.Create(schemaName, new KbUniqueKey("IX_UUID", "UUID"));
+                client.Schema.Indexes.Create(schemaName, new KbUniqueKey("IX_ID", "Id"));
+                client.Schema.Indexes.Create(schemaName, new KbIndex("IX_Segments", "SegmentA,SegmentB"));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
 
         public static void InsertUsingQueries()
         {
-            using var client = new KbClient("http://localhost:6858");
-            string schemaName = "ClientTest:A";
-            int id = 0;
-
-            client.Schema.DropIfExists(schemaName);
-            client.Schema.Create(schemaName);
-
-            client.Transaction.Begin();
-            for (int s = 0; s < 10; s++)
+            try
             {
-                for (int i = 0; i < 100; i++)
-                {
-                    Console.WriteLine($"InsertUsingQueries: {id}");
-                    client.Query.ExecuteQuery($"INSERT INTO {schemaName} (Id = {id++}, SegmentA = {i}, SegmentB = {s}, UUID = '{Guid.NewGuid()}')");
-                }
-            }
-            client.Transaction.Commit();
+                using var client = new KbClient("http://localhost:6858");
+                string schemaName = "ClientTest:A";
+                int id = 0;
 
-            client.Query.ExecuteQuery($"CREATE UniqueKey IX_UUID (UUID) ON {schemaName}");
-            client.Query.ExecuteQuery($"CREATE UniqueKey IX_ID (Id) ON {schemaName}");
-            client.Query.ExecuteQuery($"CREATE INDEX IX_Segments (SegmentA, SegmentB) ON {schemaName}");
+                var result = client.Schema.DropIfExists(schemaName);
+                client.Schema.Create(schemaName);
+
+                client.Transaction.Begin();
+                for (int s = 0; s < 10; s++)
+                {
+                    for (int i = 0; i < 100; i++)
+                    {
+                        Console.WriteLine($"InsertUsingQueries: {id}");
+                        client.Query.ExecuteQuery($"INSERT INTO {schemaName} (Id = {id++}, SegmentA = {i}, SegmentB = {s}, UUID = '{Guid.NewGuid()}')");
+                    }
+                }
+                client.Transaction.Commit();
+
+                client.Query.ExecuteQuery($"CREATE UniqueKey IX_UUID (UUID) ON {schemaName}");
+                client.Query.ExecuteQuery($"CREATE UniqueKey IX_ID (Id) ON {schemaName}");
+                client.Query.ExecuteQuery($"CREATE INDEX IX_Segments (SegmentA, SegmentB) ON {schemaName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
     }
 }
