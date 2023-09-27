@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
 using System.Security.Cryptography;
 using System.Text;
 

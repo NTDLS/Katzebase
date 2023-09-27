@@ -1,6 +1,4 @@
-﻿using NTDLS.Katzebase.Client;
-
-namespace NTDLS.Katzebase.UI
+﻿namespace NTDLS.Katzebase.Client.UI
 {
     public partial class FormConnect : Form
     {
@@ -26,7 +24,7 @@ namespace NTDLS.Katzebase.UI
         {
             try
             {
-                using (var client = new KbClient(ServerAddressURL))
+                using (var client = new KbClient(ServerAddressURL, "Katzebase.UI"))
                 {
                     if (client.Server.Ping().Success)
                     {

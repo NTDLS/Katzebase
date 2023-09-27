@@ -1,13 +1,14 @@
 ﻿using Newtonsoft.Json;
+using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Katzebase.Engine.Trace;
-using NTDLS.Katzebase.Exceptions;
-using NTDLS.Katzebase.Payloads;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using static NTDLS.Katzebase.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Atomicity
 {

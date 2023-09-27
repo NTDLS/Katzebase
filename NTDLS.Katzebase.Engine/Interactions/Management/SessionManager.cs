@@ -1,7 +1,7 @@
-﻿using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.Katzebase.Exceptions;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public ulong UpsertSessionId(Guid sessionId)
+        public ulong UpsertSessionId(Guid sessionId, string clientName = "")
         {
             try
             {
@@ -61,15 +61,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (Collection.ContainsKey(sessionId))
                     {
                         var session = Collection[sessionId];
-
                         session.LastCheckinTime = DateTime.UtcNow;
-
                         return session.ProcessId;
                     }
                     else
                     {
                         ulong processId = _nextProcessId++;
-                        Collection.Add(sessionId, new SessionState(processId, sessionId));
+
+                        var session = new SessionState(processId, sessionId)
+                        {
+                            ClientName = clientName
+                        }
+                        ;
+                        Collection.Add(sessionId, session);
                         return processId;
                     }
                 }

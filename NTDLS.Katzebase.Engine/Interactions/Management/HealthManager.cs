@@ -1,7 +1,7 @@
-﻿using NTDLS.Katzebase.Engine.Health;
+﻿using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Health;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
-using NTDLS.Katzebase.Types;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management

@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Query;
-using NTDLS.Katzebase.Types;
+﻿using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Query;
 
 namespace NTDLS.Katzebase.Engine.Functions.Parameters
 {

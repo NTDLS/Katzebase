@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Query.Tokenizers

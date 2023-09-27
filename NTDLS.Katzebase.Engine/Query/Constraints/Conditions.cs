@@ -1,7 +1,8 @@
-﻿using NTDLS.Katzebase.Engine.Library;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
-using NTDLS.Katzebase.Exceptions;
-using NTDLS.Katzebase.Types;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 

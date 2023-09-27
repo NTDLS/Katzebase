@@ -1,8 +1,8 @@
-﻿using NTDLS.Katzebase.Engine.Functions.Parameters;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
-using NTDLS.Katzebase.Exceptions;
-using NTDLS.Katzebase.Types;
 using System.Text;
 using System.Text.RegularExpressions;
 

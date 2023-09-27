@@ -1,4 +1,7 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
@@ -8,12 +11,10 @@ using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
 using NTDLS.Katzebase.Engine.Threading;
-using NTDLS.Katzebase.Exceptions;
-using NTDLS.Katzebase.Types;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
-using static NTDLS.Katzebase.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Query.Searchers
 {

@@ -1,16 +1,16 @@
 ﻿using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
-using NTDLS.Katzebase.UI.Controls;
+using NTDLS.Katzebase.Client.UI.Controls;
 using System.Xml;
 
-namespace NTDLS.Katzebase.UI.Classes
+namespace NTDLS.Katzebase.Client.UI.Classes
 {
     internal class EditorFactory
     {
 
 #if DEBUG
-        private static string sqlHighlighter => @"C:\NTDLS\Katzebase\@Installers\Highlighters\KBS.xshd";
+        private static string sqlHighlighter => @"C:\NTDLS\NTDLS.Katzebase\@Installers\Highlighters\KBS.xshd";
 #else
         private static string sqlHighlighter => Path.Combine(Path.GetDirectoryName(Application.ExecutablePath) ?? "", "Highlighters", "KBS.xshd");
 #endif

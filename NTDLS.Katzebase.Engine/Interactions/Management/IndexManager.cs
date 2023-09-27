@@ -1,4 +1,8 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
@@ -7,9 +11,6 @@ using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading;
-using NTDLS.Katzebase.Exceptions;
-using NTDLS.Katzebase.Payloads;
-using NTDLS.Katzebase.Types;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -50,6 +51,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 physicalIndex.Id = Guid.NewGuid();
                 physicalIndex.Created = DateTime.UtcNow;
                 physicalIndex.Modfied = DateTime.UtcNow;
+
+                if (physicalIndex.Partitions <= 0)
+                {
+                    physicalIndex.Partitions = _core.Settings.DefaultIndexPartitions;
+                }
 
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
                 var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);

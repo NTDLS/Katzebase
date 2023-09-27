@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace NTDLS.Katzebase.UI.Classes
+namespace NTDLS.Katzebase.Client.UI.Classes
 {
     internal class Preferences
     {

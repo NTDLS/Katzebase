@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using NTDLS.Katzebase.Payloads;
+using NTDLS.Katzebase.Client.Payloads;
 
-namespace NTDLS.Katzebase.Service.Controllers
+namespace NTDLS.Katzebase.Client.Service.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

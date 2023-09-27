@@ -1,5 +1,6 @@
-﻿using NTDLS.Katzebase.Exceptions;
-using NTDLS.Katzebase.Types;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Types;
 using System.Text.RegularExpressions;
 
 namespace NTDLS.Katzebase.Engine.Query.Tokenizers

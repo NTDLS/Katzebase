@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Types;
-using static NTDLS.Katzebase.KbConstants;
+﻿using NTDLS.Katzebase.Client.Types;
+using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Query.Sorting
 {

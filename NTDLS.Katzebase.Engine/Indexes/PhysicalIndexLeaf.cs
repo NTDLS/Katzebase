@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Types;
+﻿using NTDLS.Katzebase.Client.Types;
 using ProtoBuf;
 
 namespace NTDLS.Katzebase.Engine.Indexes

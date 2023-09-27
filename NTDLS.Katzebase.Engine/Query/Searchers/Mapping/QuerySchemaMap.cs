@@ -1,8 +1,8 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
-using NTDLS.Katzebase.Types;
 
 namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
 {

@@ -1,4 +1,4 @@
-﻿namespace NTDLS.Katzebase.UI
+﻿namespace NTDLS.Katzebase.Client.UI
 {
     partial class FormReplaceText
     {

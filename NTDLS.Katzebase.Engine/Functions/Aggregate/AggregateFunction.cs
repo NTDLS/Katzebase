@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
-using NTDLS.Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {

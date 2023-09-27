@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Query.Searchers;
-using NTDLS.Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Engine.Query.Searchers;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers

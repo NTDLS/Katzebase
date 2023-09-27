@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Types;
+﻿using NTDLS.Katzebase.Client.Types;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.IO

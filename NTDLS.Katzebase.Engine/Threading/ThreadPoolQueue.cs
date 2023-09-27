@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Sessions;
 
 namespace NTDLS.Katzebase.Engine.Threading

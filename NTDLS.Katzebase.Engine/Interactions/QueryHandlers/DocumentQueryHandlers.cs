@@ -1,12 +1,13 @@
 ﻿using Newtonsoft.Json;
+using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Searchers;
-using NTDLS.Katzebase.Exceptions;
-using NTDLS.Katzebase.Payloads;
-using NTDLS.Katzebase.Types;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers

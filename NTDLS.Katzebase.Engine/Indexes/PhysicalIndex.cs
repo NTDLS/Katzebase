@@ -36,14 +36,22 @@ namespace NTDLS.Katzebase.Engine.Indexes
 
         public PhysicalIndex Clone()
         {
-            return new PhysicalIndex
+            var result = new PhysicalIndex
             {
                 Id = Id,
                 Name = Name,
                 Created = Created,
                 Modfied = Modfied,
-                IsUnique = IsUnique
+                IsUnique = IsUnique,
+                Partitions = Partitions,
             };
+
+            foreach (var attribute in Attributes)
+            {
+                result.Attributes.Add(attribute.Clone());
+            }
+
+            return result;
         }
 
         public void AddAttribute(string name)
@@ -53,12 +61,13 @@ namespace NTDLS.Katzebase.Engine.Indexes
                 Field = name
             });
         }
+
         public void AddAttribute(PhysicalIndexAttribute attribute)
         {
             Attributes.Add(attribute);
         }
 
-        static public PhysicalIndex FromClientPayload(Payloads.KbIndex index)
+        static public PhysicalIndex FromClientPayload(Client.Payloads.KbIndex index)
         {
             var persistIndex = new PhysicalIndex()
             {
@@ -70,17 +79,17 @@ namespace NTDLS.Katzebase.Engine.Indexes
                 Partitions = index.Partitions
             };
 
-            foreach (var indexAttribute in index.Attributes)
+            foreach (var attribute in index.Attributes)
             {
-                persistIndex.AddAttribute(PhysicalIndexAttribute.FromClientPayload(indexAttribute));
+                persistIndex.AddAttribute(PhysicalIndexAttribute.FromClientPayload(attribute));
             }
 
             return persistIndex;
         }
 
-        static public Payloads.KbIndex ToClientPayload(PhysicalIndex index)
+        static public Client.Payloads.KbIndex ToClientPayload(PhysicalIndex index)
         {
-            var persistIndex = new Payloads.KbIndex()
+            var persistIndex = new Client.Payloads.KbIndex()
             {
                 Id = index.Id,
                 Name = index.Name,
@@ -90,9 +99,9 @@ namespace NTDLS.Katzebase.Engine.Indexes
                 Partitions = index.Partitions
             };
 
-            foreach (var indexAttribute in index.Attributes)
+            foreach (var attribute in index.Attributes)
             {
-                persistIndex.AddAttribute(PhysicalIndexAttribute.ToClientPayload(indexAttribute));
+                persistIndex.AddAttribute(PhysicalIndexAttribute.ToClientPayload(attribute));
             }
 
             return persistIndex;

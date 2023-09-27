@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Functions.Parameters;
-using NTDLS.Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Functions.Parameters;
 
 namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
 {

@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 
-namespace NTDLS.Katzebase.UI
+namespace NTDLS.Katzebase.Client.UI
 {
     public partial class FormAbout : Form
     {

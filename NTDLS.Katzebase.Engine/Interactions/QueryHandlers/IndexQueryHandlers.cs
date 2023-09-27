@@ -1,8 +1,8 @@
-﻿using NTDLS.Katzebase.Engine.Query;
-using NTDLS.Katzebase.Exceptions;
-using NTDLS.Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Engine.Query;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using static NTDLS.Katzebase.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {

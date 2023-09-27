@@ -1,9 +1,8 @@
-﻿using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Client.Payloads;
 using System.Diagnostics;
 using System.Reflection;
 
-namespace NTDLS.Katzebase.TestHarness
+namespace NTDLS.Katzebase.Client.TestHarness
 {
     class Program
     {

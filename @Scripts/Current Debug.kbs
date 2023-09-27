@@ -1,3 +1,6 @@
+EXEC ShowProcesses
+
+/*
 select
 	sw.Text as SourceWord,
 	S.TargetWordId,
@@ -10,7 +13,7 @@ inner join WordList:Word as tw
 	ON tw.Id = S.TargetWordId
 where
 	sw.Text = 'moon'
-	
+*/	
 --EXEC SystemScalerFunctions
 
 --select * from WordList:Language where fff = 'f'

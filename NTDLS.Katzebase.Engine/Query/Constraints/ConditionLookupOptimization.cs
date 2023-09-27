@@ -1,7 +1,8 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Schemas;
-using NTDLS.Katzebase.Exceptions;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 

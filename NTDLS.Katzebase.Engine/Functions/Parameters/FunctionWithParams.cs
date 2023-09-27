@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Library;
-using NTDLS.Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Library;
 using static NTDLS.Katzebase.Engine.Functions.Parameters.FunctionParameterTypes;
 
 namespace NTDLS.Katzebase.Engine.Functions.Parameters

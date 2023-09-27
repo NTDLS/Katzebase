@@ -1,10 +1,10 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Query.Constraints;
-using NTDLS.Katzebase.Exceptions;
-using NTDLS.Katzebase.Types;
 using System.Globalization;
 using System.Text;
 

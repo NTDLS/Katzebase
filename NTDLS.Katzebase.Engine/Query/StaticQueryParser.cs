@@ -1,11 +1,11 @@
-﻿using NTDLS.Katzebase.Engine.Functions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Functions;
 using NTDLS.Katzebase.Engine.Functions.Procedures;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
-using NTDLS.Katzebase.Exceptions;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using static NTDLS.Katzebase.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Query
 {

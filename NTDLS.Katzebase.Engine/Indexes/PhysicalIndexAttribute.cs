@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Client.Payloads;
 
 namespace NTDLS.Katzebase.Engine.Indexes
 {

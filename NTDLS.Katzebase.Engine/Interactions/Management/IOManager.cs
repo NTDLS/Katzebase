@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Library;

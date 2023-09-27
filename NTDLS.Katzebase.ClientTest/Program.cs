@@ -6,16 +6,10 @@ namespace NTDLS.Katzebase.ClientTest
     {
         static void Main()
         {
-
-            var threads = new List<Thread>
-            {
-                new Thread(InsertUsingAPI),
-                new Thread(InsertUsingQueries)
-            };
-
-            threads.ForEach(o => o.Start());
-
-            threads.ForEach(o => o.Join());
+            (new Thread(InsertUsingAPI)).Start();
+            Thread.Sleep(100);
+            (new Thread(InsertUsingQueries)).Start();
+            Console.ReadLine();
         }
 
         public static void InsertUsingAPI()
@@ -25,14 +19,14 @@ namespace NTDLS.Katzebase.ClientTest
             string schemaName = "ClientTest:B";
             int id = 0;
 
-            //client.Schema.DropIfExists(schemaName);
-            //client.Schema.Create(schemaName);
+            client.Schema.DropIfExists(schemaName);
+            client.Schema.Create(schemaName);
 
             client.Transaction.Begin();
 
-            for (int s = 0; s < 1000; s++)
+            for (int s = 0; s < 10; s++)
             {
-                for (int i = 0; i < 1000; i++)
+                for (int i = 0; i < 10; i++)
                 {
                     Console.WriteLine($"InsertUsingAPI: {id}");
 
@@ -46,11 +40,11 @@ namespace NTDLS.Katzebase.ClientTest
                     //Thread.Sleep(1000);
                 }
             }
-            //client.Transaction.Commit();
+            client.Transaction.Commit();
 
-            //client.Schema.Indexes.Create(schemaName, new Payloads.KbUniqueKey("IX_UUID", "UUID"));
-            //client.Schema.Indexes.Create(schemaName, new Payloads.KbUniqueKey("IX_ID", "Id"));
-            //client.Schema.Indexes.Create(schemaName, new Payloads.KbIndex("IX_Segments", "SegmentA,SegmentB"));
+            client.Schema.Indexes.Create(schemaName, new Payloads.KbUniqueKey("IX_UUID", "UUID"));
+            client.Schema.Indexes.Create(schemaName, new Payloads.KbUniqueKey("IX_ID", "Id"));
+            client.Schema.Indexes.Create(schemaName, new Payloads.KbIndex("IX_Segments", "SegmentA,SegmentB"));
         }
 
         public static void InsertUsingQueries()
@@ -59,13 +53,13 @@ namespace NTDLS.Katzebase.ClientTest
             string schemaName = "ClientTest:A";
             int id = 0;
 
-            //client.Schema.DropIfExists(schemaName);
-            //client.Schema.Create(schemaName);
+            client.Schema.DropIfExists(schemaName);
+            client.Schema.Create(schemaName);
 
             client.Transaction.Begin();
-            for (int s = 0; s < 1000; s++)
+            for (int s = 0; s < 10; s++)
             {
-                for (int i = 0; i < 1000; i++)
+                for (int i = 0; i < 10; i++)
                 {
                     Console.WriteLine($"InsertUsingQueries: {id}");
                     client.Query.ExecuteQuery($"INSERT INTO {schemaName} (Id = {id++}, SegmentA = {i}, SegmentB = {s}, UUID = '{Guid.NewGuid()}')");
@@ -74,9 +68,9 @@ namespace NTDLS.Katzebase.ClientTest
             }
             client.Transaction.Commit();
 
-            //client.Query.ExecuteQuery($"CREATE UniqueKey IX_UUID ON {schemaName} (UUID)");
-            //client.Query.ExecuteQuery($"CREATE UniqueKey IX_ID ON {schemaName} (Id)");
-            //client.Query.ExecuteQuery($"CREATE INDEX IX_Segments ON {schemaName} (SegmentA, SegmentB)");
+            client.Query.ExecuteQuery($"CREATE UniqueKey IX_UUID (UUID) ON {schemaName}");
+            client.Query.ExecuteQuery($"CREATE UniqueKey IX_ID (Id) ON {schemaName}");
+            client.Query.ExecuteQuery($"CREATE INDEX IX_Segments (SegmentA, SegmentB) ON {schemaName}");
         }
     }
 }

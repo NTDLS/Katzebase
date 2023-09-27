@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Query;
-using NTDLS.Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Engine.Query;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {

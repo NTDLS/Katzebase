@@ -42,6 +42,10 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// </summary>
         public Guid SessionId { get; set; }
 
+        /// <summary>
+        /// A user supplied client name to assist in identifying connection sources.
+        /// </summary>
+        public string? ClientName { get; set; }
 
         public KbNameValuePair<KbConnectionSetting, double> UpsertConnectionSetting(KbConnectionSetting name, double value)
         {

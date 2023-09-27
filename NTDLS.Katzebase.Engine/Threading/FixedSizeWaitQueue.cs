@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using System.Collections.Concurrent;
 
 namespace NTDLS.Katzebase.Engine.Threading
 {
@@ -15,6 +16,10 @@ namespace NTDLS.Katzebase.Engine.Threading
 
         public FixedSizeWaitQueue(int maxSize)
         {
+            if (maxSize <= 0)
+            {
+                throw new KbEngineException("Max queue size must be greater than 0.");
+            }
             MaxSize = maxSize;
         }
 

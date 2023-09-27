@@ -1,4 +1,7 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Procedures;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
@@ -6,8 +9,6 @@ using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Schemas;
-using NTDLS.Katzebase.Exceptions;
-using NTDLS.Katzebase.Payloads;
 using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -378,6 +379,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                             result.AddField("SessionId");
                             result.AddField("ProcessId");
+                            result.AddField("ClientName");
                             result.AddField("LoginTime");
                             result.AddField("LastCheckinTime");
                             result.AddField("TxBlocked");
@@ -407,6 +409,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 var values = new List<string?> {
                                     session.Key.ToString(),
                                     session.Value.ProcessId.ToString(),
+                                    session.Value.ClientName ?? string.Empty,
                                     session.Value.LoginTime.ToString(),
                                     session.Value.LastCheckinTime.ToString(),
                                     (tx?.BlockedBy.Count > 0).ToString(),

@@ -1,8 +1,9 @@
-﻿using NTDLS.Katzebase.Engine.Logging;
-using NTDLS.Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Logging;
 using System.Text;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using static NTDLS.Katzebase.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

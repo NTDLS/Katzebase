@@ -1,4 +1,4 @@
-﻿using static NTDLS.Katzebase.KbConstants;
+﻿using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Logging
 {
