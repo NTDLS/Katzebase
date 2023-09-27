@@ -1,8 +1,9 @@
-﻿using NTDLS.Katzebase.Client.Payloads;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Payloads;
 using System.Diagnostics;
 using System.Reflection;
 
-namespace NTDLS.Katzebase.Client.TestHarness
+namespace TestHarness
 {
     class Program
     {
@@ -20,7 +21,7 @@ namespace NTDLS.Katzebase.Client.TestHarness
             {
                 (new Thread(() =>
                 {
-                    Exporter.ExportSQLServerDatabaseToKatzebase("localhost", databasesName, "http://localhost:6858/", false);
+                    SqlServerExporter.ExportSQLServerDatabaseToKatzebase("localhost", databasesName, "http://localhost:6858/", false);
                 })).Start();
             }
         }

@@ -105,7 +105,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-
         internal void Alter(Transaction transaction, string schemaName, uint pageSize = 0)
         {
             try

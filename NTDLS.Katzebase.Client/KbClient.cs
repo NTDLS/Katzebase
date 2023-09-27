@@ -15,8 +15,8 @@ namespace NTDLS.Katzebase.Client
         {
             get
             {
-                KbUtility.EnsureNotNull(Connection);
-                return Connection;
+                KbUtility.EnsureNotNull(_connection);
+                return _connection;
             }
         }
 
@@ -88,7 +88,7 @@ namespace NTDLS.Katzebase.Client
 
         void Connect()
         {
-            if (IsConnected || ServerProcessId <= 0)
+            if (IsConnected)
             {
                 throw new KbGenericException("The client is already connected.");
             }

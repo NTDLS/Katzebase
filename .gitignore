@@ -77,3 +77,19 @@ NTDLS.Katzebase.ClientTest/obj/
 NTDLS.Katzebase.Client/bin/
 
 NTDLS.Katzebase.Client/obj/
+
+NTDLS.Katzebase.SQLServerMigration/obj/
+
+NTDLS.Katzebase.SQLServerMigration/bin/
+
+TestApplications/Benchmark/bin/
+
+TestApplications/Benchmark/obj/
+
+TestApplications/ClientTest/bin/
+
+TestApplications/ClientTest/obj/
+
+TestApplications/NugetTest/bin/
+
+TestApplications/NugetTest/obj/

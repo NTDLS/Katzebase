@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Client.Management
         }
 
         /// <summary>
-        /// Creates a single schema or an entire schema path.
+        /// Creates a single schema.
         /// </summary>
         /// <param name="schema"></param>
         public void Create(string schema, int pageSize = 0)
@@ -30,6 +30,22 @@ namespace NTDLS.Katzebase.Client.Management
             if (result == null || result.Success == false)
             {
                 throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
+            }
+        }
+
+        /// <summary>
+        /// Creates a full schema path
+        /// </summary>
+        /// <param name="schema"></param>
+        public void CreateFullSchema(string schema, int pageSize = 0)
+        {
+            string fullSchema = string.Empty;
+
+            foreach (var part in schema.Split(':'))
+            {
+                fullSchema += part;
+                Create(fullSchema, pageSize);
+                fullSchema += ':';
             }
         }
 

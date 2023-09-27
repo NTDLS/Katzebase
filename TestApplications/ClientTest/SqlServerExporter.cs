@@ -1,12 +1,13 @@
-﻿using NTDLS.Katzebase.Client.Payloads;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Payloads;
 using System.Data.SqlClient;
 using System.Dynamic;
 using System.IO.Compression;
 using System.Text;
 
-namespace NTDLS.Katzebase.Client.TestHarness
+namespace TestHarness
 {
-    public static partial class Exporter
+    public static partial class SqlServerExporter
     {
         private static List<double> PerfStasMetricsForAvg = new();
         private static int PerfStasRowsExported = 0;
@@ -15,7 +16,7 @@ namespace NTDLS.Katzebase.Client.TestHarness
 
         public static void ExportSQLServerDatabaseToKatzebase(string sqlServer, string sqlServerDatabase, string katzeBaseServerAdddress, bool omitSQLSchemaName)
         {
-            using (SqlConnection connection = new SqlConnection($"Server={sqlServer};Database={sqlServerDatabase};Trusted_Connection=True;"))
+            using (var connection = new SqlConnection($"Server={sqlServer};Database={sqlServerDatabase};Trusted_Connection=True;"))
             {
                 connection.Open();
 
@@ -48,7 +49,7 @@ namespace NTDLS.Katzebase.Client.TestHarness
 
         public static void ExportSQLServerTableToFile(string sqlServer, string sqlServerDatabase, string sqlServerTable, string fileName)
         {
-            using (SqlConnection connection = new SqlConnection($"Server={sqlServer};Database={sqlServerDatabase};Trusted_Connection=True;"))
+            using (var connection = new SqlConnection($"Server={sqlServer};Database={sqlServerDatabase};Trusted_Connection=True;"))
             {
                 connection.Open();
 

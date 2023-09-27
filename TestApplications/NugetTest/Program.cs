@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Payloads;
 
-namespace NTDLS.Katzebase.ClientTest
+namespace NugetTest
 {
     internal class Program
     {

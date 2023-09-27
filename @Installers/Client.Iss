@@ -1,7 +1,7 @@
 [Setup]
 ;-- Main Setup Information
  AppName                          = Katzebase Client
- AppVerName                       = Katzebase Client 1.0.0.0
+ AppVerName                       = Katzebase Client 1.0.1.0
  AppCopyright                     = Copyright © 1995-2023 NetworkDLS.
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase\UI
  DefaultGroupName                 = NetworkDLS\Katzebase
@@ -47,10 +47,5 @@
  Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\UI";                                                             Flags: uninsdeletekey noerror;
  Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\UI\"; ValueType: string; ValueName: "Path";   ValueData:"{app}"; Flags: CreateValueIfDoesntExist;
 
-;[Tasks]
-; Name: DesktopIcon;        Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"; Components: SSUI
-; Name: DesktopIcon\Common; Description: "For all users"; GroupDescription: "Additional icons:"; Components: SSUI; Flags: exclusive
-; Name: DesktopIcon\User;   Description: "For the current user only"; GroupDescription: "Additional icons:"; Components: SSUI; Flags: exclusive unchecked
-
-;[Run]
-; Filename: "{app}\UI\SSUI.exe"; Description: "Run UI now?"; Flags: postinstall nowait skipifsilent shellexec; Components: SSUI;
+[Run]
+ Filename: "{app}\NTDLS.Katzebase.UI.exe"; Description: "Run Katzebase UI now?"; Flags: postinstall nowait skipifsilent shellexec;
