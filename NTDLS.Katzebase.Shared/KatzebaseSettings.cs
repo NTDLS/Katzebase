@@ -1,4 +1,6 @@
-﻿namespace NTDLS.Katzebase.Shared
+﻿using System.IO;
+
+namespace NTDLS.Katzebase.Shared
 {
     public class KatzebaseSettings
     {
@@ -90,7 +92,14 @@
         public string DataRootPath
         {
             get => dataRootPath;
-            set => dataRootPath = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+            set
+            {
+                dataRootPath = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+                if (Path.IsPathRooted(dataRootPath) == false)
+                {
+                    dataRootPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, dataRootPath));
+                }
+            }
         }
         private string dataRootPath = string.Empty;
 
@@ -100,8 +109,17 @@
         public string TransactionDataPath
         {
             get => transactionDataPath;
-            set => transactionDataPath = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+            set
+            {
+                transactionDataPath = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+
+                if (Path.IsPathRooted(dataRootPath) == false)
+                {
+                    transactionDataPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, transactionDataPath));
+                }
+            }
         }
+
         private string transactionDataPath = string.Empty;
 
         /// <summary>
@@ -110,7 +128,14 @@
         public string LogDirectory
         {
             get => logDirectory;
-            set => logDirectory = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+            set
+            {
+                logDirectory = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+                if (Path.IsPathRooted(dataRootPath) == false)
+                {
+                    logDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, logDirectory));
+                }
+            }
         }
         private string logDirectory = string.Empty;
 

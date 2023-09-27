@@ -7,9 +7,9 @@
     <Nullable>enable</Nullable>
     <Company>NetworkDLS</Company>
     <Copyright>Copyright © 2023 NetworkDLS</Copyright>
-    <AssemblyVersion>1.0.6</AssemblyVersion>
-    <FileVersion>1.0.6</FileVersion>
-    <VersionPrefix>1.0.6</VersionPrefix>
+    <AssemblyVersion>1.0.7</AssemblyVersion>
+    <FileVersion>1.0.7</FileVersion>
+    <VersionPrefix>1.0.7</VersionPrefix>
     <Authors>NetworkDLS</Authors>
     <ApplicationIcon>NTDLS.Katzebase.ico</ApplicationIcon>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
@@ -21,7 +21,7 @@
     <RepositoryUrl>https://github.com/NTDLS/NTDLS.Katzebase</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>database;nosql;rdbms;webapi;unstructured-data</PackageTags>
-    <PackageReleaseNotes>Resolving stack-overflow on connection.</PackageReleaseNotes>
+    <PackageReleaseNotes>Various fixes and enhancement.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
 
