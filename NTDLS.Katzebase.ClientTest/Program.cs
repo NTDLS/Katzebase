@@ -13,6 +13,11 @@ namespace NTDLS.Katzebase.ClientTest
                 new Thread(InsertUsingQueries),
             };
 
+            using (var client = new KbClient("http://localhost:6858"))
+            {
+                client.Schema.DropIfExists("ClientTest");
+            }
+
             threads.ForEach(t => t.Start());
             threads.ForEach(t => t.Join());
 
@@ -30,7 +35,6 @@ namespace NTDLS.Katzebase.ClientTest
                 string schemaName = "ClientTest:B";
                 int id = 0;
 
-                var result = client.Schema.DropIfExists(schemaName);
                 client.Schema.Create(schemaName);
 
                 client.Transaction.Begin();
@@ -70,7 +74,6 @@ namespace NTDLS.Katzebase.ClientTest
                 string schemaName = "ClientTest:A";
                 int id = 0;
 
-                var result = client.Schema.DropIfExists(schemaName);
                 client.Schema.Create(schemaName);
 
                 client.Transaction.Begin();

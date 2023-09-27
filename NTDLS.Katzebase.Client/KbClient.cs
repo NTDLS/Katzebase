@@ -1,11 +1,25 @@
-﻿using NTDLS.Katzebase.Client.Management;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Management;
 using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Client
 {
     public class KbClient : IDisposable
     {
-        public HttpClient Connection { get; private set; }
+        public bool IsConnected => _connection != null;
+        public string ClientName { get; private set; }
+        public string BaseAddress { get; private set; }
+        public TimeSpan Timeout { get; private set; } = new TimeSpan(0, 8, 0, 0, 0);
+
+        public HttpClient Connection
+        {
+            get
+            {
+                KbUtility.EnsureNotNull(Connection);
+                return Connection;
+            }
+        }
+
         public Guid SessionId { get; private set; }
         public KbDocumentClient Document { get; private set; }
         public KbSchemaClient Schema { get; private set; }
@@ -14,10 +28,9 @@ namespace NTDLS.Katzebase.Client
         public KbQueryClient Query { get; private set; }
         public KbProcedureClient Procedure { get; private set; }
 
-        private readonly Thread _keepAliveThread;
-        public string ClientName { get; private set; }
-
-        internal object PingLock { get; private set; } = new();
+        private object _pingLock = new();
+        private HttpClient? _connection = null;
+        private Thread? _keepAliveThread = null;
 
         /// <summary>
         /// This is the process id of the session on the server. This is populated with each call to Client.Server.Ping().
@@ -30,18 +43,13 @@ namespace NTDLS.Katzebase.Client
         /// <param name="baseAddress">Base address should be in the form http://host:port/</param>
         public KbClient(string baseAddress, string clientName = "")
         {
+            BaseAddress = baseAddress;
             ClientName = clientName;
+
             if (string.IsNullOrWhiteSpace(ClientName))
             {
                 ClientName = Process.GetCurrentProcess().ProcessName;
             }
-
-            SessionId = Guid.NewGuid();
-            Connection = new HttpClient
-            {
-                BaseAddress = new Uri(baseAddress),
-                Timeout = new TimeSpan(0, 8, 0, 0, 0)
-            };
 
             Document = new KbDocumentClient(this);
             Schema = new KbSchemaClient(this);
@@ -50,10 +58,7 @@ namespace NTDLS.Katzebase.Client
             Query = new KbQueryClient(this);
             Procedure = new KbProcedureClient(this);
 
-            Server.Ping();
-
-            _keepAliveThread = new Thread(KeepAliveThread);
-            _keepAliveThread.Start();
+            Connect();
         }
 
         /// <summary>
@@ -62,18 +67,14 @@ namespace NTDLS.Katzebase.Client
         /// <param name="baseAddress">Base address should be in the form http://host:port/</param>
         public KbClient(string baseAddress, TimeSpan timeout, string clientName = "")
         {
+            BaseAddress = baseAddress;
             ClientName = clientName;
+            Timeout = timeout;
+
             if (string.IsNullOrWhiteSpace(ClientName))
             {
                 ClientName = Process.GetCurrentProcess().ProcessName;
             }
-
-            SessionId = Guid.NewGuid();
-            Connection = new HttpClient
-            {
-                BaseAddress = new Uri(baseAddress),
-                Timeout = timeout
-            };
 
             Document = new KbDocumentClient(this);
             Schema = new KbSchemaClient(this);
@@ -82,10 +83,80 @@ namespace NTDLS.Katzebase.Client
             Query = new KbQueryClient(this);
             Procedure = new KbProcedureClient(this);
 
-            Server.Ping();
+            Connect();
+        }
 
-            _keepAliveThread = new Thread(KeepAliveThread);
-            _keepAliveThread.Start();
+        void Connect()
+        {
+            if (IsConnected || ServerProcessId <= 0)
+            {
+                throw new KbGenericException("The client is already connected.");
+            }
+
+            try
+            {
+                SessionId = Guid.NewGuid();
+                _connection = new HttpClient
+                {
+                    BaseAddress = new Uri(BaseAddress),
+                    Timeout = Timeout
+                };
+
+                Server.Ping();
+
+                _keepAliveThread = new Thread(KeepAliveThread);
+                _keepAliveThread.Start();
+            }
+            catch
+            {
+                if (_connection != null)
+                {
+                    try
+                    {
+                        _connection.Dispose();
+                    }
+                    catch { }
+                }
+
+                _connection = null;
+                ServerProcessId = 0;
+                throw;
+            }
+        }
+
+        void Disconnect()
+        {
+            try
+            {
+                try
+                {
+                    if (IsConnected)
+                    {
+                        Server.CloseSession();
+                    }
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    if (_connection != null)
+                    {
+                        _connection.Dispose();
+                        _connection = null;
+                    }
+                }
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                _connection = null;
+                ServerProcessId = 0;
+            }
         }
 
         private void KeepAliveThread()
@@ -99,9 +170,9 @@ namespace NTDLS.Katzebase.Client
                     Thread.Sleep(10);
                 }
 
-                if (disposed == false)
+                lock (_pingLock)
                 {
-                    lock (PingLock)
+                    if (disposed == false)
                     {
                         try
                         {
@@ -124,7 +195,7 @@ namespace NTDLS.Katzebase.Client
 
         protected virtual void Dispose(bool disposing)
         {
-            lock (PingLock)
+            lock (_pingLock)
             {
                 if (disposed)
                 {
@@ -133,19 +204,13 @@ namespace NTDLS.Katzebase.Client
 
                 if (disposing)
                 {
-                    if (Connection != null)
+                    if (IsConnected)
                     {
                         try
                         {
-                            if (ServerProcessId != 0) //We have a ServerProcessId if we have ever had a successful ping.
-                            {
-                                Server.CloseSession();
-                            }
+                            Disconnect();
                         }
-                        catch
-                        {
-                        }
-                        Connection.Dispose();
+                        catch { }
                     }
                 }
 

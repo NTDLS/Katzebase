@@ -20,27 +20,24 @@ namespace NTDLS.Katzebase.Client.Management
         /// <exception cref="KbAPIResponseException"></exception>
         public KbActionResponsePing Ping()
         {
-            lock (_client.PingLock)
+            string url = $"api/Server/{_client.SessionId}/Ping";
+
+            if (string.IsNullOrWhiteSpace(_client.ClientName) == false)
             {
-                string url = $"api/Server/{_client.SessionId}/Ping";
-
-                if (string.IsNullOrWhiteSpace(_client.ClientName) == false)
-                {
-                    url = $"api/Server/{_client.SessionId}/Ping/{_client.ClientName}";
-                }
-
-                using var response = _client.Connection.GetAsync(url);
-                string resultText = response.Result.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<KbActionResponsePing>(resultText);
-                if (result == null || result.Success == false)
-                {
-                    throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
-                }
-
-                _client.ServerProcessId = result.ProcessId;
-
-                return result;
+                url = $"api/Server/{_client.SessionId}/Ping/{_client.ClientName}";
             }
+
+            using var response = _client.Connection.GetAsync(url);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponsePing>(resultText);
+            if (result == null || result.Success == false)
+            {
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
+            }
+
+            _client.ServerProcessId = result.ProcessId;
+
+            return result;
         }
 
         /// <summary>
