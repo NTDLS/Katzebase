@@ -1,6 +1,7 @@
-﻿using NTDLS.Katzebase.Payloads;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Payloads;
 
-namespace NTDLS.Katzebase.Engine.Atomicity.Management
+namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     public class TransactionReference : IDisposable
     {

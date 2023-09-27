@@ -1,10 +1,11 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Schemas;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Documents.Management
+namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to documents.

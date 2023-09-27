@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
+using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Trace;
 using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Payloads;
@@ -11,7 +12,7 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Schemas.PhysicalSchema;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace NTDLS.Katzebase.Engine.Schemas.Management
+namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to schemas.

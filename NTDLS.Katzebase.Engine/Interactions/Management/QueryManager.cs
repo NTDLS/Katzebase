@@ -1,12 +1,13 @@
 ﻿using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
+using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Exceptions;
 using NTDLS.Katzebase.Payloads;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Query.Management
+namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to queries.

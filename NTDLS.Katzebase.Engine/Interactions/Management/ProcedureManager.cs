@@ -12,7 +12,7 @@ using System.Diagnostics;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Functions.Management
+namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to procedures.

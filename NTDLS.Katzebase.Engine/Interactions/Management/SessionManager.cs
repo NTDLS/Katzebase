@@ -1,8 +1,9 @@
 ﻿using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
+using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Exceptions;
 
-namespace NTDLS.Katzebase.Engine.Sessions.Management
+namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to sessions.

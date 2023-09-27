@@ -1,9 +1,10 @@
-﻿using NTDLS.Katzebase.Exceptions;
+﻿using NTDLS.Katzebase.Engine.Logging;
+using NTDLS.Katzebase.Exceptions;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.KbConstants;
 
-namespace NTDLS.Katzebase.Engine.Logging
+namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to logging.

@@ -5,7 +5,7 @@ using NTDLS.Katzebase.Engine.Library;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace NTDLS.Katzebase.Engine.IO
+namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     //Internal core class methods for locking, reading, writing and managing tasks related to disk I/O.
     internal class IOManager
@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.IO
                 }
                 else
                 {
-                    return (new FileInfo(filePath)).Length;
+                    return new FileInfo(filePath).Length;
                 }
             }
             catch (Exception ex)

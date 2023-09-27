@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Locking;
 
-namespace NTDLS.Katzebase.Engine.Locking
+namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     /// <summary>
     /// Internal core class methods for locking, reading, writing and managing tasks related to locking.

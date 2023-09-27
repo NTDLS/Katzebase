@@ -6,7 +6,7 @@ using NTDLS.Katzebase.Shared;
 using System.Text.Json;
 using static NTDLS.Katzebase.Engine.Query.PreparedQuery;
 
-namespace NTDLS.Katzebase.Engine.Health.Management
+namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to configuration.

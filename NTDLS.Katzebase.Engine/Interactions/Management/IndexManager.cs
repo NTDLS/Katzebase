@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
@@ -14,7 +15,7 @@ using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
-namespace NTDLS.Katzebase.Engine.Indexes.Management
+namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to indexes.
@@ -102,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                     string pageDiskPath = physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                     physicalIndexPageMap[indexPartition] = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
                     diskSize += _core.IO.GetDecompressedSizeTracked(pageDiskPath);
-                    decompressedSiskSize += (new FileInfo(pageDiskPath)).Length;
+                    decompressedSiskSize += new FileInfo(pageDiskPath).Length;
                     physicalIndexPageMapDistilledLeaves.Add(DistillIndexBaseNodes(physicalIndexPageMap[indexPartition].Root));
                 }
 
@@ -116,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
 
                 if (documentCount > 0)
                 {
-                    selectivityScore = 100.0 - ((avgDocumentsPerNode / documentCount) * 100.0);
+                    selectivityScore = 100.0 - avgDocumentsPerNode / documentCount * 100.0;
                 }
 
                 var builder = new StringBuilder();
@@ -129,9 +130,9 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                 builder.AppendLine($"    Created           : {physicalIindex.Created}");
                 builder.AppendLine($"    Modified          : {physicalIindex.Modfied}");
                 builder.AppendLine($"    Disk Path         : {physicalIindex.GetPartitionPagesPath(physicalSchema)}");
-                builder.AppendLine($"    Pages Size        : {(diskSize / 1024.0):N2}k");
-                builder.AppendLine($"    Disk Size         : {(decompressedSiskSize / 1024.0):N2}k");
-                builder.AppendLine($"    Compression Ratio : {((decompressedSiskSize / diskSize) * 100.0):N2}");
+                builder.AppendLine($"    Pages Size        : {diskSize / 1024.0:N2}k");
+                builder.AppendLine($"    Disk Size         : {decompressedSiskSize / 1024.0:N2}k");
+                builder.AppendLine($"    Compression Ratio : {decompressedSiskSize / diskSize * 100.0:N2}");
                 builder.AppendLine($"    Root Node Count   : {combinedNodes.Sum(o => o.Documents?.Count ?? 0):N0}");
                 builder.AppendLine($"    Node Level Count  : {physicalIindex.Attributes.Count:N0}");
                 builder.AppendLine($"    Min. Node Density : {minDocumentsPerNode:N0}");
@@ -1226,7 +1227,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Management
                 {
                     foreach (var documentPointer in documentPointers)
                     {
-                        totalDeletes += (leaf?.Documents.RemoveAll(o => o.PageNumber == documentPointer.PageNumber && o.DocumentId == documentPointer.DocumentId) ?? 0);
+                        totalDeletes += leaf?.Documents.RemoveAll(o => o.PageNumber == documentPointer.PageNumber && o.DocumentId == documentPointer.DocumentId) ?? 0;
                         if (totalDeletes == maxCount)
                         {
                             break;

@@ -21,13 +21,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Benchmark",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Library", "Library", "{30F5D013-1C84-4ACF-B75F-5A326B1C732E}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{8E1D5CDE-C39E-4144-8782-C42F894D9E11}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Testing", "Testing", "{8E1D5CDE-C39E-4144-8782-C42F894D9E11}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Shared", "NTDLS.Katzebase.Shared\NTDLS.Katzebase.Shared.csproj", "{2EF323CE-ACC9-4266-9A5E-C9047F41E4B5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase", "NTDLS.Katzebase\NTDLS.Katzebase.csproj", "{1E0532A7-3A71-46F5-8227-01C6FD19DBA0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NTDLS.Katzebase.ClientTest", "NTDLS.Katzebase.ClientTest\NTDLS.Katzebase.ClientTest.csproj", "{EC2AE6A2-A023-49FC-99E8-FD77BA7576CF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.ClientTest", "NTDLS.Katzebase.ClientTest\NTDLS.Katzebase.ClientTest.csproj", "{EC2AE6A2-A023-49FC-99E8-FD77BA7576CF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

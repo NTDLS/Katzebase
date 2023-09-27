@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity.Management;
+﻿
+using NTDLS.Katzebase.Engine.Interactions.Management;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {

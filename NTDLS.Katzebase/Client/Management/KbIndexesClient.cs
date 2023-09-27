@@ -19,11 +19,31 @@ namespace NTDLS.Katzebase.Client.Management
         /// </summary>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        public void Create(string schema, Payloads.KbIndex document)
+        public void Create(string schema, KbIndex index)
         {
             string url = $"api/Indexes/{_client.SessionId}/{schema}/Create";
 
-            var postContent = new StringContent(JsonConvert.SerializeObject(document), Encoding.UTF8, "text/plain");
+            var postContent = new StringContent(JsonConvert.SerializeObject(index), Encoding.UTF8, "text/plain");
+
+            using var response = _client.Connection.PostAsync(url, postContent);
+            string resultText = response.Result.Content.ReadAsStringAsync().Result;
+            var result = JsonConvert.DeserializeObject<KbActionResponse>(resultText);
+            if (result == null || result.Success == false)
+            {
+                throw new KbAPIResponseException(result == null ? "Invalid response" : result.ExceptionText);
+            }
+        }
+
+        /// <summary>
+        /// Creates a unique index on the given schema.
+        /// </summary>
+        /// <param name="schema"></param>
+        /// <param name="document"></param>
+        public void Create(string schema, KbUniqueKey index)
+        {
+            string url = $"api/Indexes/{_client.SessionId}/{schema}/Create";
+
+            var postContent = new StringContent(JsonConvert.SerializeObject(index), Encoding.UTF8, "text/plain");
 
             using var response = _client.Connection.PostAsync(url, postContent);
             string resultText = response.Result.Content.ReadAsStringAsync().Result;

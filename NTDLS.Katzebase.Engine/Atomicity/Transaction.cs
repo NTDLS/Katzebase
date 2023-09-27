@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using NTDLS.Katzebase.Engine.Atomicity.Management;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Locking;
