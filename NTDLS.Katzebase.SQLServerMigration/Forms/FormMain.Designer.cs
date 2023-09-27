@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormMain));
             listViewSQLServer = new ListView();
             columnHeaderSchema = new ColumnHeader();
             columnHeaderTable = new ColumnHeader();
@@ -37,6 +38,13 @@
             label2 = new Label();
             label3 = new Label();
             buttonImport = new Button();
+            menuStrip1 = new MenuStrip();
+            connectionToolStripMenuItem = new ToolStripMenuItem();
+            changeConnectionToolStripMenuItem = new ToolStripMenuItem();
+            exitToolStripMenuItem = new ToolStripMenuItem();
+            helpToolStripMenuItem = new ToolStripMenuItem();
+            aboutToolStripMenuItem = new ToolStripMenuItem();
+            menuStrip1.SuspendLayout();
             SuspendLayout();
             // 
             // listViewSQLServer
@@ -46,7 +54,7 @@
             listViewSQLServer.FullRowSelect = true;
             listViewSQLServer.GridLines = true;
             listViewSQLServer.HeaderStyle = ColumnHeaderStyle.Nonclickable;
-            listViewSQLServer.Location = new Point(12, 130);
+            listViewSQLServer.Location = new Point(12, 156);
             listViewSQLServer.Name = "listViewSQLServer";
             listViewSQLServer.Size = new Size(681, 329);
             listViewSQLServer.TabIndex = 2;
@@ -66,7 +74,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(12, 9);
+            label1.Location = new Point(12, 35);
             label1.Name = "label1";
             label1.Size = new Size(107, 15);
             label1.TabIndex = 1;
@@ -74,7 +82,7 @@
             // 
             // textBoxBKServerAddress
             // 
-            textBoxBKServerAddress.Location = new Point(12, 27);
+            textBoxBKServerAddress.Location = new Point(12, 53);
             textBoxBKServerAddress.Name = "textBoxBKServerAddress";
             textBoxBKServerAddress.Size = new Size(196, 23);
             textBoxBKServerAddress.TabIndex = 0;
@@ -82,7 +90,7 @@
             // 
             // textBoxBKServerSchema
             // 
-            textBoxBKServerSchema.Location = new Point(12, 74);
+            textBoxBKServerSchema.Location = new Point(12, 100);
             textBoxBKServerSchema.Name = "textBoxBKServerSchema";
             textBoxBKServerSchema.Size = new Size(196, 23);
             textBoxBKServerSchema.TabIndex = 1;
@@ -90,7 +98,7 @@
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(12, 56);
+            label2.Location = new Point(12, 82);
             label2.Name = "label2";
             label2.Size = new Size(84, 15);
             label2.TabIndex = 3;
@@ -99,7 +107,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(12, 112);
+            label3.Location = new Point(12, 138);
             label3.Name = "label3";
             label3.Size = new Size(151, 15);
             label3.TabIndex = 5;
@@ -109,7 +117,7 @@
             // 
             buttonImport.BackColor = Color.FromArgb(192, 255, 192);
             buttonImport.ForeColor = SystemColors.ControlText;
-            buttonImport.Location = new Point(603, 27);
+            buttonImport.Location = new Point(603, 53);
             buttonImport.Name = "buttonImport";
             buttonImport.Size = new Size(90, 90);
             buttonImport.TabIndex = 3;
@@ -117,11 +125,55 @@
             buttonImport.UseVisualStyleBackColor = false;
             buttonImport.Click += buttonImport_Click;
             // 
+            // menuStrip1
+            // 
+            menuStrip1.Items.AddRange(new ToolStripItem[] { connectionToolStripMenuItem, helpToolStripMenuItem });
+            menuStrip1.Location = new Point(0, 0);
+            menuStrip1.Name = "menuStrip1";
+            menuStrip1.Size = new Size(705, 24);
+            menuStrip1.TabIndex = 6;
+            menuStrip1.Text = "menuStrip1";
+            // 
+            // connectionToolStripMenuItem
+            // 
+            connectionToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { changeConnectionToolStripMenuItem, exitToolStripMenuItem });
+            connectionToolStripMenuItem.Name = "connectionToolStripMenuItem";
+            connectionToolStripMenuItem.Size = new Size(81, 20);
+            connectionToolStripMenuItem.Text = "Connection";
+            // 
+            // changeConnectionToolStripMenuItem
+            // 
+            changeConnectionToolStripMenuItem.Name = "changeConnectionToolStripMenuItem";
+            changeConnectionToolStripMenuItem.Size = new Size(180, 22);
+            changeConnectionToolStripMenuItem.Text = "Change Connection";
+            changeConnectionToolStripMenuItem.Click += changeConnectionToolStripMenuItem_Click;
+            // 
+            // exitToolStripMenuItem
+            // 
+            exitToolStripMenuItem.Name = "exitToolStripMenuItem";
+            exitToolStripMenuItem.Size = new Size(180, 22);
+            exitToolStripMenuItem.Text = "Exit";
+            exitToolStripMenuItem.Click += exitToolStripMenuItem_Click;
+            // 
+            // helpToolStripMenuItem
+            // 
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { aboutToolStripMenuItem });
+            helpToolStripMenuItem.Name = "helpToolStripMenuItem";
+            helpToolStripMenuItem.Size = new Size(44, 20);
+            helpToolStripMenuItem.Text = "Help";
+            // 
+            // aboutToolStripMenuItem
+            // 
+            aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
+            aboutToolStripMenuItem.Size = new Size(180, 22);
+            aboutToolStripMenuItem.Text = "About";
+            aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(705, 473);
+            ClientSize = new Size(705, 498);
             Controls.Add(buttonImport);
             Controls.Add(label3);
             Controls.Add(textBoxBKServerSchema);
@@ -129,9 +181,14 @@
             Controls.Add(textBoxBKServerAddress);
             Controls.Add(label1);
             Controls.Add(listViewSQLServer);
+            Controls.Add(menuStrip1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            MainMenuStrip = menuStrip1;
             Name = "FormMain";
-            Text = "Form1";
+            Text = "Katzebase MSSQL Migration";
+            menuStrip1.ResumeLayout(false);
+            menuStrip1.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -147,5 +204,11 @@
         private Label label2;
         private Label label3;
         private Button buttonImport;
+        private MenuStrip menuStrip1;
+        private ToolStripMenuItem connectionToolStripMenuItem;
+        private ToolStripMenuItem changeConnectionToolStripMenuItem;
+        private ToolStripMenuItem exitToolStripMenuItem;
+        private ToolStripMenuItem helpToolStripMenuItem;
+        private ToolStripMenuItem aboutToolStripMenuItem;
     }
 }

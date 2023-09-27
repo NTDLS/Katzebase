@@ -18,20 +18,25 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         private void FormMain_Shown(object? sender, EventArgs e)
         {
+            if (ChangeConnection() == false)
+            {
+                Close();
+            }
+        }
+
+        private bool ChangeConnection()
+        {
             using (var form = new FormSQLConnect())
             {
                 if (form.ShowDialog() == DialogResult.OK)
                 {
                     _connectionDetails = form.ConnectionDetails;
-
                     textBoxBKServerSchema.Text = _connectionDetails.DatabaseName;
                     PopulateTables();
-                }
-                else
-                {
-                    Close();
+                    return true;
                 }
             }
+            return false;
         }
 
         class WorkloadThreadParam
@@ -61,6 +66,16 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         private void buttonImport_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(textBoxBKServerAddress.Text))
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(textBoxBKServerSchema.Text))
+            {
+                return;
+            }
+
             var param = new WorkloadThreadParam(textBoxBKServerAddress.Text, textBoxBKServerSchema.Text);
 
             foreach (ListViewItem item in listViewSQLServer.Items)
@@ -73,31 +88,60 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
             (new Thread(WorkloadThreadProc)).Start(param);
 
-            FormProgress.Singleton.ShowNew("Please wait...");
+            var result = FormProgress.Singleton.ShowNew("Please wait...");
+            if (result == DialogResult.OK)
+            {
+                MessageBox.Show("Complete!", "SQLServer Migration", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                var message = "An error occured while exporting data.";
+
+                if (FormProgress.Singleton.Form.UserData != null)
+                {
+                    message += $"\r\n{FormProgress.Singleton.Form.UserData}";
+                }
+
+                MessageBox.Show(message, "SQLServer Migration", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
         }
 
         public void WorkloadThreadProc(object? p)
         {
-            if (p == null) return;
-            var param = (WorkloadThreadParam)p;
-
-            FormProgress.Singleton.WaitForVisible();
-
-            FormProgress.Singleton.Form.SetHeaderText($"Server: {_connectionDetails.ServerName}.");
-            FormProgress.Singleton.Form.SetBodyText($"Table: [{_connectionDetails.DatabaseName}]...");
-
-            FormProgress.Singleton.Form.SetProgressMaximum(param.Items.Count);
-
-            foreach (var item in param.Items)
+            try
             {
-                FormProgress.Singleton.Form.SetBodyText($"Processing: [{item.Schema}].[{item.Table}]...");
-                ExportSQLServerTableToKatzebase(item.Schema, item.Table, param.TargetServerAddress, param.TargetServerSchema);
-                FormProgress.Singleton.Form.IncrementProgressValue();
+                if (p == null) return;
+                var param = (WorkloadThreadParam)p;
+
+                FormProgress.Singleton.WaitForVisible();
+
+                FormProgress.Singleton.Form.SetHeaderText($"Server: {_connectionDetails.ServerName}.");
+                FormProgress.Singleton.Form.SetBodyText($"Table: [{_connectionDetails.DatabaseName}]...");
+
+                FormProgress.Singleton.Form.SetProgressMaximum(param.Items.Count);
+
+                foreach (var item in param.Items)
+                {
+                    FormProgress.Singleton.Form.SetBodyText($"Processing: [{item.Schema}].[{item.Table}]...");
+                    ExportSQLServerTableToKatzebase(item.Schema, item.Table, param.TargetServerAddress, param.TargetServerSchema);
+                    FormProgress.Singleton.Form.IncrementProgressValue();
+                }
+            }
+            catch (Exception ex)
+            {
+                FormProgress.Singleton.Form.UserData = ex.Message;
+            }
+            finally
+            {
+                FormProgress.Singleton.Close(DialogResult.OK);
             }
         }
 
         private void PopulateTables()
         {
+            listViewSQLServer.Items.Clear();
+
             using var connection = new SqlConnection(_connectionDetails.ConnectionBuilder.ToString());
             try
             {
@@ -188,6 +232,11 @@ namespace NTDLS.Katzebase.SQLServerMigration
                                     Console.WriteLine(ex.Message);
                                 }
 
+                                if (rowCount % 123 == 0)
+                                {
+                                    FormProgress.Singleton.Form.SetBodyText($"Processing: [{sourceSchema}].[{sourceTable}] ({rowCount:n0})...");
+                                }
+
                                 rowCount++;
                             }
                         }
@@ -204,5 +253,22 @@ namespace NTDLS.Katzebase.SQLServerMigration
             }
         }
 
+        private void changeConnectionToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ChangeConnection();
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Close();
+        }
+
+        private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (var form = new FormAbout())
+            {
+                form.ShowDialog();
+            }
+        }
     }
 }

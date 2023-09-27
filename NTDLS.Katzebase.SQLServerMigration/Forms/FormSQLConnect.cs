@@ -1,5 +1,4 @@
-﻿using Microsoft.SqlServer.Management.Common;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Data.SqlClient;
 
 namespace NTDLS.Katzebase.SQLServerMigration
@@ -88,10 +87,9 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 checkConnectivity_Worker.WorkerSupportsCancellation = true;
                 checkConnectivity_Worker.RunWorkerAsync("master");
 
-
                 checkConnectivityProgress.ShowDialog();
 
-                var workerResult = checkConnectivityProgress.Value as CheckConnectivity_Result;
+                var workerResult = checkConnectivityProgress.UserData as CheckConnectivity_Result;
 
                 if (workerResult != null)
                 {
@@ -120,7 +118,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
         {
             if (checkConnectivityProgress != null && e != null)
             {
-                checkConnectivityProgress.Value = e.Result;
+                checkConnectivityProgress.UserData = e.Result;
                 checkConnectivityProgress.Close();
             }
         }
@@ -212,6 +210,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
         }
 
         #endregion
+
         private void PushConnectionInfo()
         {
             ConnectionDetails.UserName = txtUsername.Text;
@@ -222,22 +221,14 @@ namespace NTDLS.Katzebase.SQLServerMigration
             ConnectionDetails.EncryptConnection = cbSSLConnection.Checked;
         }
 
-        private void PopConnectionInfo()
-        {
-            if (ConnectionDetails != null)
-            {
-                txtUsername.Text = ConnectionDetails.UserName;
-                txtPassword.Text = ConnectionDetails.Password;
-                textBoxServer.Text = ConnectionDetails.ServerName;
-                cboDatabaseName.Text = ConnectionDetails.DatabaseName;
-                cbIntegratedSecurity.Checked = ConnectionDetails.UseIntegratedSecurity;
-                cbSSLConnection.Checked = ConnectionDetails.EncryptConnection;
-            }
-        }
-
-
         private void cmdOk_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(cboDatabaseName.Text))
+            {
+                MessageBox.Show("Please select a database.", "Migration Validation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             PushConnectionInfo();
 
             ConnectivityResult = CheckConnectivity();

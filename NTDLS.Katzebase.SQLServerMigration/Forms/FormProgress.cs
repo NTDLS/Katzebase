@@ -129,18 +129,6 @@
                 return singleton.ShowDialog();
             }
 
-            public static void Close(DialogResult dialogResult)
-            {
-                lock (LockObject)
-                {
-                    if (singleton != null)
-                    {
-                        singleton.DialogResult = dialogResult;
-                        singleton.Close();
-                    }
-                }
-            }
-
             public static void WaitForVisible()
             {
                 while (true)
@@ -156,14 +144,19 @@
                 }
             }
 
+            public static void Close(DialogResult result)
+            {
+                lock (LockObject)
+                {
+                    singleton?.Close(result);
+                }
+            }
+
             public static void Close()
             {
                 lock (LockObject)
                 {
-                    if (singleton != null)
-                    {
-                        singleton.Close();
-                    }
+                    singleton?.Close();
                 }
             }
         }
@@ -173,7 +166,7 @@
         /// <summary>
         /// Used by the user to set proprietary state information;
         /// </summary>
-        public object? Value { get; set; } = null;
+        public object? UserData { get; set; } = null;
         public bool HasBennShown { get; private set; } = false;
 
         public FormProgress()
@@ -199,6 +192,30 @@
                     return;
                 }
             }
+        }
+
+        public new void Close()
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(Close));
+                return;
+            }
+
+            base.Close();
+        }
+
+        public void Close(DialogResult result)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(Close));
+                return;
+            }
+
+            DialogResult = result;
+
+            base.Close();
         }
 
         public void SetHeaderText(string text)
@@ -318,12 +335,6 @@
             }
 
             cmdCancel.Enabled = value;
-        }
-
-        public void Close(DialogResult dialogResult)
-        {
-            DialogResult = dialogResult;
-            Close();
         }
 
         private void FormProgress_Shown(object sender, EventArgs e)

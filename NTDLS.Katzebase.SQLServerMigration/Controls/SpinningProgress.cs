@@ -28,13 +28,15 @@ namespace NTDLS.Katzebase.SQLServerMigration.Controls
             SetStyle(ControlStyles.DoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
             AutoIncrement = true;
         }
-        
+
         Color InactiveSegmentColour
         {
-            get{
+            get
+            {
                 return m_InactiveColour;
             }
-            set {
+            set
+            {
                 m_InactiveColour = value;
                 Invalidate();
             }
@@ -42,10 +44,12 @@ namespace NTDLS.Katzebase.SQLServerMigration.Controls
 
         Color ActiveSegmentColour
         {
-            get{
+            get
+            {
                 return m_ActiveColour;
             }
-            set {
+            set
+            {
                 m_ActiveColour = value;
                 Invalidate();
             }
@@ -53,10 +57,12 @@ namespace NTDLS.Katzebase.SQLServerMigration.Controls
 
         Color TransistionSegmentColour
         {
-            get{
+            get
+            {
                 return m_TransistionColour;
             }
-            set{
+            set
+            {
                 m_TransistionColour = value;
                 Invalidate();
             }
@@ -64,10 +70,12 @@ namespace NTDLS.Katzebase.SQLServerMigration.Controls
 
         bool BehindTransistionSegmentIsActive
         {
-            get{
+            get
+            {
                 return m_BehindIsActive;
             }
-            set{
+            set
+            {
                 m_BehindIsActive = value;
                 Invalidate();
             }
@@ -75,11 +83,13 @@ namespace NTDLS.Katzebase.SQLServerMigration.Controls
 
         int TransistionSegment
         {
-            get{
+            get
+            {
                 return m_TransitionSegment;
             }
-            set{
-                if(value > 12 || value < -1)
+            set
+            {
+                if (value > 12 || value < -1)
                 {
                     throw new ArgumentException("TransistionSegment must be between -1 and 12");
                 }
@@ -90,19 +100,21 @@ namespace NTDLS.Katzebase.SQLServerMigration.Controls
 
         bool AutoIncrement
         {
-            get{
+            get
+            {
                 return m_AutoIncrement;
             }
-            set{
+            set
+            {
                 m_AutoIncrement = value;
 
-                if(value == false && m_AutoRotateTimer != null)
+                if (value == false && m_AutoRotateTimer != null)
                 {
                     m_AutoRotateTimer.Dispose();
                     m_AutoRotateTimer = null;
                 }
 
-                if(value == true && m_AutoRotateTimer == null)
+                if (value == true && m_AutoRotateTimer == null)
                 {
                     m_AutoRotateTimer = new System.Timers.Timer(m_IncrementFrequency);
 
@@ -114,13 +126,15 @@ namespace NTDLS.Katzebase.SQLServerMigration.Controls
 
         public double AutoIncrementFrequency
         {
-            get{
+            get
+            {
                 return m_IncrementFrequency;
             }
-            set{
+            set
+            {
                 m_IncrementFrequency = value;
 
-                if(m_AutoRotateTimer != null)
+                if (m_AutoRotateTimer != null)
                 {
                     AutoIncrement = false;
                     AutoIncrement = true;
@@ -138,7 +152,7 @@ namespace NTDLS.Katzebase.SQLServerMigration.Controls
             GraphicsPath pthInnerBackground;
 
             //Create 12 segment pieces
-            for(int intCount = 0; intCount < 12; intCount++)
+            for (int intCount = 0; intCount < 12; intCount++)
             {
                 segmentPaths[intCount] = new GraphicsPath();
 
@@ -154,15 +168,16 @@ namespace NTDLS.Katzebase.SQLServerMigration.Controls
 
         private void SpinningProgress_EnabledChanged(object sender, System.EventArgs e)
         {
-            if(Enabled)
+            if (Enabled)
             {
-                if(m_AutoRotateTimer != null)
+                if (m_AutoRotateTimer != null)
                 {
                     m_AutoRotateTimer.Start();
                 }
             }
-            else {
-                if(m_AutoRotateTimer != null)
+            else
+            {
+                if (m_AutoRotateTimer != null)
                 {
                     m_AutoRotateTimer.Stop();
                 }
@@ -244,7 +259,7 @@ namespace NTDLS.Katzebase.SQLServerMigration.Controls
                 }
             }
         }
-    
+
         private void ProgressDisk_Resize(object sender, System.EventArgs e)
         {
             CalculateSegments();
