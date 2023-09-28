@@ -104,7 +104,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                 MessageBox.Show(message, "SQLServer Migration", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
         }
 
         public void WorkloadThreadProc(object? p)
@@ -127,14 +126,13 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     ExportSQLServerTableToKatzebase(item.Schema, item.Table, param.TargetServerAddress, param.TargetServerSchema);
                     FormProgress.Singleton.Form.IncrementProgressValue();
                 }
+
+                FormProgress.Singleton.Close(DialogResult.OK);
             }
             catch (Exception ex)
             {
                 FormProgress.Singleton.Form.UserData = ex.Message;
-            }
-            finally
-            {
-                FormProgress.Singleton.Close(DialogResult.OK);
+                FormProgress.Singleton.Close(DialogResult.Cancel);
             }
         }
 

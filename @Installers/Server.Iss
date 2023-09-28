@@ -22,11 +22,11 @@
  AppVersion      = 1.0.1.0
 
 [Files]
- Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\runtimes\*.*";  DestDir: "{app}\runtimes"; Flags: IgnoreVersion recursesubdirs;
- Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.exe";         DestDir: "{app}";          Flags: IgnoreVersion;
- Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.dll";         DestDir: "{app}";          Flags: IgnoreVersion;
- Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.json";        DestDir: "{app}";          Flags: IgnoreVersion;
- Source: "ServerSettings\*.*";                                          DestDir: "{app}";          Flags: IgnoreVersion;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\runtimes\*.*";        DestDir: "{app}\runtimes";              Flags: IgnoreVersion recursesubdirs;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.exe";               DestDir: "{app}";                       Flags: IgnoreVersion;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.dll";               DestDir: "{app}";                       Flags: IgnoreVersion;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.json";              DestDir: "{app}";                       Flags: IgnoreVersion;
+ Source: "ServerSettings\*.*";                                                DestDir: "{app}";                       Flags: IgnoreVersion;
 
 [Registry]
  Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Service";                                                             Flags: uninsdeletekey noerror;

@@ -21,16 +21,28 @@
  AppUpdatesURL   = http://www.NetworkDLS.com/
  AppVersion      = 1.0.0.0
 
+[Components]
+ Name: "Client";         Description: "Client";                     Types: Full Compact Custom; Flags: Fixed;
+ Name: "MSSQLMigrate";   Description: "SQL Server Migration Tool";  Types: Full Compact Custom; Flags: Fixed;
+ 
+
 [Files]
- Source: "..\NTDLS.Katzebase.UI\bin\Release\net7.0-windows\*.exe";  DestDir: "{app}";                  Flags: IgnoreVersion;
- Source: "..\NTDLS.Katzebase.UI\bin\Release\net7.0-windows\*.dll";  DestDir: "{app}";                  Flags: IgnoreVersion;
- Source: "..\NTDLS.Katzebase.UI\bin\Release\net7.0-windows\*.json"; DestDir: "{app}";                  Flags: IgnoreVersion;
- Source: ".\Highlighters\*.*";                                      DestDir: "{app}\Highlighters";     Flags: IgnoreVersion;
+ Source: "..\NTDLS.Katzebase.UI\bin\Release\net7.0-windows\*.exe";        DestDir: "{app}";                       Flags: IgnoreVersion;                Components: Client; 
+ Source: "..\NTDLS.Katzebase.UI\bin\Release\net7.0-windows\*.dll";        DestDir: "{app}";                       Flags: IgnoreVersion;                Components: Client; 
+ Source: "..\NTDLS.Katzebase.UI\bin\Release\net7.0-windows\*.json";       DestDir: "{app}";                       Flags: IgnoreVersion;                Components: Client;
+ Source: "..\NTDLS.Katzebase.UI\bin\Release\net7.0-windows\Runtimes\*.*"; DestDir: "{app}\MSSQLMigrate\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: Client;
+ Source: ".\Highlighters\*.*";                                            DestDir: "{app}\Highlighters";          Flags: IgnoreVersion;                Components: Client;
+
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net7.0-windows\*.exe";        DestDir: "{app}\MSSQLMigrate";          Flags: IgnoreVersion;                Components: MSSQLMigrate;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net7.0-windows\*.dll";        DestDir: "{app}\MSSQLMigrate";          Flags: IgnoreVersion;                Components: MSSQLMigrate;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net7.0-windows\*.json";       DestDir: "{app}\MSSQLMigrate";          Flags: IgnoreVersion;                Components: MSSQLMigrate;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net7.0-windows\Runtimes\*.*"; DestDir: "{app}\MSSQLMigrate\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: MSSQLMigrate;
 
 [Icons]
- Name: "{group}\Katzebase Manager";          Filename: "{app}\NTDLS.Katzebase.UI.exe";
- Name: "{commondesktop}\Katzebase Manager";  Filename: "{app}\NTDLS.Katzebase.UI.exe";
- Name: "{userdesktop}\Katzebase Manager";    Filename: "{app}\NTDLS.Katzebase.UI.exe";
+ Name: "{group}\SQL Server Migration Tool";  Filename: "{app}\MSSQLMigrate\NTDLS.Katzebase.SQLServerMigration.exe"; Components: Client; 
+ Name: "{group}\Katzebase Manager";          Filename: "{app}\NTDLS.Katzebase.UI.exe";                              Components: Client; 
+ Name: "{commondesktop}\Katzebase Manager";  Filename: "{app}\NTDLS.Katzebase.UI.exe";                              Components: Client; 
+ Name: "{userdesktop}\Katzebase Manager";    Filename: "{app}\NTDLS.Katzebase.UI.exe";                              Components: Client; 
 
 [Registry]
 ;-- Create SS "Katzebase SQL Script" Association

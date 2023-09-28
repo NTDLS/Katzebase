@@ -38,13 +38,13 @@
             label2 = new Label();
             label3 = new Label();
             buttonImport = new Button();
-            menuStrip1 = new MenuStrip();
+            menuStripBody = new MenuStrip();
             connectionToolStripMenuItem = new ToolStripMenuItem();
             changeConnectionToolStripMenuItem = new ToolStripMenuItem();
             exitToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
-            menuStrip1.SuspendLayout();
+            menuStripBody.SuspendLayout();
             SuspendLayout();
             // 
             // listViewSQLServer
@@ -125,14 +125,14 @@
             buttonImport.UseVisualStyleBackColor = false;
             buttonImport.Click += buttonImport_Click;
             // 
-            // menuStrip1
+            // menuStripBody
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { connectionToolStripMenuItem, helpToolStripMenuItem });
-            menuStrip1.Location = new Point(0, 0);
-            menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(705, 24);
-            menuStrip1.TabIndex = 6;
-            menuStrip1.Text = "menuStrip1";
+            menuStripBody.Items.AddRange(new ToolStripItem[] { connectionToolStripMenuItem, helpToolStripMenuItem });
+            menuStripBody.Location = new Point(0, 0);
+            menuStripBody.Name = "menuStripBody";
+            menuStripBody.Size = new Size(705, 24);
+            menuStripBody.TabIndex = 6;
+            menuStripBody.Text = "menuStrip1";
             // 
             // connectionToolStripMenuItem
             // 
@@ -165,7 +165,7 @@
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            aboutToolStripMenuItem.Size = new Size(180, 22);
+            aboutToolStripMenuItem.Size = new Size(107, 22);
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
@@ -181,14 +181,15 @@
             Controls.Add(textBoxBKServerAddress);
             Controls.Add(label1);
             Controls.Add(listViewSQLServer);
-            Controls.Add(menuStrip1);
+            Controls.Add(menuStripBody);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
-            MainMenuStrip = menuStrip1;
+            MainMenuStrip = menuStripBody;
+            MaximizeBox = false;
             Name = "FormMain";
             Text = "Katzebase MSSQL Migration";
-            menuStrip1.ResumeLayout(false);
-            menuStrip1.PerformLayout();
+            menuStripBody.ResumeLayout(false);
+            menuStripBody.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -204,7 +205,7 @@
         private Label label2;
         private Label label3;
         private Button buttonImport;
-        private MenuStrip menuStrip1;
+        private MenuStrip menuStripBody;
         private ToolStripMenuItem connectionToolStripMenuItem;
         private ToolStripMenuItem changeConnectionToolStripMenuItem;
         private ToolStripMenuItem exitToolStripMenuItem;

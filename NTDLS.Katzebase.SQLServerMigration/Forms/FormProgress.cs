@@ -209,7 +209,7 @@
         {
             if (InvokeRequired)
             {
-                Invoke(new Action(Close));
+                Invoke(new Action<DialogResult>(Close), result);
                 return;
             }
 
