@@ -42,5 +42,10 @@ namespace NTDLS.Katzebase.Engine.Locking
                 && intention.Operation == Operation
                 && intention.DiskPath == DiskPath);
         }
+
+        public new string ToString()
+        {
+            return $"{LockType}:{Operation}:{DiskPath}";
+        }
     }
 }

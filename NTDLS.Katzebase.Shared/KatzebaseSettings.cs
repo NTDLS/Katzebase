@@ -72,6 +72,11 @@ namespace NTDLS.Katzebase.Shared
         public int HealthMonitoringInstanceLevelTimeToLiveSeconds { get; set; }
 
         /// <summary>
+        /// The maximum number of seconds to wait for a transaction to acquire a lock before timing out.
+        /// </summary>
+        public int LockWaitTimeoutSeconds { get; set; }
+
+        /// <summary>
         /// The number of seconds between writing health statistics to disk and trimming any instance level counters.
         /// </summary>
         public int HealthMonitoringChekpointSeconds { get; set; }

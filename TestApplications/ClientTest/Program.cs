@@ -9,11 +9,12 @@ namespace TestHarness
     {
         private static void ExportSQLServerDatabases()
         {
+            /*
             var databasesNames = new string[]{
-                    "StackOverflow",
-                    "WordList",
-                    "AdventureWorks",
-                    "TopNotchERP",
+                    //"StackOverflow",
+                    //"WordList",
+                    //"AdventureWorks",
+                    //"TopNotchERP",
                     "NetworkDLS_Com"
                 };
 
@@ -24,6 +25,24 @@ namespace TestHarness
                     SqlServerExporter.ExportSQLServerDatabaseToKatzebase("localhost", databasesName, "http://localhost:6858/", false);
                 })).Start();
             }
+            */
+
+            using (var client = new KbClient("http://localhost:6858/"))
+            {
+                client.Schema.Drop("NetworkDLS");
+            }
+
+            for (int i = 0; i < 5; i++)
+            {
+                (new Thread(() =>
+                {
+                    SqlServerExporter.ExportSQLServerTableToKatzebase("localhost", "NetworkDLS_Com", "SitePage", "http://localhost:6858/", $"NetworkDLS:[TABLE_NAME]:{i}");
+                    SqlServerExporter.ExportSQLServerTableToKatzebase("localhost", "NetworkDLS_Com", "SiteRoutingExclude", "http://localhost:6858/", $"NetworkDLS:[TABLE_NAME]:{i}");
+                    SqlServerExporter.ExportSQLServerTableToKatzebase("localhost", "NetworkDLS_Com", "SiteError", "http://localhost:6858/", $"NetworkDLS:[TABLE_NAME]:{i}");
+                })).Start();
+            }
+
+            Console.ReadLine();
         }
 
         static void Main(string[] args)

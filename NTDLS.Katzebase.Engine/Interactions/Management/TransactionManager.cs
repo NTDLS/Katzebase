@@ -54,8 +54,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 lock (_collection)
                 {
-                    var transaction = (from o in _collection where o.ProcessId == processId select o).FirstOrDefault();
-                    return transaction;
+                    return _collection.Where(o => o.ProcessId == processId).FirstOrDefault();
                 }
             }
             catch (Exception ex)
@@ -86,29 +85,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Kills all transactions associated with the given processIDs. This is typically called from the session manager and probably should not be called otherwise.
+        /// Kills all transactions associated with the given processID. This is typically called from the session manager and probably should not be called otherwise.
         /// </summary>
         /// <param name="processIDs"></param>
-        internal void CloseByProcessIDs(List<ulong> processIDs)
+        internal void CloseByProcessID(ulong processID)
         {
             try
             {
                 lock (_collection)
                 {
-                    foreach (var processId in processIDs)
+                    var transaction = GetByProcessId(processID);
+                    if (transaction != null)
                     {
-                        var transaction = GetByProcessId(processId);
-                        if (transaction != null)
-                        {
-                            transaction.Rollback();
-                            _collection.Remove(transaction);
-                        }
+                        transaction.Rollback();
+                        _collection.Remove(transaction);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to remove transactions by processIDs.", ex);
+                _core.Log.Write($"Failed to remove transactions by processID.", ex);
                 throw;
             }
         }

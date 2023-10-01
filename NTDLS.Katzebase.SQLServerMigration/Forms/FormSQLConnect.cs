@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
         {
             InitializeComponent();
 
-            cboDatabaseName.DropDown += CboDatabaseName_DropDown;
+            comboBoxDatabaseName.DropDown += CboDatabaseName_DropDown;
         }
 
         #endregion
@@ -56,6 +56,11 @@ namespace NTDLS.Katzebase.SQLServerMigration
         {
             AcceptButton = cmdOk;
             CancelButton = cmdCancel;
+
+#if DEBUG
+            comboBoxDatabaseName.Text = "NetworkDLS_Com";
+#endif
+
         }
 
         private CheckConnectivity_Result CheckConnectivity()
@@ -216,14 +221,15 @@ namespace NTDLS.Katzebase.SQLServerMigration
             ConnectionDetails.UserName = txtUsername.Text;
             ConnectionDetails.Password = txtPassword.Text;
             ConnectionDetails.ServerName = textBoxServer.Text;
-            ConnectionDetails.DatabaseName = cboDatabaseName.Text;
-            ConnectionDetails.UseIntegratedSecurity = cbIntegratedSecurity.Checked;
-            ConnectionDetails.EncryptConnection = cbSSLConnection.Checked;
+            ConnectionDetails.DatabaseName = comboBoxDatabaseName.Text;
+            ConnectionDetails.UseIntegratedSecurity = checkBoxIntegratedSecurity.Checked;
+            ConnectionDetails.EncryptConnection = checkBoxSSLConnection.Checked;
+
         }
 
         private void cmdOk_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(cboDatabaseName.Text))
+            if (string.IsNullOrWhiteSpace(comboBoxDatabaseName.Text))
             {
                 MessageBox.Show("Please select a database.", "Migration Validation", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
@@ -274,9 +280,9 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
             try
             {
-                string currentText = cboDatabaseName.Text;
+                string currentText = comboBoxDatabaseName.Text;
 
-                cboDatabaseName.Items.Clear();
+                comboBoxDatabaseName.Items.Clear();
 
                 var builder = ConnectionDetails.ConnectionBuilder;
                 builder.InitialCatalog = "master";
@@ -291,7 +297,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                         {
                             while (reader.Read())
                             {
-                                cboDatabaseName.Items.Add(reader[0].ToString());
+                                comboBoxDatabaseName.Items.Add(reader[0].ToString());
                             }
                         }
                     }
@@ -299,15 +305,15 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     connection.Close();
                 }
 
-                cboDatabaseName.Text = currentText;
+                comboBoxDatabaseName.Text = currentText;
             }
             catch { }
         }
 
         private void cbIntegratedSecurity_CheckedChanged(object sender, EventArgs e)
         {
-            txtUsername.Enabled = !cbIntegratedSecurity.Checked;
-            txtPassword.Enabled = !cbIntegratedSecurity.Checked;
+            txtUsername.Enabled = !checkBoxIntegratedSecurity.Checked;
+            txtPassword.Enabled = !checkBoxIntegratedSecurity.Checked;
         }
 
         public static bool ParseBool(object? value)

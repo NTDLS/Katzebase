@@ -1,5 +1,6 @@
 using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.SQLServerMigration.Classes;
 using System.Data.SqlClient;
 using System.Dynamic;
 
@@ -39,31 +40,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
             return false;
         }
 
-        class WorkloadThreadParam
-        {
-            public class SelectedSqlItem
-            {
-                public string Schema { get; set; }
-                public string Table { get; set; }
-
-                public SelectedSqlItem(string schema, string name)
-                {
-                    Schema = schema;
-                    Table = name;
-                }
-            }
-
-            public List<SelectedSqlItem> Items { get; set; } = new();
-            public string TargetServerAddress { get; set; }
-            public string TargetServerSchema { get; set; }
-
-            public WorkloadThreadParam(string targetServerAddress, string targetServerSchema)
-            {
-                TargetServerAddress = targetServerAddress;
-                TargetServerSchema = targetServerSchema;
-            }
-        }
-
         private void buttonImport_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(textBoxBKServerAddress.Text))
@@ -76,13 +52,14 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 return;
             }
 
-            var param = new WorkloadThreadParam(textBoxBKServerAddress.Text, textBoxBKServerSchema.Text);
+            var param = new OuterWorkloadThreadParam(textBoxBKServerAddress.Text, textBoxBKServerSchema.Text);
 
             foreach (ListViewItem item in listViewSQLServer.Items)
             {
+                UpdateListviewText(item.Index, 2, "");
                 if (item.Checked)
                 {
-                    param.Items.Add(new WorkloadThreadParam.SelectedSqlItem(item.SubItems[0].Text, item.SubItems[1].Text));
+                    param.Items.Add(new SelectedSqlItem(item.Index, item.SubItems[0].Text, item.SubItems[1].Text));
                 }
             }
 
@@ -106,25 +83,48 @@ namespace NTDLS.Katzebase.SQLServerMigration
             }
         }
 
+        private int _activeTableWorkers = 0;
+        private int _maxTableWorkers = 8;
+
         public void WorkloadThreadProc(object? p)
         {
             try
             {
                 if (p == null) return;
-                var param = (WorkloadThreadParam)p;
+                var param = (OuterWorkloadThreadParam)p;
+
+                _totalRowCount = 0;
 
                 FormProgress.Singleton.WaitForVisible();
 
-                FormProgress.Singleton.Form.SetHeaderText($"Server: {_connectionDetails.ServerName}.");
-                FormProgress.Singleton.Form.SetBodyText($"Table: [{_connectionDetails.DatabaseName}]...");
-
+                //FormProgress.Singleton.Form.SetHeaderText($"Server: {_connectionDetails.ServerName}.");
+                //FormProgress.Singleton.Form.SetBodyText($"Table: [{_connectionDetails.DatabaseName}]...");
                 FormProgress.Singleton.Form.SetProgressMaximum(param.Items.Count);
 
                 foreach (var item in param.Items)
                 {
-                    FormProgress.Singleton.Form.SetBodyText($"Processing: [{item.Schema}].[{item.Table}]...");
-                    ExportSQLServerTableToKatzebase(item.Schema, item.Table, param.TargetServerAddress, param.TargetServerSchema);
+                    //FormProgress.Singleton.Form.SetBodyText($"Processing: [{item.Schema}].[{item.Table}]...");
+
+                    while (_activeTableWorkers >= _maxTableWorkers)
+                    {
+                        Thread.Sleep(100);
+                    }
+
+                    if (_activeTableWorkers < _maxTableWorkers)
+                    {
+                        lock (this) { _activeTableWorkers++; }
+
+                        var tableWorkerParam = new TabelWorkerThreadParam(param.TargetServerAddress, param.TargetServerSchema, item);
+
+                        (new Thread(TableWorkerThreadProc)).Start(tableWorkerParam);
+                    }
+
                     FormProgress.Singleton.Form.IncrementProgressValue();
+                }
+
+                while (_activeTableWorkers > 0)
+                {
+                    Thread.Sleep(100);
                 }
 
                 FormProgress.Singleton.Close(DialogResult.OK);
@@ -136,41 +136,44 @@ namespace NTDLS.Katzebase.SQLServerMigration
             }
         }
 
-        private void PopulateTables()
+        private void UpdateListviewText(int rowIndex, int columnIndex, string text)
         {
-            listViewSQLServer.Items.Clear();
+            if (listViewSQLServer.InvokeRequired)
+            {
+                listViewSQLServer.Invoke(new Action(() => UpdateListviewText(rowIndex, columnIndex, text)));
+                return;
+            }
+            listViewSQLServer.Items[rowIndex].SubItems[columnIndex].Text = text;
 
-            using var connection = new SqlConnection(_connectionDetails.ConnectionBuilder.ToString());
+            listViewSQLServer.EnsureVisible(rowIndex);
+
+        }
+
+        private void TableWorkerThreadProc(object? p)
+        {
+            if (p == null) return;
+            var param = (TabelWorkerThreadParam)p;
+
             try
             {
-                connection.Open();
-
-                string text = "SELECT OBJECT_SCHEMA_NAME(object_id) as [Schema], name as [Name]"
-                    + " FROM sys.tables WHERE type = 'u' ORDER BY OBJECT_SCHEMA_NAME(object_id) + '.' + name";
-
-                using var command = new SqlCommand(text, connection);
-                using var reader = command.ExecuteReader();
-
-                while (reader.Read())
-                {
-                    var item = new ListViewItem($"{reader[0]}");
-                    item.SubItems.Add($"{reader[1]}");
-                    item.Checked = true;
-
-                    listViewSQLServer.Items.Add(item);
-                }
-                reader.Close();
+                UpdateListviewText(param.Item.ListViewRowIndex, 2, "Starting");
+                ExportSQLServerTableToKatzebase(param.Item, param.TargetServerAddress, param.TargetServerSchema);
+                UpdateListviewText(param.Item.ListViewRowIndex, 2, "Complete");
             }
             catch (Exception ex)
             {
+                UpdateListviewText(param.Item.ListViewRowIndex, 2, "Exception");
             }
             finally
             {
-                connection.Close();
+                lock (this) { _activeTableWorkers--; }
             }
         }
 
-        public void ExportSQLServerTableToKatzebase(string sourceSchema, string sourceTable, string targetServerAddress, string targetSchema)
+        private long _totalRowCount = 0;
+        private object _totalRowCountLock = new();
+
+        private void ExportSQLServerTableToKatzebase(SelectedSqlItem item, string targetServerAddress, string targetSchema)
         {
             int rowsPerTransaction = 10000;
 
@@ -181,7 +184,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
             using var client = new KbClient(targetServerAddress);
 
-            string fullTargetSchema = $"{targetSchema}:{sourceSchema}:{sourceTable}".Replace(":dbo", "");
+            string fullTargetSchema = $"{targetSchema}:{item.Schema}:{item.Table}".Replace(":dbo", "");
 
             client.Schema.CreateFullSchema(fullTargetSchema);
 
@@ -193,7 +196,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                 try
                 {
-                    using (var command = new SqlCommand($"SELECT * FROM [{sourceSchema}].[{sourceTable}]", connection))
+                    using (var command = new SqlCommand($"SELECT * FROM [{item.Schema}].[{item.Table}]", connection))
                     {
                         command.CommandTimeout = 10000;
                         command.CommandType = System.Data.CommandType.Text;
@@ -230,9 +233,19 @@ namespace NTDLS.Katzebase.SQLServerMigration
                                     Console.WriteLine(ex.Message);
                                 }
 
-                                if (rowCount % 123 == 0)
+                                lock (_totalRowCountLock)
                                 {
-                                    FormProgress.Singleton.Form.SetBodyText($"Processing: [{sourceSchema}].[{sourceTable}] ({rowCount:n0})...");
+                                    if (_totalRowCount % 100 == 0)
+                                    {
+                                        FormProgress.Singleton.Form.SetBodyText($"Total rows processed: {_totalRowCount:n0}...");
+                                    }
+
+                                    _totalRowCount++;
+                                }
+
+                                if (rowCount > 0 && rowCount % 100 == 0)
+                                {
+                                    UpdateListviewText(item.ListViewRowIndex, 2, $"Rows {rowCount:n0}");
                                 }
 
                                 rowCount++;
@@ -243,11 +256,46 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 }
                 catch
                 {
-                    //TODO: add error handling/logging
+                    client.Transaction.Rollback();
                     throw;
                 }
 
                 client.Transaction.Commit();
+            }
+        }
+
+        private void PopulateTables()
+        {
+            listViewSQLServer.Items.Clear();
+
+            using var connection = new SqlConnection(_connectionDetails.ConnectionBuilder.ToString());
+            try
+            {
+                connection.Open();
+
+                string text = "SELECT OBJECT_SCHEMA_NAME(object_id) as [Schema], name as [Name]"
+                    + " FROM sys.tables WHERE type = 'u' ORDER BY OBJECT_SCHEMA_NAME(object_id) + '.' + name";
+
+                using var command = new SqlCommand(text, connection);
+                using var reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    var item = new ListViewItem($"{reader[0]}");
+                    item.SubItems.Add($"{reader[1]}");
+                    item.SubItems.Add($"");
+                    item.Checked = true;
+
+                    listViewSQLServer.Items.Add(item);
+                }
+                reader.Close();
+            }
+            catch (Exception ex)
+            {
+            }
+            finally
+            {
+                connection.Close();
             }
         }
 

@@ -34,81 +34,65 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public Dictionary<Guid, SessionState> CloneSessions()
         {
-            lock (Collection)
+            Monitor.Enter(Collection);
+            try
             {
                 return Collection.ToDictionary(o => o.Key, o => o.Value);
             }
+            finally
+            {
+                Monitor.Exit(Collection);
+            }
         }
-
 
         public List<SessionState> GetExpiredSessions()
         {
-            lock (Collection)
+            Monitor.Enter(Collection);
+            try
             {
-                var sessions = Collection.Where(o => (DateTime.UtcNow - o.Value.LastCheckinTime)
+                return Collection.Where(o => (DateTime.UtcNow - o.Value.LastCheckinTime)
                     .TotalSeconds > _core.Settings.MaxIdleConnectionSeconds).Select(o => o.Value).ToList();
-
-                return sessions;
+            }
+            finally
+            {
+                Monitor.Exit(Collection);
             }
         }
 
         public ulong UpsertSessionId(Guid sessionId, string clientName = "")
         {
+            Monitor.Enter(Collection);
+
             try
             {
-                lock (Collection)
+                if (Collection.ContainsKey(sessionId))
                 {
-                    if (Collection.ContainsKey(sessionId))
-                    {
-                        var session = Collection[sessionId];
-                        session.LastCheckinTime = DateTime.UtcNow;
-                        return session.ProcessId;
-                    }
-                    else
-                    {
-                        ulong processId = _nextProcessId++;
-
-                        var session = new SessionState(processId, sessionId)
-                        {
-                            ClientName = clientName
-                        }
-                        ;
-                        Collection.Add(sessionId, session);
-                        return processId;
-                    }
+                    var session = Collection[sessionId];
+                    session.LastCheckinTime = DateTime.UtcNow;
+                    return session.ProcessId;
                 }
+                else
+                {
+                    ulong processId = _nextProcessId++;
+
+                    var session = new SessionState(processId, sessionId)
+                    {
+                        ClientName = clientName
+                    }
+                    ;
+                    Collection.Add(sessionId, session);
+                    return processId;
+                }
+
             }
             catch (Exception ex)
             {
                 _core.Log.Write($"Failed to upsert session for session {sessionId}.", ex);
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Kills all referenced sessions and any associated transactions.
-        /// </summary>
-        /// <param name="processIDs"></param>
-        internal void CloseByProcessIDs(List<ulong> processIDs)
-        {
-            try
+            finally
             {
-                lock (Collection)
-                {
-                    _core.Transactions.CloseByProcessIDs(processIDs);
-
-                    var expiredSessions = Collection.Where(o => processIDs.Contains(o.Value.ProcessId)).ToList();
-
-                    foreach (var expiredSession in expiredSessions)
-                    {
-                        Collection.Remove(expiredSession.Key);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                _core.Log.Write($"Failed to remove sessions by processIDs.", ex);
-                throw;
+                Monitor.Exit(Collection);
             }
         }
 
@@ -120,16 +104,34 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                lock (Collection)
+                _core.Transactions.CloseByProcessID(processId);
+
+                //Once the transaction for the process has been closed, removing the process is a non-critical task.
+                // For this reason, we will "try lock" with a timeout, if we fail to remove the session now - it will be
+                // automatically retried by the HeartbeatManager.
+                bool lockAcquired = Monitor.TryEnter(Collection, TimeSpan.FromSeconds(1));
+
+                try
                 {
-                    _core.Transactions.CloseByProcessIDs(new List<ulong> { processId });
-
-                    var session = Collection.Where(o => o.Value.ProcessId == processId).FirstOrDefault().Value;
-                    if (session != null)
+                    if (lockAcquired)
                     {
-                        Collection.Remove(session.SessionId);
+                        var session = Collection.Where(o => o.Value.ProcessId == processId).FirstOrDefault().Value;
+                        if (session != null)
+                        {
+                            Collection.Remove(session.SessionId);
+                        }
                     }
-
+                    else
+                    {
+                        _core.Log.Write($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.", Client.KbConstants.KbLogSeverity.Warning);
+                    }
+                }
+                finally
+                {
+                    if (lockAcquired)
+                    {
+                        Monitor.Exit(Collection);
+                    }
                 }
             }
             catch (Exception ex)
@@ -141,22 +143,24 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public SessionState ByProcessId(ulong processId)
         {
+            Monitor.Enter(Collection);
             try
             {
-                lock (Collection)
+                var result = Collection.Where(o => o.Value.ProcessId == processId).FirstOrDefault();
+                if (result.Value != null)
                 {
-                    var result = Collection.Where(o => o.Value.ProcessId == processId).FirstOrDefault();
-                    if (result.Value != null)
-                    {
-                        return result.Value;
-                    }
-                    throw new KbSessionNotFoundException($"The session was not found: {processId}");
+                    return result.Value;
                 }
+                throw new KbSessionNotFoundException($"The session was not found: {processId}");
             }
             catch (Exception ex)
             {
                 _core.Log.Write($"Failed to get session state by process id for process id {processId}.", ex);
                 throw;
+            }
+            finally
+            {
+                Monitor.Exit(Collection);
             }
         }
     }

@@ -31,16 +31,16 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormSQLConnect));
             cmdOk = new Button();
             cmdCancel = new Button();
-            cbIntegratedSecurity = new CheckBox();
+            checkBoxIntegratedSecurity = new CheckBox();
             label1 = new Label();
             label2 = new Label();
             txtUsername = new TextBox();
             txtPassword = new TextBox();
             label3 = new Label();
             groupBox1 = new GroupBox();
-            cbSSLConnection = new CheckBox();
+            checkBoxSSLConnection = new CheckBox();
             label4 = new Label();
-            cboDatabaseName = new ComboBox();
+            comboBoxDatabaseName = new ComboBox();
             GroupBoxLine = new GroupBox();
             pictureBox1 = new PictureBox();
             textBoxServer = new TextBox();
@@ -72,15 +72,15 @@
             // 
             // cbIntegratedSecurity
             // 
-            cbIntegratedSecurity.Checked = true;
-            cbIntegratedSecurity.CheckState = CheckState.Checked;
-            cbIntegratedSecurity.Location = new Point(10, 177);
-            cbIntegratedSecurity.Margin = new Padding(4, 3, 4, 3);
-            cbIntegratedSecurity.Name = "cbIntegratedSecurity";
-            cbIntegratedSecurity.Size = new Size(166, 21);
-            cbIntegratedSecurity.TabIndex = 6;
-            cbIntegratedSecurity.Text = "Use Integrated Security?";
-            cbIntegratedSecurity.CheckedChanged += cbIntegratedSecurity_CheckedChanged;
+            checkBoxIntegratedSecurity.Checked = true;
+            checkBoxIntegratedSecurity.CheckState = CheckState.Checked;
+            checkBoxIntegratedSecurity.Location = new Point(10, 177);
+            checkBoxIntegratedSecurity.Margin = new Padding(4, 3, 4, 3);
+            checkBoxIntegratedSecurity.Name = "cbIntegratedSecurity";
+            checkBoxIntegratedSecurity.Size = new Size(166, 21);
+            checkBoxIntegratedSecurity.TabIndex = 6;
+            checkBoxIntegratedSecurity.Text = "Use Integrated Security?";
+            checkBoxIntegratedSecurity.CheckedChanged += cbIntegratedSecurity_CheckedChanged;
             // 
             // label1
             // 
@@ -132,13 +132,13 @@
             // 
             groupBox1.AccessibleRole = AccessibleRole.Grouping;
             groupBox1.Controls.Add(textBoxServer);
-            groupBox1.Controls.Add(cbSSLConnection);
+            groupBox1.Controls.Add(checkBoxSSLConnection);
             groupBox1.Controls.Add(label4);
-            groupBox1.Controls.Add(cboDatabaseName);
+            groupBox1.Controls.Add(comboBoxDatabaseName);
             groupBox1.Controls.Add(GroupBoxLine);
             groupBox1.Controls.Add(txtUsername);
             groupBox1.Controls.Add(label3);
-            groupBox1.Controls.Add(cbIntegratedSecurity);
+            groupBox1.Controls.Add(checkBoxIntegratedSecurity);
             groupBox1.Controls.Add(txtPassword);
             groupBox1.Controls.Add(label1);
             groupBox1.Controls.Add(label2);
@@ -153,12 +153,12 @@
             // 
             // cbSSLConnection
             // 
-            cbSSLConnection.Location = new Point(10, 203);
-            cbSSLConnection.Margin = new Padding(4, 3, 4, 3);
-            cbSSLConnection.Name = "cbSSLConnection";
-            cbSSLConnection.Size = new Size(178, 21);
-            cbSSLConnection.TabIndex = 10;
-            cbSSLConnection.Text = "Encrypt Connection (SSL) ?";
+            checkBoxSSLConnection.Location = new Point(10, 203);
+            checkBoxSSLConnection.Margin = new Padding(4, 3, 4, 3);
+            checkBoxSSLConnection.Name = "cbSSLConnection";
+            checkBoxSSLConnection.Size = new Size(178, 21);
+            checkBoxSSLConnection.TabIndex = 10;
+            checkBoxSSLConnection.Text = "Encrypt Connection (SSL) ?";
             // 
             // label4
             // 
@@ -171,11 +171,11 @@
             // 
             // cboDatabaseName
             // 
-            cboDatabaseName.Location = new Point(10, 271);
-            cboDatabaseName.Margin = new Padding(4, 3, 4, 3);
-            cboDatabaseName.Name = "cboDatabaseName";
-            cboDatabaseName.Size = new Size(223, 23);
-            cboDatabaseName.TabIndex = 9;
+            comboBoxDatabaseName.Location = new Point(10, 271);
+            comboBoxDatabaseName.Margin = new Padding(4, 3, 4, 3);
+            comboBoxDatabaseName.Name = "cboDatabaseName";
+            comboBoxDatabaseName.Size = new Size(223, 23);
+            comboBoxDatabaseName.TabIndex = 9;
             // 
             // GroupBoxLine
             // 
@@ -235,7 +235,7 @@
 
         private Button cmdOk;
         private Button cmdCancel;
-        private CheckBox cbIntegratedSecurity;
+        private CheckBox checkBoxIntegratedSecurity;
         private Label label1;
         private Label label2;
         private TextBox txtUsername;
@@ -244,9 +244,9 @@
         private GroupBox groupBox1;
         private PictureBox pictureBox1;
         private Label label4;
-        private ComboBox cboDatabaseName;
+        private ComboBox comboBoxDatabaseName;
         private GroupBox GroupBoxLine;
-        private CheckBox cbSSLConnection;
+        private CheckBox checkBoxSSLConnection;
         private TextBox textBoxServer;
     }
 }
