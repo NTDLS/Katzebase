@@ -332,7 +332,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             var result = collection.AddNew();
 
                             result.AddField("ProcessId");
-                            result.AddField("Blocked");
+                            result.AddField("IsBlocked");
+                            result.AddField("BlockedBy");
                             result.AddField("References");
                             result.AddField("StartTime");
                             result.AddField("HeldLockKeys");
@@ -355,14 +356,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             foreach (var tx in transactions)
                             {
                                 var values = new List<string?> {
-                                    $"{tx.ProcessId:0n}",
-                                    $"{(tx?.BlockedBy.Count > 0):0n}",
-                                    $"{tx?.ReferenceCount:0n}",
-                                    $"{tx?.StartTime:0n}",
-                                    $"{tx?.HeldLockKeys?.Count:0n}",
-                                    $"{tx?.GrantedLockCache?.Count:0n}",
-                                    $"{tx?.FilesReadForCache?.Count:0n}",
-                                    $"{tx?.DeferredIOs?.Count():0n}",
+                                    $"{tx.ProcessId:n0}",
+                                    $"{(tx?.BlockedBy.Count > 0):n0}",
+                                    string.Join(", ", tx?.BlockedBy ?? new List<ulong>()),
+                                    $"{tx?.ReferenceCount:n0}",
+                                    $"{tx?.StartTime}",
+                                    $"{tx?.HeldLockKeys?.Count:n0}",
+                                    $"{tx?.GrantedLockCache?.Count:n0}",
+                                    $"{tx?.FilesReadForCache?.Count:n0}",
+                                    $"{tx?.DeferredIOs?.Count():n0}",
                                     $"{!(tx?.IsComittedOrRolledBack == true)}",
                                     $"{tx?.IsDeadlocked}",
                                     $"{tx?.IsCancelled}",
@@ -385,7 +387,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             result.AddField("LoginTime");
                             result.AddField("LastCheckinTime");
 
-                            result.AddField("Blocked");
+                            result.AddField("IsBlocked");
+                            result.AddField("BlockedBy");
                             result.AddField("References");
                             result.AddField("StartTime");
                             result.AddField("HeldLockKeys");
@@ -414,11 +417,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                     $"{session.Key}",
                                     $"{session.Value.ProcessId:n0}",
                                     $"{session.Value.ClientName ?? string.Empty}",
-                                    $"{session.Value.LoginTime:n0}",
-                                    $"{session.Value.LastCheckinTime:n0}",
+                                    $"{session.Value.LoginTime}",
+                                    $"{session.Value.LastCheckinTime}",
                                     $"{(tx?.BlockedBy.Count > 0):n0}",
+                                    string.Join(", ", tx?.BlockedBy ?? new List<ulong>()),
                                     $"{tx?.ReferenceCount:n0}",
-                                    $"{tx?.StartTime:n0}",
+                                    $"{tx?.StartTime}",
                                     $"{tx?.HeldLockKeys?.Count:n0}",
                                     $"{tx?.GrantedLockCache?.Count:n0}",
                                     $"{tx?.FilesReadForCache?.Count:n0}",

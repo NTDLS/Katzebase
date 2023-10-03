@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Trace;
+using System.Diagnostics;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
@@ -21,7 +22,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactiontAPIHandlers APIHandlers { get; private set; }
 
-        internal TransactionReference Acquire(ulong processId) => Acquire(processId, false);
+
+        internal TransactionReference Acquire(ulong processId)
+        {
+            var transactionReference = Acquire(processId, false);
+
+            var stackFrames = (new StackTrace()).GetFrames();
+            if (stackFrames.Length >= 2)
+            {
+                transactionReference.Transaction.TopLevelOperation = stackFrames[1].GetMethod()?.Name ?? string.Empty;
+            }
+
+            return transactionReference;
+        }
 
         internal List<Transaction> CloneTransactions()
         {

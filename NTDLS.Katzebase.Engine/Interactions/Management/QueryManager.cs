@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal KbQueryResultCollection ExecureProcedure(ulong processId, KbProcedure procedure)
+        internal KbQueryResultCollection ExecuteProcedure(ulong processId, KbProcedure procedure)
         {
             var statement = new StringBuilder($"EXEC {procedure.SchemaName}:{procedure.ProcedureName}");
 

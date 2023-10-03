@@ -10,11 +10,17 @@ namespace NTDLS.Katzebase.SQLServerMigration
     {
         private SQLConnectionDetails _connectionDetails = new();
 
+        int _widthToRight = 0;
+        int _heightToBottom = 0;
+
         public FormMain()
         {
             InitializeComponent();
 
-            this.Shown += FormMain_Shown;
+            Shown += FormMain_Shown;
+
+            _widthToRight = Width - listViewSQLServer.Width;
+            _heightToBottom = Height - listViewSQLServer.Height;
         }
 
         private void FormMain_Shown(object? sender, EventArgs e)
@@ -344,6 +350,14 @@ namespace NTDLS.Katzebase.SQLServerMigration
             {
                 form.ShowDialog();
             }
+        }
+
+        private void FormMain_Resize(object sender, EventArgs e)
+        {
+            listViewSQLServer.Width = Width - _widthToRight;
+            listViewSQLServer.Height = Height - _heightToBottom;
+            buttonImport.Left = listViewSQLServer.Right - buttonImport.Width;
+
         }
     }
 }

@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryResultCollection ExecuteStatementProcedure(ulong processId, KbProcedure procedure)
         {
-            return _core.Query.ExecureProcedure(processId, procedure);
+            return _core.Query.ExecuteProcedure(processId, procedure);
         }
 
         public KbQueryResultCollection ExecuteStatementQuery(ulong processId, string statement)

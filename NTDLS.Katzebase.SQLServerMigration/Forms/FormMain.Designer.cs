@@ -188,13 +188,13 @@
             Controls.Add(label1);
             Controls.Add(listViewSQLServer);
             Controls.Add(menuStripBody);
-            FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStripBody;
             MaximizeBox = false;
             Name = "FormMain";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Katzebase MSSQL Migration";
+            Resize += FormMain_Resize;
             menuStripBody.ResumeLayout(false);
             menuStripBody.PerformLayout();
             ResumeLayout(false);

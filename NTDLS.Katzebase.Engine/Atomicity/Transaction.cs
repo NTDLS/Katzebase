@@ -14,6 +14,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {
+        public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; private set; } = Guid.NewGuid();
         public Dictionary<KbTransactionWarning, HashSet<string>> Warnings { get; private set; } = new();
         public List<KbQueryResultMessage> Messages { get; private set; } = new();

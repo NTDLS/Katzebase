@@ -34,21 +34,42 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
         }
 
-        public List<ObjectLock> GloballyHeldLocks(string diskPath, LockType lockType)
+        public HashSet<ObjectLock> GloballyHeldLocks(string diskPath, LockType lockType)
         {
             lock (CentralCriticalSections.AcquireLock)
             {
-                var lockedObjects = new List<ObjectLock>();
+                var lockedObjects = new HashSet<ObjectLock>();
 
+                //If we are locking a file, then look for all other locks for the exact path.
                 if (lockType == LockType.File)
                 {
                     //See if there are any other locks on this file:
-                    lockedObjects.AddRange(_collection.Where(o => o.LockType == LockType.File && o.DiskPath == diskPath));
+                    var fileLocks = _collection.Where(o => o.LockType == LockType.File && o.DiskPath == diskPath);
+                    foreach (var existingLock in fileLocks)
+                    {
+                        lockedObjects.Add(existingLock);
+                    }
                 }
 
-                //See if there are any other locks on the directory containig this file (or directory) or any of its parents.
+                //Look at existing directory locks and return those that would contain the file (or directory) that we are intending to lock.
+                //This is done by finding existing directory locks where the intended lock path starts with the exising lock path.
                 //When we lock a directory, we intend all lower directories to be locked too.
-                lockedObjects.AddRange(_collection.Where(o => o.LockType == LockType.Directory && diskPath.StartsWith(o.DiskPath)));
+                var lowerLevelDirectoryLocks = _collection.Where(o => o.LockType == LockType.Directory && diskPath.StartsWith(o.DiskPath));
+                foreach (var existingLock in lowerLevelDirectoryLocks)
+                {
+                    lockedObjects.Add(existingLock);
+                }
+
+                //If the intended lock is a directory then we need to find all existing locks that would be contained in the intended lock path.
+                //This is done by looking for all existing locks where the existing lock path thates with the intended lock path.
+                if (lockType == LockType.Directory)
+                {
+                    var higherLevelDirectoryLocks = _collection.Where(o => o.DiskPath.StartsWith(diskPath));
+                    foreach (var existingLock in higherLevelDirectoryLocks)
+                    {
+                        lockedObjects.Add(existingLock);
+                    }
+                }
 
                 return lockedObjects;
             }
@@ -98,7 +119,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                 {
                     transaction.EnsureActive();
 
-                    if ((DateTime.UtcNow - startTime).TotalSeconds > _core.Settings.LockWaitTimeoutSeconds)
+                    if (_core.Settings.LockWaitTimeoutSeconds > 0 && (DateTime.UtcNow - startTime).TotalSeconds > _core.Settings.LockWaitTimeoutSeconds)
                     {
                         var lockWaitTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
                         _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
@@ -216,6 +237,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                     explanation.AppendLine($"    Id: {deadLockId}");
                                     explanation.AppendLine("    Blocking Transactions {");
                                     explanation.AppendLine($"        ProcessId: {transaction.ProcessId}");
+                                    explanation.AppendLine($"        Operation: {transaction.TopLevelOperation}");
                                     explanation.AppendLine($"        ReferenceCount: {transaction.ReferenceCount}");
                                     explanation.AppendLine($"        StartTime: {transaction.StartTime}");
 
@@ -248,6 +270,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                     foreach (var waiter in blockedByMe)
                                     {
                                         explanation.AppendLine($"        ProcessId: {waiter.ProcessId}");
+                                        explanation.AppendLine($"        Operation: {waiter.TopLevelOperation}");
                                         explanation.AppendLine($"        ReferenceCount: {waiter.ReferenceCount}");
                                         explanation.AppendLine($"        StartTime: {waiter.StartTime}");
 
