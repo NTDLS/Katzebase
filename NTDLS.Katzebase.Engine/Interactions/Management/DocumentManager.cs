@@ -129,7 +129,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             return InsertDocument(transaction, physicalSchema, pageContent);
-
         }
 
         /// <summary>

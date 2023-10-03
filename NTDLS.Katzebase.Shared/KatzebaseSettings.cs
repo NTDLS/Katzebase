@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace NTDLS.Katzebase.Shared
+﻿namespace NTDLS.Katzebase.Shared
 {
     public class KatzebaseSettings
     {
@@ -70,6 +68,11 @@ namespace NTDLS.Katzebase.Shared
         /// The total number of seconds that instance level counters should stay in the health monitor for observation.
         /// </summary>
         public int HealthMonitoringInstanceLevelTimeToLiveSeconds { get; set; }
+
+        /// <summary>
+        /// The maximum number of seconds to wait for a transaction to acquire a lock before timing out.
+        /// </summary>
+        public int LockWaitTimeoutSeconds { get; set; }
 
         /// <summary>
         /// The number of seconds between writing health statistics to disk and trimming any instance level counters.

@@ -25,6 +25,7 @@
         {
             FileCreate,
             FileAlter,
+            FileRead,
             FileDelete,
             DirectoryCreate,
             DirectoryDelete

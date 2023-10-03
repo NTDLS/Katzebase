@@ -106,6 +106,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     transaction.LockFile(intendedOperation, filePath);
 
+                    transaction.RecordFileRead(filePath);
+
+                    var debugObj = transaction.HeldLockKeys?.Where(o => o.ObjectLock.DiskPath.ToLower() == filePath.ToLower())?.FirstOrDefault();
+
                     if (_core.Settings.DeferredIOEnabled)
                     {
                         KbUtility.EnsureNotNull(transaction.DeferredIOs);
@@ -117,6 +121,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         {
                             _core.Health.Increment(HealthCounterType.IODeferredIOReads);
                             _core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
+
                             return deferredIOObject;
                         }
                     }
@@ -131,6 +136,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         {
                             _core.Health.Increment(HealthCounterType.IOCacheReadHits);
                             _core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
+
                             return (T)cachedObject;
                         }
                     }
@@ -322,6 +328,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     else if (format == IOFormat.PBuf)
                     {
                         var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
+
                         if (_core.Settings.UseCompression && useCompression)
                         {
                             using (var output = new MemoryStream())
@@ -358,7 +365,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to put internal tracked file for process id {transaction.ProcessId}.", ex);
+                _core.Log.Write($"Failed to put internal tracked file for process id {transaction?.ProcessId ?? 0}.", ex);
                 throw;
             }
         }

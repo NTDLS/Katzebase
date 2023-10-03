@@ -32,6 +32,7 @@
             listViewSQLServer = new ListView();
             columnHeaderSchema = new ColumnHeader();
             columnHeaderTable = new ColumnHeader();
+            columnHeaderStatus = new ColumnHeader();
             label1 = new Label();
             textBoxBKServerAddress = new TextBox();
             textBoxBKServerSchema = new TextBox();
@@ -50,13 +51,13 @@
             // listViewSQLServer
             // 
             listViewSQLServer.CheckBoxes = true;
-            listViewSQLServer.Columns.AddRange(new ColumnHeader[] { columnHeaderSchema, columnHeaderTable });
+            listViewSQLServer.Columns.AddRange(new ColumnHeader[] { columnHeaderSchema, columnHeaderTable, columnHeaderStatus });
             listViewSQLServer.FullRowSelect = true;
             listViewSQLServer.GridLines = true;
             listViewSQLServer.HeaderStyle = ColumnHeaderStyle.Nonclickable;
             listViewSQLServer.Location = new Point(12, 156);
             listViewSQLServer.Name = "listViewSQLServer";
-            listViewSQLServer.Size = new Size(681, 329);
+            listViewSQLServer.Size = new Size(758, 329);
             listViewSQLServer.TabIndex = 2;
             listViewSQLServer.UseCompatibleStateImageBehavior = false;
             listViewSQLServer.View = View.Details;
@@ -70,6 +71,11 @@
             // 
             columnHeaderTable.Text = "Table";
             columnHeaderTable.Width = 400;
+            // 
+            // columnHeaderStatus
+            // 
+            columnHeaderStatus.Text = "Status";
+            columnHeaderStatus.Width = 120;
             // 
             // label1
             // 
@@ -117,7 +123,7 @@
             // 
             buttonImport.BackColor = Color.FromArgb(192, 255, 192);
             buttonImport.ForeColor = SystemColors.ControlText;
-            buttonImport.Location = new Point(603, 53);
+            buttonImport.Location = new Point(680, 53);
             buttonImport.Name = "buttonImport";
             buttonImport.Size = new Size(90, 90);
             buttonImport.TabIndex = 3;
@@ -130,7 +136,7 @@
             menuStripBody.Items.AddRange(new ToolStripItem[] { connectionToolStripMenuItem, helpToolStripMenuItem });
             menuStripBody.Location = new Point(0, 0);
             menuStripBody.Name = "menuStripBody";
-            menuStripBody.Size = new Size(705, 24);
+            menuStripBody.Size = new Size(782, 24);
             menuStripBody.TabIndex = 6;
             menuStripBody.Text = "menuStrip1";
             // 
@@ -173,7 +179,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(705, 498);
+            ClientSize = new Size(782, 498);
             Controls.Add(buttonImport);
             Controls.Add(label3);
             Controls.Add(textBoxBKServerSchema);
@@ -187,6 +193,7 @@
             MainMenuStrip = menuStripBody;
             MaximizeBox = false;
             Name = "FormMain";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Katzebase MSSQL Migration";
             menuStripBody.ResumeLayout(false);
             menuStripBody.PerformLayout();
@@ -211,5 +218,6 @@
         private ToolStripMenuItem exitToolStripMenuItem;
         private ToolStripMenuItem helpToolStripMenuItem;
         private ToolStripMenuItem aboutToolStripMenuItem;
+        private ColumnHeader columnHeaderStatus;
     }
 }

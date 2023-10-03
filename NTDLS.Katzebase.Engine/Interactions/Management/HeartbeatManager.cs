@@ -30,8 +30,11 @@
                 var expiredSessions = _core.Sessions.GetExpiredSessions();
                 if (expiredSessions.Any())
                 {
-                    var expiredProcessIDs = expiredSessions.Select(o => o.ProcessId).ToList();
-                    _core.Sessions.CloseByProcessIDs(expiredProcessIDs);
+                    var processIds = expiredSessions.Select(o => o.ProcessId).ToList();
+                    foreach (var processId in processIds)
+                    {
+                        _core.Sessions.CloseByProcessId(processId);
+                    }
                 }
 
                 Thread.Sleep(100);

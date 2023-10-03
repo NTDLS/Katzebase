@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
     /// </summary>
     internal class AggregateFunctionImplementation
     {
-        internal static string[] FunctionPrototypes = {
+        internal static string[] PrototypeStrings = {
                 "count:NumericArray/fieldName",
                 "sum:NumericArray/fieldName",
                 "min:NumericArray/fieldName",

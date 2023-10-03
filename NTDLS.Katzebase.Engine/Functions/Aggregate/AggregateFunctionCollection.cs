@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             {
                 _protypes = new List<AggregateFunction>();
 
-                foreach (var prototype in AggregateFunctionImplementation.FunctionPrototypes)
+                foreach (var prototype in AggregateFunctionImplementation.PrototypeStrings)
                 {
                     _protypes.Add(AggregateFunction.Parse(prototype));
                 }
