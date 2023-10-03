@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate query API handlers.", ex);
+                core.Log.Write($"Failed to instantiate query API handlers.", ex);
                 throw;
             }
         }

@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate document query handler.", ex);
+                core.Log.Write($"Failed to instantiate document query handler.", ex);
                 throw;
             }
         }

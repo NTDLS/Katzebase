@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to instanciate transaction manager.", ex);
+                core.Log.Write("Failed to instantiate transaction manager.", ex);
                 throw;
             }
         }

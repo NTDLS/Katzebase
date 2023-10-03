@@ -1,4 +1,5 @@
 ﻿using System.Data.SqlClient;
+using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Debuging
 {
@@ -8,14 +9,14 @@ namespace NTDLS.Katzebase.Debuging
 
         public static class DebugTraceSeverity
         {
-            public static string Enter = "Enter";
-            public static string Success = "Success";
-            public static string Info = "Info";
-            public static string Warning = "Warning";
-            public static string Fail = "Fail";
+            public const string Enter = "Enter";
+            public const string Success = "Success";
+            public const string Info = "Info";
+            public const string Warning = "Warning";
+            public const string Fail = "Fail";
         }
 
-        public static void Trace(Guid batch, Guid transactionId, ulong processId, string severity, string text)
+        public static void Trace(Guid transactionId, ulong processId, string severity, string text)
         {
             using (var connection = new SqlConnection($"Server=localhost;Database=Katzebase_Debug;Trusted_Connection=True;"))
             {
@@ -25,11 +26,11 @@ namespace NTDLS.Katzebase.Debuging
                 {
                     using var command = new SqlCommand("WriteSessionTrace", connection);
                     command.CommandType = System.Data.CommandType.StoredProcedure;
-                    command.Parameters.AddWithValue("Thread", Thread.CurrentThread.Name ?? $"Unnamed: {Thread.CurrentThread.ManagedThreadId}");
                     command.Parameters.AddWithValue("RunId", RunId);
-                    command.Parameters.AddWithValue("TransactionId", transactionId);
+                    command.Parameters.AddWithValue("Thread", Thread.CurrentThread.Name ?? $"Unnamed: {Thread.CurrentThread.ManagedThreadId}");
+                    command.Parameters.AddWithValue("Method", (new StackTrace()).GetFrame(1)?.GetMethod()?.Name);
                     command.Parameters.AddWithValue("ProcessId", (int)processId);
-                    command.Parameters.AddWithValue("Batch", batch);
+                    command.Parameters.AddWithValue("TransactionId", transactionId);
                     command.Parameters.AddWithValue("Severity", severity);
                     command.Parameters.AddWithValue("Info", text);
                     command.ExecuteNonQuery();

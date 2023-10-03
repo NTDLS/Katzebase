@@ -100,7 +100,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to instanciate SchemaManager.", ex);
+                core.Log.Write("Failed to instantiate SchemaManager.", ex);
                 throw;
             }
         }
@@ -193,6 +193,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 _core.Log.Write($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
                 throw;
             }
+
         }
 
         internal void Drop(Transaction transaction, string schemaName)

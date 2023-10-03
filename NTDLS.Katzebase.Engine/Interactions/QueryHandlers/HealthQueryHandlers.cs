@@ -16,7 +16,7 @@
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate health query handler.", ex);
+                core.Log.Write($"Failed to instantiate health query handler.", ex);
                 throw;
             }
         }

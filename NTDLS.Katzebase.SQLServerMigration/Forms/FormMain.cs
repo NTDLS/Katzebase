@@ -154,6 +154,8 @@ namespace NTDLS.Katzebase.SQLServerMigration
             if (p == null) return;
             var param = (TabelWorkerThreadParam)p;
 
+            Thread.CurrentThread.Name = $"Import:{param.Item.Schema}:{param.Item.Table}";
+
             try
             {
                 UpdateListviewText(param.Item.ListViewRowIndex, 2, "Starting");
@@ -186,7 +188,23 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
             string fullTargetSchema = $"{targetSchema}:{item.Schema}:{item.Table}".Replace(":dbo", "");
 
-            client.Schema.CreateFullSchema(fullTargetSchema);
+            while (true)
+            {
+                try
+                {
+                    client.Schema.CreateFullSchema(fullTargetSchema);
+                }
+                catch (Exception ex)
+                {
+                    if (ex.Message.Contains("Deadlock exception"))
+                    {
+                        Thread.Sleep(500);
+                        continue;
+                    }
+                    Console.WriteLine(ex.Message);
+                }
+                break;
+            }
 
             client.Transaction.Begin();
 
@@ -224,13 +242,24 @@ namespace NTDLS.Katzebase.SQLServerMigration
                                     client.Transaction.Begin();
                                 }
 
-                                try
+                                while (true)
                                 {
-                                    client.Document.Store(fullTargetSchema, new KbDocument(dbObject));
-                                }
-                                catch (Exception ex)
-                                {
-                                    Console.WriteLine(ex.Message);
+
+                                    try
+                                    {
+                                        client.Document.Store(fullTargetSchema, new KbDocument(dbObject));
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        if (ex.Message.Contains("Deadlock exception"))
+                                        {
+                                            Thread.Sleep(500);
+                                            client.Transaction.Begin();
+                                            continue;
+                                        }
+                                        Console.WriteLine(ex.Message);
+                                    }
+                                    break;
                                 }
 
                                 lock (_totalRowCountLock)
@@ -254,7 +283,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     }
                     connection.Close();
                 }
-                catch
+                catch (Exception ex)
                 {
                     client.Transaction.Rollback();
                     throw;

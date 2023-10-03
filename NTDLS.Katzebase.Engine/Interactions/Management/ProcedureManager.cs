@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to instanciate procedures manager.", ex);
+                core.Log.Write("Failed to instantiate procedures manager.", ex);
                 throw;
             }
         }

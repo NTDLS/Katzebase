@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate session query handler.", ex);
+                core.Log.Write($"Failed to instantiate session query handler.", ex);
                 throw;
             }
         }

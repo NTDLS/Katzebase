@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate session manager.", ex);
+                core.Log.Write($"Failed to instantiate session manager.", ex);
                 throw;
             }
         }

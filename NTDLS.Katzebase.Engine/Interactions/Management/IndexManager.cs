@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to instanciate indec manager.", ex);
+                core.Log.Write("Failed to instantiate indec manager.", ex);
                 throw;
             }
         }

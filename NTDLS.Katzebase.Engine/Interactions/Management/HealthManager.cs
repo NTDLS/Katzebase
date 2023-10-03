@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to instanciate health manager.", ex);
+                core.Log.Write("Failed to instantiate health manager.", ex);
                 throw;
             }
         }

@@ -16,7 +16,7 @@
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate transaction API handlers.", ex);
+                core.Log.Write($"Failed to instantiate transaction API handlers.", ex);
                 throw;
             }
         }

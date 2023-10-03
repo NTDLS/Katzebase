@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate schema query handler.", ex);
+                core.Log.Write($"Failed to instantiate schema query handler.", ex);
                 throw;
             }
 

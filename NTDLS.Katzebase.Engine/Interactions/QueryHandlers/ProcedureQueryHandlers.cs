@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate procedures query handler.", ex);
+                core.Log.Write($"Failed to instantiate procedures query handler.", ex);
                 throw;
             }
         }

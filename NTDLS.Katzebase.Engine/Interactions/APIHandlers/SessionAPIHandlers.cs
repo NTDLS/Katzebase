@@ -16,7 +16,7 @@
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate session API handlers.", ex);
+                core.Log.Write($"Failed to instantiate session API handlers.", ex);
                 throw;
             }
         }

@@ -84,7 +84,6 @@ namespace NTDLS.Katzebase.Engine
             Log.Write("Starting recovery.");
             Transactions.Recover();
             Log.Write("Recovery complete.");
-
             Heartbeat.Start();
         }
 

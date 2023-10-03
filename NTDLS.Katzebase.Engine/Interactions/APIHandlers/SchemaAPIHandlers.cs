@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate schema API handlers.", ex);
+                core.Log.Write($"Failed to instantiate schema API handlers.", ex);
                 throw;
             }
         }

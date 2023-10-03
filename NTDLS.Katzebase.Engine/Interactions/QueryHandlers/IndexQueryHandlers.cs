@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instanciate index query handler.", ex);
+                core.Log.Write($"Failed to instantiate index query handler.", ex);
                 throw;
             }
         }
