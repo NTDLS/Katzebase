@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
             {
                 _systemProcedureProtypes = new List<Procedure>();
 
-                foreach (var prototype in SystemProcedureImplementation.SystemProcedurePrototypes)
+                foreach (var prototype in SystemProcedurePrototypes.PrototypeStrings)
                 {
                     _systemProcedureProtypes.Add(Procedure.Parse(prototype));
                 }

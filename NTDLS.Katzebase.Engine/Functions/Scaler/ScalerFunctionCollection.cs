@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             {
                 _protypes = new List<ScalerFunction>();
 
-                foreach (var prototype in ScalerFunctionImplementation.FunctionPrototypes)
+                foreach (var prototype in ScalerFunctionImplementation.PrototypeStrings)
                 {
                     _protypes.Add(ScalerFunction.Parse(prototype));
                 }

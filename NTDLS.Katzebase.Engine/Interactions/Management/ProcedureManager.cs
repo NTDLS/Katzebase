@@ -332,16 +332,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             var result = collection.AddNew();
 
                             result.AddField("ProcessId");
-                            result.AddField("TxBlocked");
-                            result.AddField("TxReferences");
-                            result.AddField("TxStartTime");
-                            result.AddField("TxHeldLockKeys");
-                            result.AddField("TxGrantedLocks");
-                            result.AddField("TxDeferredIOs");
-                            result.AddField("TxActive");
-                            result.AddField("TxDeadlocked");
-                            result.AddField("TxCancelled");
-                            result.AddField("TxUserCreated");
+                            result.AddField("Blocked");
+                            result.AddField("References");
+                            result.AddField("StartTime");
+                            result.AddField("HeldLockKeys");
+                            result.AddField("GrantedLocks");
+                            result.AddField("CachedForRead");
+                            result.AddField("DeferredIOs");
+                            result.AddField("IsActive");
+                            result.AddField("IsDeadlocked");
+                            result.AddField("IsCancelled");
+                            result.AddField("IsUserCreated");
 
                             var transactions = _core.Transactions.CloneTransactions();
 
@@ -354,17 +355,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             foreach (var tx in transactions)
                             {
                                 var values = new List<string?> {
-                                    tx.ProcessId.ToString(),
-                                    (tx?.BlockedBy.Count > 0).ToString(),
-                                    tx?.ReferenceCount.ToString(),
-                                    tx?.StartTime.ToString(),
-                                    tx?.HeldLockKeys?.Count.ToString(),
-                                    tx?.GrantedLockCache?.Count.ToString(),
-                                    tx?.DeferredIOs?.Count().ToString(),
-                                    (!(tx?.IsComittedOrRolledBack == true)).ToString(),
-                                    tx?.IsDeadlocked.ToString(),
-                                    tx?.IsCancelled.ToString(),
-                                    tx?.IsUserCreated.ToString()
+                                    $"{tx.ProcessId:0n}",
+                                    $"{(tx?.BlockedBy.Count > 0):0n}",
+                                    $"{tx?.ReferenceCount:0n}",
+                                    $"{tx?.StartTime:0n}",
+                                    $"{tx?.HeldLockKeys?.Count:0n}",
+                                    $"{tx?.GrantedLockCache?.Count:0n}",
+                                    $"{tx?.FilesReadForCache?.Count:0n}",
+                                    $"{tx?.DeferredIOs?.Count():0n}",
+                                    $"{!(tx?.IsComittedOrRolledBack == true)}",
+                                    $"{tx?.IsDeadlocked}",
+                                    $"{tx?.IsCancelled}",
+                                    $"{tx?.IsUserCreated}"
                                 };
                                 result.AddRow(values);
                             }
@@ -382,16 +384,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             result.AddField("ClientName");
                             result.AddField("LoginTime");
                             result.AddField("LastCheckinTime");
-                            result.AddField("TxBlocked");
-                            result.AddField("TxReferences");
-                            result.AddField("TxStartTime");
-                            result.AddField("TxHeldLockKeys");
-                            result.AddField("TxGrantedLocks");
-                            result.AddField("TxDeferredIOs");
-                            result.AddField("TxActive");
-                            result.AddField("TxDeadlocked");
-                            result.AddField("TxCancelled");
-                            result.AddField("TxUserCreated");
+
+                            result.AddField("Blocked");
+                            result.AddField("References");
+                            result.AddField("StartTime");
+                            result.AddField("HeldLockKeys");
+                            result.AddField("GrantedLocks");
+                            result.AddField("CachedForRead");
+                            result.AddField("DeferredIOs");
+                            result.AddField("IsActive");
+                            result.AddField("IsDeadlocked");
+                            result.AddField("IsCancelled");
+                            result.AddField("IsUserCreated");
 
                             var sessions = _core.Sessions.CloneSessions();
                             var transactions = _core.Transactions.CloneTransactions();
@@ -407,21 +411,22 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 var tx = transactions.Where(o => o.ProcessId == session.Value.ProcessId).FirstOrDefault();
 
                                 var values = new List<string?> {
-                                    session.Key.ToString(),
-                                    session.Value.ProcessId.ToString(),
-                                    session.Value.ClientName ?? string.Empty,
-                                    session.Value.LoginTime.ToString(),
-                                    session.Value.LastCheckinTime.ToString(),
-                                    (tx?.BlockedBy.Count > 0).ToString(),
-                                    tx?.ReferenceCount.ToString(),
-                                    tx?.StartTime.ToString(),
-                                    tx?.HeldLockKeys?.Count.ToString(),
-                                    tx?.GrantedLockCache?.Count.ToString(),
-                                    tx?.DeferredIOs?.Count().ToString(),
-                                    (!(tx?.IsComittedOrRolledBack == true)).ToString(),
-                                    tx?.IsDeadlocked.ToString(),
-                                    tx?.IsCancelled.ToString(),
-                                    tx?.IsUserCreated.ToString()
+                                    $"{session.Key}",
+                                    $"{session.Value.ProcessId:n0}",
+                                    $"{session.Value.ClientName ?? string.Empty}",
+                                    $"{session.Value.LoginTime:n0}",
+                                    $"{session.Value.LastCheckinTime:n0}",
+                                    $"{(tx?.BlockedBy.Count > 0):n0}",
+                                    $"{tx?.ReferenceCount:n0}",
+                                    $"{tx?.StartTime:n0}",
+                                    $"{tx?.HeldLockKeys?.Count:n0}",
+                                    $"{tx?.GrantedLockCache?.Count:n0}",
+                                    $"{tx?.FilesReadForCache?.Count:n0}",
+                                    $"{tx?.DeferredIOs?.Count():n0}",
+                                    $"{!(tx?.IsComittedOrRolledBack == true)}",
+                                    $"{tx?.IsDeadlocked}",
+                                    $"{tx?.IsCancelled}",
+                                    $"{tx?.IsUserCreated}"
                                 };
                                 result.AddRow(values);
                             }

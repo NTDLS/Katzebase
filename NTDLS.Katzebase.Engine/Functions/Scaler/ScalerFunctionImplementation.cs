@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
     /// </summary>
     internal class ScalerFunctionImplementation
     {
-        internal static string[] FunctionPrototypes = {
+        internal static string[] PrototypeStrings = {
                 //"Function_Name:ReturnType:param_type/Param_Name=default_value,param_type/Param_Name=default_value
                 "Guid:string:",
                 "IsGreater:boolean:numeric/value1,numeric/value2",

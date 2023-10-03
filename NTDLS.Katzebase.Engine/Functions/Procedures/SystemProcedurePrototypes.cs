@@ -3,9 +3,11 @@
     /// <summary>
     /// Contains procedure protype defintions.
     /// </summary>
-    internal class SystemProcedureImplementation
+    internal class SystemProcedurePrototypes
     {
-        internal static string[] SystemProcedurePrototypes = {
+        //These are implemented in ProcedureManager.
+
+        internal static string[] PrototypeStrings = {
                 "SystemScalerFunctions:",
                 "CheckpointHealthCounters:",
                 "ClearCacheAllocations:",
