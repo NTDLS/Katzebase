@@ -1,11 +1,8 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Debuging;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Library;
-using NTDLS.Katzebase.Engine.Schemas;
 using System.Text;
-using static NTDLS.Katzebase.Debuging.SqlServerTracer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Locking
@@ -71,8 +68,6 @@ namespace NTDLS.Katzebase.Engine.Locking
             {
                 if (transaction.GrantedLockCache.Contains(intention.Key))
                 {
-                    Guid debugBatch = Guid.NewGuid();
-                    SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"Acquire():Lock:CacheGrant -> '{intention.ToString()}'");
                     return;
                 }
             }
@@ -87,10 +82,6 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         private void AcquireInternal(Transaction transaction, LockIntention intention)
         {
-            Guid debugBatch = Guid.NewGuid();
-
-            SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"AcquireInternal():Enter -> '{intention.ToString()}'");
-
             try
             {
                 //We keep track of all transactions that are waiting on locks for a few reasons:
@@ -107,7 +98,6 @@ namespace NTDLS.Katzebase.Engine.Locking
                 {
                     transaction.EnsureActive();
 
-                    /*
                     if ((DateTime.UtcNow - startTime).TotalSeconds > _core.Settings.LockWaitTimeoutSeconds)
                     {
                         var lockWaitTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
@@ -116,7 +106,6 @@ namespace NTDLS.Katzebase.Engine.Locking
                         transaction.Rollback();
                         throw new KbTimeoutException($"Timeout exceeded while waiting on lock: {intention.LockType} : {intention.Operation} : '{intention.ObjectName}'");
                     }
-                    */
 
                     lock (CentralCriticalSections.AcquireLock)
                     {
@@ -158,8 +147,6 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
-                                SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"AcquireInternal():Success:Read -> '{intention.ToString()}'");
-
                                 return;
                             }
                             else
@@ -195,8 +182,6 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
-                                SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"AcquireInternal():Success:Write -> '{intention.ToString()}'");
-
                                 return;
                             }
                             else
@@ -209,8 +194,6 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                     if (transaction.BlockedBy.Any())
                     {
-                        SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"AcquireInternal():Blocked -> '{intention.ToString()}'");
-
                         lock (_transactionWaitingForLocks)
                         {
                             //Get a list of all valid transactions.
@@ -223,8 +206,6 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 //Check to see if the current transaction is waiting on any of those blocked transaction (circular reference).
                                 if (transaction.BlockedBy.Contains(blocked.ProcessId))
                                 {
-                                    SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Exception, $"AcquireInternal():Deadlocked -> '{intention.ToString()}'");
-
                                     #region Deadlock reporting.
 
                                     var deadLockId = Guid.NewGuid().ToString();

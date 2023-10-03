@@ -14,10 +14,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {
+        public Guid Id { get; private set; } = Guid.NewGuid();
         public Dictionary<KbTransactionWarning, HashSet<string>> Warnings { get; private set; } = new();
         public List<KbQueryResultMessage> Messages { get; private set; } = new();
-
-        public List<Atom> Atoms = new();
+        public HashSet<string> FilesReadForCache { get; set; } = new();
+        public List<Atom> Atoms { get; private set; } = new();
         public ulong ProcessId { get; private set; }
         public DateTime StartTime { get; private set; }
         public List<ulong> BlockedBy { get; private set; }
@@ -108,6 +109,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         private void ReleaseLocks()
         {
+            lock (GrantedLockCache)
+            {
+                GrantedLockCache.Clear();
+            }
+
             if (HeldLockKeys != null)
             {
                 lock (HeldLockKeys)
@@ -401,7 +407,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to record file deletion for for process {ProcessId}.", ex);
+                _core.Log.Write($"Failed to record file deletion for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -445,7 +451,31 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to record file deletion for for process {ProcessId}.", ex);
+                _core.Log.Write($"Failed to record file deletion for process {ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        public void RecordFileRead(string filePath)
+        {
+            try
+            {
+                lock (SyncObject)
+                {
+                    EnsureActive();
+
+                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+
+                    lock (FilesReadForCache)
+                    {
+                        FilesReadForCache.Add(filePath);
+                    }
+                    ptRecording?.StopAndAccumulate();
+                }
+            }
+            catch (Exception ex)
+            {
+                _core.Log.Write($"Failed to record file read for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -487,7 +517,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to record file alteration for for process {ProcessId}.", ex);
+                _core.Log.Write($"Failed to record file alteration for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -565,6 +595,12 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             }
                         }
 
+                        foreach (var file in FilesReadForCache)
+                        {
+                            //Un-cache files that we have read too. These might just be persistent in cache and never written and can affect state.
+                            _core.Cache.Remove(file);
+                        }
+
                         try
                         {
                             CleanupTransaction();
@@ -576,7 +612,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                         _transactionManager.RemoveByProcessId(ProcessId);
                         DeleteTemporarySchemas();
-
                     }
                     catch
                     {
@@ -589,11 +624,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     ptRollback?.StopAndAccumulate();
                     PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
-
                 }
                 catch (Exception ex)
                 {
-                    _core.Log.Write($"Failed to rollback transaction for for process {ProcessId}.", ex);
+                    _core.Log.Write($"Failed to rollback transaction for process {ProcessId}.", ex);
                     throw;
                 }
             }
@@ -658,7 +692,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 }
                 catch (Exception ex)
                 {
-                    _core.Log.Write($"Failed to commit transaction for for process {ProcessId}.", ex);
+                    _core.Log.Write($"Failed to commit transaction for process {ProcessId}.", ex);
                     throw;
                 }
             }
@@ -712,7 +746,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to cleanup transaction for for process {ProcessId}.", ex);
+                _core.Log.Write($"Failed to cleanup transaction for process {ProcessId}.", ex);
                 throw;
             }
         }

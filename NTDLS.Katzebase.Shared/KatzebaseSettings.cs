@@ -1,6 +1,4 @@
-﻿using System.IO;
-
-namespace NTDLS.Katzebase.Shared
+﻿namespace NTDLS.Katzebase.Shared
 {
     public class KatzebaseSettings
     {

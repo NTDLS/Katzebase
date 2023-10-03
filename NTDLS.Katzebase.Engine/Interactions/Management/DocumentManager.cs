@@ -1,11 +1,9 @@
 ﻿using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Debuging;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Schemas;
-using static NTDLS.Katzebase.Debuging.SqlServerTracer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -131,7 +129,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             return InsertDocument(transaction, physicalSchema, pageContent);
-
         }
 
         /// <summary>
@@ -139,10 +136,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         internal DocumentPointer InsertDocument(Transaction transaction, PhysicalSchema physicalSchema, string pageContent)
         {
-            Guid debugBatch = Guid.NewGuid();
-
-            SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"InsertDocument():Enter -> '{physicalSchema.DiskPath}'");
-
             try
             {
                 //Open the document page catalog:
@@ -215,13 +208,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Update all of the indexes that referecne the document.
                 _core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, documentPointer);
 
-                SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"InsertDocument():Success -> '{physicalSchema.DiskPath}'");
-
                 return documentPointer;
             }
             catch (Exception ex)
             {
-                SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"InsertDocument():Fail -> '{physicalSchema.DiskPath}'");
                 _core.Log.Write($"Failed to insert document for process {transaction.ProcessId}.", ex);
                 throw;
             }

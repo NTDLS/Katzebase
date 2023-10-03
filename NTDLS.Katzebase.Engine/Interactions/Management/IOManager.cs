@@ -1,10 +1,8 @@
 ﻿using Newtonsoft.Json;
 using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Debuging;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Library;
-using static NTDLS.Katzebase.Debuging.SqlServerTracer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
@@ -100,10 +98,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal T InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format, bool useCompression = true)
         {
-            Guid debugBatch = Guid.NewGuid();
-
-            SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"InternalTrackedGet():Enter -> '{filePath}'");
-
             try
             {
                 lock (transaction.SyncObject)
@@ -112,12 +106,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     transaction.LockFile(intendedOperation, filePath);
 
+                    transaction.RecordFileRead(filePath);
+
                     var debugObj = transaction.HeldLockKeys?.Where(o => o.ObjectLock.DiskPath.ToLower() == filePath.ToLower())?.FirstOrDefault();
-
-                    if (debugObj == null)
-                    {
-
-                    }
 
                     if (_core.Settings.DeferredIOEnabled)
                     {
@@ -131,7 +122,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             _core.Health.Increment(HealthCounterType.IODeferredIOReads);
                             _core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
-                            SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"InternalTrackedGet():Deferred -> '{filePath}'");
                             return deferredIOObject;
                         }
                     }
@@ -147,7 +137,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             _core.Health.Increment(HealthCounterType.IOCacheReadHits);
                             _core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
-                            SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"InternalTrackedGet():CacheHit -> '{filePath}'");
                             return (T)cachedObject;
                         }
                     }
@@ -161,8 +150,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (format == IOFormat.JSON)
                     {
-                        SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"InternalTrackedGet():PhysicalRead -> '{filePath}'");
-
                         string text = string.Empty;
                         var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
                         if (_core.Settings.UseCompression && useCompression)
@@ -182,8 +169,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                     else if (format == IOFormat.PBuf)
                     {
-                        SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"InternalTrackedGet():PhysicalRead -> '{filePath}'");
-
                         var ptIORead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.IORead);
                         if (_core.Settings.UseCompression && useCompression)
                         {
@@ -215,15 +200,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     KbUtility.EnsureNotNull(deserializedObject);
 
-                    SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"InternalTrackedGet():Success -> '{filePath}'");
-
                     return deserializedObject;
                 }
             }
             catch (Exception ex)
             {
-                SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Exception, $"InternalTrackedGet():Fail -> '{filePath}'");
-
                 _core.Log.Write($"Failed to get tracked file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
@@ -255,9 +236,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal void PutPBufNonTracked(string filePath, object deserializedObject, bool useCompression = true)
         {
-            Guid debugBatch = Guid.NewGuid();
-            SqlServerTracer.Trace(debugBatch, 0, DebugTraceSeverity.Info, $"PutPBufNonTracked():Enter -> '{filePath}'");
-
             try
             {
                 if (_core.Settings.UseCompression && useCompression)
@@ -290,10 +268,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         private void InternalTrackedPut(Transaction transaction, string filePath, object deserializedObject, IOFormat format, bool useCompression = true)
         {
-            Guid debugBatch = Guid.NewGuid();
-
-            SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"InternalTrackedPut():Enter -> '{filePath}'");
-
             try
             {
                 lock (transaction.SyncObject)
@@ -326,8 +300,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                             _core.Health.Increment(HealthCounterType.IODeferredIOWrites);
 
-                            SqlServerTracer.Trace(debugBatch, transaction.ProcessId, DebugTraceSeverity.Info, $"InternalTrackedPut():Deferred -> '{filePath}'");
-
                             return; //We can skip caching because we write this to the deferred IO cache - which is infinitely more deterministic than the memory cache auto-ejections.
                         }
                     }
@@ -344,8 +316,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                         aproximateSizeInBytes = text.Length;
 
-                        SqlServerTracer.Trace(debugBatch, transaction?.ProcessId ?? 0, DebugTraceSeverity.Info, $"InternalTrackedPut():PhysicalWrite -> '{filePath}'");
-
                         if (_core.Settings.UseCompression && useCompression)
                         {
                             File.WriteAllBytes(filePath, Library.Compression.Deflate.Compress(text));
@@ -358,8 +328,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     else if (format == IOFormat.PBuf)
                     {
                         var ptSerialize = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Serialize);
-
-                        SqlServerTracer.Trace(debugBatch, transaction?.ProcessId ?? 0, DebugTraceSeverity.Info, $"InternalTrackedPut():PhysicalWrite -> '{filePath}'");
 
                         if (_core.Settings.UseCompression && useCompression)
                         {
@@ -394,13 +362,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         _core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
                     }
                 }
-
-                SqlServerTracer.Trace(debugBatch, transaction?.ProcessId ?? 0, DebugTraceSeverity.Info, $"InternalTrackedPut():Success-> '{filePath}'");
             }
             catch (Exception ex)
             {
-                SqlServerTracer.Trace(debugBatch, transaction?.ProcessId ?? 0, DebugTraceSeverity.Exception, $"InternalTrackedPut():Fail-> '{filePath}'");
-
                 _core.Log.Write($"Failed to put internal tracked file for process id {transaction?.ProcessId ?? 0}.", ex);
                 throw;
             }
