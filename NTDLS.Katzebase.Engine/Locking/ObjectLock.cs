@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Locking
     {
         private readonly Core _core;
         public string DiskPath { get; private set; }
-        public LockType LockType { get; private set; }
+        public LockGranularity Granularity { get; private set; }
         public List<ObjectLockKey> Keys { get; private set; } = new();
 
         /// <summary>
@@ -21,18 +21,12 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             _core = core;
             DiskPath = intention.DiskPath;
-            LockType = intention.LockType;
+            Granularity = intention.Granularity;
 
-            if (LockType == LockType.Directory && (DiskPath.EndsWith('\\') == false))
+            if (Granularity == LockGranularity.Directory && (DiskPath.EndsWith('\\') == false))
             {
                 DiskPath = $"{DiskPath}\\";
             }
-        }
-
-        enum LockDisposition
-        {
-            Acquire,
-            Release
         }
 
         public ObjectLockKey IssueSingleUseKey(Transaction transaction, LockIntention lockIntention)
@@ -41,9 +35,8 @@ namespace NTDLS.Katzebase.Engine.Locking
             {
                 lock (CentralCriticalSections.AcquireLock)
                 {
-                    var key = new ObjectLockKey(_core, this, transaction.ProcessId, lockIntention.Operation);
+                    var key = new ObjectLockKey(this, transaction.ProcessId, lockIntention.Operation);
                     Keys.Add(key);
-
                     return key;
                 }
             }

@@ -18,6 +18,7 @@
                 "ShowCachePartitions:",
                 "ShowHealthCounters:",
                 "ShowMemoryUtilization:",
+                "ShowBlockTree:",
                 "ShowProcesses:Numeric/processId=null",
                 "ShowTransactions:Numeric/processId=null",
                 "ShowWaitingLocks:Numeric/processId=null",

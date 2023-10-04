@@ -14,6 +14,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {
+        public LockIntention? CurrentLockIntention { get; set; }
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; private set; } = Guid.NewGuid();
         public Dictionary<KbTransactionWarning, HashSet<string>> Warnings { get; private set; } = new();
@@ -22,7 +23,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public List<Atom> Atoms { get; private set; } = new();
         public ulong ProcessId { get; private set; }
         public DateTime StartTime { get; private set; }
-        public List<ulong> BlockedBy { get; private set; }
+        /// <summary>
+        /// Outstanding lock-keys that are blocking this transaction.
+        /// </summary>
+        public List<ObjectLockKey> BlockedByKeys { get; private set; }
         public bool IsDeadlocked { get; set; }
         public List<ObjectLockKey>? HeldLockKeys { get; private set; }
         public PerformanceTrace? PT { get; private set; } = null;
@@ -98,13 +102,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             Messages.Add(new KbQueryResultMessage(text, type));
         }
 
-        internal List<ulong> CloneBlocks()
+        internal List<ObjectLockKey> CloneBlocks()
         {
             lock (CentralCriticalSections.AcquireLock)
             {
-                var clone = new List<ulong>();
-                clone.AddRange(BlockedBy);
-                return clone;
+                return new List<ObjectLockKey>(BlockedByKeys);
             }
         }
 
@@ -193,7 +195,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     lock (HeldLockKeys)
                     {
-                        var lockIntention = new LockIntention(diskpath, LockType.File, lockOperation);
+                        var lockIntention = new LockIntention(diskpath, LockGranularity.File, lockOperation);
                         _core.Locking.Locks.Acquire(this, lockIntention);
                     }
                     ptLock?.StopAndAccumulate();
@@ -222,7 +224,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     lock (HeldLockKeys)
                     {
-                        var lockIntention = new LockIntention(diskpath, LockType.Directory, lockOperation);
+                        var lockIntention = new LockIntention(diskpath, LockGranularity.Directory, lockOperation);
                         _core.Locking.Locks.Acquire(this, lockIntention);
                     }
 
@@ -265,7 +267,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             StartTime = DateTime.UtcNow;
             ProcessId = processId;
             _transactionManager = transactionManager;
-            BlockedBy = new List<ulong>();
+            //BlockedBy = new List<ulong>();
+            BlockedByKeys = new List<ObjectLockKey>();
 
             if (isRecovery == false)
             {

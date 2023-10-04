@@ -45,7 +45,7 @@
             Exceptions
         }
 
-        public enum LockType
+        public enum LockGranularity
         {
             Directory = 1,
             File = 2

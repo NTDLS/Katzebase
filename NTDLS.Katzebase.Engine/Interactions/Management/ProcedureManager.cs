@@ -264,13 +264,84 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             return collection;
                         }
                     //---------------------------------------------------------------------------------------------------------------------------
+                    case "showblocktree":
+                        {
+                            //TODO Take a snap of transaction block, find the headers, display the a wait trees.
+
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
+
+                            var transactions = _core.Transactions.CloneTransactions();
+
+                            var allBlocks = transactions.SelectMany(o => o.BlockedByKeys).ToList();
+
+                            var blockHeaders = transactions.Where(tx =>
+                                tx.BlockedByKeys.Count == 0 //Transaction is not blocked.
+                                && allBlocks.Where(o => o.ProcessId == tx.ProcessId).Any() //Transaction is blocking other transatransactions.
+                            ).ToList();
+
+                            var helpText = new StringBuilder();
+
+                            foreach (var blocker in blockHeaders)
+                            {
+                                RecurseBlocks(transactions, blocker, 0, ref helpText);
+                            }
+
+                            void RecurseBlocks(List<Transaction> transactions, Transaction blocker, int level, ref StringBuilder helpText)
+                            {
+                                var blockedByMe = transactions.Where(o => o.BlockedByKeys.Where(o => o.ProcessId == blocker.ProcessId).Any()).ToList();
+                                if (blockedByMe.Any() == false)
+                                {
+                                    return;
+                                }
+
+                                helpText.AppendLine(Str(level) + "Blocking Process {");
+                                helpText.AppendLine(Str(level + 1) + $"PID: {blocker.ProcessId}");
+                                helpText.AppendLine(Str(level + 1) + $"Operation: {blocker.TopLevelOperation}");
+                                if (blocker.CurrentLockIntention != null)
+                                {
+                                    helpText.AppendLine(Str(level + 1) + $"Intention: {blocker.CurrentLockIntention?.Granularity}+{blocker.CurrentLockIntention?.Operation}->{blocker.CurrentLockIntention?.DiskPath}");
+                                }
+
+                                foreach (var blocked in blockedByMe)
+                                {
+                                    var waitingKeys = blocked.BlockedByKeys.Where(o => o.ProcessId == blocker.ProcessId).ToList();
+
+                                    helpText.AppendLine(Str(level + 1) + "Blocked Process {");
+                                    helpText.AppendLine(Str(level + 2) + $"PID: {blocked.ProcessId}");
+                                    helpText.AppendLine(Str(level + 2) + $"Operation: {blocked.TopLevelOperation}");
+                                    if (blocked.CurrentLockIntention != null)
+                                    {
+                                        helpText.AppendLine(Str(level + 3) + $"Intention: {blocked.CurrentLockIntention?.Granularity}+{blocked.CurrentLockIntention?.Operation}->{blocked.CurrentLockIntention?.DiskPath}");
+                                    }
+                                    helpText.AppendLine(Str(level + 2) + "Blocking Keys {");
+                                    foreach (var waitingKey in waitingKeys)
+                                    {
+                                        helpText.AppendLine(Str(level + 3) + $"{waitingKey.ObjectLock.Granularity}+{waitingKey.Operation}->{waitingKey.ObjectLock.DiskPath}");
+                                    }
+                                    helpText.AppendLine(Str(level + 2) + "}");
+                                    helpText.AppendLine(Str(level + 1) + "}");
+
+                                    RecurseBlocks(transactions, blocked, level + 1, ref helpText);
+
+                                    helpText.AppendLine(Str(level) + "}");
+                                }
+
+                                string Str(int count) => (new string(' ', count * 4));
+                            }
+
+                            result.Messages.Add(new KbQueryResultMessage(helpText.ToString(), KbConstants.KbMessageType.Verbose));
+
+                            return collection;
+                        }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "showwaitinglocks":
                         {
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
 
                             result.AddField("ProcessId");
-                            result.AddField("LockType");
+                            result.AddField("Granularity");
                             result.AddField("Operation");
                             result.AddField("ObjectName");
 
@@ -286,7 +357,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             {
                                 var values = new List<string?> {
                                     waitingForLock.Key.ProcessId.ToString(),
-                                    waitingForLock.Value.LockType.ToString(),
+                                    waitingForLock.Value.Granularity.ToString(),
                                     waitingForLock.Value.Operation.ToString(),
                                     waitingForLock.Value.ObjectName.ToString(),
                                 };
@@ -357,8 +428,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             {
                                 var values = new List<string?> {
                                     $"{tx.ProcessId:n0}",
-                                    $"{(tx?.BlockedBy.Count > 0):n0}",
-                                    string.Join(", ", tx?.BlockedBy ?? new List<ulong>()),
+                                    $"{(tx?.BlockedByKeys.Count > 0):n0}",
+                                    string.Join(", ", tx?.BlockedByKeys.Select(o=>o.ProcessId) ?? new List<ulong>()),
                                     $"{tx?.ReferenceCount:n0}",
                                     $"{tx?.StartTime}",
                                     $"{tx?.HeldLockKeys?.Count:n0}",
@@ -419,8 +490,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                     $"{session.Value.ClientName ?? string.Empty}",
                                     $"{session.Value.LoginTime}",
                                     $"{session.Value.LastCheckinTime}",
-                                    $"{(tx?.BlockedBy.Count > 0):n0}",
-                                    string.Join(", ", tx?.BlockedBy ?? new List<ulong>()),
+                                    $"{(tx?.BlockedByKeys.Count > 0):n0}",
+                                    string.Join(", ", tx?.BlockedByKeys.Select(o=>o.ProcessId) ?? new List<ulong>()),
                                     $"{tx?.ReferenceCount:n0}",
                                     $"{tx?.StartTime}",
                                     $"{tx?.HeldLockKeys?.Count:n0}",

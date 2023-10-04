@@ -4,19 +4,19 @@ namespace NTDLS.Katzebase.Engine.Locking
 {
     public class LockIntention
     {
-        public LockType LockType { get; private set; }
+        public LockGranularity Granularity { get; private set; }
         public LockOperation Operation { get; private set; }
         public string DiskPath { get; private set; }
 
-        public string Key => $"{LockType}:{Operation}:{DiskPath}";
+        public string Key => $"{Granularity}:{Operation}:{DiskPath}";
 
-        public LockIntention(string diskPath, LockType lockType, LockOperation operation)
+        public LockIntention(string diskPath, LockGranularity lockGranularity, LockOperation operation)
         {
             DiskPath = diskPath;
-            LockType = lockType;
+            Granularity = lockGranularity;
             Operation = operation;
 
-            if (lockType == LockType.Directory && (DiskPath.EndsWith('\\') == false))
+            if (lockGranularity == LockGranularity.Directory && (DiskPath.EndsWith('\\') == false))
             {
                 DiskPath = $"{DiskPath}\\";
             }
@@ -26,26 +26,26 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             get
             {
-                return $"{LockType}:{DiskPath}";
+                return $"{Granularity}:{DiskPath}";
             }
         }
 
         public bool IsObjectEqual(LockIntention intention)
         {
-            return (intention.LockType == LockType
+            return (intention.Granularity == Granularity
                 && intention.DiskPath == DiskPath);
         }
 
         public bool IsEqual(LockIntention intention)
         {
-            return (intention.LockType == LockType
+            return (intention.Granularity == Granularity
                 && intention.Operation == Operation
                 && intention.DiskPath == DiskPath);
         }
 
         public new string ToString()
         {
-            return $"{LockType}:{Operation}:{DiskPath}";
+            return $"{Granularity}+{Operation}->{DiskPath}";
         }
     }
 }

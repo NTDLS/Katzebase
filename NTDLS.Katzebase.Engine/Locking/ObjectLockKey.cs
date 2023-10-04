@@ -4,9 +4,8 @@ namespace NTDLS.Katzebase.Engine.Locking
 {
     internal class ObjectLockKey
     {
-        private readonly Core _core;
         public ObjectLock ObjectLock { get; private set; }
-        public LockOperation LockOperation { get; private set; }
+        public LockOperation Operation { get; private set; }
         public ulong ProcessId { get; private set; }
 
         public void TurnInKey()
@@ -14,12 +13,16 @@ namespace NTDLS.Katzebase.Engine.Locking
             ObjectLock.TurnInKey(this);
         }
 
-        public ObjectLockKey(Core core, ObjectLock objectLock, ulong processId, LockOperation lockOperation)
+        public ObjectLockKey(ObjectLock objectLock, ulong processId, LockOperation operation)
         {
-            _core = core;
             ProcessId = processId;
             ObjectLock = objectLock;
-            LockOperation = lockOperation;
+            Operation = operation;
+        }
+
+        public new string ToString()
+        {
+            return $"{ObjectLock.Granularity}+{Operation}->{ObjectLock.DiskPath}";
         }
     }
 }

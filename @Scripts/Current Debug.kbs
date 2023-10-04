@@ -1,8 +1,4 @@
-create schema aaa
-
-drop schema aaa
-
---EXEC ShowProcesses
+EXEC ShowBlockTree
 
 /*
 select

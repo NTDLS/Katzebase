@@ -40,9 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             lock (_collection)
             {
-                var clone = new List<Transaction>();
-                clone.AddRange(_collection);
-                return clone;
+                return new List<Transaction>(_collection);
             }
         }
 
