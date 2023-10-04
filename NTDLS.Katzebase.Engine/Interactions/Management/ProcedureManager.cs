@@ -298,9 +298,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 helpText.AppendLine(Str(level) + "Blocking Process {");
                                 helpText.AppendLine(Str(level + 1) + $"PID: {blocker.ProcessId}");
                                 helpText.AppendLine(Str(level + 1) + $"Operation: {blocker.TopLevelOperation}");
+                                helpText.AppendLine(Str(level + 1) + $"StartTime: {blocker.StartTime}");
                                 if (blocker.CurrentLockIntention != null)
                                 {
-                                    helpText.AppendLine(Str(level + 1) + $"Intention: {blocker.CurrentLockIntention?.Granularity}+{blocker.CurrentLockIntention?.Operation}->{blocker.CurrentLockIntention?.DiskPath}");
+                                    var age = (DateTime.UtcNow - (blocker.CurrentLockIntention?.CreationTime ?? DateTime.UtcNow)).TotalMilliseconds;
+                                    helpText.AppendLine(Str(level + 1) + $"Intention: {blocker.CurrentLockIntention?.ToString()} ({age:n0}ms)");
                                 }
 
                                 foreach (var blocked in blockedByMe)
@@ -310,14 +312,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                     helpText.AppendLine(Str(level + 1) + "Blocked Process {");
                                     helpText.AppendLine(Str(level + 2) + $"PID: {blocked.ProcessId}");
                                     helpText.AppendLine(Str(level + 2) + $"Operation: {blocked.TopLevelOperation}");
+                                    helpText.AppendLine(Str(level + 2) + $"StartTime: {blocked.StartTime}");
                                     if (blocked.CurrentLockIntention != null)
                                     {
-                                        helpText.AppendLine(Str(level + 2) + $"Intention: {blocked.CurrentLockIntention?.Granularity}+{blocked.CurrentLockIntention?.Operation}->{blocked.CurrentLockIntention?.DiskPath}");
+                                        var age = (DateTime.UtcNow - (blocked.CurrentLockIntention?.CreationTime ?? DateTime.UtcNow)).TotalMilliseconds;
+                                        helpText.AppendLine(Str(level + 2) + $"Intention: {blocked.CurrentLockIntention?.ToString()} ({age:n0}ms)");
                                     }
                                     helpText.AppendLine(Str(level + 2) + "Blocking Keys {");
                                     foreach (var waitingKey in waitingKeys)
                                     {
-                                        helpText.AppendLine(Str(level + 3) + $"{waitingKey.ObjectLock.Granularity}+{waitingKey.Operation}->{waitingKey.ObjectLock.DiskPath}");
+                                        var age = (DateTime.UtcNow - waitingKey.IssueTime).TotalMilliseconds;
+                                        helpText.AppendLine(Str(level + 3) + $"{waitingKey.ToString()} ({age:n0}ms)");
                                     }
                                     helpText.AppendLine(Str(level + 2) + "}");
                                     helpText.AppendLine(Str(level + 1) + "}");
