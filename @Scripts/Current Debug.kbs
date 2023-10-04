@@ -1,9 +1,7 @@
-
-GO
 insert into Dummyload:LoadB
-(
-aa = bb
-)
+	(Name = 'AA'),(Name = 'BB'),(Name = 'CC'),
+	(Name = 'DD'),(Name = 'EE'),(Name = 'FF')
+
 --EXEC ShowBlockTree
 
 /*

@@ -124,17 +124,15 @@ namespace NTDLS.Katzebase.Engine.Locking
                     _transactionWaitingForLocks.Add(transaction, intention);
                 }
 
-                DateTime startTime = DateTime.UtcNow;
-
                 while (true)
                 {
                     transaction.EnsureActive();
 
                     transaction.CurrentLockIntention = intention;
 
-                    if (_core.Settings.LockWaitTimeoutSeconds > 0 && (DateTime.UtcNow - startTime).TotalSeconds > _core.Settings.LockWaitTimeoutSeconds)
+                    if (_core.Settings.LockWaitTimeoutSeconds > 0 && (DateTime.UtcNow - intention.CreationTime).TotalSeconds > _core.Settings.LockWaitTimeoutSeconds)
                     {
-                        var lockWaitTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                        var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
                         _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
                         _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
                         transaction.Rollback();
@@ -177,7 +175,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                     transaction.HeldLockKeys.Add(lockKey);
                                 }
 
-                                var lockWaitTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                                var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
@@ -212,7 +210,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                     transaction.HeldLockKeys.Add(lockKey);
                                 }
 
-                                var lockWaitTime = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                                var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
@@ -224,103 +222,102 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 transaction.BlockedByKeys.AddRange(blockers.Distinct());
                             }
                         }
-                    }
 
-                    if (transaction.BlockedByKeys.Any())
-                    {
-                        lock (_transactionWaitingForLocks)
+                        if (transaction.BlockedByKeys.Any())
                         {
-                            //Get a list of all valid transactions.
-                            var waitingTransactions = _transactionWaitingForLocks.Keys.Where(o => o.IsDeadlocked == false);
-
-                            //Get a list of transactions that are blocked by the current transaction.
-                            var blockedByMe = waitingTransactions.Where(o => o.BlockedByKeys.Where(k => k.ProcessId == transaction.ProcessId).Any());
-                            foreach (var blocked in blockedByMe)
+                            lock (_transactionWaitingForLocks)
                             {
-                                //Check to see if the current transaction is waiting on any of those blocked transaction (circular reference).
-                                if (transaction.BlockedByKeys.Where(o => o.ProcessId == blocked.ProcessId).Any())
+                                //Get a list of all valid transactions.
+                                var waitingTransactions = _transactionWaitingForLocks.Keys.Where(o => o.IsDeadlocked == false);
+
+                                //Get a list of transactions that are blocked by the current transaction.
+                                var blockedByMe = waitingTransactions.Where(o => o.BlockedByKeys.Where(k => k.ProcessId == transaction.ProcessId).Any());
+                                foreach (var blocked in blockedByMe)
                                 {
-                                    #region Deadlock reporting.
-
-                                    var deadLockId = Guid.NewGuid().ToString();
-
-                                    var explanation = new StringBuilder();
-
-                                    explanation.AppendLine("Deadlock {");
-                                    explanation.AppendLine($"    Id: {deadLockId}");
-                                    explanation.AppendLine("    Blocking Transactions {");
-                                    explanation.AppendLine($"        ProcessId: {transaction.ProcessId}");
-                                    explanation.AppendLine($"        Operation: {transaction.TopLevelOperation}");
-                                    explanation.AppendLine($"        ReferenceCount: {transaction.ReferenceCount}");
-                                    explanation.AppendLine($"        StartTime: {transaction.StartTime}");
-
-                                    explanation.AppendLine("        Lock Intention {");
-                                    explanation.AppendLine($"            ProcessId: {transaction.ProcessId}");
-                                    explanation.AppendLine($"            Granularity: {intention.Granularity}");
-                                    explanation.AppendLine($"            Operation: {intention.Operation}");
-                                    explanation.AppendLine($"            Object: {intention.DiskPath}");
-                                    explanation.AppendLine("        }");
-
-                                    KbUtility.EnsureNotNull(transaction.HeldLockKeys);
-
-                                    explanation.AppendLine("        Held Locks {");
-                                    foreach (var key in transaction.HeldLockKeys)
+                                    //Check to see if the current transaction is waiting on any of those blocked transaction (circular reference).
+                                    if (transaction.BlockedByKeys.Where(o => o.ProcessId == blocked.ProcessId).Any())
                                     {
-                                        explanation.AppendLine($"            ({key.ObjectLock.Granularity}) ({key.Operation}) {key.ObjectLock.DiskPath}");
-                                    }
-                                    explanation.AppendLine("        }");
+                                        #region Deadlock reporting.
 
-                                    explanation.AppendLine("        Awaiting Locks {");
-                                    foreach (var waitingFor in _transactionWaitingForLocks.Where(o => o.Key == transaction))
-                                    {
-                                        explanation.AppendLine($"            ({waitingFor.Value.Granularity}) ({waitingFor.Value.Operation}) {waitingFor.Value.DiskPath}");
-                                    }
-                                    explanation.AppendLine("        }");
+                                        var deadLockId = Guid.NewGuid().ToString();
 
-                                    explanation.AppendLine("}");
+                                        var explanation = new StringBuilder();
 
-                                    explanation.AppendLine("Blocked Transaction(s) {");
-                                    foreach (var waiter in blockedByMe)
-                                    {
-                                        explanation.AppendLine($"        ProcessId: {waiter.ProcessId}");
-                                        explanation.AppendLine($"        Operation: {waiter.TopLevelOperation}");
-                                        explanation.AppendLine($"        ReferenceCount: {waiter.ReferenceCount}");
-                                        explanation.AppendLine($"        StartTime: {waiter.StartTime}");
+                                        explanation.AppendLine("Deadlock {");
+                                        explanation.AppendLine($"    Id: {deadLockId}");
+                                        explanation.AppendLine("    Blocking Transactions {");
+                                        explanation.AppendLine($"        ProcessId: {transaction.ProcessId}");
+                                        explanation.AppendLine($"        Operation: {transaction.TopLevelOperation}");
+                                        explanation.AppendLine($"        ReferenceCount: {transaction.ReferenceCount}");
+                                        explanation.AppendLine($"        StartTime: {transaction.StartTime}");
 
-                                        KbUtility.EnsureNotNull(waiter.HeldLockKeys);
+                                        explanation.AppendLine("        Lock Intention {");
+                                        explanation.AppendLine($"            ProcessId: {transaction.ProcessId}");
+                                        explanation.AppendLine($"            Granularity: {intention.Granularity}");
+                                        explanation.AppendLine($"            Operation: {intention.Operation}");
+                                        explanation.AppendLine($"            Object: {intention.DiskPath}");
+                                        explanation.AppendLine("        }");
+
+                                        KbUtility.EnsureNotNull(transaction.HeldLockKeys);
 
                                         explanation.AppendLine("        Held Locks {");
-                                        foreach (var key in waiter.HeldLockKeys)
+                                        foreach (var key in transaction.HeldLockKeys)
                                         {
-                                            explanation.AppendLine($"            {key.ToString()}");
+                                            explanation.AppendLine($"            ({key.ObjectLock.Granularity}) ({key.Operation}) {key.ObjectLock.DiskPath}");
                                         }
                                         explanation.AppendLine("        }");
 
                                         explanation.AppendLine("        Awaiting Locks {");
-                                        foreach (var waitingFor in _transactionWaitingForLocks.Where(o => o.Key == waiter))
+                                        foreach (var waitingFor in _transactionWaitingForLocks.Where(o => o.Key == transaction))
                                         {
-                                            explanation.AppendLine($"            {waitingFor.Value.ToString()}");
+                                            explanation.AppendLine($"            ({waitingFor.Value.Granularity}) ({waitingFor.Value.Operation}) {waitingFor.Value.DiskPath}");
                                         }
                                         explanation.AppendLine("        }");
+
+                                        explanation.AppendLine("}");
+
+                                        explanation.AppendLine("Blocked Transaction(s) {");
+                                        foreach (var waiter in blockedByMe)
+                                        {
+                                            explanation.AppendLine($"        ProcessId: {waiter.ProcessId}");
+                                            explanation.AppendLine($"        Operation: {waiter.TopLevelOperation}");
+                                            explanation.AppendLine($"        ReferenceCount: {waiter.ReferenceCount}");
+                                            explanation.AppendLine($"        StartTime: {waiter.StartTime}");
+
+                                            KbUtility.EnsureNotNull(waiter.HeldLockKeys);
+
+                                            explanation.AppendLine("        Held Locks {");
+                                            foreach (var key in waiter.HeldLockKeys)
+                                            {
+                                                explanation.AppendLine($"            {key.ToString()}");
+                                            }
+                                            explanation.AppendLine("        }");
+
+                                            explanation.AppendLine("        Awaiting Locks {");
+                                            foreach (var waitingFor in _transactionWaitingForLocks.Where(o => o.Key == waiter))
+                                            {
+                                                explanation.AppendLine($"            {waitingFor.Value.ToString()}");
+                                            }
+                                            explanation.AppendLine("        }");
+                                        }
+                                        explanation.AppendLine("    }");
+                                        explanation.AppendLine("}");
+
+                                        transaction.AddMessage(explanation.ToString(), KbConstants.KbMessageType.Deadlock);
+
+                                        #endregion
+
+                                        transaction.IsDeadlocked = true;
+                                        transaction.Rollback();
+
+                                        _core.Health.Increment(HealthCounterType.DeadlockCount);
+
+                                        throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.", explanation.ToString());
                                     }
-                                    explanation.AppendLine("    }");
-                                    explanation.AppendLine("}");
-
-                                    transaction.AddMessage(explanation.ToString(), KbConstants.KbMessageType.Deadlock);
-
-                                    #endregion
-
-                                    transaction.IsDeadlocked = true;
-                                    transaction.Rollback();
-
-                                    _core.Health.Increment(HealthCounterType.DeadlockCount);
-
-                                    throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.", explanation.ToString());
                                 }
                             }
                         }
                     }
-
                     Thread.Sleep(1);
                 }
             }

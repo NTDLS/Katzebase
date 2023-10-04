@@ -4,6 +4,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 {
     public class LockIntention
     {
+        public DateTime CreationTime { get; set; }
         public LockGranularity Granularity { get; private set; }
         public LockOperation Operation { get; private set; }
         public string DiskPath { get; private set; }
@@ -12,6 +13,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         public LockIntention(string diskPath, LockGranularity lockGranularity, LockOperation operation)
         {
+            CreationTime = DateTime.UtcNow;
             DiskPath = diskPath;
             Granularity = lockGranularity;
             Operation = operation;
