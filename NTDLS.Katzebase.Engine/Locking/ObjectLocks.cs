@@ -136,7 +136,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                         _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
                         _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
                         transaction.Rollback();
-                        throw new KbTimeoutException($"Timeout exceeded while waiting on lock: {intention.Granularity} : {intention.Operation} : '{intention.ObjectName}'");
+                        throw new KbTimeoutException($"Timeout exceeded while waiting on lock: {intention.ToString()}");
                     }
 
                     lock (CentralCriticalSections.AcquireLock)
@@ -263,14 +263,14 @@ namespace NTDLS.Katzebase.Engine.Locking
                                         explanation.AppendLine("        Held Locks {");
                                         foreach (var key in transaction.HeldLockKeys)
                                         {
-                                            explanation.AppendLine($"            ({key.ObjectLock.Granularity}) ({key.Operation}) {key.ObjectLock.DiskPath}");
+                                            explanation.AppendLine($"            {key.ToString()}");
                                         }
                                         explanation.AppendLine("        }");
 
                                         explanation.AppendLine("        Awaiting Locks {");
                                         foreach (var waitingFor in _transactionWaitingForLocks.Where(o => o.Key == transaction))
                                         {
-                                            explanation.AppendLine($"            ({waitingFor.Value.Granularity}) ({waitingFor.Value.Operation}) {waitingFor.Value.DiskPath}");
+                                            explanation.AppendLine($"            {waitingFor.Value.ToString()}");
                                         }
                                         explanation.AppendLine("        }");
 
