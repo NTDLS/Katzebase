@@ -40,36 +40,47 @@ namespace NTDLS.Katzebase.Engine.Locking
             {
                 var lockedObjects = new HashSet<ObjectLock>();
 
+                var intentionDirectory = Path.GetDirectoryName(intention.DiskPath) ?? string.Empty;
+
                 //If we are locking a file, then look for all other locks for the exact path.
                 if (intention.Granularity == LockGranularity.File)
                 {
-                    //See if there are any other locks on this file:
-                    var fileLocks = _collection.Where(o => o.Granularity == LockGranularity.File && o.DiskPath == intention.DiskPath);
+                    var fileLocks = _collection.Where(o =>
+                        o.Granularity == LockGranularity.File && o.DiskPath == intention.DiskPath);
                     foreach (var existingLock in fileLocks)
                     {
                         lockedObjects.Add(existingLock);
                     }
                 }
 
-                //Look at existing directory locks and return those that would contain the file (or directory) that we are intending to lock.
-                //This is done by finding existing directory locks where the intended lock path starts with the exising lock path.
-                //When we lock a directory, we intend all lower directories to be locked too.
-                var lowerLevelDirectoryLocks = _collection.Where(o => o.Granularity == LockGranularity.Directory && intention.DiskPath.StartsWith(o.DiskPath));
-                foreach (var existingLock in lowerLevelDirectoryLocks)
+                //Check if the intended file or directory is in a locked directory.
+                var exactDirectoryLocks = _collection.Where(o =>
+                    (o.Granularity == LockGranularity.Directory || o.Granularity == LockGranularity.Path) && intention.DiskPath == intentionDirectory);
+                foreach (var existingLock in exactDirectoryLocks)
                 {
                     lockedObjects.Add(existingLock);
                 }
 
-                //If the intended lock is a directory then we need to find all existing locks that would be contained in the intended lock path.
-                //This is done by looking for all existing locks where the existing lock path thates with the intended lock path.
-                if (intention.Granularity == LockGranularity.Directory)
+                var direcotryAndSubPathLocks = _collection.Where(o =>
+                    o.Granularity == LockGranularity.Path && intentionDirectory.StartsWith(o.DiskPath));
+                foreach (var existingLock in direcotryAndSubPathLocks)
                 {
-                    var higherLevelDirectoryLocks = _collection.Where(o => o.DiskPath.StartsWith(intention.DiskPath));
+                    lockedObjects.Add(existingLock);
+                }
+
+
+                /* TODO: Think though this, seems agressive. If we need to lock a parent path then we should just do it explicitly.
+                //If the intended lock is a path then we need to find all existing locks that would be contained in the intended lock path.
+                //This is done by looking for all existing locks where the existing lock path starts with the intended lock path.
+                if (intention.Granularity == LockGranularity.Path)
+                {
+                    var higherLevelDirectoryLocks = _collection.Where(o => o.DiskPath.StartsWith(intentionDirectory));
                     foreach (var existingLock in higherLevelDirectoryLocks)
                     {
                         lockedObjects.Add(existingLock);
                     }
                 }
+                */
 
                 return lockedObjects;
             }

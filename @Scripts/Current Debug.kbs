@@ -1,4 +1,10 @@
-EXEC ShowBlockTree
+
+GO
+insert into Dummyload:LoadB
+(
+aa = bb
+)
+--EXEC ShowBlockTree
 
 /*
 select

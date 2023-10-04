@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             Granularity = lockGranularity;
             Operation = operation;
 
-            if (lockGranularity == LockGranularity.Directory && (DiskPath.EndsWith('\\') == false))
+            if ((lockGranularity == LockGranularity.Directory || lockGranularity == LockGranularity.Path) && (DiskPath.EndsWith('\\') == false))
             {
                 DiskPath = $"{DiskPath}\\";
             }

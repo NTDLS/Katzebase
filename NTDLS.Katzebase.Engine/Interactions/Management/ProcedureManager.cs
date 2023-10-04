@@ -312,7 +312,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                     helpText.AppendLine(Str(level + 2) + $"Operation: {blocked.TopLevelOperation}");
                                     if (blocked.CurrentLockIntention != null)
                                     {
-                                        helpText.AppendLine(Str(level + 3) + $"Intention: {blocked.CurrentLockIntention?.Granularity}+{blocked.CurrentLockIntention?.Operation}->{blocked.CurrentLockIntention?.DiskPath}");
+                                        helpText.AppendLine(Str(level + 2) + $"Intention: {blocked.CurrentLockIntention?.Granularity}+{blocked.CurrentLockIntention?.Operation}->{blocked.CurrentLockIntention?.DiskPath}");
                                     }
                                     helpText.AppendLine(Str(level + 2) + "Blocking Keys {");
                                     foreach (var waitingKey in waitingKeys)

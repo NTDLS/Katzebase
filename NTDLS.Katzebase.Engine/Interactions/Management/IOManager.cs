@@ -475,7 +475,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                transaction.LockDirectory(LockOperation.Write, diskPath);
+                transaction.LockPath(LockOperation.Write, diskPath);
 
                 if (_core.Settings.CacheEnabled)
                 {

@@ -238,6 +238,37 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
+        public void LockPath(LockOperation lockOperation, string diskpath)
+        {
+            try
+            {
+                lock (SyncObject)
+                {
+                    EnsureActive();
+
+                    var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
+
+                    diskpath = diskpath.ToLower();
+
+                    KbUtility.EnsureNotNull(HeldLockKeys);
+
+                    lock (HeldLockKeys)
+                    {
+                        var lockIntention = new LockIntention(diskpath, LockGranularity.Path, lockOperation);
+                        _core.Locking.Locks.Acquire(this, lockIntention);
+                    }
+
+                    ptLock?.StopAndAccumulate();
+                }
+            }
+            catch (Exception ex)
+            {
+                _core.Log.Write("Failed to acquire file lock.", ex);
+                throw;
+            }
+        }
+
+
         #endregion
 
         public void SetManager(TransactionManager transactionManager)
