@@ -22,8 +22,7 @@ To run the included examples, download the [sample Katzebase database]( https://
 ## SQL Server Migration Tool
 We wven included a tool to import your schema and data from SQL Server into Katzebase.
 
-![image](https://github.com/NTDLS/NTDLS.Katzebase/assets/11428567/e5c8bef6-0b0c-4f04-832c-74567793ea28)
-
+![image](https://github.com/NTDLS/NTDLS.Katzebase/assets/11428567/41959624-0254-4566-a495-05c72f4a3642)
 
 ## Contributing
 
