@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// </summary>
     public class QueryAPIHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public QueryAPIHandlers(Core core)
+        public QueryAPIHandlers(EngineCore core)
         {
             _core = core;
 

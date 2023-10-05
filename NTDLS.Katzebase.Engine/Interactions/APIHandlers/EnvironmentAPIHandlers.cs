@@ -5,9 +5,9 @@
     /// </summary>
     public class EnvironmentAPIHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public EnvironmentAPIHandlers(Core core)
+        public EnvironmentAPIHandlers(EngineCore core)
         {
             _core = core;
 

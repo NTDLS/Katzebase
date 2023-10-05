@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Returns a random sample of all document fields from a schema.
         /// </summary>
-        internal static KbQueryResult SampleSchemaDocuments(Core core, Transaction transaction, string schemaName, int rowLimit = -1)
+        internal static KbQueryResult SampleSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int rowLimit = -1)
         {
             var result = new KbQueryResult();
 
@@ -58,7 +58,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Returns a top list of all document fields from a schema.
         /// </summary>
-        internal static KbQueryResult ListSchemaDocuments(Core core, Transaction transaction, string schemaName, int topCount)
+        internal static KbQueryResult ListSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int topCount)
         {
             var result = new KbQueryResult();
 
@@ -95,7 +95,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Finds all documents using a prepared query. Performs all filtering and ordering.
         /// </summary>
-        internal static KbQueryResult FindDocumentsByPreparedQuery(Core core, Transaction transaction, PreparedQuery query)
+        internal static KbQueryResult FindDocumentsByPreparedQuery(EngineCore core, Transaction transaction, PreparedQuery query)
         {
             var result = new KbQueryResult();
 
@@ -137,7 +137,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <param name="query"></param>
         /// <param name="schemaPrefix"></param>
         /// <returns></returns>
-        internal static IEnumerable<DocumentPointer> FindDocumentPointersByPreparedQuery(Core core, Transaction transaction, PreparedQuery query, string schemaPrefix)
+        internal static IEnumerable<DocumentPointer> FindDocumentPointersByPreparedQuery(EngineCore core, Transaction transaction, PreparedQuery query, string schemaPrefix)
         {
             var schemaMap = new QuerySchemaMap(core, transaction);
 

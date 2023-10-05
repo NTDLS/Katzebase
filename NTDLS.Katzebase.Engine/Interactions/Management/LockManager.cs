@@ -9,9 +9,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     internal class LockManager
     {
         internal ObjectLocks Locks { get; private set; }
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        internal LockManager(Core core)
+        internal LockManager(EngineCore core)
         {
             _core = core;
             try

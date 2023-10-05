@@ -10,9 +10,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class SessionQueryHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public SessionQueryHandlers(Core core)
+        public SessionQueryHandlers(EngineCore core)
         {
             _core = core;
 

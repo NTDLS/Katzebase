@@ -9,9 +9,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// </summary>
     public class DocumentAPIHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public DocumentAPIHandlers(Core core)
+        public DocumentAPIHandlers(EngineCore core)
         {
             _core = core;
 

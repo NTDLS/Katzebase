@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class SchemaManager
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
         private readonly string _rootCatalogFile;
         private PhysicalSchema? _rootPhysicalSchema = null;
 
@@ -51,7 +51,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public SchemaManager(Core core)
+        public SchemaManager(EngineCore core)
         {
             _core = core;
 

@@ -11,9 +11,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class IndexQueryHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public IndexQueryHandlers(Core core)
+        public IndexQueryHandlers(EngineCore core)
         {
             _core = core;
 

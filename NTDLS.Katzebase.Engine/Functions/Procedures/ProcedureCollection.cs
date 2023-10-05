@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
             }
         }
 
-        public static AppliedProcedurePrototype ApplyProcedurePrototype(Core core, Transaction transaction, string procedureName, List<FunctionParameterBase> parameters)
+        public static AppliedProcedurePrototype ApplyProcedurePrototype(EngineCore core, Transaction transaction, string procedureName, List<FunctionParameterBase> parameters)
         {
             if (_systemProcedureProtypes == null)
             {

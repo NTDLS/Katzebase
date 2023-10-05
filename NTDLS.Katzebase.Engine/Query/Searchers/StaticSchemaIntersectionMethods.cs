@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <param name="query"></param>
         /// <param name="gatherDocumentPointersForSchemaPrefix">When not null, the process will focus on obtaining a list of DocumentPointers instead of key/values. This is used for UPDATES and DELETES.</param>
         /// <returns></returns>
-        internal static DocumentLookupResults GetDocumentsByConditions(Core core, Transaction transaction,
+        internal static DocumentLookupResults GetDocumentsByConditions(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix = null)
         {
             var topLevel = schemaMap.First();
@@ -258,11 +258,11 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             public DocumentLookupResults Results_old = new();
             public QuerySchemaMap SchemaMap { get; private set; }
-            public Core Core { get; private set; }
+            public EngineCore Core { get; private set; }
             public Transaction Transaction { get; private set; }
             public PreparedQuery Query { get; private set; }
 
-            public LookupThreadParam(Core core, Transaction transaction, QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
+            public LookupThreadParam(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
             {
                 GatherDocumentPointersForSchemaPrefix = gatherDocumentPointersForSchemaPrefix;
                 Core = core;

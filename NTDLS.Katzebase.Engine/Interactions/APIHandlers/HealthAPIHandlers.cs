@@ -5,9 +5,9 @@
     /// </summary>
     public class HealthAPIHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public HealthAPIHandlers(Core core)
+        public HealthAPIHandlers(EngineCore core)
         {
             _core = core;
 

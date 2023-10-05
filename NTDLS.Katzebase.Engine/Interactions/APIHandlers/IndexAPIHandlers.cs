@@ -9,9 +9,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// </summary>
     public class IndexAPIHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public IndexAPIHandlers(Core core)
+        public IndexAPIHandlers(EngineCore core)
         {
             _core = core;
 

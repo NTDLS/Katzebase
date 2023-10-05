@@ -4,7 +4,7 @@
     {
         internal Dictionary<string, KbCacheItem> Collection { get; private set; } = new();
         private readonly Timer _timer;
-        private readonly Core _core;
+        private readonly EngineCore _core;
         private readonly int _cachePartitions;
 
         #region IDisposable
@@ -43,7 +43,7 @@
             }
         }
 
-        public KbMemoryCache(Core core)
+        public KbMemoryCache(EngineCore core)
         {
             _core = core;
             _cachePartitions = _core.Settings.CachePartitions; //We save this because this is NOT changable while the server is running.

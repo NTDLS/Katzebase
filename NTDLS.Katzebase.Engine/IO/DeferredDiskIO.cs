@@ -22,12 +22,12 @@ namespace NTDLS.Katzebase.Engine.IO
             }
         }
 
-        private readonly Core _core;
+        private readonly EngineCore _core;
         private readonly KbInsensitiveDictionary<DeferredDiskIOObject> _collection = new();
 
         public bool ContainsKey(string key) => _collection.ContainsKey(key);
 
-        public DeferredDiskIO(Core core)
+        public DeferredDiskIO(EngineCore core)
         {
             _core = core;
         }

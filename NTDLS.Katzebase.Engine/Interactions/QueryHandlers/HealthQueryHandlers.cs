@@ -5,9 +5,9 @@
     /// </summary>
     internal class HealthQueryHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public HealthQueryHandlers(Core core)
+        public HealthQueryHandlers(EngineCore core)
         {
             _core = core;
 

@@ -14,10 +14,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class QueryManager
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
         public QueryAPIHandlers APIHandlers { get; private set; }
 
-        public QueryManager(Core core)
+        public QueryManager(EngineCore core)
         {
             _core = core;
             APIHandlers = new QueryAPIHandlers(core);

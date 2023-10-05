@@ -2,11 +2,11 @@
 {
     internal class HeartbeatManager
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
         private readonly Thread _threadHandle;
         private bool _continueRunning = false;
 
-        public HeartbeatManager(Core core)
+        public HeartbeatManager(EngineCore core)
         {
             _core = core;
             _threadHandle = new Thread(HearbeatThreadProc);

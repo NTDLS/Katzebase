@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class TransactionQueryHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public TransactionQueryHandlers(Core core)
+        public TransactionQueryHandlers(EngineCore core)
         {
             _core = core;
 

@@ -12,10 +12,10 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
     /// </summary>
     internal class QuerySchemaMap : KbInsensitiveDictionary<QuerySchemaMapItem>
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
         public Transaction Transaction { get; private set; }
 
-        public QuerySchemaMap(Core core, Transaction transaction)
+        public QuerySchemaMap(EngineCore core, Transaction transaction)
         {
             _core = core;
             Transaction = transaction;

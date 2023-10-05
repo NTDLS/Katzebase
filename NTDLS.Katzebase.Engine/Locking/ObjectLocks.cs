@@ -11,9 +11,9 @@ namespace NTDLS.Katzebase.Engine.Locking
     {
         private readonly List<ObjectLock> _collection = new();
         private readonly Dictionary<Transaction, LockIntention> _transactionWaitingForLocks = new();
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public ObjectLocks(Core core)
+        public ObjectLocks(EngineCore core)
         {
             _core = core;
         }

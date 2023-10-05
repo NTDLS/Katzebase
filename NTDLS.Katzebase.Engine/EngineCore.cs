@@ -6,7 +6,7 @@ using System.Runtime.Caching;
 
 namespace NTDLS.Katzebase.Engine
 {
-    public class Core
+    public class EngineCore
     {
         internal IOManager IO;
         internal LockManager Locking;
@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine
 
         public MemoryCache LookupOptimizationCache { get; set; } = new MemoryCache("ConditionLookupOptimization");
 
-        public Core(KatzebaseSettings settings)
+        public EngineCore(KatzebaseSettings settings)
         {
             Settings = settings;
 

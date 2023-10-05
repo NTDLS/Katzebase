@@ -10,9 +10,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class SchemaQueryHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public SchemaQueryHandlers(Core core)
+        public SchemaQueryHandlers(EngineCore core)
         {
             _core = core;
 

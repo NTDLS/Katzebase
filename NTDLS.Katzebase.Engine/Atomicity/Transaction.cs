@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public bool IsUserCreated { get; set; }
         public DeferredDiskIO DeferredIOs { get; private set; }
 
-        private readonly Core _core;
+        private readonly EngineCore _core;
         private TransactionManager? _transactionManager;
         private StreamWriter? _transactionLogHandle = null;
 
@@ -300,7 +300,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-        public Transaction(Core core, TransactionManager transactionManager, ulong processId, bool isRecovery)
+        public Transaction(EngineCore core, TransactionManager transactionManager, ulong processId, bool isRecovery)
         {
             _core = core;
             _transactionManager = transactionManager;

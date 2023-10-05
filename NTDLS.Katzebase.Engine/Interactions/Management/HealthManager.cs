@@ -13,13 +13,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     {
         public KbInsensitiveDictionary<HealthCounter> Counters { get; private set; } = new();
 
-        private readonly Core _core;
+        private readonly EngineCore _core;
         private DateTime lastCheckpoint = DateTime.MinValue;
 
         internal HealthQueryHandlers QueryHandlers { get; private set; }
         public HealthAPIHandlers APIHandlers { get; private set; }
 
-        public HealthManager(Core core)
+        public HealthManager(EngineCore core)
         {
             _core = core;
 

@@ -12,11 +12,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class LogManager
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
         private StreamWriter? _fileHandle = null;
         private DateTime _recycledTime = DateTime.MinValue;
 
-        public LogManager(Core core)
+        public LogManager(EngineCore core)
         {
             _core = core;
             CycleLog();

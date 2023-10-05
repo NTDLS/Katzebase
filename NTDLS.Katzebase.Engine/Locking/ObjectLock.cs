@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 {
     internal class ObjectLock
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
         public string DiskPath { get; private set; }
         public LockGranularity Granularity { get; private set; }
         public List<ObjectLockKey> Keys { get; private set; } = new();
@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         /// </summary>
         public ulong Hits { get; set; }
 
-        public ObjectLock(Core core, LockIntention intention)
+        public ObjectLock(EngineCore core, LockIntention intention)
         {
             _core = core;
             DiskPath = intention.DiskPath;

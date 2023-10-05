@@ -10,14 +10,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class SessionManager
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
         private ulong _nextProcessId = 1;
 
         internal SessionAPIHandlers APIHandlers { get; private set; }
         internal SessionQueryHandlers QueryHandlers { get; private set; }
         internal Dictionary<Guid, SessionState> Collection { get; private set; } = new();
 
-        public SessionManager(Core core)
+        public SessionManager(EngineCore core)
         {
             _core = core;
             try

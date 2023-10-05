@@ -5,9 +5,9 @@
     /// </summary>
     public class TransactiontAPIHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public TransactiontAPIHandlers(Core core)
+        public TransactiontAPIHandlers(EngineCore core)
         {
             _core = core;
 

@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class TransactionManager
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
         private readonly List<Transaction> _collection = new();
 
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return clones;
         }
 
-        public TransactionManager(Core core)
+        public TransactionManager(EngineCore core)
         {
             _core = core;
             try

@@ -7,12 +7,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     internal class CacheManager
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
         private readonly KbMemoryCache[] _partitions;
 
         public int PartitionCount { get; private set; }
 
-        public CacheManager(Core core)
+        public CacheManager(EngineCore core)
         {
             _core = core;
 

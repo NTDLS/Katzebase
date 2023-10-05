@@ -11,6 +11,7 @@
     <Version>1.0.3.0</Version>
     <Authors>NetworkDLS</Authors>
     <ApplicationIcon>NTDLS.Katzebase.ico</ApplicationIcon>
+    <StartupObject>NTDLS.Katzebase.SQLServerMigration.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>

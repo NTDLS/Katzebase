@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
 
         public ConditionLookupOptimization? Optimization { get; private set; }
 
-        public QuerySchemaMapItem(Core core, Transaction transaction, QuerySchemaMap schemaMap, PhysicalSchema physicalSchema,
+        public QuerySchemaMapItem(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PhysicalSchema physicalSchema,
             PhysicalDocumentPageCatalog documentPageCatalog, Conditions? conditions, string prefix)
         {
             Prefix = prefix;

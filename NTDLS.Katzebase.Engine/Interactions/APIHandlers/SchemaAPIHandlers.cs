@@ -11,9 +11,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// </summary>
     public class SchemaAPIHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public SchemaAPIHandlers(Core core)
+        public SchemaAPIHandlers(EngineCore core)
         {
             _core = core;
 

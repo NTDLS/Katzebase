@@ -5,9 +5,9 @@
     /// </summary>
     public class SessionAPIHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public SessionAPIHandlers(Core core)
+        public SessionAPIHandlers(EngineCore core)
         {
             _core = core;
 

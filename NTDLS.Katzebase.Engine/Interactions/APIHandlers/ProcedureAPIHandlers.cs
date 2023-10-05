@@ -5,9 +5,9 @@
     /// </summary>
     public class ProcedureAPIHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public ProcedureAPIHandlers(Core core)
+        public ProcedureAPIHandlers(EngineCore core)
         {
             _core = core;
 

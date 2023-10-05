@@ -6,12 +6,12 @@ namespace NTDLS.Katzebase.Client.Service
 {
     public class Program
     {
-        private static Core? _core = null;
-        public static Core Core
+        private static EngineCore? _core = null;
+        public static EngineCore Core
         {
             get
             {
-                _core ??= new Core(Configuration);
+                _core ??= new EngineCore(Configuration);
                 return _core;
             }
         }

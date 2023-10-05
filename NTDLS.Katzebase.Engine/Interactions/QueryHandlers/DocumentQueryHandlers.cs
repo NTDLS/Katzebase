@@ -17,9 +17,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// </summary>
     internal class DocumentQueryHandlers
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
-        public DocumentQueryHandlers(Core core)
+        public DocumentQueryHandlers(EngineCore core)
         {
             _core = core;
 

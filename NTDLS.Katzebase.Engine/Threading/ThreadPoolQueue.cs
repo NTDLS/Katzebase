@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Threading
 {
     public static class ThreadPoolHelper
     {
-        internal static int CalculateThreadCount(Core core, Transaction transaction, int expectedItemCount, double multiplier = 1)
+        internal static int CalculateThreadCount(EngineCore core, Transaction transaction, int expectedItemCount, double multiplier = 1)
         {
             var session = core.Sessions.ByProcessId(transaction.ProcessId);
 

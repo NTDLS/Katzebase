@@ -23,7 +23,7 @@
 
 [Components]
  Name: "Client";         Description: "Client";                     Types: Full Compact Custom; Flags: Fixed;
- Name: "MSSQLMigrate";   Description: "SQL Server Migration Tool";  Types: Full Compact Custom; Flags: Fixed;
+ Name: "MSSQLMigrate";   Description: "SQL Server Migration Tool";  Types: Full Custom;
  
 
 [Files]

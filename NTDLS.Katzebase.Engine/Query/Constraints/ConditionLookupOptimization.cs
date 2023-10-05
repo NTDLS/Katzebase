@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// Takes a nested set of conditions and returns a selection of indexes as well as a clone of the conditions with associated indexes.
         /// </summary>
         /// <returns>A selection of indexes as well as a clone of the conditions with associated indexes</returns>
-        public static ConditionLookupOptimization Build(Core core,
+        public static ConditionLookupOptimization Build(EngineCore core,
             Transaction transaction, PhysicalSchema physicalSchema, Conditions conditions, string workingSchemaPrefix)
         {
             try

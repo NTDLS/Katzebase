@@ -11,8 +11,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     //Internal core class methods for locking, reading, writing and managing tasks related to disk I/O.
     internal class IOManager
     {
-        private readonly Core _core;
-        public IOManager(Core core)
+        private readonly EngineCore _core;
+        public IOManager(EngineCore core)
         {
             _core = core;
         }

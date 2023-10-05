@@ -23,11 +23,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class IndexManager
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
         internal IndexQueryHandlers QueryHandlers { get; private set; }
         public IndexAPIHandlers APIHandlers { get; private set; }
 
-        public IndexManager(Core core)
+        public IndexManager(EngineCore core)
         {
             _core = core;
             try

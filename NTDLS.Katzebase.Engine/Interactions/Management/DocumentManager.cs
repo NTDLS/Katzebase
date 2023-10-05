@@ -13,12 +13,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class DocumentManager
     {
-        private readonly Core _core;
+        private readonly EngineCore _core;
 
         internal DocumentQueryHandlers QueryHandlers { get; private set; }
         public DocumentAPIHandlers APIHandlers { get; private set; }
 
-        public DocumentManager(Core core)
+        public DocumentManager(EngineCore core)
         {
             _core = core;
 
