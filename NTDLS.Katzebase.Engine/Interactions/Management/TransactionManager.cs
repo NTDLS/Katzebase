@@ -22,7 +22,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactiontAPIHandlers APIHandlers { get; private set; }
 
-
         internal TransactionReference Acquire(ulong processId)
         {
             var transactionReference = Acquire(processId, false);
@@ -36,12 +35,23 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return transactionReference;
         }
 
-        internal List<Transaction> CloneTransactions()
+        internal List<TransactionSnapshot> Snapshot()
         {
+            var collectionClone = new List<Transaction>();
+
             lock (_collection)
             {
-                return new List<Transaction>(_collection);
+                collectionClone.AddRange(_collection);
             }
+
+            var clones = new List<TransactionSnapshot>();
+
+            foreach (var item in collectionClone)
+            {
+                clones.Add(item.Snapshot());
+            }
+
+            return clones;
         }
 
         public TransactionManager(Core core)

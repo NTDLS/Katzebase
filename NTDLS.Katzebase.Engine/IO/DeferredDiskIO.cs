@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Types;
+using static NTDLS.Katzebase.Engine.IO.DeferredDiskIOSnapshot;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.IO
@@ -29,6 +30,21 @@ namespace NTDLS.Katzebase.Engine.IO
         public DeferredDiskIO(Core core)
         {
             _core = core;
+        }
+
+        public DeferredDiskIOSnapshot Snapshot()
+        {
+            var snapshot = new DeferredDiskIOSnapshot();
+
+            lock (this)
+            {
+                foreach (var kvp in _collection)
+                {
+                    snapshot.Collection.Add(kvp.Key, new DeferredDiskIOObjectSnapshot(kvp.Value.DiskPath, kvp.Value.Format, kvp.Value.UseCompression));
+                }
+            }
+
+            return snapshot;
         }
 
         public int Count()

@@ -131,8 +131,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     if (transaction.IsUserCreated)
                     {
-                        //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
-                        transaction.TemporarySchemas.Add(physicalSchema.VirtualPath);
+                        lock (transaction.TemporarySchemas)
+                        {
+                            //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
+                            transaction.TemporarySchemas.Add(physicalSchema.VirtualPath);
+                        }
                     }
                 }
             }
@@ -182,8 +185,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         if (transaction.IsUserCreated)
                         {
-                            //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
-                            transaction.TemporarySchemas.Add(physicalSchema.VirtualPath);
+                            lock (transaction.TemporarySchemas)
+                            {
+                                //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
+                                transaction.TemporarySchemas.Add(physicalSchema.VirtualPath);
+                            }
                         }
                     }
                 }

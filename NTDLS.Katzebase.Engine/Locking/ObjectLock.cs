@@ -29,6 +29,26 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
         }
 
+        public ObjectLockSnapshot Snapshot(bool cloneKeys = false)
+        {
+            var snapshot = new ObjectLockSnapshot()
+            {
+                DiskPath = DiskPath,
+                Granularity = Granularity,
+                Hits = Hits,
+            };
+
+            if (cloneKeys) //Prevent stack-overflow.
+            {
+                foreach (var key in Keys)
+                {
+                    snapshot.Keys.Add(key.Snapshot());
+                }
+            }
+
+            return snapshot;
+        }
+
         public ObjectLockKey IssueSingleUseKey(Transaction transaction, LockIntention lockIntention)
         {
             try

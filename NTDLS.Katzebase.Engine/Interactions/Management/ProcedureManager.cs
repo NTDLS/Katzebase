@@ -271,11 +271,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
 
-                            var transactions = _core.Transactions.CloneTransactions();
+                            var txSnapshots = _core.Transactions.Snapshot();
 
-                            var allBlocks = transactions.SelectMany(o => o.BlockedByKeys).ToList();
+                            var allBlocks = txSnapshots.SelectMany(o => o.BlockedByKeys).ToList();
 
-                            var blockHeaders = transactions.Where(tx =>
+                            var blockHeaders = txSnapshots.Where(tx =>
                                 tx.BlockedByKeys.Count == 0 //Transaction is not blocked.
                                 && allBlocks.Where(o => o.ProcessId == tx.ProcessId).Any() //Transaction is blocking other transatransactions.
                             ).ToList();
@@ -284,53 +284,54 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                             foreach (var blocker in blockHeaders)
                             {
-                                RecurseBlocks(transactions, blocker, 0, ref helpText);
+                                RecurseBlocks(txSnapshots, blocker, 0, ref helpText);
                             }
 
-                            void RecurseBlocks(List<Transaction> transactions, Transaction blocker, int level, ref StringBuilder helpText)
+                            void RecurseBlocks(List<TransactionSnapshot> txSnapshots, TransactionSnapshot blockingTx, int level, ref StringBuilder helpText)
                             {
-                                var blockedByMe = transactions.Where(o => o.BlockedByKeys.Where(o => o.ProcessId == blocker.ProcessId).Any()).ToList();
-                                if (blockedByMe.Any() == false)
+                                var blockedTxs = txSnapshots.Where(o => o.BlockedByKeys.Where(o => o.ProcessId == blockingTx.ProcessId).Any()).ToList();
+                                if (blockedTxs.Any() == false)
                                 {
                                     return;
                                 }
 
                                 helpText.AppendLine(Str(level) + "Blocking Process {");
-                                helpText.AppendLine(Str(level + 1) + $"PID: {blocker.ProcessId}");
-                                helpText.AppendLine(Str(level + 1) + $"Operation: {blocker.TopLevelOperation}");
-                                helpText.AppendLine(Str(level + 1) + $"StartTime: {blocker.StartTime}");
-                                if (blocker.CurrentLockIntention != null)
+                                helpText.AppendLine(Str(level + 1) + $"PID: {blockingTx.ProcessId}");
+                                helpText.AppendLine(Str(level + 1) + $"Operation: {blockingTx.TopLevelOperation}");
+                                helpText.AppendLine(Str(level + 1) + $"StartTime: {blockingTx.StartTime}");
+                                if (blockingTx.CurrentLockIntention != null)
                                 {
-                                    var age = (DateTime.UtcNow - (blocker.CurrentLockIntention?.CreationTime ?? DateTime.UtcNow)).TotalMilliseconds;
-                                    helpText.AppendLine(Str(level + 1) + $"Intention: {blocker.CurrentLockIntention?.ToString()} ({age:n0}ms)");
+                                    var age = (DateTime.UtcNow - (blockingTx.CurrentLockIntention?.CreationTime ?? DateTime.UtcNow)).TotalMilliseconds;
+                                    helpText.AppendLine(Str(level + 1) + $"Intention: {blockingTx.CurrentLockIntention?.ToString()} ({age:n0}ms)");
                                 }
 
-                                foreach (var blocked in blockedByMe)
+                                foreach (var blockedTx in blockedTxs)
                                 {
-                                    var waitingKeys = blocked.BlockedByKeys.Where(o => o.ProcessId == blocker.ProcessId).ToList();
+                                    var blockedTxWaitKeys = blockedTx.BlockedByKeys.Where(o => o.ProcessId == blockingTx.ProcessId).ToList();
 
+                                    helpText.AppendLine();
                                     helpText.AppendLine(Str(level + 1) + "Blocked Process {");
-                                    helpText.AppendLine(Str(level + 2) + $"PID: {blocked.ProcessId}");
-                                    helpText.AppendLine(Str(level + 2) + $"Operation: {blocked.TopLevelOperation}");
-                                    helpText.AppendLine(Str(level + 2) + $"StartTime: {blocked.StartTime}");
-                                    if (blocked.CurrentLockIntention != null)
+                                    helpText.AppendLine(Str(level + 2) + $"PID: {blockedTx.ProcessId}");
+                                    helpText.AppendLine(Str(level + 2) + $"Operation: {blockedTx.TopLevelOperation}");
+                                    helpText.AppendLine(Str(level + 2) + $"StartTime: {blockedTx.StartTime}");
+                                    if (blockedTx.CurrentLockIntention != null)
                                     {
-                                        var age = (DateTime.UtcNow - (blocked.CurrentLockIntention?.CreationTime ?? DateTime.UtcNow)).TotalMilliseconds;
-                                        helpText.AppendLine(Str(level + 2) + $"Intention: {blocked.CurrentLockIntention?.ToString()} ({age:n0}ms)");
+                                        var age = (DateTime.UtcNow - (blockedTx.CurrentLockIntention?.CreationTime ?? DateTime.UtcNow)).TotalMilliseconds;
+                                        helpText.AppendLine(Str(level + 2) + $"Intention: {blockedTx.CurrentLockIntention?.ToString()} ({age:n0}ms)");
                                     }
                                     helpText.AppendLine(Str(level + 2) + "Blocking Keys {");
-                                    foreach (var waitingKey in waitingKeys)
+                                    foreach (var key in blockedTxWaitKeys)
                                     {
-                                        var age = (DateTime.UtcNow - waitingKey.IssueTime).TotalMilliseconds;
-                                        helpText.AppendLine(Str(level + 3) + $"{waitingKey.ToString()} ({age:n0}ms)");
+                                        var age = (DateTime.UtcNow - key.IssueTime).TotalMilliseconds;
+                                        helpText.AppendLine(Str(level + 3) + $"{key.ToString()} ({age:n0}ms)");
                                     }
                                     helpText.AppendLine(Str(level + 2) + "}");
                                     helpText.AppendLine(Str(level + 1) + "}");
 
-                                    RecurseBlocks(transactions, blocked, level + 1, ref helpText);
-
-                                    helpText.AppendLine(Str(level) + "}");
+                                    RecurseBlocks(txSnapshots, blockedTx, level + 1, ref helpText);
                                 }
+                                helpText.AppendLine(Str(level) + "}");
+                                helpText.AppendLine();
 
                                 string Str(int count) => (new string(' ', count * 4));
                             }
@@ -350,15 +351,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             result.AddField("Operation");
                             result.AddField("ObjectName");
 
-                            var waitingForLocks = _core.Locking.Locks.CloneTransactionWaitingForLocks().ToList();
+                            var waitingTxSnapshots = _core.Locking.Locks.SnapshotWaitingTransactions().ToList();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
                             if (processId != null)
                             {
-                                waitingForLocks = waitingForLocks.Where(o => o.Key.ProcessId == processId).ToList();
+                                waitingTxSnapshots = waitingTxSnapshots.Where(o => o.Key.ProcessId == processId).ToList();
                             }
 
-                            foreach (var waitingForLock in waitingForLocks)
+                            foreach (var waitingForLock in waitingTxSnapshots)
                             {
                                 var values = new List<string?> {
                                     waitingForLock.Key.ProcessId.ToString(),
@@ -380,21 +381,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             result.AddField("ProcessId");
                             result.AddField("BlockedBy");
 
-                            var transactions = _core.Transactions.CloneTransactions();
+                            var txSnapshots = _core.Transactions.Snapshot();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
                             if (processId != null)
                             {
-                                transactions = transactions.Where(o => o.ProcessId == processId).ToList();
+                                txSnapshots = txSnapshots.Where(o => o.ProcessId == processId).ToList();
                             }
 
-                            foreach (var tx in transactions)
+                            foreach (var txSnapshot in txSnapshots)
                             {
-                                var blockedBy = tx.CloneBlocks();
-
-                                foreach (var block in blockedBy)
+                                foreach (var block in txSnapshot.BlockedByKeys)
                                 {
-                                    var values = new List<string?> { tx.ProcessId.ToString(), block.ToString() };
+                                    var values = new List<string?> { txSnapshot.ProcessId.ToString(), block.ToString() };
                                     result.AddRow(values);
                                 }
                             }
@@ -421,30 +420,30 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             result.AddField("IsCancelled");
                             result.AddField("IsUserCreated");
 
-                            var transactions = _core.Transactions.CloneTransactions();
+                            var txSnapshots = _core.Transactions.Snapshot();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
                             if (processId != null)
                             {
-                                transactions = transactions.Where(o => o.ProcessId == processId).ToList();
+                                txSnapshots = txSnapshots.Where(o => o.ProcessId == processId).ToList();
                             }
 
-                            foreach (var tx in transactions)
+                            foreach (var txSnapshot in txSnapshots)
                             {
                                 var values = new List<string?> {
-                                    $"{tx.ProcessId:n0}",
-                                    $"{(tx?.BlockedByKeys.Count > 0):n0}",
-                                    string.Join(", ", tx?.BlockedByKeys.Select(o=>o.ProcessId) ?? new List<ulong>()),
-                                    $"{tx?.ReferenceCount:n0}",
-                                    $"{tx?.StartTime}",
-                                    $"{tx?.HeldLockKeys?.Count:n0}",
-                                    $"{tx?.GrantedLockCache?.Count:n0}",
-                                    $"{tx?.FilesReadForCache?.Count:n0}",
-                                    $"{tx?.DeferredIOs?.Count():n0}",
-                                    $"{!(tx?.IsComittedOrRolledBack == true)}",
-                                    $"{tx?.IsDeadlocked}",
-                                    $"{tx?.IsCancelled}",
-                                    $"{tx?.IsUserCreated}"
+                                    $"{txSnapshot.ProcessId:n0}",
+                                    $"{(txSnapshot?.BlockedByKeys.Count > 0):n0}",
+                                    string.Join(", ", txSnapshot?.BlockedByKeys.Select(o=>o.ProcessId) ?? new List<ulong>()),
+                                    $"{txSnapshot?.ReferenceCount:n0}",
+                                    $"{txSnapshot?.StartTime}",
+                                    $"{txSnapshot?.HeldLockKeys.Count:n0}",
+                                    $"{txSnapshot?.GrantedLockCache?.Count:n0}",
+                                    $"{txSnapshot?.FilesReadForCache?.Count:n0}",
+                                    $"{txSnapshot?.DeferredIOs?.Count():n0}",
+                                    $"{!(txSnapshot?.IsComittedOrRolledBack == true)}",
+                                    $"{txSnapshot?.IsDeadlocked}",
+                                    $"{txSnapshot?.IsCancelled}",
+                                    $"{txSnapshot?.IsUserCreated}"
                                 };
                                 result.AddRow(values);
                             }
@@ -477,17 +476,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             result.AddField("IsUserCreated");
 
                             var sessions = _core.Sessions.CloneSessions();
-                            var transactions = _core.Transactions.CloneTransactions();
+                            var txSnapshots = _core.Transactions.Snapshot();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
                             if (processId != null)
                             {
-                                transactions = transactions.Where(o => o.ProcessId == processId).ToList();
+                                txSnapshots = txSnapshots.Where(o => o.ProcessId == processId).ToList();
                             }
 
                             foreach (var session in sessions)
                             {
-                                var tx = transactions.Where(o => o.ProcessId == session.Value.ProcessId).FirstOrDefault();
+                                var txSnapshot = txSnapshots.Where(o => o.ProcessId == session.Value.ProcessId).FirstOrDefault();
 
                                 var values = new List<string?> {
                                     $"{session.Key}",
@@ -495,18 +494,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                     $"{session.Value.ClientName ?? string.Empty}",
                                     $"{session.Value.LoginTime}",
                                     $"{session.Value.LastCheckinTime}",
-                                    $"{(tx?.BlockedByKeys.Count > 0):n0}",
-                                    string.Join(", ", tx?.BlockedByKeys.Select(o=>o.ProcessId) ?? new List<ulong>()),
-                                    $"{tx?.ReferenceCount:n0}",
-                                    $"{tx?.StartTime}",
-                                    $"{tx?.HeldLockKeys?.Count:n0}",
-                                    $"{tx?.GrantedLockCache?.Count:n0}",
-                                    $"{tx?.FilesReadForCache?.Count:n0}",
-                                    $"{tx?.DeferredIOs?.Count():n0}",
-                                    $"{!(tx?.IsComittedOrRolledBack == true)}",
-                                    $"{tx?.IsDeadlocked}",
-                                    $"{tx?.IsCancelled}",
-                                    $"{tx?.IsUserCreated}"
+                                    $"{(txSnapshot?.BlockedByKeys.Count > 0):n0}",
+                                    string.Join(", ", txSnapshot?.BlockedByKeys.Select(o=>o.ProcessId) ?? new List<ulong>()),
+                                    $"{txSnapshot?.ReferenceCount:n0}",
+                                    $"{txSnapshot?.StartTime}",
+                                    $"{txSnapshot?.HeldLockKeys.Count:n0}",
+                                    $"{txSnapshot?.GrantedLockCache?.Count:n0}",
+                                    $"{txSnapshot?.FilesReadForCache?.Count:n0}",
+                                    $"{txSnapshot?.DeferredIOs?.Count():n0}",
+                                    $"{!(txSnapshot?.IsComittedOrRolledBack == true)}",
+                                    $"{txSnapshot?.IsDeadlocked}",
+                                    $"{txSnapshot?.IsCancelled}",
+                                    $"{txSnapshot?.IsUserCreated}"
                                 };
                                 result.AddRow(values);
                             }

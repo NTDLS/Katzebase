@@ -26,9 +26,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <summary>
         /// Outstanding lock-keys that are blocking this transaction.
         /// </summary>
-        public List<ObjectLockKey> BlockedByKeys { get; private set; }
+        public List<ObjectLockKey> BlockedByKeys { get; private set; } = new();
         public bool IsDeadlocked { get; set; }
-        public List<ObjectLockKey>? HeldLockKeys { get; private set; }
+        public List<ObjectLockKey> HeldLockKeys { get; private set; } = new();
         public PerformanceTrace? PT { get; private set; } = null;
         public HashSet<string> TemporarySchemas { get; private set; } = new();
 
@@ -47,10 +47,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
         /// </summary>
         public bool IsUserCreated { get; set; }
-        public DeferredDiskIO? DeferredIOs { get; private set; }
+        public DeferredDiskIO DeferredIOs { get; private set; }
 
         private readonly Core _core;
-        private TransactionManager _transactionManager;
+        private TransactionManager? _transactionManager;
         private StreamWriter? _transactionLogHandle = null;
 
         public bool IsComittedOrRolledBack { get; private set; } = false;
@@ -70,6 +70,33 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     return _referenceCount;
                 }
             }
+        }
+
+        public TransactionSnapshot Snapshot()
+        {
+            var snapshot = new TransactionSnapshot()
+            {
+                Id = Id,
+                ProcessId = ProcessId,
+                CurrentLockIntention = CurrentLockIntention,
+                StartTime = StartTime,
+                ReferenceCount = ReferenceCount,
+                IsDeadlocked = IsDeadlocked,
+                IsUserCreated = IsUserCreated,
+                TopLevelOperation = TopLevelOperation,
+                IsComittedOrRolledBack = IsComittedOrRolledBack,
+                IsCancelled = IsCancelled
+            };
+
+            lock (GrantedLockCache) snapshot.GrantedLockCache = new HashSet<string>(GrantedLockCache);
+            lock (BlockedByKeys) snapshot.BlockedByKeys = BlockedByKeys.Select(o => o.Snapshot()).ToList();
+            lock (HeldLockKeys) snapshot.HeldLockKeys = HeldLockKeys.Select(o => o.Snapshot()).ToList();
+            lock (TemporarySchemas) snapshot.TemporarySchemas = new HashSet<string>(TemporarySchemas);
+            lock (FilesReadForCache) snapshot.FilesReadForCache = new HashSet<string>(FilesReadForCache);
+            lock (DeferredIOs) snapshot.DeferredIOs = DeferredIOs.Snapshot();
+            lock (Atoms) snapshot.Atoms = Atoms.Select(o => o.Snapshot()).ToList();
+
+            return snapshot;
         }
 
         public void AddWarning(KbTransactionWarning warning, string message = "")
@@ -102,14 +129,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             Messages.Add(new KbQueryResultMessage(text, type));
         }
 
-        internal List<ObjectLockKey> CloneBlocks()
-        {
-            lock (CentralCriticalSections.AcquireLock)
-            {
-                return new List<ObjectLockKey>(BlockedByKeys);
-            }
-        }
-
         private void ReleaseLocks()
         {
             lock (GrantedLockCache)
@@ -117,14 +136,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 GrantedLockCache.Clear();
             }
 
-            if (HeldLockKeys != null)
+            lock (HeldLockKeys)
             {
-                lock (HeldLockKeys)
+                foreach (var key in HeldLockKeys)
                 {
-                    foreach (var key in HeldLockKeys)
-                    {
-                        key.TurnInKey();
-                    }
+                    key.TurnInKey();
                 }
             }
         }
@@ -181,6 +197,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void LockFile(LockOperation lockOperation, string diskpath)
         {
+            KbUtility.EnsureNotNull(_core);
+
             try
             {
                 lock (SyncObject)
@@ -191,13 +209,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     diskpath = diskpath.ToLower();
 
-                    KbUtility.EnsureNotNull(HeldLockKeys);
-
-                    lock (HeldLockKeys)
-                    {
-                        var lockIntention = new LockIntention(diskpath, LockGranularity.File, lockOperation);
-                        _core.Locking.Locks.Acquire(this, lockIntention);
-                    }
+                    var lockIntention = new LockIntention(diskpath, LockGranularity.File, lockOperation);
+                    _core.Locking.Locks.Acquire(this, lockIntention);
                     ptLock?.StopAndAccumulate();
                 }
             }
@@ -210,6 +223,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void LockDirectory(LockOperation lockOperation, string diskpath)
         {
+            KbUtility.EnsureNotNull(_core);
+
             try
             {
                 lock (SyncObject)
@@ -220,13 +235,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     diskpath = diskpath.ToLower();
 
-                    KbUtility.EnsureNotNull(HeldLockKeys);
-
-                    lock (HeldLockKeys)
-                    {
-                        var lockIntention = new LockIntention(diskpath, LockGranularity.Directory, lockOperation);
-                        _core.Locking.Locks.Acquire(this, lockIntention);
-                    }
+                    var lockIntention = new LockIntention(diskpath, LockGranularity.Directory, lockOperation);
+                    _core.Locking.Locks.Acquire(this, lockIntention);
 
                     ptLock?.StopAndAccumulate();
                 }
@@ -240,6 +250,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void LockPath(LockOperation lockOperation, string diskpath)
         {
+            KbUtility.EnsureNotNull(_core);
+
             try
             {
                 lock (SyncObject)
@@ -250,13 +262,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     diskpath = diskpath.ToLower();
 
-                    KbUtility.EnsureNotNull(HeldLockKeys);
-
-                    lock (HeldLockKeys)
-                    {
-                        var lockIntention = new LockIntention(diskpath, LockGranularity.Path, lockOperation);
-                        _core.Locking.Locks.Acquire(this, lockIntention);
-                    }
+                    var lockIntention = new LockIntention(diskpath, LockGranularity.Path, lockOperation);
+                    _core.Locking.Locks.Acquire(this, lockIntention);
 
                     ptLock?.StopAndAccumulate();
                 }
@@ -280,6 +287,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             get
             {
+                KbUtility.EnsureNotNull(_core);
                 return Path.Combine(_core.Settings.TransactionDataPath, ProcessId.ToString());
             }
         }
@@ -295,11 +303,12 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public Transaction(Core core, TransactionManager transactionManager, ulong processId, bool isRecovery)
         {
             _core = core;
+            _transactionManager = transactionManager;
+
             StartTime = DateTime.UtcNow;
             ProcessId = processId;
-            _transactionManager = transactionManager;
-            //BlockedBy = new List<ulong>();
-            BlockedByKeys = new List<ObjectLockKey>();
+
+            DeferredIOs = new DeferredDiskIO(core);
 
             if (isRecovery == false)
             {
@@ -308,9 +317,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 {
                     PT = new PerformanceTrace();
                 }
-
-                HeldLockKeys = new List<ObjectLockKey>();
-                DeferredIOs = new DeferredDiskIO(core);
 
                 Directory.CreateDirectory(TransactionPath);
 
@@ -325,10 +331,18 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         #region Action Recorders.
 
-        private bool IsFileAlreadyRecorded(string filePath) => Atoms.Exists(o => o.Key == filePath.ToLower());
+        private bool IsFileAlreadyRecorded(string filePath)
+        {
+            lock (Atoms)
+            {
+                return Atoms.Exists(o => o.Key == filePath.ToLower());
+            }
+        }
 
         public void RecordFileCreate(string filePath)
         {
+            KbUtility.EnsureNotNull(_core);
+
             try
             {
                 lock (SyncObject)
@@ -367,6 +381,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void RecordDirectoryCreate(string path)
         {
+            KbUtility.EnsureNotNull(_core);
+
             try
             {
                 lock (SyncObject)
@@ -404,6 +420,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void RecordPathDelete(string diskPath)
         {
+            KbUtility.EnsureNotNull(_core);
+
             try
             {
                 lock (SyncObject)
@@ -412,7 +430,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                    DeferredIOs?.RemoveItemsWithPrefix(diskPath);
+                    lock (DeferredIOs) DeferredIOs.RemoveItemsWithPrefix(diskPath);
 
                     lock (Atoms)
                     {
@@ -449,6 +467,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void RecordFileDelete(string filePath)
         {
+            KbUtility.EnsureNotNull(_core);
+
             try
             {
                 lock (SyncObject)
@@ -457,7 +477,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                    DeferredIOs?.Remove(filePath);
+                    lock (DeferredIOs) DeferredIOs.Remove(filePath);
 
                     lock (Atoms)
                     {
@@ -493,6 +513,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void RecordFileRead(string filePath)
         {
+            KbUtility.EnsureNotNull(_core);
+
             try
             {
                 lock (SyncObject)
@@ -501,10 +523,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                    lock (FilesReadForCache)
-                    {
-                        FilesReadForCache.Add(filePath);
-                    }
+                    lock (FilesReadForCache) FilesReadForCache.Add(filePath);
                     ptRecording?.StopAndAccumulate();
                 }
             }
@@ -517,6 +536,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void RecordFileAlter(string filePath)
         {
+            KbUtility.EnsureNotNull(_core);
+
             try
             {
                 lock (SyncObject)
@@ -569,6 +590,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void Rollback()
         {
+            KbUtility.EnsureNotNull(_core);
+
             lock (SyncObject)
             {
                 if (IsComittedOrRolledBack)
@@ -630,10 +653,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             }
                         }
 
-                        foreach (var file in FilesReadForCache)
+                        lock (FilesReadForCache)
                         {
-                            //Un-cache files that we have read too. These might just be persistent in cache and never written and can affect state.
-                            _core.Cache.Remove(file);
+                            foreach (var file in FilesReadForCache)
+                            {
+                                //Un-cache files that we have read too. These might just be persistent in cache and never written and can affect state.
+                                _core.Cache.Remove(file);
+                            }
                         }
 
                         try
@@ -645,7 +671,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             //Discard.
                         }
 
-                        _transactionManager.RemoveByProcessId(ProcessId);
+                        _transactionManager?.RemoveByProcessId(ProcessId);
                         DeleteTemporarySchemas();
                     }
                     catch
@@ -676,6 +702,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <exception cref="KbGenericException"></exception>
         public bool Commit()
         {
+            KbUtility.EnsureNotNull(_core);
+
             lock (SyncObject)
             {
                 if (IsCancelled)
@@ -701,10 +729,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                             try
                             {
-                                KbUtility.EnsureNotNull(DeferredIOs);
-                                DeferredIOs.CommitDeferredDiskIO();
+                                lock (DeferredIOs) DeferredIOs.CommitDeferredDiskIO();
                                 CleanupTransaction();
-                                _transactionManager.RemoveByProcessId(ProcessId);
+                                _transactionManager?.RemoveByProcessId(ProcessId);
                                 DeleteTemporarySchemas();
                             }
                             catch
@@ -737,21 +764,28 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         private void DeleteTemporarySchemas()
         {
-            if (TemporarySchemas.Any())
+            KbUtility.EnsureNotNull(_core);
+
+            lock (TemporarySchemas)
             {
-                using (var ephemeralTxRef = _core.Transactions.Acquire(ProcessId))
+                if (TemporarySchemas.Any())
                 {
-                    foreach (var tempSchema in TemporarySchemas)
+                    using (var ephemeralTxRef = _core.Transactions.Acquire(ProcessId))
                     {
-                        _core.Schemas.Drop(ephemeralTxRef.Transaction, tempSchema);
+                        foreach (var tempSchema in TemporarySchemas)
+                        {
+                            _core.Schemas.Drop(ephemeralTxRef.Transaction, tempSchema);
+                        }
+                        ephemeralTxRef.Commit();
                     }
-                    ephemeralTxRef.Commit();
                 }
             }
         }
 
         private void CleanupTransaction()
         {
+            KbUtility.EnsureNotNull(_core);
+
             try
             {
                 if (_transactionLogHandle != null)

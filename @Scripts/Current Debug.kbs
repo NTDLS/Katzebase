@@ -1,10 +1,20 @@
-begin transaction
+EXEC ShowBlockTree
 
-insert into Dummyload:LoadB
+Begin Transaction
+
+insert into Dummyload:LoadA
 	(Name = 'AA'),(Name = 'BB'),(Name = 'CC'),
 	(Name = 'DD'),(Name = 'EE'),(Name = 'FF')
+--Rollback Transaction	
+	
+/*
+begin transaction
 
-rollback transaction
+insert into Dummy
+	(Name = 'AA'),(Name = 'BB'),(Name = 'CC'),
+	(Name = 'DD'),(Name = 'EE'),(Name = 'FF')
+*/
+--rollback transaction
 
 --EXEC ShowBlockTree
 

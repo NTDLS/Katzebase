@@ -22,5 +22,19 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             OriginalPath = originalPath;
             Key = OriginalPath.ToLower();
         }
+
+        public AtomSnapshot Snapshot()
+        {
+            var snapshot = new AtomSnapshot()
+            {
+                Action = Action,
+                OriginalPath = OriginalPath,
+                Key = Key,
+                BackupPath = BackupPath,
+                Sequence = Sequence
+            };
+
+            return snapshot;
+        }
     }
 }

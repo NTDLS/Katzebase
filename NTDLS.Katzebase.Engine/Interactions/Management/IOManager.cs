@@ -108,7 +108,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     transaction.RecordFileRead(filePath);
 
-                    var debugObj = transaction.HeldLockKeys?.Where(o => o.ObjectLock.DiskPath.ToLower() == filePath.ToLower())?.FirstOrDefault();
+                    var debugObj = transaction.HeldLockKeys.Where(o => o.ObjectLock.DiskPath.ToLower() == filePath.ToLower())?.FirstOrDefault();
 
                     if (_core.Settings.DeferredIOEnabled)
                     {
