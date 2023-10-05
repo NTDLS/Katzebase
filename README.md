@@ -19,6 +19,12 @@ Check out the full documentation at https://katzebase.com/
 ## Sample Data
 To run the included examples, download the [sample Katzebase database]( https://katzebase.com/Download/Katzebase.zip).
 
+## SQL Server Migration Tool
+We wven included a tool to import your schema and data from SQL Server into Katzebase.
+
+![image](https://github.com/NTDLS/NTDLS.Katzebase/assets/11428567/e5c8bef6-0b0c-4f04-832c-74567793ea28)
+
+
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change. If you want to join the project, just email me (its on my profile).
