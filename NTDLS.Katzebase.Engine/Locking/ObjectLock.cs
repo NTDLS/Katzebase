@@ -53,12 +53,12 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             try
             {
-                lock (CentralCriticalSections.AcquireLock)
+                var key = new ObjectLockKey(this, transaction.ProcessId, lockIntention.Operation);
+                using (StaticCriticalSections.AcquireLock.Enter())
                 {
-                    var key = new ObjectLockKey(this, transaction.ProcessId, lockIntention.Operation);
                     Keys.Add(key);
-                    return key;
                 }
+                return key;
             }
             catch (Exception ex)
             {
@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             try
             {
-                lock (CentralCriticalSections.AcquireLock)
+                using (StaticCriticalSections.AcquireLock.Enter())
                 {
                     Keys.Remove(key);
 

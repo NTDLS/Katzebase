@@ -27,17 +27,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal void Remove(ObjectLock objectLock)
         {
-            try
+            using (StaticCriticalSections.AcquireLock.Enter())
             {
-                lock (CentralCriticalSections.AcquireLock)
+                try
                 {
                     Locks.Remove(objectLock);
                 }
-            }
-            catch (Exception ex)
-            {
-                _core.Log.Write($"Failed to remove lock.", ex);
-                throw;
+                catch (Exception ex)
+                {
+                    _core.Log.Write($"Failed to remove lock.", ex);
+                    throw;
+                }
             }
         }
     }
