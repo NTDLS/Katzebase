@@ -228,7 +228,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
             if (FormProgress.Singleton.Form.IsCancelPending)
             {
-                break;
+                return;
             }
 
             client.Transaction.Begin();
