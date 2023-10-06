@@ -14,23 +14,17 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {
+
         public LockIntention? CurrentLockIntention { get; set; }
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; private set; } = Guid.NewGuid();
         public Dictionary<KbTransactionWarning, HashSet<string>> Warnings { get; private set; } = new();
         public List<KbQueryResultMessage> Messages { get; private set; } = new();
-        public HashSet<string> FilesReadForCache { get; set; } = new();
-        public List<Atom> Atoms { get; private set; } = new();
         public ulong ProcessId { get; private set; }
         public DateTime StartTime { get; private set; }
-        /// <summary>
-        /// Outstanding lock-keys that are blocking this transaction.
-        /// </summary>
-        public List<ObjectLockKey> BlockedByKeys { get; private set; } = new();
         public bool IsDeadlocked { get; set; }
-        public List<ObjectLockKey> HeldLockKeys { get; private set; } = new();
+
         public PerformanceTrace? PT { get; private set; } = null;
-        public HashSet<string> TemporarySchemas { get; private set; } = new();
 
         /// <summary>
         /// Used for general locking, if any.
@@ -38,16 +32,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public object SyncObject { get; private set; } = new object();
 
         /// <summary>
-        /// We keep a hashset of locks granted to this transaction by the LockIntention.Key so that we
-        ///     do not have to perform blocking or deadlock checks again for the life of this transaction.
-        /// </summary>
-        public HashSet<string> GrantedLockCache { get; private set; } = new HashSet<string>();
-
-        /// <summary>
         /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
         /// </summary>
         public bool IsUserCreated { get; set; }
-        public DeferredDiskIO DeferredIOs { get; private set; }
+
 
         private readonly EngineCore _core;
         private TransactionManager? _transactionManager;
@@ -71,6 +59,54 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 }
             }
         }
+
+        #region Critical objects (Any object in this region must be locked for access).
+
+        /// <summary>
+        /// Lock if you need to read/write.
+        /// Write-cached objects that need to be flushed to disk upon commit.
+        /// </summary>
+        public DeferredDiskIO DeferredIOs { get; private set; }
+
+        /// <summary>
+        /// Lock if you need to read/write.
+        /// Files that have been read by the transaction. These will be placed into read
+        /// cache and since they can be modified in memory, the cached items must be removed upon rollback.
+        /// </summary>
+        public HashSet<string> FilesReadForCache { get; set; } = new();
+
+        /// <summary>
+        /// Lock if you need to read/write.
+        /// All abortable operations that the transaction has performed.
+        /// </summary>
+        public List<Atom> Atoms { get; private set; } = new();
+
+        /// <summary>
+        /// Lock if you need to read/write.
+        /// We keep a hashset of locks granted to this transaction by the LockIntention.Key so that we
+        ///     do not have to perform blocking or deadlock checks again for the life of this transaction.
+        /// </summary>
+        public HashSet<string> GrantedLockCache { get; private set; } = new HashSet<string>();
+
+        /// <summary>
+        /// Lock if you need to read/write.
+        /// Outstanding lock-keys that are blocking this transaction.
+        /// </summary>
+        public List<ObjectLockKey> BlockedByKeys { get; private set; } = new();
+
+        /// <summary>
+        /// Lock if you need to read/write.
+        /// All lock-keys that are currently held by the transaction.
+        /// </summary>
+        public List<ObjectLockKey> HeldLockKeys { get; private set; } = new();
+
+        /// <summary>
+        /// Lock if you need to read/write.
+        /// Any temporary schemas that have been created in this transaction.
+        /// </summary>
+        public HashSet<string> TemporarySchemas { get; private set; } = new();
+
+        #endregion
 
         public TransactionSnapshot Snapshot()
         {
@@ -201,18 +237,15 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             try
             {
-                lock (SyncObject)
-                {
-                    EnsureActive();
+                EnsureActive();
 
-                    var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"File:{lockOperation}");
+                var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"File:{lockOperation}");
 
-                    diskpath = diskpath.ToLower();
+                diskpath = diskpath.ToLower();
 
-                    var lockIntention = new LockIntention(diskpath, LockGranularity.File, lockOperation);
-                    _core.Locking.Locks.Acquire(this, lockIntention);
-                    ptLock?.StopAndAccumulate();
-                }
+                var lockIntention = new LockIntention(diskpath, LockGranularity.File, lockOperation);
+                _core.Locking.Locks.Acquire(this, lockIntention);
+                ptLock?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -227,19 +260,16 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             try
             {
-                lock (SyncObject)
-                {
-                    EnsureActive();
+                EnsureActive();
 
-                    var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
+                var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
 
-                    diskpath = diskpath.ToLower();
+                diskpath = diskpath.ToLower();
 
-                    var lockIntention = new LockIntention(diskpath, LockGranularity.Directory, lockOperation);
-                    _core.Locking.Locks.Acquire(this, lockIntention);
+                var lockIntention = new LockIntention(diskpath, LockGranularity.Directory, lockOperation);
+                _core.Locking.Locks.Acquire(this, lockIntention);
 
-                    ptLock?.StopAndAccumulate();
-                }
+                ptLock?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -254,19 +284,16 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             try
             {
-                lock (SyncObject)
-                {
-                    EnsureActive();
+                EnsureActive();
 
-                    var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
+                var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
 
-                    diskpath = diskpath.ToLower();
+                diskpath = diskpath.ToLower();
 
-                    var lockIntention = new LockIntention(diskpath, LockGranularity.Path, lockOperation);
-                    _core.Locking.Locks.Acquire(this, lockIntention);
+                var lockIntention = new LockIntention(diskpath, LockGranularity.Path, lockOperation);
+                _core.Locking.Locks.Acquire(this, lockIntention);
 
-                    ptLock?.StopAndAccumulate();
-                }
+                ptLock?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -345,32 +372,29 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             try
             {
-                lock (SyncObject)
+                EnsureActive();
+
+                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+                lock (Atoms)
                 {
-                    EnsureActive();
-
-                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-                    lock (Atoms)
+                    if (IsFileAlreadyRecorded(filePath))
                     {
-                        if (IsFileAlreadyRecorded(filePath))
-                        {
-                            return;
-                        }
-
-                        var atom = new Atom(ActionType.FileCreate, filePath)
-                        {
-                            Sequence = Atoms.Count
-                        };
-
-                        Atoms.Add(atom);
-
-                        KbUtility.EnsureNotNull(_transactionLogHandle);
-
-                        _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                        return;
                     }
 
-                    ptRecording?.StopAndAccumulate();
+                    var atom = new Atom(ActionType.FileCreate, filePath)
+                    {
+                        Sequence = Atoms.Count
+                    };
+
+                    Atoms.Add(atom);
+
+                    KbUtility.EnsureNotNull(_transactionLogHandle);
+
+                    _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                 }
+
+                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -385,31 +409,28 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             try
             {
-                lock (SyncObject)
+                EnsureActive();
+
+                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+                lock (Atoms)
                 {
-                    EnsureActive();
-
-                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-                    lock (Atoms)
+                    if (IsFileAlreadyRecorded(path))
                     {
-                        if (IsFileAlreadyRecorded(path))
-                        {
-                            return;
-                        }
-
-                        var atom = new Atom(ActionType.DirectoryCreate, path)
-                        {
-                            Sequence = Atoms.Count
-                        };
-
-                        Atoms.Add(atom);
-
-                        KbUtility.EnsureNotNull(_transactionLogHandle);
-
-                        _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                        return;
                     }
-                    ptRecording?.StopAndAccumulate();
+
+                    var atom = new Atom(ActionType.DirectoryCreate, path)
+                    {
+                        Sequence = Atoms.Count
+                    };
+
+                    Atoms.Add(atom);
+
+                    KbUtility.EnsureNotNull(_transactionLogHandle);
+
+                    _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                 }
+                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -424,39 +445,36 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             try
             {
-                lock (SyncObject)
+                EnsureActive();
+
+                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+
+                lock (DeferredIOs) DeferredIOs.RemoveItemsWithPrefix(diskPath);
+
+                lock (Atoms)
                 {
-                    EnsureActive();
-
-                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-
-                    lock (DeferredIOs) DeferredIOs.RemoveItemsWithPrefix(diskPath);
-
-                    lock (Atoms)
+                    if (IsFileAlreadyRecorded(diskPath))
                     {
-                        if (IsFileAlreadyRecorded(diskPath))
-                        {
-                            return;
-                        }
-
-                        string backupPath = Path.Combine(TransactionPath, Guid.NewGuid().ToString());
-                        Directory.CreateDirectory(backupPath);
-                        Helpers.CopyDirectory(diskPath, backupPath);
-
-                        var atom = new Atom(ActionType.DirectoryDelete, diskPath)
-                        {
-                            BackupPath = backupPath,
-                            Sequence = Atoms.Count
-                        };
-
-                        Atoms.Add(atom);
-
-                        KbUtility.EnsureNotNull(_transactionLogHandle);
-
-                        _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                        return;
                     }
-                    ptRecording?.StopAndAccumulate();
+
+                    string backupPath = Path.Combine(TransactionPath, Guid.NewGuid().ToString());
+                    Directory.CreateDirectory(backupPath);
+                    Helpers.CopyDirectory(diskPath, backupPath);
+
+                    var atom = new Atom(ActionType.DirectoryDelete, diskPath)
+                    {
+                        BackupPath = backupPath,
+                        Sequence = Atoms.Count
+                    };
+
+                    Atoms.Add(atom);
+
+                    KbUtility.EnsureNotNull(_transactionLogHandle);
+
+                    _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                 }
+                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -471,38 +489,35 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             try
             {
-                lock (SyncObject)
+                EnsureActive();
+
+                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+
+                lock (DeferredIOs) DeferredIOs.Remove(filePath);
+
+                lock (Atoms)
                 {
-                    EnsureActive();
-
-                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-
-                    lock (DeferredIOs) DeferredIOs.Remove(filePath);
-
-                    lock (Atoms)
+                    if (IsFileAlreadyRecorded(filePath))
                     {
-                        if (IsFileAlreadyRecorded(filePath))
-                        {
-                            return;
-                        }
-
-                        string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
-                        File.Copy(filePath, backupPath);
-
-                        var atom = new Atom(ActionType.FileDelete, filePath)
-                        {
-                            BackupPath = backupPath,
-                            Sequence = Atoms.Count
-                        };
-
-                        Atoms.Add(atom);
-
-                        KbUtility.EnsureNotNull(_transactionLogHandle);
-
-                        _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                        return;
                     }
-                    ptRecording?.StopAndAccumulate();
+
+                    string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
+                    File.Copy(filePath, backupPath);
+
+                    var atom = new Atom(ActionType.FileDelete, filePath)
+                    {
+                        BackupPath = backupPath,
+                        Sequence = Atoms.Count
+                    };
+
+                    Atoms.Add(atom);
+
+                    KbUtility.EnsureNotNull(_transactionLogHandle);
+
+                    _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                 }
+                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -517,15 +532,12 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             try
             {
-                lock (SyncObject)
-                {
-                    EnsureActive();
+                EnsureActive();
 
-                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                    lock (FilesReadForCache) FilesReadForCache.Add(filePath);
-                    ptRecording?.StopAndAccumulate();
-                }
+                lock (FilesReadForCache) FilesReadForCache.Add(filePath);
+                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {
@@ -540,36 +552,33 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             try
             {
-                lock (SyncObject)
+                EnsureActive();
+
+                var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
+
+                lock (Atoms)
                 {
-                    EnsureActive();
-
-                    var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-
-                    lock (Atoms)
+                    if (IsFileAlreadyRecorded(filePath))
                     {
-                        if (IsFileAlreadyRecorded(filePath))
-                        {
-                            return;
-                        }
-
-                        string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
-                        File.Copy(filePath, backupPath);
-
-                        var atom = new Atom(ActionType.FileAlter, filePath)
-                        {
-                            BackupPath = backupPath,
-                            Sequence = Atoms.Count
-                        };
-
-                        Atoms.Add(atom);
-
-                        KbUtility.EnsureNotNull(_transactionLogHandle);
-
-                        _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                        return;
                     }
-                    ptRecording?.StopAndAccumulate();
+
+                    string backupPath = Path.Combine(TransactionPath, Guid.NewGuid() + ".bak");
+                    File.Copy(filePath, backupPath);
+
+                    var atom = new Atom(ActionType.FileAlter, filePath)
+                    {
+                        BackupPath = backupPath,
+                        Sequence = Atoms.Count
+                    };
+
+                    Atoms.Add(atom);
+
+                    KbUtility.EnsureNotNull(_transactionLogHandle);
+
+                    _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
                 }
+                ptRecording?.StopAndAccumulate();
             }
             catch (Exception ex)
             {

@@ -90,7 +90,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
         }
 
         private int _activeTableWorkers = 0;
-        private int _maxTableWorkers = 8;
+        private int _maxTableWorkers = Environment.ProcessorCount;
 
         public void WorkloadThreadProc(object? p)
         {
@@ -102,6 +102,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 _totalRowCount = 0;
 
                 FormProgress.Singleton.WaitForVisible();
+                FormProgress.Singleton.Form.SetCanCancel(true);
 
                 //FormProgress.Singleton.Form.SetHeaderText($"Server: {_connectionDetails.ServerName}.");
                 //FormProgress.Singleton.Form.SetBodyText($"Table: [{_connectionDetails.DatabaseName}]...");
@@ -109,11 +110,14 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                 foreach (var item in param.Items)
                 {
-                    //FormProgress.Singleton.Form.SetBodyText($"Processing: [{item.Schema}].[{item.Table}]...");
-
                     while (_activeTableWorkers >= _maxTableWorkers)
                     {
                         Thread.Sleep(100);
+                    }
+
+                    if (FormProgress.Singleton.Form.IsCancelPending)
+                    {
+                        break;
                     }
 
                     if (_activeTableWorkers < _maxTableWorkers)
@@ -166,7 +170,12 @@ namespace NTDLS.Katzebase.SQLServerMigration
             {
                 UpdateListviewText(param.Item.ListViewRowIndex, 2, "Starting");
                 ExportSQLServerTableToKatzebase(param.Item, param.TargetServerAddress, param.TargetServerSchema);
-                UpdateListviewText(param.Item.ListViewRowIndex, 2, "Complete");
+
+                if (FormProgress.Singleton.Form.IsCancelPending)
+                {
+                    UpdateListviewText(param.Item.ListViewRowIndex, 2, "Cancelled");
+                }
+                else UpdateListviewText(param.Item.ListViewRowIndex, 2, "Complete");
             }
             catch (Exception ex)
             {
@@ -196,6 +205,11 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
             while (true)
             {
+                if (FormProgress.Singleton.Form.IsCancelPending)
+                {
+                    break;
+                }
+
                 try
                 {
                     client.Schema.CreateFullSchema(fullTargetSchema);
@@ -209,6 +223,11 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     }
                     Console.WriteLine(ex.Message);
                 }
+                break;
+            }
+
+            if (FormProgress.Singleton.Form.IsCancelPending)
+            {
                 break;
             }
 
@@ -231,6 +250,11 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                             while (dataReader.Read())
                             {
+                                if (FormProgress.Singleton.Form.IsCancelPending)
+                                {
+                                    break;
+                                }
+
                                 var dbObject = new ExpandoObject() as IDictionary<string, object>;
 
                                 for (int iField = 0; iField < dataReader.FieldCount; iField++)
@@ -250,6 +274,10 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                                 while (true)
                                 {
+                                    if (FormProgress.Singleton.Form.IsCancelPending)
+                                    {
+                                        break;
+                                    }
 
                                     try
                                     {
@@ -346,10 +374,8 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            using (var form = new FormAbout())
-            {
-                form.ShowDialog();
-            }
+            using var form = new FormAbout();
+            form.ShowDialog();
         }
 
         private void FormMain_Resize(object sender, EventArgs e)
@@ -357,7 +383,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
             listViewSQLServer.Width = Width - _widthToRight;
             listViewSQLServer.Height = Height - _heightToBottom;
             buttonImport.Left = listViewSQLServer.Right - buttonImport.Width;
-
         }
     }
 }

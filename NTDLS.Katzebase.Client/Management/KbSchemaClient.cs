@@ -44,7 +44,10 @@ namespace NTDLS.Katzebase.Client.Management
             foreach (var part in schema.Split(':'))
             {
                 fullSchema += part;
-                Create(fullSchema, pageSize);
+                if (Exists(fullSchema) == false)
+                {
+                    Create(fullSchema, pageSize);
+                }
                 fullSchema += ':';
             }
         }

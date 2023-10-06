@@ -135,7 +135,7 @@
                 {
                     lock (LockObject)
                     {
-                        if (singleton != null && singleton.HasBennShown == true)
+                        if (singleton != null && singleton.HasBeenShown == true)
                         {
                             break;
                         }
@@ -167,22 +167,26 @@
         /// Used by the user to set proprietary state information;
         /// </summary>
         public object? UserData { get; set; } = null;
-        public bool HasBennShown { get; private set; } = false;
+        public bool HasBeenShown { get; private set; } = false;
+        public bool IsCancelPending { get; private set; } = false;
 
         public FormProgress()
         {
             InitializeComponent();
 
             lblBody.Text = "";
-            cmdCancel.Enabled = false;
+            buttonCancel.Enabled = false;
             pbProgress.Minimum = 0;
             pbProgress.Maximum = 100;
+
+
 
             DialogResult = DialogResult.OK;
         }
 
-        private void cmdCancel_Click(object sender, EventArgs e)
+        private void ButtonCancel_Click(object sender, EventArgs e)
         {
+            IsCancelPending = true;
             if (OnCancel != null)
             {
                 OnCancelInfo onCancelInfo = new OnCancelInfo();
@@ -334,12 +338,13 @@
                 return;
             }
 
-            cmdCancel.Enabled = value;
+            buttonCancel.Enabled = value;
         }
 
         private void FormProgress_Shown(object sender, EventArgs e)
         {
-            HasBennShown = true;
+            HasBeenShown = true;
+            IsCancelPending = false;
         }
     }
 }

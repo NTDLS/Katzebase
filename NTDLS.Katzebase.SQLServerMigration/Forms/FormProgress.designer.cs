@@ -31,24 +31,24 @@ namespace NTDLS.Katzebase.SQLServerMigration
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FormProgress));
-            cmdCancel = new Button();
+            buttonCancel = new Button();
             pbProgress = new ProgressBar();
             lblHeader = new Label();
             lblBody = new Label();
             spinningProgress1 = new SpinningProgress();
             SuspendLayout();
             // 
-            // cmdCancel
+            // buttonCancel
             // 
-            cmdCancel.Enabled = false;
-            cmdCancel.Location = new Point(286, 120);
-            cmdCancel.Margin = new Padding(4, 3, 4, 3);
-            cmdCancel.Name = "cmdCancel";
-            cmdCancel.Size = new Size(88, 27);
-            cmdCancel.TabIndex = 1;
-            cmdCancel.Text = "Cancel";
-            cmdCancel.UseVisualStyleBackColor = true;
-            cmdCancel.Click += cmdCancel_Click;
+            buttonCancel.Enabled = false;
+            buttonCancel.Location = new Point(286, 120);
+            buttonCancel.Margin = new Padding(4, 3, 4, 3);
+            buttonCancel.Name = "buttonCancel";
+            buttonCancel.Size = new Size(88, 27);
+            buttonCancel.TabIndex = 1;
+            buttonCancel.Text = "Cancel";
+            buttonCancel.UseVisualStyleBackColor = true;
+            buttonCancel.Click += ButtonCancel_Click;
             // 
             // pbProgress
             // 
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
             Controls.Add(lblBody);
             Controls.Add(lblHeader);
             Controls.Add(pbProgress);
-            Controls.Add(cmdCancel);
+            Controls.Add(buttonCancel);
             Controls.Add(spinningProgress1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
@@ -115,7 +115,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         #endregion
 
-        private Button cmdCancel;
+        private Button buttonCancel;
         private ProgressBar pbProgress;
         private Label lblHeader;
         private Label lblBody;
