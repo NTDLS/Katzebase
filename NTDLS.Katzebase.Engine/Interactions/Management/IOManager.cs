@@ -100,7 +100,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                lock (transaction.SyncObject)
+                using (transaction.SyncObjectLock.Lock())
                 {
                     transaction.EnsureActive();
 
@@ -270,7 +270,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                lock (transaction.SyncObject)
+                using (new CriticalSection(transaction.GrantedLockCache))
                 {
                     transaction.EnsureActive();
 

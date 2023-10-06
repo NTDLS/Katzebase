@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.Library;
-using NTDLS.Katzebase.Engine.Locking;
+﻿using NTDLS.Katzebase.Engine.Locking;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -27,7 +26,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal void Remove(ObjectLock objectLock)
         {
-            using (_core.AcquireLock.Enter())
+            using (_core.AcquireLock.Lock())
             {
                 try
                 {

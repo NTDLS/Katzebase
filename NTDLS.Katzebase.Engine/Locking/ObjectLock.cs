@@ -1,5 +1,4 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Library;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Locking
@@ -54,7 +53,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             try
             {
                 var key = new ObjectLockKey(this, transaction.ProcessId, lockIntention.Operation);
-                using (_core.AcquireLock.Enter())
+                using (_core.AcquireLock.Lock())
                 {
                     Keys.Add(key);
                 }
@@ -71,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             try
             {
-                using (_core.AcquireLock.Enter())
+                using (_core.AcquireLock.Lock())
                 {
                     Keys.Remove(key);
 

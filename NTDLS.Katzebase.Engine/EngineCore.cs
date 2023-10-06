@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine
         public QueryManager Query;
 
         #region Critical Sections.
-        
+
         internal ManagedCriticalSection AcquireLock { get; } = new();
 
         #endregion

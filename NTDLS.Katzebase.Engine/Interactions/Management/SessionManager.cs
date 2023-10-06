@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public Dictionary<Guid, SessionState> CloneSessions()
         {
-            using (_collectionLock.Enter())
+            using (_collectionLock.Lock())
             {
                 return Collection.ToDictionary(o => o.Key, o => o.Value);
             }
@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public List<SessionState> GetExpiredSessions()
         {
-            using (_collectionLock.Enter())
+            using (_collectionLock.Lock())
             {
                 return Collection.Where(o => (DateTime.UtcNow - o.Value.LastCheckinTime)
                     .TotalSeconds > _core.Settings.MaxIdleConnectionSeconds).Select(o => o.Value).ToList();
@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public ulong UpsertSessionId(Guid sessionId, string clientName = "")
         {
-            using (_collectionLock.Enter())
+            using (_collectionLock.Lock())
             {
                 try
                 {
@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Once the transaction for the process has been closed, removing the process is a non-critical task.
                 // For this reason, we will "try lock" with a timeout, if we fail to remove the session now - it will be
                 // automatically retried by the HeartbeatManager.
-                using (_collectionLock.TryEnter(1000, out bool wasLockAcquired))
+                using (_collectionLock.TryLock(1000, out bool wasLockAcquired))
                 {
                     if (wasLockAcquired)
                     {
@@ -124,7 +124,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public SessionState ByProcessId(ulong processId)
         {
-            using (_collectionLock.Enter())
+            using (_collectionLock.Lock())
             {
                 try
                 {
