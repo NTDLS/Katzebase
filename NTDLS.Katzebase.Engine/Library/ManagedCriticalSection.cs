@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Engine.Library
 {
-    internal class CriticalSectionManager
+    internal class ManagedCriticalSection
     {
         /// <summary>
         /// Enters a critical section and returns a IDisposable object for which its disposal will release the lock.

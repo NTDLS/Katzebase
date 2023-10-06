@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             try
             {
                 var key = new ObjectLockKey(this, transaction.ProcessId, lockIntention.Operation);
-                using (StaticCriticalSections.AcquireLock.Enter())
+                using (_core.AcquireLock.Enter())
                 {
                     Keys.Add(key);
                 }
@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             try
             {
-                using (StaticCriticalSections.AcquireLock.Enter())
+                using (_core.AcquireLock.Enter())
                 {
                     Keys.Remove(key);
 

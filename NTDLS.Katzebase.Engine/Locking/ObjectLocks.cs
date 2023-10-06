@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             try
             {
-                using (StaticCriticalSections.AcquireLock.Enter())
+                using (_core.AcquireLock.Enter())
                 {
                     _collection.Remove(objectLock);
                 }
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         /// <returns></returns>
         public HashSet<ObjectLock> GetConflictingLocks(LockIntention intention)
         {
-            using (StaticCriticalSections.AcquireLock.Enter())
+            using (_core.AcquireLock.Enter())
             {
                 var lockedObjects = new HashSet<ObjectLock>();
 
@@ -144,7 +144,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                         throw new KbTimeoutException($"Timeout exceeded while waiting on lock: {intention.ToString()}");
                     }
 
-                    using (StaticCriticalSections.AcquireLock.TryEnter(10, out bool wasLockAcquired))
+                    using (_core.AcquireLock.TryEnter(10, out bool wasLockAcquired))
                     {
                         if (wasLockAcquired)
                         {
