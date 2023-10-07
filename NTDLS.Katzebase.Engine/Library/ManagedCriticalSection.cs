@@ -27,6 +27,40 @@
             return result;
         }
 
+        public delegate void ManagedCriticalSectionDelegateT<T>(T obj);
+
+        public static void LockAndExecute<T>(T obj, ManagedCriticalSectionDelegateT<T> function) where T : class
+        {
+            using (new CriticalSection(obj))
+            {
+                function(obj);
+            }
+        }
+
+        public static bool TryLockAndExecute<T>(T obj, ManagedCriticalSectionDelegateT<T> function) where T : class
+        {
+            using (var crit = new CriticalSection(obj, 0))
+            {
+                if (crit.IsLockHeld)
+                {
+                    function(obj);
+                }
+                return crit.IsLockHeld;
+            }
+        }
+
+        public static bool TryLockAndExecute<T>(T obj, int timeout, ManagedCriticalSectionDelegateT<T> function) where T : class
+        {
+            using (var crit = new CriticalSection(obj, timeout))
+            {
+                if (crit.IsLockHeld)
+                {
+                    function(obj);
+                }
+                return crit.IsLockHeld;
+            }
+        }
+
         public delegate void ManagedCriticalSectionDelegate();
 
         public static void LockAndExecute(object obj, ManagedCriticalSectionDelegate function)
