@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <summary>
         /// Used for general locking, if any.
         /// </summary>
-        public ManagedCriticalSection SyncObjectLock { get; } = new();
+        public CriticalSection SyncObjectLock { get; } = new();
 
         /// <summary>
         /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
@@ -124,13 +124,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 IsCancelled = IsCancelled
             };
 
-            ManagedCriticalSection.LockAndExecute(GrantedLockCache, (obj) => { snapshot.GrantedLockCache = new HashSet<string>(GrantedLockCache); });
-            ManagedCriticalSection.LockAndExecute(BlockedByKeys, (obj) => { snapshot.BlockedByKeys = obj.Select(o => o.Snapshot()).ToList(); });
-            ManagedCriticalSection.LockAndExecute(HeldLockKeys, (obj) => { snapshot.HeldLockKeys = obj.Select(o => o.Snapshot()).ToList(); });
-            ManagedCriticalSection.LockAndExecute(TemporarySchemas, (obj) => { snapshot.TemporarySchemas = new HashSet<string>(obj); });
-            ManagedCriticalSection.LockAndExecute(FilesReadForCache, (obj) => { snapshot.FilesReadForCache = new HashSet<string>(obj); });
-            ManagedCriticalSection.LockAndExecute(DeferredIOs, (obj) => { snapshot.DeferredIOs = obj.Snapshot(); });
-            ManagedCriticalSection.LockAndExecute(Atoms, (obj) => { snapshot.Atoms = obj.Select(o => o.Snapshot()).ToList(); });
+            CriticalSection.Execute(GrantedLockCache, (obj) => { snapshot.GrantedLockCache = new HashSet<string>(GrantedLockCache); });
+            CriticalSection.Execute(BlockedByKeys, (obj) => { snapshot.BlockedByKeys = obj.Select(o => o.Snapshot()).ToList(); });
+            CriticalSection.Execute(HeldLockKeys, (obj) => { snapshot.HeldLockKeys = obj.Select(o => o.Snapshot()).ToList(); });
+            CriticalSection.Execute(TemporarySchemas, (obj) => { snapshot.TemporarySchemas = new HashSet<string>(obj); });
+            CriticalSection.Execute(FilesReadForCache, (obj) => { snapshot.FilesReadForCache = new HashSet<string>(obj); });
+            CriticalSection.Execute(DeferredIOs, (obj) => { snapshot.DeferredIOs = obj.Snapshot(); });
+            CriticalSection.Execute(Atoms, (obj) => { snapshot.Atoms = obj.Select(o => o.Snapshot()).ToList(); });
 
             return snapshot;
         }
@@ -167,9 +167,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         private void ReleaseLocks()
         {
-            ManagedCriticalSection.LockAndExecute(GrantedLockCache, (obj) => obj.Clear());
+            CriticalSection.Execute(GrantedLockCache, (obj) => obj.Clear());
 
-            ManagedCriticalSection.LockAndExecute(HeldLockKeys, (obj) =>
+            CriticalSection.Execute(HeldLockKeys, (obj) =>
             {
                 foreach (var key in obj)
                 {
@@ -359,7 +359,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             bool result = false;
 
-            ManagedCriticalSection.LockAndExecute(Atoms, (obj) =>
+            CriticalSection.Execute(Atoms, (obj) =>
             {
                 result = obj.Exists(o => o.Key == filePath.ToLower());
             });
@@ -377,7 +377,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                ManagedCriticalSection.LockAndExecute(Atoms, (obj) =>
+                CriticalSection.Execute(Atoms, (obj) =>
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
@@ -414,7 +414,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 EnsureActive();
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-                ManagedCriticalSection.LockAndExecute(Atoms, (obj) =>
+                CriticalSection.Execute(Atoms, (obj) =>
                 {
                     if (IsFileAlreadyRecorded(path))
                     {
@@ -451,9 +451,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                ManagedCriticalSection.LockAndExecute(DeferredIOs, (obj) => obj.RemoveItemsWithPrefix(diskPath));
+                CriticalSection.Execute(DeferredIOs, (obj) => obj.RemoveItemsWithPrefix(diskPath));
 
-                ManagedCriticalSection.LockAndExecute(Atoms, (obj) =>
+                CriticalSection.Execute(Atoms, (obj) =>
                 {
                     if (IsFileAlreadyRecorded(diskPath))
                     {
@@ -495,9 +495,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                ManagedCriticalSection.LockAndExecute(DeferredIOs, (obj) => obj.Remove(diskPath));
+                CriticalSection.Execute(DeferredIOs, (obj) => obj.Remove(filePath));
 
-                ManagedCriticalSection.LockAndExecute(Atoms, (obj) =>
+                CriticalSection.Execute(Atoms, (obj) =>
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
@@ -538,7 +538,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                ManagedCriticalSection.LockAndExecute(FilesReadForCache, (obj) => obj.Add(filePath));
+                CriticalSection.Execute(FilesReadForCache, (obj) => obj.Add(filePath));
 
                 ptRecording?.StopAndAccumulate();
             }
@@ -559,7 +559,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                ManagedCriticalSection.LockAndExecute(Atoms, (obj) =>
+                CriticalSection.Execute(Atoms, (obj) =>
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
@@ -665,7 +665,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             }
                         }
 
-                        ManagedCriticalSection.LockAndExecute(FilesReadForCache, (obj) =>
+                        CriticalSection.Execute(FilesReadForCache, (obj) =>
                         {
                             foreach (var file in obj)
                             {
@@ -741,7 +741,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                             try
                             {
-                                ManagedCriticalSection.LockAndExecute(DeferredIOs, (obj) => obj.CommitDeferredDiskIO());
+                                CriticalSection.Execute(DeferredIOs, (obj) => obj.CommitDeferredDiskIO());
                                 CleanupTransaction();
                                 _transactionManager?.RemoveByProcessId(ProcessId);
                                 DeleteTemporarySchemas();
@@ -778,7 +778,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             KbUtility.EnsureNotNull(_core);
 
-            ManagedCriticalSection.LockAndExecute(TemporarySchemas, (obj) =>
+            CriticalSection.Execute(TemporarySchemas, (obj) =>
             {
                 if (obj.Any())
                 {

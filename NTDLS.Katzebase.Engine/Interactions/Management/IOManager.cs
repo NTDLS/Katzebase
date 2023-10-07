@@ -270,7 +270,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                using (new CriticalSection(transaction.GrantedLockCache))
+                using (new CriticalSectionReference(transaction.GrantedLockCache))
                 {
                     transaction.EnsureActive();
 

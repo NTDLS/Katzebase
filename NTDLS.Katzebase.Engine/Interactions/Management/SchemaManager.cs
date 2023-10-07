@@ -132,7 +132,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     if (transaction.IsUserCreated)
                     {
-                        using (new CriticalSection(transaction.TemporarySchemas))
+                        using (new CriticalSectionReference(transaction.TemporarySchemas))
                         {
                             //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
                             transaction.TemporarySchemas.Add(physicalSchema.VirtualPath);
@@ -186,7 +186,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         if (transaction.IsUserCreated)
                         {
-                            using (new CriticalSection(transaction.TemporarySchemas))
+                            using (new CriticalSectionReference(transaction.TemporarySchemas))
                             {
                                 //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
                                 transaction.TemporarySchemas.Add(physicalSchema.VirtualPath);

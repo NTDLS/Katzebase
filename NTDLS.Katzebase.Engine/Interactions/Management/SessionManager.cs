@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal SessionQueryHandlers QueryHandlers { get; private set; }
         internal Dictionary<Guid, SessionState> Collection { get; private set; } = new();
 
-        private readonly ManagedCriticalSection _collectionLock = new();
+        private readonly CriticalSection _collectionLock = new();
 
         public SessionManager(EngineCore core)
         {

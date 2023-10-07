@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Engine.Library
 {
-    internal class CriticalSectionMultiple : IDisposable
+    internal class CriticalSectionReferenceArray : IDisposable
     {
         private class LockObject
         {
@@ -21,7 +21,7 @@
         /// Enters a critical section.
         /// </summary>
         /// <param name="lockObject"></param>
-        public CriticalSectionMultiple(object[] lockObjects)
+        public CriticalSectionReferenceArray(object[] lockObjects)
         {
             _lockObjects = new LockObject[lockObjects.Length];
 
@@ -37,7 +37,7 @@
         /// Tries to enter a critical section.
         /// </summary>
         /// <param name="lockObject"></param>
-        public CriticalSectionMultiple(object[] lockObjects, int timeout)
+        public CriticalSectionReferenceArray(object[] lockObjects, int timeout)
         {
             _lockObjects = new LockObject[lockObjects.Length];
 
