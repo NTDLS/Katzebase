@@ -41,14 +41,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         private int _referenceCount = 0;
         public int ReferenceCount
         {
-            set
-            {
-                TransactionGranularitySync.Use(() => _referenceCount = value);
-            }
-            get
-            {
-                return TransactionGranularitySync.Use(() => _referenceCount);
-            }
+            set => TransactionGranularitySync.Use(() => _referenceCount = value);
+            get => TransactionGranularitySync.Use(() => _referenceCount);
         }
 
         #region Critical objects (Any object in this region must be locked for access).
