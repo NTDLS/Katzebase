@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Engine.Library
 {
-    internal class CriticalSection : IDisposable
+    internal class CriticalSectionReference : IDisposable
     {
         private readonly object _lockObject;
 
@@ -10,7 +10,7 @@
         /// Enters a critical section.
         /// </summary>
         /// <param name="lockObject"></param>
-        public CriticalSection(object lockObject)
+        public CriticalSectionReference(object lockObject)
         {
             _lockObject = lockObject;
             Monitor.Enter(_lockObject);
@@ -21,7 +21,7 @@
         /// Tries to enter a critical section.
         /// </summary>
         /// <param name="lockObject"></param>
-        public CriticalSection(object lockObject, int timeout)
+        public CriticalSectionReference(object lockObject, int timeout)
         {
             _lockObject = lockObject;
             IsLockHeld = Monitor.TryEnter(_lockObject, timeout);

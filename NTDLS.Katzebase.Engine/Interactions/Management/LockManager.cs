@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.Library;
-using NTDLS.Katzebase.Engine.Locking;
+﻿using NTDLS.Katzebase.Engine.Locking;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -8,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     internal class LockManager
     {
-        internal ObjectLocks Locks { get; private set; }
+        internal ObjectLocks Locks { get; private set; } = new();
         private readonly EngineCore _core;
 
         internal LockManager(EngineCore core)
@@ -16,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             _core = core;
             try
             {
-                Locks = new ObjectLocks(core);
+                Locks.SetCore(core);
             }
             catch (Exception ex)
             {
@@ -27,17 +26,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal void Remove(ObjectLock objectLock)
         {
-            using (_core.AcquireLock.Enter())
+            try
             {
-                try
-                {
-                    Locks.Remove(objectLock);
-                }
-                catch (Exception ex)
-                {
-                    _core.Log.Write($"Failed to remove lock.", ex);
-                    throw;
-                }
+                Locks.Remove(objectLock);
+            }
+            catch (Exception ex)
+            {
+                _core.Log.Write($"Failed to remove lock.", ex);
+                throw;
             }
         }
     }

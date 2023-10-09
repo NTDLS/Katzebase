@@ -121,7 +121,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     lock (_partitions[partitionIndex])
                     {
-                        foreach (var item in _partitions[partitionIndex].Collection)
+                        foreach (var item in _partitions[partitionIndex].CloneCollection())
                         {
                             result.Partitions.Add(new CachePartitionAllocationDetails.CachePartitionAllocationDetail(item.Key)
                             {
@@ -219,7 +219,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     lock (_partitions[i])
                     {
-                        var keysToRemove = _partitions[i].Keys().Where(entry => entry.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList();
+                        var keysToRemove = _partitions[i].CloneKeys().Where(entry => entry.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList();
                         foreach (string key in keysToRemove)
                         {
                             _partitions[i].Remove(key);

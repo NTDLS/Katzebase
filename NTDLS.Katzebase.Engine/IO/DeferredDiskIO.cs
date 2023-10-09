@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Types;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Types;
 using static NTDLS.Katzebase.Engine.IO.DeferredDiskIOSnapshot;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -22,12 +23,12 @@ namespace NTDLS.Katzebase.Engine.IO
             }
         }
 
-        private readonly EngineCore _core;
+        private EngineCore? _core;
         private readonly KbInsensitiveDictionary<DeferredDiskIOObject> _collection = new();
 
         public bool ContainsKey(string key) => _collection.ContainsKey(key);
 
-        public DeferredDiskIO(EngineCore core)
+        public void SetCore(EngineCore core)
         {
             _core = core;
         }
@@ -60,6 +61,8 @@ namespace NTDLS.Katzebase.Engine.IO
         /// </summary>
         public void CommitDeferredDiskIO()
         {
+            KbUtility.EnsureNotNull(_core);
+
             lock (this)
             {
                 foreach (var obj in _collection)

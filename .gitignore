@@ -97,3 +97,9 @@ TestApplications/NugetTest/obj/
 NTDLS.Katzebase.Debuging/obj/
 
 NTDLS.Katzebase.Debuging/bin/
+
+NTDLS.CriticalSection/obj/
+
+NTDLS.Semaphore/bin/
+
+NTDLS.Semaphore/obj/

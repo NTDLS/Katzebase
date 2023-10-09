@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 RowCount = rowCount,
                 Metrics = Transaction.PT?.ToCollection(),
                 Messages = Transaction.Messages,
-                Warnings = Transaction.Warnings,
+                Warnings = Transaction.CloneWarnings(),
                 Duration = (DateTime.UtcNow - Transaction.StartTime).TotalMilliseconds
             };
         }
@@ -63,7 +63,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             result.RowCount = rowCount;
             result.Metrics = Transaction.PT?.ToCollection();
             result.Messages = Transaction.Messages;
-            result.Warnings = Transaction.Warnings;
+            result.Warnings = Transaction.CloneWarnings();
             result.Duration = (DateTime.UtcNow - Transaction.StartTime).TotalMilliseconds;
 
             return result;

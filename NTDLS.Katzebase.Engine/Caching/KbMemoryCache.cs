@@ -2,7 +2,7 @@
 {
     internal class KbMemoryCache : IDisposable
     {
-        internal Dictionary<string, KbCacheItem> Collection { get; private set; } = new();
+        private readonly Dictionary<string, KbCacheItem> _collection = new();
         private readonly Timer _timer;
         private readonly EngineCore _core;
         private readonly int _cachePartitions;
@@ -26,7 +26,7 @@
             {
                 if (disposing)
                 {
-                    Collection.Clear();
+                    _collection.Clear();
                     _timer.Dispose();
                 }
                 _disposed = true;
@@ -35,11 +35,22 @@
 
         #endregion
 
-        public List<string> Keys()
+        public List<string> CloneKeys()
         {
             lock (this)
             {
-                return Collection.Select(o => o.Key).ToList();
+                return _collection.Select(o => o.Key).ToList();
+            }
+        }
+
+        public Dictionary<string, KbCacheItem> CloneCollection()
+        {
+            lock (this)
+            {
+                return _collection.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => kvp.Value.Clone()
+                );
             }
         }
 
@@ -62,7 +73,7 @@
                     //When we reach our set memory pressure, we will remove the least recently hit items from cache.
                     //TODO: since we have the hit count, update count, etc. maybe we can make this more intelligent?
 
-                    var oldestGottenItems = Collection.OrderBy(o => o.Value.LastGetDate)
+                    var oldestGottenItems = _collection.OrderBy(o => o.Value.LastGetDate)
                         .Select(o => new
                         {
                             o.Key,
@@ -91,7 +102,7 @@
         public double SizeInMegabytes()
         {
             Monitor.Enter(this);
-            var result = Collection.Sum(o => o.Value.AproximateSizeInBytes / 1024.0 / 1024.0);
+            var result = _collection.Sum(o => o.Value.AproximateSizeInBytes / 1024.0 / 1024.0);
             Monitor.Exit(this);
             return result;
         }
@@ -108,7 +119,7 @@
         public double SizeInKilobytes()
         {
             Monitor.Enter(this);
-            var result = Collection.Sum(o => o.Value.AproximateSizeInBytes / 1024.0);
+            var result = _collection.Sum(o => o.Value.AproximateSizeInBytes / 1024.0);
             Monitor.Exit(this);
             return result;
 
@@ -117,7 +128,7 @@
         public int Count()
         {
             Monitor.Enter(this);
-            var result = Collection.Count;
+            var result = _collection.Count;
             Monitor.Exit(this);
             return result;
         }
@@ -125,7 +136,7 @@
         public bool Contains(string key)
         {
             Monitor.Enter(this);
-            var result = Collection.ContainsKey(key);
+            var result = _collection.ContainsKey(key);
             Monitor.Exit(this);
             return result;
         }
@@ -133,7 +144,7 @@
         public object Get(string key)
         {
             Monitor.Enter(this);
-            var result = Collection[key];
+            var result = _collection[key];
             result.GetCount++;
             result.LastGetDate = DateTime.UtcNow;
             Monitor.Exit(this);
@@ -143,7 +154,7 @@
         public bool Remove(string key)
         {
             Monitor.Enter(this);
-            var result = Collection.Remove(key);
+            var result = _collection.Remove(key);
             Monitor.Exit(this);
             return result;
         }
@@ -151,7 +162,7 @@
         public void Clear()
         {
             Monitor.Enter(this);
-            Collection.Clear();
+            _collection.Clear();
             Monitor.Exit(this);
         }
 
@@ -159,9 +170,9 @@
         {
             Monitor.Enter(this);
             KbCacheItem? result = null;
-            if (Collection.ContainsKey(key))
+            if (_collection.ContainsKey(key))
             {
-                result = Collection[key];
+                result = _collection[key];
                 result.GetCount++;
                 result.LastGetDate = DateTime.UtcNow;
             }
@@ -172,7 +183,7 @@
         public bool TryGetValue(string key, out object? value)
         {
             Monitor.Enter(this);
-            if (Collection.TryGetValue(key, out var result))
+            if (_collection.TryGetValue(key, out var result))
             {
                 Monitor.Exit(this);
                 result.GetCount++;
@@ -191,9 +202,9 @@
         public void Upsert(string key, object obj, int lengthOfUnserializedObject = 0)
         {
             Monitor.Enter(this);
-            if (Collection.ContainsKey(key))
+            if (_collection.ContainsKey(key))
             {
-                var cacheItem = Collection[key];
+                var cacheItem = _collection[key];
                 cacheItem.Value = obj;
                 cacheItem.SetCount++;
                 cacheItem.LastSetDate = DateTime.UtcNow;
@@ -202,7 +213,7 @@
             }
             else
             {
-                Collection.Add(key, new KbCacheItem(obj, lengthOfUnserializedObject * sizeof(char)));
+                _collection.Add(key, new KbCacheItem(obj, lengthOfUnserializedObject * sizeof(char)));
             }
             Monitor.Exit(this);
         }

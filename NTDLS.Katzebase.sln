@@ -30,7 +30,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NugetTest", "TestApplicatio
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.SQLServerMigration", "NTDLS.Katzebase.SQLServerMigration\NTDLS.Katzebase.SQLServerMigration.csproj", "{9F9AFF5C-E07D-48B5-A989-FBFD59A97ACD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NTDLS.Katzebase.Debuging", "NTDLS.Katzebase.Debuging\NTDLS.Katzebase.Debuging.csproj", "{5598BAE2-BC03-4DF4-A0A9-120ECD7ABB1E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Debuging", "NTDLS.Katzebase.Debuging\NTDLS.Katzebase.Debuging.csproj", "{5598BAE2-BC03-4DF4-A0A9-120ECD7ABB1E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
