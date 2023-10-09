@@ -11,37 +11,29 @@ using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-
 namespace NTDLS.Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {
-
         public LockIntention? CurrentLockIntention { get; set; }
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; private set; } = Guid.NewGuid();
-        public Dictionary<KbTransactionWarning, HashSet<string>> Warnings { get; private set; } = new();
         public List<KbQueryResultMessage> Messages { get; private set; } = new();
         public ulong ProcessId { get; private set; }
         public DateTime StartTime { get; private set; }
         public bool IsDeadlocked { get; set; }
-
         public PerformanceTrace? PT { get; private set; } = null;
-
-        /// <summary>
-        /// Used for general locking, if any.
-        /// </summary>
-        public CriticalResource<object> SyncObjectLock { get; } = new();
+        public CriticalSection TransactionGranularitySync { get; } = new();
 
         /// <summary>
         /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
         /// </summary>
         public bool IsUserCreated { get; set; }
 
-
         private readonly EngineCore _core;
         private TransactionManager? _transactionManager;
         private StreamWriter? _transactionLogHandle = null;
+        private CriticalResource<Dictionary<KbTransactionWarning, HashSet<string>>> _warnings = new();
 
         public bool IsComittedOrRolledBack { get; private set; } = false;
         public bool IsCancelled { get; private set; } = false;
@@ -51,14 +43,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             set
             {
-                _referenceCount = value;
+                TransactionGranularitySync.Use(() => _referenceCount = value);
             }
             get
             {
-                lock (this)
-                {
-                    return _referenceCount;
-                }
+                return TransactionGranularitySync.Use(() => _referenceCount);
             }
         }
 
@@ -133,27 +122,38 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void AddWarning(KbTransactionWarning warning, string message = "")
         {
-            lock (Warnings)
+            _warnings.Use((warnings) =>
             {
-                if (Warnings.ContainsKey(warning) == false)
+                if (warnings.ContainsKey(warning) == false)
                 {
                     var messages = new HashSet<string>();
                     if (string.IsNullOrEmpty(message) == false)
                     {
                         messages.Add(message);
                     }
-                    Warnings.Add(warning, messages);
+                    warnings.Add(warning, messages);
                 }
                 else
                 {
-                    var obj = Warnings[warning];
+                    var obj = warnings[warning];
                     //No need to duplicate or blank any messages.
                     if (string.IsNullOrEmpty(message) == false && obj.Any(o => o == message) == false)
                     {
-                        Warnings[warning].Add(message);
+                        warnings[warning].Add(message);
                     }
                 }
-            }
+            });
+        }
+
+        public Dictionary<KbTransactionWarning, HashSet<string>> CloneWarnings()
+        {
+            return _warnings.Use((warnings) =>
+            {
+                return warnings.ToDictionary(
+                    kvp => kvp.Key,
+                    kvp => new HashSet<string>(kvp.Value)
+                );
+            });
         }
 
         public void AddMessage(string text, KbMessageType type)
@@ -593,17 +593,14 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void AddReference()
         {
-            lock (this)
-            {
-                _referenceCount++;
-            }
+            TransactionGranularitySync.Use(() => _referenceCount++);
         }
 
         public void Rollback()
         {
             KbUtility.EnsureNotNull(_core);
 
-            SyncObjectLock.Use((obj) =>
+            TransactionGranularitySync.Use(() =>
             {
                 if (IsComittedOrRolledBack)
                 {
@@ -718,7 +715,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             KbUtility.EnsureNotNull(_core);
 
-            return SyncObjectLock.UseNullable((obj) =>
+            return TransactionGranularitySync.Use(() =>
             {
                 if (IsCancelled)
                 {
@@ -733,37 +730,34 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 try
                 {
                     var ptCommit = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Commit);
-                    lock (this)
+                    _referenceCount--;
+
+                    if (_referenceCount == 0)
                     {
-                        _referenceCount--;
+                        IsComittedOrRolledBack = true;
 
-                        if (_referenceCount == 0)
+                        try
                         {
-                            IsComittedOrRolledBack = true;
-
-                            try
-                            {
-                                DeferredIOs.Use((obj) => obj.CommitDeferredDiskIO());
-                                CleanupTransaction();
-                                _transactionManager?.RemoveByProcessId(ProcessId);
-                                DeleteTemporarySchemas();
-                            }
-                            catch
-                            {
-                                throw;
-                            }
-                            finally
-                            {
-                                ReleaseLocks();
-                            }
-                            ptCommit?.StopAndAccumulate();
-                            PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
-                            return true;
+                            DeferredIOs.Use((obj) => obj.CommitDeferredDiskIO());
+                            CleanupTransaction();
+                            _transactionManager?.RemoveByProcessId(ProcessId);
+                            DeleteTemporarySchemas();
                         }
-                        else if (_referenceCount < 0)
+                        catch
                         {
-                            throw new KbGenericException("Transaction reference count fell below zero.");
+                            throw;
                         }
+                        finally
+                        {
+                            ReleaseLocks();
+                        }
+                        ptCommit?.StopAndAccumulate();
+                        PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
+                        return true;
+                    }
+                    else if (_referenceCount < 0)
+                    {
+                        throw new KbGenericException("Transaction reference count fell below zero.");
                     }
                 }
                 catch (Exception ex)

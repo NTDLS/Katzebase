@@ -41,12 +41,9 @@ namespace NTDLS.Katzebase.Engine.Indexes
         {
             var catalog = new PhysicalIndexCatalog();
 
-            lock (this)
+            foreach (var obj in Collection)
             {
-                foreach (var obj in Collection)
-                {
-                    catalog.Collection.Add(obj.Clone());
-                }
+                catalog.Collection.Add(obj.Clone());
             }
 
             return catalog;

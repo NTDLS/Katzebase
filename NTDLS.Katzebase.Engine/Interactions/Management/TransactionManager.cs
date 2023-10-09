@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Trace;
+using NTDLS.Semaphore;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -17,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     public class TransactionManager
     {
         private readonly EngineCore _core;
-        private readonly List<Transaction> _collection = new();
+        private readonly CriticalResource<List<Transaction>> _collection = new();
 
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactiontAPIHandlers APIHandlers { get; private set; }
@@ -39,10 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             var collectionClone = new List<Transaction>();
 
-            lock (_collection)
-            {
-                collectionClone.AddRange(_collection);
-            }
+            _collection.Use((obj) => collectionClone.AddRange(obj));
 
             var clones = new List<TransactionSnapshot>();
 
@@ -73,10 +71,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                lock (_collection)
-                {
-                    return _collection.Where(o => o.ProcessId == processId).FirstOrDefault();
-                }
+                return _collection.Use((obj) => obj.Where(o => o.ProcessId == processId).FirstOrDefault());
             }
             catch (Exception ex)
             {
@@ -89,14 +84,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                lock (_collection)
+                _collection.Use((obj) =>
                 {
                     var transaction = GetByProcessId(processId);
                     if (transaction != null)
                     {
-                        _collection.Remove(transaction);
+                        obj.Remove(transaction);
                     }
-                }
+                });
             }
             catch (Exception ex)
             {
@@ -109,19 +104,21 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Kills all transactions associated with the given processID. This is typically called from the session manager and probably should not be called otherwise.
         /// </summary>
         /// <param name="processIDs"></param>
-        internal void CloseByProcessID(ulong processID)
+        internal void CloseByProcessID(ulong processId)
         {
             try
             {
-                lock (_collection)
+                _collection.Use((obj) =>
                 {
-                    var transaction = GetByProcessId(processID);
+                    var transaction = GetByProcessId(processId);
                     if (transaction != null)
                     {
                         transaction.Rollback();
-                        _collection.Remove(transaction);
+
+                        obj.Remove(transaction);
                     }
-                }
+                });
+
             }
             catch (Exception ex)
             {
@@ -190,7 +187,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             try
             {
-                lock (_collection)
+                return _collection.Use((obj) =>
                 {
                     PerformanceTraceDurationTracker? ptAcquireTransaction = null;
                     var transaction = GetByProcessId(processId);
@@ -203,7 +200,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                         ptAcquireTransaction = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
 
-                        _collection.Add(transaction);
+                        obj.Add(transaction);
                     }
 
                     if (isUserCreated)
@@ -220,7 +217,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     KbUtility.EnsureNotNull(transaction);
 
                     return new TransactionReference(transaction);
-                }
+                });
             }
             catch (Exception ex)
             {

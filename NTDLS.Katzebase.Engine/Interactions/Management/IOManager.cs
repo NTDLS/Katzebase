@@ -100,7 +100,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = transaction.SyncObjectLock.UseNullable((obj) =>
+                var result = transaction.TransactionGranularitySync.Use(() =>
                 {
                     transaction.EnsureActive();
 

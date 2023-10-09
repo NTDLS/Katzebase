@@ -32,8 +32,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.SQLServerMi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Debuging", "NTDLS.Katzebase.Debuging\NTDLS.Katzebase.Debuging.csproj", "{5598BAE2-BC03-4DF4-A0A9-120ECD7ABB1E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NTDLS.Semaphore", "NTDLS.Semaphore\NTDLS.Semaphore.csproj", "{085925BE-197D-4ED2-8B54-6D8BC61FF65B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -80,10 +78,6 @@ Global
 		{5598BAE2-BC03-4DF4-A0A9-120ECD7ABB1E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5598BAE2-BC03-4DF4-A0A9-120ECD7ABB1E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5598BAE2-BC03-4DF4-A0A9-120ECD7ABB1E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{085925BE-197D-4ED2-8B54-6D8BC61FF65B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{085925BE-197D-4ED2-8B54-6D8BC61FF65B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{085925BE-197D-4ED2-8B54-6D8BC61FF65B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{085925BE-197D-4ED2-8B54-6D8BC61FF65B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -95,7 +89,6 @@ Global
 		{E72880E2-EB81-4EF6-8DFB-E2AA6A15533B} = {08463189-3AA6-472B-8116-584F09A0A305}
 		{EA1154E1-F4C4-457A-A08F-3C98F1A612E5} = {08463189-3AA6-472B-8116-584F09A0A305}
 		{5598BAE2-BC03-4DF4-A0A9-120ECD7ABB1E} = {30F5D013-1C84-4ACF-B75F-5A326B1C732E}
-		{085925BE-197D-4ED2-8B54-6D8BC61FF65B} = {30F5D013-1C84-4ACF-B75F-5A326B1C732E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16ADDA6D-28A3-4730-94D0-61E6D3E723B0}

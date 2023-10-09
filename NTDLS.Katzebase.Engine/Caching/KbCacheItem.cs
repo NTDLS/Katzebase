@@ -28,5 +28,17 @@
             SetCount = 1;
             AproximateSizeInBytes = aproximateSizeInBytes;
         }
+
+        public KbCacheItem Clone()
+        {
+            return new KbCacheItem(Value, AproximateSizeInBytes)
+            {
+                GetCount = GetCount,
+                SetCount = SetCount,
+                Created = Created,
+                LastSetDate = LastSetDate,
+                LastGetDate = LastGetDate,
+            };
+        }
     }
 }

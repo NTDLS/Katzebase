@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Locking
     internal class ObjectLocks
     {
         private readonly CriticalResource<List<ObjectLock>> _collection = new();
-        private readonly Dictionary<Transaction, LockIntention> _transactionWaitingForLocks = new();
+        private readonly CriticalResource<Dictionary<Transaction, LockIntention>> _transactionWaitingForLocks = new();
         private EngineCore? _core;
 
         public void SetCore(EngineCore core)
@@ -95,10 +95,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         internal Dictionary<TransactionSnapshot, LockIntention> SnapshotWaitingTransactions()
         {
-            lock (_transactionWaitingForLocks)
-            {
-                return _transactionWaitingForLocks.ToDictionary(o => o.Key.Snapshot(), o => o.Value);
-            }
+            return _transactionWaitingForLocks.Use((obj) => obj.ToDictionary(o => o.Key.Snapshot(), o => o.Value));
         }
 
         public void Acquire(Transaction transaction, LockIntention intention)
@@ -125,10 +122,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                 //We keep track of all transactions that are waiting on locks for a few reasons:
                 // (1) When we suspect a deadlock we know what all transactions are potentially involved
                 // (2) We are safe to poke around those transaction's properties because we know their threda are in this method.
-                lock (_transactionWaitingForLocks)
-                {
-                    _transactionWaitingForLocks.Add(transaction, intention);
-                }
+                _transactionWaitingForLocks.Use((obj) => obj.Add(transaction, intention));
 
                 while (true)
                 {
@@ -146,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                     }
 
                     bool? transactionAcquiredLock = _collection.TryUseAll<bool>(new ICriticalResource[] {
-                        transaction.SyncObjectLock, transaction.HeldLockKeys, transaction.BlockedByKeys }, out bool isLockHeld, (obj) =>
+                        transaction.TransactionGranularitySync, transaction.HeldLockKeys, transaction.BlockedByKeys }, out bool isLockHeld, (obj) =>
                     {
                         var lockedObjects = GetConflictingLocks(intention); //Find any existing locks on the given lock intention.
 
@@ -233,10 +227,10 @@ namespace NTDLS.Katzebase.Engine.Locking
                         {
                             if (obj.Any())
                             {
-                                lock (_transactionWaitingForLocks)
+                                _transactionWaitingForLocks.Use((txWaitingForLocks) =>
                                 {
                                     //Get a list of all valid transactions.
-                                    var waitingTransactions = _transactionWaitingForLocks.Keys.Where(o => o.IsDeadlocked == false);
+                                    var waitingTransactions = txWaitingForLocks.Keys.Where(o => o.IsDeadlocked == false);
 
                                     //Get a list of transactions that are blocked by the current transaction.
                                     var blockedByMe = waitingTransactions.Where(
@@ -281,7 +275,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                             explanation.AppendLine("        }");
 
                                             explanation.AppendLine("        Awaiting Locks {");
-                                            foreach (var waitingFor in _transactionWaitingForLocks.Where(o => o.Key == transaction))
+                                            foreach (var waitingFor in txWaitingForLocks.Where(o => o.Key == transaction))
                                             {
                                                 explanation.AppendLine($"            {waitingFor.Value.ToString()}");
                                             }
@@ -311,7 +305,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                                 explanation.AppendLine("        }");
 
                                                 explanation.AppendLine("        Awaiting Locks {");
-                                                foreach (var waitingFor in _transactionWaitingForLocks.Where(o => o.Key == waiter))
+                                                foreach (var waitingFor in txWaitingForLocks.Where(o => o.Key == waiter))
                                                 {
                                                     explanation.AppendLine($"            {waitingFor.Value.ToString()}");
                                                 }
@@ -332,7 +326,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                             throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.", explanation.ToString());
                                         }
                                     }
-                                }
+                                });
                             }
                         });
                         return false;
@@ -354,11 +348,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             finally
             {
                 transaction.CurrentLockIntention = null;
-
-                lock (_transactionWaitingForLocks)
-                {
-                    _transactionWaitingForLocks.Remove(transaction);
-                }
+                _transactionWaitingForLocks.Use((obj) => obj.Remove(transaction));
             }
         }
     }
