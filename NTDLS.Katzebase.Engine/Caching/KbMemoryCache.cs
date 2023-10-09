@@ -1,8 +1,10 @@
-﻿namespace NTDLS.Katzebase.Engine.Caching
+﻿using NTDLS.Semaphore;
+
+namespace NTDLS.Katzebase.Engine.Caching
 {
     internal class KbMemoryCache : IDisposable
     {
-        private readonly Dictionary<string, KbCacheItem> _collection = new();
+        private readonly CriticalResource<Dictionary<string, KbCacheItem>> _collection = new();
         private readonly Timer _timer;
         private readonly EngineCore _core;
         private readonly int _cachePartitions;
@@ -26,7 +28,7 @@
             {
                 if (disposing)
                 {
-                    _collection.Clear();
+                    _collection.Use((obj) => obj.Clear());
                     _timer.Dispose();
                 }
                 _disposed = true;
@@ -35,24 +37,13 @@
 
         #endregion
 
-        public List<string> CloneKeys()
-        {
-            lock (this)
-            {
-                return _collection.Select(o => o.Key).ToList();
-            }
-        }
+        public List<string> CloneKeys() => _collection.Use((obj) => obj.Select(o => o.Key).ToList());
 
-        public Dictionary<string, KbCacheItem> CloneCollection()
-        {
-            lock (this)
-            {
-                return _collection.ToDictionary(
-                    kvp => kvp.Key,
-                    kvp => kvp.Value.Clone()
-                );
-            }
-        }
+        public Dictionary<string, KbCacheItem> CloneCollection() =>
+            _collection.Use((obj) => obj.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.Clone()
+            ));
 
         public KbMemoryCache(EngineCore core)
         {
@@ -68,12 +59,12 @@
             var sizeInMegabytes = SizeInMegabytes();
             if (sizeInMegabytes > maxMemoryMB)
             {
-                if (Monitor.TryEnter(this, 50))
+                _collection.TryUse(50, (obj) =>
                 {
                     //When we reach our set memory pressure, we will remove the least recently hit items from cache.
                     //TODO: since we have the hit count, update count, etc. maybe we can make this more intelligent?
 
-                    var oldestGottenItems = _collection.OrderBy(o => o.Value.LastGetDate)
+                    var oldestGottenItems = obj.OrderBy(o => o.Value.LastGetDate)
                         .Select(o => new
                         {
                             o.Key,
@@ -93,129 +84,62 @@
                             break;
                         }
                     }
-
-                    Monitor.Exit(this);
-                }
+                });
             }
         }
 
-        public double SizeInMegabytes()
-        {
-            Monitor.Enter(this);
-            var result = _collection.Sum(o => o.Value.AproximateSizeInBytes / 1024.0 / 1024.0);
-            Monitor.Exit(this);
-            return result;
-        }
-
-        public double MaxSizeInMegabytes()
-        {
-            return (_core.Settings.CacheMaxMemory / _cachePartitions);
-        }
-        public double MaxSizeInKilobytes()
-        {
-            return (_core.Settings.CacheMaxMemory / _cachePartitions) * 1024.0;
-        }
-
-        public double SizeInKilobytes()
-        {
-            Monitor.Enter(this);
-            var result = _collection.Sum(o => o.Value.AproximateSizeInBytes / 1024.0);
-            Monitor.Exit(this);
-            return result;
-
-        }
-
-        public int Count()
-        {
-            Monitor.Enter(this);
-            var result = _collection.Count;
-            Monitor.Exit(this);
-            return result;
-        }
-
-        public bool Contains(string key)
-        {
-            Monitor.Enter(this);
-            var result = _collection.ContainsKey(key);
-            Monitor.Exit(this);
-            return result;
-        }
+        public double SizeInMegabytes() => _collection.Use((obj) => obj.Sum(o => o.Value.AproximateSizeInBytes / 1024.0 / 1024.0));
+        public double MaxSizeInMegabytes() => (_core.Settings.CacheMaxMemory / _cachePartitions);
+        public double MaxSizeInKilobytes() => (_core.Settings.CacheMaxMemory / _cachePartitions) * 1024.0;
+        public double SizeInKilobytes() => _collection.Use((obj) => obj.Sum(o => o.Value.AproximateSizeInBytes / 1024.0));
+        public int Count() => _collection.Use((obj) => obj.Count);
+        public bool Contains(string key) => _collection.Use((obj) => obj.ContainsKey(key));
+        public bool Remove(string key) => _collection.Use((obj) => obj.Remove(key));
+        public void Clear() => _collection.Use((obj) => obj.Clear());
 
         public object Get(string key)
         {
-            Monitor.Enter(this);
-            var result = _collection[key];
-            result.GetCount++;
-            result.LastGetDate = DateTime.UtcNow;
-            Monitor.Exit(this);
-            return result.Value;
-        }
-
-        public bool Remove(string key)
-        {
-            Monitor.Enter(this);
-            var result = _collection.Remove(key);
-            Monitor.Exit(this);
-            return result;
-        }
-
-        public void Clear()
-        {
-            Monitor.Enter(this);
-            _collection.Clear();
-            Monitor.Exit(this);
+            return _collection.Use((obj) =>
+            {
+                var result = obj[key];
+                result.GetCount++;
+                result.LastGetDate = DateTime.UtcNow;
+                return result.Value;
+            });
         }
 
         public object? TryGet(string key)
         {
-            Monitor.Enter(this);
-            KbCacheItem? result = null;
-            if (_collection.ContainsKey(key))
+            return _collection.Use((obj) =>
             {
-                result = _collection[key];
-                result.GetCount++;
-                result.LastGetDate = DateTime.UtcNow;
-            }
-            Monitor.Exit(this);
-            return result?.Value;
+                if (obj.ContainsKey(key))
+                {
+                    var result = obj[key];
+                    result.GetCount++;
+                    result.LastGetDate = DateTime.UtcNow;
+                    return result?.Value;
+                }
+                return null;
+            });
         }
 
-        public bool TryGetValue(string key, out object? value)
+        public void Upsert(string key, object value, int lengthOfUnserializedObject = 0)
         {
-            Monitor.Enter(this);
-            if (_collection.TryGetValue(key, out var result))
+            _collection.Use(obj =>
             {
-                Monitor.Exit(this);
-                result.GetCount++;
-                result.LastGetDate = DateTime.UtcNow;
-                value = result.Value;
-                return true;
-            }
-            else
-            {
-                Monitor.Exit(this);
-                value = null;
-                return false;
-            }
-        }
-
-        public void Upsert(string key, object obj, int lengthOfUnserializedObject = 0)
-        {
-            Monitor.Enter(this);
-            if (_collection.ContainsKey(key))
-            {
-                var cacheItem = _collection[key];
-                cacheItem.Value = obj;
-                cacheItem.SetCount++;
-                cacheItem.LastSetDate = DateTime.UtcNow;
-                cacheItem.AproximateSizeInBytes = lengthOfUnserializedObject * sizeof(char);
-
-            }
-            else
-            {
-                _collection.Add(key, new KbCacheItem(obj, lengthOfUnserializedObject * sizeof(char)));
-            }
-            Monitor.Exit(this);
+                if (obj.ContainsKey(key))
+                {
+                    var cacheItem = obj[key];
+                    cacheItem.Value = obj;
+                    cacheItem.SetCount++;
+                    cacheItem.LastSetDate = DateTime.UtcNow;
+                    cacheItem.AproximateSizeInBytes = lengthOfUnserializedObject * sizeof(char);
+                }
+                else
+                {
+                    obj.Add(key, new KbCacheItem(value, lengthOfUnserializedObject * sizeof(char)));
+                }
+            });
         }
     }
 }
