@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Locking
@@ -8,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         private readonly EngineCore _core;
         public string DiskPath { get; private set; }
         public LockGranularity Granularity { get; private set; }
-        public List<ObjectLockKey> Keys { get; private set; } = new();
+        public CriticalResource<List<ObjectLockKey>> Keys { get; private set; } = new();
 
         /// <summary>
         /// The total number of times we attmepted to lock this object.
@@ -39,10 +40,13 @@ namespace NTDLS.Katzebase.Engine.Locking
 
             if (cloneKeys) //Prevent stack-overflow.
             {
-                foreach (var key in Keys)
+                Keys.Use((obj) =>
                 {
-                    snapshot.Keys.Add(key.Snapshot());
-                }
+                    foreach (var key in obj)
+                    {
+                        snapshot.Keys.Add(key.Snapshot());
+                    }
+                });
             }
 
             return snapshot;
@@ -53,10 +57,10 @@ namespace NTDLS.Katzebase.Engine.Locking
             try
             {
                 var key = new ObjectLockKey(this, transaction.ProcessId, lockIntention.Operation);
-                using (_core.AcquireLock.Lock())
+                Keys.Use((obj) =>
                 {
-                    Keys.Add(key);
-                }
+                    obj.Add(key);
+                });
                 return key;
             }
             catch (Exception ex)
@@ -70,15 +74,15 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             try
             {
-                using (_core.AcquireLock.Lock())
+                Keys.Use((obj) =>
                 {
-                    Keys.Remove(key);
+                    obj.Remove(key);
 
-                    if (Keys.Count == 0)
+                    if (obj.Count == 0)
                     {
                         _core.Locking.Remove(key.ObjectLock);
                     }
-                }
+                });
             }
             catch (Exception ex)
             {

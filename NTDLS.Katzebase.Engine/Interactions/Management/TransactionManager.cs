@@ -156,10 +156,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         var ra = JsonConvert.DeserializeObject<Atom>(atom);
                         KbUtility.EnsureNotNull(ra);
-                        transaction.Atoms.Add(ra);
+                        transaction.Atoms.Use((obj) => obj.Add(ra));
                     }
 
-                    _core.Log.Write($"Rolling back session {transaction.ProcessId} with {transaction.Atoms.Count} actions.", KbLogSeverity.Warning);
+                    _core.Log.Write($"Rolling back session {transaction.ProcessId} with {atoms.Count} actions.", KbLogSeverity.Warning);
 
                     try
                     {

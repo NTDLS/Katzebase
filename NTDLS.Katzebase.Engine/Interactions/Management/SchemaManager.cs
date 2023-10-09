@@ -6,7 +6,6 @@ using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
-using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Trace;
 using System.Text;
@@ -132,11 +131,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     if (transaction.IsUserCreated)
                     {
-                        using (new CriticalSectionReference(transaction.TemporarySchemas))
-                        {
-                            //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
-                            transaction.TemporarySchemas.Add(physicalSchema.VirtualPath);
-                        }
+                        //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
+                        transaction.TemporarySchemas.UseNullable((obj) => obj.Add(physicalSchema.VirtualPath));
                     }
                 }
             }
@@ -186,11 +182,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         if (transaction.IsUserCreated)
                         {
-                            using (new CriticalSectionReference(transaction.TemporarySchemas))
-                            {
-                                //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
-                                transaction.TemporarySchemas.Add(physicalSchema.VirtualPath);
-                            }
+                            //If this is a long standing transaction, then we can keep track of these temp schemas and delete them automatically.
+                            transaction.TemporarySchemas.UseNullable((obj) => obj.Add(physicalSchema.VirtualPath));
                         }
                     }
                 }

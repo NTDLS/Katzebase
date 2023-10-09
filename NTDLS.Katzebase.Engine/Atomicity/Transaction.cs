@@ -7,8 +7,10 @@ using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Katzebase.Engine.Trace;
+using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+
 
 namespace NTDLS.Katzebase.Engine.Atomicity
 {
@@ -29,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <summary>
         /// Used for general locking, if any.
         /// </summary>
-        public CriticalSection SyncObjectLock { get; } = new();
+        public CriticalResource<object> SyncObjectLock { get; } = new();
 
         /// <summary>
         /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
@@ -63,48 +65,42 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         #region Critical objects (Any object in this region must be locked for access).
 
         /// <summary>
-        /// Lock if you need to read/write.
         /// Write-cached objects that need to be flushed to disk upon commit.
         /// </summary>
-        public DeferredDiskIO DeferredIOs { get; private set; }
-
+        public CriticalResource<DeferredDiskIO> DeferredIOs { get; private set; } = new();
         /// <summary>
-        /// Lock if you need to read/write.
         /// Files that have been read by the transaction. These will be placed into read
         /// cache and since they can be modified in memory, the cached items must be removed upon rollback.
         /// </summary>
-        public HashSet<string> FilesReadForCache { get; set; } = new();
+        public CriticalResource<HashSet<string>> FilesReadForCache { get; set; } = new();
 
         /// <summary>
-        /// Lock if you need to read/write.
         /// All abortable operations that the transaction has performed.
         /// </summary>
-        public List<Atom> Atoms { get; private set; } = new();
+        public CriticalResource<List<Atom>> Atoms { get; private set; } = new();
 
         /// <summary>
-        /// Lock if you need to read/write.
         /// We keep a hashset of locks granted to this transaction by the LockIntention.Key so that we
         ///     do not have to perform blocking or deadlock checks again for the life of this transaction.
         /// </summary>
-        public HashSet<string> GrantedLockCache { get; private set; } = new HashSet<string>();
+        public CriticalResource<HashSet<string>> GrantedLockCache { get; private set; } = new();
 
         /// <summary>
-        /// Lock if you need to read/write.
         /// Outstanding lock-keys that are blocking this transaction.
         /// </summary>
-        public List<ObjectLockKey> BlockedByKeys { get; private set; } = new();
+        public CriticalResource<List<ObjectLockKey>> BlockedByKeys { get; private set; } = new();
 
         /// <summary>
         /// Lock if you need to read/write.
         /// All lock-keys that are currently held by the transaction.
         /// </summary>
-        public List<ObjectLockKey> HeldLockKeys { get; private set; } = new();
+        public CriticalResource<List<ObjectLockKey>> HeldLockKeys { get; private set; } = new();
 
         /// <summary>
         /// Lock if you need to read/write.
         /// Any temporary schemas that have been created in this transaction.
         /// </summary>
-        public HashSet<string> TemporarySchemas { get; private set; } = new();
+        public CriticalResource<HashSet<string>> TemporarySchemas { get; private set; } = new();
 
         #endregion
 
@@ -124,13 +120,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 IsCancelled = IsCancelled
             };
 
-            CriticalSection.Execute(GrantedLockCache, (obj) => { snapshot.GrantedLockCache = new HashSet<string>(GrantedLockCache); });
-            CriticalSection.Execute(BlockedByKeys, (obj) => { snapshot.BlockedByKeys = obj.Select(o => o.Snapshot()).ToList(); });
-            CriticalSection.Execute(HeldLockKeys, (obj) => { snapshot.HeldLockKeys = obj.Select(o => o.Snapshot()).ToList(); });
-            CriticalSection.Execute(TemporarySchemas, (obj) => { snapshot.TemporarySchemas = new HashSet<string>(obj); });
-            CriticalSection.Execute(FilesReadForCache, (obj) => { snapshot.FilesReadForCache = new HashSet<string>(obj); });
-            CriticalSection.Execute(DeferredIOs, (obj) => { snapshot.DeferredIOs = obj.Snapshot(); });
-            CriticalSection.Execute(Atoms, (obj) => { snapshot.Atoms = obj.Select(o => o.Snapshot()).ToList(); });
+            GrantedLockCache.Use((obj) => { snapshot.GrantedLockCache = new HashSet<string>(obj); });
+            BlockedByKeys.Use((obj) => { snapshot.BlockedByKeys = obj.Select(o => o.Snapshot()).ToList(); });
+            HeldLockKeys.Use((obj) => { snapshot.HeldLockKeys = obj.Select(o => o.Snapshot()).ToList(); });
+            TemporarySchemas.Use((obj) => { snapshot.TemporarySchemas = new HashSet<string>(obj); });
+            FilesReadForCache.Use((obj) => { snapshot.FilesReadForCache = new HashSet<string>(obj); });
+            DeferredIOs.Use((obj) => { snapshot.DeferredIOs = obj.Snapshot(); });
+            Atoms.Use((obj) => { snapshot.Atoms = obj.Select(o => o.Snapshot()).ToList(); });
 
             return snapshot;
         }
@@ -167,9 +163,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         private void ReleaseLocks()
         {
-            CriticalSection.Execute(GrantedLockCache, (obj) => obj.Clear());
+            GrantedLockCache.Use((obj) => obj.Clear());
 
-            CriticalSection.Execute(HeldLockKeys, (obj) =>
+            HeldLockKeys.Use((obj) =>
             {
                 foreach (var key in obj)
                 {
@@ -332,7 +328,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             StartTime = DateTime.UtcNow;
             ProcessId = processId;
 
-            DeferredIOs = new DeferredDiskIO(core);
+            DeferredIOs.Use((obj) =>
+            {
+                obj.SetCore(core);
+            });
 
             if (isRecovery == false)
             {
@@ -359,7 +358,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             bool result = false;
 
-            CriticalSection.Execute(Atoms, (obj) =>
+            Atoms.Use((obj) =>
             {
                 result = obj.Exists(o => o.Key == filePath.ToLower());
             });
@@ -377,7 +376,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                CriticalSection.Execute(Atoms, (obj) =>
+                Atoms.Use((obj) =>
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
@@ -414,7 +413,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 EnsureActive();
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
-                CriticalSection.Execute(Atoms, (obj) =>
+                Atoms.Use((obj) =>
                 {
                     if (IsFileAlreadyRecorded(path))
                     {
@@ -451,9 +450,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                CriticalSection.Execute(DeferredIOs, (obj) => obj.RemoveItemsWithPrefix(diskPath));
+                DeferredIOs.Use((obj) => obj.RemoveItemsWithPrefix(diskPath));
 
-                CriticalSection.Execute(Atoms, (obj) =>
+                Atoms.Use((obj) =>
                 {
                     if (IsFileAlreadyRecorded(diskPath))
                     {
@@ -495,9 +494,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                CriticalSection.Execute(DeferredIOs, (obj) => obj.Remove(filePath));
+                DeferredIOs.Use((obj) => obj.Remove(filePath));
 
-                CriticalSection.Execute(Atoms, (obj) =>
+                Atoms.Use((obj) =>
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
@@ -538,7 +537,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                CriticalSection.Execute(FilesReadForCache, (obj) => obj.Add(filePath));
+                FilesReadForCache.UseNullable((obj) => obj.Add(filePath));
 
                 ptRecording?.StopAndAccumulate();
             }
@@ -559,7 +558,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptRecording = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Recording);
 
-                CriticalSection.Execute(Atoms, (obj) =>
+                Atoms.Use((obj) =>
                 {
                     if (IsFileAlreadyRecorded(filePath))
                     {
@@ -604,7 +603,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             KbUtility.EnsureNotNull(_core);
 
-            using (SyncObjectLock.Lock())
+            SyncObjectLock.Use((obj) =>
             {
                 if (IsComittedOrRolledBack)
                 {
@@ -619,72 +618,75 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     var ptRollback = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Rollback);
                     try
                     {
-                        var rollbackActions = Atoms.OrderByDescending(o => o.Sequence);
-
-                        foreach (var record in rollbackActions)
+                        Atoms.Use((obj) =>
                         {
-                            //We need to eject the rolled back item from the cache since its last known state has changed.
-                            _core.Cache.Remove(record.OriginalPath);
+                            var rollbackActions = obj.OrderByDescending(o => o.Sequence);
 
-                            if (record.Action == ActionType.FileCreate)
+                            foreach (var record in rollbackActions)
                             {
-                                try
+                                //We need to eject the rolled back item from the cache since its last known state has changed.
+                                _core.Cache.Remove(record.OriginalPath);
+
+                                if (record.Action == ActionType.FileCreate)
                                 {
-                                    if (File.Exists(record.OriginalPath))
+                                    try
                                     {
-                                        File.Delete(record.OriginalPath);
+                                        if (File.Exists(record.OriginalPath))
+                                        {
+                                            File.Delete(record.OriginalPath);
+                                        }
+                                    }
+                                    catch
+                                    {
+                                        //Discard.
+                                    }
+                                    Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(record.OriginalPath));
+                                }
+                                else if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
+                                {
+                                    var diskPath = Path.GetDirectoryName(record.OriginalPath);
+
+                                    KbUtility.EnsureNotNull(diskPath);
+                                    KbUtility.EnsureNotNull(record.BackupPath);
+
+                                    Directory.CreateDirectory(diskPath);
+                                    File.Copy(record.BackupPath, record.OriginalPath, true);
+                                }
+                                else if (record.Action == ActionType.DirectoryCreate)
+                                {
+                                    if (Directory.Exists(record.OriginalPath))
+                                    {
+                                        Directory.Delete(record.OriginalPath, false);
                                     }
                                 }
-                                catch
+                                else if (record.Action == ActionType.DirectoryDelete)
                                 {
-                                    //Discard.
-                                }
-                                Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(record.OriginalPath));
-                            }
-                            else if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
-                            {
-                                var diskPath = Path.GetDirectoryName(record.OriginalPath);
-
-                                KbUtility.EnsureNotNull(diskPath);
-                                KbUtility.EnsureNotNull(record.BackupPath);
-
-                                Directory.CreateDirectory(diskPath);
-                                File.Copy(record.BackupPath, record.OriginalPath, true);
-                            }
-                            else if (record.Action == ActionType.DirectoryCreate)
-                            {
-                                if (Directory.Exists(record.OriginalPath))
-                                {
-                                    Directory.Delete(record.OriginalPath, false);
+                                    KbUtility.EnsureNotNull(record.BackupPath);
+                                    Helpers.CopyDirectory(record.BackupPath, record.OriginalPath);
                                 }
                             }
-                            else if (record.Action == ActionType.DirectoryDelete)
-                            {
-                                KbUtility.EnsureNotNull(record.BackupPath);
-                                Helpers.CopyDirectory(record.BackupPath, record.OriginalPath);
-                            }
-                        }
 
-                        CriticalSection.Execute(FilesReadForCache, (obj) =>
-                        {
-                            foreach (var file in obj)
+                            FilesReadForCache.Use((obj) =>
                             {
-                                //Un-cache files that we have read too. These might just be persistent in cache and never written and can affect state.
-                                _core.Cache.Remove(file);
+                                foreach (var file in obj)
+                                {
+                                    //Un-cache files that we have read too. These might just be persistent in cache and never written and can affect state.
+                                    _core.Cache.Remove(file);
+                                }
+                            });
+
+                            try
+                            {
+                                CleanupTransaction();
                             }
+                            catch
+                            {
+                                //Discard.
+                            }
+
+                            _transactionManager?.RemoveByProcessId(ProcessId);
+                            DeleteTemporarySchemas();
                         });
-
-                        try
-                        {
-                            CleanupTransaction();
-                        }
-                        catch
-                        {
-                            //Discard.
-                        }
-
-                        _transactionManager?.RemoveByProcessId(ProcessId);
-                        DeleteTemporarySchemas();
                     }
                     catch
                     {
@@ -703,7 +705,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     _core.Log.Write($"Failed to rollback transaction for process {ProcessId}.", ex);
                     throw;
                 }
-            }
+            });
         }
 
         /// <summary>
@@ -716,7 +718,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             KbUtility.EnsureNotNull(_core);
 
-            using (SyncObjectLock.Lock())
+            return SyncObjectLock.UseNullable((obj) =>
             {
                 if (IsCancelled)
                 {
@@ -741,7 +743,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                             try
                             {
-                                CriticalSection.Execute(DeferredIOs, (obj) => obj.CommitDeferredDiskIO());
+                                DeferredIOs.Use((obj) => obj.CommitDeferredDiskIO());
                                 CleanupTransaction();
                                 _transactionManager?.RemoveByProcessId(ProcessId);
                                 DeleteTemporarySchemas();
@@ -769,16 +771,15 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     _core.Log.Write($"Failed to commit transaction for process {ProcessId}.", ex);
                     throw;
                 }
-            }
-
-            return false;
+                return false;
+            });
         }
 
         private void DeleteTemporarySchemas()
         {
             KbUtility.EnsureNotNull(_core);
 
-            CriticalSection.Execute(TemporarySchemas, (obj) =>
+            TemporarySchemas.Use((obj) =>
             {
                 if (obj.Any())
                 {
@@ -807,20 +808,23 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     _transactionLogHandle = null;
                 }
 
-                foreach (var record in Atoms)
+                Atoms.Use((obj) =>
                 {
-                    //Delete all the backup files.
-                    if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
+                    foreach (var record in obj)
                     {
-                        KbUtility.EnsureNotNull(record.BackupPath);
-                        File.Delete(record.BackupPath);
+                        //Delete all the backup files.
+                        if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
+                        {
+                            KbUtility.EnsureNotNull(record.BackupPath);
+                            File.Delete(record.BackupPath);
+                        }
+                        else if (record.Action == ActionType.DirectoryDelete)
+                        {
+                            KbUtility.EnsureNotNull(record.BackupPath);
+                            Directory.Delete(record.BackupPath, true);
+                        }
                     }
-                    else if (record.Action == ActionType.DirectoryDelete)
-                    {
-                        KbUtility.EnsureNotNull(record.BackupPath);
-                        Directory.Delete(record.BackupPath, true);
-                    }
-                }
+                });
 
                 File.Delete(TransactionLogFilePath);
                 Directory.Delete(TransactionPath, true);

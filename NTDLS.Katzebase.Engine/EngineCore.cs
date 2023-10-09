@@ -1,5 +1,4 @@
 ﻿using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Shared;
 using System.Diagnostics;
 using System.Reflection;
@@ -25,12 +24,6 @@ namespace NTDLS.Katzebase.Engine
         public ProcedureManager Procedures;
         public IndexManager Indexes;
         public QueryManager Query;
-
-        #region Critical Sections.
-
-        internal CriticalSection AcquireLock { get; } = new();
-
-        #endregion
 
         public MemoryCache LookupOptimizationCache { get; set; } = new MemoryCache("ConditionLookupOptimization");
 
