@@ -98,9 +98,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal T InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format, bool useCompression = true)
         {
+            if ("D:\\Katzebase\\Root\\@schemas.kbcat".ToLower() == filePath.ToLower())
+            {
+            }
+
             try
             {
-                var result = transaction.TransactionGranularitySync.Use(() =>
+                var result = transaction.CriticalSectionTransaction.Use(() =>
                 {
                     transaction.EnsureActive();
 
@@ -278,6 +282,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         private void InternalTrackedPut(Transaction transaction, string filePath, object deserializedObject, IOFormat format, bool useCompression = true)
         {
+            if ("D:\\Katzebase\\Root\\@schemas.kbcat".ToLower() == filePath.ToLower())
+            {
+            }
+
             try
             {
                 //Why would we lock this here??

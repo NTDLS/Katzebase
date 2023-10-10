@@ -1,3 +1,52 @@
+SELECT
+	I.InvtId,
+	PO.InvtId,
+	PO.Descr
+FROM
+	Inventory as I
+INNER JOIN PurOrdDet as PO
+	ON PO.InvtId = I.InvtId
+WHERE
+	I.InvtId IN (
+		'01ENG4BG1',
+		'01GKT905PAN',
+		'01INJ2003TM',
+		'01PIP05S3',
+		'02BRG30',
+		'00MANKAWEX',
+		'01APUFP',
+		'06BR45AFAL',
+		'06BR50',
+		'BSDC145',
+		'W8K36'
+	)
+
+
+/*
+SELECT
+	I.InvtId,
+	PO.InvtId,
+	PO.Descr
+FROM
+	Inventory as I
+LEFT OUTER JOIN PurOrdDet as PO
+	ON PO.InvtId = I.InvtId
+WHERE
+	I.InvtId IN (
+		'01ENG4BG1',
+		'01GKT905PAN',
+		'01INJ2003TM',
+		'01PIP05S3',
+		'02BRG30',
+		'00MANKAWEX',
+		'01APUFP',
+		'06BR45AFAL',
+		'06BR50',
+		'BSDC145',
+		'W8K36'
+	)
+*/
+/*
 EXEC ShowBlockTree
 
 Begin Transaction
@@ -5,6 +54,7 @@ Begin Transaction
 insert into Dummyload:LoadA
 	(Name = 'AA'),(Name = 'BB'),(Name = 'CC'),
 	(Name = 'DD'),(Name = 'EE'),(Name = 'FF')
+*/
 --Rollback Transaction	
 	
 /*

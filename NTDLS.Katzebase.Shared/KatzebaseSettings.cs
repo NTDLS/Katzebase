@@ -7,9 +7,9 @@
         /// </summary>
         public bool CacheEnabled { get; set; }
         /// <summary>
-        /// The maximum amount of memory that the server will be allowed to use before scavenging the cache.
+        /// The maximum amount of memory in megabytes that the server will be allowed to use before scavenging the cache.
         /// </summary>
-        public long CacheMaxMemory { get; set; }
+        public int CacheMaxMemoryMegabytes { get; set; }
 
         /// <summary>
         /// The number of memory cache partitions to create. (0 = CPU Count)

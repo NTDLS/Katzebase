@@ -9,19 +9,19 @@ namespace NTDLS.Katzebase.Engine.Locking
 {
     internal class ObjectLocks
     {
-        private readonly CriticalResource<List<ObjectLock>> _collection = new();
-        private readonly CriticalResource<Dictionary<Transaction, LockIntention>> _transactionWaitingForLocks = new();
-        private EngineCore? _core;
+        private readonly CriticalResource<List<ObjectLock>> _collection;
+        private readonly CriticalResource<Dictionary<Transaction, LockIntention>> _transactionWaitingForLocks;
+        private readonly EngineCore _core;
 
-        public void SetCore(EngineCore core)
+        public ObjectLocks(EngineCore core)
         {
             _core = core;
+            _collection = new(core.Locking.CriticalSectionLockManagement);
+            _transactionWaitingForLocks = new(core.Locking.CriticalSectionLockManagement);
         }
 
         public void Remove(ObjectLock objectLock)
         {
-            KbUtility.EnsureNotNull(_core);
-
             try
             {
                 _collection.Use((obj) => obj.Remove(objectLock));
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         /// <returns></returns>
         public HashSet<ObjectLock> GetConflictingLocks(LockIntention intention)
         {
-            var result = _collection.UseNullable((obj) =>
+            var result = _collection.Use((obj) =>
             {
                 var lockedObjects = new HashSet<ObjectLock>();
 
@@ -115,8 +115,6 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         private void AcquireInternal(Transaction transaction, LockIntention intention)
         {
-            KbUtility.EnsureNotNull(_core);
-
             try
             {
                 //We keep track of all transactions that are waiting on locks for a few reasons:
@@ -139,8 +137,9 @@ namespace NTDLS.Katzebase.Engine.Locking
                         throw new KbTimeoutException($"Timeout exceeded while waiting on lock: {intention.ToString()}");
                     }
 
-                    bool? transactionAcquiredLock = _collection.TryUseAll<bool>(new ICriticalResource[] {
-                        transaction.TransactionGranularitySync, transaction.HeldLockKeys, transaction.BlockedByKeys }, out bool isLockHeld, (obj) =>
+                    //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical section "Locking.CriticalSectionLockManagement",
+                    //  we will only need 
+                    bool transactionAcquiredLock = _collection.TryUseAll(new ICriticalResource[] { transaction.CriticalSectionTransaction }, out bool isLockHeld, (obj) =>
                     {
                         var lockedObjects = GetConflictingLocks(intention); //Find any existing locks on the given lock intention.
 

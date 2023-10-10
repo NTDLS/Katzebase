@@ -2,7 +2,6 @@
 using NTDLS.Katzebase.Shared;
 using System.Diagnostics;
 using System.Reflection;
-using System.Runtime.Caching;
 
 namespace NTDLS.Katzebase.Engine
 {
@@ -24,8 +23,6 @@ namespace NTDLS.Katzebase.Engine
         public ProcedureManager Procedures;
         public IndexManager Indexes;
         public QueryManager Query;
-
-        public MemoryCache LookupOptimizationCache { get; set; } = new MemoryCache("ConditionLookupOptimization");
 
         public EngineCore(KatzebaseSettings settings)
         {

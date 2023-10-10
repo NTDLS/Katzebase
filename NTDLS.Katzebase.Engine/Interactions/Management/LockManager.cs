@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Locking;
+using NTDLS.Semaphore;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -7,15 +8,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     internal class LockManager
     {
-        internal ObjectLocks Locks { get; private set; } = new();
+        internal ObjectLocks Locks { get; private set; }
         private readonly EngineCore _core;
+
+        public CriticalSection CriticalSectionLockManagement { get; private set; } = new();
 
         internal LockManager(EngineCore core)
         {
             _core = core;
+
             try
             {
-                Locks.SetCore(core);
+                Locks = new ObjectLocks(core);
             }
             catch (Exception ex)
             {

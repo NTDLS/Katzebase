@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public DateTime StartTime { get; private set; }
         public bool IsDeadlocked { get; set; }
         public PerformanceTrace? PT { get; private set; } = null;
-        public CriticalSection TransactionGranularitySync { get; } = new();
+        public CriticalSection CriticalSectionTransaction { get; } = new();
 
         /// <summary>
         /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         private readonly EngineCore _core;
         private TransactionManager? _transactionManager;
         private StreamWriter? _transactionLogHandle = null;
-        private CriticalResource<Dictionary<KbTransactionWarning, HashSet<string>>> _warnings = new();
+        private readonly CriticalResource<Dictionary<KbTransactionWarning, HashSet<string>>> _warnings = new();
 
         public bool IsComittedOrRolledBack { get; private set; } = false;
         public bool IsCancelled { get; private set; } = false;
@@ -41,8 +41,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         private int _referenceCount = 0;
         public int ReferenceCount
         {
-            set => TransactionGranularitySync.Use(() => _referenceCount = value);
-            get => TransactionGranularitySync.Use(() => _referenceCount);
+            set => CriticalSectionTransaction.Use(() => _referenceCount = value);
+            get => CriticalSectionTransaction.Use(() => _referenceCount);
         }
 
         #region Critical objects (Any object in this region must be locked for access).
@@ -66,18 +66,18 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// We keep a hashset of locks granted to this transaction by the LockIntention.Key so that we
         ///     do not have to perform blocking or deadlock checks again for the life of this transaction.
         /// </summary>
-        public CriticalResource<HashSet<string>> GrantedLockCache { get; private set; } = new();
+        public CriticalResource<HashSet<string>> GrantedLockCache { get; private set; }
 
         /// <summary>
         /// Outstanding lock-keys that are blocking this transaction.
         /// </summary>
-        public CriticalResource<List<ObjectLockKey>> BlockedByKeys { get; private set; } = new();
+        public CriticalResource<List<ObjectLockKey>> BlockedByKeys { get; private set; }
 
         /// <summary>
         /// Lock if you need to read/write.
         /// All lock-keys that are currently held by the transaction.
         /// </summary>
-        public CriticalResource<List<ObjectLockKey>> HeldLockKeys { get; private set; } = new();
+        public CriticalResource<List<ObjectLockKey>> HeldLockKeys { get; private set; }
 
         /// <summary>
         /// Lock if you need to read/write.
@@ -318,6 +318,10 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             _core = core;
             _transactionManager = transactionManager;
+
+            GrantedLockCache = new(core.Locking.CriticalSectionLockManagement);
+            BlockedByKeys = new(core.Locking.CriticalSectionLockManagement);
+            HeldLockKeys = new(core.Locking.CriticalSectionLockManagement);
 
             StartTime = DateTime.UtcNow;
             ProcessId = processId;
@@ -587,14 +591,14 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void AddReference()
         {
-            TransactionGranularitySync.Use(() => _referenceCount++);
+            CriticalSectionTransaction.Use(() => _referenceCount++);
         }
 
         public void Rollback()
         {
             KbUtility.EnsureNotNull(_core);
 
-            TransactionGranularitySync.Use(() =>
+            CriticalSectionTransaction.Use(() =>
             {
                 if (IsComittedOrRolledBack)
                 {
@@ -709,7 +713,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             KbUtility.EnsureNotNull(_core);
 
-            return TransactionGranularitySync.Use(() =>
+            return CriticalSectionTransaction.Use(() =>
             {
                 if (IsCancelled)
                 {

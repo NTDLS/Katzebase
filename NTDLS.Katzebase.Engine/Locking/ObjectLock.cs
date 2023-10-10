@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         private readonly EngineCore _core;
         public string DiskPath { get; private set; }
         public LockGranularity Granularity { get; private set; }
-        public CriticalResource<List<ObjectLockKey>> Keys { get; private set; } = new();
+        public CriticalResource<List<ObjectLockKey>> Keys { get; private set; }
 
         /// <summary>
         /// The total number of times we attmepted to lock this object.
@@ -20,6 +20,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         public ObjectLock(EngineCore core, LockIntention intention)
         {
             _core = core;
+            Keys = new CriticalResource<List<ObjectLockKey>>(core.Locking.CriticalSectionLockManagement);
             DiskPath = intention.DiskPath;
             Granularity = intention.Granularity;
 

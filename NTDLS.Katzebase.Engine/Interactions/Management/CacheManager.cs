@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.Caching;
+﻿using NTDLS.FastMemoryCache;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     internal class CacheManager
     {
         private readonly EngineCore _core;
-        private readonly KbMemoryCache[] _partitions;
+        private readonly PartitionedMemoryCache _cache;
 
         public int PartitionCount { get; private set; }
 
@@ -18,17 +18,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             try
             {
-                PartitionCount = core.Settings.CachePartitions > 0 ? core.Settings.CachePartitions : Environment.ProcessorCount;
-
-                _partitions = new KbMemoryCache[PartitionCount];
-
-                int maxMemoryPerPartition = (int)(core.Settings.CacheMaxMemory / (double)PartitionCount);
-                maxMemoryPerPartition = maxMemoryPerPartition < 5 ? 5 : maxMemoryPerPartition;
-
-                for (int i = 0; i < PartitionCount; i++)
+                var config = new PartitionedCacheConfiguration
                 {
-                    _partitions[i] = new KbMemoryCache(core);
-                }
+                    MaxMemoryMegabytes = core.Settings.CacheMaxMemoryMegabytes,
+                    IsCaseSensitive = false,
+                    PartitionCount = core.Settings.CachePartitions > 0 ? core.Settings.CachePartitions : Environment.ProcessorCount,
+                    ScavengeIntervalSeconds = core.Settings.CacheScavengeInterval > 0 ? core.Settings.CacheScavengeInterval : 30
+                };
+
+                _cache = new PartitionedMemoryCache(config);
             }
             catch (Exception ex)
             {
@@ -39,19 +37,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public void Close()
         {
-            for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
-            {
-                _partitions[partitionIndex].Dispose();
-            }
+            _cache.Dispose();
         }
 
         public void Upsert(string key, object value, int aproximateSizeInBytes = 0)
         {
             try
             {
-                key = key.ToLower();
-                int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
-                _partitions[partitionIndex].Upsert(key, value, aproximateSizeInBytes);
+                _cache.Upsert(key, value, aproximateSizeInBytes);
             }
             catch (Exception ex)
             {
@@ -64,10 +57,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
-                {
-                    _partitions[partitionIndex].Clear();
-                }
+                _cache.Clear();
             }
             catch (Exception ex)
             {
@@ -80,26 +70,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = new CachePartitionAllocationStats
-                {
-                    PartitionCount = PartitionCount
-                };
-
-                for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
-                {
-                    lock (_partitions[partitionIndex])
-                    {
-                        result.Partitions.Add(new CachePartitionAllocationStats.CachePartitionAllocationStat
-                        {
-                            Partition = partitionIndex,
-                            Allocations = _partitions[partitionIndex].Count(),
-                            SizeInKilobytes = _partitions[partitionIndex].SizeInKilobytes(),
-                            MaxSizeInKilobytes = _partitions[partitionIndex].MaxSizeInKilobytes()
-                        });
-                    }
-                }
-
-                return result;
+                return _cache.GetPartitionAllocationStatistics(); ;
             }
             catch (Exception ex)
             {
@@ -112,32 +83,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = new CachePartitionAllocationDetails
-                {
-                    PartitionCount = PartitionCount
-                };
-
-                for (int partitionIndex = 0; partitionIndex < PartitionCount; partitionIndex++)
-                {
-                    lock (_partitions[partitionIndex])
-                    {
-                        foreach (var item in _partitions[partitionIndex].CloneCollection())
-                        {
-                            result.Partitions.Add(new CachePartitionAllocationDetails.CachePartitionAllocationDetail(item.Key)
-                            {
-                                Partition = partitionIndex,
-                                AproximateSizeInBytes = item.Value.AproximateSizeInBytes,
-                                GetCount = item.Value.GetCount,
-                                SetCount = item.Value.SetCount,
-                                Created = item.Value.Created,
-                                LastSetDate = item.Value.LastSetDate,
-                                LastGetDate = item.Value.LastGetDate,
-                            });
-                        }
-                    }
-                }
-
-                return result;
+                return _cache.GetPartitionAllocationDetails();
             }
             catch (Exception ex)
             {
@@ -150,13 +96,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                key = key.ToLower();
-                int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
-
-                lock (_partitions[partitionIndex])
-                {
-                    return _partitions[partitionIndex].TryGet(key);
-                }
+                return _cache.TryGet(key);
             }
             catch (Exception ex)
             {
@@ -169,13 +109,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                key = key.ToLower();
-                int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
-
-                lock (_partitions[partitionIndex])
-                {
-                    return _partitions[partitionIndex].Get(key);
-                }
+                return _cache.Get(key);
             }
             catch (Exception ex)
             {
@@ -188,20 +122,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                key = key.ToLower();
-                int partitionIndex = Math.Abs(key.GetHashCode() % PartitionCount);
-
-                int itemsEjected = 0;
-
-                lock (_partitions[partitionIndex])
-                {
-                    if (_partitions[partitionIndex].Remove(key))
-                    {
-                        itemsEjected++;
-                    }
-                }
-
-                return itemsEjected;
+                return _cache.Remove(key);
             }
             catch (Exception ex)
             {
@@ -214,18 +135,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                prefix = prefix.ToLower();
-                for (int i = 0; i < PartitionCount; i++)
-                {
-                    lock (_partitions[i])
-                    {
-                        var keysToRemove = _partitions[i].CloneKeys().Where(entry => entry.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)).ToList();
-                        foreach (string key in keysToRemove)
-                        {
-                            _partitions[i].Remove(key);
-                        }
-                    }
-                }
+                _cache.RemoveItemsWithPrefix(prefix);
             }
             catch (Exception ex)
             {
