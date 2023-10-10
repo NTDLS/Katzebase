@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Shared;
+using NTDLS.Semaphore;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -23,6 +24,8 @@ namespace NTDLS.Katzebase.Engine
         public ProcedureManager Procedures;
         public IndexManager Indexes;
         public QueryManager Query;
+
+        internal CriticalSection CriticalSectionLockManagement { get; private set; } = new();
 
         public EngineCore(KatzebaseSettings settings)
         {

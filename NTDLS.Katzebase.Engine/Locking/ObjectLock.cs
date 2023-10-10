@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         public ObjectLock(EngineCore core, LockIntention intention)
         {
             _core = core;
-            Keys = new CriticalResource<List<ObjectLockKey>>(core.Locking.CriticalSectionLockManagement);
+            Keys = new CriticalResource<List<ObjectLockKey>>(core.CriticalSectionLockManagement);
             DiskPath = intention.DiskPath;
             Granularity = intention.Granularity;
 

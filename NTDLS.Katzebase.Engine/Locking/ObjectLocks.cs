@@ -16,8 +16,8 @@ namespace NTDLS.Katzebase.Engine.Locking
         public ObjectLocks(EngineCore core)
         {
             _core = core;
-            _collection = new(core.Locking.CriticalSectionLockManagement);
-            _transactionWaitingForLocks = new(core.Locking.CriticalSectionLockManagement);
+            _collection = new(core.CriticalSectionLockManagement);
+            _transactionWaitingForLocks = new(core.CriticalSectionLockManagement);
         }
 
         public void Remove(ObjectLock objectLock)

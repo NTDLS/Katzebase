@@ -319,9 +319,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             _core = core;
             _transactionManager = transactionManager;
 
-            GrantedLockCache = new(core.Locking.CriticalSectionLockManagement);
-            BlockedByKeys = new(core.Locking.CriticalSectionLockManagement);
-            HeldLockKeys = new(core.Locking.CriticalSectionLockManagement);
+            GrantedLockCache = new(core.CriticalSectionLockManagement);
+            BlockedByKeys = new(core.CriticalSectionLockManagement);
+            HeldLockKeys = new(core.CriticalSectionLockManagement);
 
             StartTime = DateTime.UtcNow;
             ProcessId = processId;

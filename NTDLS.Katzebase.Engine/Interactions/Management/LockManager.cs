@@ -11,8 +11,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal ObjectLocks Locks { get; private set; }
         private readonly EngineCore _core;
 
-        public CriticalSection CriticalSectionLockManagement { get; private set; } = new();
-
         internal LockManager(EngineCore core)
         {
             _core = core;
