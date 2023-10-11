@@ -7,9 +7,9 @@
     <Nullable>enable</Nullable>
     <Company>NetworkDLS</Company>
     <Copyright>Copyright © 2023 NetworkDLS</Copyright>
-    <AssemblyVersion>1.0.8</AssemblyVersion>
-    <FileVersion>1.0.8</FileVersion>
-    <VersionPrefix>1.0.8</VersionPrefix>
+    <AssemblyVersion>1.0.9</AssemblyVersion>
+    <FileVersion>1.0.9</FileVersion>
+    <VersionPrefix>1.0.9</VersionPrefix>
     <Authors>NetworkDLS</Authors>
     <ApplicationIcon>NTDLS.Katzebase.ico</ApplicationIcon>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
