@@ -20,11 +20,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="170.18.0" />
+    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.0.10" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
   </ItemGroup>
 
   <ItemGroup>

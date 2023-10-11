@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.12" />
+    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.0.10" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
     <PackageReference Include="Topshelf" Version="4.3.0" />
   </ItemGroup>
@@ -24,7 +25,6 @@
   <ItemGroup>
     <ProjectReference Include="..\NTDLS.Katzebase.Engine\NTDLS.Katzebase.Engine.csproj" />
     <ProjectReference Include="..\NTDLS.Katzebase.Shared\NTDLS.Katzebase.Shared.csproj" />
-    <ProjectReference Include="..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
   </ItemGroup>
 
 </Project>

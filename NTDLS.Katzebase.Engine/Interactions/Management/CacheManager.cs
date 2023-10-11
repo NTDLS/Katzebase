@@ -1,4 +1,5 @@
 ﻿using NTDLS.FastMemoryCache;
+using NTDLS.FastMemoryCache.Metrics;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

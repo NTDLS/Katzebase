@@ -17,11 +17,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.0.10" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
   </ItemGroup>
 
 </Project>

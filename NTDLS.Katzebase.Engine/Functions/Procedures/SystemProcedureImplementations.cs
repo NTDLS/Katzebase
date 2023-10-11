@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                         {
                             var cachePartitions = core.Cache.GetPartitionAllocationDetails();
                             long totalCacheSize = 0;
-                            foreach (var partition in cachePartitions.Partitions)
+                            foreach (var partition in cachePartitions.Items)
                             {
                                 totalCacheSize += partition.AproximateSizeInBytes;
                             }
@@ -110,7 +110,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             var cachePartitions = core.Cache.GetPartitionAllocationDetails();
 
-                            foreach (var partition in cachePartitions.Partitions)
+                            foreach (var partition in cachePartitions.Items)
                             {
                                 var values = new List<string?> {
                                     $"{partition.Partition:n0}",

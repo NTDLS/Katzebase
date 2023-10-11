@@ -33,11 +33,11 @@
     <PackageReference Include="AvalonEdit" Version="6.3.0.90" />
     <PackageReference Include="HIC.System.Windows.Forms.DataVisualization" Version="1.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.0.10" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\NTDLS.Katzebase.Shared\NTDLS.Katzebase.Shared.csproj" />
-    <ProjectReference Include="..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
   </ItemGroup>
 
   <ItemGroup>

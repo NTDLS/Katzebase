@@ -1,5 +1,4 @@
 ﻿using NTDLS.Katzebase.Engine.Locking;
-using NTDLS.Semaphore;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
