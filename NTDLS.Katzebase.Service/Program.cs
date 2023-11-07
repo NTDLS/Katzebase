@@ -41,12 +41,12 @@ namespace NTDLS.Katzebase.Client.Service
             }
         }
 
-        public class MyService
+        public class KatzebaseService
         {
             private SemaphoreSlim _semaphoreToRequestStop;
             private Thread _thread;
 
-            public MyService()
+            public KatzebaseService()
             {
                 _semaphoreToRequestStop = new SemaphoreSlim(0);
                 _thread = new Thread(DoWork);
@@ -125,9 +125,9 @@ namespace NTDLS.Katzebase.Client.Service
                     rc.RestartService(1); // restart the service after 1 minute
                 });
 
-                x.Service<MyService>(s =>
+                x.Service<KatzebaseService>(s =>
                 {
-                    s.ConstructUsing(hostSettings => new MyService());
+                    s.ConstructUsing(hostSettings => new KatzebaseService());
                     s.WhenStarted(tc => tc.Start());
                     s.WhenStopped(tc => tc.Stop());
                 });
