@@ -9,8 +9,8 @@ namespace NTDLS.Katzebase.Engine.Locking
 {
     internal class ObjectLocks
     {
-        private readonly CriticalResource<List<ObjectLock>> _collection;
-        private readonly CriticalResource<Dictionary<Transaction, LockIntention>> _transactionWaitingForLocks;
+        private readonly PessimisticSemaphore<List<ObjectLock>> _collection;
+        private readonly PessimisticSemaphore<Dictionary<Transaction, LockIntention>> _transactionWaitingForLocks;
         private readonly EngineCore _core;
 
         public ObjectLocks(EngineCore core)
@@ -139,7 +139,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                     //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical section "Locking.CriticalSectionLockManagement",
                     //  we will only need 
-                    bool transactionAcquiredLock = _collection.TryUseAll(new ICriticalResource[] { transaction.CriticalSectionTransaction }, out bool isLockHeld, (obj) =>
+                    bool transactionAcquiredLock = _collection.TryUseAll(new ICriticalSection[] { transaction.CriticalSectionTransaction }, out bool isLockHeld, (obj) =>
                     {
                         var lockedObjects = GetConflictingLocks(intention); //Find any existing locks on the given lock intention.
 

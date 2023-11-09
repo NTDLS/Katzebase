@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     public class TransactionManager
     {
         private readonly EngineCore _core;
-        private readonly CriticalResource<List<Transaction>> _collection = new();
+        private readonly PessimisticSemaphore<List<Transaction>> _collection = new();
 
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactiontAPIHandlers APIHandlers { get; private set; }

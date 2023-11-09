@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         private readonly EngineCore _core;
         private TransactionManager? _transactionManager;
         private StreamWriter? _transactionLogHandle = null;
-        private readonly CriticalResource<Dictionary<KbTransactionWarning, HashSet<string>>> _warnings = new();
+        private readonly PessimisticSemaphore<Dictionary<KbTransactionWarning, HashSet<string>>> _warnings = new();
 
         public bool IsComittedOrRolledBack { get; private set; } = false;
         public bool IsCancelled { get; private set; } = false;
@@ -50,40 +50,40 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <summary>
         /// Write-cached objects that need to be flushed to disk upon commit.
         /// </summary>
-        public CriticalResource<DeferredDiskIO> DeferredIOs { get; private set; } = new();
+        public PessimisticSemaphore<DeferredDiskIO> DeferredIOs { get; private set; } = new();
         /// <summary>
         /// Files that have been read by the transaction. These will be placed into read
         /// cache and since they can be modified in memory, the cached items must be removed upon rollback.
         /// </summary>
-        public CriticalResource<HashSet<string>> FilesReadForCache { get; set; } = new();
+        public PessimisticSemaphore<HashSet<string>> FilesReadForCache { get; set; } = new();
 
         /// <summary>
         /// All abortable operations that the transaction has performed.
         /// </summary>
-        public CriticalResource<List<Atom>> Atoms { get; private set; } = new();
+        public PessimisticSemaphore<List<Atom>> Atoms { get; private set; } = new();
 
         /// <summary>
         /// We keep a hashset of locks granted to this transaction by the LockIntention.Key so that we
         ///     do not have to perform blocking or deadlock checks again for the life of this transaction.
         /// </summary>
-        public CriticalResource<HashSet<string>> GrantedLockCache { get; private set; }
+        public PessimisticSemaphore<HashSet<string>> GrantedLockCache { get; private set; }
 
         /// <summary>
         /// Outstanding lock-keys that are blocking this transaction.
         /// </summary>
-        public CriticalResource<List<ObjectLockKey>> BlockedByKeys { get; private set; }
+        public PessimisticSemaphore<List<ObjectLockKey>> BlockedByKeys { get; private set; }
 
         /// <summary>
         /// Lock if you need to read/write.
         /// All lock-keys that are currently held by the transaction.
         /// </summary>
-        public CriticalResource<List<ObjectLockKey>> HeldLockKeys { get; private set; }
+        public PessimisticSemaphore<List<ObjectLockKey>> HeldLockKeys { get; private set; }
 
         /// <summary>
         /// Lock if you need to read/write.
         /// Any temporary schemas that have been created in this transaction.
         /// </summary>
-        public CriticalResource<HashSet<string>> TemporarySchemas { get; private set; } = new();
+        public PessimisticSemaphore<HashSet<string>> TemporarySchemas { get; private set; } = new();
 
         #endregion
 

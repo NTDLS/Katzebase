@@ -145,9 +145,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             {
                                 var values = new List<string?> {
                                     $"{partition.Partition:n0}",
-                                    $"{partition.Allocations:n0}",
+                                    $"{partition.Count:n0}",
                                     $"{partition.SizeInKilobytes:n2}",
-                                    $"{partition.MaxSizeInKilobytes:n2}"
+                                    $"{(partition.Configuration.MaxMemoryMegabytes * 1024.0):n2}"
                                 };
 
                                 result.AddRow(values);

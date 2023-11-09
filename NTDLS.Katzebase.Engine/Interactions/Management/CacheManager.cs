@@ -119,7 +119,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public int Remove(string key)
+        public bool Remove(string key)
         {
             try
             {
