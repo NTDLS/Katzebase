@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Company>NetworkDLS</Company>
     <Copyright>Copyright © 2023 NetworkDLS</Copyright>
-    <Version>1.0.4.0</Version>
+    <Version>1.0.5.0</Version>
     <Authors>NetworkDLS</Authors>
     <ApplicationIcon>NTDLS.Katzebase.ico</ApplicationIcon>
   </PropertyGroup>
