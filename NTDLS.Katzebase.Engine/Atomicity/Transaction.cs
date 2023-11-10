@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public DateTime StartTime { get; private set; }
         public bool IsDeadlocked { get; set; }
         public PerformanceTrace? PT { get; private set; } = null;
-        public CriticalSection CriticalSectionTransaction { get; } = new();
+        public OptimisticCriticalSection CriticalSectionTransaction { get; } = new();
 
         /// <summary>
         /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
@@ -41,8 +41,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         private int _referenceCount = 0;
         public int ReferenceCount
         {
-            set => CriticalSectionTransaction.Use(() => _referenceCount = value);
-            get => CriticalSectionTransaction.Use(() => _referenceCount);
+            set => CriticalSectionTransaction.Write(() => _referenceCount = value);
+            get => CriticalSectionTransaction.Read(() => _referenceCount);
         }
 
         #region Critical objects (Any object in this region must be locked for access).
@@ -66,18 +66,18 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// We keep a hashset of locks granted to this transaction by the LockIntention.Key so that we
         ///     do not have to perform blocking or deadlock checks again for the life of this transaction.
         /// </summary>
-        public PessimisticSemaphore<HashSet<string>> GrantedLockCache { get; private set; }
+        public OptimisticSemaphore<HashSet<string>> GrantedLockCache { get; private set; }
 
         /// <summary>
         /// Outstanding lock-keys that are blocking this transaction.
         /// </summary>
-        public PessimisticSemaphore<List<ObjectLockKey>> BlockedByKeys { get; private set; }
+        public OptimisticSemaphore<List<ObjectLockKey>> BlockedByKeys { get; private set; }
 
         /// <summary>
         /// Lock if you need to read/write.
         /// All lock-keys that are currently held by the transaction.
         /// </summary>
-        public PessimisticSemaphore<List<ObjectLockKey>> HeldLockKeys { get; private set; }
+        public OptimisticSemaphore<List<ObjectLockKey>> HeldLockKeys { get; private set; }
 
         /// <summary>
         /// Lock if you need to read/write.
@@ -103,9 +103,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 IsCancelled = IsCancelled
             };
 
-            GrantedLockCache.Use((obj) => { snapshot.GrantedLockCache = new HashSet<string>(obj); });
-            BlockedByKeys.Use((obj) => { snapshot.BlockedByKeys = obj.Select(o => o.Snapshot()).ToList(); });
-            HeldLockKeys.Use((obj) => { snapshot.HeldLockKeys = obj.Select(o => o.Snapshot()).ToList(); });
+            GrantedLockCache.Read((obj) => { snapshot.GrantedLockCache = new HashSet<string>(obj); });
+            BlockedByKeys.Read((obj) => { snapshot.BlockedByKeys = obj.Select(o => o.Snapshot()).ToList(); });
+            HeldLockKeys.Read((obj) => { snapshot.HeldLockKeys = obj.Select(o => o.Snapshot()).ToList(); });
             TemporarySchemas.Use((obj) => { snapshot.TemporarySchemas = new HashSet<string>(obj); });
             FilesReadForCache.Use((obj) => { snapshot.FilesReadForCache = new HashSet<string>(obj); });
             DeferredIOs.Use((obj) => { snapshot.DeferredIOs = obj.Snapshot(); });
@@ -157,9 +157,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         private void ReleaseLocks()
         {
-            GrantedLockCache.Use((obj) => obj.Clear());
+            GrantedLockCache.Write((obj) => obj.Clear());
 
-            HeldLockKeys.Use((obj) =>
+            HeldLockKeys.Write((obj) =>
             {
                 foreach (var key in obj)
                 {
@@ -591,14 +591,14 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void AddReference()
         {
-            CriticalSectionTransaction.Use(() => _referenceCount++);
+            CriticalSectionTransaction.Write(() => _referenceCount++);
         }
 
         public void Rollback()
         {
             KbUtility.EnsureNotNull(_core);
 
-            CriticalSectionTransaction.Use(() =>
+            CriticalSectionTransaction.Write(() =>
             {
                 if (IsComittedOrRolledBack)
                 {
@@ -713,7 +713,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             KbUtility.EnsureNotNull(_core);
 
-            return CriticalSectionTransaction.Use(() =>
+            return CriticalSectionTransaction.Write(() =>
             {
                 if (IsCancelled)
                 {
