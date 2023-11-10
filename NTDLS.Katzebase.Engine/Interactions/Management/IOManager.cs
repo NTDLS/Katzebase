@@ -98,13 +98,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal T InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format, bool useCompression = true)
         {
-            if ("D:\\Katzebase\\Root\\@schemas.kbcat".ToLower() == filePath.ToLower())
-            {
-            }
-
             try
             {
-                var result = transaction.CriticalSectionTransaction.Use(() =>
+                var result = transaction.CriticalSectionTransaction.Write(() =>
                 {
                     transaction.EnsureActive();
 
