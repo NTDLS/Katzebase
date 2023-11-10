@@ -100,7 +100,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = transaction.CriticalSectionTransaction.Write(() =>
+                var result = transaction.CriticalSectionTransaction.Use(() =>
                 {
                     transaction.EnsureActive();
 

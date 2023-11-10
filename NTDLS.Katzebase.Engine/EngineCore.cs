@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine
         public IndexManager Indexes;
         public QueryManager Query;
 
-        internal OptimisticCriticalSection CriticalSectionLockManagement { get; private set; } = new();
+        internal PessimisticCriticalSection CriticalSectionLockManagement { get; private set; } = new();
 
         public EngineCore(KatzebaseSettings settings)
         {

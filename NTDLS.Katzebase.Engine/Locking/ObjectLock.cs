@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         private readonly EngineCore _core;
         public string DiskPath { get; private set; }
         public LockGranularity Granularity { get; private set; }
-        public OptimisticSemaphore<List<ObjectLockKey>> Keys { get; private set; }
+        public PessimisticSemaphore<List<ObjectLockKey>> Keys { get; private set; }
 
         /// <summary>
         /// The total number of times we attmepted to lock this object.
@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         public ObjectLock(EngineCore core, LockIntention intention)
         {
             _core = core;
-            Keys = new OptimisticSemaphore<List<ObjectLockKey>>(core.CriticalSectionLockManagement);
+            Keys = new PessimisticSemaphore<List<ObjectLockKey>>(core.CriticalSectionLockManagement);
             DiskPath = intention.DiskPath;
             Granularity = intention.Granularity;
 
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
             if (cloneKeys) //Prevent stack-overflow.
             {
-                Keys.Read((obj) =>
+                Keys.Use((obj) =>
                 {
                     foreach (var key in obj)
                     {
@@ -58,7 +58,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             try
             {
                 var key = new ObjectLockKey(this, transaction.ProcessId, lockIntention.Operation);
-                Keys.Write((obj) =>
+                Keys.Use((obj) =>
                 {
                     obj.Add(key);
                 });
@@ -75,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             try
             {
-                Keys.Write((obj) =>
+                Keys.Use((obj) =>
                 {
                     obj.Remove(key);
 
