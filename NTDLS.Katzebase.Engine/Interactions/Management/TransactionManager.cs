@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     public class TransactionManager
     {
         private readonly EngineCore _core;
-        private readonly PessimisticSemaphore<List<Transaction>> _collection = new();
+        private readonly OptimisticSemaphore<List<Transaction>> _collection = new();
 
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactiontAPIHandlers APIHandlers { get; private set; }
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             var collectionClone = new List<Transaction>();
 
-            _collection.Use((obj) => collectionClone.AddRange(obj));
+            _collection.Read((obj) => collectionClone.AddRange(obj));
 
             var clones = new List<TransactionSnapshot>();
 
@@ -62,7 +62,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to instantiate transaction manager.", ex);
+                _core.Log.Write("Failed to instantiate transaction manager.", ex);
                 throw;
             }
         }
@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                return _collection.Use((obj) => obj.Where(o => o.ProcessId == processId).FirstOrDefault());
+                return _collection.Read((obj) => obj.Where(o => o.ProcessId == processId).FirstOrDefault());
             }
             catch (Exception ex)
             {
@@ -84,7 +84,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                _collection.Use((obj) =>
+                _collection.Write((obj) =>
                 {
                     var transaction = GetByProcessId(processId);
                     if (transaction != null)
@@ -108,7 +108,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                _collection.Use((obj) =>
+                _collection.Write((obj) =>
                 {
                     var transaction = GetByProcessId(processId);
                     if (transaction != null)
@@ -153,7 +153,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         var ra = JsonConvert.DeserializeObject<Atom>(atom);
                         KbUtility.EnsureNotNull(ra);
-                        transaction.Atoms.Use((obj) => obj.Add(ra));
+                        transaction.Atoms.Write((obj) => obj.Add(ra));
                     }
 
                     _core.Log.Write($"Rolling back session {transaction.ProcessId} with {atoms.Count} actions.", KbLogSeverity.Warning);
@@ -187,7 +187,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             try
             {
-                return _collection.Use((obj) =>
+                return _collection.Write((obj) =>
                 {
                     PerformanceTraceDurationTracker? ptAcquireTransaction = null;
                     var transaction = GetByProcessId(processId);

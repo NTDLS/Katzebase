@@ -100,7 +100,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var result = transaction.CriticalSectionTransaction.Use(() =>
+                var result = transaction.CriticalSectionTransaction.Write(() =>
                 {
                     transaction.EnsureActive();
 
@@ -110,7 +110,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (_core.Settings.DeferredIOEnabled)
                     {
-                        var result = transaction.DeferredIOs.UseNullable<T>((obj) =>
+                        var result = transaction.DeferredIOs.ReadNullable<T>((obj) =>
                         {
                             var ptDeferredWriteRead = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredRead);
                             var deferredIOObject = obj.GetDeferredDiskIO<T>(filePath);
@@ -278,14 +278,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         private void InternalTrackedPut(Transaction transaction, string filePath, object deserializedObject, IOFormat format, bool useCompression = true)
         {
-            if ("D:\\Katzebase\\Root\\@schemas.kbcat".ToLower() == filePath.ToLower())
-            {
-            }
-
             try
             {
                 //Why would we lock this here??
-                //transaction.GrantedLockCache.Use((obj) =>
+                //transaction.GrantedLockCache.Write((obj) =>
                 //{
                 transaction.EnsureActive();
 
@@ -308,7 +304,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         _core.Log.Trace($"IO:Write-Deferred:{filePath}");
 
-                        transaction.DeferredIOs.Use((obj) =>
+                        transaction.DeferredIOs.Write((obj) =>
                         {
                             var ptDeferredWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredWrite);
                             obj.PutDeferredDiskIO(filePath, filePath, deserializedObject, format, useCompression);
@@ -442,7 +438,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 bool result = false;
 
-                transaction.DeferredIOs.Use((obj) =>
+                transaction.DeferredIOs.Read((obj) =>
                 {
                     if (obj.ContainsKey(lowerFilePath))
                     {

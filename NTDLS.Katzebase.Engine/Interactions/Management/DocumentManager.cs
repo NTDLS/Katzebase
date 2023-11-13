@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to instantiate document manager.", ex);
+                _core.Log.Write("Failed to instantiate document manager.", ex);
                 throw;
             }
         }

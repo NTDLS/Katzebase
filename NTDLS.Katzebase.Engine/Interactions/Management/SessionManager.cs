@@ -13,7 +13,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     {
         private readonly EngineCore _core;
         private ulong _nextProcessId = 1;
-        private PessimisticSemaphore<Dictionary<Guid, SessionState>> _collection = new();
+        private readonly OptimisticSemaphore<Dictionary<Guid, SessionState>> _collection = new();
 
         internal SessionAPIHandlers APIHandlers { get; private set; }
         internal SessionQueryHandlers QueryHandlers { get; private set; }
@@ -28,19 +28,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instantiate session manager.", ex);
+                _core.Log.Write($"Failed to instantiate session manager.", ex);
                 throw;
             }
         }
 
         public Dictionary<Guid, SessionState> CloneSessions()
         {
-            return _collection.Use((obj) => obj.ToDictionary(o => o.Key, o => o.Value));
+            return _collection.Read((obj) => obj.ToDictionary(o => o.Key, o => o.Value));
         }
 
         public List<SessionState> GetExpiredSessions()
         {
-            return _collection.Use((obj) =>
+            return _collection.Read((obj) =>
             {
                 return obj.Where(o => (DateTime.UtcNow - o.Value.LastCheckinTime)
                     .TotalSeconds > _core.Settings.MaxIdleConnectionSeconds).Select(o => o.Value).ToList();
@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public ulong UpsertSessionId(Guid sessionId, string clientName = "")
         {
-            return _collection.Use((obj) =>
+            return _collection.Write((obj) =>
             {
                 try
                 {
@@ -94,7 +94,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Once the transaction for the process has been closed, removing the process is a non-critical task.
                 // For this reason, we will "try lock" with a timeout, if we fail to remove the session now - it will be
                 // automatically retried by the HeartbeatManager.
-                _collection.TryUse(out bool wasLockObtained, 1000, (obj) =>
+                _collection.TryWrite(out bool wasLockObtained, 1000, (obj) =>
                 {
                     var session = obj.Where(o => o.Value.ProcessId == processId).FirstOrDefault().Value;
                     if (session != null)
@@ -117,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public SessionState ByProcessId(ulong processId)
         {
-            return _collection.Use((obj) =>
+            return _collection.Read((obj) =>
             {
                 try
                 {

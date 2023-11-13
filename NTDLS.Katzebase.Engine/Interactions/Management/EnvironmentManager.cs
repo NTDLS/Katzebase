@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Write("Failed to instantiate environment manager.", ex);
+                _core.Log.Write("Failed to instantiate environment manager.", ex);
                 throw;
             }
         }

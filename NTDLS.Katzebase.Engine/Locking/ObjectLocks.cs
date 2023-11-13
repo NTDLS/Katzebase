@@ -9,8 +9,8 @@ namespace NTDLS.Katzebase.Engine.Locking
 {
     internal class ObjectLocks
     {
-        private readonly PessimisticSemaphore<List<ObjectLock>> _collection;
-        private readonly PessimisticSemaphore<Dictionary<Transaction, LockIntention>> _transactionWaitingForLocks;
+        private readonly OptimisticSemaphore<List<ObjectLock>> _collection;
+        private readonly OptimisticSemaphore<Dictionary<Transaction, LockIntention>> _transactionWaitingForLocks;
         private readonly EngineCore _core;
 
         public ObjectLocks(EngineCore core)
@@ -24,7 +24,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         {
             try
             {
-                _collection.Use((obj) => obj.Remove(objectLock));
+                _collection.Write((obj) => obj.Remove(objectLock));
             }
             catch (Exception ex)
             {
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         /// <returns></returns>
         public HashSet<ObjectLock> GetConflictingLocks(LockIntention intention)
         {
-            var result = _collection.Use((obj) =>
+            var result = _collection.Read((obj) =>
             {
                 var lockedObjects = new HashSet<ObjectLock>();
 
@@ -95,12 +95,12 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         internal Dictionary<TransactionSnapshot, LockIntention> SnapshotWaitingTransactions()
         {
-            return _transactionWaitingForLocks.Use((obj) => obj.ToDictionary(o => o.Key.Snapshot(), o => o.Value));
+            return _transactionWaitingForLocks.Read((obj) => obj.ToDictionary(o => o.Key.Snapshot(), o => o.Value));
         }
 
         public void Acquire(Transaction transaction, LockIntention intention)
         {
-            if (transaction.GrantedLockCache.UseNullable((obj) =>
+            if (transaction.GrantedLockCache.ReadNullable((obj) =>
             {
                 return obj.Contains(intention.Key);
             }))
@@ -110,7 +110,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
             AcquireInternal(transaction, intention);
 
-            transaction.GrantedLockCache.UseNullable((obj) => obj.Add(intention.Key));
+            transaction.GrantedLockCache.WriteNullable((obj) => obj.Add(intention.Key));
         }
 
         private void AcquireInternal(Transaction transaction, LockIntention intention)
@@ -120,7 +120,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                 //We keep track of all transactions that are waiting on locks for a few reasons:
                 // (1) When we suspect a deadlock we know what all transactions are potentially involved
                 // (2) We are safe to poke around those transaction's properties because we know their threda are in this method.
-                _transactionWaitingForLocks.Use((obj) => obj.Add(transaction, intention));
+                _transactionWaitingForLocks.Write((obj) => obj.Add(transaction, intention));
 
                 while (true)
                 {
@@ -139,7 +139,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                     //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical section "Locking.CriticalSectionLockManagement",
                     //  we will only need 
-                    bool transactionAcquiredLock = _collection.TryUseAll(new IPessimisticCriticalSection[] { transaction.CriticalSectionTransaction }, out bool isLockHeld, (obj) =>
+                    bool transactionAcquiredLock = _collection.TryWriteAll(new IOptimisticCriticalSection[] { transaction.CriticalSectionTransaction }, out bool isLockHeld, (obj) =>
                     {
                         var lockedObjects = GetConflictingLocks(intention); //Find any existing locks on the given lock intention.
 
@@ -154,26 +154,26 @@ namespace NTDLS.Katzebase.Engine.Locking
                         //We just want read access.
                         if (intention.Operation == LockOperation.Read)
                         {
-                            var blockers = lockedObjects.SelectMany(o => o.Keys.Use((obj) => obj))
+                            var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
                                 .Where(o => o.Operation == LockOperation.Write && o.ProcessId != transaction.ProcessId).ToList();
 
                             //If there are no existing un-owned write locks.
                             if (blockers.Any() == false)
                             {
-                                transaction.BlockedByKeys.Use((obj) => obj.Clear());
+                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
 
                                 foreach (var lockedObject in lockedObjects)
                                 {
                                     lockedObject.Hits++;
 
-                                    if (lockedObject.Keys.Use((obj) => obj).Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
+                                    if (lockedObject.Keys.Read((obj) => obj).Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
                                     {
                                         //Do we really need to hand out multiple keys to the same object of the same type? I dont think we do. Just continue...
                                         continue;
                                     }
 
                                     var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-                                    transaction.HeldLockKeys.Use((obj) => obj.Add(lockKey));
+                                    transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
                                 }
 
                                 var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
@@ -184,23 +184,23 @@ namespace NTDLS.Katzebase.Engine.Locking
                             }
                             else
                             {
-                                transaction.BlockedByKeys.Use((obj) => obj.Clear());
-                                transaction.BlockedByKeys.Use((obj) => obj.AddRange(blockers.Distinct()));
+                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                                transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
                             }
                         }
                         //We want write access.
                         else if (intention.Operation == LockOperation.Write)
                         {
-                            var blockers = lockedObjects.SelectMany(o => o.Keys.Use((obj) => obj)).Where(o => o.ProcessId != transaction.ProcessId).ToList();
+                            var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj)).Where(o => o.ProcessId != transaction.ProcessId).ToList();
                             if (blockers.Any() == false) //If there are no existing un-owned locks.
                             {
-                                transaction.BlockedByKeys.Use((obj) => obj.Clear());
+                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
 
                                 foreach (var lockedObject in lockedObjects)
                                 {
                                     lockedObject.Hits++;
 
-                                    if (lockedObject.Keys.Use((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
+                                    if (lockedObject.Keys.Read((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
                                     {
                                         //Do we really need to hand out multiple keys to the same object of the same type? I dont think we do.
                                         continue;
@@ -208,7 +208,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                                     var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
 
-                                    transaction.HeldLockKeys.Use((obj) => obj.Add(lockKey));
+                                    transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
                                 }
 
                                 var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
@@ -219,23 +219,23 @@ namespace NTDLS.Katzebase.Engine.Locking
                             }
                             else
                             {
-                                transaction.BlockedByKeys.Use((obj) => obj.Clear());
-                                transaction.BlockedByKeys.Use((obj) => obj.AddRange(blockers.Distinct()));
+                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                                transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
                             }
                         }
 
-                        transaction.BlockedByKeys.Use((obj) =>
+                        transaction.BlockedByKeys.Read((obj) =>
                         {
                             if (obj.Any())
                             {
-                                _transactionWaitingForLocks.Use((txWaitingForLocks) =>
+                                _transactionWaitingForLocks.Read((txWaitingForLocks) =>
                                 {
                                     //Get a list of all valid transactions.
                                     var waitingTransactions = txWaitingForLocks.Keys.Where(o => o.IsDeadlocked == false);
 
                                     //Get a list of transactions that are blocked by the current transaction.
                                     var blockedByMe = waitingTransactions.Where(
-                                        o => o.BlockedByKeys.UseNullable((obj) => obj.Where(k => k.ProcessId == transaction.ProcessId).Any())).ToList();
+                                        o => o.BlockedByKeys.ReadNullable((obj) => obj.Where(k => k.ProcessId == transaction.ProcessId).Any())).ToList();
 
                                     foreach (var blocked in blockedByMe)
                                     {
@@ -266,7 +266,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                             KbUtility.EnsureNotNull(transaction.HeldLockKeys);
 
                                             explanation.AppendLine("        Held Locks {");
-                                            transaction.HeldLockKeys.Use((obj) =>
+                                            transaction.HeldLockKeys.Read((obj) =>
                                             {
                                                 foreach (var key in obj)
                                                 {
@@ -296,7 +296,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                                                 explanation.AppendLine("        Held Locks {");
 
-                                                waiter.HeldLockKeys.Use((obj) =>
+                                                waiter.HeldLockKeys.Read((obj) =>
                                                 {
                                                     foreach (var key in obj)
                                                     {
@@ -349,7 +349,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             finally
             {
                 transaction.CurrentLockIntention = null;
-                _transactionWaitingForLocks.Use((obj) => obj.Remove(transaction));
+                _transactionWaitingForLocks.Write((obj) => obj.Remove(transaction));
             }
         }
     }
