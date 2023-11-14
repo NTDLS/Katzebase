@@ -59,7 +59,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                 //Check if the intended file or directory is in a locked directory.
                 var exactDirectoryLocks = obj.Where(o =>
-                    (o.Granularity == LockGranularity.Directory || o.Granularity == LockGranularity.Path) && intention.DiskPath == intentionDirectory);
+                    (o.Granularity == LockGranularity.Directory || o.Granularity == LockGranularity.Path) && o.DiskPath == intentionDirectory);
                 foreach (var existingLock in exactDirectoryLocks)
                 {
                     lockedObjects.Add(existingLock);
