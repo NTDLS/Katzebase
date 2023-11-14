@@ -469,7 +469,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 string cacheKey = filePath.ToLower();
-                transaction.LockFile(LockOperation.Write, cacheKey);
+                transaction.LockFile(LockOperation.Delete, cacheKey);
 
                 if (_core.Settings.CacheEnabled)
                 {
@@ -496,7 +496,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                transaction.LockPath(LockOperation.Write, diskPath);
+                transaction.LockPath(LockOperation.Delete, diskPath);
 
                 if (_core.Settings.CacheEnabled)
                 {

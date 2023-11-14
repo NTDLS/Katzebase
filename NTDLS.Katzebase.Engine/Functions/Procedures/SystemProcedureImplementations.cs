@@ -258,6 +258,42 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             return collection;
                         }
                     //---------------------------------------------------------------------------------------------------------------------------
+                    case "showlocks":
+                        {
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
+
+                            result.AddField("ProcessId");
+                            result.AddField("Granularity");
+                            result.AddField("Operation");
+                            result.AddField("ObjectName");
+
+                            var txSnapshots = core.Transactions.Snapshot();
+
+                            var processId = proc.Parameters.GetNullable<ulong?>("processId");
+                            if (processId != null)
+                            {
+                                txSnapshots = txSnapshots.Where(o => o.ProcessId == processId).ToList();
+                            }
+
+                            foreach (var tx in txSnapshots)
+                            {
+                                foreach (var heldLockKey in tx.HeldLockKeys)
+                                {
+
+                                    var values = new List<string?> {
+                                        heldLockKey.ProcessId.ToString(),
+                                        heldLockKey.ObjectLock.Granularity.ToString(),
+                                        heldLockKey.Operation.ToString(),
+                                        heldLockKey.ObjectName.ToString(),
+                                    };
+                                    result.AddRow(values);
+                                }
+                            }
+
+                            return collection;
+                        }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "showwaitinglocks":
                         {
                             var collection = new KbQueryResultCollection();

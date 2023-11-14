@@ -14,6 +14,7 @@
                 "ClearHealthCounters:",
                 "ReleaseCacheAllocations:",
                 "ShowBlocks:Numeric/processId=null",
+                "ShowLocks:Numeric/processId=null",
                 "ShowCacheAllocations:",
                 "ShowCachePartitions:",
                 "ShowHealthCounters:",
