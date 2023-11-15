@@ -241,6 +241,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
+        /// <summary>
+        /// Locks a single directory and all files (but not sub-directories) that it contains.
+        /// </summary>
+        /// <param name="lockOperation"></param>
+        /// <param name="diskpath"></param>
         public void LockDirectory(LockOperation lockOperation, string diskpath)
         {
             KbUtility.EnsureNotNull(_core);
@@ -265,6 +270,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
+        /// <summary>
+        /// Locks a path (which means the directory, sub-directory and all files beneath it).
+        /// </summary>
+        /// <param name="lockOperation"></param>
+        /// <param name="diskpath"></param>
         public void LockPath(LockOperation lockOperation, string diskpath)
         {
             KbUtility.EnsureNotNull(_core);

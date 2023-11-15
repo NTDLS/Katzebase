@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         /// </summary>
         /// <param name="intention"></param>
         /// <returns></returns>
-        public HashSet<ObjectLock> GetConflictingLocks(LockIntention intention)
+        public HashSet<ObjectLock> GetOverlappingLocks(LockIntention intention)
         {
             var result = _collection.Read((obj) =>
             {
@@ -50,27 +50,20 @@ namespace NTDLS.Katzebase.Engine.Locking
                 if (intention.Granularity == LockGranularity.File)
                 {
                     var fileLocks = obj.Where(o =>
-                        o.Granularity == LockGranularity.File && o.DiskPath == intention.DiskPath);
-                    foreach (var existingLock in fileLocks)
-                    {
-                        lockedObjects.Add(existingLock);
-                    }
+                        o.Granularity == LockGranularity.File && o.DiskPath == intention.DiskPath).ToList();
+                    fileLocks.ForEach(o => lockedObjects.Add(o));
                 }
 
                 //Check if the intended file or directory is in a locked directory.
                 var exactDirectoryLocks = obj.Where(o =>
-                    (o.Granularity == LockGranularity.Directory || o.Granularity == LockGranularity.Path) && o.DiskPath == intentionDirectory);
-                foreach (var existingLock in exactDirectoryLocks)
-                {
-                    lockedObjects.Add(existingLock);
-                }
+                    (o.Granularity == LockGranularity.Directory || o.Granularity == LockGranularity.Path) && o.DiskPath == intentionDirectory).ToList();
+                exactDirectoryLocks.ForEach(o => lockedObjects.Add(o));
 
                 var direcotryAndSubPathLocks = obj.Where(o =>
-                    o.Granularity == LockGranularity.Path && intentionDirectory.StartsWith(o.DiskPath));
-                foreach (var existingLock in direcotryAndSubPathLocks)
-                {
-                    lockedObjects.Add(existingLock);
-                }
+                    o.Granularity == LockGranularity.Path && intentionDirectory.StartsWith(o.DiskPath)).ToList();
+                direcotryAndSubPathLocks.ForEach(o => lockedObjects.Add(o));
+
+                //direcotryAndSubPathLocks.ForEach(new ObjectLock(_core, new LockIntention(intentionDirectory, LockGranularity.Directory, LockOperation.SchemaPreserve)));
 
                 /* TODO: Think though this, seems agressive. If we need to lock a parent path then we should just do it explicitly.
                 //If the intended lock is a path then we need to find all existing locks that would be contained in the intended lock path.
@@ -122,8 +115,17 @@ namespace NTDLS.Katzebase.Engine.Locking
                 // (2) We are safe to poke around those transaction's properties because we know their threda are in this method.
                 _transactionWaitingForLocks.Write((obj) => obj.Add(transaction, intention));
 
+                int retries = 0;
+
                 while (true)
                 {
+                    retries++;
+
+                    if (retries > 100)
+                    {
+
+                    }
+
                     transaction.EnsureActive();
 
                     transaction.CurrentLockIntention = intention;
@@ -141,7 +143,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                     //  we will only need 
                     bool transactionAcquiredLock = _collection.TryWriteAll(new IOptimisticCriticalSection[] { transaction.CriticalSectionTransaction }, out bool isLockHeld, (obj) =>
                     {
-                        var lockedObjects = GetConflictingLocks(intention); //Find any existing locks on the given lock intention.
+                        var lockedObjects = GetOverlappingLocks(intention); //Find any existing locks on the given lock intention.
 
                         if (lockedObjects.Count == 0)
                         {
@@ -151,11 +153,12 @@ namespace NTDLS.Katzebase.Engine.Locking
                             lockedObjects.Add(lockedObject);
                         }
 
-                        //We just want read access.
-                        if (intention.Operation == LockOperation.Read)
+                        /*
+                        if (intention.Operation == LockOperation.SchemaPreserve)
                         {
+                            //This operation is blocked by: Read and Write.
                             var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                                .Where(o => o.Operation == LockOperation.Write && o.ProcessId != transaction.ProcessId).ToList();
+                                .Where(o => (o.Operation == LockOperation.Write || o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
 
                             //If there are no existing un-owned write locks.
                             if (blockers.Any() == false)
@@ -188,10 +191,87 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
                             }
                         }
-                        //We want write access.
+                        */
+                        if (intention.Operation == LockOperation.Read)
+                        {
+                            //This operation is blocked by: Read and Write.
+                            var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
+                                .Where(o => (o.Operation == LockOperation.Write || o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
+
+                            //If there are no existing un-owned write locks.
+                            if (blockers.Any() == false)
+                            {
+                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
+
+                                foreach (var lockedObject in lockedObjects)
+                                {
+                                    lockedObject.Hits++;
+
+                                    if (lockedObject.Keys.Read((obj) => obj).Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
+                                    {
+                                        //Do we really need to hand out multiple keys to the same object of the same type? I dont think we do. Just continue...
+                                        continue;
+                                    }
+
+                                    var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+                                    transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
+                                }
+
+                                var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
+                                _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
+                                _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+
+                                return true;
+                            }
+                            else
+                            {
+                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                                transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
+                            }
+                        }
                         else if (intention.Operation == LockOperation.Write)
                         {
-                            var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj)).Where(o => o.ProcessId != transaction.ProcessId).ToList();
+                            //This operation is blocked by: Read, Write, Delete.
+                            var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
+                                .Where(o => /*(o.Operation != LockOperation.SchemaPreserve) &&*/ o.ProcessId != transaction.ProcessId).ToList();
+
+                            if (blockers.Any() == false) //If there are no existing un-owned locks.
+                            {
+                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
+
+                                foreach (var lockedObject in lockedObjects)
+                                {
+                                    lockedObject.Hits++;
+
+                                    if (lockedObject.Keys.Read((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
+                                    {
+                                        //Do we really need to hand out multiple keys to the same object of the same type? I dont think we do.
+                                        continue;
+                                    }
+
+                                    var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+
+                                    transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
+                                }
+
+                                var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
+                                _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
+                                _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+
+                                return true;
+                            }
+                            else
+                            {
+                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                                transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
+                            }
+                        }
+                        else if (intention.Operation == LockOperation.Delete)
+                        {
+                            //This operation is blocked by: Everyhing
+                            var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
+                                .Where(o => o.ProcessId != transaction.ProcessId).ToList();
+
                             if (blockers.Any() == false) //If there are no existing un-owned locks.
                             {
                                 transaction.BlockedByKeys.Write((obj) => obj.Clear());

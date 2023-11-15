@@ -71,6 +71,7 @@
 			<Word>QueryThreadWeight</Word>
 			<Word>ClearCacheAllocations</Word>
 			<Word>ShowBlockTree</Word>
+			<Word>ShowLocks</Word>
 			<Word>ShowMemoryUtilization</Word>
 			<Word>ShowCacheAllocations</Word>
 			<Word>ReleaseCacheAllocations</Word>

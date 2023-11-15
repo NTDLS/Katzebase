@@ -54,8 +54,10 @@
 
         public enum LockOperation
         {
-            Read,
-            Write
+            //SchemaPreserve, //Do not allow deletes.
+            Read, //Do not allow writes or deletes.
+            Write, //Do not allow other reads, writes or deletes.
+            Delete //Do not allow read, preserve, write or delete.
         }
 
         public enum QueryType
