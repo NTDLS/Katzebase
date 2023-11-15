@@ -297,7 +297,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                         {
                             while (reader.Read())
                             {
-                                comboBoxDatabaseName.Items.Add(reader[0].ToString());
+                                comboBoxDatabaseName.Items.Add(reader[0]?.ToString() ?? string.Empty);
                             }
                         }
                     }

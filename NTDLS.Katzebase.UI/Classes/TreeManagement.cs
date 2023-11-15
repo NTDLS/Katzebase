@@ -249,6 +249,7 @@ namespace NTDLS.Katzebase.UI.Classes
                 {
                     int nodeIndex = node.Nodes[i].Index;
                     var nodeCopy = node.Nodes[i].Clone() as TreeNode;
+                    KbUtility.EnsureNotNull(nodeCopy);
                     node.Nodes.Remove(node.Nodes[i]);
 
                     node.Nodes.Insert(nodeIndex + 1, nodeCopy);
@@ -258,6 +259,7 @@ namespace NTDLS.Katzebase.UI.Classes
                 {
                     int nodeIndex = node.Nodes[i].Index;
                     var nodeCopy = node.Nodes[i].Clone() as TreeNode;
+                    KbUtility.EnsureNotNull(nodeCopy);
                     node.Nodes.Remove(node.Nodes[i]);
 
                     node.Nodes.Insert(nodeIndex - 1, nodeCopy);

@@ -95,44 +95,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
         }
 
 
-        private List<PrefixedField>? _allFields = null;
-
-        /// <summary>
-        /// Returns a list of document fields that are referenced by the field list.
-        /// </summary>
-        /// <returns></returns>
-        public List<PrefixedField> AllDocumentFields()
-        {
-            lock (this)
-            {
-                if (_allFields == null)
-                {
-                    _allFields = new();
-
-                    _allFields.AddRange(this.OfType<FunctionDocumentFieldParameter>().Select(o => o.Value).ToList());
-
-                    var children = new List<FunctionParameterBase>();
-
-                    children.AddRange(this.OfType<FunctionExpression>());
-                    children.AddRange(this.OfType<FunctionWithParams>());
-
-                    foreach (var param in children)
-                    {
-                        if (param is FunctionExpression)
-                        {
-                            GetAllFieldsRecursive(ref _allFields, ((FunctionExpression)param).Parameters);
-                        }
-                        if (param is FunctionWithParams)
-                        {
-                            GetAllFieldsRecursive(ref _allFields, ((FunctionWithParams)param).Parameters);
-                        }
-                    }
-                }
-
-                return _allFields;
-            }
-        }
-
         private void GetAllFieldsRecursive(ref List<PrefixedField> result, List<FunctionParameterBase> list)
         {
             foreach (var param in list)

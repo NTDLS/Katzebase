@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Company>NetworkDLS</Company>
@@ -19,9 +19,9 @@
   <ItemGroup>
     <PackageReference Include="CoreCLR-NCalc" Version="2.2.113" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="NTDLS.FastMemoryCache" Version="1.4.3" />
-    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.1.0" />
-    <PackageReference Include="NTDLS.Semaphore" Version="2.2.4" />
+    <PackageReference Include="NTDLS.FastMemoryCache" Version="1.4.4" />
+    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.1.1" />
+    <PackageReference Include="NTDLS.Semaphore" Version="2.2.5" />
     <PackageReference Include="protobuf-net" Version="3.2.26" />
   </ItemGroup>
 

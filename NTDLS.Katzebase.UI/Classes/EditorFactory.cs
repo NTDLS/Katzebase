@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.UI.Classes
         {
             try
             {
-                if (sender is TabControl tabControl)
+                if (sender is TabControl tabControl && tabControl.SelectedTab != null)
                 {
                     ((TabFilePage)tabControl.SelectedTab).Editor.Focus();
                 }
@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.UI.Classes
         {
             try
             {
-                if (sender is TabControl tabControl)
+                if (sender is TabControl tabControl && tabControl.SelectedTab != null)
                 {
                     ((TabFilePage)tabControl.SelectedTab).Editor.Focus();
                 }
