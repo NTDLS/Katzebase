@@ -30,6 +30,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.SQLServerMi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Debuging", "NTDLS.Katzebase.Debuging\NTDLS.Katzebase.Debuging.csproj", "{5598BAE2-BC03-4DF4-A0A9-120ECD7ABB1E}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Installer", "Installer", "{E15F84FB-63C7-47E4-B894-CFC6B4FBB2A0}"
+	ProjectSection(SolutionItems) = preProject
+		@Installers\Client.Iss = @Installers\Client.Iss
+		@Installers\Server.Iss = @Installers\Server.Iss
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
