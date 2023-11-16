@@ -22,10 +22,10 @@
  AppVersion      = 0.6.0.0
 
 [Files]
- Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\runtimes\*.*";        DestDir: "{app}\runtimes";              Flags: IgnoreVersion recursesubdirs;
- Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.exe";               DestDir: "{app}";                       Flags: IgnoreVersion;
- Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.dll";               DestDir: "{app}";                       Flags: IgnoreVersion;
- Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\*.json";              DestDir: "{app}";                       Flags: IgnoreVersion;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net8.0\runtimes\*.*";        DestDir: "{app}\runtimes";              Flags: IgnoreVersion recursesubdirs;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net8.0\*.exe";               DestDir: "{app}";                       Flags: IgnoreVersion;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net8.0\*.dll";               DestDir: "{app}";                       Flags: IgnoreVersion;
+ Source: "..\NTDLS.Katzebase.Service\bin\Release\net8.0\*.json";              DestDir: "{app}";                       Flags: IgnoreVersion;
  Source: "ServerSettings\*.*";                                                DestDir: "{app}";                       Flags: IgnoreVersion;
 
 [Registry]

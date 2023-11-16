@@ -27,16 +27,16 @@
  
 
 [Files]
- Source: "..\NTDLS.Katzebase.UI\bin\Release\net7.0-windows\*.exe";        DestDir: "{app}";                       Flags: IgnoreVersion;                Components: Client; 
- Source: "..\NTDLS.Katzebase.UI\bin\Release\net7.0-windows\*.dll";        DestDir: "{app}";                       Flags: IgnoreVersion;                Components: Client; 
- Source: "..\NTDLS.Katzebase.UI\bin\Release\net7.0-windows\*.json";       DestDir: "{app}";                       Flags: IgnoreVersion;                Components: Client;
- Source: "..\NTDLS.Katzebase.UI\bin\Release\net7.0-windows\Runtimes\*.*"; DestDir: "{app}\MSSQLMigrate\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: Client;
+ Source: "..\NTDLS.Katzebase.UI\bin\Release\net8.0-windows\*.exe";        DestDir: "{app}";                       Flags: IgnoreVersion;                Components: Client; 
+ Source: "..\NTDLS.Katzebase.UI\bin\Release\net8.0-windows\*.dll";        DestDir: "{app}";                       Flags: IgnoreVersion;                Components: Client; 
+ Source: "..\NTDLS.Katzebase.UI\bin\Release\net8.0-windows\*.json";       DestDir: "{app}";                       Flags: IgnoreVersion;                Components: Client;
+ Source: "..\NTDLS.Katzebase.UI\bin\Release\net8.0-windows\Runtimes\*.*"; DestDir: "{app}\MSSQLMigrate\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: Client;
  Source: ".\Highlighters\*.*";                                            DestDir: "{app}\Highlighters";          Flags: IgnoreVersion;                Components: Client;
 
- Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net7.0-windows\*.exe";        DestDir: "{app}\MSSQLMigrate";          Flags: IgnoreVersion;                Components: MSSQLMigrate;
- Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net7.0-windows\*.dll";        DestDir: "{app}\MSSQLMigrate";          Flags: IgnoreVersion;                Components: MSSQLMigrate;
- Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net7.0-windows\*.json";       DestDir: "{app}\MSSQLMigrate";          Flags: IgnoreVersion;                Components: MSSQLMigrate;
- Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net7.0-windows\Runtimes\*.*"; DestDir: "{app}\MSSQLMigrate\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: MSSQLMigrate;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.exe";        DestDir: "{app}\MSSQLMigrate";          Flags: IgnoreVersion;                Components: MSSQLMigrate;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.dll";        DestDir: "{app}\MSSQLMigrate";          Flags: IgnoreVersion;                Components: MSSQLMigrate;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.json";       DestDir: "{app}\MSSQLMigrate";          Flags: IgnoreVersion;                Components: MSSQLMigrate;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\Runtimes\*.*"; DestDir: "{app}\MSSQLMigrate\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: MSSQLMigrate;
 
 [Icons]
  Name: "{group}\Katzebase MSSQL Migration Tool";  Filename: "{app}\MSSQLMigrate\NTDLS.Katzebase.SQLServerMigration.exe"; Components: MSSQLMigrate; 
