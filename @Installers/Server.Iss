@@ -1,12 +1,12 @@
 [Setup]
 ;-- Main Setup Information
  AppName                          = Katzebase Server
- AppVerName                       = Katzebase Server 0.1.1.0
+ AppVerName                       = Katzebase Server 0.1.2.0
  AppCopyright                     = Copyright © 1995-2023 NetworkDLS.
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase\Service
  DefaultGroupName                 = NetworkDLS\Katzebase
  UninstallDisplayIcon             = {app}\NTDLS.Katzebase.Service.exe
- SetupIconFile                    = "..\@Art\Katzebase.ico"
+ SetupIconFile                    = "..\@Art\Icon.ico"
  PrivilegesRequired               = admin
  Uninstallable                    = Yes
  MinVersion                       = 0.0,7.0
@@ -19,7 +19,7 @@
  AppPublisher    = NetworkDLS
  AppPublisherURL = http://www.NetworkDLS.com/
  AppUpdatesURL   = http://www.NetworkDLS.com/
- AppVersion      = 0.1.1.0
+ AppVersion      = 0.1.2.0
 
 [Files]
  Source: "..\NTDLS.Katzebase.Service\bin\Release\net7.0\runtimes\*.*";        DestDir: "{app}\runtimes";              Flags: IgnoreVersion recursesubdirs;

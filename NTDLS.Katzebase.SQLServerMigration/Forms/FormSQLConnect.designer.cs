@@ -38,12 +38,12 @@
             txtPassword = new TextBox();
             label3 = new Label();
             groupBox1 = new GroupBox();
+            textBoxServer = new TextBox();
             checkBoxSSLConnection = new CheckBox();
             label4 = new Label();
             comboBoxDatabaseName = new ComboBox();
             GroupBoxLine = new GroupBox();
             pictureBox1 = new PictureBox();
-            textBoxServer = new TextBox();
             groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             SuspendLayout();
@@ -70,13 +70,13 @@
             cmdCancel.UseVisualStyleBackColor = true;
             cmdCancel.Click += cmdCancel_Click;
             // 
-            // cbIntegratedSecurity
+            // checkBoxIntegratedSecurity
             // 
             checkBoxIntegratedSecurity.Checked = true;
             checkBoxIntegratedSecurity.CheckState = CheckState.Checked;
             checkBoxIntegratedSecurity.Location = new Point(10, 177);
             checkBoxIntegratedSecurity.Margin = new Padding(4, 3, 4, 3);
-            checkBoxIntegratedSecurity.Name = "cbIntegratedSecurity";
+            checkBoxIntegratedSecurity.Name = "checkBoxIntegratedSecurity";
             checkBoxIntegratedSecurity.Size = new Size(166, 21);
             checkBoxIntegratedSecurity.TabIndex = 6;
             checkBoxIntegratedSecurity.Text = "Use Integrated Security?";
@@ -151,11 +151,19 @@
             groupBox1.TabStop = false;
             groupBox1.Text = "SQL Server Connectivity Attributes";
             // 
-            // cbSSLConnection
+            // textBoxServer
+            // 
+            textBoxServer.Location = new Point(10, 47);
+            textBoxServer.Name = "textBoxServer";
+            textBoxServer.Size = new Size(224, 23);
+            textBoxServer.TabIndex = 4;
+            textBoxServer.Text = "localhost";
+            // 
+            // checkBoxSSLConnection
             // 
             checkBoxSSLConnection.Location = new Point(10, 203);
             checkBoxSSLConnection.Margin = new Padding(4, 3, 4, 3);
-            checkBoxSSLConnection.Name = "cbSSLConnection";
+            checkBoxSSLConnection.Name = "checkBoxSSLConnection";
             checkBoxSSLConnection.Size = new Size(178, 21);
             checkBoxSSLConnection.TabIndex = 10;
             checkBoxSSLConnection.Text = "Encrypt Connection (SSL) ?";
@@ -169,11 +177,11 @@
             label4.TabIndex = 8;
             label4.Text = "Database Name:";
             // 
-            // cboDatabaseName
+            // comboBoxDatabaseName
             // 
             comboBoxDatabaseName.Location = new Point(10, 271);
             comboBoxDatabaseName.Margin = new Padding(4, 3, 4, 3);
-            comboBoxDatabaseName.Name = "cboDatabaseName";
+            comboBoxDatabaseName.Name = "comboBoxDatabaseName";
             comboBoxDatabaseName.Size = new Size(223, 23);
             comboBoxDatabaseName.TabIndex = 9;
             // 
@@ -197,14 +205,6 @@
             pictureBox1.Size = new Size(61, 65);
             pictureBox1.TabIndex = 3;
             pictureBox1.TabStop = false;
-            // 
-            // textBoxServer
-            // 
-            textBoxServer.Location = new Point(10, 47);
-            textBoxServer.Name = "textBoxServer";
-            textBoxServer.Size = new Size(224, 23);
-            textBoxServer.TabIndex = 4;
-            textBoxServer.Text = "localhost";
             // 
             // FormSQLConnect
             // 

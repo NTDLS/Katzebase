@@ -6,13 +6,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Company>NetworkDLS</Company>
     <Copyright>Copyright © 2023 NetworkDLS</Copyright>
-    <Version>0.1.1.0</Version>
+    <Version>0.1.2.0</Version>
     <Authors>NetworkDLS</Authors>
-    <ApplicationIcon>NTDLS.Katzebase.ico</ApplicationIcon>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="NTDLS.Katzebase.ico" />
+    <Content Include="Icon.ico" />
   </ItemGroup>
 
   <ItemGroup>

@@ -141,7 +141,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                     //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical section "Locking.CriticalSectionLockManagement",
                     //  we will only need 
-                    bool transactionAcquiredLock = _collection.TryWriteAll(new IOptimisticCriticalSection[] { transaction.CriticalSectionTransaction }, out bool isLockHeld, (obj) =>
+                    bool transactionAcquiredLock = _collection.TryWriteAll(new ICriticalSection[] { transaction.CriticalSectionTransaction }, out bool isLockHeld, (obj) =>
                     {
                         var lockedObjects = GetOverlappingLocks(intention); //Find any existing locks on the given lock intention.
 

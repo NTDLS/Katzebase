@@ -191,7 +191,7 @@
             // toolStripButtonNewFile
             // 
             toolStripButtonNewFile.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonNewFile.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolNewFile;
+            toolStripButtonNewFile.Image = Properties.Resources.ToolNewFile;
             toolStripButtonNewFile.ImageTransparentColor = Color.Magenta;
             toolStripButtonNewFile.Name = "toolStripButtonNewFile";
             toolStripButtonNewFile.Size = new Size(23, 22);
@@ -201,7 +201,7 @@
             // toolStripButtonOpen
             // 
             toolStripButtonOpen.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonOpen.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolOpenFile;
+            toolStripButtonOpen.Image = Properties.Resources.ToolOpenFile;
             toolStripButtonOpen.ImageTransparentColor = Color.Magenta;
             toolStripButtonOpen.Name = "toolStripButtonOpen";
             toolStripButtonOpen.Size = new Size(23, 22);
@@ -211,7 +211,7 @@
             // toolStripButtonSave
             // 
             toolStripButtonSave.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonSave.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolSave;
+            toolStripButtonSave.Image = Properties.Resources.ToolSave;
             toolStripButtonSave.ImageTransparentColor = Color.Magenta;
             toolStripButtonSave.Name = "toolStripButtonSave";
             toolStripButtonSave.Size = new Size(23, 22);
@@ -221,7 +221,7 @@
             // toolStripButtonSaveAll
             // 
             toolStripButtonSaveAll.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonSaveAll.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolSaveAll;
+            toolStripButtonSaveAll.Image = Properties.Resources.ToolSaveAll;
             toolStripButtonSaveAll.ImageTransparentColor = Color.Magenta;
             toolStripButtonSaveAll.Name = "toolStripButtonSaveAll";
             toolStripButtonSaveAll.Size = new Size(23, 22);
@@ -231,7 +231,7 @@
             // toolStripButtonCloseCurrentTab
             // 
             toolStripButtonCloseCurrentTab.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonCloseCurrentTab.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolCloseFile;
+            toolStripButtonCloseCurrentTab.Image = Properties.Resources.ToolCloseFile;
             toolStripButtonCloseCurrentTab.ImageTransparentColor = Color.Magenta;
             toolStripButtonCloseCurrentTab.Name = "toolStripButtonCloseCurrentTab";
             toolStripButtonCloseCurrentTab.Size = new Size(23, 22);
@@ -246,7 +246,7 @@
             // toolStripButtonExplainPlan
             // 
             toolStripButtonExplainPlan.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonExplainPlan.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolRunOne;
+            toolStripButtonExplainPlan.Image = Properties.Resources.ToolRunOne;
             toolStripButtonExplainPlan.ImageTransparentColor = Color.Magenta;
             toolStripButtonExplainPlan.Name = "toolStripButtonExplainPlan";
             toolStripButtonExplainPlan.Size = new Size(23, 22);
@@ -256,7 +256,7 @@
             // toolStripButtonExecuteScript
             // 
             toolStripButtonExecuteScript.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonExecuteScript.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolRun;
+            toolStripButtonExecuteScript.Image = Properties.Resources.ToolRun;
             toolStripButtonExecuteScript.ImageTransparentColor = Color.Magenta;
             toolStripButtonExecuteScript.Name = "toolStripButtonExecuteScript";
             toolStripButtonExecuteScript.Size = new Size(23, 22);
@@ -266,7 +266,7 @@
             // toolStripButtonStop
             // 
             toolStripButtonStop.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonStop.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolStop;
+            toolStripButtonStop.Image = Properties.Resources.ToolStop;
             toolStripButtonStop.ImageTransparentColor = Color.Magenta;
             toolStripButtonStop.Name = "toolStripButtonStop";
             toolStripButtonStop.Size = new Size(23, 22);
@@ -281,7 +281,7 @@
             // toolStripButtonFind
             // 
             toolStripButtonFind.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonFind.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolFind;
+            toolStripButtonFind.Image = Properties.Resources.ToolFind;
             toolStripButtonFind.ImageTransparentColor = Color.Magenta;
             toolStripButtonFind.Name = "toolStripButtonFind";
             toolStripButtonFind.Size = new Size(23, 22);
@@ -291,7 +291,7 @@
             // toolStripButtonReplace
             // 
             toolStripButtonReplace.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonReplace.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolReplace;
+            toolStripButtonReplace.Image = Properties.Resources.ToolReplace;
             toolStripButtonReplace.ImageTransparentColor = Color.Magenta;
             toolStripButtonReplace.Name = "toolStripButtonReplace";
             toolStripButtonReplace.Size = new Size(23, 22);
@@ -306,7 +306,7 @@
             // toolStripButtonUndo
             // 
             toolStripButtonUndo.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonUndo.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolUndo;
+            toolStripButtonUndo.Image = Properties.Resources.ToolUndo;
             toolStripButtonUndo.ImageTransparentColor = Color.Magenta;
             toolStripButtonUndo.Name = "toolStripButtonUndo";
             toolStripButtonUndo.Size = new Size(23, 22);
@@ -316,7 +316,7 @@
             // toolStripButtonRedo
             // 
             toolStripButtonRedo.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonRedo.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolRedo;
+            toolStripButtonRedo.Image = Properties.Resources.ToolRedo;
             toolStripButtonRedo.ImageTransparentColor = Color.Magenta;
             toolStripButtonRedo.Name = "toolStripButtonRedo";
             toolStripButtonRedo.Size = new Size(23, 22);
@@ -331,7 +331,7 @@
             // toolStripButtonCut
             // 
             toolStripButtonCut.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonCut.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolCut;
+            toolStripButtonCut.Image = Properties.Resources.ToolCut;
             toolStripButtonCut.ImageTransparentColor = Color.Magenta;
             toolStripButtonCut.Name = "toolStripButtonCut";
             toolStripButtonCut.Size = new Size(23, 22);
@@ -341,7 +341,7 @@
             // toolStripButtonCopy
             // 
             toolStripButtonCopy.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonCopy.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolCopy;
+            toolStripButtonCopy.Image = Properties.Resources.ToolCopy;
             toolStripButtonCopy.ImageTransparentColor = Color.Magenta;
             toolStripButtonCopy.Name = "toolStripButtonCopy";
             toolStripButtonCopy.Size = new Size(23, 22);
@@ -351,7 +351,7 @@
             // toolStripButtonPaste
             // 
             toolStripButtonPaste.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonPaste.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolPaste;
+            toolStripButtonPaste.Image = Properties.Resources.ToolPaste;
             toolStripButtonPaste.ImageTransparentColor = Color.Magenta;
             toolStripButtonPaste.Name = "toolStripButtonPaste";
             toolStripButtonPaste.Size = new Size(23, 22);
@@ -366,7 +366,7 @@
             // toolStripButtonDecreaseIndent
             // 
             toolStripButtonDecreaseIndent.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonDecreaseIndent.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolDecreaseIndent;
+            toolStripButtonDecreaseIndent.Image = Properties.Resources.ToolDecreaseIndent;
             toolStripButtonDecreaseIndent.ImageTransparentColor = Color.Magenta;
             toolStripButtonDecreaseIndent.Name = "toolStripButtonDecreaseIndent";
             toolStripButtonDecreaseIndent.Size = new Size(23, 22);
@@ -376,7 +376,7 @@
             // toolStripButtonIncreaseIndent
             // 
             toolStripButtonIncreaseIndent.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonIncreaseIndent.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolIncreaseIndent;
+            toolStripButtonIncreaseIndent.Image = Properties.Resources.ToolIncreaseIndent;
             toolStripButtonIncreaseIndent.ImageTransparentColor = Color.Magenta;
             toolStripButtonIncreaseIndent.Name = "toolStripButtonIncreaseIndent";
             toolStripButtonIncreaseIndent.Size = new Size(23, 22);
@@ -391,7 +391,7 @@
             // toolStripButtonProject
             // 
             toolStripButtonProject.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonProject.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolProjectPanel;
+            toolStripButtonProject.Image = Properties.Resources.ToolProjectPanel;
             toolStripButtonProject.ImageTransparentColor = Color.Magenta;
             toolStripButtonProject.Name = "toolStripButtonProject";
             toolStripButtonProject.Size = new Size(23, 22);
@@ -401,7 +401,7 @@
             // toolStripButtonOutput
             // 
             toolStripButtonOutput.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonOutput.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolOutputPanel;
+            toolStripButtonOutput.Image = Properties.Resources.ToolOutputPanel;
             toolStripButtonOutput.ImageTransparentColor = Color.Magenta;
             toolStripButtonOutput.Name = "toolStripButtonOutput";
             toolStripButtonOutput.Size = new Size(23, 22);
@@ -411,7 +411,7 @@
             // toolStripButtonMacros
             // 
             toolStripButtonMacros.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonMacros.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolToolsPanel;
+            toolStripButtonMacros.Image = Properties.Resources.ToolToolsPanel;
             toolStripButtonMacros.ImageTransparentColor = Color.Magenta;
             toolStripButtonMacros.Name = "toolStripButtonMacros";
             toolStripButtonMacros.Size = new Size(23, 22);
@@ -427,7 +427,7 @@
             // toolStripButtonSnippets
             // 
             toolStripButtonSnippets.DisplayStyle = ToolStripItemDisplayStyle.Image;
-            toolStripButtonSnippets.Image = NTDLS.Katzebase.UI.Properties.Resources.ToolSnippets;
+            toolStripButtonSnippets.Image = Properties.Resources.ToolSnippets;
             toolStripButtonSnippets.ImageTransparentColor = Color.Magenta;
             toolStripButtonSnippets.Name = "toolStripButtonSnippets";
             toolStripButtonSnippets.Size = new Size(23, 22);

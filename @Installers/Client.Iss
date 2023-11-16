@@ -1,12 +1,12 @@
 [Setup]
 ;-- Main Setup Information
  AppName                          = Katzebase Client
- AppVerName                       = Katzebase Client 0.1.1.0
+ AppVerName                       = Katzebase Client 0.1.2.0
  AppCopyright                     = Copyright © 1995-2023 NetworkDLS.
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase\UI
  DefaultGroupName                 = NetworkDLS\Katzebase
  UninstallDisplayIcon             = {app}\NTDLS.Katzebase.UI.exe
- SetupIconFile                    = "..\@Art\Katzebase.ico"
+ SetupIconFile                    = "..\@Art\Icon.ico"
  PrivilegesRequired               = admin
  Uninstallable                    = Yes
  MinVersion                       = 0.0,7.0
@@ -19,7 +19,7 @@
  AppPublisher    = NetworkDLS
  AppPublisherURL = http://www.NetworkDLS.com/
  AppUpdatesURL   = http://www.NetworkDLS.com/
- AppVersion      = 0.1.1.0
+ AppVersion      = 0.1.2.0
 
 [Components]
  Name: "Client";         Description: "Client";                     Types: Full Compact Custom; Flags: Fixed;
@@ -39,10 +39,10 @@
  Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net7.0-windows\Runtimes\*.*"; DestDir: "{app}\MSSQLMigrate\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: MSSQLMigrate;
 
 [Icons]
- Name: "{group}\SQL Server Migration Tool";  Filename: "{app}\MSSQLMigrate\NTDLS.Katzebase.SQLServerMigration.exe"; Components: Client; 
- Name: "{group}\Katzebase Manager";          Filename: "{app}\NTDLS.Katzebase.UI.exe";                              Components: Client; 
- Name: "{commondesktop}\Katzebase Manager";  Filename: "{app}\NTDLS.Katzebase.UI.exe";                              Components: Client; 
- Name: "{userdesktop}\Katzebase Manager";    Filename: "{app}\NTDLS.Katzebase.UI.exe";                              Components: Client; 
+ Name: "{group}\Katzebase MSSQL Migration Tool";  Filename: "{app}\MSSQLMigrate\NTDLS.Katzebase.SQLServerMigration.exe"; Components: MSSQLMigrate; 
+ Name: "{group}\Katzebase Manager";               Filename: "{app}\NTDLS.Katzebase.UI.exe";                              Components: Client; 
+ Name: "{commondesktop}\Katzebase Manager";       Filename: "{app}\NTDLS.Katzebase.UI.exe";                              Components: Client; 
+ Name: "{userdesktop}\Katzebase Manager";         Filename: "{app}\NTDLS.Katzebase.UI.exe";                              Components: Client; 
 
 [Registry]
 ;-- Create SS "Katzebase SQL Script" Association

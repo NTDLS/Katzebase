@@ -40,12 +40,12 @@
             // 
             // pictureBox1
             // 
-            pictureBox1.BackgroundImageLayout = ImageLayout.Center;
             pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
             pictureBox1.Location = new Point(35, 35);
             pictureBox1.Margin = new Padding(4, 3, 4, 3);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(103, 108);
+            pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
             pictureBox1.TabIndex = 0;
             pictureBox1.TabStop = false;
             // 
@@ -87,7 +87,7 @@
             // linkWebsite
             // 
             linkWebsite.AutoSize = true;
-            linkWebsite.Font = new Font("Microsoft Sans Serif", 11F, FontStyle.Regular, GraphicsUnit.Point);
+            linkWebsite.Font = new Font("Microsoft Sans Serif", 11F);
             linkWebsite.Location = new Point(170, 171);
             linkWebsite.Margin = new Padding(4, 0, 4, 0);
             linkWebsite.Name = "linkWebsite";

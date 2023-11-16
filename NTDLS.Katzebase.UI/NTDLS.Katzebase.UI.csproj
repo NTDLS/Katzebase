@@ -5,11 +5,11 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <ApplicationIcon>NTDLS.Katzebase.ico</ApplicationIcon>
+    <ApplicationIcon>Icon.ico</ApplicationIcon>
     <UseWindowsForms>true</UseWindowsForms>
     <Company>NetworkDLS</Company>
     <Copyright>Copyright © 2023 NetworkDLS</Copyright>
-    <Version>0.1.1.0</Version>
+    <Version>0.1.2.0</Version>
     <Authors>NetworkDLS</Authors>
   </PropertyGroup>
 
@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="NTDLS.Katzebase.ico" />
+    <Content Include="Icon.ico" />
   </ItemGroup>
 
   <ItemGroup>
