@@ -15,6 +15,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Remove="C:\Users\ntdls\.nuget\packages\ntdls.katzebase.client\1.1.1\contentFiles\any\net8.0\NTDLS.Katzebase.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Icon.ico" />
   </ItemGroup>
 
