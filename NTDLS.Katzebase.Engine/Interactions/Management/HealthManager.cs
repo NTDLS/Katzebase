@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class HealthManager
     {
-        public KbInsensitiveDictionary<HealthCounter> Counters { get; private set; } = new();
+        public NTDLS.Semaphore.OptimisticCriticalResource< KbInsensitiveDictionary<HealthCounter>> Counters { get; private set; } = new();
 
         private readonly EngineCore _core;
         private DateTime lastCheckpoint = DateTime.MinValue;
@@ -32,9 +32,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (File.Exists(healthCounterDiskPath))
                 {
                     var physicalCounters = core.IO.GetJsonNonTracked<KbInsensitiveDictionary<HealthCounter>>(healthCounterDiskPath, false);
+
                     if (physicalCounters != null)
                     {
-                        Counters = physicalCounters;
+                        Counters.Write(o => physicalCounters.ToList().ForEach(kvp => o.Add(kvp.Key, kvp.Value)));
                     }
                 }
             }
@@ -54,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             lock (Counters)
             {
-                return Counters.Clone();
+                return Counters.Read(o => o.Clone());
             }
         }
 
@@ -62,7 +63,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             lock (Counters)
             {
-                Counters.Clear();
+                Counters.Write(o => o.Clear());
                 Checkpoint();
             }
         }
@@ -123,17 +124,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 string key = type.ToString();
 
-                lock (Counters)
+                Counters.Write(o =>
                 {
-                    if (Counters.ContainsKey(key))
+                    if (o.ContainsKey(key))
                     {
-                        var counterItem = Counters[key];
+                        var counterItem = o[key];
                         counterItem.Value += value;
                         counterItem.WaitDateTimeUtc = DateTime.UtcNow;
                     }
                     else
                     {
-                        Counters.Add(key, new HealthCounter()
+                        o.Add(key, new HealthCounter()
                         {
                             Instance = key,
                             Type = type,
@@ -146,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         Checkpoint();
                     }
-                }
+                });
             }
             catch (Exception ex)
             {
@@ -171,17 +172,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 string key = $"{type}:{instance}";
 
-                lock (Counters)
+                Counters.Write(o =>
                 {
-                    if (Counters.ContainsKey(key))
+                    if (o.ContainsKey(key))
                     {
-                        var counterItem = Counters[key];
+                        var counterItem = o[key];
                         counterItem.Value += value;
                         counterItem.WaitDateTimeUtc = DateTime.UtcNow;
                     }
                     else
                     {
-                        Counters.Add(key, new HealthCounter()
+                        o.Add(key, new HealthCounter()
                         {
                             Instance = key,
                             Type = type,
@@ -194,7 +195,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         Checkpoint();
                     }
-                }
+                });
             }
             catch (Exception ex)
             {
@@ -231,17 +232,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 string key = $"{type}";
 
-                lock (Counters)
+                Counters.Write(o =>
                 {
-                    if (Counters.ContainsKey(key))
+                    if (o.ContainsKey(key))
                     {
-                        var counterItem = Counters[key];
+                        var counterItem = o[key];
                         counterItem.Value = value;
                         counterItem.WaitDateTimeUtc = DateTime.UtcNow;
                     }
                     else
                     {
-                        Counters.Add(key, new HealthCounter()
+                        o.Add(key, new HealthCounter()
                         {
                             Instance = key,
                             Type = type,
@@ -254,7 +255,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         Checkpoint();
                     }
-                }
+                });
             }
             catch (Exception ex)
             {
@@ -279,17 +280,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 string key = $"{type}:{instance}";
 
-                lock (Counters)
+                Counters.Write(o =>
                 {
-                    if (Counters.ContainsKey(key))
+                    if (o.ContainsKey(key))
                     {
-                        var counterItem = Counters[key];
+                        var counterItem = o[key];
                         counterItem.Value = value;
                         counterItem.WaitDateTimeUtc = DateTime.UtcNow;
                     }
                     else
                     {
-                        Counters.Add(key, new HealthCounter()
+                        o.Add(key, new HealthCounter()
                         {
                             Instance = key,
                             Type = type,
@@ -302,7 +303,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         Checkpoint();
                     }
-                }
+                });
             }
             catch (Exception ex)
             {
