@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Interactions.Management;
+using NTDLS.Katzebase.Engine.Threading.Management;
 using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using System.Diagnostics;
@@ -24,6 +25,7 @@ namespace NTDLS.Katzebase.Engine
         public ProcedureManager Procedures;
         public IndexManager Indexes;
         public QueryManager Query;
+        public ThreadPoolManager ThreadPool;
 
         internal OptimisticSemaphore CriticalSectionLockManagement { get; private set; } = new();
 
@@ -70,6 +72,9 @@ namespace NTDLS.Katzebase.Engine
             Log.Write("Initializing query manager.");
             Query = new QueryManager(this);
 
+            Log.Write("Initializing thread pool manager.");
+            ThreadPool = new ThreadPoolManager(this);
+
             Log.Write("Initializing procedure manager.");
             Procedures = new ProcedureManager(this);
 
@@ -91,6 +96,7 @@ namespace NTDLS.Katzebase.Engine
         {
             Log.Write("Stopping the server.");
 
+            ThreadPool.Stop();
             Cache.Close();
             Heartbeat.Stop();
             Health.Close();

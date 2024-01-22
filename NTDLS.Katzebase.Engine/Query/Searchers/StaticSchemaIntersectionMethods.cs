@@ -10,7 +10,6 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
-using NTDLS.Katzebase.Engine.Threading;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -88,43 +87,38 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 documentPointers = core.Documents.AcquireDocumentPointers(transaction, topLevelMap.PhysicalSchema, LockOperation.Read);
             }
 
-            var ptThreadCreation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCreation);
-            var threadParam = new LookupThreadParam(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
-            int threadCount = ThreadPoolHelper.CalculateThreadCount(core, transaction, documentPointers.Count());
+            var threadPoolQueue = core.ThreadPool.Generic.CreateQueueStateCollection();
 
-            //threadCount = 1;
-
-            transaction.PT?.AddDescreteMetric(PerformanceTraceDescreteMetricType.ThreadCount, threadCount);
-            var threadPool = ThreadPoolQueue<DocumentPointer, LookupThreadParam>
-                .CreateAndStart($"GetDocumentsByConditions:{transaction.ProcessId}", LookupThreadProc, threadParam, threadCount);
-            ptThreadCreation?.StopAndAccumulate();
+            var instance = new LookupThreadInstance(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
 
             foreach (var documentPointer in documentPointers)
             {
-                if (threadPool.HasException || threadPool.ContinueToProcessQueue == false)
-                {
-                    break;
-                }
-
                 //We cant stop when we hit the row limit if we are sorting or grouping.
                 if (query.RowLimit != 0 && query.SortFields.Any() == false
-                     && query.GroupFields.Any() == false && threadParam.Results.Collection.Count >= query.RowLimit)
+                     && query.GroupFields.Any() == false && instance.Results.Collection.Count >= query.RowLimit)
                 {
                     break;
                 }
 
+                if (threadPoolQueue.ExceptionOccured())
+                {
+                    break;
+                }
+
+                var envelope = new LookupThreadParameterEnvelope(instance, documentPointer);
+
                 var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
-                threadPool.EnqueueWorkItem(documentPointer);
+                threadPoolQueue.Enqueue(envelope, LookupThreadWorker);
                 ptThreadQueue?.StopAndAccumulate();
             }
 
             var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
-            threadPool.WaitForCompletion();
+            threadPoolQueue.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
 
             #region Grouping.
 
-            if (threadParam.Results.Collection.Any() && (query.GroupFields.Any()
+            if (instance.Results.Collection.Any() && (query.GroupFields.Any()
                 || query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Aggregate).Any())
                )
             {
@@ -133,13 +127,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 if (query.GroupFields.Any())
                 {
                     //Here we are going to build a grouping_key using the concatenated select fields.
-                    groupedValues = threadParam.Results.Collection.GroupBy(arr =>
+                    groupedValues = instance.Results.Collection.GroupBy(arr =>
                         string.Join("\t", query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => arr.AuxiliaryFields[groupFieldParam.Value.Key])));
                 }
                 else
                 {
                     //We do not have a group by, but we do have aggregate functions. Group by an empty string.
-                    groupedValues = threadParam.Results.Collection.GroupBy(arr =>
+                    groupedValues = instance.Results.Collection.GroupBy(arr =>
                         string.Join("\t", query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => string.Empty)));
                 }
 
@@ -181,7 +175,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     groupedResults.Add(rowResults);
                 }
 
-                threadParam.Results = groupedResults;
+                instance.Results = groupedResults;
             }
 
             #endregion
@@ -189,9 +183,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             #region Sorting.
 
             //Get a list of all the fields we need to sory by.
-            if (query.SortFields.Any() && threadParam.Results.Collection.Any())
+            if (query.SortFields.Any() && instance.Results.Collection.Any())
             {
-                var modelAuxiliaryFields = threadParam.Results.Collection.First().AuxiliaryFields;
+                var modelAuxiliaryFields = instance.Results.Collection.First().AuxiliaryFields;
 
                 var sortingColumns = new List<(string fieldName, KbSortDirection sortDirection)>();
                 foreach (var sortField in query.SortFields.OfType<SortField>())
@@ -205,7 +199,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 //Sort the results:
                 var ptSorting = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Sorting);
-                threadParam.Results.Collection = threadParam.Results.Collection.OrderBy(row => row.AuxiliaryFields, new ResultValueComparer(sortingColumns)).ToList();
+                instance.Results.Collection = instance.Results.Collection.OrderBy(row => row.AuxiliaryFields, new ResultValueComparer(sortingColumns)).ToList();
 
                 ptSorting?.StopAndAccumulate();
             }
@@ -215,22 +209,22 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //Enforce row limits.
             if (query.RowLimit > 0)
             {
-                threadParam.Results.Collection = threadParam.Results.Collection.Take(query.RowLimit).ToList();
+                instance.Results.Collection = instance.Results.Collection.Take(query.RowLimit).ToList();
             }
 
             if (gatherDocumentPointersForSchemaPrefix != null)
             {
                 //Distill the document pointers to a distinct list. Can we do this in the threads? Maybe prevent the dups in the first place?
-                threadParam.DocumentPointers = threadParam.DocumentPointers.Distinct(new DocumentPageEqualityComparer()).ToList();
+                instance.DocumentPointers = instance.DocumentPointers.Distinct(new DocumentPageEqualityComparer()).ToList();
             }
 
-            if (query.DynamicallyBuildSelectList && threadParam.Results.Collection.Count > 0)
+            if (query.DynamicallyBuildSelectList && instance.Results.Collection.Count > 0)
             {
                 //If this was a "select *", we may have discovered different "fields" in different documents. We need to make sure that all rows
                 //  have the same number of values.
 
                 int maxFieldCount = query.SelectFields.Count;
-                foreach (var row in threadParam.Results.Collection)
+                foreach (var row in instance.Results.Collection)
                 {
                     if (row.Values.Count < maxFieldCount)
                     {
@@ -242,15 +236,27 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             var results = new DocumentLookupResults();
 
-            results.DocumentPointers.AddRange(threadParam.DocumentPointers);
-            results.AddRange(threadParam.Results);
+            results.DocumentPointers.AddRange(instance.DocumentPointers);
+            results.AddRange(instance.Results);
 
             return results;
         }
 
         #region Threading.
 
-        private class LookupThreadParam
+        private class LookupThreadParameterEnvelope
+        {
+            public LookupThreadInstance Instance { get; set; }
+            public DocumentPointer DocumentPointer { get; set; }
+
+            public LookupThreadParameterEnvelope(LookupThreadInstance instance, DocumentPointer documentPointer)
+            {
+                Instance = instance;
+                DocumentPointer = documentPointer;
+            }
+        }
+
+        private class LookupThreadInstance
         {
             public string? GatherDocumentPointersForSchemaPrefix { get; set; } = null;
             public SchemaIntersectionRowCollection Results { get; set; } = new();
@@ -262,7 +268,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             public Transaction Transaction { get; private set; }
             public PreparedQuery Query { get; private set; }
 
-            public LookupThreadParam(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
+            public LookupThreadInstance(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
             {
                 GatherDocumentPointersForSchemaPrefix = gatherDocumentPointersForSchemaPrefix;
                 Core = core;
@@ -272,67 +278,57 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
-        private static void LookupThreadProc(ThreadPoolQueue<DocumentPointer, LookupThreadParam> pool, LookupThreadParam? param)
+        private static void LookupThreadWorker(object? parameter)
         {
-            KbUtility.EnsureNotNull(param);
+            KbUtility.EnsureNotNull(parameter);
 
-            while (pool.ContinueToProcessQueue)
+            var param = (LookupThreadParameterEnvelope)parameter;
+
+            param.Instance.Transaction.EnsureActive();
+
+            var resultingRows = new SchemaIntersectionRowCollection();
+
+            IntersectAllSchemas(param.Instance, param.DocumentPointer, ref resultingRows);
+
+            //Limit the results by the rows that have the correct number of schema matches.
+            //TODO: This could probably be used to implement OUTER JOINS.
+            if (param.Instance.GatherDocumentPointersForSchemaPrefix == null)
             {
-                param.Transaction.EnsureActive();
+                resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaKeys.Count == param.Instance.SchemaMap.Count).ToList();
+            }
+            else
+            {
+                resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaDocumentPointers.Count == param.Instance.SchemaMap.Count).ToList();
+            }
 
-                var ptThreadDeQueue = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadDeQueue);
-                var toplevelDocument = pool.DequeueWorkItem();
-                ptThreadDeQueue?.StopAndAccumulate();
-
-                if (toplevelDocument == null)
+            //Execute functions
+            if (param.Instance.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
+            {
+                lock (param.Instance.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
                 {
-                    continue;
+                    ExecuteFunctions(param.Instance.Transaction, param.Instance, resultingRows);
                 }
+            }
+            else
+            {
+                ExecuteFunctions(param.Instance.Transaction, param.Instance, resultingRows);
+            }
 
-                var resultingRows = new SchemaIntersectionRowCollection();
-
-                IntersectAllSchemas(param, toplevelDocument, ref resultingRows);
-
-                //Limit the results by the rows that have the correct number of schema matches.
-                //TODO: This could probably be used to implement OUTER JOINS.
-                if (param.GatherDocumentPointersForSchemaPrefix == null)
+            lock (param.Instance.Results)
+            {
+                //Accumulate the results up to the parent.
+                if (param.Instance.GatherDocumentPointersForSchemaPrefix == null)
                 {
-                    resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaKeys.Count == param.SchemaMap.Count).ToList();
-                }
-                else
-                {
-                    resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaDocumentPointers.Count == param.SchemaMap.Count).ToList();
-                }
-
-                //Execute functions
-                if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
-                {
-                    lock (param.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
-                    {
-                        ExecuteFunctions(param.Transaction, param, resultingRows);
-                    }
+                    param.Instance.Results.AddRange(resultingRows);
                 }
                 else
                 {
-                    ExecuteFunctions(param.Transaction, param, resultingRows);
-                }
-
-                lock (param.Results)
-                {
-                    //Accumulate the results up to the parent.
-                    if (param.GatherDocumentPointersForSchemaPrefix == null)
-                    {
-                        param.Results.AddRange(resultingRows);
-                    }
-                    else
-                    {
-                        param.DocumentPointers.AddRange(resultingRows.Collection.Select(o => o.SchemaDocumentPointers[param.GatherDocumentPointersForSchemaPrefix]));
-                    }
+                    param.Instance.DocumentPointers.AddRange(resultingRows.Collection.Select(o => o.SchemaDocumentPointers[param.Instance.GatherDocumentPointersForSchemaPrefix]));
                 }
             }
         }
 
-        static void ExecuteFunctions(Transaction transaction, LookupThreadParam param, SchemaIntersectionRowCollection resultingRows)
+        static void ExecuteFunctions(Transaction transaction, LookupThreadInstance param, SchemaIntersectionRowCollection resultingRows)
         {
             foreach (var methodField in param.Query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
             {
@@ -369,7 +365,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         #endregion
 
-        private static void IntersectAllSchemas(LookupThreadParam param, DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection resultingRows)
+        private static void IntersectAllSchemas(LookupThreadInstance param, DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection resultingRows)
         {
             var topLevelSchemaMap = param.SchemaMap.First();
 
@@ -411,7 +407,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
-        private static void IntersectAllSchemasRecursive(LookupThreadParam param,
+        private static void IntersectAllSchemasRecursive(LookupThreadInstance param,
             int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
             ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
             ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
@@ -597,7 +593,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
-        private static void FillInSchemaResultDocumentValues(LookupThreadParam param, string schemaKey,
+        private static void FillInSchemaResultDocumentValues(LookupThreadInstance param, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
             if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
@@ -617,7 +613,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// Gets the values of all selected fields from document.
         /// </summary>
         /// 
-        private static void FillInSchemaResultDocumentValuesAtomic(LookupThreadParam param, string schemaKey,
+        private static void FillInSchemaResultDocumentValuesAtomic(LookupThreadInstance param, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
             var documentContent = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
@@ -730,7 +726,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
-        private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(Transaction transaction, LookupThreadParam param, SchemaIntersectionRowCollection inputResults)
+        private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(Transaction transaction, LookupThreadInstance param, SchemaIntersectionRowCollection inputResults)
         {
             var outputResults = new List<SchemaIntersectionRow>();
             var expression = new NCalc.Expression(param.Query.Conditions.HighLevelExpressionTree);

@@ -1,3 +1,32 @@
+DROP INDEX IX_Address_City_Address ON AdventureWorks:Person:Address
+GO
+
+CREATE INDEX IX_Address_City_Address(
+    city,
+    addressline1
+) ON AdventureWorks:Person:Address WITH (PARTITIONS=100)
+
+/*
+Previous thread model cold:
+Batch 1 of 2 completed in 90ms. (0 rows affected)
+Batch 2 of 2 completed in 3,234ms. (0 rows affected)
+
+Previous thread model hot:
+Batch 1 of 2 completed in 98ms. (0 rows affected)
+Batch 2 of 2 completed in 3,167ms. (0 rows affected)
+
+New thread model cold:
+Batch 1 of 2 completed in 108ms. (0 rows affected)
+Batch 2 of 2 completed in 1,417ms. (0 rows affected)
+
+New thread model hot:
+Batch 1 of 2 completed in 84ms. (0 rows affected)
+Batch 2 of 2 completed in 1,185ms. (0 rows affected)
+
+
+*/
+
+/*
 SELECT
 	I.InvtId,
 	PO.InvtId,
@@ -20,7 +49,7 @@ WHERE
 		'BSDC145',
 		'W8K36'
 	)
-
+*/
 
 /*
 SELECT
