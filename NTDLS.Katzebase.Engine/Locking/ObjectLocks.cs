@@ -9,8 +9,8 @@ namespace NTDLS.Katzebase.Engine.Locking
 {
     internal class ObjectLocks
     {
-        private readonly OptimisticSemaphore<List<ObjectLock>> _collection;
-        private readonly OptimisticSemaphore<Dictionary<Transaction, LockIntention>> _transactionWaitingForLocks;
+        private readonly OptimisticCriticalResource<List<ObjectLock>> _collection;
+        private readonly OptimisticCriticalResource<Dictionary<Transaction, LockIntention>> _transactionWaitingForLocks;
         private readonly EngineCore _core;
 
         public ObjectLocks(EngineCore core)

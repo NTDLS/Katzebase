@@ -13,7 +13,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     {
         private readonly EngineCore _core;
         private ulong _nextProcessId = 1;
-        private readonly OptimisticSemaphore<Dictionary<Guid, SessionState>> _collection = new();
+        private readonly OptimisticCriticalResource<Dictionary<Guid, SessionState>> _collection = new();
 
         internal SessionAPIHandlers APIHandlers { get; private set; }
         internal SessionQueryHandlers QueryHandlers { get; private set; }
