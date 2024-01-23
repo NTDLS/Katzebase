@@ -20,8 +20,9 @@ Batch 1 of 2 completed in 108ms. (0 rows affected)
 Batch 2 of 2 completed in 1,417ms. (0 rows affected)
 
 New thread model hot:
-Batch 1 of 2 completed in 84ms. (0 rows affected)
-Batch 2 of 2 completed in 1,185ms. (0 rows affected)
+Batch 1 of 2 completed in 77ms. (0 rows affected)
+Batch 2 of 2 completed in 872ms. (0 rows affected)
+
 
 
 */
