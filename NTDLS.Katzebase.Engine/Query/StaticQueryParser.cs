@@ -139,9 +139,7 @@ namespace NTDLS.Katzebase.Engine.Query
                             { "CacheMaxMemory", typeof(int) },
                             { "CacheScavengeInterval", typeof(int) },
                             { "CachePartitions", typeof(int) },
-                            { "CacheSeconds", typeof(int) },
-                            { "MaxQueryThreads", typeof(int) },
-                            { "MinQueryThreads", typeof(int) }
+                            { "CacheSeconds", typeof(int) }
                         };
                         StaticWithOptionsParser.ParseWithOptions(ref query, options, ref result);
                     }

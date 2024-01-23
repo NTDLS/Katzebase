@@ -44,14 +44,9 @@
         public uint DefaultIndexPartitions { get; set; }
 
         /// <summary>
-        /// The maximum number of threads that can be used per query. This is enforced over the session maximum.
+        /// The number of threads to initially allocate to the tread pool.
         /// </summary>
-        public int MaxQueryThreads { get; set; }
-
-        /// <summary>
-        /// The minimum number of threads that can be executed per query. The session minimum takes precedent over this setting.
-        /// </summary>
-        public int MinQueryThreads { get; set; }
+        public int InitialThreadPoolSize { get; set; }
 
         /// <summary>
         /// Whether the engine will keep health metrics.

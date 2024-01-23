@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class HealthManager
     {
-        public NTDLS.Semaphore.OptimisticCriticalResource< KbInsensitiveDictionary<HealthCounter>> Counters { get; private set; } = new();
+        public NTDLS.Semaphore.OptimisticCriticalResource<KbInsensitiveDictionary<HealthCounter>> Counters { get; private set; } = new();
 
         private readonly EngineCore _core;
         private DateTime lastCheckpoint = DateTime.MinValue;

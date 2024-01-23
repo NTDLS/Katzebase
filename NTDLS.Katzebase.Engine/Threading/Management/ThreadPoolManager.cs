@@ -15,7 +15,8 @@ namespace NTDLS.Katzebase.Engine.Threading.Management
         {
             _core = core;
 
-            Generic = new DelegateThreadPool(64);
+
+            Generic = new DelegateThreadPool(_core.Settings.InitialThreadPoolSize);
         }
 
         public void Stop()

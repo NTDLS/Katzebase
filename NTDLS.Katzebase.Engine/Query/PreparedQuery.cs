@@ -45,11 +45,8 @@ namespace NTDLS.Katzebase.Engine.Query
             CacheMaxMemory,
             CacheScavengeInterval,
             CachePartitions,
-            CacheSeconds,
-            MaxQueryThreads,
-            MinQueryThreads,
+            CacheSeconds
             //----------Configuration (END)----------
-
         }
 
         public bool DynamicallyBuildSelectList { get; set; } = false;

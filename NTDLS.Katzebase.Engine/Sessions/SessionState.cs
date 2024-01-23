@@ -6,21 +6,13 @@ namespace NTDLS.Katzebase.Engine.Sessions
     {
         public enum KbConnectionSetting
         {
-            TraceWaitTimes,
-            MinQueryThreads,
-            MaxQueryThreads,
-            QueryThreadWeight
+            TraceWaitTimes
         }
 
         /// <summary>
         /// Settings associated with the connection.
         /// </summary>
         public List<KbNameValuePair<KbConnectionSetting, double>> Variables { get; private set; } = new();
-
-        //public bool? TraceWaitTimesEnabled { get; set; }
-        //public int? MinQueryThreads { get; set; } = null;
-        //public int? MaxQueryThreads { get; set; } = null;
-        //public double? QueryThreadWeight { get; set; } = null;
 
         /// <summary>
         /// The UTC date/time that the session was created.
