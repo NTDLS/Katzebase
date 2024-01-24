@@ -6,6 +6,8 @@ CREATE INDEX IX_Address_City_Address(
     addressline1
 ) ON AdventureWorks:Person:Address WITH (PARTITIONS=100)
 
+--787ms
+
 /*
 Previous thread model cold:
 Batch 1 of 2 completed in 90ms. (0 rows affected)
@@ -22,9 +24,6 @@ Batch 2 of 2 completed in 1,417ms. (0 rows affected)
 New thread model hot:
 Batch 1 of 2 completed in 77ms. (0 rows affected)
 Batch 2 of 2 completed in 872ms. (0 rows affected)
-
-
-
 */
 
 /*
@@ -296,7 +295,20 @@ inner join WordList:Word as tw
 inner join WordList:Language as tl
 	on tl.Id = tw.LanguageId
 where
-	sw.Text like 'moon%'
+	sw.Text = 'moon'
+	
+	*/
+
+CREATE INDEX IX_Word
+(
+	Text
+) ON WordList:Word
+
+select * from WordList:Word as sw
+	where
+	sw.Text = 'moon'
+	
+	/*
 
 SELECT top 1000 *
 FROM WordList:Word
@@ -1009,10 +1021,6 @@ REBUILD INDEX IX_Product_Name ON AdventureWorks:Production:Product;
 REBUILD INDEX IX_TransactionHistory_ProductID_ActualCost ON AdventureWorks:Production:TransactionHistory;
 REBUILD UNIQUEKEY IX_ProductSubcategory_ProductSubcategoryID ON AdventureWorks:Production:ProductSubcategory;
 REBUILD UNIQUEKEY IX_TransactionHistory_TransactionId ON AdventureWorks:Production:TransactionHistory
-
-
-
-
 
 --SET TraceWaitTimes ON;
 

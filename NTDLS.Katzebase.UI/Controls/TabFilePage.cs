@@ -575,7 +575,7 @@ namespace NTDLS.Katzebase.UI.Controls
                         outputGrid.Columns.Add(field.Name, field.Name);
                     }
 
-                    int maxRowsToLoad = 100;
+                    int maxRowsToLoad = Program.Settings.MaxResultRows;
                     foreach (var row in result.Rows)
                     {
                         var rowValues = new List<string>();

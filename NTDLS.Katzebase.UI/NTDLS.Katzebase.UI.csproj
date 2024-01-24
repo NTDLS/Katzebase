@@ -38,6 +38,7 @@
     <PackageReference Include="HIC.System.Windows.Forms.DataVisualization" Version="1.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NTDLS.Katzebase.Client" Version="1.1.1" />
+    <PackageReference Include="NTDLS.Persistence" Version="1.2.0" />
   </ItemGroup>
 
   <ItemGroup>

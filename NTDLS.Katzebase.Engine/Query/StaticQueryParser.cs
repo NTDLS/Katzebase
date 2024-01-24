@@ -586,7 +586,6 @@ namespace NTDLS.Katzebase.Engine.Query
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index' or 'schema'.");
                 }
-
             }
             #endregion
 
