@@ -193,7 +193,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 _core.Log.Write($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
                 throw;
             }
-
         }
 
         internal void Drop(Transaction transaction, string schemaName)
@@ -316,13 +315,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, SchemaCatalogFile);
 
-                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Read) == false)
+                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Read, out var parentSchemaCatalogLockKey) == false)
                     {
                         throw new KbObjectNotFoundException($"The schema [{schemaName}] does not exist.");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
-                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Read);
+                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Read, out var schemaCatalogLockKey);
 
                     var physicalSchema = parentCatalog.GetByName(parentSchemaame);
                     if (physicalSchema != null)
@@ -338,6 +337,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     transaction.LockDirectory(intendedOperation, physicalSchema.DiskPath);
+
+                    //We want to acquire the locks as usual, but we do not want to retain a full lock because it causes
+                    //  unnecessary blocking. So we will instead convert these locks to "stability" locks so we do not block
+                    //  read/writes but only block deletes.
+                    transaction.ConvertLockToStability(parentSchemaCatalogLockKey);
+                    transaction.ConvertLockToStability(schemaCatalogLockKey);
 
                     return physicalSchema;
                 }
@@ -388,13 +393,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, SchemaCatalogFile);
 
-                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, intendedOperation) == false)
+                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Read, out var parentSchemaCatalogLockKey) == false)
                     {
                         throw new KbObjectNotFoundException($"The schema [{schemaName}] does not exist.");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
-                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), intendedOperation);
+                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Read, out var schemaCatalogLockKey);
 
                     var virtualSchema = parentCatalog.GetByName(parentSchemaName)?.ToVirtual();
                     if (virtualSchema != null)
@@ -404,7 +409,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         virtualSchema.VirtualPath = schemaName;
                         virtualSchema.Exists = true;
                         virtualSchema.IsTemporary = isTemporary;
-
                     }
                     else
                     {
@@ -420,6 +424,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     transaction.LockDirectory(intendedOperation, virtualSchema.DiskPath);
+
+                    //We want to acquire the locks as usual, but we do not want to retain a full lock because it causes
+                    //  unnecessary blocking. So we will instead convert these locks to "stability" locks so we do not block
+                    //  read/writes but only block deletes.
+                    transaction.ConvertLockToStability(parentSchemaCatalogLockKey);
+                    transaction.ConvertLockToStability(schemaCatalogLockKey);
 
                     return virtualSchema;
                 }

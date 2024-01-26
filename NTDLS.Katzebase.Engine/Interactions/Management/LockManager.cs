@@ -25,11 +25,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void Remove(ObjectLock objectLock)
+        internal void Release(ObjectLock objectLock)
         {
             try
             {
-                Locks.Remove(objectLock);
+                Locks.Release(objectLock);
             }
             catch (Exception ex)
             {

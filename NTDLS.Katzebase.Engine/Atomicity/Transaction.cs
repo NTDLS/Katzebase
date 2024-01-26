@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 {
     internal class Transaction : IDisposable
     {
-        public LockIntention? CurrentLockIntention { get; set; }
+        public ObjectLockIntention? CurrentLockIntention { get; set; }
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; private set; } = Guid.NewGuid();
         public List<KbQueryResultMessage> Messages { get; private set; } = new();
@@ -218,7 +218,15 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         #region Locking Helpers.
 
-        public void LockFile(LockOperation lockOperation, string diskpath)
+        public void ConvertLockToStability(ObjectLockKey? lockKey)
+        {
+            if (lockKey != null)
+            {
+                _core.Locking.Locks.ConvertToStability(this, lockKey);
+            }
+        }
+
+        public ObjectLockKey? LockFile(LockOperation lockOperation, string diskpath)
         {
             KbUtility.EnsureNotNull(_core);
 
@@ -230,9 +238,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 diskpath = diskpath.ToLower();
 
-                var lockIntention = new LockIntention(diskpath, LockGranularity.File, lockOperation);
-                _core.Locking.Locks.Acquire(this, lockIntention);
+                var lockIntention = new ObjectLockIntention(diskpath, LockGranularity.File, lockOperation);
+                var result = _core.Locking.Locks.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -246,7 +256,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// </summary>
         /// <param name="lockOperation"></param>
         /// <param name="diskpath"></param>
-        public void LockDirectory(LockOperation lockOperation, string diskpath)
+        public ObjectLockKey? LockDirectory(LockOperation lockOperation, string diskpath)
         {
             KbUtility.EnsureNotNull(_core);
 
@@ -258,10 +268,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 diskpath = diskpath.ToLower();
 
-                var lockIntention = new LockIntention(diskpath, LockGranularity.Directory, lockOperation);
-                _core.Locking.Locks.Acquire(this, lockIntention);
-
+                var lockIntention = new ObjectLockIntention(diskpath, LockGranularity.Directory, lockOperation);
+                var result = _core.Locking.Locks.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -275,7 +286,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// </summary>
         /// <param name="lockOperation"></param>
         /// <param name="diskpath"></param>
-        public void LockPath(LockOperation lockOperation, string diskpath)
+        public ObjectLockKey? LockPath(LockOperation lockOperation, string diskpath)
         {
             KbUtility.EnsureNotNull(_core);
 
@@ -287,10 +298,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 diskpath = diskpath.ToLower();
 
-                var lockIntention = new LockIntention(diskpath, LockGranularity.Path, lockOperation);
-                _core.Locking.Locks.Acquire(this, lockIntention);
-
+                var lockIntention = new ObjectLockIntention(diskpath, LockGranularity.RecursiveDirectory, lockOperation);
+                var result = _core.Locking.Locks.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
+
+                return result;
             }
             catch (Exception ex)
             {
@@ -298,7 +310,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 throw;
             }
         }
-
 
         #endregion
 

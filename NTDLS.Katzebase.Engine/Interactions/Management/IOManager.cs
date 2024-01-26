@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Locking;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
@@ -85,26 +86,40 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        internal T GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey, bool useCompression = true)
+            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON, out acquiredLockKey, useCompression);
+
+        internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey, bool useCompression = true)
+            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out acquiredLockKey, useCompression);
+
+        internal PhysicalDocumentPage GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey) where T : PhysicalDocumentPage
+        {
+            return InternalTrackedGet<PhysicalDocumentPage>(transaction, filePath, intendedOperation, IOFormat.PBuf, out acquiredLockKey, false);
+        }
+
         internal T GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation, bool useCompression = true)
-            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON, useCompression);
+            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON, out _, useCompression);
 
         internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, bool useCompression = true)
-            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, useCompression);
+            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out _, useCompression);
 
         internal PhysicalDocumentPage GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation) where T : PhysicalDocumentPage
         {
-            return InternalTrackedGet<PhysicalDocumentPage>(transaction, filePath, intendedOperation, IOFormat.PBuf, false);
+            return InternalTrackedGet<PhysicalDocumentPage>(transaction, filePath, intendedOperation, IOFormat.PBuf, out _, false);
         }
 
-        internal T InternalTrackedGet<T>(Transaction transaction, string filePath, LockOperation intendedOperation, IOFormat format, bool useCompression = true)
+        internal T InternalTrackedGet<T>(Transaction transaction, string filePath,
+            LockOperation intendedOperation, IOFormat format, out ObjectLockKey? acquiredLockKey, bool useCompression = true)
         {
             try
             {
+                ObjectLockKey? internalAcquiredLockKey = null;
+
                 var result = transaction.CriticalSectionTransaction.Write(() =>
                 {
                     transaction.EnsureActive();
 
-                    transaction.LockFile(intendedOperation, filePath);
+                    internalAcquiredLockKey = transaction.LockFile(intendedOperation, filePath);
 
                     transaction.RecordFileRead(filePath);
 
@@ -210,6 +225,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 });
 
                 KbUtility.EnsureNotNull(result);
+
+                acquiredLockKey = internalAcquiredLockKey;
 
                 return result;
             }
@@ -387,9 +404,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal bool DirectoryExists(Transaction transaction, string diskPath, LockOperation intendedOperation)
         {
+            return DirectoryExists(transaction, diskPath, intendedOperation, out _);
+        }
+
+        internal bool DirectoryExists(Transaction transaction, string diskPath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
+        {
             try
             {
-                transaction.LockDirectory(intendedOperation, diskPath);
+                acquiredLockKey = transaction.LockDirectory(intendedOperation, diskPath);
 
                 _core.Log.Trace($"IO:Exists-Directory:{transaction.ProcessId}->{diskPath}");
 
@@ -404,6 +426,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal void CreateDirectory(Transaction transaction, string? diskPath)
         {
+            CreateDirectory(transaction, diskPath, out _);
+        }
+
+        internal void CreateDirectory(Transaction transaction, string? diskPath, out ObjectLockKey? acquiredLockKey)
+        {
             try
             {
                 if (diskPath == null)
@@ -411,7 +438,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     throw new ArgumentNullException(nameof(diskPath));
                 }
 
-                transaction.LockDirectory(LockOperation.Write, diskPath);
+                acquiredLockKey = transaction.LockDirectory(LockOperation.Write, diskPath);
 
                 bool doesFileExist = Directory.Exists(diskPath);
 
@@ -432,6 +459,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal bool FileExists(Transaction transaction, string filePath, LockOperation intendedOperation)
         {
+            return FileExists(transaction, filePath, intendedOperation, out _);
+        }
+
+        internal bool FileExists(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
+        {
             try
             {
                 string lowerFilePath = filePath.ToLower();
@@ -448,10 +480,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (result)
                 {
+                    acquiredLockKey = null;
                     return result;
                 }
 
-                transaction.LockFile(intendedOperation, lowerFilePath);
+                acquiredLockKey = transaction.LockFile(intendedOperation, lowerFilePath);
 
                 _core.Log.Trace($"IO:Exits-File:{transaction.ProcessId}->{filePath}");
 
@@ -466,10 +499,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal void DeleteFile(Transaction transaction, string filePath)
         {
+            DeleteFile(transaction, filePath, out _);
+        }
+
+        internal void DeleteFile(Transaction transaction, string filePath, out ObjectLockKey? acquiredLockKey)
+        {
             try
             {
                 string cacheKey = filePath.ToLower();
-                transaction.LockFile(LockOperation.Delete, cacheKey);
+                acquiredLockKey = transaction.LockFile(LockOperation.Delete, cacheKey);
 
                 if (_core.Settings.CacheEnabled)
                 {
@@ -494,9 +532,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal void DeletePath(Transaction transaction, string diskPath)
         {
+            DeletePath(transaction, diskPath, out _);
+        }
+
+        internal void DeletePath(Transaction transaction, string diskPath, out ObjectLockKey? acquiredLockKey)
+        {
             try
             {
-                transaction.LockPath(LockOperation.Delete, diskPath);
+                acquiredLockKey = transaction.LockPath(LockOperation.Delete, diskPath);
 
                 if (_core.Settings.CacheEnabled)
                 {

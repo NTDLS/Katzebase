@@ -225,7 +225,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 throw;
             }
         }
-
         public void Commit(ulong processId)
         {
             try

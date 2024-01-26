@@ -2,7 +2,7 @@
 
 namespace NTDLS.Katzebase.Engine.Locking
 {
-    public class LockIntention
+    public class ObjectLockIntention
     {
         public DateTime CreationTime { get; set; }
         public LockGranularity Granularity { get; private set; }
@@ -11,14 +11,14 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         public string Key => $"{Granularity}:{Operation}:{DiskPath}";
 
-        public LockIntention(string diskPath, LockGranularity lockGranularity, LockOperation operation)
+        public ObjectLockIntention(string diskPath, LockGranularity lockGranularity, LockOperation operation)
         {
             CreationTime = DateTime.UtcNow;
             DiskPath = diskPath;
             Granularity = lockGranularity;
             Operation = operation;
 
-            if ((lockGranularity == LockGranularity.Directory || lockGranularity == LockGranularity.Path) && (DiskPath.EndsWith('\\') == false))
+            if ((lockGranularity == LockGranularity.Directory || lockGranularity == LockGranularity.RecursiveDirectory) && (DiskPath.EndsWith('\\') == false))
             {
                 DiskPath = $"{DiskPath}\\";
             }
@@ -32,13 +32,13 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
         }
 
-        public bool IsObjectEqual(LockIntention intention)
+        public bool IsObjectEqual(ObjectLockIntention intention)
         {
             return (intention.Granularity == Granularity
                 && intention.DiskPath == DiskPath);
         }
 
-        public bool IsEqual(LockIntention intention)
+        public bool IsEqual(ObjectLockIntention intention)
         {
             return (intention.Granularity == Granularity
                 && intention.Operation == Operation

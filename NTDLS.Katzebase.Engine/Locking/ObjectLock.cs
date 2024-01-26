@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Locking
         /// </summary>
         public ulong Hits { get; set; }
 
-        public ObjectLock(EngineCore core, LockIntention intention)
+        public ObjectLock(EngineCore core, ObjectLockIntention intention)
         {
             _core = core;
             Keys = new OptimisticCriticalResource<List<ObjectLockKey>>(core.CriticalSectionLockManagement);
@@ -53,7 +53,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             return snapshot;
         }
 
-        public ObjectLockKey IssueSingleUseKey(Transaction transaction, LockIntention lockIntention)
+        public ObjectLockKey IssueSingleUseKey(Transaction transaction, ObjectLockIntention lockIntention)
         {
             try
             {
@@ -81,7 +81,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                     if (obj.Count == 0)
                     {
-                        _core.Locking.Remove(key.ObjectLock);
+                        _core.Locking.Release(key.ObjectLock);
                     }
                 });
             }

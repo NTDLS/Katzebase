@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
     /// </summary>
     internal class TransactionSnapshot
     {
-        public LockIntention? CurrentLockIntention { get; set; }
+        public ObjectLockIntention? CurrentLockIntention { get; set; }
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; set; } = Guid.NewGuid();
         public HashSet<string> FilesReadForCache { get; set; } = new();

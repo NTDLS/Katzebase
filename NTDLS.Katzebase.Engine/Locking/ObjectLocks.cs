@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Locking
     internal class ObjectLocks
     {
         private readonly OptimisticCriticalResource<List<ObjectLock>> _collection;
-        private readonly OptimisticCriticalResource<Dictionary<Transaction, LockIntention>> _transactionWaitingForLocks;
+        private readonly OptimisticCriticalResource<Dictionary<Transaction, ObjectLockIntention>> _transactionWaitingForLocks;
         private readonly EngineCore _core;
 
         public ObjectLocks(EngineCore core)
@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             _transactionWaitingForLocks = new(core.CriticalSectionLockManagement);
         }
 
-        public void Remove(ObjectLock objectLock)
+        public void Release(ObjectLock objectLock)
         {
             try
             {
@@ -38,47 +38,32 @@ namespace NTDLS.Katzebase.Engine.Locking
         /// </summary>
         /// <param name="intention"></param>
         /// <returns></returns>
-        public HashSet<ObjectLock> GetOverlappingLocks(LockIntention intention)
+        public HashSet<ObjectLock> GetOverlappingLocks(ObjectLockIntention intention)
         {
-            var result = _collection.Read((obj) =>
+            var result = _collection.Read((existingLocks) =>
             {
-                var lockedObjects = new HashSet<ObjectLock>();
+                var result = new HashSet<ObjectLock>();
 
                 var intentionDirectory = Path.GetDirectoryName(intention.DiskPath) ?? string.Empty;
 
                 //If we are locking a file, then look for all other locks for the exact path.
                 if (intention.Granularity == LockGranularity.File)
                 {
-                    var fileLocks = obj.Where(o =>
+                    var fileLocks = existingLocks.Where(o =>
                         o.Granularity == LockGranularity.File && o.DiskPath == intention.DiskPath).ToList();
-                    fileLocks.ForEach(o => lockedObjects.Add(o));
+                    fileLocks.ForEach(o => result.Add(o));
                 }
 
                 //Check if the intended file or directory is in a locked directory.
-                var exactDirectoryLocks = obj.Where(o =>
-                    (o.Granularity == LockGranularity.Directory || o.Granularity == LockGranularity.Path) && o.DiskPath == intentionDirectory).ToList();
-                exactDirectoryLocks.ForEach(o => lockedObjects.Add(o));
+                var exactDirectoryLocks = existingLocks.Where(o =>
+                    (o.Granularity == LockGranularity.Directory) && o.DiskPath == intentionDirectory).ToList();
+                exactDirectoryLocks.ForEach(o => result.Add(o));
 
-                var direcotryAndSubPathLocks = obj.Where(o =>
-                    o.Granularity == LockGranularity.Path && intentionDirectory.StartsWith(o.DiskPath)).ToList();
-                direcotryAndSubPathLocks.ForEach(o => lockedObjects.Add(o));
+                var direcotryAndSubPathLocks = existingLocks.Where(o =>
+                    o.Granularity == LockGranularity.RecursiveDirectory && intentionDirectory.StartsWith(o.DiskPath)).ToList();
+                direcotryAndSubPathLocks.ForEach(o => result.Add(o));
 
-                //direcotryAndSubPathLocks.ForEach(new ObjectLock(_core, new LockIntention(intentionDirectory, LockGranularity.Directory, LockOperation.SchemaPreserve)));
-
-                /* TODO: Think though this, seems agressive. If we need to lock a parent path then we should just do it explicitly.
-                //If the intended lock is a path then we need to find all existing locks that would be contained in the intended lock path.
-                //This is done by looking for all existing locks where the existing lock path starts with the intended lock path.
-                if (intention.Granularity == LockGranularity.Path)
-                {
-                    var higherLevelDirectoryLocks = _collection.Where(o => o.DiskPath.StartsWith(intentionDirectory));
-                    foreach (var existingLock in higherLevelDirectoryLocks)
-                    {
-                        lockedObjects.Add(existingLock);
-                    }
-                }
-                */
-
-                return lockedObjects;
+                return result;
             });
 
             KbUtility.EnsureNotNull(result);
@@ -86,27 +71,46 @@ namespace NTDLS.Katzebase.Engine.Locking
             return result;
         }
 
-        internal Dictionary<TransactionSnapshot, LockIntention> SnapshotWaitingTransactions()
+        internal Dictionary<TransactionSnapshot, ObjectLockIntention> SnapshotWaitingTransactions()
         {
             return _transactionWaitingForLocks.Read((obj) => obj.ToDictionary(o => o.Key.Snapshot(), o => o.Value));
         }
 
-        public void Acquire(Transaction transaction, LockIntention intention)
+        public ObjectLockKey? Acquire(Transaction transaction, ObjectLockIntention intention)
         {
-            if (transaction.GrantedLockCache.ReadNullable((obj) =>
+            if (transaction.GrantedLockCache.Read((obj) =>
             {
                 return obj.Contains(intention.Key);
             }))
             {
-                return;
+                //This transaction owns the lock, but it was created with a previous call to Acquire().
+                //This means that the transaction has the key, but the caller will not be be provided
+                //with it since modification by a non-creator caller would be dangerous.
+                return null;
             }
 
-            AcquireInternal(transaction, intention);
+            var lockKey = AcquireInternal(transaction, intention);
 
-            transaction.GrantedLockCache.WriteNullable((obj) => obj.Add(intention.Key));
+            transaction.GrantedLockCache.Write((obj) => obj.Add(intention.Key));
+
+            return lockKey;
         }
 
-        private void AcquireInternal(Transaction transaction, LockIntention intention)
+        /// <summary>
+        /// Allows the lock-key to be converted to an stability lock. This is used when we need to
+        /// temporarily lock an object in a long running transation but do not want to keep the agressive lock.
+        /// </summary>
+        public void ConvertToStability(Transaction transaction, ObjectLockKey lockKey)
+        {
+            transaction.GrantedLockCache.Write((obj) =>
+                {
+                    obj.Remove(lockKey.Key);
+                    lockKey.ConvertToStability();
+                    obj.Add(lockKey.Key);
+                });
+        }
+
+        private ObjectLockKey AcquireInternal(Transaction transaction, ObjectLockIntention intention)
         {
             try
             {
@@ -115,17 +119,8 @@ namespace NTDLS.Katzebase.Engine.Locking
                 // (2) We are safe to poke around those transaction's properties because we know their threda are in this method.
                 _transactionWaitingForLocks.Write((obj) => obj.Add(transaction, intention));
 
-                int retries = 0;
-
                 while (true)
                 {
-                    retries++;
-
-                    if (retries > 100)
-                    {
-
-                    }
-
                     transaction.EnsureActive();
 
                     transaction.CurrentLockIntention = intention;
@@ -139,10 +134,12 @@ namespace NTDLS.Katzebase.Engine.Locking
                         throw new KbTimeoutException($"Timeout exceeded while waiting on lock: {intention.ToString()}");
                     }
 
-                    //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical section "Locking.CriticalSectionLockManagement",
-                    //  we will only need 
-                    bool transactionAcquiredLock = _collection.TryWriteAll(new ICriticalSection[] { transaction.CriticalSectionTransaction }, out bool isLockHeld, (obj) =>
+                    //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical
+                    //section "Locking.CriticalSectionLockManagement", we will only need:
+                    var acquiredLockKey = _collection.TryWriteAll([transaction.CriticalSectionTransaction], out bool isLockHeld, (obj) =>
                     {
+                        ObjectLockKey? lockKey = null;
+
                         var lockedObjects = GetOverlappingLocks(intention); //Find any existing locks on the given lock intention.
 
                         if (lockedObjects.Count == 0)
@@ -153,14 +150,12 @@ namespace NTDLS.Katzebase.Engine.Locking
                             lockedObjects.Add(lockedObject);
                         }
 
-                        /*
-                        if (intention.Operation == LockOperation.SchemaPreserve)
+                        if (intention.Operation == LockOperation.Stability)
                         {
-                            //This operation is blocked by: Read and Write.
+                            //This operation is blocked by: Delete.
                             var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                                .Where(o => (o.Operation == LockOperation.Write || o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
+                                .Where(o => (o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
 
-                            //If there are no existing un-owned write locks.
                             if (blockers.Any() == false)
                             {
                                 transaction.BlockedByKeys.Write((obj) => obj.Clear());
@@ -175,7 +170,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                         continue;
                                     }
 
-                                    var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+                                    lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
                                     transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
                                 }
 
@@ -183,7 +178,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
-                                return true;
+                                return lockKey;
                             }
                             else
                             {
@@ -191,14 +186,12 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
                             }
                         }
-                        */
-                        if (intention.Operation == LockOperation.Read)
+                        else if (intention.Operation == LockOperation.Read)
                         {
                             //This operation is blocked by: Read and Write.
                             var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
                                 .Where(o => (o.Operation == LockOperation.Write || o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
 
-                            //If there are no existing un-owned write locks.
                             if (blockers.Any() == false)
                             {
                                 transaction.BlockedByKeys.Write((obj) => obj.Clear());
@@ -213,7 +206,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                         continue;
                                     }
 
-                                    var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+                                    lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
                                     transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
                                 }
 
@@ -221,7 +214,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
-                                return true;
+                                return lockKey;
                             }
                             else
                             {
@@ -233,9 +226,9 @@ namespace NTDLS.Katzebase.Engine.Locking
                         {
                             //This operation is blocked by: Read, Write, Delete.
                             var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                                .Where(o => /*(o.Operation != LockOperation.SchemaPreserve) &&*/ o.ProcessId != transaction.ProcessId).ToList();
+                                .Where(o => o.Operation != LockOperation.Stability && o.ProcessId != transaction.ProcessId).ToList();
 
-                            if (blockers.Any() == false) //If there are no existing un-owned locks.
+                            if (blockers.Any() == false)
                             {
                                 transaction.BlockedByKeys.Write((obj) => obj.Clear());
 
@@ -249,8 +242,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                         continue;
                                     }
 
-                                    var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-
+                                    lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
                                     transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
                                 }
 
@@ -258,7 +250,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
-                                return true;
+                                return lockKey;
                             }
                             else
                             {
@@ -286,7 +278,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                         continue;
                                     }
 
-                                    var lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+                                    lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
 
                                     transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
                                 }
@@ -295,7 +287,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
                                 _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
-                                return true;
+                                return lockKey;
                             }
                             else
                             {
@@ -410,12 +402,12 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 });
                             }
                         });
-                        return false;
+                        return null;
                     });
 
-                    if (transactionAcquiredLock == true)
+                    if (acquiredLockKey != null)
                     {
-                        return;
+                        return acquiredLockKey;
                     }
 
                     Thread.Sleep(1);

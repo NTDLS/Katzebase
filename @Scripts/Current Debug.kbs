@@ -1,3 +1,7 @@
+drop schema Dummyload
+exec showlocks
+
+/*
 DROP INDEX IX_Address_City_Address ON AdventureWorks:Person:Address
 GO
 
@@ -5,7 +9,7 @@ CREATE INDEX IX_Address_City_Address(
     city,
     addressline1
 ) ON AdventureWorks:Person:Address WITH (PARTITIONS=100)
-
+*/
 --787ms
 
 /*
@@ -299,6 +303,7 @@ where
 	
 	*/
 
+/*
 CREATE INDEX IX_Word
 (
 	Text
@@ -307,7 +312,7 @@ CREATE INDEX IX_Word
 select * from WordList:Word as sw
 	where
 	sw.Text = 'moon'
-	
+*/	
 	/*
 
 SELECT top 1000 *
