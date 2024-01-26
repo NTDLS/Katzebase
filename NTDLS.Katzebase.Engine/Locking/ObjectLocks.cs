@@ -325,7 +325,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                             explanation.AppendLine("    Blocking Transactions {");
                                             explanation.AppendLine($"        ProcessId: {transaction.ProcessId}");
                                             explanation.AppendLine($"        Operation: {transaction.TopLevelOperation}");
-                                            explanation.AppendLine($"        ReferenceCount: {transaction.ReferenceCount}");
+                                            //explanation.AppendLine($"        ReferenceCount: {transaction.ReferenceCount}"); //This causes a race condition.
                                             explanation.AppendLine($"        StartTime: {transaction.StartTime}");
 
                                             explanation.AppendLine("        Lock Intention {");
@@ -361,7 +361,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                             {
                                                 explanation.AppendLine($"        ProcessId: {waiter.ProcessId}");
                                                 explanation.AppendLine($"        Operation: {waiter.TopLevelOperation}");
-                                                explanation.AppendLine($"        ReferenceCount: {waiter.ReferenceCount}");
+                                                //explanation.AppendLine($"        ReferenceCount: {waiter.ReferenceCount}"); //This causes a race condition.
                                                 explanation.AppendLine($"        StartTime: {waiter.StartTime}");
 
                                                 KbUtility.EnsureNotNull(waiter.HeldLockKeys);

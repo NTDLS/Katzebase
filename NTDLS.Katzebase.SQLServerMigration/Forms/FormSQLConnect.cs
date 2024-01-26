@@ -58,7 +58,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
             CancelButton = cmdCancel;
 
 #if DEBUG
-            comboBoxDatabaseName.Text = "Dummyload";
+            comboBoxDatabaseName.Text = "AdventureWorks";
 #endif
 
         }

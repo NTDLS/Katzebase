@@ -31,6 +31,11 @@ namespace NTDLS.Katzebase.Engine
 
         public EngineCore(KatzebaseSettings settings)
         {
+            if (Debugger.IsAttached)
+            {
+                ThreadOwnershipTracking.Enable();
+            }
+
             Settings = settings;
 
             Log = new LogManager(this);
