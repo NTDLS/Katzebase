@@ -35,7 +35,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
             pbProgress = new ProgressBar();
             lblHeader = new Label();
             lblBody = new Label();
-            spinningProgress1 = new SpinningProgress();
             SuspendLayout();
             // 
             // buttonCancel
@@ -79,15 +78,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
             lblBody.TabIndex = 4;
             lblBody.Text = "Please wait...";
             // 
-            // spinningProgress1
-            // 
-            spinningProgress1.AutoIncrementFrequency = 100D;
-            spinningProgress1.Location = new Point(14, 14);
-            spinningProgress1.Margin = new Padding(5, 3, 5, 3);
-            spinningProgress1.Name = "spinningProgress1";
-            spinningProgress1.Size = new Size(35, 35);
-            spinningProgress1.TabIndex = 0;
-            // 
             // FormProgress
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -98,7 +88,6 @@ namespace NTDLS.Katzebase.SQLServerMigration
             Controls.Add(lblHeader);
             Controls.Add(pbProgress);
             Controls.Add(buttonCancel);
-            Controls.Add(spinningProgress1);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Icon = (Icon)resources.GetObject("$this.Icon");
             Margin = new Padding(4, 3, 4, 3);

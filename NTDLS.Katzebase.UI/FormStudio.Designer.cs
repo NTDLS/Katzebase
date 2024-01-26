@@ -37,7 +37,7 @@
             statusStripDocument = new StatusStrip();
             toolStripStatusLabelServerName = new ToolStripStatusLabel();
             toolStripStatusLabelProcessId = new ToolStripStatusLabel();
-            toolStrip1 = new ToolStrip();
+            toolStripButtons = new ToolStrip();
             toolStripButtonNewFile = new ToolStripButton();
             toolStripButtonOpen = new ToolStripButton();
             toolStripButtonSave = new ToolStripButton();
@@ -66,7 +66,7 @@
             toolStripButtonMacros = new ToolStripButton();
             toolStripSeparator7 = new ToolStripSeparator();
             toolStripButtonSnippets = new ToolStripButton();
-            menuStrip1 = new MenuStrip();
+            menuStripMain = new MenuStrip();
             fileToolStripMenuItem = new ToolStripMenuItem();
             connectToolStripMenuItem = new ToolStripMenuItem();
             closeProjectToolStripMenuItem = new ToolStripMenuItem();
@@ -92,8 +92,8 @@
             splitContainerMacros.Panel2.SuspendLayout();
             splitContainerMacros.SuspendLayout();
             statusStripDocument.SuspendLayout();
-            toolStrip1.SuspendLayout();
-            menuStrip1.SuspendLayout();
+            toolStripButtons.SuspendLayout();
+            menuStripMain.SuspendLayout();
             SuspendLayout();
             // 
             // splitContainerObjectExplorer
@@ -179,14 +179,14 @@
             toolStripStatusLabelProcessId.Size = new Size(47, 17);
             toolStripStatusLabelProcessId.Text = "Process";
             // 
-            // toolStrip1
+            // toolStripButtons
             // 
-            toolStrip1.Items.AddRange(new ToolStripItem[] { toolStripButtonNewFile, toolStripButtonOpen, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripButtonStop, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonUndo, toolStripButtonRedo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
-            toolStrip1.Location = new Point(0, 24);
-            toolStrip1.Name = "toolStrip1";
-            toolStrip1.Size = new Size(1184, 25);
-            toolStrip1.TabIndex = 1;
-            toolStrip1.Text = "toolStrip1";
+            toolStripButtons.Items.AddRange(new ToolStripItem[] { toolStripButtonNewFile, toolStripButtonOpen, toolStripButtonSave, toolStripButtonSaveAll, toolStripButtonCloseCurrentTab, toolStripSeparator1, toolStripButtonExplainPlan, toolStripButtonExecuteScript, toolStripButtonStop, toolStripSeparator2, toolStripButtonFind, toolStripButtonReplace, toolStripSeparator3, toolStripButtonUndo, toolStripButtonRedo, toolStripSeparator4, toolStripButtonCut, toolStripButtonCopy, toolStripButtonPaste, toolStripSeparator5, toolStripButtonDecreaseIndent, toolStripButtonIncreaseIndent, toolStripSeparator6, toolStripButtonProject, toolStripButtonOutput, toolStripButtonMacros, toolStripSeparator7, toolStripButtonSnippets });
+            toolStripButtons.Location = new Point(0, 24);
+            toolStripButtons.Name = "toolStripButtons";
+            toolStripButtons.Size = new Size(1184, 25);
+            toolStripButtons.TabIndex = 1;
+            toolStripButtons.Text = "toolStrip1";
             // 
             // toolStripButtonNewFile
             // 
@@ -435,14 +435,14 @@
             toolStripButtonSnippets.Visible = false;
             toolStripButtonSnippets.Click += toolStripButtonSnippets_Click;
             // 
-            // menuStrip1
+            // menuStripMain
             // 
-            menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, documentToolStripMenuItem, helpToolStripMenuItem });
-            menuStrip1.Location = new Point(0, 0);
-            menuStrip1.Name = "menuStrip1";
-            menuStrip1.Size = new Size(1184, 24);
-            menuStrip1.TabIndex = 2;
-            menuStrip1.Text = "menuStrip1";
+            menuStripMain.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, documentToolStripMenuItem, helpToolStripMenuItem });
+            menuStripMain.Location = new Point(0, 0);
+            menuStripMain.Name = "menuStripMain";
+            menuStripMain.Size = new Size(1184, 24);
+            menuStripMain.TabIndex = 2;
+            menuStripMain.Text = "menuStrip1";
             // 
             // fileToolStripMenuItem
             // 
@@ -559,10 +559,10 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1184, 761);
             Controls.Add(splitContainerObjectExplorer);
-            Controls.Add(toolStrip1);
-            Controls.Add(menuStrip1);
+            Controls.Add(toolStripButtons);
+            Controls.Add(menuStripMain);
             Icon = (Icon)resources.GetObject("$this.Icon");
-            MainMenuStrip = menuStrip1;
+            MainMenuStrip = menuStripMain;
             Name = "FormStudio";
             Text = "Katzebase";
             Load += FormStudio_Load;
@@ -580,10 +580,10 @@
             splitContainerMacros.ResumeLayout(false);
             statusStripDocument.ResumeLayout(false);
             statusStripDocument.PerformLayout();
-            toolStrip1.ResumeLayout(false);
-            toolStrip1.PerformLayout();
-            menuStrip1.ResumeLayout(false);
-            menuStrip1.PerformLayout();
+            toolStripButtons.ResumeLayout(false);
+            toolStripButtons.PerformLayout();
+            menuStripMain.ResumeLayout(false);
+            menuStripMain.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -592,12 +592,12 @@
 
         private SplitContainer splitContainerObjectExplorer;
         private TabControl tabControlBody;
-        private ToolStrip toolStrip1;
+        private ToolStrip toolStripButtons;
         private TreeView treeViewProject;
         private ToolStripButton toolStripButtonSave;
         private ToolStripButton toolStripButtonSaveAll;
         private ToolStripButton toolStripButtonCloseCurrentTab;
-        private MenuStrip menuStrip1;
+        private MenuStrip menuStripMain;
         private ToolStripMenuItem fileToolStripMenuItem;
         private ToolStripMenuItem closeProjectToolStripMenuItem;
         private ToolStripSeparator toolStripMenuItem2;
