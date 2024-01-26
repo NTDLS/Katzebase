@@ -4,11 +4,11 @@
     {
         public string Schema { get; set; }
         public string Table { get; set; }
-        public int ListViewRowIndex { get; set; }
+        public ListViewItem ListItem { get; set; }
 
-        public SelectedSqlItem(int listViewRowIndex, string schema, string name)
+        public SelectedSqlItem(ListViewItem item, string schema, string name)
         {
-            ListViewRowIndex = listViewRowIndex;
+            ListItem = item;
             Schema = schema;
             Table = name;
         }

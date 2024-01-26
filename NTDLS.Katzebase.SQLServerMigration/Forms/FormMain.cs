@@ -62,10 +62,10 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
             foreach (ListViewItem item in listViewSQLServer.Items)
             {
-                UpdateListviewText(item.Index, 2, "");
+                UpdateListviewText(item, 2, "");
                 if (item.Checked)
                 {
-                    param.Items.Add(new SelectedSqlItem(item.Index, item.SubItems[0].Text, item.SubItems[1].Text));
+                    param.Items.Add(new SelectedSqlItem(item, item.SubItems[0].Text, item.SubItems[1].Text));
                 }
             }
 
@@ -122,7 +122,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                     if (_activeTableWorkers < _maxTableWorkers)
                     {
-                        lock (this) { _activeTableWorkers++; }
+                        Interlocked.Increment(ref _activeTableWorkers);
 
                         var tableWorkerParam = new TabelWorkerThreadParam(param.TargetServerAddress, param.TargetServerSchema, item);
 
@@ -146,17 +146,36 @@ namespace NTDLS.Katzebase.SQLServerMigration
             }
         }
 
-        private void UpdateListviewText(int rowIndex, int columnIndex, string text)
+        private void MoveListViewItemFirst(ListViewItem item)
         {
             if (listViewSQLServer.InvokeRequired)
             {
-                listViewSQLServer.Invoke(new Action(() => UpdateListviewText(rowIndex, columnIndex, text)));
+                listViewSQLServer.Invoke(new Action(() => MoveListViewItemFirst(item)));
                 return;
             }
-            listViewSQLServer.Items[rowIndex].SubItems[columnIndex].Text = text;
+            listViewSQLServer.Items.Remove(item);
+            listViewSQLServer.Items.Insert(0, item);
+        }
 
-            listViewSQLServer.EnsureVisible(rowIndex);
+        private void MoveListViewItemLast(ListViewItem item)
+        {
+            if (listViewSQLServer.InvokeRequired)
+            {
+                listViewSQLServer.Invoke(new Action(() => MoveListViewItemLast(item)));
+                return;
+            }
+            listViewSQLServer.Items.Remove(item);
+            listViewSQLServer.Items.Insert(listViewSQLServer.Items.Count - 1, item);
+        }
 
+        private void UpdateListviewText(ListViewItem item, int columnIndex, string text)
+        {
+            if (listViewSQLServer.InvokeRequired)
+            {
+                listViewSQLServer.Invoke(new Action(() => UpdateListviewText(item, columnIndex, text)));
+                return;
+            }
+            item.SubItems[columnIndex].Text = text;
         }
 
         private void TableWorkerThreadProc(object? p)
@@ -168,23 +187,26 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
             try
             {
-                UpdateListviewText(param.Item.ListViewRowIndex, 2, "Starting");
+                MoveListViewItemFirst(param.Item.ListItem);
+                UpdateListviewText(param.Item.ListItem, 2, "Starting");
                 ExportSQLServerTableToKatzebase(param.Item, param.TargetServerAddress, param.TargetServerSchema);
 
                 if (FormProgress.Singleton.Form.IsCancelPending)
                 {
-                    UpdateListviewText(param.Item.ListViewRowIndex, 2, "Cancelled");
+                    UpdateListviewText(param.Item.ListItem, 2, "Cancelled");
                 }
-                else UpdateListviewText(param.Item.ListViewRowIndex, 2, "Complete");
+                else UpdateListviewText(param.Item.ListItem, 2, "Complete");
             }
             catch (Exception ex)
             {
-                UpdateListviewText(param.Item.ListViewRowIndex, 2, "Exception");
+                UpdateListviewText(param.Item.ListItem, 2, "Exception");
             }
             finally
             {
-                lock (this) { _activeTableWorkers--; }
+                Interlocked.Decrement(ref _activeTableWorkers);
             }
+
+            MoveListViewItemLast(param.Item.ListItem);
         }
 
         private long _totalRowCount = 0;
@@ -308,7 +330,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                                 if (rowCount > 0 && rowCount % 100 == 0)
                                 {
-                                    UpdateListviewText(item.ListViewRowIndex, 2, $"Rows {rowCount:n0}");
+                                    UpdateListviewText(item.ListItem, 2, $"Rows {rowCount:n0}");
                                 }
 
                                 rowCount++;
