@@ -2,7 +2,7 @@
 ;-- Main Setup Information
  AppName                          = Katzebase Client
  AppVerName                       = Katzebase Client 0.7.0.0
- AppCopyright                     = Copyright © 1995-2023 NetworkDLS.
+ AppCopyright                     = Copyright © 2024 NetworkDLS.
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase\UI
  DefaultGroupName                 = NetworkDLS\Katzebase
  UninstallDisplayIcon             = {app}\NTDLS.Katzebase.UI.exe
@@ -60,4 +60,4 @@
  Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\UI\"; ValueType: string; ValueName: "Path";   ValueData:"{app}"; Flags: CreateValueIfDoesntExist;
 
 [Run]
- Filename: "{app}\NTDLS.Katzebase.UI.exe"; Description: "Run Katzebase UI now?"; Flags: postinstall nowait skipifsilent shellexec;
+ Filename: "{app}\NTDLS.Katzebase.UI.exe"; Description: "Run Katzebase Manager now?"; Flags: postinstall nowait skipifsilent shellexec;

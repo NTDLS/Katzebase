@@ -46,8 +46,8 @@ namespace NTDLS.Katzebase.UI
                 return;
             }
 
-            var files = Directory.EnumerateFiles(path, "*.dll", SearchOption.AllDirectories).ToList();
-            files.AddRange(Directory.EnumerateFiles(path, "*.exe", SearchOption.AllDirectories).ToList());
+            var files = Directory.EnumerateFiles(path, "*.dll", SearchOption.TopDirectoryOnly).ToList();
+            files.AddRange(Directory.EnumerateFiles(path, "*.exe", SearchOption.TopDirectoryOnly).ToList());
 
             foreach (var file in files)
             {

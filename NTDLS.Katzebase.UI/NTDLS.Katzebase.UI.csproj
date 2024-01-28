@@ -8,8 +8,8 @@
     <ApplicationIcon>Icon.ico</ApplicationIcon>
     <UseWindowsForms>true</UseWindowsForms>
     <Company>NetworkDLS</Company>
-    <Copyright>Copyright © 2023 NetworkDLS</Copyright>
-    <Version>0.6.0.0</Version>
+    <Copyright>Copyright © 2024 NetworkDLS</Copyright>
+    <Version>0.7.0.0</Version>
     <Authors>NetworkDLS</Authors>
   </PropertyGroup>
 
