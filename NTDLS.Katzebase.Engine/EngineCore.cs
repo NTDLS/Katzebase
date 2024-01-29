@@ -13,7 +13,6 @@ namespace NTDLS.Katzebase.Engine
         internal LockManager Locking;
         internal CacheManager Cache;
         internal KatzebaseSettings Settings;
-        internal HeartbeatManager Heartbeat;
 
         public SchemaManager Schemas;
         public EnvironmentManager Environment;
@@ -83,8 +82,6 @@ namespace NTDLS.Katzebase.Engine
             Log.Write("Initializing procedure manager.");
             Procedures = new ProcedureManager(this);
 
-            Log.Write("Initializing hearbeat.");
-            Heartbeat = new HeartbeatManager(this);
         }
 
         public void Start()
@@ -94,7 +91,6 @@ namespace NTDLS.Katzebase.Engine
             Log.Write("Starting recovery.");
             Transactions.Recover();
             Log.Write("Recovery complete.");
-            Heartbeat.Start();
         }
 
         public void Stop()
@@ -103,7 +99,6 @@ namespace NTDLS.Katzebase.Engine
 
             ThreadPool.Stop();
             Cache.Close();
-            Heartbeat.Stop();
             Health.Close();
             Log.Close();
         }

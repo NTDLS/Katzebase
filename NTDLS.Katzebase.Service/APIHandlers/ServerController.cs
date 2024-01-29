@@ -1,22 +1,30 @@
-﻿using NTDLS.Katzebase.Client.Payloads.Queries;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Payloads.Queries;
+using NTDLS.Katzebase.Engine;
 
-namespace NTDLS.Katzebase.Client.Service.Controllers
+namespace NTDLS.Katzebase.Service.APIHandlers
 {
-    public static class ServerController
+    public class ServerController
     {
+        private readonly EngineCore _core;
+        public ServerController(EngineCore core)
+        {
+            _core = core;
+        }
+
         /// <summary>
         /// Tests the connection to the server.
         /// </summary>
         /// <param name="schema"></param>
-        public static KbQueryServerCloseSessionReply CloseSession(KbQueryServerCloseSession param)
+        public KbQueryServerCloseSessionReply CloseSession(KbQueryServerCloseSession param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                Program.Core.Sessions.CloseByProcessId(processId);
+                _core.Sessions.CloseByProcessId(processId);
 
                 var result = new KbQueryServerCloseSessionReply
                 {
@@ -42,15 +50,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Tests the connection to the server.
         /// </summary>
         /// <param name="schema"></param>
-        public static KbQueryServerTerminateProcessReply TerminateProcess(KbQueryServerTerminateProcess param)
+        public KbQueryServerTerminateProcessReply TerminateProcess(KbQueryServerTerminateProcess param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                Program.Core.Sessions.CloseByProcessId(param.ReferencedProcessId);
+                _core.Sessions.CloseByProcessId(param.ReferencedProcessId);
 
                 var result = new KbQueryServerTerminateProcessReply
                 {

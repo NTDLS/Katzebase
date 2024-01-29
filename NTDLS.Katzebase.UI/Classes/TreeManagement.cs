@@ -7,23 +7,24 @@ namespace NTDLS.Katzebase.UI.Classes
     {
         public static void PopulateServer(TreeView treeView, string serverAddress, int serverPort)
         {
-            using (var client = new KbClient(serverAddress, serverPort, "Katzebase.UI"))
+            var client = new KbClient(serverAddress, serverPort, "Katzebase.UI");
+
+            string key = serverAddress.ToLower();
+
+            var foundNode = FindNodeOfType(treeView, ServerNodeType.Server, key);
+            if (foundNode != null)
             {
-                string key = serverAddress.ToLower();
-
-                var foundNode = FindNodeOfType(treeView, ServerNodeType.Server, key);
-                if (foundNode != null)
-                {
-                    treeView.Nodes.Remove(foundNode);
-                }
-
-                var serverNode = CreateServerNode(key, serverAddress, serverPort);
-
-                PopulateSchemaNode(serverNode, client, ":");
-
-                treeView.Nodes.Add(serverNode);
+                treeView.Nodes.Remove(foundNode);
             }
+
+            var serverNode = CreateServerNode(key, serverAddress, serverPort, client);
+
+            PopulateSchemaNode(serverNode, client, ":");
+
+            treeView.Nodes.Add(serverNode);
+
         }
+
 
         /// <summary>
         /// Populates a schema, its indexes and one level deeper to ensure there is somehting to expand in the tree.
@@ -67,13 +68,12 @@ namespace NTDLS.Katzebase.UI.Classes
             }
 
             var rootNode = GetRootNode(node);
-            using (var client = new KbClient(rootNode.ServerAddress, rootNode.ServerPort))
+            string schema = FullSchemaPath(node);
+
+            node.Nodes.Clear(); //Dont clear the node until we hear back from the server.
+            if (rootNode.ServerClient != null)
             {
-                string schema = FullSchemaPath(node);
-
-                node.Nodes.Clear(); //Dont clear the node until we hear back from the server.
-
-                PopulateSchemaNode(node, client, schema);
+                PopulateSchemaNode(node, rootNode.ServerClient, schema);
             }
         }
 
@@ -91,7 +91,7 @@ namespace NTDLS.Katzebase.UI.Classes
             return node;
         }
 
-        public static ServerTreeNode CreateServerNode(string name, string serverAddress, int serverPort)
+        public static ServerTreeNode CreateServerNode(string name, string serverAddress, int serverPort, KbClient serverClient)
         {
             var node = new ServerTreeNode(name)
             {
@@ -99,7 +99,8 @@ namespace NTDLS.Katzebase.UI.Classes
                 ImageKey = "Server",
                 SelectedImageKey = "Server",
                 ServerAddress = serverAddress,
-                ServerPort = serverPort
+                ServerPort = serverPort,
+                ServerClient = serverClient
             };
 
             return node;

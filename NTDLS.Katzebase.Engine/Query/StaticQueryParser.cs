@@ -1242,8 +1242,6 @@ namespace NTDLS.Katzebase.Engine.Query
             return result;
         }
 
-
-
         /*
         private static UpsertKeyValues ParseUpsertKeyValues(string conditionsText, ref int position)
         {

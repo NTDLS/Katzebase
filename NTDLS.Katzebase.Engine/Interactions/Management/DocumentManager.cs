@@ -73,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return AcquireDocumentPointers(transaction, physicalSchema, lockIntention);
         }
 
-        internal IEnumerable<DocumentPointer> AcquireDocumentPointers(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
+        internal IEnumerable<DocumentPointer> AcquireDocumentPointers(Transaction transaction, PhysicalSchema physicalSchema, LockOperation lockIntention, int limit = -1)
         {
             try
             {
@@ -85,6 +85,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     var physicalDocumentPageMap = AcquireDocumentPageMap(transaction, physicalSchema, item.PageNumber, lockIntention);
                     documentPointers.AddRange(physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer(item.PageNumber, o)));
+
+                    if (limit > 0 && documentPointers.Count > limit)
+                    {
+                        break;
+                    }
                 }
 
                 return documentPointers;

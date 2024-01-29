@@ -63,7 +63,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             var result = new KbQueryDocumentListResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
+            var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read, topCount).ToList();
 
             for (int i = 0; i < documentPointers.Count && (i < topCount || topCount < 0); i++)
             {

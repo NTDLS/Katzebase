@@ -75,11 +75,6 @@
         public int HealthMonitoringChekpointSeconds { get; set; }
 
         /// <summary>
-        /// The number of seconds that a connection must be idle before its transactions are rolled back and connectin closed.
-        /// </summary>
-        public int MaxIdleConnectionSeconds { get; set; }
-
-        /// <summary>
         /// The TCP/IP listen port for the server.
         /// </summary>
         public int ListenPort { get; set; }

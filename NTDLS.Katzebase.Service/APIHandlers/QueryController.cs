@@ -1,18 +1,26 @@
-﻿using NTDLS.Katzebase.Client.Payloads.Queries;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Payloads.Queries;
+using NTDLS.Katzebase.Engine;
 
-namespace NTDLS.Katzebase.Client.Service.Controllers
+namespace NTDLS.Katzebase.Service.APIHandlers
 {
-    public static class QueryController
+    public class QueryController
     {
-        public static KbQueryQueryExplainReply ExplainQuery(KbQueryQueryExplain param)
+        private readonly EngineCore _core;
+        public QueryController(EngineCore core)
+        {
+            _core = core;
+        }
+
+        public KbQueryQueryExplainReply ExplainQuery(KbQueryQueryExplain param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Query.APIHandlers.ExecuteStatementExplain(processId, param.Statement);
+                return _core.Query.APIHandlers.ExecuteStatementExplain(processId, param.Statement);
             }
             catch (Exception ex)
             {
@@ -24,15 +32,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
             }
         }
 
-        public static KbQueryQueryExecuteQueryReply ExecuteQuery(KbQueryQueryExecuteQuery param)
+        public KbQueryQueryExecuteQueryReply ExecuteQuery(KbQueryQueryExecuteQuery param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Query.APIHandlers.ExecuteStatementQuery(processId, param.Statement);
+                return _core.Query.APIHandlers.ExecuteStatementQuery(processId, param.Statement);
             }
             catch (Exception ex)
             {
@@ -44,15 +52,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
             }
         }
 
-        public static KbQueryQueryExecuteQueriesReply ExecuteQueries(KbQueryQueryExecuteQueries param)
+        public KbQueryQueryExecuteQueriesReply ExecuteQueries(KbQueryQueryExecuteQueries param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Query.APIHandlers.ExecuteStatementQueries(processId, param.Statements);
+                return _core.Query.APIHandlers.ExecuteStatementQueries(processId, param.Statements);
             }
             catch (Exception ex)
             {
@@ -64,15 +72,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
             }
         }
 
-        public static KbQueryQueryExecuteNonQueryReply ExecuteNonQuery(KbQueryQueryExecuteNonQuery param)
+        public KbQueryQueryExecuteNonQueryReply ExecuteNonQuery(KbQueryQueryExecuteNonQuery param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Query.APIHandlers.ExecuteStatementNonQuery(processId, param.Statement);
+                return _core.Query.APIHandlers.ExecuteStatementNonQuery(processId, param.Statement);
             }
             catch (Exception ex)
             {

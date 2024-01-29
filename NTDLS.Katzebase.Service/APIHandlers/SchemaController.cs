@@ -1,22 +1,30 @@
-﻿using NTDLS.Katzebase.Client.Payloads.Queries;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Payloads.Queries;
+using NTDLS.Katzebase.Engine;
 
-namespace NTDLS.Katzebase.Client.Service.Controllers
+namespace NTDLS.Katzebase.Service.APIHandlers
 {
-    public static class SchemaController
+    public class SchemaController
     {
+        private readonly EngineCore _core;
+        public SchemaController(EngineCore core)
+        {
+            _core = core;
+        }
+
         /// <summary>
         /// Lists the existing schemas within a given schema.
         /// </summary>
         /// <param name="schema"></param>
-        public static KbQuerySchemaListReply List(KbQuerySchemaList param)
+        public KbQuerySchemaListReply List(KbQuerySchemaList param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Schemas.APIHandlers.ListSchemas(processId, param.Schema);
+                return _core.Schemas.APIHandlers.ListSchemas(processId, param.Schema);
             }
             catch (Exception ex)
             {
@@ -32,15 +40,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Creates a single schema or an entire schema path.
         /// </summary>
         /// <param name="schema"></param>
-        public static KbQuerySchemaCreateReply Create(KbQuerySchemaCreate param)
+        public KbQuerySchemaCreateReply Create(KbQuerySchemaCreate param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Schemas.APIHandlers.CreateSchema(processId, param.Schema, param.PageSize);
+                return _core.Schemas.APIHandlers.CreateSchema(processId, param.Schema, param.PageSize);
             }
             catch (Exception ex)
             {
@@ -56,15 +64,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Checks for the existence of a schema.
         /// </summary>
         /// <param name="schema"></param>
-        public static KbQuerySchemaExistsReply Exists(KbQuerySchemaExists param)
+        public KbQuerySchemaExistsReply Exists(KbQuerySchemaExists param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Schemas.APIHandlers.DoesSchemaExist(processId, param.Schema);
+                return _core.Schemas.APIHandlers.DoesSchemaExist(processId, param.Schema);
             }
             catch (Exception ex)
             {
@@ -80,15 +88,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Drops a single schema or an entire schema path.
         /// </summary>
         /// <param name="schema"></param>
-        public static KbQuerySchemaDropReply Drop(KbQuerySchemaDrop param)
+        public KbQuerySchemaDropReply Drop(KbQuerySchemaDrop param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Schemas.APIHandlers.DropSchema(processId, param.Schema);
+                return _core.Schemas.APIHandlers.DropSchema(processId, param.Schema);
             }
             catch (Exception ex)
             {

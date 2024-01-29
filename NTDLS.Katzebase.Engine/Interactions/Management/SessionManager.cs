@@ -38,15 +38,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _collection.Read((obj) => obj.ToDictionary(o => o.Key, o => o.Value));
         }
 
-        public List<SessionState> GetExpiredSessions()
-        {
-            return _collection.Read((obj) =>
-            {
-                return obj.Where(o => (DateTime.UtcNow - o.Value.LastCheckinTime)
-                    .TotalSeconds > _core.Settings.MaxIdleConnectionSeconds).Select(o => o.Value).ToList();
-            });
-        }
-
         public ulong UpsertSessionId(Guid sessionId, string clientName = "")
         {
             return _collection.Write((obj) =>

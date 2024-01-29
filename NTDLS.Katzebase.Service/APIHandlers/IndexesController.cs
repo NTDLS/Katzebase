@@ -1,18 +1,26 @@
-﻿using NTDLS.Katzebase.Client.Payloads.Queries;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Payloads.Queries;
+using NTDLS.Katzebase.Engine;
 
-namespace NTDLS.Katzebase.Client.Service.Controllers
+namespace NTDLS.Katzebase.Service.APIHandlers
 {
-    public static class IndexesController
+    public class IndexesController
     {
-        public static KbQueryIndexCreateReply Create(KbQueryIndexCreate param)
+        private readonly EngineCore _core;
+        public IndexesController(EngineCore core)
+        {
+            _core = core;
+        }
+
+        public KbQueryIndexCreateReply Create(KbQueryIndexCreate param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.CreateIndex(processId, param.Schema, param.Index);
+                return _core.Indexes.APIHandlers.CreateIndex(processId, param.Schema, param.Index);
             }
             catch (Exception ex)
             {
@@ -28,15 +36,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Rebuilds a single index.
         /// </summary>
         /// <param name="schema"></param>
-        public static KbQueryIndexRebuildReply Rebuild(KbQueryIndexRebuild param)
+        public KbQueryIndexRebuildReply Rebuild(KbQueryIndexRebuild param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.RebuildIndex(processId, param.Schema, param.IndexName, param.NewPartitionCount);
+                return _core.Indexes.APIHandlers.RebuildIndex(processId, param.Schema, param.IndexName, param.NewPartitionCount);
             }
             catch (Exception ex)
             {
@@ -52,15 +60,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Drops a single index.
         /// </summary>
         /// <param name="schema"></param>
-        public static KbQueryIndexDropReply Drop(KbQueryIndexDrop param)
+        public KbQueryIndexDropReply Drop(KbQueryIndexDrop param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.DropIndex(processId, param.Schema, param.IndexName);
+                return _core.Indexes.APIHandlers.DropIndex(processId, param.Schema, param.IndexName);
             }
             catch (Exception ex)
             {
@@ -76,15 +84,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Checks for the existence of an index.
         /// </summary>
         /// <param name="schema"></param>
-        public static KbQueryIndexExistsReply Exists(KbQueryIndexExists param)
+        public KbQueryIndexExistsReply Exists(KbQueryIndexExists param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.DoesIndexExist(processId, param.Schema, param.IndexName);
+                return _core.Indexes.APIHandlers.DoesIndexExist(processId, param.Schema, param.IndexName);
             }
             catch (Exception ex)
             {
@@ -100,15 +108,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Gets an index from a specific schema.
         /// </summary>
         /// <param name="schema"></param>
-        public static KbQueryIndexGetReply Get(KbQueryIndexGet param)
+        public KbQueryIndexGetReply Get(KbQueryIndexGet param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.Get(processId, param.Schema, param.IndexName);
+                return _core.Indexes.APIHandlers.Get(processId, param.Schema, param.IndexName);
             }
             catch (Exception ex)
             {
@@ -124,15 +132,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Lists the existing indexes within a given schema.
         /// </summary>
         /// <param name="schema"></param>
-        public static KbQueryIndexListReply List(KbQueryIndexList param)
+        public KbQueryIndexListReply List(KbQueryIndexList param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.ListIndexes(processId, param.Schema);
+                return _core.Indexes.APIHandlers.ListIndexes(processId, param.Schema);
             }
             catch (Exception ex)
             {

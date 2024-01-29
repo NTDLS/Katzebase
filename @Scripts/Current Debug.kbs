@@ -1,5 +1,12 @@
+SELECT
+	I.InvtId
+FROM
+	TopNotchERP:Inventory as I
+	
+/*
 drop schema Dummyload
 exec showlocks
+*/
 
 /*
 DROP INDEX IX_Address_City_Address ON AdventureWorks:Person:Address
@@ -36,8 +43,8 @@ SELECT
 	PO.InvtId,
 	PO.Descr
 FROM
-	Inventory as I
-INNER JOIN PurOrdDet as PO
+	TopNotchERP:Inventory as I
+INNER JOIN TopNotchERP:PurOrdDet as PO
 	ON PO.InvtId = I.InvtId
 WHERE
 	I.InvtId IN (

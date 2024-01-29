@@ -1,18 +1,26 @@
-﻿using NTDLS.Katzebase.Client.Payloads.Queries;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Payloads.Queries;
+using NTDLS.Katzebase.Engine;
 
-namespace NTDLS.Katzebase.Client.Service.Controllers
+namespace NTDLS.Katzebase.Service.APIHandlers
 {
-    public static class TransactionController
+    public class TransactionController
     {
-        public static KbQueryTransactionBeginReply Begin(KbQueryTransactionBegin param)
+        private readonly EngineCore _core;
+        public TransactionController(EngineCore core)
+        {
+            _core = core;
+        }
+
+        public KbQueryTransactionBeginReply Begin(KbQueryTransactionBegin param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                Program.Core.Transactions.APIHandlers.Begin(processId);
+                _core.Transactions.APIHandlers.Begin(processId);
                 return new KbQueryTransactionBeginReply { Success = true };
             }
             catch (Exception ex)
@@ -26,15 +34,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
 
         }
 
-        public static KbQueryTransactionCommitReply Commit(KbQueryTransactionCommit param)
+        public KbQueryTransactionCommitReply Commit(KbQueryTransactionCommit param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                Program.Core.Transactions.APIHandlers.Commit(processId);
+                _core.Transactions.APIHandlers.Commit(processId);
                 return new KbQueryTransactionCommitReply { Success = true };
             }
             catch (Exception ex)
@@ -48,15 +56,15 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
 
         }
 
-        public static KbQueryTransactionRollbackReply Rollback(KbQueryTransactionRollback param)
+        public KbQueryTransactionRollbackReply Rollback(KbQueryTransactionRollback param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
+                var processId = _core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
-                Program.Core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Trace(Thread.CurrentThread.Name);
 
-                Program.Core.Transactions.APIHandlers.Rollback(processId);
+                _core.Transactions.APIHandlers.Rollback(processId);
                 return new KbQueryTransactionRollbackReply { Success = true };
             }
             catch (Exception ex)
