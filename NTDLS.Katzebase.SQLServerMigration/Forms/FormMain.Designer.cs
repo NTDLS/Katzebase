@@ -34,8 +34,8 @@
             columnHeaderTable = new ColumnHeader();
             columnHeaderStatus = new ColumnHeader();
             label1 = new Label();
-            textBoxBKServerAddress = new TextBox();
-            textBoxBKServerSchema = new TextBox();
+            textBoxServerHost = new TextBox();
+            textBoxServerSchema = new TextBox();
             label2 = new Label();
             label3 = new Label();
             buttonImport = new Button();
@@ -45,6 +45,8 @@
             exitToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
+            textBoxServerPort = new TextBox();
+            labelBoxServerPort = new Label();
             menuStripBody.SuspendLayout();
             SuspendLayout();
             // 
@@ -82,24 +84,24 @@
             label1.AutoSize = true;
             label1.Location = new Point(12, 35);
             label1.Name = "label1";
-            label1.Size = new Size(107, 15);
+            label1.Size = new Size(90, 15);
             label1.TabIndex = 1;
-            label1.Text = "Katzebase Address:";
+            label1.Text = "Katzebase Host:";
             // 
-            // textBoxBKServerAddress
+            // textBoxServerHost
             // 
-            textBoxBKServerAddress.Location = new Point(12, 53);
-            textBoxBKServerAddress.Name = "textBoxBKServerAddress";
-            textBoxBKServerAddress.Size = new Size(196, 23);
-            textBoxBKServerAddress.TabIndex = 0;
-            textBoxBKServerAddress.Text = "http://localhost:6858/";
+            textBoxServerHost.Location = new Point(12, 53);
+            textBoxServerHost.Name = "textBoxServerHost";
+            textBoxServerHost.Size = new Size(196, 23);
+            textBoxServerHost.TabIndex = 0;
+            textBoxServerHost.Text = "http://localhost:6858/";
             // 
-            // textBoxBKServerSchema
+            // textBoxServerSchema
             // 
-            textBoxBKServerSchema.Location = new Point(12, 100);
-            textBoxBKServerSchema.Name = "textBoxBKServerSchema";
-            textBoxBKServerSchema.Size = new Size(196, 23);
-            textBoxBKServerSchema.TabIndex = 1;
+            textBoxServerSchema.Location = new Point(12, 100);
+            textBoxServerSchema.Name = "textBoxServerSchema";
+            textBoxServerSchema.Size = new Size(196, 23);
+            textBoxServerSchema.TabIndex = 1;
             // 
             // label2
             // 
@@ -175,16 +177,35 @@
             aboutToolStripMenuItem.Text = "About";
             aboutToolStripMenuItem.Click += aboutToolStripMenuItem_Click;
             // 
+            // textBoxServerPort
+            // 
+            textBoxServerPort.Location = new Point(214, 53);
+            textBoxServerPort.Name = "textBoxServerPort";
+            textBoxServerPort.Size = new Size(65, 23);
+            textBoxServerPort.TabIndex = 7;
+            textBoxServerPort.Text = "6858";
+            // 
+            // labelBoxServerPort
+            // 
+            labelBoxServerPort.AutoSize = true;
+            labelBoxServerPort.Location = new Point(214, 35);
+            labelBoxServerPort.Name = "labelBoxServerPort";
+            labelBoxServerPort.Size = new Size(29, 15);
+            labelBoxServerPort.TabIndex = 8;
+            labelBoxServerPort.Text = "Port";
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(782, 498);
+            Controls.Add(labelBoxServerPort);
+            Controls.Add(textBoxServerPort);
             Controls.Add(buttonImport);
             Controls.Add(label3);
-            Controls.Add(textBoxBKServerSchema);
+            Controls.Add(textBoxServerSchema);
             Controls.Add(label2);
-            Controls.Add(textBoxBKServerAddress);
+            Controls.Add(textBoxServerHost);
             Controls.Add(label1);
             Controls.Add(listViewSQLServer);
             Controls.Add(menuStripBody);
@@ -207,8 +228,8 @@
         private ColumnHeader columnHeaderSchema;
         private ColumnHeader columnHeaderTable;
         private Label label1;
-        private TextBox textBoxBKServerAddress;
-        private TextBox textBoxBKServerSchema;
+        private TextBox textBoxServerHost;
+        private TextBox textBoxServerSchema;
         private Label label2;
         private Label label3;
         private Button buttonImport;
@@ -219,5 +240,7 @@
         private ToolStripMenuItem helpToolStripMenuItem;
         private ToolStripMenuItem aboutToolStripMenuItem;
         private ColumnHeader columnHeaderStatus;
+        private TextBox textBoxServerPort;
+        private Label labelBoxServerPort;
     }
 }

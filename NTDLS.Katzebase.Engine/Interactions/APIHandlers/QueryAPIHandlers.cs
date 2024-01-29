@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Client.Payloads.Queries;
 using NTDLS.Katzebase.Engine.Query;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
@@ -24,9 +25,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryResultCollection ExecuteStatementExplain(ulong processId, string statement)
+        public KbQueryQueryExplainReply ExecuteStatementExplain(ulong processId, string statement)
         {
-            var results = new KbQueryResultCollection();
+            var results = new KbQueryQueryExplainReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
             {
                 results.Add(_core.Query.ExplainQuery(processId, preparedQuery));
@@ -34,14 +35,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             return results;
         }
 
-        public KbQueryResultCollection ExecuteStatementProcedure(ulong processId, KbProcedure procedure)
+        public KbQueryProcedureExecuteReply ExecuteStatementProcedure(ulong processId, KbProcedure procedure)
         {
-            return _core.Query.ExecuteProcedure(processId, procedure);
+            return (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(processId, procedure);
         }
 
-        public KbQueryResultCollection ExecuteStatementQuery(ulong processId, string statement)
+        public KbQueryQueryExecuteQueryReply ExecuteStatementQuery(ulong processId, string statement)
         {
-            var results = new KbQueryResultCollection();
+            var results = new KbQueryQueryExecuteQueryReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
             {
                 results.Add(_core.Query.ExecuteQuery(processId, preparedQuery));
@@ -49,9 +50,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             return results;
         }
 
-        public KbQueryResultCollection ExecuteStatementQueries(ulong processId, List<string> statements)
+        public KbQueryQueryExecuteQueriesReply ExecuteStatementQueries(ulong processId, List<string> statements)
         {
-            var results = new KbQueryResultCollection();
+            var results = new KbQueryQueryExecuteQueriesReply();
 
             foreach (var statement in statements)
             {
@@ -65,9 +66,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             return results;
         }
 
-        public KbActionResponseCollection ExecuteStatementNonQuery(ulong processId, string statement)
+        public KbQueryQueryExecuteNonQueryReply ExecuteStatementNonQuery(ulong processId, string statement)
         {
-            var results = new KbActionResponseCollection();
+            var results = new KbQueryQueryExecuteNonQueryReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
             {
                 results.Add(_core.Query.ExecuteNonQuery(processId, preparedQuery));

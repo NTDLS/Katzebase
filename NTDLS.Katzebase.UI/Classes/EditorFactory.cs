@@ -56,7 +56,7 @@ namespace NTDLS.Katzebase.UI.Classes
             }
         }
 
-        public TabFilePage Create(string serverAddressURL, string tabText)
+        public TabFilePage Create(string serverHost, int serverPort, string tabText)
         {
             var editor = new TextEditor
             {
@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.UI.Classes
                 WordWrap = false,
             };
 
-            var tabFilePage = new TabFilePage(TabControlParent, serverAddressURL, tabText, editor)
+            var tabFilePage = new TabFilePage(TabControlParent, serverHost, serverPort, tabText, editor)
             {
                 //..
             };

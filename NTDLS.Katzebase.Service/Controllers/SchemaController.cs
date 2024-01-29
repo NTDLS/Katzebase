@@ -1,31 +1,26 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using NTDLS.Katzebase.Client.Payloads;
+﻿using NTDLS.Katzebase.Client.Payloads.Queries;
 
 namespace NTDLS.Katzebase.Client.Service.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class SchemaController
+    public static class SchemaController
     {
         /// <summary>
         /// Lists the existing schemas within a given schema.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/List")]
-        public KbActionResponseSchemaCollection List(Guid sessionId, string schema)
+        public static KbQuerySchemaListReply List(KbQuerySchemaList param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Schemas.APIHandlers.ListSchemas(processId, schema);
+                return Program.Core.Schemas.APIHandlers.ListSchemas(processId, param.Schema);
             }
             catch (Exception ex)
             {
-                return new KbActionResponseSchemaCollection
+                return new KbQuerySchemaListReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -37,21 +32,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Creates a single schema or an entire schema path.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/{pageSize}/Create")]
-        public KbActionResponse Create(Guid sessionId, string schema, uint pageSize)
+        public static KbQuerySchemaCreateReply Create(KbQuerySchemaCreate param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Schemas.APIHandlers.CreateSchema(processId, schema, pageSize);
+                return Program.Core.Schemas.APIHandlers.CreateSchema(processId, param.Schema, param.PageSize);
             }
             catch (Exception ex)
             {
-                return new KbActionResponse
+                return new KbQuerySchemaCreateReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -63,21 +56,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Checks for the existence of a schema.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/Exists")]
-        public KbActionResponseBoolean Exists(Guid sessionId, string schema)
+        public static KbQuerySchemaExistsReply Exists(KbQuerySchemaExists param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Schemas.APIHandlers.DoesSchemaExist(processId, schema);
+                return Program.Core.Schemas.APIHandlers.DoesSchemaExist(processId, param.Schema);
             }
             catch (Exception ex)
             {
-                return new KbActionResponseBoolean
+                return new KbQuerySchemaExistsReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -89,21 +80,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Drops a single schema or an entire schema path.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/Drop")]
-        public KbActionResponse Drop(Guid sessionId, string schema)
+        public static KbQuerySchemaDropReply Drop(KbQuerySchemaDrop param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Schemas.APIHandlers.DropSchema(processId, schema);
+                return Program.Core.Schemas.APIHandlers.DropSchema(processId, param.Schema);
             }
             catch (Exception ex)
             {
-                return new KbActionResponse
+                return new KbQuerySchemaDropReply
                 {
                     ExceptionText = ex.Message,
                     Success = false

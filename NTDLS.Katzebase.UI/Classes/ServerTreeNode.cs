@@ -7,6 +7,7 @@ namespace NTDLS.Katzebase.UI.Classes
         public ServerNodeType NodeType { get; set; }
 
         public string ServerAddress { get; set; } = string.Empty;
+        public int ServerPort { get; set; }
 
         public ServerTreeNode(string name) :
              base(name)

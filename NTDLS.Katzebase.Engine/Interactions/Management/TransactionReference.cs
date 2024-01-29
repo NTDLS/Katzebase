@@ -56,6 +56,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return CommitAndApplyMetricsThenReturnResults(0);
         }
 
+        public T CommitAndApplyMetricsThenReturnResults<T>(T result) where T : KbBaseActionResponse
+        {
+            Commit();
+
+            result.RowCount = 0;
+            result.Metrics = Transaction.PT?.ToCollection();
+            result.Messages = Transaction.Messages;
+            result.Warnings = Transaction.CloneWarnings();
+            result.Duration = (DateTime.UtcNow - Transaction.StartTime).TotalMilliseconds;
+
+            return result;
+        }
+
         public T CommitAndApplyMetricsThenReturnResults<T>(T result, int rowCount) where T : KbBaseActionResponse
         {
             Commit();

@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             AggregateFunctionCollection.Initialize();
         }
 
-        internal KbQueryResult ExplainQuery(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExplainQuery(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else if (preparedQuery.QueryType == QueryType.Set)
                 {
-                    return new KbQueryResult();
+                    return new KbQueryDocumentListResult();
                 }
                 else
                 {
@@ -145,7 +145,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     || preparedQuery.QueryType == QueryType.Rollback)
                 {
                     //Reroute to non-query as appropriate:
-                    return KbQueryResult.FromActionResponse(ExecuteNonQuery(processId, preparedQuery)).ToCollection();
+                    return KbQueryDocumentListResult.FromActionResponse(ExecuteNonQuery(processId, preparedQuery)).ToCollection();
                 }
                 else
                 {

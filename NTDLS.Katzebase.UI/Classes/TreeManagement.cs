@@ -5,15 +5,10 @@ namespace NTDLS.Katzebase.UI.Classes
 {
     public static class TreeManagement
     {
-        public static void PopulateServer(TreeView treeView, string serverAddress)
+        public static void PopulateServer(TreeView treeView, string serverAddress, int serverPort)
         {
-            using (var client = new KbClient(serverAddress, "Katzebase.UI"))
+            using (var client = new KbClient(serverAddress, serverPort, "Katzebase.UI"))
             {
-                if (client.Server.Ping().Success == false)
-                {
-                    throw new Exception("Could not api ping the server.");
-                }
-
                 string key = serverAddress.ToLower();
 
                 var foundNode = FindNodeOfType(treeView, ServerNodeType.Server, key);
@@ -72,7 +67,7 @@ namespace NTDLS.Katzebase.UI.Classes
             }
 
             var rootNode = GetRootNode(node);
-            using (var client = new KbClient(rootNode.ServerAddress))
+            using (var client = new KbClient(rootNode.ServerAddress, rootNode.ServerPort))
             {
                 string schema = FullSchemaPath(node);
 

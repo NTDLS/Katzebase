@@ -1,5 +1,9 @@
+using NTDLS.Katzebase.Client.Payloads.Queries;
+using NTDLS.Katzebase.Client.Service.Controllers;
 using NTDLS.Katzebase.Engine;
 using NTDLS.Katzebase.Shared;
+using NTDLS.ReliableMessaging;
+using NTDLS.StreamFraming.Payloads;
 using Topshelf;
 
 namespace NTDLS.Katzebase.Client.Service
@@ -13,6 +17,16 @@ namespace NTDLS.Katzebase.Client.Service
             {
                 _core ??= new EngineCore(Configuration);
                 return _core;
+            }
+        }
+
+        private static MessageServer? _messageServer;
+        public static MessageServer MessageServer
+        {
+            get
+            {
+                _messageServer ??= new MessageServer();
+                return _messageServer;
             }
         }
 
@@ -66,51 +80,128 @@ namespace NTDLS.Katzebase.Client.Service
             private void DoWork()
             {
                 Core.Start();
+                MessageServer.Start(Configuration.ListenPort);
 
-                // Add services to the container.
-                var builder = WebApplication.CreateBuilder();
-                builder.Services.AddControllers();
-                builder.Services.AddEndpointsApiExplorer();
-                builder.Services.AddSwaggerGen();
+                MessageServer.OnQueryReceived += MessageServer_OnQueryReceived;
 
-                builder.Services.AddControllers(options =>
-                {
-                    options.InputFormatters.Add(new TextPlainInputFormatter());
-                });
-
-                builder.Logging.ClearProviders();
-                builder.Logging.SetMinimumLevel(LogLevel.Warning);
-
-                var app = builder.Build();
-
-                // Configure the HTTP request pipeline.
-                if (app.Environment.IsDevelopment())
-                {
-                    app.UseSwagger();
-                    app.UseSwaggerUI();
-                }
-
-                app.UseAuthorization();
-                app.MapControllers();
-                app.RunAsync(Configuration.BaseAddress);
-
-                if (app.Environment.IsDevelopment())
-                {
-                    //System.Diagnostics.Process.Start("explorer", $"{Configuration.BaseAddress}swagger/index.html");
-                }
-
-                Core.Log.Write($"Listening on {Configuration.BaseAddress}.");
+                Core.Log.Write($"Listening on {Configuration.ListenPort}.");
 
                 while (true)
                 {
                     if (_semaphoreToRequestStop.Wait(500))
                     {
                         Core.Log.Write($"Stopping...");
-                        app.StopAsync();
+                        MessageServer.Stop();
                         Core.Stop();
                         break;
                     }
                 }
+            }
+
+            private IFramePayloadQueryReply MessageServer_OnQueryReceived(MessageServer server, Guid connectionId, IFramePayloadQuery payload)
+            {
+                if (payload is KbQueryDocumentCatalog queryDocumentCatalog)
+                {
+                    return DocumentController.Catalog(queryDocumentCatalog);
+                }
+                else if (payload is KbQueryDocumentDeleteById queryDocumentDeleteById)
+                {
+                    return DocumentController.DeleteById(queryDocumentDeleteById);
+                }
+                else if (payload is KbQueryDocumentList queryDocumentList)
+                {
+                    return DocumentController.List(queryDocumentList);
+                }
+                else if (payload is KbQueryDocumentSample queryDocumentSample)
+                {
+                    return DocumentController.Sample(queryDocumentSample);
+                }
+                else if (payload is KbQueryDocumentStore queryDocumentStore)
+                {
+                    return DocumentController.Store(queryDocumentStore);
+                }
+                else if (payload is KbQueryIndexCreate queryIndexCreate)
+                {
+                    return IndexesController.Create(queryIndexCreate);
+                }
+                else if (payload is KbQueryIndexDrop queryIndexDrop)
+                {
+                    return IndexesController.Drop(queryIndexDrop);
+                }
+                else if (payload is KbQueryIndexExists queryIndexExists)
+                {
+                    return IndexesController.Exists(queryIndexExists);
+                }
+                else if (payload is KbQueryIndexGet queryIndexGet)
+                {
+                    return IndexesController.Get(queryIndexGet);
+                }
+                else if (payload is KbQueryIndexList queryIndexList)
+                {
+                    return IndexesController.List(queryIndexList);
+                }
+                else if (payload is KbQueryIndexRebuild queryIndexRebuild)
+                {
+                    return IndexesController.Rebuild(queryIndexRebuild);
+                }
+                else if (payload is KbQueryProcedureExecute queryProcedureExecute)
+                {
+                    return ProcedureController.ExecuteProcedure(queryProcedureExecute);
+                }
+                else if (payload is KbQueryQueryExecuteNonQuery queryQueryExecuteNonQuery)
+                {
+                    return QueryController.ExecuteNonQuery(queryQueryExecuteNonQuery);
+                }
+                else if (payload is KbQueryQueryExecuteQueries queryQueryExecuteQueries)
+                {
+                    return QueryController.ExecuteQueries(queryQueryExecuteQueries);
+                }
+                else if (payload is KbQueryQueryExecuteQuery queryQueryExecuteQuery)
+                {
+                    return QueryController.ExecuteQuery(queryQueryExecuteQuery);
+                }
+                else if (payload is KbQueryQueryExplain queryQueryExplain)
+                {
+                    return QueryController.ExplainQuery(queryQueryExplain);
+                }
+                else if (payload is KbQuerySchemaCreate querySchemaCreate)
+                {
+                    return SchemaController.Create(querySchemaCreate);
+                }
+                else if (payload is KbQuerySchemaDrop querySchemaDrop)
+                {
+                    return SchemaController.Drop(querySchemaDrop);
+                }
+                else if (payload is KbQuerySchemaExists querySchemaExists)
+                {
+                    return SchemaController.Exists(querySchemaExists);
+                }
+                else if (payload is KbQuerySchemaList querySchemaList)
+                {
+                    return SchemaController.List(querySchemaList);
+                }
+                else if (payload is KbQueryServerCloseSession queryServerCloseSession)
+                {
+                    ServerController.CloseSession(queryServerCloseSession);
+                }
+                else if (payload is KbQueryServerTerminateProcess queryServerTerminateProcess)
+                {
+                    ServerController.TerminateProcess(queryServerTerminateProcess);
+                }
+                else if (payload is KbQueryTransactionBegin KbQueryTransactionBegin)
+                {
+                    TransactionController.Begin(KbQueryTransactionBegin);
+                }
+                else if (payload is KbQueryTransactionCommit queryTransactionCommit)
+                {
+                    TransactionController.Commit(queryTransactionCommit);
+                }
+                else if (payload is KbQueryTransactionRollback queryTransactionRollback)
+                {
+                    TransactionController.Rollback(queryTransactionRollback);
+                }
+
+                throw new NotImplementedException();
             }
         }
 

@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Client.Payloads.Queries;
 using NTDLS.Katzebase.Engine.Schemas;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -27,14 +27,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbActionResponseSchemaCollection ListSchemas(ulong processId, string schemaName)
+        public KbQuerySchemaListReply ListSchemas(ulong processId, string schemaName)
         {
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schemaName, LockOperation.Read);
 
-                var result = new KbActionResponseSchemaCollection();
+                var result = new KbQuerySchemaListReply();
 
                 if (physicalSchema.DiskPath == null)
                 {
@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     result.Collection.Add(item.ToClientPayload());
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 0);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result);
             }
             catch (Exception ex)
             {
@@ -62,7 +62,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// Creates a structure of schemas, denotaed by colons.
         /// </summary>
         /// <param name="schemaPath"></param>
-        public KbActionResponse CreateSchema(ulong processId, string schemaName, uint pageSize = 0)
+        public KbQuerySchemaCreateReply CreateSchema(ulong processId, string schemaName, uint pageSize = 0)
         {
             try
             {
@@ -77,7 +77,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     pathBuilder.Append(":");
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQuerySchemaCreateReply());
             }
             catch (Exception ex)
             {
@@ -90,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// Returns true if the schema exists.
         /// </summary>
         /// <param name="schemaPath"></param>
-        public KbActionResponseBoolean DoesSchemaExist(ulong processId, string schemaName)
+        public KbQuerySchemaExistsReply DoesSchemaExist(ulong processId, string schemaName)
         {
             try
             {
@@ -113,7 +113,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     pathBuilder.Append(":");
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbActionResponseBoolean(schemaExists), 0);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQuerySchemaExistsReply(schemaExists));
             }
             catch (Exception ex)
             {
@@ -126,7 +126,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// Drops a single schema or an entire schema path.
         /// </summary>
         /// <param name="schema"></param>
-        public KbActionResponse DropSchema(ulong processId, string schemaName)
+        public KbQuerySchemaDropReply DropSchema(ulong processId, string schemaName)
         {
             try
             {
@@ -149,11 +149,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     parentCatalog.Collection.Remove(nsItem);
 
                     _core.IO.DeletePath(transactionReference.Transaction, physicalSchema.DiskPath);
-
                     _core.IO.PutJson(transactionReference.Transaction, parentSchemaCatalogFile, parentCatalog);
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults();
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQuerySchemaDropReply());
             }
             catch (Exception ex)
             {

@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 if (form.ShowDialog() == DialogResult.OK)
                 {
                     _connectionDetails = form.ConnectionDetails;
-                    textBoxBKServerSchema.Text = _connectionDetails.DatabaseName;
+                    textBoxServerSchema.Text = _connectionDetails.DatabaseName;
                     PopulateTables();
                     return true;
                 }
@@ -48,17 +48,22 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
         private void buttonImport_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(textBoxBKServerAddress.Text))
+            if (string.IsNullOrWhiteSpace(textBoxServerHost.Text))
             {
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(textBoxBKServerSchema.Text))
+            if (int.TryParse(textBoxServerPort.Text, out var serverPort))
             {
                 return;
             }
 
-            var param = new OuterWorkloadThreadParam(textBoxBKServerAddress.Text, textBoxBKServerSchema.Text);
+            if (string.IsNullOrWhiteSpace(textBoxServerSchema.Text))
+            {
+                return;
+            }
+
+            var param = new OuterWorkloadThreadParam(textBoxServerHost.Text, serverPort, textBoxServerSchema.Text);
 
             foreach (ListViewItem item in listViewSQLServer.Items)
             {
@@ -124,7 +129,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                     {
                         Interlocked.Increment(ref _activeTableWorkers);
 
-                        var tableWorkerParam = new TabelWorkerThreadParam(param.TargetServerAddress, param.TargetServerSchema, item);
+                        var tableWorkerParam = new TabelWorkerThreadParam(param.TargetServerHost, param.TargetServerPort, param.TargetServerSchema, item);
 
                         (new Thread(TableWorkerThreadProc)).Start(tableWorkerParam);
                     }
@@ -189,7 +194,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
             {
                 MoveListViewItemFirst(param.Item.ListItem);
                 UpdateListviewText(param.Item.ListItem, 2, "Starting");
-                ExportSQLServerTableToKatzebase(param.Item, param.TargetServerAddress, param.TargetServerSchema);
+                ExportSQLServerTableToKatzebase(param.Item, param.TargetServerHost, param.TargetServerPort, param.TargetServerSchema);
 
                 if (FormProgress.Singleton.Form.IsCancelPending)
                 {
@@ -212,7 +217,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
         private long _totalRowCount = 0;
         private object _totalRowCountLock = new();
 
-        private void ExportSQLServerTableToKatzebase(SelectedSqlItem item, string targetServerAddress, string targetSchema)
+        private void ExportSQLServerTableToKatzebase(SelectedSqlItem item, string targetServerHost, int targetServerPort, string targetSchema)
         {
             int rowsPerTransaction = 10000;
 
@@ -221,7 +226,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
                 rowsPerTransaction = 100;
             }
 
-            using var client = new KbClient(targetServerAddress);
+            using var client = new KbClient(targetServerHost, targetServerPort);
 
             string fullTargetSchema = $"{targetSchema}:{item.Schema}:{item.Table}".Replace(":dbo", "");
 
@@ -234,7 +239,7 @@ namespace NTDLS.Katzebase.SQLServerMigration
 
                 try
                 {
-                    client.Schema.CreateFullSchema(fullTargetSchema);
+                    client.Schema.CreateRecursive(fullTargetSchema);
                 }
                 catch (Exception ex)
                 {

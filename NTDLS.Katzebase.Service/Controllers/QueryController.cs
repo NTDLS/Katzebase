@@ -1,30 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using NTDLS.Katzebase.Client.Payloads;
+﻿using NTDLS.Katzebase.Client.Payloads.Queries;
 
 namespace NTDLS.Katzebase.Client.Service.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class QueryController
+    public static class QueryController
     {
-        [HttpPost]
-        [Route("{sessionId}/ExplainQuery")]
-        public KbQueryResultCollection ExplainQuery(Guid sessionId, [FromBody] string value)
+        public static KbQueryQueryExplainReply ExplainQuery(KbQueryQueryExplain param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                var statement = JsonConvert.DeserializeObject<string>(value);
-                KbUtility.EnsureNotNull(statement);
-                return Program.Core.Query.APIHandlers.ExecuteStatementExplain(processId, statement);
+                return Program.Core.Query.APIHandlers.ExecuteStatementExplain(processId, param.Statement);
             }
             catch (Exception ex)
             {
-                return new KbQueryResultCollection
+                return new KbQueryQueryExplainReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -32,23 +24,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("{sessionId}/ExecuteQuery")]
-        public KbQueryResultCollection ExecuteQuery(Guid sessionId, [FromBody] string value)
+        public static KbQueryQueryExecuteQueryReply ExecuteQuery(KbQueryQueryExecuteQuery param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                var statement = JsonConvert.DeserializeObject<string>(value);
-                KbUtility.EnsureNotNull(statement);
-                return Program.Core.Query.APIHandlers.ExecuteStatementQuery(processId, statement);
+                return Program.Core.Query.APIHandlers.ExecuteStatementQuery(processId, param.Statement);
             }
             catch (Exception ex)
             {
-                return new KbQueryResultCollection
+                return new KbQueryQueryExecuteQueryReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -56,23 +44,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("{sessionId}/ExecuteQueries")]
-        public KbQueryResultCollection ExecuteQueries(Guid sessionId, [FromBody] string values)
+        public static KbQueryQueryExecuteQueriesReply ExecuteQueries(KbQueryQueryExecuteQueries param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                var statements = JsonConvert.DeserializeObject<List<string>>(values);
-                KbUtility.EnsureNotNull(statements);
-                return Program.Core.Query.APIHandlers.ExecuteStatementQueries(processId, statements);
+                return Program.Core.Query.APIHandlers.ExecuteStatementQueries(processId, param.Statements);
             }
             catch (Exception ex)
             {
-                return new KbQueryResultCollection
+                return new KbQueryQueryExecuteQueriesReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -80,23 +64,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("{sessionId}/ExecuteNonQuery")]
-        public KbActionResponseCollection ExecuteNonQuery(Guid sessionId, [FromBody] string value)
+        public static KbQueryQueryExecuteNonQueryReply ExecuteNonQuery(KbQueryQueryExecuteNonQuery param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                var statement = JsonConvert.DeserializeObject<string>(value);
-                KbUtility.EnsureNotNull(statement);
-                return Program.Core.Query.APIHandlers.ExecuteStatementNonQuery(processId, statement);
+                return Program.Core.Query.APIHandlers.ExecuteStatementNonQuery(processId, param.Statement);
             }
             catch (Exception ex)
             {
-                return new KbActionResponseCollection
+                return new KbQueryQueryExecuteNonQueryReply
                 {
                     ExceptionText = ex.Message,
                     Success = false

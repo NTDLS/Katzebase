@@ -1,31 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using NTDLS.Katzebase.Client.Payloads;
+﻿using NTDLS.Katzebase.Client.Payloads.Queries;
 
 namespace NTDLS.Katzebase.Client.Service.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class IndexesController
+    public static class IndexesController
     {
-        [HttpPost]
-        [Route("{sessionId}/{schema}/Create")]
-        public KbActionResponseGuid Create(Guid sessionId, string schema, [FromBody] string value)
+        public static KbQueryIndexCreateReply Create(KbQueryIndexCreate param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                var content = JsonConvert.DeserializeObject<KbIndex>(value);
-                KbUtility.EnsureNotNull(content);
-
-                return Program.Core.Indexes.APIHandlers.CreateIndex(processId, schema, content);
+                return Program.Core.Indexes.APIHandlers.CreateIndex(processId, param.Schema, param.Index);
             }
             catch (Exception ex)
             {
-                return new KbActionResponseGuid
+                return new KbQueryIndexCreateReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -37,21 +28,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Rebuilds a single index.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/{name}/{newPartitionCount}/Rebuild")]
-        public KbActionResponse Rebuild(Guid sessionId, string schema, string name, uint newPartitionCount)
+        public static KbQueryIndexRebuildReply Rebuild(KbQueryIndexRebuild param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.RebuildIndex(processId, schema, name, newPartitionCount);
+                return Program.Core.Indexes.APIHandlers.RebuildIndex(processId, param.Schema, param.IndexName, param.NewPartitionCount);
             }
             catch (Exception ex)
             {
-                return new KbActionResponse
+                return new KbQueryIndexRebuildReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -63,21 +52,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Drops a single index.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/{name}/Drop")]
-        public KbActionResponse Drop(Guid sessionId, string schema, string name)
+        public static KbQueryIndexDropReply Drop(KbQueryIndexDrop param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.DropIndex(processId, schema, name);
+                return Program.Core.Indexes.APIHandlers.DropIndex(processId, param.Schema, param.IndexName);
             }
             catch (Exception ex)
             {
-                return new KbActionResponse
+                return new KbQueryIndexDropReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -89,21 +76,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Checks for the existence of an index.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/{name}/Exists")]
-        public KbActionResponseBoolean Exists(Guid sessionId, string schema, string name)
+        public static KbQueryIndexExistsReply Exists(KbQueryIndexExists param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.DoesIndexExist(processId, schema, name);
+                return Program.Core.Indexes.APIHandlers.DoesIndexExist(processId, param.Schema, param.IndexName);
             }
             catch (Exception ex)
             {
-                return new KbActionResponseBoolean
+                return new KbQueryIndexExistsReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -115,21 +100,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Gets an index from a specific schema.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/{name}/Get")]
-        public KbActionResponseIndex Get(Guid sessionId, string schema, string name)
+        public static KbQueryIndexGetReply Get(KbQueryIndexGet param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.Get(processId, schema, name);
+                return Program.Core.Indexes.APIHandlers.Get(processId, param.Schema, param.IndexName);
             }
             catch (Exception ex)
             {
-                return new KbActionResponseIndex
+                return new KbQueryIndexGetReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -141,21 +124,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Lists the existing indexes within a given schema.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/List")]
-        public KbActionResponseIndexes List(Guid sessionId, string schema)
+        public static KbQueryIndexListReply List(KbQueryIndexList param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Indexes.APIHandlers.ListIndexes(processId, schema);
+                return Program.Core.Indexes.APIHandlers.ListIndexes(processId, param.Schema);
             }
             catch (Exception ex)
             {
-                return new KbActionResponseIndexes
+                return new KbQueryIndexListReply
                 {
                     ExceptionText = ex.Message,
                     Success = false

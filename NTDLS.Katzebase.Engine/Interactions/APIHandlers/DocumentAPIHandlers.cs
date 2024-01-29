@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Client.Payloads.Queries;
 using NTDLS.Katzebase.Engine.Query.Searchers;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -25,12 +26,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryResult DocumentSample(ulong processId, string schemaName, int rowLimit)
+        public KbQueryDocumentSampleReply DocumentSample(ulong processId, string schemaName, int rowLimit)
         {
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
-                var result = StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, schemaName, rowLimit);
+                var result = (KbQueryDocumentSampleReply)StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, schemaName, rowLimit);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
@@ -47,12 +48,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schemaName"></param>
         /// <param name="rowLimit"></param>
         /// <returns></returns>
-        public KbQueryResult ListDocuments(ulong processId, string schemaName, int rowLimit = -1)
+        public KbQueryDocumentListReply ListDocuments(ulong processId, string schemaName, int rowLimit = -1)
         {
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
-                var result = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, schemaName, rowLimit);
+                var result = (KbQueryDocumentListReply)StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, schemaName, rowLimit);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
@@ -70,12 +71,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="document"></param>
         /// <param name="newId"></param>
         /// <exception cref="KbObjectNotFoundException"></exception>
-        public KbActionResponseUInt StoreDocument(ulong processId, string schemaName, KbDocument document)
+        public KbQueryDocumentStoreReply StoreDocument(ulong processId, string schemaName, KbDocument document)
         {
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
-                var result = new KbActionResponseUInt()
+                var result = new KbQueryDocumentStoreReply()
                 {
                     Value = _core.Documents.InsertDocument(transactionReference.Transaction, schemaName, document.Content).DocumentId,
                 };
@@ -96,12 +97,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schema"></param>
         /// <returns></returns>
         /// <exception cref="KbObjectNotFoundException"></exception>
-        public KbDocumentCatalogCollection DocumentCatalog(ulong processId, string schemaName)
+        public KbQueryDocumentCatalogReply DocumentCatalog(ulong processId, string schemaName)
         {
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
-                var result = new KbDocumentCatalogCollection();
+                var result = new KbQueryDocumentCatalogReply();
                 var documentPointers = _core.Documents.AcquireDocumentPointers(transactionReference.Transaction, schemaName, LockOperation.Read).ToList();
 
                 result.Collection.AddRange(documentPointers.Select(o => new KbDocumentCatalogItem(o.DocumentId)));
@@ -117,7 +118,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <summary>
         /// Deletes a document by its ID.
         /// </summary>
-        public KbActionResponse DeleteDocumentById(ulong processId, string schemaName, uint documentId)
+        public KbQueryDocumentDeleteByIdReply DeleteDocumentById(ulong processId, string schemaName, uint documentId)
         {
             try
             {
@@ -127,7 +128,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var pointersToDelete = documentPointers.Where(o => o.DocumentId == documentId);
 
                 _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, pointersToDelete);
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count);
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryDocumentDeleteByIdReply(), documentPointers.Count);
             }
             catch (Exception ex)
             {

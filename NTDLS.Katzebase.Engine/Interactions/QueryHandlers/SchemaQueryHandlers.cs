@@ -27,19 +27,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
         }
 
-        internal KbQueryResult ExecuteAnalyze(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteAnalyze(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
-                var result = new KbQueryResult();
+                var result = new KbQueryDocumentListResult();
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
                     var includePhysicalPages = preparedQuery.Attribute(PreparedQuery.QueryAttribute.IncludePhysicalPages, false);
-                    result = _core.Schemas.AnalysePages(transactionReference.Transaction, schemaName, includePhysicalPages);
+                    result = _core.Schemas.AnalyzePages(transactionReference.Transaction, schemaName, includePhysicalPages);
                 }
                 else
                 {
@@ -132,12 +132,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
-                var result = new KbQueryResult();
+                var result = new KbQueryDocumentListResult();
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                 {

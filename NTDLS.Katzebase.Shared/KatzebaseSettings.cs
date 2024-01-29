@@ -80,9 +80,9 @@
         public int MaxIdleConnectionSeconds { get; set; }
 
         /// <summary>
-        /// The base listening URL for the web-services.
+        /// The TCP/IP listen port for the server.
         /// </summary>
-        public string BaseAddress { get; set; } = string.Empty;
+        public int ListenPort { get; set; }
 
         /// <summary>
         /// The top level directory for all schemas.

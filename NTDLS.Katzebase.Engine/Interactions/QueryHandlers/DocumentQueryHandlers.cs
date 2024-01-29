@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteSelectInto(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteSelectInto(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -224,7 +224,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteSample(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteSample(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -241,7 +241,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -258,7 +258,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {

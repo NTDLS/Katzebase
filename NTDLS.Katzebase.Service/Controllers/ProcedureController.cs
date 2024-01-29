@@ -1,30 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using NTDLS.Katzebase.Client.Payloads;
+﻿using NTDLS.Katzebase.Client.Payloads.Queries;
 
 namespace NTDLS.Katzebase.Client.Service.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ProcedureController
+    public static class ProcedureController
     {
-        [HttpPost]
-        [Route("{sessionId}/ExecuteProcedure")]
-        public KbQueryResultCollection ExecuteProcedure(Guid sessionId, [FromBody] string value)
+        public static KbQueryProcedureExecuteReply ExecuteProcedure(KbQueryProcedureExecute param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                var procedure = JsonConvert.DeserializeObject<KbProcedure>(value);
-                KbUtility.EnsureNotNull(procedure);
-                return Program.Core.Query.APIHandlers.ExecuteStatementProcedure(processId, procedure);
+                return Program.Core.Query.APIHandlers.ExecuteStatementProcedure(processId, param.Procedure);
             }
             catch (Exception ex)
             {
-                return new KbQueryResultCollection
+                return new KbQueryProcedureExecuteReply
                 {
                     ExceptionText = ex.Message,
                     Success = false

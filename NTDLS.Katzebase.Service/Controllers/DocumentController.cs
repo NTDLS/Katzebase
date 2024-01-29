@@ -1,32 +1,26 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using NTDLS.Katzebase.Client.Payloads;
+﻿using NTDLS.Katzebase.Client.Payloads.Queries;
 
 namespace NTDLS.Katzebase.Client.Service.Controllers
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class DocumentController
+    public static class DocumentController
     {
         /// <summary>
         /// Lists the documents within a given schema with their values.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/List/{count}")]
-        public KbQueryResult List(Guid sessionId, string schema, int count)
+        public static KbQueryDocumentListReply List(KbQueryDocumentList param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Documents.APIHandlers.ListDocuments(processId, schema, count);
+                return Program.Core.Documents.APIHandlers.ListDocuments(processId, param.Schema, param.Count);
             }
             catch (Exception ex)
             {
-                return new KbQueryResult
+                return new KbQueryDocumentListReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -38,21 +32,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Samples the documents within a given schema with their values.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/Sample/{count}")]
-        public KbQueryResult Sample(Guid sessionId, string schema, int count)
+        public static KbQueryDocumentSampleReply Sample(KbQueryDocumentSample param)
         {
             try
             {
-                ulong processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                ulong processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Documents.APIHandlers.DocumentSample(processId, schema, count);
+                return Program.Core.Documents.APIHandlers.DocumentSample(processId, param.Schema, param.Count);
             }
             catch (Exception ex)
             {
-                return new KbQueryResult
+                return new KbQueryDocumentSampleReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -64,21 +56,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Lists the documents within a given schema.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/Catalog")]
-        public KbDocumentCatalogCollection Catalog(Guid sessionId, string schema)
+        public static KbQueryDocumentCatalogReply Catalog(KbQueryDocumentCatalog param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Documents.APIHandlers.DocumentCatalog(processId, schema);
+                return Program.Core.Documents.APIHandlers.DocumentCatalog(processId, param.Schema);
             }
             catch (Exception ex)
             {
-                return new KbDocumentCatalogCollection
+                return new KbQueryDocumentCatalogReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -86,23 +76,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("{sessionId}/{schema}/Store")]
-        public KbActionResponseUInt Store(Guid sessionId, string schema, [FromBody] string value)
+        public static KbQueryDocumentStoreReply Store(KbQueryDocumentStore param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                var content = JsonConvert.DeserializeObject<KbDocument>(value);
-                KbUtility.EnsureNotNull(content);
-                return Program.Core.Documents.APIHandlers.StoreDocument(processId, schema, content);
+                return Program.Core.Documents.APIHandlers.StoreDocument(processId, param.Schema, param.Document);
             }
             catch (Exception ex)
             {
-                return new KbActionResponseUInt
+                return new KbQueryDocumentStoreReply
                 {
                     ExceptionText = ex.Message,
                     Success = false
@@ -114,21 +100,19 @@ namespace NTDLS.Katzebase.Client.Service.Controllers
         /// Deletes a single document by its Id.
         /// </summary>
         /// <param name="schema"></param>
-        [HttpGet]
-        [Route("{sessionId}/{schema}/{id}/DeleteById")]
-        public KbActionResponse DeleteById(Guid sessionId, string schema, uint id)
+        public static KbQueryDocumentDeleteByIdReply DeleteById(KbQueryDocumentDeleteById param)
         {
             try
             {
-                var processId = Program.Core.Sessions.UpsertSessionId(sessionId);
+                var processId = Program.Core.Sessions.UpsertSessionId(param.SessionId);
                 Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{KbUtility.GetCurrentMethod()}";
                 Program.Core.Log.Trace(Thread.CurrentThread.Name);
 
-                return Program.Core.Documents.APIHandlers.DeleteDocumentById(processId, schema, id);
+                return Program.Core.Documents.APIHandlers.DeleteDocumentById(processId, param.Schema, param.Id);
             }
             catch (Exception ex)
             {
-                return new KbActionResponse
+                return new KbQueryDocumentDeleteByIdReply
                 {
                     ExceptionText = ex.Message,
                     Success = false

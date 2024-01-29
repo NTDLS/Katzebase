@@ -479,14 +479,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal KbQueryResult AnalysePages(Transaction transaction, string schemaName, bool includePhysicalPages)
+        internal KbQueryDocumentListResult AnalyzePages(Transaction transaction, string schemaName, bool includePhysicalPages)
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
             var pageCatalog = _core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
             var message = new StringBuilder();
 
-            var result = new KbQueryResult();
+            var result = new KbQueryDocumentListResult();
             result.AddField("CatalogPageNumber");
             result.AddField("CatalogDocumentCount");
             result.AddField("PageFullness");
