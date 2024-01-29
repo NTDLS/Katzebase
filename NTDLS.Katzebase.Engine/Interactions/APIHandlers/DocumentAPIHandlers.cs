@@ -53,8 +53,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
-                var result = (KbQueryDocumentListReply)StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, schemaName, rowLimit);
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
+                var nativeResults = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, schemaName, rowLimit);
+
+                var apiResults = new KbQueryDocumentListReply()
+                {
+                    Rows = nativeResults.Rows,
+                    Fields = nativeResults.Fields
+                };
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(apiResults, apiResults.Rows.Count);
             }
             catch (Exception ex)
             {

@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using NTDLS.Katzebase.Client.Payloads.Queries;
 using NTDLS.Katzebase.Client.Service.Controllers;
 using NTDLS.Katzebase.Engine;
@@ -37,14 +38,8 @@ namespace NTDLS.Katzebase.Client.Service
             {
                 if (_settings == null)
                 {
-                    IConfiguration config = new ConfigurationBuilder()
-                                 .AddJsonFile("appsettings.json")
-                                 .AddEnvironmentVariables()
-                                 .Build();
-
-
-                    // Get values from the config given their key and their target type.
-                    _settings = config.GetRequiredSection("Settings").Get<KatzebaseSettings>();
+                    string json = File.ReadAllText("appsettings.json");
+                    _settings = JsonConvert.DeserializeObject<KatzebaseSettings>(json);
                     if (_settings == null)
                     {
                         throw new Exception("Failed to load settings");
@@ -182,23 +177,23 @@ namespace NTDLS.Katzebase.Client.Service
                 }
                 else if (payload is KbQueryServerCloseSession queryServerCloseSession)
                 {
-                    ServerController.CloseSession(queryServerCloseSession);
+                    return ServerController.CloseSession(queryServerCloseSession);
                 }
                 else if (payload is KbQueryServerTerminateProcess queryServerTerminateProcess)
                 {
-                    ServerController.TerminateProcess(queryServerTerminateProcess);
+                    return ServerController.TerminateProcess(queryServerTerminateProcess);
                 }
                 else if (payload is KbQueryTransactionBegin KbQueryTransactionBegin)
                 {
-                    TransactionController.Begin(KbQueryTransactionBegin);
+                    return TransactionController.Begin(KbQueryTransactionBegin);
                 }
                 else if (payload is KbQueryTransactionCommit queryTransactionCommit)
                 {
-                    TransactionController.Commit(queryTransactionCommit);
+                    return TransactionController.Commit(queryTransactionCommit);
                 }
                 else if (payload is KbQueryTransactionRollback queryTransactionRollback)
                 {
-                    TransactionController.Rollback(queryTransactionRollback);
+                    return TransactionController.Rollback(queryTransactionRollback);
                 }
 
                 throw new NotImplementedException();

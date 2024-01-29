@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.UI.Classes
                     treeView.Nodes.Remove(foundNode);
                 }
 
-                var serverNode = CreateServerNode(key, serverAddress);
+                var serverNode = CreateServerNode(key, serverAddress, serverPort);
 
                 PopulateSchemaNode(serverNode, client, ":");
 
@@ -91,14 +91,15 @@ namespace NTDLS.Katzebase.UI.Classes
             return node;
         }
 
-        public static ServerTreeNode CreateServerNode(string name, string serverAddress)
+        public static ServerTreeNode CreateServerNode(string name, string serverAddress, int serverPort)
         {
             var node = new ServerTreeNode(name)
             {
                 NodeType = Constants.ServerNodeType.Server,
                 ImageKey = "Server",
                 SelectedImageKey = "Server",
-                ServerAddress = serverAddress
+                ServerAddress = serverAddress,
+                ServerPort = serverPort
             };
 
             return node;
