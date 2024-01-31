@@ -158,42 +158,15 @@ namespace NTDLS.Katzebase.Service
             }
             else if (payload is KbQueryServerStartSession queryServerStartSession)
             {
-                //TODO: Wrap in a API handler like the other methods.
-                var result = new KbQueryServerStartSessionReply
-                {
-                    ProcessId = processId,
-                    SessionId = connectionId,
-                    ServerTimeUTC = DateTime.UtcNow,
-                    Success = true
-                };
-
-                return result;
+                return _core.Sessions.APIHandlers.StartSession(connectionId);
             }
             else if (payload is KbQueryServerCloseSession queryServerCloseSession)
             {
-                //TODO: Wrap in a API handler like the other methods.
-
-                _core.Sessions.CloseByProcessId(processId);
-
-                var result = new KbQueryServerCloseSessionReply
-                {
-                    Success = true
-                };
-
-                return result;
+                return _core.Sessions.APIHandlers.CloseSession(processId);
             }
             else if (payload is KbQueryServerTerminateProcess queryServerTerminateProcess)
             {
-                //TODO: Wrap in a API handler like the other methods.
-
-                _core.Sessions.CloseByProcessId(queryServerTerminateProcess.ReferencedProcessId);
-
-                var result = new KbQueryServerTerminateProcessReply
-                {
-                    Success = true
-                };
-
-                return result;
+                return _core.Sessions.APIHandlers.TerminateSession(queryServerTerminateProcess.ReferencedProcessId);
             }
             else if (payload is KbQueryTransactionBegin KbQueryTransactionBegin)
             {

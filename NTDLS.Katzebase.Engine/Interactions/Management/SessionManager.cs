@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private ulong _nextProcessId = 1;
         private readonly OptimisticCriticalResource<Dictionary<Guid, SessionState>> _collection = new();
 
-        internal SessionAPIHandlers APIHandlers { get; private set; }
+        public SessionAPIHandlers APIHandlers { get; private set; }
         internal SessionQueryHandlers QueryHandlers { get; private set; }
 
         public SessionManager(EngineCore core)
