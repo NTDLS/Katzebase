@@ -31,8 +31,7 @@ namespace NTDLS.Katzebase.Client.Service
             {
                 var apiService = new APIService();
 
-
-
+                apiService.Start();
 
                 while (true)
                 {
