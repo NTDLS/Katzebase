@@ -14,6 +14,10 @@ namespace NTDLS.Katzebase.Service
         private readonly MessageServer _messageServer;
         private readonly KatzebaseSettings _settings;
 
+        private delegate IFramePayloadQueryReply APIMessageHandler(Guid connectionId, ulong processId, IFramePayloadQuery payload);
+
+        private Dictionary<Type, APIMessageHandler> _handlerMapings;
+
         public APIService()
         {
             string json = File.ReadAllText("appsettings.json");
@@ -33,6 +37,36 @@ namespace NTDLS.Katzebase.Service
             _messageServer.OnQueryReceived += MessageServer_OnQueryReceived;
 
             _core.Log.Write($"Listening on {_settings.ListenPort}.");
+
+            _handlerMapings = new()
+            {
+                { typeof(KbQueryDocumentCatalog), (connectionId, processId, payload) => _core.Documents.APIHandlers.DocumentCatalog(processId, (KbQueryDocumentCatalog)payload) },
+                { typeof(KbQueryDocumentDeleteById), (connectionId, processId, payload) => _core.Documents.APIHandlers.DeleteDocumentById(processId, (KbQueryDocumentDeleteById)payload) },
+                { typeof(KbQueryDocumentList), (connectionId, processId, payload) => _core.Documents.APIHandlers.ListDocuments(processId, (KbQueryDocumentList)payload) },
+                { typeof(KbQueryDocumentSample), (connectionId, processId, payload) => _core.Documents.APIHandlers.DocumentSample(processId, (KbQueryDocumentSample)payload) },
+                { typeof(KbQueryDocumentStore), (connectionId, processId, payload) => _core.Documents.APIHandlers.StoreDocument(processId, (KbQueryDocumentStore)payload) },
+                { typeof(KbQueryIndexCreate), (connectionId, processId, payload) => _core.Indexes.APIHandlers.CreateIndex(processId, (KbQueryIndexCreate)payload) },
+                { typeof(KbQueryIndexDrop), (connectionId, processId, payload) => _core.Indexes.APIHandlers.DropIndex(processId, (KbQueryIndexDrop)payload) },
+                { typeof(KbQueryIndexExists), (connectionId, processId, payload) => _core.Indexes.APIHandlers.DoesIndexExist(processId, (KbQueryIndexExists)payload) },
+                { typeof(KbQueryIndexGet), (connectionId, processId, payload) => _core.Indexes.APIHandlers.Get(processId, (KbQueryIndexGet)payload) },
+                { typeof(KbQueryIndexList), (connectionId, processId, payload) => _core.Indexes.APIHandlers.ListIndexes(processId, (KbQueryIndexList)payload) },
+                { typeof(KbQueryIndexRebuild), (connectionId, processId, payload) => _core.Indexes.APIHandlers.RebuildIndex(processId, (KbQueryIndexRebuild)payload) },
+                { typeof(KbQueryProcedureExecute), (connectionId, processId, payload) => _core.Query.APIHandlers.ExecuteStatementProcedure(processId, (KbQueryProcedureExecute)payload) },
+                { typeof(KbQueryQueryExecuteNonQuery), (connectionId, processId, payload) => _core.Query.APIHandlers.ExecuteStatementNonQuery(processId, (KbQueryQueryExecuteNonQuery)payload) },
+                { typeof(KbQueryQueryExecuteQueries), (connectionId, processId, payload) => _core.Query.APIHandlers.ExecuteStatementQueries(processId, (KbQueryQueryExecuteQueries)payload) },
+                { typeof(KbQueryQueryExecuteQuery), (connectionId, processId, payload) => _core.Query.APIHandlers.ExecuteStatementQuery(processId, (KbQueryQueryExecuteQuery)payload) },
+                { typeof(KbQueryQueryExplain), (connectionId, processId, payload) => _core.Query.APIHandlers.ExecuteStatementExplain(processId, (KbQueryQueryExplain)payload) },
+                { typeof(KbQuerySchemaCreate), (connectionId, processId, payload) => _core.Schemas.APIHandlers.CreateSchema(processId, (KbQuerySchemaCreate)payload) },
+                { typeof(KbQuerySchemaDrop), (connectionId, processId, payload) => _core.Schemas.APIHandlers.DropSchema(processId, (KbQuerySchemaDrop)payload) },
+                { typeof(KbQuerySchemaExists), (connectionId, processId, payload) => _core.Schemas.APIHandlers.DoesSchemaExist(processId, (KbQuerySchemaExists)payload) },
+                { typeof(KbQuerySchemaList), (connectionId, processId, payload) => _core.Schemas.APIHandlers.ListSchemas(processId, (KbQuerySchemaList)payload) },
+                { typeof(KbQueryServerStartSession), (connectionId, processId, payload) => _core.Sessions.APIHandlers.StartSession(connectionId) },
+                { typeof(KbQueryServerCloseSession), (connectionId, processId, payload) => _core.Sessions.APIHandlers.CloseSession(processId) },
+                { typeof(KbQueryServerTerminateProcess), (connectionId, processId, payload) => _core.Sessions.APIHandlers.TerminateSession(processId, (KbQueryServerTerminateProcess)payload) },
+                { typeof(KbQueryTransactionBegin), (connectionId, processId, payload) => _core.Transactions.APIHandlers.Begin(processId) },
+                { typeof(KbQueryTransactionCommit), (connectionId, processId, payload) => _core.Transactions.APIHandlers.Commit(processId) },
+                { typeof(KbQueryTransactionRollback), (connectionId, processId, payload) => _core.Transactions.APIHandlers.Rollback(processId)}
+            };
         }
 
         public void Start()
@@ -76,109 +110,9 @@ namespace NTDLS.Katzebase.Service
             Thread.CurrentThread.Name = Thread.CurrentThread.Name = $"KbAPI:{processId}:{payload.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 
-            if (payload is KbQueryDocumentCatalog queryDocumentCatalog)
+            if (_handlerMapings.TryGetValue(payload.GetType(), out var handler))
             {
-                return _core.Documents.APIHandlers.DocumentCatalog(processId, queryDocumentCatalog.Schema);
-            }
-            else if (payload is KbQueryDocumentDeleteById queryDocumentDeleteById)
-            {
-                return _core.Documents.APIHandlers.DeleteDocumentById(processId, queryDocumentDeleteById.Schema, queryDocumentDeleteById.Id);
-            }
-            else if (payload is KbQueryDocumentList queryDocumentList)
-            {
-                return _core.Documents.APIHandlers.ListDocuments(processId, queryDocumentList.Schema, queryDocumentList.Count);
-            }
-            else if (payload is KbQueryDocumentSample queryDocumentSample)
-            {
-                return _core.Documents.APIHandlers.DocumentSample(processId, queryDocumentSample.Schema, queryDocumentSample.Count);
-            }
-            else if (payload is KbQueryDocumentStore queryDocumentStore)
-            {
-                return _core.Documents.APIHandlers.StoreDocument(processId, queryDocumentStore.Schema, queryDocumentStore.Document);
-            }
-            else if (payload is KbQueryIndexCreate queryIndexCreate)
-            {
-                return _core.Indexes.APIHandlers.CreateIndex(processId, queryIndexCreate.Schema, queryIndexCreate.Index);
-            }
-            else if (payload is KbQueryIndexDrop queryIndexDrop)
-            {
-                return _core.Indexes.APIHandlers.DropIndex(processId, queryIndexDrop.Schema, queryIndexDrop.IndexName);
-            }
-            else if (payload is KbQueryIndexExists queryIndexExists)
-            {
-                return _core.Indexes.APIHandlers.DoesIndexExist(processId, queryIndexExists.Schema, queryIndexExists.IndexName);
-            }
-            else if (payload is KbQueryIndexGet queryIndexGet)
-            {
-                return _core.Indexes.APIHandlers.Get(processId, queryIndexGet.Schema, queryIndexGet.IndexName);
-            }
-            else if (payload is KbQueryIndexList queryIndexList)
-            {
-                return _core.Indexes.APIHandlers.ListIndexes(processId, queryIndexList.Schema);
-            }
-            else if (payload is KbQueryIndexRebuild queryIndexRebuild)
-            {
-                return _core.Indexes.APIHandlers.RebuildIndex(processId, queryIndexRebuild.Schema, queryIndexRebuild.IndexName, queryIndexRebuild.NewPartitionCount);
-            }
-            else if (payload is KbQueryProcedureExecute queryProcedureExecute)
-            {
-                return _core.Query.APIHandlers.ExecuteStatementProcedure(processId, queryProcedureExecute.Procedure);
-            }
-            else if (payload is KbQueryQueryExecuteNonQuery queryQueryExecuteNonQuery)
-            {
-                return _core.Query.APIHandlers.ExecuteStatementNonQuery(processId, queryQueryExecuteNonQuery.Statement);
-            }
-            else if (payload is KbQueryQueryExecuteQueries queryQueryExecuteQueries)
-            {
-                return _core.Query.APIHandlers.ExecuteStatementQueries(processId, queryQueryExecuteQueries.Statements);
-            }
-            else if (payload is KbQueryQueryExecuteQuery queryQueryExecuteQuery)
-            {
-                return _core.Query.APIHandlers.ExecuteStatementQuery(processId, queryQueryExecuteQuery.Statement);
-            }
-            else if (payload is KbQueryQueryExplain queryQueryExplain)
-            {
-                return _core.Query.APIHandlers.ExecuteStatementExplain(processId, queryQueryExplain.Statement);
-            }
-            else if (payload is KbQuerySchemaCreate querySchemaCreate)
-            {
-                return _core.Schemas.APIHandlers.CreateSchema(processId, querySchemaCreate.Schema, querySchemaCreate.PageSize);
-            }
-            else if (payload is KbQuerySchemaDrop querySchemaDrop)
-            {
-                return _core.Schemas.APIHandlers.DropSchema(processId, querySchemaDrop.Schema);
-            }
-            else if (payload is KbQuerySchemaExists querySchemaExists)
-            {
-                return _core.Schemas.APIHandlers.DoesSchemaExist(processId, querySchemaExists.Schema);
-            }
-            else if (payload is KbQuerySchemaList querySchemaList)
-            {
-                return _core.Schemas.APIHandlers.ListSchemas(processId, querySchemaList.Schema);
-            }
-            else if (payload is KbQueryServerStartSession queryServerStartSession)
-            {
-                return _core.Sessions.APIHandlers.StartSession(connectionId);
-            }
-            else if (payload is KbQueryServerCloseSession queryServerCloseSession)
-            {
-                return _core.Sessions.APIHandlers.CloseSession(processId);
-            }
-            else if (payload is KbQueryServerTerminateProcess queryServerTerminateProcess)
-            {
-                return _core.Sessions.APIHandlers.TerminateSession(queryServerTerminateProcess.ReferencedProcessId);
-            }
-            else if (payload is KbQueryTransactionBegin KbQueryTransactionBegin)
-            {
-                return _core.Transactions.APIHandlers.Begin(processId);
-            }
-            else if (payload is KbQueryTransactionCommit queryTransactionCommit)
-            {
-                return _core.Transactions.APIHandlers.Commit(processId);
-            }
-            else if (payload is KbQueryTransactionRollback queryTransactionRollback)
-            {
-                return _core.Transactions.APIHandlers.Rollback(processId);
+                return handler(connectionId, processId, payload);
             }
 
             throw new NotImplementedException();

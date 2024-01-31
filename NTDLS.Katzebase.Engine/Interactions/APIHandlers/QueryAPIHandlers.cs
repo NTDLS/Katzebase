@@ -25,36 +25,36 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryQueryExplainReply ExecuteStatementExplain(ulong processId, string statement)
+        public KbQueryQueryExplainReply ExecuteStatementExplain(ulong processId, KbQueryQueryExplain param)
         {
             var results = new KbQueryQueryExplainReply();
-            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
+            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
                 results.Add(_core.Query.ExplainQuery(processId, preparedQuery));
             }
             return results;
         }
 
-        public KbQueryProcedureExecuteReply ExecuteStatementProcedure(ulong processId, KbProcedure procedure)
+        public KbQueryProcedureExecuteReply ExecuteStatementProcedure(ulong processId, KbQueryProcedureExecute param)
         {
-            return (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(processId, procedure);
+            return (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(processId, param.Procedure);
         }
 
-        public KbQueryQueryExecuteQueryReply ExecuteStatementQuery(ulong processId, string statement)
+        public KbQueryQueryExecuteQueryReply ExecuteStatementQuery(ulong processId, KbQueryQueryExecuteQuery param)
         {
             var results = new KbQueryQueryExecuteQueryReply();
-            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
+            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
                 results.Add(_core.Query.ExecuteQuery(processId, preparedQuery));
             }
             return results;
         }
 
-        public KbQueryQueryExecuteQueriesReply ExecuteStatementQueries(ulong processId, List<string> statements)
+        public KbQueryQueryExecuteQueriesReply ExecuteStatementQueries(ulong processId, KbQueryQueryExecuteQueries param)
         {
             var results = new KbQueryQueryExecuteQueriesReply();
 
-            foreach (var statement in statements)
+            foreach (var statement in param.Statements)
             {
                 foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
                 {
@@ -66,10 +66,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             return results;
         }
 
-        public KbQueryQueryExecuteNonQueryReply ExecuteStatementNonQuery(ulong processId, string statement)
+        public KbQueryQueryExecuteNonQueryReply ExecuteStatementNonQuery(ulong processId, KbQueryQueryExecuteNonQuery param)
         {
             var results = new KbQueryQueryExecuteNonQueryReply();
-            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
+            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
                 results.Add(_core.Query.ExecuteNonQuery(processId, preparedQuery));
             }

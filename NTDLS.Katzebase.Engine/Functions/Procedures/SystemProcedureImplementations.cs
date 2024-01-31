@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Query;
 using System.Diagnostics;
 using System.Text;
 
@@ -566,8 +567,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                         }
 
                         var batchStartTime = DateTime.UtcNow;
-                        var batchResults = core.Query.APIHandlers.ExecuteStatementQuery(transaction.ProcessId, batchText).Collection.Single();
-                        var batchDuration = (DateTime.UtcNow - batchStartTime).TotalMilliseconds;
+
+                        var batchResults = new KbQueryResultCollection();
+                        foreach (var preparedQuery in StaticQueryParser.PrepareBatch(batchText))
+                        {
+                            batchResults.Add(core.Query.ExecuteQuery(transaction.ProcessId, preparedQuery));
+                        }
 
                         if (batchResults.Success != true)
                         {

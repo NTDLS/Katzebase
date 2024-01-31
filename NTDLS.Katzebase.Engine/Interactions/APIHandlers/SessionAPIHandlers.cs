@@ -66,11 +66,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryServerTerminateProcessReply TerminateSession(ulong processId)
+        public KbQueryServerTerminateProcessReply TerminateSession(ulong processId, KbQueryServerTerminateProcess param)
         {
             try
             {
-                _core.Sessions.CloseByProcessId(processId);
+                _core.Sessions.CloseByProcessId(param.ReferencedProcessId);
 
                 var result = new KbQueryServerTerminateProcessReply
                 {
