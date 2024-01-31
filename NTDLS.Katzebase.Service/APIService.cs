@@ -5,7 +5,6 @@ using NTDLS.Katzebase.Engine;
 using NTDLS.Katzebase.Shared;
 using NTDLS.ReliableMessaging;
 using NTDLS.StreamFraming.Payloads;
-using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Service
 {
@@ -159,6 +158,7 @@ namespace NTDLS.Katzebase.Service
             }
             else if (payload is KbQueryServerStartSession queryServerStartSession)
             {
+                //TODO: Wrap in a API handler like the other methods.
                 var result = new KbQueryServerStartSessionReply
                 {
                     ProcessId = processId,
@@ -171,6 +171,8 @@ namespace NTDLS.Katzebase.Service
             }
             else if (payload is KbQueryServerCloseSession queryServerCloseSession)
             {
+                //TODO: Wrap in a API handler like the other methods.
+
                 _core.Sessions.CloseByProcessId(processId);
 
                 var result = new KbQueryServerCloseSessionReply
@@ -182,6 +184,8 @@ namespace NTDLS.Katzebase.Service
             }
             else if (payload is KbQueryServerTerminateProcess queryServerTerminateProcess)
             {
+                //TODO: Wrap in a API handler like the other methods.
+
                 _core.Sessions.CloseByProcessId(queryServerTerminateProcess.ReferencedProcessId);
 
                 var result = new KbQueryServerTerminateProcessReply
@@ -193,18 +197,15 @@ namespace NTDLS.Katzebase.Service
             }
             else if (payload is KbQueryTransactionBegin KbQueryTransactionBegin)
             {
-                _core.Transactions.APIHandlers.Begin(processId);
-                return new KbQueryTransactionCommitReply { Success = true };
+                return _core.Transactions.APIHandlers.Begin(processId);
             }
             else if (payload is KbQueryTransactionCommit queryTransactionCommit)
             {
-                _core.Transactions.APIHandlers.Commit(processId);
-                return new KbQueryTransactionCommitReply { Success = true };
+                return _core.Transactions.APIHandlers.Commit(processId);
             }
             else if (payload is KbQueryTransactionRollback queryTransactionRollback)
             {
-                _core.Transactions.APIHandlers.Rollback(processId);
-                return new KbQueryTransactionRollbackReply { Success = true };
+                return _core.Transactions.APIHandlers.Rollback(processId);
             }
 
             throw new NotImplementedException();
