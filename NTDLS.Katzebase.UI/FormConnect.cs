@@ -4,9 +4,16 @@ namespace NTDLS.Katzebase.UI
 {
     public partial class FormConnect : Form
     {
-        public string ServerAddress => textBoxServerAddress.Text.Trim();
-        public string ServerPort => textBoxPort.Text.Trim();
-        public string ServerAddressURL => $"http://{ServerAddress}:{ServerPort}/";
+        public string ServerHost => textBoxServerAddress.Text.Trim();
+        public int ServerPort
+
+        {
+            get
+            {
+                _ = int.TryParse(textBoxPort.Text.Trim(), out var port);
+                return port;
+            }
+        }
 
         public FormConnect()
         {
@@ -26,13 +33,10 @@ namespace NTDLS.Katzebase.UI
         {
             try
             {
-                using (var client = new KbClient(ServerAddressURL))
+                using (var client = new KbClient(ServerHost, ServerPort))
                 {
-                    if (client.Server.Ping().Success)
-                    {
-                        DialogResult = DialogResult.OK;
-                        Close();
-                    }
+                    DialogResult = DialogResult.OK;
+                    Close();
                 }
             }
             catch (Exception ex)

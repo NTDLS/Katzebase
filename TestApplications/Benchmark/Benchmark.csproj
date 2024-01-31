@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.1.1" />
+    <ProjectReference Include="..\..\..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
   </ItemGroup>
 
 </Project>

@@ -14,7 +14,8 @@ namespace Benchmark
         const string _ScriptsPath = @"..\..\..\Scripts";
         const string _DataPath = @"..\..\..\Data";
         const string _ServicePath = @"..\..\..\..\Katzebase.Service\bin\Release\net7.0\Katzebase.Service.exe";
-        const string _ServiveAddress = "http://localhost:6858/";
+        const string _serverHost = "localhost";
+        const int _serverPort = 6858;
 
         static void Main()
         {
@@ -48,7 +49,7 @@ namespace Benchmark
             Console.WriteLine($"ExecuteBenchamark_Inserts: {schemaName}");
 
             var process = StartService();
-            using (var client = new KbClient(_ServiveAddress))
+            using (var client = new KbClient(_serverHost, _serverPort))
             {
                 client.Schema.DropIfExists(schemaName);
                 client.Schema.Create(schemaName);
@@ -111,7 +112,7 @@ namespace Benchmark
             foreach (var scriptFile in scriptFiles)
             {
                 var process = StartService();
-                using (var client = new KbClient(_ServiveAddress))
+                using (var client = new KbClient(_serverHost, _serverPort))
                 {
                     var queryText = File.ReadAllText(scriptFile);
 
@@ -138,7 +139,7 @@ namespace Benchmark
         private static void CreatePayloadData()
         {
             var process = StartService();
-            using (var client = new KbClient(_ServiveAddress))
+            using (var client = new KbClient(_serverHost, _serverPort))
             {
                 client.Schema.DropIfExists("Benchmarking");
                 client.Schema.Create("Benchmarking:Payload_1000");
@@ -198,7 +199,7 @@ namespace Benchmark
         private static void InsertPayloadData(string fileName, string schemaName, int maxCount)
         {
             var process = StartService();
-            using (var client = new KbClient(_ServiveAddress))
+            using (var client = new KbClient(_serverHost, _serverPort))
             {
                 client.Schema.DropIfExists(schemaName);
                 client.Schema.Create(schemaName);

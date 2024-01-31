@@ -16,6 +16,7 @@ namespace NTDLS.Katzebase.UI
         private readonly ImageList _treeImages = new();
         private readonly System.Windows.Forms.Timer _toolbarSyncTimer = new();
         public string _lastusedServerAddress = string.Empty;
+        public int _lastusedServerPort;
         private readonly string _firstLoadFilename = string.Empty;
 
         public FormStudio()
@@ -97,7 +98,7 @@ namespace NTDLS.Katzebase.UI
         {
             var tabFilePage = CurrentTabFilePage();
 
-            toolStripStatusLabelServerName.Text = "Server: " + tabFilePage?.Client?.Connection.BaseAddress?.ToString() ?? string.Empty;
+            toolStripStatusLabelServerName.Text = $"Server: {tabFilePage?.Client?.Host}:{tabFilePage?.Client?.Port}";
             toolStripStatusLabelProcessId.Text = "PID: " + tabFilePage?.Client?.ServerProcessId.ToString("N0") ?? string.Empty;
 
             bool isTabOpen = (tabFilePage != null);
@@ -273,7 +274,7 @@ namespace NTDLS.Katzebase.UI
                     if (node.NodeType == Constants.ServerNodeType.Server)
                     {
                         node.Nodes.Clear();
-                        TreeManagement.PopulateServer(treeViewProject, node.ServerAddress);
+                        TreeManagement.PopulateServer(treeViewProject, node.ServerAddress, node.ServerPort);
                         foreach (TreeNode expandNode in treeViewProject.Nodes)
                         {
                             expandNode.Expand();
@@ -298,7 +299,7 @@ namespace NTDLS.Katzebase.UI
                 else if (e.ClickedItem?.Text == "Select top n...")
                 {
                     var rootNode = TreeManagement.GetRootNode(node);
-                    var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                    var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress, rootNode.ServerPort);
                     tabFilePage.Editor.Text = $"SELECT TOP 100\r\n\t*\r\nFROM\r\n\t{TreeManagement.FullSchemaPath(node)}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.ExecuteCurrentScriptAsync(false);
@@ -306,7 +307,7 @@ namespace NTDLS.Katzebase.UI
                 else if (e.ClickedItem?.Text == "Sample")
                 {
                     var rootNode = TreeManagement.GetRootNode(node);
-                    var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                    var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress, rootNode.ServerPort);
                     tabFilePage.Editor.Text = $"SAMPLE {TreeManagement.FullSchemaPath(node)} 100\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
@@ -315,7 +316,7 @@ namespace NTDLS.Katzebase.UI
                 else if (e.ClickedItem?.Text == "Drop Index")
                 {
                     var rootNode = TreeManagement.GetRootNode(node);
-                    var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                    var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress, rootNode.ServerPort);
                     tabFilePage.Editor.Text = $"DROP INDEX {node.Text} ON {TreeManagement.FullSchemaPath(node)}\r\n";
                     tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                     tabFilePage.TabSplitContainer.SplitterDistance = 60;
@@ -323,7 +324,7 @@ namespace NTDLS.Katzebase.UI
                 else if (e.ClickedItem?.Text == "Rebuild Index")
                 {
                     var rootNode = TreeManagement.GetRootNode(node);
-                    using (var client = new KbClient(rootNode.ServerAddress))
+                    using (var client = new KbClient(rootNode.ServerAddress, rootNode.ServerPort))
                     {
                         var result = client.Schema.Indexes.Get(TreeManagement.FullSchemaPath(node), node.Text);
                         if (result != null && result.Index != null)
@@ -333,7 +334,7 @@ namespace NTDLS.Katzebase.UI
                             text.Append($" {result.Index.Name} ON {TreeManagement.FullSchemaPath(node)}");
                             text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
 
-                            var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                            var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress, rootNode.ServerPort);
                             tabFilePage.Editor.Text = text.ToString();
                             tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                             tabFilePage.TabSplitContainer.SplitterDistance = 60;
@@ -343,7 +344,7 @@ namespace NTDLS.Katzebase.UI
                 else if (e.ClickedItem?.Text == "Script Index")
                 {
                     var rootNode = TreeManagement.GetRootNode(node);
-                    using (var client = new KbClient(rootNode.ServerAddress))
+                    using (var client = new KbClient(rootNode.ServerAddress, rootNode.ServerPort))
                     {
                         var result = client.Schema.Indexes.Get(TreeManagement.FullSchemaPath(node), node.Text);
                         if (result != null && result.Index != null)
@@ -360,7 +361,7 @@ namespace NTDLS.Katzebase.UI
                             text.Append($"\r\n) ON {TreeManagement.FullSchemaPath(node)}");
                             text.AppendLine($" WITH (PARTITIONS={result.Index.Partitions})");
 
-                            var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress);
+                            var tabFilePage = CreateNewTab(FormUtility.GetNextNewFileName(), rootNode.ServerAddress, rootNode.ServerPort);
                             tabFilePage.Editor.Text = text.ToString();
                             tabFilePage.Editor.SelectionStart = tabFilePage.Editor.Text.Length;
                             tabFilePage.TabSplitContainer.SplitterDistance = 60;
@@ -538,16 +539,17 @@ namespace NTDLS.Katzebase.UI
             return null;
         }
 
-        private TabFilePage CreateNewTab(string tabText = "", string serverAddress = "")
+        private TabFilePage CreateNewTab(string tabText = "", string serverAddress = "", int serverPort = 0)
         {
             KbUtility.EnsureNotNull(_editorFactory);
 
             if (string.IsNullOrWhiteSpace(serverAddress))
             {
                 serverAddress = _lastusedServerAddress;
+                serverPort = _lastusedServerPort;
             }
 
-            return TabFilePage.Create(_editorFactory, tabText, serverAddress);
+            return TabFilePage.Create(_editorFactory, tabText, serverAddress, serverPort);
         }
 
 
@@ -572,9 +574,10 @@ namespace NTDLS.Katzebase.UI
                 using var form = new FormConnect();
                 if (form.ShowDialog() == DialogResult.OK)
                 {
-                    _lastusedServerAddress = form.ServerAddressURL;
+                    _lastusedServerAddress = form.ServerHost;
+                    _lastusedServerPort = form.ServerPort;
 
-                    TreeManagement.PopulateServer(treeViewProject, _lastusedServerAddress);
+                    TreeManagement.PopulateServer(treeViewProject, _lastusedServerAddress, _lastusedServerPort);
 
                     foreach (TreeNode node in treeViewProject.Nodes)
                     {

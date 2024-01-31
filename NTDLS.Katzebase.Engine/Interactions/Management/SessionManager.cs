@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private ulong _nextProcessId = 1;
         private readonly OptimisticCriticalResource<Dictionary<Guid, SessionState>> _collection = new();
 
-        internal SessionAPIHandlers APIHandlers { get; private set; }
+        public SessionAPIHandlers APIHandlers { get; private set; }
         internal SessionQueryHandlers QueryHandlers { get; private set; }
 
         public SessionManager(EngineCore core)
@@ -36,15 +36,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         public Dictionary<Guid, SessionState> CloneSessions()
         {
             return _collection.Read((obj) => obj.ToDictionary(o => o.Key, o => o.Value));
-        }
-
-        public List<SessionState> GetExpiredSessions()
-        {
-            return _collection.Read((obj) =>
-            {
-                return obj.Where(o => (DateTime.UtcNow - o.Value.LastCheckinTime)
-                    .TotalSeconds > _core.Settings.MaxIdleConnectionSeconds).Select(o => o.Value).ToList();
-            });
         }
 
         public ulong UpsertSessionId(Guid sessionId, string clientName = "")

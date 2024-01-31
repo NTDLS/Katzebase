@@ -14,7 +14,7 @@ namespace TestHarness
         private static DateTime LastPerfStatDateTime = DateTime.MinValue;
         private static object PerfStasLockObj = new object();
 
-        public static void ExportSQLServerDatabaseToKatzebase(string sqlServer, string sqlServerDatabase, string katzeBaseServerAdddress, bool omitSQLSchemaName)
+        public static void ExportSQLServerDatabaseToKatzebase(string sqlServer, string sqlServerDatabase, string katzeBaseServerHost, int katzeBaseServerPort, bool omitSQLSchemaName)
         {
             using (var connection = new SqlConnection($"Server={sqlServer};Database={sqlServerDatabase};Trusted_Connection=True;"))
             {
@@ -38,7 +38,7 @@ namespace TestHarness
                         while (dataReader.Read() /*&& rowCount++ < 10000*/)
                         {
                             //ExportSQLServerTableToFile(sqlServer, sqlServerDatabase, $"{dataReader["ObjectName"]}", "../../../Outputdata.gz");
-                            ExportSQLServerTableToKatzebase(sqlServer, sqlServerDatabase, $"{dataReader["ObjectName"]}", katzeBaseServerAdddress);
+                            ExportSQLServerTableToKatzebase(sqlServer, sqlServerDatabase, $"{dataReader["ObjectName"]}", katzeBaseServerHost, katzeBaseServerPort);
                         }
                     }
                 }
@@ -106,7 +106,7 @@ namespace TestHarness
             }
         }
 
-        public static void ExportSQLServerTableToKatzebase(string sqlServer, string sqlServerDatabase, string sqlServerTable, string katzeBaseServerAdddress)
+        public static void ExportSQLServerTableToKatzebase(string sqlServer, string sqlServerDatabase, string sqlServerTable, string katzeBaseServerHost, int katzeBaseServerPort)
         {
             int rowsPerTransaction = 10000;
 
@@ -115,7 +115,7 @@ namespace TestHarness
                 rowsPerTransaction = 100;
             }
 
-            using var client = new KbClient(katzeBaseServerAdddress);
+            using var client = new KbClient(katzeBaseServerHost, katzeBaseServerPort);
 
             string kbSchema = $"{sqlServerDatabase}:{sqlServerTable.Replace("[", "").Replace("]", "").Replace("dbo.", "").Replace('.', ':')}";
 
@@ -211,7 +211,7 @@ namespace TestHarness
             }
         }
 
-        public static void ExportSQLServerTableToKatzebase(string sqlServer, string sqlServerDatabase, string sqlServerTable, string katzeBaseServerAdddress, string targetSchema)
+        public static void ExportSQLServerTableToKatzebase(string sqlServer, string sqlServerDatabase, string sqlServerTable, string katzeBaseServerHost, int katzeBaseServerPort, string targetSchema)
         {
             try
             {
@@ -224,9 +224,9 @@ namespace TestHarness
 
                 targetSchema = targetSchema.Replace("[TABLE_NAME]", sqlServerTable);
 
-                using var client = new KbClient(katzeBaseServerAdddress);
+                using var client = new KbClient(katzeBaseServerHost, katzeBaseServerPort);
 
-                client.Schema.CreateFullSchema(targetSchema);
+                client.Schema.CreateRecursive(targetSchema);
 
                 client.Transaction.Begin();
 

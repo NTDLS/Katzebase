@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResult ExecuteAnalyze(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteAnalyze(ulong processId, PreparedQuery preparedQuery)
         {
             try
             {
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 transactionReference.Transaction.AddMessage(analysis, KbMessageType.Verbose);
 
                 //TODO: Maybe we should return a table here too? Maybe more than one?
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryResult(), 0);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryDocumentListResult(), 0);
             }
             catch (Exception ex)
             {

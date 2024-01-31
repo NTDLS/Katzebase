@@ -11,9 +11,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Returns a random sample of all document fields from a schema.
         /// </summary>
-        internal static KbQueryResult SampleSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int rowLimit = -1)
+        internal static KbQueryDocumentListResult SampleSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int rowLimit = -1)
         {
-            var result = new KbQueryResult();
+            var result = new KbQueryDocumentListResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
             var physicalDocumentPageCatalog = core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
@@ -58,12 +58,12 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Returns a top list of all document fields from a schema.
         /// </summary>
-        internal static KbQueryResult ListSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int topCount)
+        internal static KbQueryDocumentListResult ListSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int topCount)
         {
-            var result = new KbQueryResult();
+            var result = new KbQueryDocumentListResult();
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-            var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
+            var documentPointers = core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read, topCount).ToList();
 
             for (int i = 0; i < documentPointers.Count && (i < topCount || topCount < 0); i++)
             {
@@ -95,9 +95,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Finds all documents using a prepared query. Performs all filtering and ordering.
         /// </summary>
-        internal static KbQueryResult FindDocumentsByPreparedQuery(EngineCore core, Transaction transaction, PreparedQuery query)
+        internal static KbQueryDocumentListResult FindDocumentsByPreparedQuery(EngineCore core, Transaction transaction, PreparedQuery query)
         {
-            var result = new KbQueryResult();
+            var result = new KbQueryDocumentListResult();
 
             var schemaMap = new QuerySchemaMap(core, transaction);
 

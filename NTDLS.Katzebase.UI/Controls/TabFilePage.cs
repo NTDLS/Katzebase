@@ -14,7 +14,7 @@ namespace NTDLS.Katzebase.UI.Controls
         public TabControl TabControlParent { get; private set; }
         public int ExecutionExceptionCount { get; private set; } = 0;
         public bool IsScriptExecuting { get; private set; } = false;
-        public string ServerAddressURL { get; set; }
+        public string ServerHost { get; set; }
         public KbClient? Client { get; private set; }
         public bool IsFileOpen { get; private set; } = false;
 
@@ -114,28 +114,28 @@ namespace NTDLS.Katzebase.UI.Controls
 
         #endregion
 
-        public TabFilePage(TabControl tabControlParent, string serverAddressURL, string tabText, TextEditor editor) :
+        public TabFilePage(TabControl tabControlParent, string serverHost, int serverPort, string tabText, TextEditor editor) :
              base(tabText)
         {
             TabControlParent = tabControlParent;
             Editor = editor;
             FindTextForm = new FormFindText(this);
             ReplaceTextForm = new FormReplaceText(this);
-            ServerAddressURL = serverAddressURL;
-            if (string.IsNullOrEmpty(serverAddressURL) == false)
+            ServerHost = serverHost;
+            if (string.IsNullOrEmpty(serverHost) == false)
             {
-                Client = new KbClient(ServerAddressURL);
+                Client = new KbClient(serverHost, serverPort);
             }
         }
 
-        public static TabFilePage Create(EditorFactory editorFactory, string tabText = "", string serverAddress = "")
+        public static TabFilePage Create(EditorFactory editorFactory, string tabText = "", string serverHost = "", int serverPort = 0)
         {
             if (string.IsNullOrWhiteSpace(tabText))
             {
                 tabText = FormUtility.GetNextNewFileName();
             }
 
-            var newInstance = editorFactory.Create(serverAddress, tabText);
+            var newInstance = editorFactory.Create(serverHost, serverPort, tabText);
 
             newInstance.Editor.KeyUp += newInstance.Editor_KeyUp;
             newInstance.Controls.Add(newInstance.TabSplitContainer);
@@ -156,7 +156,6 @@ namespace NTDLS.Katzebase.UI.Controls
             newInstance.TabSplitContainer.SplitterMoved += TabSplitContainer_SplitterMoved;
             newInstance.TabSplitContainer.SplitterDistance = Preferences.Instance.ResultsSplitterDistance;
 
-            newInstance.Client?.Server.Ping();
             newInstance.Editor.Focus();
 
             return newInstance;
@@ -247,8 +246,6 @@ namespace NTDLS.Katzebase.UI.Controls
                     IsScriptExecuting = false;
                     return;
                 }
-
-                Client.Server.Ping();
 
                 PreExecuteEvent(this);
 

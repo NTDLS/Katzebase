@@ -5,6 +5,9 @@ namespace NugetTest
 {
     internal class Program
     {
+        const string _serverHost = "localhost";
+        const int _serverPort = 6858;
+
         static void Main()
         {
             var threads = new List<Thread>()
@@ -13,7 +16,7 @@ namespace NugetTest
                 new Thread(InsertUsingQueries),
             };
 
-            using (var client = new KbClient("http://localhost:6858"))
+            using (var client = new KbClient(_serverHost, _serverPort))
             {
                 client.Schema.DropIfExists("ClientTest");
             }
@@ -30,7 +33,7 @@ namespace NugetTest
         {
             try
             {
-                using var client = new KbClient("http://localhost:6858");
+                using var client = new KbClient(_serverHost, _serverPort);
 
                 string schemaName = "ClientTest:B";
                 int id = 0;
@@ -70,7 +73,7 @@ namespace NugetTest
         {
             try
             {
-                using var client = new KbClient("http://localhost:6858");
+                using var client = new KbClient(_serverHost, _serverPort);
                 string schemaName = "ClientTest:A";
                 int id = 0;
 

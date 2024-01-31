@@ -7,6 +7,9 @@ namespace TestHarness
 {
     class Program
     {
+        const string _serverHost = "localhost";
+        const int _serverPort = 6858;
+
         private static void ExportSQLServerDatabases()
         {
             /*
@@ -22,12 +25,12 @@ namespace TestHarness
             {
                 (new Thread(() =>
                 {
-                    SqlServerExporter.ExportSQLServerDatabaseToKatzebase("localhost", databasesName, "http://localhost:6858/", false);
+                    SqlServerExporter.ExportSQLServerDatabaseToKatzebase("localhost", databasesName, "localhost", 6858, false);
                 })).Start();
             }
             */
 
-            using (var client = new KbClient("http://localhost:6858/"))
+            using (var client = new KbClient(_serverHost, _serverPort))
             {
                 client.Schema.Drop("NetworkDLS");
             }
@@ -36,9 +39,9 @@ namespace TestHarness
             {
                 (new Thread(() =>
                 {
-                    SqlServerExporter.ExportSQLServerTableToKatzebase("localhost", "NetworkDLS_Com", "SitePage", "http://localhost:6858/", $"NetworkDLS:[TABLE_NAME]:{i}");
-                    SqlServerExporter.ExportSQLServerTableToKatzebase("localhost", "NetworkDLS_Com", "SiteRoutingExclude", "http://localhost:6858/", $"NetworkDLS:[TABLE_NAME]:{i}");
-                    SqlServerExporter.ExportSQLServerTableToKatzebase("localhost", "NetworkDLS_Com", "SiteError", "http://localhost:6858/", $"NetworkDLS:[TABLE_NAME]:{i}");
+                    SqlServerExporter.ExportSQLServerTableToKatzebase("localhost", "NetworkDLS_Com", "SitePage", "localhost", 6858, $"NetworkDLS:[TABLE_NAME]:{i}");
+                    SqlServerExporter.ExportSQLServerTableToKatzebase("localhost", "NetworkDLS_Com", "SiteRoutingExclude", "localhost", 6858, $"NetworkDLS:[TABLE_NAME]:{i}");
+                    SqlServerExporter.ExportSQLServerTableToKatzebase("localhost", "NetworkDLS_Com", "SiteError", "localhost", 6858, $"NetworkDLS:[TABLE_NAME]:{i}");
                 })).Start();
             }
 
@@ -55,7 +58,7 @@ namespace TestHarness
             //(new Thread(() => { TestThread("AdventureWorks2012:dbo:AWBuildVersion"); })).Start();
 
             /*
-            using (var client = new KbClient("http://localhost:6858/"))
+            using (var client = new KbClient(_serverHost, _serverPort))
             {
                 client.Schema.DropIfExists("StackOverflow2010");
             }
@@ -79,7 +82,7 @@ namespace TestHarness
 
             //TestIndexCreationProductInventory();
 
-            //using KatzebaseClient client = new KatzebaseClient("http://localhost:6858/");
+            //using KatzebaseClient client = new KatzebaseClient("localhost", 6858);
             //client.Query.ExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)");
             //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)");
             //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299 AND productid = 366");
@@ -109,39 +112,41 @@ namespace TestHarness
 
         static void TestSproc()
         {
-            using var client = new KbClient("http://localhost:6858/");
+            using var client = new KbClient(_serverHost, _serverPort);
 
             var procedure = new KbProcedure("AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName");
             procedure.Parameters.Add("ProductColor", "Test-Color");
             var result = client.Procedure.Execute(procedure);
 
-            if (result.Fields.Count > 0)
+            foreach (var resultSet in result.Collection)
             {
-                foreach (var field in result.Fields)
-                {
-                    Console.Write($"[{field.Name}] ");
-                }
-                Console.WriteLine();
-            }
 
-            if (result.Rows.Count > 0)
-            {
-                foreach (var row in result.Rows)
+                if (resultSet.Fields.Count > 0)
                 {
-                    foreach (var value in row.Values)
+                    foreach (var field in resultSet.Fields)
                     {
-                        Console.Write($"'{value}' ");
+                        Console.Write($"[{field.Name}] ");
                     }
                     Console.WriteLine();
+                }
+
+                if (resultSet.Rows.Count > 0)
+                {
+                    foreach (var row in resultSet.Rows)
+                    {
+                        foreach (var value in row.Values)
+                        {
+                            Console.Write($"'{value}' ");
+                        }
+                        Console.WriteLine();
+                    }
                 }
             }
         }
 
         static void TestAllAPIs()
         {
-            using var client = new KbClient("http://localhost:6858/");
-
-            client.Server.Ping();
+            using var client = new KbClient(_serverHost, _serverPort);
 
             client.Schema.Create("TestAllAPIs");
             client.Schema.Create("TestAllAPIs:SubSchema");
@@ -194,7 +199,7 @@ namespace TestHarness
 
         private static KbQueryResultCollection TestExecuteQuery(string queryText)
         {
-            using var client = new KbClient("http://localhost:6858/");
+            using var client = new KbClient(_serverHost, _serverPort);
             return client.Query.ExecuteQuery(queryText);
         }
 
@@ -204,7 +209,7 @@ namespace TestHarness
 
         private static void TestIndexCreationProductInventory()
         {
-            using var client = new KbClient("http://localhost:6858/");
+            using var client = new KbClient(_serverHost, _serverPort);
 
             string? schemaPath = "AdventureWorks2012:Production:ProductSubcategory";
 
@@ -230,7 +235,7 @@ namespace TestHarness
 
         private static void TestIndexCreationStateProvince()
         {
-            using var client = new KbClient("http://localhost:6858/");
+            using var client = new KbClient(_serverHost, _serverPort);
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
             string? schemaPath = "AdventureWorks2012:Person:StateProvince";
@@ -259,7 +264,7 @@ namespace TestHarness
 
         private static void TestIndexCreationPerson()
         {
-            using var client = new KbClient("http://localhost:6858/");
+            using var client = new KbClient(_serverHost, _serverPort);
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
             string? schemaPath = "AdventureWorks2012:Person:Person";
@@ -287,7 +292,7 @@ namespace TestHarness
         #region TestIndexDocumentDeletion.
         private static void TestIndexDocumentDeletion()
         {
-            using var client = new KbClient("http://localhost:6858/");
+            using var client = new KbClient(_serverHost, _serverPort);
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
             string? schemaPath = "Students:Indexing";
@@ -377,7 +382,7 @@ namespace TestHarness
         #region TestAddDocumentsCreateIndex.
         private static void TestAddDocumentsCreateIndex()
         {
-            using var client = new KbClient("http://localhost:6858/");
+            using var client = new KbClient(_serverHost, _serverPort);
 
             Console.WriteLine("Session Started: {0}", client.SessionId);
             string? schemaPath = "Students:Indexing";
@@ -458,7 +463,7 @@ namespace TestHarness
         #region TestCreateIndexAddDocuments.
         private static void TestCreateIndexAddDocuments()
         {
-            using var client = new KbClient("http://localhost:6858/");
+            using var client = new KbClient(_serverHost, _serverPort);
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
             string? schemaPath = "Students:Indexing";
@@ -542,7 +547,7 @@ namespace TestHarness
 
         static void StressTestThreadProc()
         {
-            using var client = new KbClient("http://localhost:6858/");
+            using var client = new KbClient(_serverHost, _serverPort);
 
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
@@ -627,7 +632,7 @@ namespace TestHarness
 
         static void TestCreateAllAdventureWorks2012Indexes()
         {
-            using var client = new KbClient("http://localhost:6858/");
+            using var client = new KbClient(_serverHost, _serverPort);
             Console.WriteLine("Session Started: {0}", client.SessionId);
 
             client.Transaction.Begin();
