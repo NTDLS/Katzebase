@@ -14,7 +14,7 @@ namespace Benchmark
         const string _ScriptsPath = @"..\..\..\Scripts";
         const string _DataPath = @"..\..\..\Data";
         const string _ServicePath = @"..\..\..\..\Katzebase.Service\bin\Release\net7.0\Katzebase.Service.exe";
-        const string _serverHost = "localhost";
+        const string _serverHost = "127.0.0.1";
         const int _serverPort = 6858;
 
         static void Main()

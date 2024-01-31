@@ -293,7 +293,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (schemaName.StartsWith('#'))
                 {
                     var session = _core.Sessions.ByProcessId(transaction.ProcessId);
-                    schemaName = $"Temporary:{schemaName.Substring(1).Replace(':', '_')}_{session.SessionId}";
+                    schemaName = $"Temporary:{schemaName.Substring(1).Replace(':', '_')}_{session.ConnectionId}";
                     isTemporary = true;
                 }
 
@@ -371,7 +371,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (schemaName.StartsWith('#'))
                 {
                     var session = _core.Sessions.ByProcessId(transaction.ProcessId);
-                    schemaName = $"Temporary:{schemaName.Substring(1).Replace(':', '_')}_{session.SessionId}";
+                    schemaName = $"Temporary:{schemaName.Substring(1).Replace(':', '_')}_{session.ConnectionId}";
                     isTemporary = true;
                 }
 

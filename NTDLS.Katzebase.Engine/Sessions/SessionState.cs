@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// <summary>
         /// SessionId is produced by the client.
         /// </summary>
-        public Guid SessionId { get; set; }
+        public Guid ConnectionId { get; set; }
 
         /// <summary>
         /// A user supplied client name to assist in identifying connection sources.
@@ -70,10 +70,10 @@ namespace NTDLS.Katzebase.Engine.Sessions
             return null;
         }
 
-        public SessionState(ulong processId, Guid sessionId)
+        public SessionState(ulong processId, Guid connectionId)
         {
             ProcessId = processId;
-            SessionId = sessionId;
+            ConnectionId = connectionId;
         }
     }
 }

@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.UI
 
         private void FormConnect_Load(object sender, EventArgs e)
         {
-            textBoxServerAddress.Text = "localhost";
+            textBoxServerAddress.Text = "127.0.0.1";
             textBoxPort.Text = "6858";
 
             AcceptButton = buttonConnect;

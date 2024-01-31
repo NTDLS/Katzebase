@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Company>NetworkDLS</Company>
     <Copyright>Copyright © 2024 NetworkDLS</Copyright>
-    <Version>0.7.0.0</Version>
+    <Version>0.8.0.0</Version>
     <Authors>NetworkDLS</Authors>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
     <StartupObject>NTDLS.Katzebase.SQLServerMigration.Program</StartupObject>
@@ -24,11 +24,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="170.23.0" />
+    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.2.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
   </ItemGroup>
 
   <ItemGroup>

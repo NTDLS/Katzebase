@@ -1,7 +1,7 @@
 [Setup]
 ;-- Main Setup Information
  AppName                          = Katzebase Client
- AppVerName                       = Katzebase Client 0.7.0.0
+ AppVerName                       = Katzebase Client 0.8.0.0
  AppCopyright                     = Copyright © 2024 NetworkDLS.
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase\UI
  DefaultGroupName                 = NetworkDLS\Katzebase
@@ -19,7 +19,7 @@
  AppPublisher    = NetworkDLS
  AppPublisherURL = http://www.NetworkDLS.com/
  AppUpdatesURL   = http://www.NetworkDLS.com/
- AppVersion      = 0.7.0.0
+ AppVersion      = 0.8.0.0
 
 [Components]
  Name: "Client";         Description: "Client";                     Types: Full Compact Custom; Flags: Fixed;

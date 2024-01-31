@@ -157,7 +157,7 @@
             textBoxServer.Name = "textBoxServer";
             textBoxServer.Size = new Size(224, 23);
             textBoxServer.TabIndex = 4;
-            textBoxServer.Text = "localhost";
+            textBoxServer.Text = "127.0.0.1";
             // 
             // checkBoxSSLConnection
             // 

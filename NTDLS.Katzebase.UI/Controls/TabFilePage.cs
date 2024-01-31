@@ -225,7 +225,7 @@ namespace NTDLS.Katzebase.UI.Controls
             }
 
 
-            Client.Server.TerminateProcess(Client.ServerProcessId);
+            Client.Server.TerminateProcess(Client.ProcessId);
         }
 
         /// <summary>

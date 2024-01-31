@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.UI
             var tabFilePage = CurrentTabFilePage();
 
             toolStripStatusLabelServerName.Text = $"Server: {tabFilePage?.Client?.Host}:{tabFilePage?.Client?.Port}";
-            toolStripStatusLabelProcessId.Text = "PID: " + tabFilePage?.Client?.ServerProcessId.ToString("N0") ?? string.Empty;
+            toolStripStatusLabelProcessId.Text = "PID: " + tabFilePage?.Client?.ProcessId.ToString("N0") ?? string.Empty;
 
             bool isTabOpen = (tabFilePage != null);
             bool isTextSelected = (tabFilePage != null) && (tabFilePage?.Editor?.SelectionLength > 0);

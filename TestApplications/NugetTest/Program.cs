@@ -5,7 +5,7 @@ namespace NugetTest
 {
     internal class Program
     {
-        const string _serverHost = "localhost";
+        const string _serverHost = "127.0.0.1";
         const int _serverPort = 6858;
 
         static void Main()

@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Payloads.Queries;
+﻿using NTDLS.Katzebase.Client.Payloads.RoundTrip;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
@@ -23,16 +23,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryServerStartSessionReply StartSession(Guid sessionId)
+        public KbQueryServerStartSessionReply StartSession(Guid connectionId)
         {
             try
             {
-                var processId = _core.Sessions.UpsertSessionId(sessionId);
+                var processId = _core.Sessions.UpsertConnectionId(connectionId);
 
                 var result = new KbQueryServerStartSessionReply
                 {
                     ProcessId = processId,
-                    SessionId = sessionId,
+                    ConnectionId = connectionId,
                     ServerTimeUTC = DateTime.UtcNow,
                     Success = true
                 };
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to start session for session id {sessionId}.", ex);
+                _core.Log.Write($"Failed to start session for session id {connectionId}.", ex);
                 throw;
             }
         }

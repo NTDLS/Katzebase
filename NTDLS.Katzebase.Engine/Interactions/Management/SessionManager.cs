@@ -38,15 +38,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _collection.Read((obj) => obj.ToDictionary(o => o.Key, o => o.Value));
         }
 
-        public ulong UpsertSessionId(Guid sessionId, string clientName = "")
+        public ulong UpsertConnectionId(Guid connectionId, string clientName = "")
         {
             return _collection.Write((obj) =>
             {
                 try
                 {
-                    if (obj.ContainsKey(sessionId))
+                    if (obj.ContainsKey(connectionId))
                     {
-                        var session = obj[sessionId];
+                        var session = obj[connectionId];
                         session.LastCheckinTime = DateTime.UtcNow;
                         return session.ProcessId;
                     }
@@ -54,19 +54,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         ulong processId = _nextProcessId++;
 
-                        var session = new SessionState(processId, sessionId)
+                        var session = new SessionState(processId, connectionId)
                         {
                             ClientName = clientName
                         }
                         ;
-                        obj.Add(sessionId, session);
+                        obj.Add(connectionId, session);
                         return processId;
                     }
 
                 }
                 catch (Exception ex)
                 {
-                    _core.Log.Write($"Failed to upsert session for session {sessionId}.", ex);
+                    _core.Log.Write($"Failed to upsert session for session {connectionId}.", ex);
                     throw;
                 }
             });
@@ -90,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var session = obj.Where(o => o.Value.ProcessId == processId).FirstOrDefault().Value;
                     if (session != null)
                     {
-                        obj.Remove(session.SessionId);
+                        obj.Remove(session.ConnectionId);
                     }
                 });
 

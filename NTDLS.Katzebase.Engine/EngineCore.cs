@@ -41,61 +41,61 @@ namespace NTDLS.Katzebase.Engine
 
             Assembly assembly = Assembly.GetExecutingAssembly();
             FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
-            Log.Write($"{fileVersionInfo.ProductName} v{fileVersionInfo.ProductVersion} PID:{Process.GetCurrentProcess().Id}");
+            Log.Verbose($"{fileVersionInfo.ProductName} v{fileVersionInfo.ProductVersion} PID:{Process.GetCurrentProcess().Id}");
 
-            Log.Write("Initializing cache manager.");
+            Log.Verbose("Initializing cache manager.");
             Cache = new CacheManager(this);
 
-            Log.Write("Initializing IO manager.");
+            Log.Verbose("Initializing IO manager.");
             IO = new IOManager(this);
 
-            Log.Write("Initializing health manager.");
+            Log.Verbose("Initializing health manager.");
             Health = new HealthManager(this);
 
-            Log.Write("Initializing environment manager.");
+            Log.Verbose("Initializing environment manager.");
             Environment = new EnvironmentManager(this);
 
-            Log.Write("Initializing index manager.");
+            Log.Verbose("Initializing index manager.");
             Indexes = new IndexManager(this);
 
-            Log.Write("Initializing session manager.");
+            Log.Verbose("Initializing session manager.");
             Sessions = new SessionManager(this);
 
-            Log.Write("Initializing lock manager.");
+            Log.Verbose("Initializing lock manager.");
             Locking = new LockManager(this);
 
-            Log.Write("Initializing transaction manager.");
+            Log.Verbose("Initializing transaction manager.");
             Transactions = new TransactionManager(this);
 
-            Log.Write("Initializing schema manager.");
+            Log.Verbose("Initializing schema manager.");
             Schemas = new SchemaManager(this);
 
-            Log.Write("Initializing document manager.");
+            Log.Verbose("Initializing document manager.");
             Documents = new DocumentManager(this);
 
-            Log.Write("Initializing query manager.");
+            Log.Verbose("Initializing query manager.");
             Query = new QueryManager(this);
 
-            Log.Write("Initializing thread pool manager.");
+            Log.Verbose("Initializing thread pool manager.");
             ThreadPool = new ThreadPoolManager(this);
 
-            Log.Write("Initializing procedure manager.");
+            Log.Verbose("Initializing procedure manager.");
             Procedures = new ProcedureManager(this);
 
         }
 
         public void Start()
         {
-            Log.Write("Starting the server.");
+            Log.Verbose("Starting the server.");
 
-            Log.Write("Starting recovery.");
+            Log.Verbose("Starting recovery.");
             Transactions.Recover();
-            Log.Write("Recovery complete.");
+            Log.Verbose("Recovery complete.");
         }
 
         public void Stop()
         {
-            Log.Write("Stopping the server.");
+            Log.Verbose("Stopping the server.");
 
             ThreadPool.Stop();
             Cache.Close();
