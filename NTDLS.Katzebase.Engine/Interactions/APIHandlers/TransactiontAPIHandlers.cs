@@ -23,10 +23,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryTransactionCommitReply Begin(ulong processId)
+        public KbQueryTransactionBeginReply Begin(ulong processId)
         {
             _core.Transactions.Acquire(processId, true);
-            return new KbQueryTransactionCommitReply()
+            return new KbQueryTransactionBeginReply()
             {
                 Success = true,
             };

@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             CycleLog();
         }
 
-        public void Write(Exception ex) => Write(new LogEntry(ex.Message) { Severity = KbLogSeverity.Exception });
+        public void Exception(Exception ex) => Write(new LogEntry(ex.Message) { Severity = KbLogSeverity.Exception });
         public void Verbose(string message) => Write(new LogEntry(message) { Severity = KbLogSeverity.Verbose });
         public void Trace(string message) => Write(new LogEntry(message) { Severity = KbLogSeverity.Trace });
         public void Write(string message, Exception ex) => Write(new LogEntry(message) { Exception = ex, Severity = KbLogSeverity.Exception });

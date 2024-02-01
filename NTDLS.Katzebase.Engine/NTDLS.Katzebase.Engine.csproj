@@ -21,7 +21,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NTDLS.DelegateThreadPooling" Version="1.2.9" />
     <PackageReference Include="NTDLS.FastMemoryCache" Version="1.5.1" />
-    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.2.0" />
+    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.2.5" />
     <PackageReference Include="NTDLS.Semaphore" Version="3.3.0" />
     <PackageReference Include="protobuf-net" Version="3.2.30" />
   </ItemGroup>

@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Server
             }
             catch (Exception ex)
             {
-                _core?.Log.Write(ex);
+                _core?.Log.Exception(ex);
                 throw;
             }
         }
@@ -85,7 +85,7 @@ namespace NTDLS.Katzebase.Server
             }
             catch (Exception ex)
             {
-                _core?.Log.Write(ex);
+                _core?.Log.Exception(ex);
                 throw;
             }
         }
@@ -100,7 +100,7 @@ namespace NTDLS.Katzebase.Server
             }
             catch (Exception ex)
             {
-                _core?.Log.Write(ex);
+                _core?.Log.Exception(ex);
                 throw;
             }
         }
@@ -116,7 +116,7 @@ namespace NTDLS.Katzebase.Server
 
         private void MessageServer_OnException(MessageServer client, Guid connectionId, Exception ex, IFramePayload? payload)
         {
-            throw new NotImplementedException();
+            _core?.Log?.Exception(ex);
         }
 
         private IFramePayloadQueryReply MessageServer_OnQueryReceived(MessageServer server, Guid connectionId, IFramePayloadQuery payload)

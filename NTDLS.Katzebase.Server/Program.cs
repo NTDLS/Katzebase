@@ -1,4 +1,3 @@
-using NTDLS.Katzebase.Server;
 using Topshelf;
 using Topshelf.ServiceConfigurators;
 
@@ -11,7 +10,7 @@ namespace NTDLS.Katzebase.Server
             private SemaphoreSlim _semaphoreToRequestStop;
             private Thread _thread;
 
-            public KatzebaseService(ServiceConfigurator< KatzebaseService> s )
+            public KatzebaseService(ServiceConfigurator<KatzebaseService> s)
             {
                 _semaphoreToRequestStop = new SemaphoreSlim(0);
                 _thread = new Thread(DoWork);
