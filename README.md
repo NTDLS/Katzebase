@@ -1,4 +1,4 @@
-# Katzebase Server
+# Katzebase : Server
 ![Icon128](https://github.com/NTDLS/NTDLS.Katzebase.Server/assets/11428567/36bf8f56-0500-41b4-93de-044a062b0911)
 
 - **Server / Service** code and releases: https://github.com/NTDLS/NTDLS.Katzebase.Server
