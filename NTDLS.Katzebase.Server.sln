@@ -24,7 +24,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NugetTest", "TestApplicatio
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Installer", "Installer", "{E15F84FB-63C7-47E4-B894-CFC6B4FBB2A0}"
 	ProjectSection(SolutionItems) = preProject
-		@Installers\Server.Iss = @Installers\Server.Iss
+		@Installers\Setup.Iss = @Installers\Setup.Iss
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.Server", "NTDLS.Katzebase.Server\NTDLS.Katzebase.Server.csproj", "{6BCF1E2A-EA51-452A-8CE0-1E975F57C285}"
