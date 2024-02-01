@@ -1,5 +1,6 @@
 using NTDLS.Katzebase.Server;
 using Topshelf;
+using Topshelf.ServiceConfigurators;
 
 namespace NTDLS.Katzebase.Server
 {
@@ -10,7 +11,7 @@ namespace NTDLS.Katzebase.Server
             private SemaphoreSlim _semaphoreToRequestStop;
             private Thread _thread;
 
-            public KatzebaseService()
+            public KatzebaseService(ServiceConfigurator< KatzebaseService> s )
             {
                 _semaphoreToRequestStop = new SemaphoreSlim(0);
                 _thread = new Thread(DoWork);
@@ -29,20 +30,27 @@ namespace NTDLS.Katzebase.Server
 
             private void DoWork()
             {
-                var apiService = new APIService();
-
-                apiService.Start();
-
-                while (true)
+                try
                 {
-                    if (_semaphoreToRequestStop.Wait(500))
+                    var apiService = new APIService();
+
+                    apiService.Start();
+
+                    while (true)
                     {
-                        apiService.Stop();
-                        break;
+                        if (_semaphoreToRequestStop.Wait(500))
+                        {
+                            apiService.Stop();
+                            break;
+                        }
                     }
                 }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occured while starting or the service: {ex.Message}");
+                    return;
+                }
             }
-
         }
 
         public static void Main()
@@ -58,7 +66,7 @@ namespace NTDLS.Katzebase.Server
 
                 x.Service<KatzebaseService>(s =>
                 {
-                    s.ConstructUsing(hostSettings => new KatzebaseService());
+                    s.ConstructUsing(hostSettings => new KatzebaseService(s));
                     s.WhenStarted(tc => tc.Start());
                     s.WhenStopped(tc => tc.Stop());
                 });
