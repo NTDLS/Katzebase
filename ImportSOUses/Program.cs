@@ -8,14 +8,14 @@ namespace ImportSOUses
         static void Main()
         {
             using var client = new KbClient("127.0.0.1", 6858);
-            client.Schema.Create("SOUsers");
+            client.Schema.Create("SoUsers");
 
             client.Transaction.Begin();
 
             int rowCount = 0;
-            int rowsPerTransaction = 10000;
+            int rowsPerTransaction = 1000;
 
-            using (XmlReader reader = XmlReader.Create("C:\\Users\\ntdls\\Downloads\\stackexchange\\Users.xml"))
+            using (XmlReader reader = XmlReader.Create("C:\\Katzebase\\@External\\Users.xml"))
             {
                 while (reader.Read())
                 {
@@ -36,11 +36,11 @@ namespace ImportSOUses
                             DownVotes = reader.GetAttribute("DownVotes")
                         };
 
-                        client.Document.Store("SOUsers", record);
+                        client.Document.Store("SoUsers", record);
 
                         if (rowCount++ > 0 && (rowCount % rowsPerTransaction) == 0)
                         {
-                            Console.WriteLine("Comitting...");
+                            Console.WriteLine($"Comitting... {rowCount}");
                             client.Transaction.Commit();
                             client.Transaction.Begin();
                         }

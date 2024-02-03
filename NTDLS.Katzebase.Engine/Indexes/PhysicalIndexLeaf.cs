@@ -4,7 +4,7 @@ using ProtoBuf;
 namespace NTDLS.Katzebase.Engine.Indexes
 {
     [ProtoContract]
-    internal class PhysicalIndexLeaf
+    public class PhysicalIndexLeaf
     {
         [ProtoMember(1)]
         public KbInsensitiveDictionary<PhysicalIndexLeaf> Children { get; set; } = new();

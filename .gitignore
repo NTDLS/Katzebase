@@ -111,3 +111,7 @@ NTDLS.Katzebase.Server/obj/
 ImportSOUses/bin/
 
 ImportSOUses/obj/
+
+DatabaseObjectViewer/bin/
+
+DatabaseObjectViewer/obj/
