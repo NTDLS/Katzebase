@@ -1,4 +1,4 @@
-namespace DatabaseObjectViewer
+namespace NTDLS.Katzebase.ObjectViewer
 {
     internal static class Program
     {

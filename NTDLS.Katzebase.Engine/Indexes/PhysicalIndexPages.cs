@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
     public class PhysicalIndexPages
     {
         [ProtoMember(1)]
-        internal PhysicalIndexLeaf Root = new();
+        public PhysicalIndexLeaf Root = new();
 
         public PhysicalIndexPages()
         {

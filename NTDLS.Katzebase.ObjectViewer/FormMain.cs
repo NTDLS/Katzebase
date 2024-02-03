@@ -1,24 +1,37 @@
 using Newtonsoft.Json;
 using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Indexes;
-using System;
+using NTDLS.Katzebase.Engine.Schemas;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace DatabaseObjectViewer
+namespace NTDLS.Katzebase.ObjectViewer
 {
     public partial class FormMain : Form
     {
-        private readonly List<Type> _types = new()
+        class TypeMapping
         {
-            typeof(PhysicalDocument),
-            typeof(PhysicalDocumentPage),
-            typeof(PhysicalDocumentPageCatalog),
-            typeof(PhysicalDocumentPageCatalogItem),
-            typeof(PhysicalDocumentPageMap),
-            typeof(PhysicalIndex),
-            typeof(PhysicalIndexCatalog),
-            typeof(PhysicalIndexEntry),
-            typeof(PhysicalIndexLeaf),
-            typeof(PhysicalIndexPages)
+            public string Identifier { get; set; }
+            public IOFormat Format { get; set; }
+            public Type Type { get; set; }
+
+            public TypeMapping(string identifier, Type type, IOFormat format)
+            {
+                Identifier = identifier.ToLower();
+                Type = type;
+                Format = format;
+            }
+        }
+
+        private readonly List<TypeMapping> _types = new()
+        {
+            new TypeMapping(".kbixpage", typeof(PhysicalIndexPages), IOFormat.PBuf),
+            new TypeMapping(".kbpage", typeof(PhysicalDocumentPage), IOFormat.PBuf),
+            new TypeMapping(".kbmap", typeof(PhysicalDocumentPageMap), IOFormat.PBuf),
+            new TypeMapping("@schemas.kbcat", typeof(PhysicalSchemaCatalog), IOFormat.JSON),
+            new TypeMapping("@pages.kbcat", typeof(PhysicalDocumentPageCatalog), IOFormat.PBuf),
+            new TypeMapping("@indexes.kbcat", typeof(PhysicalIndexCatalog), IOFormat.JSON),
+            new TypeMapping("@procedures.kbcat", typeof(PhysicalProcedureCatalog), IOFormat.JSON),
         };
 
         public FormMain()
@@ -32,9 +45,6 @@ namespace DatabaseObjectViewer
             AllowDrop = true;
             DragEnter += TextBoxFile_DragEnter;
             DragDrop += TextBoxFile_DragDrop;
-
-            comboBoxType.Items.Add("<unknown>");
-            _types.Select(o => o.Name).Order().ToList().ForEach(t => comboBoxType.Items.Add(t));
 
             Resize += FormMain_Resize;
 
@@ -72,26 +82,40 @@ namespace DatabaseObjectViewer
             }
         }
 
-        private void ProcessFile(string fileName)
+        private void ProcessFile(string filePath)
         {
-            foreach (var type in _types)
+            try
             {
-                if (ProcessFilePBuf(fileName, type, out var friendlyText))
+                var typeMapping = _types.Where(o => o.Identifier == Path.GetFileName(filePath).ToLower()
+                || o.Identifier == Path.GetExtension(filePath).ToLower()).ToList().FirstOrDefault();
+                if (typeMapping != null)
                 {
-                    textBoxObject.Text = friendlyText;
-                    comboBoxType.Text = type.Name;
-                    return;
-                }
-                else if (ProcessFileJson(fileName, type, out friendlyText))
-                {
-                    textBoxObject.Text = friendlyText;
-                    comboBoxType.Text = type.Name;
-                    return;
+                    if (typeMapping.Format == IOFormat.PBuf)
+                    {
+                        if (ProcessFilePBuf(filePath, typeMapping.Type, out var friendlyText))
+                        {
+                            textBoxObject.Text = friendlyText;
+                            textBoxType.Text = typeMapping.Type.Name;
+                            return;
+                        }
+                    }
+                    else if (typeMapping.Format == IOFormat.JSON)
+                    {
+                        if (ProcessFileJson(filePath, typeMapping.Type, out var friendlyText))
+                        {
+                            textBoxObject.Text = friendlyText;
+                            textBoxType.Text = typeMapping.Type.Name;
+                            return;
+                        }
+                    }
                 }
             }
+            catch
+            {
+            }
 
-            textBoxObject.Text = $"Could not desearilize the object: '{fileName}'.";
-            comboBoxType.Text = "<unknown>";
+            textBoxObject.Text = $"Could not desearilize the object: '{filePath}'.";
+            textBoxType.Text = "<unknown>";
         }
 
         private bool ProcessFilePBuf(string fileName, Type type, out string friendlyText)
@@ -105,7 +129,7 @@ namespace DatabaseObjectViewer
                     var serializedData = NTDLS.Katzebase.Engine.Library.Compression.Deflate.Decompress(fileBytes);
                     fileBytes = serializedData;
                 }
-                catch {}
+                catch { }
 
                 using var input = new MemoryStream(fileBytes);
 
@@ -115,7 +139,7 @@ namespace DatabaseObjectViewer
 
                 var deserializedObject = deserializeMethod?.Invoke(null, new object[] { input });
 
-                friendlyText = JsonConvert.SerializeObject(deserializedObject, Newtonsoft.Json.Formatting.Indented);
+                friendlyText = JsonConvert.SerializeObject(deserializedObject, Formatting.Indented);
                 return true;
             }
             catch
@@ -138,7 +162,7 @@ namespace DatabaseObjectViewer
                 // Invoke the DeserializeObject method to deserialize the JSON string
                 var deserializedObject = deserializeMethod?.Invoke(null, new object[] { serializedData, type });
 
-                friendlyText = Newtonsoft.Json.JsonConvert.SerializeObject(deserializedObject, Newtonsoft.Json.Formatting.Indented);
+                friendlyText = JsonConvert.SerializeObject(deserializedObject, Formatting.Indented);
                 return true;
             }
             catch

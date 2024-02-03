@@ -13,6 +13,7 @@ namespace NTDLS.Katzebase.Engine.Documents
     [ProtoContract]
     public class PhysicalDocument
     {
+        [ProtoMember(1)]
         [ProtoIgnore]
         private KbInsensitiveDictionary<string?>? _dictionary = null;
 

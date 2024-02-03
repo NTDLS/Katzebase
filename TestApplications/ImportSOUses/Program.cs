@@ -13,7 +13,7 @@ namespace ImportSOUses
             client.Transaction.Begin();
 
             int rowCount = 0;
-            int rowsPerTransaction = 1000;
+            int rowsPerTransaction = 10000;
 
             using (XmlReader reader = XmlReader.Create("C:\\Katzebase\\@External\\Users.xml"))
             {

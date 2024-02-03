@@ -1,4 +1,4 @@
-﻿namespace DatabaseObjectViewer
+﻿namespace NTDLS.Katzebase.ObjectViewer
 {
     partial class FormMain
     {
@@ -32,9 +32,9 @@
             textBoxFile = new TextBox();
             labelFile = new Label();
             labelType = new Label();
-            comboBoxType = new ComboBox();
             textBoxObject = new TextBox();
             buttonBrowse = new Button();
+            textBoxType = new TextBox();
             SuspendLayout();
             // 
             // textBoxFile
@@ -62,15 +62,6 @@
             labelType.TabIndex = 2;
             labelType.Text = "Type";
             // 
-            // comboBoxType
-            // 
-            comboBoxType.DropDownStyle = ComboBoxStyle.DropDownList;
-            comboBoxType.FormattingEnabled = true;
-            comboBoxType.Location = new Point(49, 55);
-            comboBoxType.Name = "comboBoxType";
-            comboBoxType.Size = new Size(391, 23);
-            comboBoxType.TabIndex = 3;
-            // 
             // textBoxObject
             // 
             textBoxObject.Location = new Point(49, 98);
@@ -91,14 +82,22 @@
             buttonBrowse.UseVisualStyleBackColor = true;
             buttonBrowse.Click += buttonBrowse_Click;
             // 
+            // textBoxType
+            // 
+            textBoxType.Location = new Point(49, 55);
+            textBoxType.Name = "textBoxType";
+            textBoxType.ReadOnly = true;
+            textBoxType.Size = new Size(391, 23);
+            textBoxType.TabIndex = 6;
+            // 
             // FormMain
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(781, 479);
+            Controls.Add(textBoxType);
             Controls.Add(buttonBrowse);
             Controls.Add(textBoxObject);
-            Controls.Add(comboBoxType);
             Controls.Add(labelType);
             Controls.Add(labelFile);
             Controls.Add(textBoxFile);
@@ -106,7 +105,7 @@
             Name = "FormMain";
             SizeGripStyle = SizeGripStyle.Show;
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Object Viewer";
+            Text = "Katzebase Object Viewer";
             ResumeLayout(false);
             PerformLayout();
         }
@@ -116,8 +115,8 @@
         private TextBox textBoxFile;
         private Label labelFile;
         private Label labelType;
-        private ComboBox comboBoxType;
         private TextBox textBoxObject;
         private Button buttonBrowse;
+        private TextBox textBoxType;
     }
 }
