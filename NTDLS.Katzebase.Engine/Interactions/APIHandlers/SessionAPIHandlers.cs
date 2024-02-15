@@ -1,11 +1,12 @@
 ﻿using NTDLS.Katzebase.Client.Payloads.RoundTrip;
+using NTDLS.ReliableMessaging;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
     /// <summary>
     /// Public class methods for handling API requests related to sessions.
     /// </summary>
-    public class SessionAPIHandlers
+    public class SessionAPIHandlers : IRmMessageHandler
     {
         private readonly EngineCore _core;
 
@@ -23,16 +24,21 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryServerStartSessionReply StartSession(Guid connectionId)
+        public KbQueryServerStartSessionReply StartSession(RmContext context, KbQueryServerStartSession param)
         {
             try
             {
-                var processId = _core.Sessions.UpsertConnectionId(connectionId);
+                var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+
+#if DEBUG
+                Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+                _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
 
                 var result = new KbQueryServerStartSessionReply
                 {
                     ProcessId = processId,
-                    ConnectionId = connectionId,
+                    ConnectionId = context.ConnectionId,
                     ServerTimeUTC = DateTime.UtcNow,
                     Success = true
                 };
@@ -41,13 +47,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to start session for session id {connectionId}.", ex);
+                _core.Log.Write($"Failed to start session for session id {context.ConnectionId}.", ex);
                 throw;
             }
         }
 
-        public KbQueryServerCloseSessionReply CloseSession(ulong processId)
+        public KbQueryServerCloseSessionReply CloseSession(RmContext context, KbQueryServerCloseSession param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 _core.Sessions.CloseByProcessId(processId);
@@ -66,8 +77,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryServerTerminateProcessReply TerminateSession(ulong processId, KbQueryServerTerminateProcess param)
+        public KbQueryServerTerminateProcessReply TerminateSession(RmContext context, KbQueryServerTerminateProcess param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 _core.Sessions.CloseByProcessId(param.ReferencedProcessId);

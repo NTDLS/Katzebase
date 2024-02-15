@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Payloads.RoundTrip;
 using NTDLS.Katzebase.Engine.Query.Searchers;
+using NTDLS.ReliableMessaging;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
@@ -8,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to documents.
     /// </summary>
-    public class DocumentAPIHandlers
+    public class DocumentAPIHandlers : IRmMessageHandler
     {
         private readonly EngineCore _core;
 
@@ -26,8 +27,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryDocumentSampleReply DocumentSample(ulong processId, KbQueryDocumentSample param)
+        public KbQueryDocumentSampleReply DocumentSample(RmContext context, KbQueryDocumentSample param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -48,8 +54,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schemaName"></param>
         /// <param name="rowLimit"></param>
         /// <returns></returns>
-        public KbQueryDocumentListReply ListDocuments(ulong processId, KbQueryDocumentList param)
+        public KbQueryDocumentListReply ListDocuments(RmContext context, KbQueryDocumentList param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -78,8 +89,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="document"></param>
         /// <param name="newId"></param>
         /// <exception cref="KbObjectNotFoundException"></exception>
-        public KbQueryDocumentStoreReply StoreDocument(ulong processId, KbQueryDocumentStore param)
+        public KbQueryDocumentStoreReply StoreDocument(RmContext context, KbQueryDocumentStore param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -104,8 +120,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schema"></param>
         /// <returns></returns>
         /// <exception cref="KbObjectNotFoundException"></exception>
-        public KbQueryDocumentCatalogReply DocumentCatalog(ulong processId, KbQueryDocumentCatalog param)
+        public KbQueryDocumentCatalogReply DocumentCatalog(RmContext context, KbQueryDocumentCatalog param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -125,8 +146,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <summary>
         /// Deletes a document by its ID.
         /// </summary>
-        public KbQueryDocumentDeleteByIdReply DeleteDocumentById(ulong processId, KbQueryDocumentDeleteById param)
+        public KbQueryDocumentDeleteByIdReply DeleteDocumentById(RmContext context, KbQueryDocumentDeleteById param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);

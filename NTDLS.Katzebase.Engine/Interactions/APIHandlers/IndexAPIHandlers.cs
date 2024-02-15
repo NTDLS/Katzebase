@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Payloads.RoundTrip;
 using NTDLS.Katzebase.Engine.Indexes;
+using NTDLS.ReliableMessaging;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
@@ -8,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to indexes.
     /// </summary>
-    public class IndexAPIHandlers
+    public class IndexAPIHandlers : IRmMessageHandler
     {
         private readonly EngineCore _core;
 
@@ -26,8 +27,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryIndexGetReply Get(ulong processId, KbQueryIndexGet param)
+        public KbQueryIndexGetReply Get(RmContext context, KbQueryIndexGet param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -50,8 +56,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryIndexListReply ListIndexes(ulong processId, KbQueryIndexList param)
+        public KbQueryIndexListReply ListIndexes(RmContext context, KbQueryIndexList param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -72,8 +83,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryIndexExistsReply DoesIndexExist(ulong processId, KbQueryIndexExists param)
+        public KbQueryIndexExistsReply DoesIndexExist(RmContext context, KbQueryIndexExists param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -88,8 +104,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryIndexCreateReply CreateIndex(ulong processId, KbQueryIndexCreate param)
+        public KbQueryIndexCreateReply CreateIndex(RmContext context, KbQueryIndexCreate param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -103,8 +124,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryIndexRebuildReply RebuildIndex(ulong processId, KbQueryIndexRebuild param)
+        public KbQueryIndexRebuildReply RebuildIndex(RmContext context, KbQueryIndexRebuild param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -118,8 +144,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryIndexDropReply DropIndex(ulong processId, KbQueryIndexDrop param)
+        public KbQueryIndexDropReply DropIndex(RmContext context, KbQueryIndexDrop param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);

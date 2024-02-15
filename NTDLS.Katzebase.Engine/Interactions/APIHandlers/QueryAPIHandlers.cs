@@ -1,12 +1,13 @@
 ﻿using NTDLS.Katzebase.Client.Payloads.RoundTrip;
 using NTDLS.Katzebase.Engine.Query;
+using NTDLS.ReliableMessaging;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
     /// <summary>
     /// Public class methods for handling API requests related to queries.
     /// </summary>
-    public class QueryAPIHandlers
+    public class QueryAPIHandlers : IRmMessageHandler
     {
         private readonly EngineCore _core;
 
@@ -24,8 +25,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryQueryExplainReply ExecuteStatementExplain(ulong processId, KbQueryQueryExplain param)
+        public KbQueryQueryExplainReply ExecuteStatementExplain(RmContext context, KbQueryQueryExplain param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             var results = new KbQueryQueryExplainReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
@@ -34,13 +40,23 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             return results;
         }
 
-        public KbQueryProcedureExecuteReply ExecuteStatementProcedure(ulong processId, KbQueryProcedureExecute param)
+        public KbQueryProcedureExecuteReply ExecuteStatementProcedure(RmContext context, KbQueryProcedureExecute param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             return (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(processId, param.Procedure);
         }
 
-        public KbQueryQueryExecuteQueryReply ExecuteStatementQuery(ulong processId, KbQueryQueryExecuteQuery param)
+        public KbQueryQueryExecuteQueryReply ExecuteStatementQuery(RmContext context, KbQueryQueryExecuteQuery param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             var results = new KbQueryQueryExecuteQueryReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
@@ -49,8 +65,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             return results;
         }
 
-        public KbQueryQueryExecuteQueriesReply ExecuteStatementQueries(ulong processId, KbQueryQueryExecuteQueries param)
+        public KbQueryQueryExecuteQueriesReply ExecuteStatementQueries(RmContext context, KbQueryQueryExecuteQueries param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             var results = new KbQueryQueryExecuteQueriesReply();
 
             foreach (var statement in param.Statements)
@@ -65,8 +86,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             return results;
         }
 
-        public KbQueryQueryExecuteNonQueryReply ExecuteStatementNonQuery(ulong processId, KbQueryQueryExecuteNonQuery param)
+        public KbQueryQueryExecuteNonQueryReply ExecuteStatementNonQuery(RmContext context, KbQueryQueryExecuteNonQuery param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             var results = new KbQueryQueryExecuteNonQueryReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {

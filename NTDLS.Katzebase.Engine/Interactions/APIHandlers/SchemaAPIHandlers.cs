@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads.RoundTrip;
 using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.ReliableMessaging;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -9,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to schema.
     /// </summary>
-    public class SchemaAPIHandlers
+    public class SchemaAPIHandlers : IRmMessageHandler
     {
         private readonly EngineCore _core;
 
@@ -27,8 +28,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQuerySchemaListReply ListSchemas(ulong processId, KbQuerySchemaList param)
+        public KbQuerySchemaListReply ListSchemas(RmContext context, KbQuerySchemaList param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -57,13 +63,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-
         /// <summary>
         /// Creates a structure of schemas, denotaed by colons.
         /// </summary>
         /// <param name="schemaPath"></param>
-        public KbQuerySchemaCreateReply CreateSchema(ulong processId, KbQuerySchemaCreate param)
+        public KbQuerySchemaCreateReply CreateSchema(RmContext context, KbQuerySchemaCreate param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -90,8 +100,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// Returns true if the schema exists.
         /// </summary>
         /// <param name="schemaPath"></param>
-        public KbQuerySchemaExistsReply DoesSchemaExist(ulong processId, KbQuerySchemaExists param)
+        public KbQuerySchemaExistsReply DoesSchemaExist(RmContext context, KbQuerySchemaExists param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
@@ -126,8 +141,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// Drops a single schema or an entire schema path.
         /// </summary>
         /// <param name="schema"></param>
-        public KbQuerySchemaDropReply DropSchema(ulong processId, KbQuerySchemaDrop param)
+        public KbQuerySchemaDropReply DropSchema(RmContext context, KbQuerySchemaDrop param)
         {
+            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            _core.Log.Trace(Thread.CurrentThread.Name);
+#endif
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(processId);
