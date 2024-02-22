@@ -20,7 +20,7 @@ Katzebase is an ACID compliant document-based database written in C# using .NET 
 - Document indexing.
 - Partitioning.
 - Logging and health monitoring.
-- SQL Query language with support for (field list, joins, top(count), where clause).
+- SQL Query language with support for field list, joins, top(count), where clause, grouping, aggregations, etc.
 
 
 ## Client Connectivity?
