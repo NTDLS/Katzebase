@@ -101,7 +101,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
                             result.AddField("Partition");
-                            result.AddField("AproximateSizeInBytes");
+                            result.AddField("ApproximateSizeInBytes");
                             result.AddField("Created");
                             result.AddField("GetCount");
                             result.AddField("LastGetDate");
