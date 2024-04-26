@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Documents
     /// </summary>
     [ProtoContract]
     [Serializable]
-    public class PhysicalDocumentPageMap
+    public struct PhysicalDocumentPageMap
     {
         public PhysicalDocumentPageMap() { }
 
