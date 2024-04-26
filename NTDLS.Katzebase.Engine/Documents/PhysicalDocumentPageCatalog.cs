@@ -12,8 +12,22 @@ namespace NTDLS.Katzebase.Engine.Documents
     {
         public PhysicalDocumentPageCatalog() { }
 
+        [ProtoIgnore]
+        private List<PhysicalDocumentPageCatalogItem>? _catalog;
+
         [ProtoMember(1)]
-        public List<PhysicalDocumentPageCatalogItem> Catalog { get; private set; } = [];
+        public List<PhysicalDocumentPageCatalogItem> Catalog
+        {
+            get
+            {
+                _catalog ??= new List<PhysicalDocumentPageCatalogItem>();
+                return _catalog;
+            }
+            set
+            {
+                _catalog = value;
+            }
+        }
 
         [ProtoMember(2)]
         public uint NextDocumentId { get; set; } = 0;
@@ -60,7 +74,7 @@ namespace NTDLS.Katzebase.Engine.Documents
         }
         */
 
-        public PhysicalDocumentPageCatalogItem? GetPageWithRoomForNewDocument(uint pageSize)
+        public PhysicalDocumentPageCatalogItem GetPageWithRoomForNewDocument(uint pageSize)
         {
             //TODO: Make the page size configurable.
             return Catalog.Where(o => o.DocumentCount < pageSize).FirstOrDefault();
