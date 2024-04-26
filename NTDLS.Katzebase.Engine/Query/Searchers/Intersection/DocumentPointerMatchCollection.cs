@@ -2,6 +2,7 @@
 
 namespace NTDLS.Katzebase.Engine.Query.Searchers.Intersection
 {
+    /*
     internal class DocumentPointerMatch : DocumentPointer
     {
         public DocumentPointerMatch(int pageNumber, uint documentId) : base(pageNumber, documentId)
@@ -26,4 +27,5 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Intersection
             }
         }
     }
+    */
 }
