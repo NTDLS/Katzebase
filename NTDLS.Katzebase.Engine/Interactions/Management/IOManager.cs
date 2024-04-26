@@ -104,6 +104,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
             => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out _, false);
 
+
         internal T InternalTrackedGet<T>(Transaction transaction, string filePath,
             LockOperation intendedOperation, IOFormat format, out ObjectLockKey? acquiredLockKey, bool useCompression = true)
         {
@@ -121,40 +122,40 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (_core.Settings.DeferredIOEnabled)
                     {
-                        var result = transaction.DeferredIOs.ReadNullable<T>((obj) =>
+                        var result = transaction.DeferredIOs.ReadNullable((obj) =>
                         {
                             var ptDeferredWriteRead = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredRead);
-                            var deferredIOObject = obj.GetDeferredDiskIO<T>(filePath);
+                            bool wasDeferred = obj.GetDeferredDiskIO<T>(filePath, out var reference);
                             ptDeferredWriteRead?.StopAndAccumulate();
 
-                            if (deferredIOObject != null)
+                            if (wasDeferred)
                             {
                                 _core.Health.Increment(HealthCounterType.IODeferredIOReads);
                                 _core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
-                                return deferredIOObject;
+                                return reference;
                             }
                             return default;
                         });
 
-                        if (result != null)
+                        if (Helpers.IsNotDefault(result))
                         {
-                            return (T)result;
+                            return result;
                         }
                     }
 
                     if (_core.Settings.CacheEnabled)
                     {
                         var ptCacheRead = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheRead);
-                        var cachedObject = _core.Cache.TryGet(filePath);
+                        bool cacheHit = _core.Cache.TryGet(filePath, out var cachedObject);
                         ptCacheRead?.StopAndAccumulate();
 
-                        if (cachedObject != null)
+                        if(cacheHit)
                         {
                             _core.Health.Increment(HealthCounterType.IOCacheReadHits);
                             _core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
-                            return (T)cachedObject;
+                            return (T?)cachedObject;
                         }
                     }
 
@@ -163,7 +164,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     _core.Log.Trace($"IO:Read:{transaction.ProcessId}->{filePath}");
 
                     T? deserializedObject;
-                    int aproximateSizeInBytes = 0;
+                    int approximateSizeInBytes = 0;
 
                     if (format == IOFormat.JSON)
                     {
@@ -177,7 +178,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         {
                             text = File.ReadAllText(filePath);
                         }
-                        aproximateSizeInBytes = text.Length;
+                        approximateSizeInBytes = text.Length;
                         ptIORead?.StopAndAccumulate();
 
                         var ptDeserialize = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.Deserialize);
@@ -190,14 +191,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         if (_core.Settings.UseCompression && useCompression)
                         {
                             var serializedData = Library.Compression.Deflate.Decompress(File.ReadAllBytes(filePath));
-                            aproximateSizeInBytes = serializedData.Length;
+                            approximateSizeInBytes = serializedData.Length;
                             using var input = new MemoryStream(serializedData);
                             deserializedObject = ProtoBuf.Serializer.Deserialize<T>(input);
                         }
                         else
                         {
                             using var file = File.OpenRead(filePath);
-                            aproximateSizeInBytes = (int)file.Length;
+                            approximateSizeInBytes = (int)file.Length;
                             deserializedObject = ProtoBuf.Serializer.Deserialize<T>(file);
                         }
                         ptIORead?.StopAndAccumulate();
@@ -210,7 +211,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (_core.Settings.CacheEnabled && deserializedObject != null)
                     {
                         var ptCacheWrite = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.CacheWrite);
-                        _core.Cache.Upsert(filePath, deserializedObject, aproximateSizeInBytes);
+                        _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes);
                         ptCacheWrite?.StopAndAccumulate();
                         _core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
                     }
@@ -237,6 +238,36 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region Putters.
 
+        internal void PutJsonNonTrackedButCached(string filePath, object deserializedObject, bool useCompression = true)
+        {
+            try
+            {
+                string text = JsonConvert.SerializeObject(deserializedObject);
+
+                int approximateSizeInBytes = text.Length;
+
+                if (_core.Settings.UseCompression && useCompression)
+                {
+                    File.WriteAllBytes(filePath, Library.Compression.Deflate.Compress(text));
+                }
+                else
+                {
+                    File.WriteAllText(filePath, text);
+                }
+
+                if (_core.Settings.CacheEnabled)
+                {
+                    _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes);
+                    _core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
+                }
+            }
+            catch (Exception ex)
+            {
+                _core.Log.Write($"Failed to put non-tracked json for file {filePath}.", ex);
+                throw;
+            }
+        }
+
         internal void PutJsonNonTracked(string filePath, object deserializedObject, bool useCompression = true)
         {
             try
@@ -253,6 +284,44 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             catch (Exception ex)
             {
                 _core.Log.Write($"Failed to put non-tracked json for file {filePath}.", ex);
+                throw;
+            }
+        }
+
+        internal void PutPBufNonTrackedButCached(string filePath, object deserializedObject, bool useCompression = true)
+        {
+            try
+            {
+                int approximateSizeInBytes = 0;
+
+                if (_core.Settings.UseCompression && useCompression)
+                {
+                    using (var output = new MemoryStream())
+                    {
+                        ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                        approximateSizeInBytes = (int)output.Length;
+                        var compressedPbuf = Library.Compression.Deflate.Compress(output.ToArray());
+                        File.WriteAllBytes(filePath, compressedPbuf);
+                    }
+                }
+                else
+                {
+                    using (var file = File.Create(filePath))
+                    {
+                        approximateSizeInBytes = (int)file.Length;
+                        ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                    }
+                }
+
+                if (_core.Settings.CacheEnabled)
+                {
+                    _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes);
+                    _core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
+                }
+            }
+            catch (Exception ex)
+            {
+                _core.Log.Write($"Failed to put non-tracked pbuf for file {filePath}.", ex);
                 throw;
             }
         }
@@ -293,9 +362,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                //Why would we lock this here??
-                //transaction.GrantedLockCache.Write((obj) =>
-                //{
                 transaction.EnsureActive();
 
                 transaction.LockFile(LockOperation.Write, filePath);
@@ -332,7 +398,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 _core.Log.Trace($"IO:Write:{filePath}");
 
-                int aproximateSizeInBytes = 0;
+                int approximateSizeInBytes = 0;
 
                 if (format == IOFormat.JSON)
                 {
@@ -340,7 +406,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     string text = JsonConvert.SerializeObject(deserializedObject);
                     ptSerialize?.StopAndAccumulate();
 
-                    aproximateSizeInBytes = text.Length;
+                    approximateSizeInBytes = text.Length;
 
                     if (_core.Settings.UseCompression && useCompression)
                     {
@@ -360,7 +426,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         using (var output = new MemoryStream())
                         {
                             ProtoBuf.Serializer.Serialize(output, deserializedObject);
-                            aproximateSizeInBytes = (int)output.Length;
+                            approximateSizeInBytes = (int)output.Length;
                             var compressedPbuf = Library.Compression.Deflate.Compress(output.ToArray());
                             File.WriteAllBytes(filePath, compressedPbuf);
                         }
@@ -369,7 +435,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         using (var file = File.Create(filePath))
                         {
-                            aproximateSizeInBytes = (int)file.Length;
+                            approximateSizeInBytes = (int)file.Length;
                             ProtoBuf.Serializer.Serialize(file, deserializedObject);
                         }
                     }
@@ -383,11 +449,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (_core.Settings.CacheEnabled)
                 {
                     var ptCacheWrite = transaction?.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.CacheWrite);
-                    _core.Cache.Upsert(filePath, deserializedObject, aproximateSizeInBytes);
+                    _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes);
                     ptCacheWrite?.StopAndAccumulate();
                     _core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
                 }
-                //});
             }
             catch (Exception ex)
             {

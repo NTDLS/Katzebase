@@ -3,7 +3,9 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
+using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Schemas;
+using System.Diagnostics;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -163,7 +165,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 PhysicalDocumentPageCatalogItem physicalPageCatalogItem;
 
-                if (existingPhysicalPageCatalogItem == null)
+                if (Helpers.IsDefault(existingPhysicalPageCatalogItem))
                 {
                     //We didn't find a page with room, we're going to have to create a new "Page Catalog Item" and new "Document Page Map".
                     // add the given document ID to it and add that catalog item to the catalog collection:
@@ -188,7 +190,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    physicalPageCatalogItem = existingPhysicalPageCatalogItem.Value;
+                    physicalPageCatalogItem = existingPhysicalPageCatalogItem;
 
                     physicalPageCatalogItem.DocumentCount++;
 

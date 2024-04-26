@@ -71,11 +71,11 @@ namespace NTDLS.Katzebase.Engine.IO
                     {
                         if (obj.Value.Format == IOFormat.JSON)
                         {
-                            _core.IO.PutJsonNonTracked(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
+                            _core.IO.PutJsonNonTrackedButCached(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
                         }
                         else if (obj.Value.Format == IOFormat.PBuf)
                         {
-                            _core.IO.PutPBufNonTracked(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
+                            _core.IO.PutPBufNonTrackedButCached(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
                         }
                         else
                         {
@@ -88,18 +88,20 @@ namespace NTDLS.Katzebase.Engine.IO
             }
         }
 
-        public T? GetDeferredDiskIO<T>(string key)
+        public bool GetDeferredDiskIO<T>(string key, out T? outReference)
         {
             key = key.ToLower();
 
             lock (this)
             {
-                if (_collection.ContainsKey(key))
+                if(_collection.TryGetValue(key, out var deferredIO))
                 {
-                    return (T)_collection[key].Reference;
+                    outReference = (T)deferredIO.Reference;
+                    return true;
                 }
             }
-            return default;
+            outReference = default;
+            return false;
         }
 
         public void Remove(string key)
