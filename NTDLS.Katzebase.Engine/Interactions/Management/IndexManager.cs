@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 physicalIndex.Id = Guid.NewGuid();
                 physicalIndex.Created = DateTime.UtcNow;
-                physicalIndex.Modfied = DateTime.UtcNow;
+                physicalIndex.Modified = DateTime.UtcNow;
 
                 if (physicalIndex.Partitions <= 0)
                 {
@@ -133,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 builder.AppendLine($"    Id                : {physicalIindex.Id}");
                 builder.AppendLine($"    Unique            : {physicalIindex.IsUnique}");
                 builder.AppendLine($"    Created           : {physicalIindex.Created}");
-                builder.AppendLine($"    Modified          : {physicalIindex.Modfied}");
+                builder.AppendLine($"    Modified          : {physicalIindex.Modified}");
                 builder.AppendLine($"    Disk Path         : {physicalIindex.GetPartitionPagesPath(physicalSchema)}");
                 builder.AppendLine($"    Pages Size        : {diskSize / 1024.0:N2}k");
                 builder.AppendLine($"    Disk Size         : {decompressedSiskSize / 1024.0:N2}k");
@@ -183,7 +183,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 RebuildIndex(transaction, physicalSchema, physicalIindex);
 
-                physicalIindex.Modfied = DateTime.UtcNow;
+                physicalIindex.Modified = DateTime.UtcNow;
 
                 _core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
             }

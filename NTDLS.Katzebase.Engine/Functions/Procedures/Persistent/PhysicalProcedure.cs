@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
         public string Name { get; set; } = string.Empty;
         public Guid Id { get; set; }
         public DateTime Created { get; set; }
-        public DateTime Modfied { get; set; }
+        public DateTime Modified { get; set; }
         public List<string> Batches { get; set; } = new List<string>();
 
         public PhysicalProcedure Clone()
@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
                 Id = Id,
                 Name = Name,
                 Created = Created,
-                Modfied = Modfied
+                Modified = Modified
             };
         }
 
