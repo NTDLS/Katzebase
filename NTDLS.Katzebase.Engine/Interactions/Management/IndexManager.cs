@@ -414,7 +414,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 //This is an index scan.
                 var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
-                //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                //If we got here then we didn't get a full match and will need to add all of the child-leaf document IDs for later elimination.
                 var resultingDocuments = DistillIndexLeaves(workingPhysicalIndexLeaves);
                 ptIndexDistillation?.StopAndAccumulate();
 
@@ -622,7 +622,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 //This is an index scan.
                 var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
-                //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                //If we got here then we didn't get a full match and will need to add all of the child-leaf document IDs for later elimination.
                 var resultingDocuments = DistillIndexLeaves(workingPhysicalIndexLeaves);
                 ptIndexDistillation?.StopAndAccumulate();
 

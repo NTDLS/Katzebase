@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Server
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"An error occured while starting or the service: {ex.Message}");
+                    Console.WriteLine($"An error occurred while starting or the service: {ex.Message}");
                     return;
                 }
             }

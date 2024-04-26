@@ -725,7 +725,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         }
 
         /// <summary>
-        /// Dereferecnes a transaction, if the references fall to zero then the transaction should be disposed.
+        /// Dereferences a transaction, if the references fall to zero then the transaction should be disposed.
         /// </summary>
         /// <returns></returns>
         /// <exception cref="KbTransactionCancelledException"></exception>

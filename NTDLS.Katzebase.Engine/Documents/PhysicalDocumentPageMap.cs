@@ -9,6 +9,8 @@ namespace NTDLS.Katzebase.Engine.Documents
     [Serializable]
     public class PhysicalDocumentPageMap
     {
+        public PhysicalDocumentPageMap() { }
+
         [ProtoMember(1)]
         public HashSet<uint> DocumentIDs { get; private set; } = new();
 

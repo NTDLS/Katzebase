@@ -10,6 +10,8 @@ namespace NTDLS.Katzebase.Engine.Documents
     [Serializable]
     public class PhysicalDocumentPage
     {
+        public PhysicalDocumentPage() { }
+
         [ProtoMember(1)]
         public Dictionary<uint, PhysicalDocument> Documents { get; set; } = new();
     }
