@@ -92,10 +92,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey, bool useCompression = true)
             => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out acquiredLockKey, useCompression);
 
-        internal PhysicalDocumentPage GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey) where T : PhysicalDocumentPage
-        {
-            return InternalTrackedGet<PhysicalDocumentPage>(transaction, filePath, intendedOperation, IOFormat.PBuf, out acquiredLockKey, false);
-        }
+        internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
+            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out acquiredLockKey, false);
 
         internal T GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation, bool useCompression = true)
             => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON, out _, useCompression);
@@ -103,10 +101,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, bool useCompression = true)
             => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out _, useCompression);
 
-        internal PhysicalDocumentPage GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation) where T : PhysicalDocumentPage
-        {
-            return InternalTrackedGet<PhysicalDocumentPage>(transaction, filePath, intendedOperation, IOFormat.PBuf, out _, false);
-        }
+        internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
+            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out _, false);
 
         internal T InternalTrackedGet<T>(Transaction transaction, string filePath,
             LockOperation intendedOperation, IOFormat format, out ObjectLockKey? acquiredLockKey, bool useCompression = true)
