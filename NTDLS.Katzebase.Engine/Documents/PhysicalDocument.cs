@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Documents
     /// </summary>
     [Serializable]
     [ProtoContract]
-    public class PhysicalDocument
+    public struct PhysicalDocument
     {
         [ProtoMember(1)]
         [ProtoIgnore]
