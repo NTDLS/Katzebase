@@ -395,7 +395,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         return foundLeaves.SelectMany(o => o.Documents ?? new List<PhysicalIndexEntry>()).ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
                     }
 
-                    //Drop down to the next leve in the virtual tree we are building.
+                    //Drop down to the next leaf in the virtual tree we are building.
                     workingPhysicalIndexLeaves = new List<PhysicalIndexLeaf>();
                     workingPhysicalIndexLeaves.AddRange(foundLeaves);
 

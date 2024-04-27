@@ -41,7 +41,8 @@ namespace NTDLS.Katzebase.Engine.IO
             {
                 foreach (var kvp in _collection)
                 {
-                    snapshot.Collection.Add(kvp.Key, new DeferredDiskIOObjectSnapshot(kvp.Value.DiskPath, kvp.Value.Format, kvp.Value.UseCompression));
+                    snapshot.Collection.Add(kvp.Key, new DeferredDiskIOObjectSnapshot(
+                        kvp.Value.DiskPath, kvp.Value.Format, kvp.Value.UseCompression));
                 }
             }
 
@@ -107,6 +108,7 @@ namespace NTDLS.Katzebase.Engine.IO
         public void Remove(string key)
         {
             key = key.ToLower();
+
             lock (this)
             {
                 _collection.Remove(key);
@@ -145,9 +147,9 @@ namespace NTDLS.Katzebase.Engine.IO
 
             lock (this)
             {
-                if (_collection.ContainsKey(key))
+                if (_collection.TryGetValue(key, out var value))
                 {
-                    _collection[key].Reference = reference;
+                    value.Reference = reference;
                 }
                 else
                 {
