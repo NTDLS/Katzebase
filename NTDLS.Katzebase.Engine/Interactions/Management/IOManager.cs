@@ -101,8 +101,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, bool useCompression = true)
             => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out _, useCompression);
 
-        internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
-            => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out _, false);
+        //internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
+          //  => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out _, false);
 
 
         internal T InternalTrackedGet<T>(Transaction transaction, string filePath,
