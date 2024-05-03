@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Sessions;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -26,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             AggregateFunctionCollection.Initialize();
         }
 
-        internal KbQueryDocumentListResult ExplainQuery(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExplainQuery(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
@@ -34,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     || preparedQuery.QueryType == QueryType.Delete
                     || preparedQuery.QueryType == QueryType.Update)
                 {
-                    return _core.Documents.QueryHandlers.ExecuteExplain(processId, preparedQuery);
+                    return _core.Documents.QueryHandlers.ExecuteExplain(session, preparedQuery);
                 }
                 else if (preparedQuery.QueryType == QueryType.Set)
                 {
@@ -47,16 +48,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to explain query for process id {processId}.", ex);
+                _core.Log.Write($"Failed to explain query for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbQueryResultCollection ExecuteProcedure(ulong processId, KbProcedure procedure)
+        internal KbQueryResultCollection ExecuteProcedure(SessionState session, KbProcedure procedure)
         {
             var statement = new StringBuilder($"EXEC {procedure.SchemaName}:{procedure.ProcedureName}");
 
-            using (var transactionReference = _core.Transactions.Acquire(processId))
+            using (var transactionReference = _core.Transactions.Acquire(session))
             {
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, procedure.SchemaName, LockOperation.Read);
                 var physicalProcedure = _core.Procedures.Acquire(transactionReference.Transaction, physicalSchema, procedure.ProcedureName, LockOperation.Read);
@@ -86,35 +87,35 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     throw new KbEngineException("Expected only one procedure call per batch.");
                 }
-                return _core.Procedures.QueryHandlers.ExecuteExec(processId, batch.First());
+                return _core.Procedures.QueryHandlers.ExecuteExec(session, batch.First());
             }
         }
 
-        internal KbQueryResultCollection ExecuteQuery(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryResultCollection ExecuteQuery(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
                 if (preparedQuery.QueryType == QueryType.Select)
                 {
-                    return _core.Documents.QueryHandlers.ExecuteSelect(processId, preparedQuery).ToCollection();
+                    return _core.Documents.QueryHandlers.ExecuteSelect(session, preparedQuery).ToCollection();
                 }
                 else if (preparedQuery.QueryType == QueryType.Sample)
                 {
-                    return _core.Documents.QueryHandlers.ExecuteSample(processId, preparedQuery).ToCollection();
+                    return _core.Documents.QueryHandlers.ExecuteSample(session, preparedQuery).ToCollection();
                 }
                 else if (preparedQuery.QueryType == QueryType.Exec)
                 {
-                    return _core.Procedures.QueryHandlers.ExecuteExec(processId, preparedQuery);
+                    return _core.Procedures.QueryHandlers.ExecuteExec(session, preparedQuery);
                 }
                 else if (preparedQuery.QueryType == QueryType.List)
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Documents)
                     {
-                        return _core.Documents.QueryHandlers.ExecuteList(processId, preparedQuery).ToCollection();
+                        return _core.Documents.QueryHandlers.ExecuteList(session, preparedQuery).ToCollection();
                     }
                     else if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                     {
-                        return _core.Schemas.QueryHandlers.ExecuteList(processId, preparedQuery).ToCollection();
+                        return _core.Schemas.QueryHandlers.ExecuteList(session, preparedQuery).ToCollection();
                     }
                     throw new KbEngineException("Invalid list query subtype.");
                 }
@@ -122,11 +123,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Index)
                     {
-                        return _core.Indexes.QueryHandlers.ExecuteAnalyze(processId, preparedQuery).ToCollection();
+                        return _core.Indexes.QueryHandlers.ExecuteAnalyze(session, preparedQuery).ToCollection();
                     }
                     else if (preparedQuery.SubQueryType == SubQueryType.Schema)
                     {
-                        return _core.Schemas.QueryHandlers.ExecuteAnalyze(processId, preparedQuery).ToCollection();
+                        return _core.Schemas.QueryHandlers.ExecuteAnalyze(session, preparedQuery).ToCollection();
                     }
                     throw new KbEngineException("Invalid analyze query subtype.");
                 }
@@ -145,7 +146,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     || preparedQuery.QueryType == QueryType.Rollback)
                 {
                     //Reroute to non-query as appropriate:
-                    return KbQueryDocumentListResult.FromActionResponse(ExecuteNonQuery(processId, preparedQuery)).ToCollection();
+                    return KbQueryDocumentListResult.FromActionResponse(ExecuteNonQuery(session, preparedQuery)).ToCollection();
                 }
                 else
                 {
@@ -154,45 +155,45 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute query for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute query for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbBaseActionResponse ExecuteNonQuery(ulong processId, PreparedQuery preparedQuery)
+        internal KbBaseActionResponse ExecuteNonQuery(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
                 if (preparedQuery.QueryType == QueryType.Insert)
                 {
-                    return _core.Documents.QueryHandlers.ExecuteInsert(processId, preparedQuery);
+                    return _core.Documents.QueryHandlers.ExecuteInsert(session, preparedQuery);
                 }
                 else if (preparedQuery.QueryType == QueryType.Update)
                 {
-                    return _core.Documents.QueryHandlers.ExecuteUpdate(processId, preparedQuery);
+                    return _core.Documents.QueryHandlers.ExecuteUpdate(session, preparedQuery);
                 }
                 else if (preparedQuery.QueryType == QueryType.SelectInto)
                 {
-                    return _core.Documents.QueryHandlers.ExecuteSelectInto(processId, preparedQuery);
+                    return _core.Documents.QueryHandlers.ExecuteSelectInto(session, preparedQuery);
                 }
                 else if (preparedQuery.QueryType == QueryType.Delete)
                 {
-                    return _core.Documents.QueryHandlers.ExecuteDelete(processId, preparedQuery);
+                    return _core.Documents.QueryHandlers.ExecuteDelete(session, preparedQuery);
                 }
                 else if (preparedQuery.QueryType == QueryType.Kill)
                 {
-                    return _core.Sessions.QueryHandlers.ExecuteKillProcess(processId, preparedQuery);
+                    return _core.Sessions.QueryHandlers.ExecuteKillProcess(session, preparedQuery);
                 }
                 else if (preparedQuery.QueryType == QueryType.Set)
                 {
-                    return _core.Sessions.QueryHandlers.ExecuteSetVariable(processId, preparedQuery);
+                    return _core.Sessions.QueryHandlers.ExecuteSetVariable(session, preparedQuery);
                 }
                 else if (preparedQuery.QueryType == QueryType.Rebuild)
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Index
                         || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                     {
-                        return _core.Indexes.QueryHandlers.ExecuteRebuild(processId, preparedQuery);
+                        return _core.Indexes.QueryHandlers.ExecuteRebuild(session, preparedQuery);
                     }
                     throw new NotImplementedException();
                 }
@@ -200,15 +201,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                     {
-                        return _core.Indexes.QueryHandlers.ExecuteCreate(processId, preparedQuery);
+                        return _core.Indexes.QueryHandlers.ExecuteCreate(session, preparedQuery);
                     }
                     else if (preparedQuery.SubQueryType == SubQueryType.Procedure)
                     {
-                        return _core.Procedures.QueryHandlers.ExecuteCreate(processId, preparedQuery);
+                        return _core.Procedures.QueryHandlers.ExecuteCreate(session, preparedQuery);
                     }
                     else if (preparedQuery.SubQueryType == SubQueryType.Schema)
                     {
-                        return _core.Schemas.QueryHandlers.ExecuteCreate(processId, preparedQuery);
+                        return _core.Schemas.QueryHandlers.ExecuteCreate(session, preparedQuery);
                     }
 
                     throw new NotImplementedException();
@@ -217,11 +218,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Schema)
                     {
-                        return _core.Schemas.QueryHandlers.ExecuteAlter(processId, preparedQuery);
+                        return _core.Schemas.QueryHandlers.ExecuteAlter(session, preparedQuery);
                     }
                     else if (preparedQuery.SubQueryType == SubQueryType.Configuration)
                     {
-                        return _core.Environment.QueryHandlers.ExecuteAlter(processId, preparedQuery);
+                        return _core.Environment.QueryHandlers.ExecuteAlter(session, preparedQuery);
                     }
                     throw new NotImplementedException();
                 }
@@ -230,11 +231,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (preparedQuery.SubQueryType == SubQueryType.Index
                         || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                     {
-                        return _core.Indexes.QueryHandlers.ExecuteDrop(processId, preparedQuery);
+                        return _core.Indexes.QueryHandlers.ExecuteDrop(session, preparedQuery);
                     }
                     else if (preparedQuery.SubQueryType == SubQueryType.Schema)
                     {
-                        return _core.Schemas.QueryHandlers.ExecuteDrop(processId, preparedQuery);
+                        return _core.Schemas.QueryHandlers.ExecuteDrop(session, preparedQuery);
                     }
                     throw new NotImplementedException();
                 }
@@ -242,7 +243,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Transaction)
                     {
-                        _core.Transactions.QueryHandlers.Begin(processId);
+                        _core.Transactions.QueryHandlers.Begin(session);
                         return new KbActionResponse { Success = true };
                     }
                     throw new NotImplementedException();
@@ -251,7 +252,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Transaction)
                     {
-                        _core.Transactions.QueryHandlers.Rollback(processId);
+                        _core.Transactions.QueryHandlers.Rollback(session);
                         return new KbActionResponse { Success = true };
                     }
                     throw new NotImplementedException();
@@ -260,7 +261,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     if (preparedQuery.SubQueryType == SubQueryType.Transaction)
                     {
-                        _core.Transactions.QueryHandlers.Commit(processId);
+                        _core.Transactions.QueryHandlers.Commit(session);
                         return new KbActionResponse { Success = true };
                     }
                     throw new NotImplementedException();
@@ -272,7 +273,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute non-query for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute non-query for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

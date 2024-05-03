@@ -29,14 +29,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryIndexGetReply Get(RmContext context, KbQueryIndexGet param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
 
                 var physicalIndex = indexCatalog.GetByName(param.IndexName);
@@ -51,21 +51,21 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to create index for process {processId}.", ex);
+                _core.Log.Write($"Failed to create index for process {session.ProcessId}.", ex);
                 throw;
             }
         }
 
         public KbQueryIndexListReply ListIndexes(RmContext context, KbQueryIndexList param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var result = new KbQueryIndexListReply();
 
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
@@ -78,88 +78,88 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to list indexes for process {processId}.", ex);
+                _core.Log.Write($"Failed to list indexes for process {session.ProcessId}.", ex);
                 throw;
             }
         }
 
         public KbQueryIndexExistsReply DoesIndexExist(RmContext context, KbQueryIndexExists param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
                 bool value = indexCatalog.GetByName(param.IndexName) != null;
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexExistsReply(value));
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to create index for process {processId}.", ex);
+                _core.Log.Write($"Failed to create index for process {session.ProcessId}.", ex);
                 throw;
             }
         }
 
         public KbQueryIndexCreateReply CreateIndex(RmContext context, KbQueryIndexCreate param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 _core.Indexes.CreateIndex(transactionReference.Transaction, param.Schema, param.Index, out Guid newId);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexCreateReply(newId), 0);
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to create index for process {processId}.", ex);
+                _core.Log.Write($"Failed to create index for process {session.ProcessId}.", ex);
                 throw;
             }
         }
 
         public KbQueryIndexRebuildReply RebuildIndex(RmContext context, KbQueryIndexRebuild param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 _core.Indexes.RebuildIndex(transactionReference.Transaction, param.Schema, param.IndexName, param.NewPartitionCount);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexRebuildReply());
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to create index for process {processId}.", ex);
+                _core.Log.Write($"Failed to create index for process {session.ProcessId}.", ex);
                 throw;
             }
         }
 
         public KbQueryIndexDropReply DropIndex(RmContext context, KbQueryIndexDrop param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 _core.Indexes.DropIndex(transactionReference.Transaction, param.Schema, param.IndexName);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexDropReply());
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to create index for process {processId}.", ex);
+                _core.Log.Write($"Failed to create index for process {session.ProcessId}.", ex);
                 throw;
             }
         }

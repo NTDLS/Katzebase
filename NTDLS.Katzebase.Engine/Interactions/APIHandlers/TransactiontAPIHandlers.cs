@@ -26,12 +26,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryTransactionBeginReply Begin(RmContext context, KbQueryTransactionBegin param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
-            _core.Transactions.Acquire(processId, true);
+            _core.Transactions.Acquire(session, true);
             return new KbQueryTransactionBeginReply()
             {
                 Success = true,
@@ -40,12 +40,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryTransactionCommitReply Commit(RmContext context, KbQueryTransactionCommit param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
-            _core.Transactions.Commit(processId);
+            _core.Transactions.Commit(session.ProcessId);
             return new KbQueryTransactionCommitReply()
             {
                 Success = true,
@@ -54,12 +54,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryTransactionRollbackReply Rollback(RmContext context, KbQueryTransactionRollback param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
-            _core.Transactions.Rollback(processId);
+            _core.Transactions.Rollback(session.ProcessId);
             return new KbQueryTransactionRollbackReply()
             {
                 Success = true,

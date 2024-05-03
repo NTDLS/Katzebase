@@ -1,8 +1,18 @@
+/*
 SELECT
 	I.InvtId
 FROM
 	TopNotchERP:Inventory as I
-	
+*/
+--create schema test
+
+insert into test
+(First='Josh', Last='Patterson'),
+(First='Bridget', Last='Patterson')
+GO
+
+select * from test
+
 /*
 drop schema Dummyload
 exec showlocks

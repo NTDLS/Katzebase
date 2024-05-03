@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         public new string ToString()
         {
-            return $"{Granularity}+{Operation}->{DiskPath}";
+            return $"{Granularity}+{Operation}:{DiskPath}";
         }
     }
 }

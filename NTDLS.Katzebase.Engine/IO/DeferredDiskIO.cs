@@ -41,7 +41,8 @@ namespace NTDLS.Katzebase.Engine.IO
             {
                 foreach (var kvp in _collection)
                 {
-                    snapshot.Collection.Add(kvp.Key, new DeferredDiskIOObjectSnapshot(kvp.Value.DiskPath, kvp.Value.Format, kvp.Value.UseCompression));
+                    snapshot.Collection.Add(kvp.Key, new DeferredDiskIOObjectSnapshot(
+                        kvp.Value.DiskPath, kvp.Value.Format, kvp.Value.UseCompression));
                 }
             }
 
@@ -71,11 +72,11 @@ namespace NTDLS.Katzebase.Engine.IO
                     {
                         if (obj.Value.Format == IOFormat.JSON)
                         {
-                            _core.IO.PutJsonNonTracked(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
+                            _core.IO.PutJsonNonTrackedButCached(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
                         }
                         else if (obj.Value.Format == IOFormat.PBuf)
                         {
-                            _core.IO.PutPBufNonTracked(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
+                            _core.IO.PutPBufNonTrackedButCached(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
                         }
                         else
                         {
@@ -88,23 +89,26 @@ namespace NTDLS.Katzebase.Engine.IO
             }
         }
 
-        public T? GetDeferredDiskIO<T>(string key)
+        public bool GetDeferredDiskIO<T>(string key, out T? outReference)
         {
             key = key.ToLower();
 
             lock (this)
             {
-                if (_collection.ContainsKey(key))
+                if (_collection.TryGetValue(key, out var deferredIO))
                 {
-                    return (T)_collection[key].Reference;
+                    outReference = (T)deferredIO.Reference;
+                    return true;
                 }
             }
-            return default;
+            outReference = default;
+            return false;
         }
 
         public void Remove(string key)
         {
             key = key.ToLower();
+
             lock (this)
             {
                 _collection.Remove(key);
@@ -143,9 +147,9 @@ namespace NTDLS.Katzebase.Engine.IO
 
             lock (this)
             {
-                if (_collection.ContainsKey(key))
+                if (_collection.TryGetValue(key, out var value))
                 {
-                    _collection[key].Reference = reference;
+                    value.Reference = reference;
                 }
                 else
                 {

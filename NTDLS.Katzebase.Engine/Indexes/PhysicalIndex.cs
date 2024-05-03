@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
         public string Name { get; set; } = string.Empty;
         public Guid Id { get; set; }
         public DateTime Created { get; set; }
-        public DateTime Modfied { get; set; }
+        public DateTime Modified { get; set; }
         public uint Partitions { get; set; } = 1000;
         public bool IsUnique { get; set; } = false;
         public string GetPartitionPagesPath(PhysicalSchema physicalSchema) => Path.Combine(physicalSchema.DiskPath, $"@Index_{Helpers.MakeSafeFileName(Name)}");
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
                 Id = Id,
                 Name = Name,
                 Created = Created,
-                Modfied = Modfied,
+                Modified = Modified,
                 IsUnique = IsUnique,
                 Partitions = Partitions,
             };
@@ -74,7 +74,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
                 Id = index.Id,
                 Name = index.Name,
                 Created = index.Created,
-                Modfied = index.Modfied,
+                Modified = index.Modfied,
                 IsUnique = index.IsUnique,
                 Partitions = index.Partitions
             };
@@ -94,7 +94,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
                 Id = index.Id,
                 Name = index.Name,
                 Created = index.Created,
-                Modfied = index.Modfied,
+                Modfied = index.Modified,
                 IsUnique = index.IsUnique,
                 Partitions = index.Partitions
             };

@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Engine.Sessions.SessionState;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
@@ -26,11 +27,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteKillProcess(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteKillProcess(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var referencedProcessId = preparedQuery.Attribute<ulong>(PreparedQuery.QueryAttribute.ProcessId);
 
                 _core.Sessions.CloseByProcessId(referencedProcessId);
@@ -38,17 +39,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute variable set for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute variable set for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbActionResponse ExecuteSetVariable(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteSetVariable(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
-                var session = _core.Sessions.ByProcessId(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
 
                 foreach (var variable in preparedQuery.VariableValues)
                 {
@@ -79,7 +79,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute variable set for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute variable set for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

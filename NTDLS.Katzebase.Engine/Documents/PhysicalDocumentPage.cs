@@ -8,9 +8,25 @@ namespace NTDLS.Katzebase.Engine.Documents
     /// </summary>
     [ProtoContract]
     [Serializable]
-    public class PhysicalDocumentPage
+    public struct PhysicalDocumentPage
     {
+        public PhysicalDocumentPage() { }
+
+        [ProtoIgnore]
+        private Dictionary<uint, PhysicalDocument>? _documents;
+
         [ProtoMember(1)]
-        public Dictionary<uint, PhysicalDocument> Documents { get; set; } = new();
+        public Dictionary<uint, PhysicalDocument> Documents
+        {
+            get
+            {
+                _documents ??= new Dictionary<uint, PhysicalDocument>();
+                return _documents;
+            }
+            set
+            {
+                _documents = value;
+            }
+        }
     }
 }

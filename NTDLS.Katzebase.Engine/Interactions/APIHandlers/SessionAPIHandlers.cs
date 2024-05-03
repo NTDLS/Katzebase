@@ -28,16 +28,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         {
             try
             {
-                var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+                var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 
 #if DEBUG
-                Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+                Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
                 _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
 
                 var result = new KbQueryServerStartSessionReply
                 {
-                    ProcessId = processId,
+                    ProcessId = session.ProcessId,
                     ConnectionId = context.ConnectionId,
                     ServerTimeUTC = DateTime.UtcNow,
                     Success = true
@@ -54,14 +54,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryServerCloseSessionReply CloseSession(RmContext context, KbQueryServerCloseSession param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                _core.Sessions.CloseByProcessId(processId);
+                _core.Sessions.CloseByProcessId(session.ProcessId);
 
                 var result = new KbQueryServerCloseSessionReply
                 {
@@ -72,16 +72,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to close session for process id {processId}.", ex);
+                _core.Log.Write($"Failed to close session for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
         public KbQueryServerTerminateProcessReply TerminateSession(RmContext context, KbQueryServerTerminateProcess param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to close session for process id {processId}.", ex);
+                _core.Log.Write($"Failed to close session for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

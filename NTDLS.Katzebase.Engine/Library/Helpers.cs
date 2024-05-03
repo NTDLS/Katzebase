@@ -6,6 +6,11 @@ namespace NTDLS.Katzebase.Engine.Library
 {
     public static class Helpers
     {
+        public static bool IsDefault<T>(T? value)
+            => value == null || EqualityComparer<T>.Default.Equals(value, default(T));
+        public static bool IsNotDefault<T>(T? value)
+            => value != null && !EqualityComparer<T>.Default.Equals(value, default(T));
+
         public static void CopyDirectory(string sourcePath, string destinationPath)
         {
             Directory.CreateDirectory(destinationPath);

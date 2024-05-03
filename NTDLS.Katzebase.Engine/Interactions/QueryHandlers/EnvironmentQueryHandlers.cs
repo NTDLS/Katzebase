@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
@@ -26,11 +27,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteAlter(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteAlter(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Configuration)
                 {
@@ -45,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute environment alter for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute environment alter for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

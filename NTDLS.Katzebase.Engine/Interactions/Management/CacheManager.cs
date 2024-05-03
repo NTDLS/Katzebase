@@ -41,11 +41,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             _cache.Dispose();
         }
 
-        public void Upsert(string key, object value, int aproximateSizeInBytes = 0)
+        public void Upsert(string key, object value, int approximateSizeInBytes = 0)
         {
             try
             {
-                _cache.Upsert(key, value, aproximateSizeInBytes);
+                _cache.Upsert(key, value, approximateSizeInBytes);
             }
             catch (Exception ex)
             {
@@ -98,6 +98,24 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 return _cache.TryGet(key);
+            }
+            catch (Exception ex)
+            {
+                _core.Log.Write("Failed to get cache object.", ex);
+                throw;
+            }
+        }
+
+        public bool TryGet(string key, out object? value)
+        {
+            try
+            {
+                if (_cache.TryGet(key, out value))
+                {
+                    return true;
+                }
+                value = default;
+                return false;
             }
             catch (Exception ex)
             {

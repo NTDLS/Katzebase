@@ -13,16 +13,9 @@ namespace NTDLS.Katzebase.Engine.Locking
         public ulong ProcessId { get; set; }
 
         public string ObjectName
-        {
-            get
-            {
-                return $"{ObjectLock.Granularity}:{ObjectLock.DiskPath}";
-            }
-        }
+            => $"{ObjectLock.Granularity}:{ObjectLock.DiskPath}";
 
         public new string ToString()
-        {
-            return $"{ObjectLock.Granularity}+{Operation}->{ObjectLock.DiskPath}";
-        }
+            => $"{ObjectLock.Granularity}:{Operation}:{ObjectLock.DiskPath}";
     }
 }

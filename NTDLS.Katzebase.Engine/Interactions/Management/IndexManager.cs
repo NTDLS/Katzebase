@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 physicalIndex.Id = Guid.NewGuid();
                 physicalIndex.Created = DateTime.UtcNow;
-                physicalIndex.Modfied = DateTime.UtcNow;
+                physicalIndex.Modified = DateTime.UtcNow;
 
                 if (physicalIndex.Partitions <= 0)
                 {
@@ -133,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 builder.AppendLine($"    Id                : {physicalIindex.Id}");
                 builder.AppendLine($"    Unique            : {physicalIindex.IsUnique}");
                 builder.AppendLine($"    Created           : {physicalIindex.Created}");
-                builder.AppendLine($"    Modified          : {physicalIindex.Modfied}");
+                builder.AppendLine($"    Modified          : {physicalIindex.Modified}");
                 builder.AppendLine($"    Disk Path         : {physicalIindex.GetPartitionPagesPath(physicalSchema)}");
                 builder.AppendLine($"    Pages Size        : {diskSize / 1024.0:N2}k");
                 builder.AppendLine($"    Disk Size         : {decompressedSiskSize / 1024.0:N2}k");
@@ -183,7 +183,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 RebuildIndex(transaction, physicalSchema, physicalIindex);
 
-                physicalIindex.Modfied = DateTime.UtcNow;
+                physicalIindex.Modified = DateTime.UtcNow;
 
                 _core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
             }
@@ -242,7 +242,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 //Unfortunately, we cant easily eliminate index partitions. Lets gram some threads and scan all of the partitions.
 
-                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateCollection();
+                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
                 var instance = new MatchConditionValuesDocumentsThreadInstance(transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, conditionValues);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
@@ -395,7 +395,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         return foundLeaves.SelectMany(o => o.Documents ?? new List<PhysicalIndexEntry>()).ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
                     }
 
-                    //Drop down to the next leve in the virtual tree we are building.
+                    //Drop down to the next leaf in the virtual tree we are building.
                     workingPhysicalIndexLeaves = new List<PhysicalIndexLeaf>();
                     workingPhysicalIndexLeaves.AddRange(foundLeaves);
 
@@ -414,7 +414,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 //This is an index scan.
                 var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
-                //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                //If we got here then we didn't get a full match and will need to add all of the child-leaf document IDs for later elimination.
                 var resultingDocuments = DistillIndexLeaves(workingPhysicalIndexLeaves);
                 ptIndexDistillation?.StopAndAccumulate();
 
@@ -448,7 +448,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 //Unfortunately, we cant easily eliminate index partitions. Lets fire up some threads and scan all of the partitions.
 
-                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateCollection();
+                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
                 var instance = new MatchWorkingSchemaDocumentsThreadInstance(transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, workingSchemaPrefix);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
@@ -622,7 +622,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 //This is an index scan.
                 var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
-                //If we got here then we didnt get a full match and will need to add all of the child-leaf document IDs for later elimination.
+                //If we got here then we didn't get a full match and will need to add all of the child-leaf document IDs for later elimination.
                 var resultingDocuments = DistillIndexLeaves(workingPhysicalIndexLeaves);
                 ptIndexDistillation?.StopAndAccumulate();
 
@@ -1159,7 +1159,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     _core.IO.PutPBuf(transaction, physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateCollection();
+                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
                 var instance = new RebuildIndexThreadInstance(transaction, physicalSchema, physicalIndexPageMap, physicalIindex, physicalIindex.Partitions);
 
                 foreach (var documentPointer in documentPointers)
@@ -1287,7 +1287,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateCollection();
+                    var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
                     var instance = new RemoveDocumentsFromIndexThreadInstance(transaction, physicalIindex, physicalSchema, documentPointers);
 
                     for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)

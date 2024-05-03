@@ -59,9 +59,9 @@ namespace NTDLS.Katzebase.Engine.Locking
                     (o.Granularity == LockGranularity.Directory) && o.DiskPath == intentionDirectory).ToList();
                 exactDirectoryLocks.ForEach(o => result.Add(o));
 
-                var direcotryAndSubPathLocks = existingLocks.Where(o =>
+                var directoryAndSubPathLocks = existingLocks.Where(o =>
                     o.Granularity == LockGranularity.RecursiveDirectory && intentionDirectory.StartsWith(o.DiskPath)).ToList();
-                direcotryAndSubPathLocks.ForEach(o => result.Add(o));
+                directoryAndSubPathLocks.ForEach(o => result.Add(o));
 
                 return result;
             });
@@ -72,20 +72,17 @@ namespace NTDLS.Katzebase.Engine.Locking
         }
 
         internal Dictionary<TransactionSnapshot, ObjectLockIntention> SnapshotWaitingTransactions()
-        {
-            return _transactionWaitingForLocks.Read((obj) => obj.ToDictionary(o => o.Key.Snapshot(), o => o.Value));
-        }
+            => _transactionWaitingForLocks.Read((obj) => obj.ToDictionary(o => o.Key.Snapshot(), o => o.Value));
 
         public ObjectLockKey? Acquire(Transaction transaction, ObjectLockIntention intention)
         {
-            if (transaction.GrantedLockCache.Read((obj) =>
-            {
-                return obj.Contains(intention.Key);
-            }))
+            if (transaction.GrantedLockCache.Read((obj) => obj.Contains(intention.Key)))
             {
                 //This transaction owns the lock, but it was created with a previous call to Acquire().
-                //This means that the transaction has the key, but the caller will not be be provided
-                //with it since modification by a non-creator caller would be dangerous.
+                //  This means that the transaction has the key, but the caller will not be be provided
+                //  with it since modification by a non-creator caller would be dangerous.
+                //
+                //Additionally, we will not issue a new SingleUseKey for the lock because that would be wasteful.
                 return null;
             }
 
@@ -98,25 +95,23 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         /// <summary>
         /// Allows the lock-key to be converted to an stability lock. This is used when we need to
-        /// temporarily lock an object in a long running transation but do not want to keep the agressive lock.
+        /// temporarily lock an object in a long running transaction but do not want to keep the aggressive lock.
         /// </summary>
         public void ConvertToStability(Transaction transaction, ObjectLockKey lockKey)
-        {
-            transaction.GrantedLockCache.Write((obj) =>
-                {
-                    obj.Remove(lockKey.Key);
-                    lockKey.ConvertToStability();
-                    obj.Add(lockKey.Key);
-                });
-        }
+            => transaction.GrantedLockCache.Write((obj) =>
+            {
+                obj.Remove(lockKey.Key);
+                lockKey.ConvertToStability();
+                obj.Add(lockKey.Key);
+            });
 
         private ObjectLockKey AcquireInternal(Transaction transaction, ObjectLockIntention intention)
         {
             try
             {
                 //We keep track of all transactions that are waiting on locks for a few reasons:
-                // (1) When we suspect a deadlock we know what all transactions are potentially involved
-                // (2) We are safe to poke around those transaction's properties because we know their threda are in this method.
+                // (1) When we suspect a deadlock we know what all transactions are potentially involved.
+                // (2) We are safe to poke around those transaction's properties because we know their threads are working in this function.
                 _transactionWaitingForLocks.Write((obj) => obj.Add(transaction, intention));
 
                 while (true)
@@ -135,7 +130,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                     }
 
                     //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical
-                    //section "Locking.CriticalSectionLockManagement", we will only need:
+                    //  section "Locking.CriticalSectionLockManagement", we will only need:
                     var acquiredLockKey = _collection.TryWriteAll([transaction.CriticalSectionTransaction], out bool isLockHeld, (obj) =>
                     {
                         ObjectLockKey? lockKey = null;
@@ -156,7 +151,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                             var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
                                 .Where(o => (o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
 
-                            if (blockers.Any() == false)
+                            if (blockers.Count != 0)
                             {
                                 transaction.BlockedByKeys.Write((obj) => obj.Clear());
 
@@ -166,7 +161,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                                     if (lockedObject.Keys.Read((obj) => obj).Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
                                     {
-                                        //Do we really need to hand out multiple keys to the same object of the same type? I dont think we do. Just continue...
+                                        //Do we really need to hand out multiple keys to the same object of the same type? I don't think we do. Just continue...
                                         continue;
                                     }
 
@@ -202,7 +197,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                                     if (lockedObject.Keys.Read((obj) => obj).Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
                                     {
-                                        //Do we really need to hand out multiple keys to the same object of the same type? I dont think we do. Just continue...
+                                        //Do we really need to hand out multiple keys to the same object of the same type? I don't think we do. Just continue...
                                         continue;
                                     }
 
@@ -238,7 +233,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                                     if (lockedObject.Keys.Read((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
                                     {
-                                        //Do we really need to hand out multiple keys to the same object of the same type? I dont think we do.
+                                        //Do we really need to hand out multiple keys to the same object of the same type? I don't think we do.
                                         continue;
                                     }
 
@@ -260,7 +255,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                         }
                         else if (intention.Operation == LockOperation.Delete)
                         {
-                            //This operation is blocked by: Everyhing
+                            //This operation is blocked by: Everything
                             var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
                                 .Where(o => o.ProcessId != transaction.ProcessId).ToList();
 
@@ -274,7 +269,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                                     if (lockedObject.Keys.Read((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
                                     {
-                                        //Do we really need to hand out multiple keys to the same object of the same type? I dont think we do.
+                                        //Do we really need to hand out multiple keys to the same object of the same type? I don't think we do.
                                         continue;
                                     }
 
@@ -314,87 +309,9 @@ namespace NTDLS.Katzebase.Engine.Locking
                                         //Check to see if the current transaction is waiting on any of those blocked transaction (circular reference).
                                         if (obj.Where(o => o.ProcessId == blocked.ProcessId).Any())
                                         {
-                                            #region Deadlock reporting.
+                                            var explanation = GetDeadlockExplanation(transaction, txWaitingForLocks, intention, blockedByMe);
 
-                                            var deadLockId = Guid.NewGuid().ToString();
-
-                                            var explanation = new StringBuilder();
-
-                                            explanation.AppendLine("Deadlock {");
-                                            explanation.AppendLine($"    Id: {deadLockId}");
-                                            explanation.AppendLine("    Blocking Transactions {");
-                                            explanation.AppendLine($"        ProcessId: {transaction.ProcessId}");
-                                            explanation.AppendLine($"        Operation: {transaction.TopLevelOperation}");
-                                            //explanation.AppendLine($"        ReferenceCount: {transaction.ReferenceCount}"); //This causes a race condition.
-                                            explanation.AppendLine($"        StartTime: {transaction.StartTime}");
-
-                                            explanation.AppendLine("        Lock Intention {");
-                                            explanation.AppendLine($"            ProcessId: {transaction.ProcessId}");
-                                            explanation.AppendLine($"            Granularity: {intention.Granularity}");
-                                            explanation.AppendLine($"            Operation: {intention.Operation}");
-                                            explanation.AppendLine($"            Object: {intention.DiskPath}");
-                                            explanation.AppendLine("        }");
-
-                                            KbUtility.EnsureNotNull(transaction.HeldLockKeys);
-
-                                            explanation.AppendLine("        Held Locks {");
-                                            transaction.HeldLockKeys.Read((obj) =>
-                                            {
-                                                foreach (var key in obj)
-                                                {
-                                                    explanation.AppendLine($"            {key.ToString()}");
-                                                }
-                                            });
-                                            explanation.AppendLine("        }");
-
-                                            explanation.AppendLine("        Awaiting Locks {");
-                                            foreach (var waitingFor in txWaitingForLocks.Where(o => o.Key == transaction))
-                                            {
-                                                explanation.AppendLine($"            {waitingFor.Value.ToString()}");
-                                            }
-                                            explanation.AppendLine("        }");
-
-                                            explanation.AppendLine("}");
-
-                                            explanation.AppendLine("Blocked Transaction(s) {");
-                                            foreach (var waiter in blockedByMe)
-                                            {
-                                                explanation.AppendLine($"        ProcessId: {waiter.ProcessId}");
-                                                explanation.AppendLine($"        Operation: {waiter.TopLevelOperation}");
-                                                //explanation.AppendLine($"        ReferenceCount: {waiter.ReferenceCount}"); //This causes a race condition.
-                                                explanation.AppendLine($"        StartTime: {waiter.StartTime}");
-
-                                                KbUtility.EnsureNotNull(waiter.HeldLockKeys);
-
-                                                explanation.AppendLine("        Held Locks {");
-
-                                                waiter.HeldLockKeys.Read((obj) =>
-                                                {
-                                                    foreach (var key in obj)
-                                                    {
-                                                        explanation.AppendLine($"            {key.ToString()}");
-                                                    }
-                                                });
-                                                explanation.AppendLine("        }");
-
-                                                explanation.AppendLine("        Awaiting Locks {");
-                                                foreach (var waitingFor in txWaitingForLocks.Where(o => o.Key == waiter))
-                                                {
-                                                    explanation.AppendLine($"            {waitingFor.Value.ToString()}");
-                                                }
-                                                explanation.AppendLine("        }");
-                                            }
-                                            explanation.AppendLine("    }");
-                                            explanation.AppendLine("}");
-
-                                            transaction.AddMessage(explanation.ToString(), KbConstants.KbMessageType.Deadlock);
-
-                                            #endregion
-
-                                            transaction.IsDeadlocked = true;
-                                            transaction.Rollback();
-
-                                            _core.Health.Increment(HealthCounterType.DeadlockCount);
+                                            transaction.SetDeadlocked();
 
                                             throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.", explanation.ToString());
                                         }
@@ -423,6 +340,90 @@ namespace NTDLS.Katzebase.Engine.Locking
                 transaction.CurrentLockIntention = null;
                 _transactionWaitingForLocks.Write((obj) => obj.Remove(transaction));
             }
+        }
+
+        private string GetDeadlockExplanation(Transaction transaction,
+            Dictionary<Transaction, ObjectLockIntention> txWaitingForLocks,
+            ObjectLockIntention intention, List<Transaction> blockedByMe)
+        {
+            var deadLockId = Guid.NewGuid().ToString();
+
+            var explanation = new StringBuilder();
+
+            explanation.AppendLine("Deadlock {");
+            explanation.AppendLine($"    Id: {deadLockId}");
+            explanation.AppendLine("    Blocking Transactions {");
+            explanation.AppendLine($"        ProcessId: {transaction.ProcessId}");
+            explanation.AppendLine($"        Operation: {transaction.TopLevelOperation}");
+            //explanation.AppendLine($"        ReferenceCount: {transaction.ReferenceCount}"); //This causes a race condition.
+            explanation.AppendLine($"        StartTime: {transaction.StartTime}");
+
+            explanation.AppendLine("        Lock Intention {");
+            explanation.AppendLine($"            ProcessId: {transaction.ProcessId}");
+            explanation.AppendLine($"            Granularity: {intention.Granularity}");
+            explanation.AppendLine($"            Operation: {intention.Operation}");
+            explanation.AppendLine($"            Object: {intention.DiskPath}");
+            explanation.AppendLine("        }");
+
+            KbUtility.EnsureNotNull(transaction.HeldLockKeys);
+
+            explanation.AppendLine("        Held Locks {");
+            transaction.HeldLockKeys.Read((obj) =>
+            {
+                foreach (var key in obj)
+                {
+                    explanation.AppendLine($"            {key.ToString()}");
+                }
+            });
+            explanation.AppendLine("        }");
+
+            explanation.AppendLine("        Awaiting Locks {");
+            foreach (var waitingFor in txWaitingForLocks.Where(o => o.Key == transaction))
+            {
+                explanation.AppendLine($"            {waitingFor.Value.ToString()}");
+            }
+            explanation.AppendLine("        }");
+
+            explanation.AppendLine("}");
+
+            explanation.AppendLine("Blocked Transaction(s) {");
+            foreach (var waiter in blockedByMe)
+            {
+                explanation.AppendLine($"        ProcessId: {waiter.ProcessId}");
+                explanation.AppendLine($"        Operation: {waiter.TopLevelOperation}");
+                //explanation.AppendLine($"        ReferenceCount: {waiter.ReferenceCount}"); //This causes a race condition.
+                explanation.AppendLine($"        StartTime: {waiter.StartTime}");
+
+                KbUtility.EnsureNotNull(waiter.HeldLockKeys);
+
+                explanation.AppendLine("        Held Locks {");
+
+                waiter.HeldLockKeys.Read((obj) =>
+                {
+                    foreach (var key in obj)
+                    {
+                        explanation.AppendLine($"            {key.ToString()}");
+                    }
+                });
+                explanation.AppendLine("        }");
+
+                explanation.AppendLine("        Awaiting Locks {");
+                foreach (var waitingFor in txWaitingForLocks.Where(o => o.Key == waiter))
+                {
+                    explanation.AppendLine($"            {waitingFor.Value.ToString()}");
+                }
+                explanation.AppendLine("        }");
+            }
+            explanation.AppendLine("    }");
+            if (string.IsNullOrEmpty(transaction.Session.QueryText) == false)
+            {
+                explanation.AppendLine($"    Query: {transaction.Session.QueryText}");
+            }
+            explanation.AppendLine("}");
+
+            transaction.AddMessage(explanation.ToString(), KbConstants.KbMessageType.Deadlock);
+
+            return explanation.ToString();
         }
     }
 }

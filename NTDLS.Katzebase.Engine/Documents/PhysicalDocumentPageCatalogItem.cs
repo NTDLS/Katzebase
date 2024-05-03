@@ -4,11 +4,11 @@ namespace NTDLS.Katzebase.Engine.Documents
 {
     /// <summary>
     /// This is the collection item that is physically written to disk via PhysicalDocumentPageCatalog. It contains the
-    ///     page number as the number of documents sotred in that page.
+    ///     page number as the number of documents stored in that page.
     /// </summary>
     [ProtoContract]
     [Serializable]
-    public class PhysicalDocumentPageCatalogItem
+    public struct PhysicalDocumentPageCatalogItem
     {
         [ProtoMember(1)]
         public int PageNumber { get; set; }

@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
@@ -27,11 +28,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
         }
 
-        internal KbQueryDocumentListResult ExecuteAnalyze(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteAnalyze(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 var result = new KbQueryDocumentListResult();
@@ -50,16 +51,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute schema drop for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute schema drop for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbActionResponse ExecuteDrop(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteDrop(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
@@ -75,16 +76,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute schema drop for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute schema drop for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbActionResponse ExecuteAlter(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteAlter(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
@@ -101,16 +102,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute schema alter for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute schema alter for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbActionResponse ExecuteCreate(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteCreate(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
@@ -127,16 +128,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute schema create for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute schema create for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteList(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var result = new KbQueryDocumentListResult();
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schemas)
@@ -157,7 +158,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute schema list for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute schema list for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

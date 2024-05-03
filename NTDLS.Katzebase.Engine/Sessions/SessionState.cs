@@ -10,6 +10,11 @@ namespace NTDLS.Katzebase.Engine.Sessions
         }
 
         /// <summary>
+        /// The query currently associated with the session.
+        /// </summary>
+        public string QueryText { get; set; } = string.Empty;
+
+        /// <summary>
         /// Settings associated with the connection.
         /// </summary>
         public List<KbNameValuePair<KbConnectionSetting, double>> Variables { get; private set; } = new();
@@ -22,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// <summary>
         /// The last UTC date/time that the connection was interacted with.
         /// </summary>
-        public DateTime LastCheckinTime { get; set; } = DateTime.UtcNow;
+        public DateTime LastCheckInTime { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// ProcessId is produced by the server.
@@ -75,5 +80,11 @@ namespace NTDLS.Katzebase.Engine.Sessions
             ProcessId = processId;
             ConnectionId = connectionId;
         }
+
+        public void SetCurrentQuery(string statement)
+            => QueryText = statement;
+
+        public void ClearCurrentQuery()
+            => QueryText = string.Empty;
     }
 }

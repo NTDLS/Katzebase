@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
+using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Schemas;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -58,7 +59,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                return _core.IO.GetPBuf<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemFilePath(pageNumber), lockIntention);
+                return _core.IO.GetPBuf<PhysicalDocumentPage>(transaction, physicalSchema.DocumentPageCatalogItemFilePath(pageNumber), lockIntention, false);
             }
             catch (Exception ex)
             {
@@ -152,21 +153,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var physicalDocument = new PhysicalDocument(pageContent)
                 {
                     Created = DateTime.UtcNow,
-                    Modfied = DateTime.UtcNow,
+                    Modified = DateTime.UtcNow,
                 };
 
                 PhysicalDocumentPageMap physicalDocumentPageMap;
                 PhysicalDocumentPage documentPage;
 
                 //Find a page with some empty room:
-                var physicalPageCatalogItem = documentPageCatalog.GetPageWithRoomForNewDocument(physicalSchema.PageSize);
+                var existingPhysicalPageCatalogItem = documentPageCatalog.GetPageWithRoomForNewDocument(physicalSchema.PageSize);
 
-                if (physicalPageCatalogItem == null)
+                PhysicalDocumentPageCatalogItem physicalPageCatalogItem;
+
+                if (Helpers.IsDefault(existingPhysicalPageCatalogItem))
                 {
-                    //We didnt find a page with room, we're going to have to create a new "Page Catalog Item" and new "Document Page Map".
+                    //We didn't find a page with room, we're going to have to create a new "Page Catalog Item" and new "Document Page Map".
                     // add the given document ID to it and add that catalog item to the catalog collection:
-                    physicalPageCatalogItem = new PhysicalDocumentPageCatalogItem(documentPageCatalog.NextPageNumber());
-                    physicalPageCatalogItem.DocumentCount = 1;
+                    physicalPageCatalogItem = new PhysicalDocumentPageCatalogItem(documentPageCatalog.NextPageNumber())
+                    {
+                        DocumentCount = 1
+                    };
 
                     //Create a new document page map.
                     physicalDocumentPageMap = new PhysicalDocumentPageMap();
@@ -184,6 +189,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
+                    physicalPageCatalogItem = existingPhysicalPageCatalogItem;
+
                     physicalPageCatalogItem.DocumentCount++;
 
                     //Open the page and add the document to it.
@@ -210,7 +217,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var documentPointer = new DocumentPointer(physicalPageCatalogItem.PageNumber, physicalDocumentId);
 
-                //Update all of the indexes that referecne the document.
+                //Update all of the indexes that reference the document.
                 _core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, documentPointer);
 
                 return documentPointer;
@@ -227,7 +234,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         /// <param name="transaction"></param>
         /// <param name="physicalSchema"></param>
-        /// <param name="documents">List of dovuemtn pointers and their new content.</param>
+        /// <param name="documents">List of document pointers and their new content.</param>
         /// <param name="listOfModifiedFields">A list of the fields that were modified so that we can filter the indexes we need to update.</param>
         internal void UpdateDocuments(Transaction transaction, PhysicalSchema physicalSchema,
             List<DocumentPointer> updatedDocumentPointers, IEnumerable<string>? listOfModifiedFields = null)
@@ -241,7 +248,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var documentPage = AcquireDocumentPage(transaction, physicalSchema, documentPointer.PageNumber, LockOperation.Write);
 
                     var physicalDocument = documentPage.Documents[documentPointer.DocumentId];
-                    physicalDocument.Modfied = DateTime.UtcNow;
+                    physicalDocument.Modified = DateTime.UtcNow;
                     documentPage.Documents[documentPointer.DocumentId] = physicalDocument;
 
                     //Save the document page:
@@ -250,7 +257,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     physicalDocuments.Add(documentPointer, physicalDocument);
                 }
 
-                //Update all of the indexes that referecne the document.
+                //Update all of the indexes that reference the document.
                 _core.Indexes.UpdateDocumentsIntoIndexes(transaction, physicalSchema, physicalDocuments, listOfModifiedFields);
             }
             catch (Exception ex)
@@ -278,7 +285,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     var documentPage = AcquireDocumentPage(transaction, physicalSchema, documentPointer.PageNumber, LockOperation.Write);
 
-                    documentPageCatalog.Catalog[documentPointer.PageNumber].DocumentCount--;
+                    var CopyOfDocumentPageCatalog = documentPageCatalog.Catalog[documentPointer.PageNumber];
+
+                    CopyOfDocumentPageCatalog.DocumentCount--;
+
+                    documentPageCatalog.Catalog[documentPointer.PageNumber] = CopyOfDocumentPageCatalog;
 
                     //Remove the item from the document page.
                     documentPage.Documents.Remove(documentPointer.DocumentId);
@@ -295,9 +306,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Save the document page catalog:
                 _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
 
-                if (documentPointers.Count() > 0)
+                if (documentPointers.Any())
                 {
-                    //Update all of the indexes that referecne the documents.
+                    //Update all of the indexes that reference the documents.
                     _core.Indexes.RemoveDocumentsFromIndexes(transaction, physicalSchema, documentPointers);
                 }
             }

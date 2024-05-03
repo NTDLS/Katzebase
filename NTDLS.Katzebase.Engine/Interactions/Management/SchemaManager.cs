@@ -62,7 +62,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 _rootCatalogFile = Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile);
 
-                //If the catalog doesnt exist, create a new empty one.
+                //If the catalog doesn't exist, create a new empty one.
                 if (File.Exists(_rootCatalogFile) == false)
                 {
                     Directory.CreateDirectory(core.Settings.DataRootPath);
@@ -281,7 +281,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Opens a schema for a desired access. Takes a virtual schema path (schema:schema2:scheams3) and converts to to a physical location
+        /// Opens a schema for a desired access. Takes a virtual schema path (schema0:schema2:schema3) and converts to to a physical location
         /// </summary>
         internal PhysicalSchema Acquire(Transaction transaction, string schemaName, LockOperation intendedOperation)
         {
@@ -307,7 +307,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 else
                 {
                     var segments = schemaName.Split(':');
-                    var parentSchemaame = segments[segments.Count() - 1];
+                    var thisSchemaName = segments[segments.Count() - 1];
 
                     var schemaDiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join("\\", segments));
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
@@ -323,16 +323,21 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
                         Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Read, out var schemaCatalogLockKey);
 
-                    var physicalSchema = parentCatalog.GetByName(parentSchemaame);
+                    var physicalSchema = parentCatalog.GetByName(thisSchemaName);
                     if (physicalSchema != null)
                     {
-                        physicalSchema.Name = parentSchemaame;
+                        physicalSchema.Name = thisSchemaName;
                         physicalSchema.DiskPath = schemaDiskPath;
                         physicalSchema.VirtualPath = schemaName;
                         physicalSchema.IsTemporary = isTemporary;
                     }
                     else
                     {
+                        //TODO: Somehow we get here and it looks like the same transaction is the one that
+                        //  wrote the record for the creation of the schema that we cannot find. From what I
+                        //  can tell, the schema catalog is cached without the schema we're looking for although
+                        //  it does in fact exist on the filesystem and even has the default files in it.
+
                         throw new KbObjectNotFoundException(schemaName);
                     }
 

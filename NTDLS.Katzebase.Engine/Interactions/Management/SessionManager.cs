@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _collection.Read((obj) => obj.ToDictionary(o => o.Key, o => o.Value));
         }
 
-        public ulong UpsertConnectionId(Guid connectionId, string clientName = "")
+        public SessionState UpsertConnectionId(Guid connectionId, string clientName = "")
         {
             return _collection.Write((obj) =>
             {
@@ -47,8 +47,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (obj.ContainsKey(connectionId))
                     {
                         var session = obj[connectionId];
-                        session.LastCheckinTime = DateTime.UtcNow;
-                        return session.ProcessId;
+                        session.LastCheckInTime = DateTime.UtcNow;
+                        return session;
                     }
                     else
                     {
@@ -57,10 +57,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         var session = new SessionState(processId, connectionId)
                         {
                             ClientName = clientName
-                        }
-                        ;
+                        };
+
                         obj.Add(connectionId, session);
-                        return processId;
+                        return session;
                     }
 
                 }

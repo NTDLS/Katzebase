@@ -1,5 +1,6 @@
 ﻿
 using NTDLS.Katzebase.Engine.Interactions.Management;
+using NTDLS.Katzebase.Engine.Sessions;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
@@ -24,8 +25,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        public TransactionReference Begin(ulong processId) => _core.Transactions.Acquire(processId, true);
-        public void Commit(ulong processId) => _core.Transactions.Commit(processId);
-        public void Rollback(ulong processId) => _core.Transactions.Rollback(processId);
+        public TransactionReference Begin(SessionState session) => _core.Transactions.Acquire(session, true);
+        public void Commit(SessionState session) => _core.Transactions.Commit(session);
+        public void Rollback(SessionState session) => _core.Transactions.Rollback(session);
     }
 }

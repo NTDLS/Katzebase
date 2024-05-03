@@ -29,26 +29,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryDocumentSampleReply DocumentSample(RmContext context, KbQueryDocumentSample param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var result = (KbQueryDocumentSampleReply)StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document sample for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document sample for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
         /// <summary>
-        /// Returns all doucments in a schema with there values.
+        /// Returns all documents in a schema with there values.
         /// </summary>
         /// <param name="processId"></param>
         /// <param name="schemaName"></param>
@@ -56,14 +56,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <returns></returns>
         public KbQueryDocumentListReply ListDocuments(RmContext context, KbQueryDocumentList param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var nativeResults = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
 
                 var apiResults = new KbQueryDocumentListReply()
@@ -76,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document list for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document list for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -91,14 +91,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <exception cref="KbObjectNotFoundException"></exception>
         public KbQueryDocumentStoreReply StoreDocument(RmContext context, KbQueryDocumentStore param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var result = new KbQueryDocumentStoreReply()
                 {
                     Value = _core.Documents.InsertDocument(transactionReference.Transaction, param.Schema, param.Document.Content).DocumentId,
@@ -108,7 +108,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document store for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document store for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -122,14 +122,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <exception cref="KbObjectNotFoundException"></exception>
         public KbQueryDocumentCatalogReply DocumentCatalog(RmContext context, KbQueryDocumentCatalog param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var result = new KbQueryDocumentCatalogReply();
                 var documentPointers = _core.Documents.AcquireDocumentPointers(transactionReference.Transaction, param.Schema, LockOperation.Read).ToList();
 
@@ -138,7 +138,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document catalog for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document catalog for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -148,14 +148,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// </summary>
         public KbQueryDocumentDeleteByIdReply DeleteDocumentById(RmContext context, KbQueryDocumentDeleteById param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Write);
                 var documentPointers = _core.Documents.AcquireDocumentPointers(transactionReference.Transaction, physicalSchema, LockOperation.Write).ToList();
                 var pointersToDelete = documentPointers.Where(o => o.DocumentId == param.Id);
@@ -166,7 +166,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document delete for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document delete for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

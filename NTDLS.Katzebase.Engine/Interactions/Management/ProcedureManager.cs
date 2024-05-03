@@ -43,28 +43,28 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             var physicalProcedureCatalog = Acquire(transaction, physicalSchema, LockOperation.Write);
 
-            var physicalProcesure = physicalProcedureCatalog.GetByName(objectName);
-            if (physicalProcesure == null)
+            var physicalProcedure = physicalProcedureCatalog.GetByName(objectName);
+            if (physicalProcedure == null)
             {
-                physicalProcesure = new PhysicalProcedure()
+                physicalProcedure = new PhysicalProcedure()
                 {
                     Id = Guid.NewGuid(),
                     Name = objectName,
                     Created = DateTime.UtcNow,
-                    Modfied = DateTime.UtcNow,
+                    Modified = DateTime.UtcNow,
                     Parameters = parameters,
                     Batches = Batches,
                 };
 
-                physicalProcedureCatalog.Add(physicalProcesure);
+                physicalProcedureCatalog.Add(physicalProcedure);
 
                 _core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), physicalProcedureCatalog);
             }
             else
             {
-                physicalProcesure.Parameters = parameters;
-                physicalProcesure.Batches = Batches;
-                physicalProcesure.Modfied = DateTime.UtcNow;
+                physicalProcedure.Parameters = parameters;
+                physicalProcedure.Batches = Batches;
+                physicalProcedure.Modified = DateTime.UtcNow;
 
                 _core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), physicalProcedureCatalog);
             }

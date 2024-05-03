@@ -8,6 +8,7 @@ using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Searchers;
+using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
@@ -33,26 +34,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSelect(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteSelect(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document select for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document select for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSelectInto(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteSelectInto(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var targetSchema = preparedQuery.Attributes[PreparedQuery.QueryAttribute.TargetSchema].ToString();
                 KbUtility.EnsureNotNull(targetSchema);
 
@@ -91,7 +92,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document select for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document select for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -102,11 +103,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         /// <param name="processId"></param>
         /// <param name="preparedQuery"></param>
         /// <returns></returns>
-        internal KbActionResponse ExecuteInsert(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteInsert(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
 
                 foreach (var upsertValues in preparedQuery.UpsertValues)
@@ -142,7 +143,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document insert for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document insert for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -153,11 +154,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         /// <param name="processId"></param>
         /// <param name="preparedQuery"></param>
         /// <returns></returns>
-        internal KbActionResponse ExecuteUpdate(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteUpdate(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var firstSchema = preparedQuery.Schemas.Single();
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
 
@@ -212,23 +213,23 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 var listOfModifiedFields = preparedQuery.UpdateValues.Select(o => o.Key);
 
-                //We update all of the documents all at once so we dont have to keep opening/closing catalogs.
+                //We update all of the documents all at once so we don't have to keep opening/closing catalogs.
                 _core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocumentPointers, listOfModifiedFields);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document update for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document update for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSample(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteSample(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 string schemaName = preparedQuery.Schemas.Single().Name;
                 var result = StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
 
@@ -236,16 +237,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document sample for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document sample for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteList(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteList(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 string schemaName = preparedQuery.Schemas.Single().Name;
                 var result = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
 
@@ -253,12 +254,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document list for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document list for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteExplain(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteExplain(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
@@ -275,16 +276,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document explain for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document explain for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbActionResponse ExecuteDelete(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteDelete(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var firstSchema = preparedQuery.Schemas.Single();
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
                 var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
@@ -302,7 +303,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document delete for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute document delete for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

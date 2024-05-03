@@ -47,9 +47,9 @@
 
         public enum LockGranularity
         {
-            Directory = 1,     //All files in a directory.
-            File = 2,          //A single file.
-            RecursiveDirectory //All files in a directory and all directories below it.
+            Directory = 1,         //All files in a directory.
+            File = 2,              //A single file.
+            RecursiveDirectory = 3 //All files in a directory and all directories below it.
         }
 
         public enum LockOperation

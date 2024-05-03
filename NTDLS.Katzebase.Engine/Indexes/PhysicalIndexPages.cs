@@ -2,6 +2,7 @@
 
 namespace NTDLS.Katzebase.Engine.Indexes
 {
+    //TODO: This should be a struct.
     [ProtoContract]
     public class PhysicalIndexPages
     {
