@@ -59,9 +59,9 @@ namespace NTDLS.Katzebase.Engine.Locking
                     (o.Granularity == LockGranularity.Directory) && o.DiskPath == intentionDirectory).ToList();
                 exactDirectoryLocks.ForEach(o => result.Add(o));
 
-                var direcotryAndSubPathLocks = existingLocks.Where(o =>
+                var directoryAndSubPathLocks = existingLocks.Where(o =>
                     o.Granularity == LockGranularity.RecursiveDirectory && intentionDirectory.StartsWith(o.DiskPath)).ToList();
-                direcotryAndSubPathLocks.ForEach(o => result.Add(o));
+                directoryAndSubPathLocks.ForEach(o => result.Add(o));
 
                 return result;
             });
@@ -72,20 +72,17 @@ namespace NTDLS.Katzebase.Engine.Locking
         }
 
         internal Dictionary<TransactionSnapshot, ObjectLockIntention> SnapshotWaitingTransactions()
-        {
-            return _transactionWaitingForLocks.Read((obj) => obj.ToDictionary(o => o.Key.Snapshot(), o => o.Value));
-        }
+            => _transactionWaitingForLocks.Read((obj) => obj.ToDictionary(o => o.Key.Snapshot(), o => o.Value));
 
         public ObjectLockKey? Acquire(Transaction transaction, ObjectLockIntention intention)
         {
-            if (transaction.GrantedLockCache.Read((obj) =>
-            {
-                return obj.Contains(intention.Key);
-            }))
+            if (transaction.GrantedLockCache.Read((obj) => obj.Contains(intention.Key)))
             {
                 //This transaction owns the lock, but it was created with a previous call to Acquire().
-                //This means that the transaction has the key, but the caller will not be be provided
-                //with it since modification by a non-creator caller would be dangerous.
+                //  This means that the transaction has the key, but the caller will not be be provided
+                //  with it since modification by a non-creator caller would be dangerous.
+                //
+                //Additionally, we will not issue a new SingleUseKey for the lock because that would be wasteful.
                 return null;
             }
 
@@ -98,25 +95,23 @@ namespace NTDLS.Katzebase.Engine.Locking
 
         /// <summary>
         /// Allows the lock-key to be converted to an stability lock. This is used when we need to
-        /// temporarily lock an object in a long running transation but do not want to keep the agressive lock.
+        /// temporarily lock an object in a long running transaction but do not want to keep the aggressive lock.
         /// </summary>
         public void ConvertToStability(Transaction transaction, ObjectLockKey lockKey)
-        {
-            transaction.GrantedLockCache.Write((obj) =>
-                {
-                    obj.Remove(lockKey.Key);
-                    lockKey.ConvertToStability();
-                    obj.Add(lockKey.Key);
-                });
-        }
+            => transaction.GrantedLockCache.Write((obj) =>
+            {
+                obj.Remove(lockKey.Key);
+                lockKey.ConvertToStability();
+                obj.Add(lockKey.Key);
+            });
 
         private ObjectLockKey AcquireInternal(Transaction transaction, ObjectLockIntention intention)
         {
             try
             {
                 //We keep track of all transactions that are waiting on locks for a few reasons:
-                // (1) When we suspect a deadlock we know what all transactions are potentially involved
-                // (2) We are safe to poke around those transaction's properties because we know their threda are in this method.
+                // (1) When we suspect a deadlock we know what all transactions are potentially involved.
+                // (2) We are safe to poke around those transaction's properties because we know their threads are working in this function.
                 _transactionWaitingForLocks.Write((obj) => obj.Add(transaction, intention));
 
                 while (true)
@@ -135,7 +130,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                     }
 
                     //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical
-                    //section "Locking.CriticalSectionLockManagement", we will only need:
+                    //  section "Locking.CriticalSectionLockManagement", we will only need:
                     var acquiredLockKey = _collection.TryWriteAll([transaction.CriticalSectionTransaction], out bool isLockHeld, (obj) =>
                     {
                         ObjectLockKey? lockKey = null;
@@ -156,7 +151,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                             var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
                                 .Where(o => (o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
 
-                            if (blockers.Any() == false)
+                            if (blockers.Count != 0)
                             {
                                 transaction.BlockedByKeys.Write((obj) => obj.Clear());
 
@@ -351,8 +346,6 @@ namespace NTDLS.Katzebase.Engine.Locking
             Dictionary<Transaction, ObjectLockIntention> txWaitingForLocks,
             ObjectLockIntention intention, List<Transaction> blockedByMe)
         {
-            #region Deadlock reporting.
-
             var deadLockId = Guid.NewGuid().ToString();
 
             var explanation = new StringBuilder();
@@ -422,12 +415,13 @@ namespace NTDLS.Katzebase.Engine.Locking
                 explanation.AppendLine("        }");
             }
             explanation.AppendLine("    }");
-            explanation.AppendLine($"    Query: {transaction.Session.QueryText}");
+            if (string.IsNullOrEmpty(transaction.Session.QueryText) == false)
+            {
+                explanation.AppendLine($"    Query: {transaction.Session.QueryText}");
+            }
             explanation.AppendLine("}");
 
             transaction.AddMessage(explanation.ToString(), KbConstants.KbMessageType.Deadlock);
-
-            #endregion
 
             return explanation.ToString();
         }

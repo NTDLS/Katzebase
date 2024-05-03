@@ -306,7 +306,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Save the document page catalog:
                 _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
 
-                if (documentPointers.Count() > 0)
+                if (documentPointers.Any())
                 {
                     //Update all of the indexes that reference the documents.
                     _core.Indexes.RemoveDocumentsFromIndexes(transaction, physicalSchema, documentPointers);

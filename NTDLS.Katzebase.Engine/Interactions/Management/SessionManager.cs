@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (obj.ContainsKey(connectionId))
                     {
                         var session = obj[connectionId];
-                        session.LastCheckinTime = DateTime.UtcNow;
+                        session.LastCheckInTime = DateTime.UtcNow;
                         return session;
                     }
                     else

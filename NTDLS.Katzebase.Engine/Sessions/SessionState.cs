@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// <summary>
         /// The last UTC date/time that the connection was interacted with.
         /// </summary>
-        public DateTime LastCheckinTime { get; set; } = DateTime.UtcNow;
+        public DateTime LastCheckInTime { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// ProcessId is produced by the server.

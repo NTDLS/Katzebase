@@ -447,7 +447,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                     $"{s.Value.ProcessId:n0}",
                                     $"{s.Value.ClientName ?? string.Empty}",
                                     $"{s.Value.LoginTime}",
-                                    $"{s.Value.LastCheckinTime}",
+                                    $"{s.Value.LastCheckInTime}",
                                     $"{(txSnapshot?.BlockedByKeys.Count > 0):n0}",
                                     string.Join(", ", txSnapshot?.BlockedByKeys.Select(o=>o.ProcessId) ?? new List<ulong>()),
                                     $"{txSnapshot?.ReferenceCount:n0}",

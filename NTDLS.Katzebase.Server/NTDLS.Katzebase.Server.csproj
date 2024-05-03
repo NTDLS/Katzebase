@@ -21,8 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.3.1" />
-    <PackageReference Include="NTDLS.ReliableMessaging" Version="1.5.0" />
     <PackageReference Include="Topshelf" Version="4.3.0" />
   </ItemGroup>
 
