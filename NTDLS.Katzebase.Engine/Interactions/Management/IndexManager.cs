@@ -242,7 +242,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 //Unfortunately, we cant easily eliminate index partitions. Lets gram some threads and scan all of the partitions.
 
-                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateCollection();
+                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
                 var instance = new MatchConditionValuesDocumentsThreadInstance(transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, conditionValues);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
@@ -448,7 +448,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 //Unfortunately, we cant easily eliminate index partitions. Lets fire up some threads and scan all of the partitions.
 
-                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateCollection();
+                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
                 var instance = new MatchWorkingSchemaDocumentsThreadInstance(transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, workingSchemaPrefix);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
@@ -1159,7 +1159,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     _core.IO.PutPBuf(transaction, physicalIindex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateCollection();
+                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
                 var instance = new RebuildIndexThreadInstance(transaction, physicalSchema, physicalIndexPageMap, physicalIindex, physicalIindex.Partitions);
 
                 foreach (var documentPointer in documentPointers)
@@ -1287,7 +1287,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateCollection();
+                    var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
                     var instance = new RemoveDocumentsFromIndexThreadInstance(transaction, physicalIindex, physicalSchema, documentPointers);
 
                     for (int indexPartition = 0; indexPartition < physicalIindex.Partitions; indexPartition++)

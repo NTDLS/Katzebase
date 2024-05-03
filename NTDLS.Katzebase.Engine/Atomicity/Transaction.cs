@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public OptimisticSemaphore CriticalSectionTransaction { get; } = new();
 
         /// <summary>
-        /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everyhting.
+        /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everything.
         /// </summary>
         public bool IsUserCreated { get; set; }
 
@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         private StreamWriter? _transactionLogHandle = null;
         private readonly PessimisticCriticalResource<Dictionary<KbTransactionWarning, HashSet<string>>> _warnings = new();
 
-        public bool IsComittedOrRolledBack { get; private set; } = false;
+        public bool IsCommittedOrRolledBack { get; private set; } = false;
         public bool IsCancelled { get; private set; } = false;
 
         private int _referenceCount = 0;
@@ -63,7 +63,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public OptimisticCriticalResource<List<Atom>> Atoms { get; private set; } = new();
 
         /// <summary>
-        /// We keep a hashset of locks granted to this transaction by the LockIntention.Key so that we
+        /// We keep a hash-set of locks granted to this transaction by the LockIntention.Key so that we
         ///     do not have to perform blocking or deadlock checks again for the life of this transaction.
         /// </summary>
         public OptimisticCriticalResource<HashSet<string>> GrantedLockCache { get; private set; }
@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 IsDeadlocked = IsDeadlocked,
                 IsUserCreated = IsUserCreated,
                 TopLevelOperation = TopLevelOperation,
-                IsComittedOrRolledBack = IsComittedOrRolledBack,
+                IsCommittedOrRolledBack = IsCommittedOrRolledBack,
                 IsCancelled = IsCancelled
             };
 
@@ -178,9 +178,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 throw new KbTransactionCancelledException("The transaction was deadlocked");
             }
-            if (IsComittedOrRolledBack)
+            if (IsCommittedOrRolledBack)
             {
-                throw new KbTransactionCancelledException("The transaction was comitted or rolled back.");
+                throw new KbTransactionCancelledException("The transaction was committed or rolled back.");
             }
         }
 
@@ -205,7 +205,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             if (disposing)
             {
                 //Rollback Transaction if its still open:
-                if (IsUserCreated == false && IsComittedOrRolledBack == false)
+                if (IsUserCreated == false && IsCommittedOrRolledBack == false)
                 {
                     Rollback();
                 }
@@ -226,7 +226,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
         }
 
-        public ObjectLockKey? LockFile(LockOperation lockOperation, string diskpath)
+        public ObjectLockKey? LockFile(LockOperation lockOperation, string diskPath)
         {
             KbUtility.EnsureNotNull(_core);
 
@@ -236,9 +236,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"File:{lockOperation}");
 
-                diskpath = diskpath.ToLower();
+                diskPath = diskPath.ToLower();
 
-                var lockIntention = new ObjectLockIntention(diskpath, LockGranularity.File, lockOperation);
+                var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.File, lockOperation);
                 var result = _core.Locking.Locks.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
@@ -255,8 +255,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// Locks a single directory and all files (but not sub-directories) that it contains.
         /// </summary>
         /// <param name="lockOperation"></param>
-        /// <param name="diskpath"></param>
-        public ObjectLockKey? LockDirectory(LockOperation lockOperation, string diskpath)
+        /// <param name="diskPath"></param>
+        public ObjectLockKey? LockDirectory(LockOperation lockOperation, string diskPath)
         {
             KbUtility.EnsureNotNull(_core);
 
@@ -266,9 +266,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
 
-                diskpath = diskpath.ToLower();
+                diskPath = diskPath.ToLower();
 
-                var lockIntention = new ObjectLockIntention(diskpath, LockGranularity.Directory, lockOperation);
+                var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.Directory, lockOperation);
                 var result = _core.Locking.Locks.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
@@ -285,8 +285,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// Locks a path (which means the directory, sub-directory and all files beneath it).
         /// </summary>
         /// <param name="lockOperation"></param>
-        /// <param name="diskpath"></param>
-        public ObjectLockKey? LockPath(LockOperation lockOperation, string diskpath)
+        /// <param name="diskPath"></param>
+        public ObjectLockKey? LockPath(LockOperation lockOperation, string diskPath)
         {
             KbUtility.EnsureNotNull(_core);
 
@@ -296,9 +296,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
 
-                diskpath = diskpath.ToLower();
+                diskPath = diskPath.ToLower();
 
-                var lockIntention = new ObjectLockIntention(diskpath, LockGranularity.RecursiveDirectory, lockOperation);
+                var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.RecursiveDirectory, lockOperation);
                 var result = _core.Locking.Locks.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
@@ -621,12 +621,12 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             CriticalSectionTransaction.Write(() =>
             {
-                if (IsComittedOrRolledBack)
+                if (IsCommittedOrRolledBack)
                 {
                     return;
                 }
 
-                IsComittedOrRolledBack = true;
+                IsCommittedOrRolledBack = true;
                 IsCancelled = true;
 
                 try
@@ -741,7 +741,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     throw new KbTransactionCancelledException();
                 }
 
-                if (IsComittedOrRolledBack)
+                if (IsCommittedOrRolledBack)
                 {
                     return true;
                 }
@@ -753,7 +753,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     if (_referenceCount == 0)
                     {
-                        IsComittedOrRolledBack = true;
+                        IsCommittedOrRolledBack = true;
 
                         try
                         {

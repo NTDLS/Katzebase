@@ -394,7 +394,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                     $"{txSnapshot?.GrantedLockCache?.Count:n0}",
                                     $"{txSnapshot?.FilesReadForCache?.Count:n0}",
                                     $"{txSnapshot?.DeferredIOs?.Count():n0}",
-                                    $"{!(txSnapshot?.IsComittedOrRolledBack == true)}",
+                                    $"{!(txSnapshot?.IsCommittedOrRolledBack == true)}",
                                     $"{txSnapshot?.IsDeadlocked}",
                                     $"{txSnapshot?.IsCancelled}",
                                     $"{txSnapshot?.IsUserCreated}"
@@ -456,7 +456,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                     $"{txSnapshot?.GrantedLockCache?.Count:n0}",
                                     $"{txSnapshot?.FilesReadForCache?.Count:n0}",
                                     $"{txSnapshot?.DeferredIOs?.Count():n0}",
-                                    $"{!(txSnapshot?.IsComittedOrRolledBack == true)}",
+                                    $"{!(txSnapshot?.IsCommittedOrRolledBack == true)}",
                                     $"{txSnapshot?.IsDeadlocked}",
                                     $"{txSnapshot?.IsCancelled}",
                                     $"{txSnapshot?.IsUserCreated}"

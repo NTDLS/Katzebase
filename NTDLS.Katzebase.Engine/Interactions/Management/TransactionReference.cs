@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     {
         internal Transaction Transaction { get; private set; }
 
-        private bool _isComittedOrRolledBack = false;
+        private bool _isCommittedOrRolledBack = false;
         private bool _disposed = false;
 
         public void Dispose()
@@ -18,18 +18,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public void Rollback()
         {
-            if (_isComittedOrRolledBack == false)
+            if (_isCommittedOrRolledBack == false)
             {
-                _isComittedOrRolledBack = true;
+                _isCommittedOrRolledBack = true;
                 Transaction.Rollback();
             }
         }
 
         public void Commit()
         {
-            if (_isComittedOrRolledBack == false)
+            if (_isCommittedOrRolledBack == false)
             {
-                _isComittedOrRolledBack = true;
+                _isCommittedOrRolledBack = true;
                 if (Transaction.Commit())
                 {
                     Transaction.Dispose();
@@ -98,9 +98,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             if (disposing)
             {
                 //Rollback Transaction if its still open:
-                if (_isComittedOrRolledBack == false)
+                if (_isCommittedOrRolledBack == false)
                 {
-                    _isComittedOrRolledBack = true;
+                    _isCommittedOrRolledBack = true;
                     Transaction.Rollback();
                 }
             }

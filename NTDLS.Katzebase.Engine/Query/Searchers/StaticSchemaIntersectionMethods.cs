@@ -87,7 +87,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 documentPointers = core.Documents.AcquireDocumentPointers(transaction, topLevelMap.PhysicalSchema, LockOperation.Read);
             }
 
-            var threadPoolQueue = core.ThreadPool.Generic.CreateQueueStateCollection();
+            var threadPoolQueue = core.ThreadPool.Generic.CreateQueueStateTracker();
 
             var instance = new LookupThreadInstance(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
 

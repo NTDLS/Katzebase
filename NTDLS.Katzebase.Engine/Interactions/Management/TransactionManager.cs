@@ -170,7 +170,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to recover uncomitted transations.", ex);
+                _core.Log.Write("Failed to recover uncommitted transations.", ex);
                 throw;
             }
         }

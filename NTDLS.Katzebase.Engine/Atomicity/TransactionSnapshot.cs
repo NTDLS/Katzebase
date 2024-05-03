@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public HashSet<string> GrantedLockCache { get; set; } = new();
         public bool IsUserCreated { get; set; }
         public DeferredDiskIOSnapshot DeferredIOs { get; set; } = new();
-        public bool IsComittedOrRolledBack { get; set; } = false;
+        public bool IsCommittedOrRolledBack { get; set; } = false;
         public bool IsCancelled { get; set; } = false;
         public int ReferenceCount { get; set; }
     }

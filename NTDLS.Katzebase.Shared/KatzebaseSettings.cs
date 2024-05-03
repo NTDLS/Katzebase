@@ -138,7 +138,7 @@
         public bool FlushLog { get; set; }
 
         /// <summary>
-        /// When true, all write operations associated with a transaction are deferred until the transaction is comitted.
+        /// When true, all write operations associated with a transaction are deferred until the transaction is committed.
         /// </summary>
         public bool DeferredIOEnabled { get; set; }
 
