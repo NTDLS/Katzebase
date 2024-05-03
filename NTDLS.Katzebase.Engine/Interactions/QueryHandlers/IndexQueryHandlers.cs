@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -27,11 +28,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteDrop(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteDrop(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
@@ -47,16 +48,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute index drop for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute index drop for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteAnalyze(ulong processId, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteAnalyze(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
 
                 var analysis = _core.Indexes.AnalyzeIndex(transactionReference.Transaction,
                     preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Schema),
@@ -69,16 +70,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute index rebuild for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute index rebuild for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbActionResponse ExecuteRebuild(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteRebuild(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
                 var indexName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName);
@@ -89,16 +90,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute index rebuild for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute index rebuild for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
 
-        internal KbActionResponse ExecuteCreate(ulong processId, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteCreate(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session);
 
                 if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
@@ -128,7 +129,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute index create for process id {processId}.", ex);
+                _core.Log.Write($"Failed to execute index create for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

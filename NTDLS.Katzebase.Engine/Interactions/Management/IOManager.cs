@@ -146,7 +146,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         bool cacheHit = _core.Cache.TryGet(filePath, out var cachedObject);
                         ptCacheRead?.StopAndAccumulate();
 
-                        if(cacheHit)
+                        if (cacheHit)
                         {
                             _core.Health.Increment(HealthCounterType.IOCacheReadHits);
                             _core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");

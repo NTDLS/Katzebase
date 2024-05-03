@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var result = (KbQueryDocumentSampleReply)StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
@@ -63,7 +63,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var nativeResults = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
 
                 var apiResults = new KbQueryDocumentListReply()
@@ -98,7 +98,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var result = new KbQueryDocumentStoreReply()
                 {
                     Value = _core.Documents.InsertDocument(transactionReference.Transaction, param.Schema, param.Document.Content).DocumentId,
@@ -129,7 +129,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var result = new KbQueryDocumentCatalogReply();
                 var documentPointers = _core.Documents.AcquireDocumentPointers(transactionReference.Transaction, param.Schema, LockOperation.Read).ToList();
 
@@ -155,7 +155,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Write);
                 var documentPointers = _core.Documents.AcquireDocumentPointers(transactionReference.Transaction, physicalSchema, LockOperation.Write).ToList();
                 var pointersToDelete = documentPointers.Where(o => o.DocumentId == param.Id);

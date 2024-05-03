@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Read);
 
                 var result = new KbQuerySchemaListReply();
@@ -76,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var segments = param.Schema.Split(':');
                 var pathBuilder = new StringBuilder();
 
@@ -109,7 +109,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var segments = param.Schema.Split(':');
                 var pathBuilder = new StringBuilder();
                 bool schemaExists = false;
@@ -150,7 +150,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
+                using var transactionReference = _core.Transactions.Acquire(session);
                 var segments = param.Schema.Split(':');
                 var parentSchemaName = segments[segments.Count() - 1];
 

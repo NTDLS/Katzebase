@@ -33,11 +33,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
 
+            session.SetCurrentQuery(param.Statement);
+
             var results = new KbQueryQueryExplainReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
-                results.Add(_core.Query.ExplainQuery(session.ProcessId, preparedQuery));
+                results.Add(_core.Query.ExplainQuery(session, preparedQuery));
             }
+
+            session.ClearCurrentQuery();
+
             return results;
         }
 
@@ -48,7 +53,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
-            return (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(session.ProcessId, param.Procedure);
+
+            session.SetCurrentQuery(param.Procedure.ProcedureName);
+            var result = (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(session, param.Procedure);
+            session.ClearCurrentQuery();
+
+            return result;
         }
 
         public KbQueryQueryExecuteQueryReply ExecuteStatementQuery(RmContext context, KbQueryQueryExecuteQuery param)
@@ -58,11 +68,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
+            session.SetCurrentQuery(param.Statement);
+
             var results = new KbQueryQueryExecuteQueryReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
-                results.Add(_core.Query.ExecuteQuery(session.ProcessId, preparedQuery));
+                results.Add(_core.Query.ExecuteQuery(session, preparedQuery));
             }
+
+            session.ClearCurrentQuery();
+
             return results;
         }
 
@@ -77,13 +92,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
             foreach (var statement in param.Statements)
             {
+                session.SetCurrentQuery(statement);
+
                 foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
                 {
-                    var intermediateResult = _core.Query.ExecuteQuery(session.ProcessId, preparedQuery);
+                    var intermediateResult = _core.Query.ExecuteQuery(session, preparedQuery);
 
                     results.Add(intermediateResult);
                 }
             }
+
+            session.ClearCurrentQuery();
+
             return results;
         }
 
@@ -94,11 +114,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
+            session.SetCurrentQuery(param.Statement);
+
             var results = new KbQueryQueryExecuteNonQueryReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
-                results.Add(_core.Query.ExecuteNonQuery(session.ProcessId, preparedQuery));
+                results.Add(_core.Query.ExecuteNonQuery(session, preparedQuery));
             }
+
+            session.ClearCurrentQuery();
+
             return results;
         }
     }

@@ -95,7 +95,7 @@ namespace NTDLS.Katzebase.Engine.IO
 
             lock (this)
             {
-                if(_collection.TryGetValue(key, out var deferredIO))
+                if (_collection.TryGetValue(key, out var deferredIO))
                 {
                     outReference = (T)deferredIO.Reference;
                     return true;

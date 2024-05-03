@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
+using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Engine.Trace;
 using NTDLS.Semaphore;
 using System.Diagnostics;
@@ -23,9 +24,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
         public TransactiontAPIHandlers APIHandlers { get; private set; }
 
-        internal TransactionReference Acquire(ulong processId)
+        internal TransactionReference Acquire(SessionState session)
         {
-            var transactionReference = Acquire(processId, false);
+            var transactionReference = Acquire(session, false);
 
             var stackFrames = (new StackTrace()).GetFrames();
             if (stackFrames.Length >= 2)
@@ -181,7 +182,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         /// <param name="processId"></param>
         /// <returns></returns>
-        internal TransactionReference Acquire(ulong processId, bool isUserCreated)
+        internal TransactionReference Acquire(SessionState session, bool isUserCreated)
         {
             var startTime = DateTime.UtcNow;
 
@@ -190,10 +191,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 return _collection.Write((obj) =>
                 {
                     PerformanceTraceDurationTracker? ptAcquireTransaction = null;
-                    var transaction = GetByProcessId(processId);
+                    var transaction = GetByProcessId(session.ProcessId);
                     if (transaction == null)
                     {
-                        transaction = new Transaction(_core, this, processId, false)
+                        transaction = new Transaction(_core, this, session.ProcessId, false)
                         {
                             IsUserCreated = isUserCreated
                         };
@@ -206,7 +207,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (isUserCreated)
                     {
                         //We might be several transactions deep when we see the first user created transaction.
-                        //That means we need to conver this transaction to a user transaction.
+                        //That means we need to convert this transaction to a user transaction.
                         transaction.IsUserCreated = true;
                     }
 
@@ -221,10 +222,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to acquire transaction for process {processId}.", ex);
+                _core.Log.Write($"Failed to acquire transaction for process {session.ProcessId}.", ex);
                 throw;
             }
         }
+
+        public void Commit(SessionState session)
+            => Commit(session.ProcessId);
+
         public void Commit(ulong processId)
         {
             try
@@ -237,6 +242,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 throw;
             }
         }
+
+        public void Rollback(SessionState session)
+            => Rollback(session.ProcessId);
 
         public void Rollback(ulong processId)
         {

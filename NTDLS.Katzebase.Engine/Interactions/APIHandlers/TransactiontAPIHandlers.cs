@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
-            _core.Transactions.Acquire(session.ProcessId, true);
+            _core.Transactions.Acquire(session, true);
             return new KbQueryTransactionBeginReply()
             {
                 Success = true,

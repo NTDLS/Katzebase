@@ -422,6 +422,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                 explanation.AppendLine("        }");
             }
             explanation.AppendLine("    }");
+            explanation.AppendLine($"    Query: {transaction.Session.QueryText}");
             explanation.AppendLine("}");
 
             transaction.AddMessage(explanation.ToString(), KbConstants.KbMessageType.Deadlock);

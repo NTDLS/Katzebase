@@ -438,16 +438,16 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                 txSnapshots = txSnapshots.Where(o => o.ProcessId == processId).ToList();
                             }
 
-                            foreach (var session in sessions)
+                            foreach (var s in sessions)
                             {
-                                var txSnapshot = txSnapshots.Where(o => o.ProcessId == session.Value.ProcessId).FirstOrDefault();
+                                var txSnapshot = txSnapshots.Where(o => o.ProcessId == s.Value.ProcessId).FirstOrDefault();
 
                                 var values = new List<string?> {
-                                    $"{session.Key}",
-                                    $"{session.Value.ProcessId:n0}",
-                                    $"{session.Value.ClientName ?? string.Empty}",
-                                    $"{session.Value.LoginTime}",
-                                    $"{session.Value.LastCheckinTime}",
+                                    $"{s.Key}",
+                                    $"{s.Value.ProcessId:n0}",
+                                    $"{s.Value.ClientName ?? string.Empty}",
+                                    $"{s.Value.LoginTime}",
+                                    $"{s.Value.LastCheckinTime}",
                                     $"{(txSnapshot?.BlockedByKeys.Count > 0):n0}",
                                     string.Join(", ", txSnapshot?.BlockedByKeys.Select(o=>o.ProcessId) ?? new List<ulong>()),
                                     $"{txSnapshot?.ReferenceCount:n0}",
@@ -514,10 +514,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
 #if DEBUG
                                 //This is to provide code for the documentation wiki.
-                                var wikiProtitype = new StringBuilder();
+                                var wikiPrototype = new StringBuilder();
 
-                                wikiProtitype.Append($"##Color(#318000, {prototype.ReturnType})");
-                                wikiProtitype.Append($" ##Color(#c6680e, {prototype.Name})(");
+                                wikiPrototype.Append($"##Color(#318000, {prototype.ReturnType})");
+                                wikiPrototype.Append($" ##Color(#c6680e, {prototype.Name})(");
 
                                 if (prototype.Parameters.Count > 0)
                                 {
@@ -525,20 +525,20 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                     {
                                         var param = prototype.Parameters[i];
 
-                                        wikiProtitype.Append($"##Color(#318000, {param.Type}) ##Color(#c6680e, {param.Name})");
+                                        wikiPrototype.Append($"##Color(#318000, {param.Type}) ##Color(#c6680e, {param.Name})");
                                         if (param.HasDefault)
                                         {
-                                            wikiProtitype.Append($" = ##Color(#CC0000, \"'{param.DefaultValue}'\")");
+                                            wikiPrototype.Append($" = ##Color(#CC0000, \"'{param.DefaultValue}'\")");
                                         }
-                                        wikiProtitype.Append(", ");
+                                        wikiPrototype.Append(", ");
                                     }
-                                    if (wikiProtitype.Length > 2)
+                                    if (wikiPrototype.Length > 2)
                                     {
-                                        wikiProtitype.Length -= 2;
+                                        wikiPrototype.Length -= 2;
                                     }
                                 }
-                                wikiProtitype.Append($")");
-                                result.Messages.Add(new KbQueryResultMessage(wikiProtitype.ToString(), KbConstants.KbMessageType.Verbose));
+                                wikiPrototype.Append($")");
+                                result.Messages.Add(new KbQueryResultMessage(wikiPrototype.ToString(), KbConstants.KbMessageType.Verbose));
 #endif
 
                             }
@@ -554,8 +554,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                 KbUtility.EnsureNotNull(proc.PhysicalProcedure);
                 KbQueryResultCollection collection = new();
 
+                var session = core.Sessions.ByProcessId(transaction.ProcessId);
+
                 //We create a "user transaction" so that we have a way to track and destroy temporary objects created by the procedure.
-                using (var transactionReference = core.Transactions.Acquire(transaction.ProcessId, true))
+                using (var transactionReference = core.Transactions.Acquire(session, true))
                 {
                     foreach (var batch in proc.PhysicalProcedure.Batches)
                     {
@@ -571,7 +573,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                         var batchResults = new KbQueryResultCollection();
                         foreach (var preparedQuery in StaticQueryParser.PrepareBatch(batchText))
                         {
-                            batchResults.Add(core.Query.ExecuteQuery(transaction.ProcessId, preparedQuery));
+                            batchResults.Add(core.Query.ExecuteQuery(session, preparedQuery));
                         }
 
                         if (batchResults.Success != true)

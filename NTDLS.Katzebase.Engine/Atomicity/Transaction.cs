@@ -6,6 +6,7 @@ using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Locking;
+using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Engine.Trace;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Client.KbConstants;
@@ -20,6 +21,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public Guid Id { get; private set; } = Guid.NewGuid();
         public List<KbQueryResultMessage> Messages { get; private set; } = new();
         public ulong ProcessId { get; private set; }
+        public SessionState Session => _core.Sessions.ByProcessId(ProcessId);
+
         public DateTime StartTime { get; private set; }
         public bool IsDeadlocked { get; private set; }
         public PerformanceTrace? PT { get; private set; } = null;
@@ -797,7 +800,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 if (obj.Any())
                 {
-                    using (var ephemeralTxRef = _core.Transactions.Acquire(ProcessId))
+                    using (var ephemeralTxRef = _core.Transactions.Acquire(Session))
                     {
                         foreach (var tempSchema in obj)
                         {
