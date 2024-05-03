@@ -77,11 +77,11 @@ namespace NTDLS.Katzebase.Server
 
         private void RmServer_OnDisconnected(RmContext context)
         {
-            _core?.Log.Trace($"Disonnected: {context.ConnectionId}");
+            _core?.Log.Trace($"Disconnected: {context.ConnectionId}");
             KbUtility.EnsureNotNull(_core);
 
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
-            _core.Sessions.CloseByProcessId(processId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            _core.Sessions.CloseByProcessId(session.ProcessId);
         }
 
         private void RmServer_OnException(RmContext context, Exception ex, IRmPayload? payload)

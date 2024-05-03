@@ -27,49 +27,50 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExplainReply ExecuteStatementExplain(RmContext context, KbQueryQueryExplain param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
+
             var results = new KbQueryQueryExplainReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
-                results.Add(_core.Query.ExplainQuery(processId, preparedQuery));
+                results.Add(_core.Query.ExplainQuery(session.ProcessId, preparedQuery));
             }
             return results;
         }
 
         public KbQueryProcedureExecuteReply ExecuteStatementProcedure(RmContext context, KbQueryProcedureExecute param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
-            return (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(processId, param.Procedure);
+            return (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(session.ProcessId, param.Procedure);
         }
 
         public KbQueryQueryExecuteQueryReply ExecuteStatementQuery(RmContext context, KbQueryQueryExecuteQuery param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             var results = new KbQueryQueryExecuteQueryReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
-                results.Add(_core.Query.ExecuteQuery(processId, preparedQuery));
+                results.Add(_core.Query.ExecuteQuery(session.ProcessId, preparedQuery));
             }
             return results;
         }
 
         public KbQueryQueryExecuteQueriesReply ExecuteStatementQueries(RmContext context, KbQueryQueryExecuteQueries param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             var results = new KbQueryQueryExecuteQueriesReply();
@@ -78,9 +79,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
                 {
-                    var intermediatResult = _core.Query.ExecuteQuery(processId, preparedQuery);
+                    var intermediateResult = _core.Query.ExecuteQuery(session.ProcessId, preparedQuery);
 
-                    results.Add(intermediatResult);
+                    results.Add(intermediateResult);
                 }
             }
             return results;
@@ -88,15 +89,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExecuteNonQueryReply ExecuteStatementNonQuery(RmContext context, KbQueryQueryExecuteNonQuery param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             var results = new KbQueryQueryExecuteNonQueryReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
-                results.Add(_core.Query.ExecuteNonQuery(processId, preparedQuery));
+                results.Add(_core.Query.ExecuteNonQuery(session.ProcessId, preparedQuery));
             }
             return results;
         }

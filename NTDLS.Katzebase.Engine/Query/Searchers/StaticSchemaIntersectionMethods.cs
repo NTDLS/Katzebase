@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             ConditionLookupOptimization? lookupOptimization = null;
 
             //TODO: Here we should evaluate whatever conditions we can to early eliminate the top level document scans.
-            //If we dont have any conditions then we just need to return all rows from the schema.
+            //If we don't have any conditions then we just need to return all rows from the schema.
             if (query.Conditions.Subsets.Count > 0)
             {
                 lookupOptimization = ConditionLookupOptimization.Build(core, transaction, topLevelMap.PhysicalSchema, query.Conditions, topLevelMap.Prefix);

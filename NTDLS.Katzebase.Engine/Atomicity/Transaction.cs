@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public List<KbQueryResultMessage> Messages { get; private set; } = new();
         public ulong ProcessId { get; private set; }
         public DateTime StartTime { get; private set; }
-        public bool IsDeadlocked { get; set; }
+        public bool IsDeadlocked { get; private set; }
         public PerformanceTrace? PT { get; private set; } = null;
         public OptimisticSemaphore CriticalSectionTransaction { get; } = new();
 
@@ -151,8 +151,16 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         }
 
         public void AddMessage(string text, KbMessageType type)
+            => Messages.Add(new KbQueryResultMessage(text, type));
+
+        /// <summary>
+        /// Sets the transaction as "deadlocked", rolls back the transaction and does health reporting.
+        /// </summary>
+        public void SetDeadlocked()
         {
-            Messages.Add(new KbQueryResultMessage(text, type));
+            IsDeadlocked = true;
+            Rollback();
+            _core.Health.Increment(HealthCounterType.DeadlockCount);
         }
 
         private void ReleaseLocks()
@@ -174,11 +182,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 throw new KbTransactionCancelledException("The transaction was cancelled");
             }
-            if (IsDeadlocked)
+            else if (IsDeadlocked)
             {
                 throw new KbTransactionCancelledException("The transaction was deadlocked");
             }
-            if (IsCommittedOrRolledBack)
+            else if (IsCommittedOrRolledBack)
             {
                 throw new KbTransactionCancelledException("The transaction was committed or rolled back.");
             }
@@ -328,12 +336,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         }
 
         public string TransactionLogFilePath
-        {
-            get
-            {
-                return TransactionPath + "\\" + TransactionActionsFile;
-            }
-        }
+            => TransactionPath + "\\" + TransactionActionsFile;
 
         public Transaction(EngineCore core, TransactionManager transactionManager, ulong processId, bool isRecovery)
         {
@@ -611,9 +614,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         #endregion
 
         public void AddReference()
-        {
-            CriticalSectionTransaction.Write(() => _referenceCount++);
-        }
+           => CriticalSectionTransaction.Write(() => _referenceCount++);
 
         public void Rollback()
         {

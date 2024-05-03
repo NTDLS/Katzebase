@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
             {
                 if (Parameters.Count > 0 && Parameters[0].Type == KbProcedureParameterType.Infinite_String)
                 {
-                    //The first parameter is infinite, we dont even check anything else.
+                    //The first parameter is infinite, we don't even check anything else.
                 }
                 else
                 {

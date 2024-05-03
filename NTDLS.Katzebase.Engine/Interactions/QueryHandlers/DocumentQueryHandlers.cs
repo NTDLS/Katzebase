@@ -212,7 +212,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 var listOfModifiedFields = preparedQuery.UpdateValues.Select(o => o.Key);
 
-                //We update all of the documents all at once so we dont have to keep opening/closing catalogs.
+                //We update all of the documents all at once so we don't have to keep opening/closing catalogs.
                 _core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocumentPointers, listOfModifiedFields);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());

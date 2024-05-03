@@ -78,7 +78,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             {
                 if (Parameters.Count > 0 && Parameters[0].Type == KbScalerFunctionParameterType.Infinite_String)
                 {
-                    //The first parameter is infinite, we dont even check anything else.
+                    //The first parameter is infinite, we don't even check anything else.
                 }
                 else
                 {

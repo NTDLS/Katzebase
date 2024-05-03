@@ -30,14 +30,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQuerySchemaListReply ListSchemas(RmContext context, KbQuerySchemaList param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Read);
 
                 var result = new KbQuerySchemaListReply();
@@ -58,25 +58,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to get schema list for process {processId}.", ex);
+                _core.Log.Write($"Failed to get schema list for process {session.ProcessId}.", ex);
                 throw;
             }
         }
 
         /// <summary>
-        /// Creates a structure of schemas, denotaed by colons.
+        /// Creates a structure of schemas, denoted by colons.
         /// </summary>
         /// <param name="schemaPath"></param>
         public KbQuerySchemaCreateReply CreateSchema(RmContext context, KbQuerySchemaCreate param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
                 var segments = param.Schema.Split(':');
                 var pathBuilder = new StringBuilder();
 
@@ -91,7 +91,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to create schema lineage for process {processId}.", ex);
+                _core.Log.Write($"Failed to create schema lineage for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -102,14 +102,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schemaPath"></param>
         public KbQuerySchemaExistsReply DoesSchemaExist(RmContext context, KbQuerySchemaExists param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
                 var segments = param.Schema.Split(':');
                 var pathBuilder = new StringBuilder();
                 bool schemaExists = false;
@@ -132,7 +132,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to confirm schema for process {processId}.", ex);
+                _core.Log.Write($"Failed to confirm schema for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -143,14 +143,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schema"></param>
         public KbQuerySchemaDropReply DropSchema(RmContext context, KbQuerySchemaDrop param)
         {
-            var processId = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
-            Thread.CurrentThread.Name = $"KbAPI:{processId}:{param.GetType().Name}";
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             _core.Log.Trace(Thread.CurrentThread.Name);
 #endif
             try
             {
-                using var transactionReference = _core.Transactions.Acquire(processId);
+                using var transactionReference = _core.Transactions.Acquire(session.ProcessId);
                 var segments = param.Schema.Split(':');
                 var parentSchemaName = segments[segments.Count() - 1];
 
@@ -176,7 +176,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to drop schema for process {processId}.", ex);
+                _core.Log.Write($"Failed to drop schema for process {session.ProcessId}.", ex);
                 throw;
             }
         }
