@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using NTDLS.Katzebase.Client;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
@@ -55,9 +55,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
                 var targetSchema = preparedQuery.Attributes[PreparedQuery.QueryAttribute.TargetSchema].ToString();
-                KbUtility.EnsureNotNull(targetSchema);
 
-                var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write);
+                var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema.EnsureNotNull(), LockOperation.Write);
 
                 if (physicalTargetSchema.Exists == false)
                 {
@@ -169,16 +168,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     getDocumentPointsForSchemaPrefix = preparedQuery.Attributes[PreparedQuery.QueryAttribute.SpecificSchemaPrefix] as string;
                 }
 
-                KbUtility.EnsureNotNull(getDocumentPointsForSchemaPrefix);
-
-                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(_core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
+                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
+                    _core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix.EnsureNotNull());
 
                 var updatedDocumentPointers = new List<DocumentPointer>();
 
                 foreach (var documentPointer in documentPointers)
                 {
-                    var physicalDocument = _core.Documents.AcquireDocument(transactionReference.Transaction, physicalSchema, documentPointer, LockOperation.Write);
-                    KbUtility.EnsureNotNull(physicalDocument);
+                    var physicalDocument = _core.Documents.AcquireDocument
+                        (transactionReference.Transaction, physicalSchema, documentPointer, LockOperation.Write);
 
                     foreach (var updateValue in preparedQuery.UpdateValues)
                     {
@@ -295,9 +293,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     getDocumentPointsForSchemaPrefix = preparedQuery.Attributes[PreparedQuery.QueryAttribute.SpecificSchemaPrefix] as string;
                 }
 
-                KbUtility.EnsureNotNull(getDocumentPointsForSchemaPrefix);
-
-                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(_core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix);
+                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery
+                    (_core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix.EnsureNotNull());
                 _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, documentPointers.ToArray());
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
             }

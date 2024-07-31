@@ -1,10 +1,9 @@
 ﻿using Newtonsoft.Json;
-using NTDLS.Katzebase.Client;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.IO;
-using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Engine.Trace;
@@ -239,7 +238,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public ObjectLockKey? LockFile(LockOperation lockOperation, string diskPath)
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             try
             {
@@ -269,7 +268,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <param name="diskPath"></param>
         public ObjectLockKey? LockDirectory(LockOperation lockOperation, string diskPath)
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             try
             {
@@ -299,7 +298,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <param name="diskPath"></param>
         public ObjectLockKey? LockPath(LockOperation lockOperation, string diskPath)
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             try
             {
@@ -333,7 +332,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             get
             {
-                KbUtility.EnsureNotNull(_core);
+                _core.EnsureNotNull();
                 return Path.Combine(_core.Settings.TransactionDataPath, ProcessId.ToString());
             }
         }
@@ -373,7 +372,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     AutoFlush = true
                 };
 
-                KbUtility.EnsureNotNull(_transactionLogHandle);
+                _transactionLogHandle.EnsureNotNull();
             }
         }
 
@@ -393,7 +392,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void RecordFileCreate(string filePath)
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             try
             {
@@ -415,9 +414,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     obj.Add(atom);
 
-                    KbUtility.EnsureNotNull(_transactionLogHandle);
-
-                    _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                    _transactionLogHandle.EnsureNotNull().WriteLine(JsonConvert.SerializeObject(atom));
                 });
 
                 ptRecording?.StopAndAccumulate();
@@ -431,7 +428,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void RecordDirectoryCreate(string path)
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             try
             {
@@ -452,9 +449,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     obj.Add(atom);
 
-                    KbUtility.EnsureNotNull(_transactionLogHandle);
-
-                    _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                    _transactionLogHandle.EnsureNotNull().WriteLine(JsonConvert.SerializeObject(atom));
                 });
                 ptRecording?.StopAndAccumulate();
             }
@@ -467,7 +462,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void RecordPathDelete(string diskPath)
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             try
             {
@@ -486,7 +481,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     string backupPath = Path.Combine(TransactionPath, Guid.NewGuid().ToString());
                     Directory.CreateDirectory(backupPath);
-                    Helpers.CopyDirectory(diskPath, backupPath);
+                    Library.Helpers.CopyDirectory(diskPath, backupPath);
 
                     var atom = new Atom(ActionType.DirectoryDelete, diskPath)
                     {
@@ -496,9 +491,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     obj.Add(atom);
 
-                    KbUtility.EnsureNotNull(_transactionLogHandle);
-
-                    _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                    _transactionLogHandle.EnsureNotNull().WriteLine(JsonConvert.SerializeObject(atom));
                 });
                 ptRecording?.StopAndAccumulate();
             }
@@ -511,7 +504,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void RecordFileDelete(string filePath)
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             try
             {
@@ -539,9 +532,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     obj.Add(atom);
 
-                    KbUtility.EnsureNotNull(_transactionLogHandle);
-
-                    _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                    _transactionLogHandle.EnsureNotNull().WriteLine(JsonConvert.SerializeObject(atom));
                 });
                 ptRecording?.StopAndAccumulate();
             }
@@ -554,7 +545,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void RecordFileRead(string filePath)
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             try
             {
@@ -575,7 +566,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void RecordFileAlter(string filePath)
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             try
             {
@@ -601,9 +592,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     obj.Add(atom);
 
-                    KbUtility.EnsureNotNull(_transactionLogHandle);
-
-                    _transactionLogHandle.WriteLine(JsonConvert.SerializeObject(atom));
+                    _transactionLogHandle.EnsureNotNull().WriteLine(JsonConvert.SerializeObject(atom));
                 });
                 ptRecording?.StopAndAccumulate();
             }
@@ -621,7 +610,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public void Rollback()
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             CriticalSectionTransaction.Write(() =>
             {
@@ -660,17 +649,14 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                     {
                                         //Discard.
                                     }
-                                    Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(record.OriginalPath));
+                                    Library.Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(record.OriginalPath));
                                 }
                                 else if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
                                 {
                                     var diskPath = Path.GetDirectoryName(record.OriginalPath);
 
-                                    KbUtility.EnsureNotNull(diskPath);
-                                    KbUtility.EnsureNotNull(record.BackupPath);
-
-                                    Directory.CreateDirectory(diskPath);
-                                    File.Copy(record.BackupPath, record.OriginalPath, true);
+                                    Directory.CreateDirectory(diskPath.EnsureNotNull());
+                                    File.Copy(record.BackupPath.EnsureNotNull(), record.OriginalPath, true);
                                 }
                                 else if (record.Action == ActionType.DirectoryCreate)
                                 {
@@ -681,8 +667,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                 }
                                 else if (record.Action == ActionType.DirectoryDelete)
                                 {
-                                    KbUtility.EnsureNotNull(record.BackupPath);
-                                    Helpers.CopyDirectory(record.BackupPath, record.OriginalPath);
+                                    Library.Helpers.CopyDirectory(record.BackupPath.EnsureNotNull(), record.OriginalPath);
                                 }
                             }
 
@@ -736,7 +721,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <exception cref="KbGenericException"></exception>
         public bool Commit()
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             return CriticalSectionTransaction.Write(() =>
             {
@@ -794,7 +779,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         private void DeleteTemporarySchemas()
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             TemporarySchemas.Write((obj) =>
             {
@@ -814,7 +799,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         private void CleanupTransaction()
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             try
             {
@@ -832,13 +817,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                         //Delete all the backup files.
                         if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
                         {
-                            KbUtility.EnsureNotNull(record.BackupPath);
-                            File.Delete(record.BackupPath);
+                            File.Delete(record.BackupPath.EnsureNotNull());
                         }
                         else if (record.Action == ActionType.DirectoryDelete)
                         {
-                            KbUtility.EnsureNotNull(record.BackupPath);
-                            Directory.Delete(record.BackupPath, true);
+                            Directory.Delete(record.BackupPath.EnsureNotNull(), true);
                         }
                     }
                 });

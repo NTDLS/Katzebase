@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Library;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
@@ -23,10 +23,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     {
                         throw new KbGenericException($"Value for {name} cannot be null.");
                     }
-                    return Helpers.ConvertTo<T>(parameter.Parameter.DefaultValue);
+                    return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
                 }
 
-                return Helpers.ConvertTo<T>(parameter.Value);
+                return Converters.ConvertTo<T>(parameter.Value);
             }
             catch
             {
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     return defaultValue;
                 }
 
-                return Helpers.ConvertTo<T>(value);
+                return Converters.ConvertTo<T>(value);
             }
             catch
             {
@@ -68,10 +68,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     {
                         throw new KbGenericException($"Value for {name} cannot be null.");
                     }
-                    return Helpers.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
+                    return Converters.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
                 }
 
-                return Helpers.ConvertToNullable<T>(parameter.Value);
+                return Converters.ConvertToNullable<T>(parameter.Value);
             }
             catch
             {
@@ -89,7 +89,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     return defaultValue;
                 }
 
-                return Helpers.ConvertToNullable<T>(value);
+                return Converters.ConvertToNullable<T>(value);
             }
             catch
             {

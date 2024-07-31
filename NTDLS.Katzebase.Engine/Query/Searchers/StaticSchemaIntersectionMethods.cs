@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
@@ -53,9 +53,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     //All condition subsets have a selected index. Start building a list of possible document IDs.
                     foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
                     {
-                        KbUtility.EnsureNotNull(subset.IndexSelection);
-
-                        var indexMatchedDocuments = core.Indexes.MatchWorkingSchemaDocuments(transaction, topLevelMap.PhysicalSchema, subset.IndexSelection, subset, topLevelMap.Prefix);
+                        var indexMatchedDocuments = core.Indexes.MatchWorkingSchemaDocuments
+                            (transaction, topLevelMap.PhysicalSchema, subset.IndexSelection.EnsureNotNull(), subset, topLevelMap.Prefix);
                         limitedDocumentPointers.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
 
@@ -100,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     break;
                 }
 
-                if (threadPoolQueue.ExceptionOccured())
+                if (threadPoolQueue.ExceptionOccurred())
                 {
                     break;
                 }
@@ -280,9 +279,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         private static void LookupThreadWorker(object? parameter)
         {
-            KbUtility.EnsureNotNull(parameter);
-
-            var param = (LookupThreadParameterEnvelope)parameter;
+            var param = (LookupThreadParameterEnvelope)parameter.EnsureNotNull();
 
             param.Instance.Transaction.EnsureActive();
 
@@ -415,9 +412,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             var currentSchemaKVP = param.SchemaMap.Skip(skipSchemaCount).First();
             var currentSchemaMap = currentSchemaKVP.Value;
 
-            KbUtility.EnsureNotNull(currentSchemaMap?.Conditions);
-
-            var expression = new NCalc.Expression(currentSchemaMap.Conditions.HighLevelExpressionTree);
+            var expression = new NCalc.Expression(currentSchemaMap.Conditions.EnsureNotNull().HighLevelExpressionTree);
 
             //Create a reference to the entire document catalog.
             IEnumerable<DocumentPointer>? limitedDocumentPointers = null;
@@ -432,8 +427,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 //All condition subsets have a selected index. Start building a list of possible document IDs.
                 foreach (var subset in currentSchemaMap.Optimization.Conditions.NonRootSubsets)
                 {
-                    KbUtility.EnsureNotNull(subset.IndexSelection);
-
                     var keyValuePairs = new KbInsensitiveDictionary<string>();
 
                     //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
@@ -449,7 +442,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     }
 
                     //Match on values from the document.
-                    var documentIds = param.Core.Indexes.MatchConditionValuesDocuments(param.Transaction, currentSchemaMap.PhysicalSchema, subset.IndexSelection, subset, keyValuePairs);
+                    var documentIds = param.Core.Indexes.MatchConditionValuesDocuments
+                        (param.Transaction, currentSchemaMap.PhysicalSchema, subset.IndexSelection.EnsureNotNull(), subset, keyValuePairs);
 
                     furtherLimitedDocumentPointers.AddRange(documentIds.Values);
                 }
@@ -570,24 +564,21 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             foreach (var condition in conditionSubset.Conditions)
             {
-                KbUtility.EnsureNotNull(condition.Left.Value);
-                KbUtility.EnsureNotNull(condition.Right.Value);
-
                 //Get the value of the condition:
                 var documentContent = joinScopedContentCache[condition.Left.Prefix];
-                if (!documentContent.TryGetValue(condition.Left.Value, out string? leftDocumentValue))
+                if (!documentContent.TryGetValue(condition.Left.Value.EnsureNotNull(), out string? leftDocumentValue))
                 {
                     throw new KbEngineException($"Field not found in document [{condition.Left.Value}].");
                 }
 
                 //Get the value of the condition:
                 documentContent = joinScopedContentCache[condition.Right.Prefix];
-                if (!documentContent.TryGetValue(condition.Right.Value, out string? reftDocumentValue))
+                if (!documentContent.TryGetValue(condition.Right.Value.EnsureNotNull(), out string? rightDocumentValue))
                 {
                     throw new KbEngineException($"Field not found in document [{condition.Right.Value}].");
                 }
 
-                var singleConditionResult = Condition.IsMatch(transaction, leftDocumentValue?.ToLower(), condition.LogicalQualifier, reftDocumentValue);
+                var singleConditionResult = Condition.IsMatch(transaction, leftDocumentValue?.ToLower(), condition.LogicalQualifier, rightDocumentValue);
 
                 expression.Parameters[condition.ConditionKey] = singleConditionResult;
             }
@@ -721,7 +712,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         #endregion
 
-        #region WHERE clasue.
+        #region WHERE clause.
 
         /// <summary>
         /// This is where we filter the results by the WHERE clause.
@@ -749,12 +740,12 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         }
 
         /// <summary>
-        /// Sets the parameters for the WHERE clasue expression evaluation from the condition field values saved from the MSQ lookup.
+        /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction,
             ref NCalc.Expression expression, Conditions conditions, KbInsensitiveDictionary<string?> conditionField)
         {
-            //If we have subsets, then we need to satisify those in order to complete the equation.
+            //If we have subsets, then we need to satisfy those in order to complete the equation.
             foreach (var subsetKey in conditions.Root.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
@@ -763,7 +754,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         }
 
         /// <summary>
-        /// Sets the parameters for the WHERE clasue expression evaluation from the condition field values saved from the MSQ lookup.
+        /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction, ref NCalc.Expression expression,
             Conditions conditions, ConditionSubset conditionSubset, KbInsensitiveDictionary<string?> conditionField)
@@ -777,8 +768,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             foreach (var condition in conditionSubset.Conditions)
             {
-                KbUtility.EnsureNotNull(condition.Left.Value);
-
                 //Get the value of the condition:
                 if (conditionField.TryGetValue(condition.Left.Key, out string? value) == false)
                 {

@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Payloads;
 using System.Diagnostics;
 using System.IO.Compression;
@@ -25,7 +26,7 @@ namespace Benchmark
             CreatePayloadData();
 
             Console.WriteLine("Executing scripts:");
-            ExecuteBenchamark_Scripts();
+            ExecuteBenchmark_Scripts();
 
             Console.WriteLine("Executing inserts:");
             ExecuteBenchamark_Inserts();
@@ -39,14 +40,14 @@ namespace Benchmark
 
         private static void ExecuteBenchamark_Inserts()
         {
-            ExecuteBenchamark_Inserts("Payload.gz", "Benchmarking:Insertion_tx10", 10000, 10);
-            ExecuteBenchamark_Inserts("Payload.gz", "Benchmarking:Payload_Insertion_tx100", 10000, 100);
-            ExecuteBenchamark_Inserts("Payload.gz", "Benchmarking:Insertion_tx1000", 10000, 1000);
+            ExecuteBenchmark_Inserts("Payload.gz", "Benchmarking:Insertion_tx10", 10000, 10);
+            ExecuteBenchmark_Inserts("Payload.gz", "Benchmarking:Payload_Insertion_tx100", 10000, 100);
+            ExecuteBenchmark_Inserts("Payload.gz", "Benchmarking:Insertion_tx1000", 10000, 1000);
         }
 
-        private static void ExecuteBenchamark_Inserts(string fileName, string schemaName, int maxCount, int rowsPerTransaction)
+        private static void ExecuteBenchmark_Inserts(string fileName, string schemaName, int maxCount, int rowsPerTransaction)
         {
-            Console.WriteLine($"ExecuteBenchamark_Inserts: {schemaName}");
+            Console.WriteLine($"ExecuteBenchmark_Inserts: {schemaName}");
 
             var process = StartService();
             using (var client = new KbClient(_serverHost, _serverPort))
@@ -55,8 +56,7 @@ namespace Benchmark
                 client.Schema.Create(schemaName);
 
                 var bytes = DecompressToString(File.ReadAllBytes(Path.Combine(_DataPath, fileName)));
-                var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes);
-                KbUtility.EnsureNotNull(payloadRows);
+                var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes).EnsureNotNull();
 
                 double previousTotalProcessorTime = 0;
                 for (int i = 0; i < _iterationsPerTest; i++)
@@ -105,7 +105,7 @@ namespace Benchmark
             process.Kill();
         }
 
-        private static void ExecuteBenchamark_Scripts()
+        private static void ExecuteBenchmark_Scripts()
         {
             var scriptFiles = GetBenchmarkScripts();
 
@@ -119,7 +119,7 @@ namespace Benchmark
                     double previousTotalProcessorTime = 0;
                     for (int i = 0; i < _iterationsPerTest; i++)
                     {
-                        Console.WriteLine($"ExecuteBenchamark_Scripts: {Path.GetFileNameWithoutExtension(scriptFile)}->{i}");
+                        Console.WriteLine($"ExecuteBenchmark_Scripts: {Path.GetFileNameWithoutExtension(scriptFile)}->{i}");
 
                         var result = client.Query.ExecuteQuery(queryText);
 
@@ -147,8 +147,7 @@ namespace Benchmark
                 client.Schema.Create("Benchmarking:Payload_100000");
 
                 var bytes = DecompressToString(File.ReadAllBytes(Path.Combine(_DataPath, "Payload.gz")));
-                var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes);
-                KbUtility.EnsureNotNull(payloadRows);
+                var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes).EnsureNotNull();
 
                 int rowCount = 0;
                 int rowsPerTransaction = 1000;
@@ -205,8 +204,7 @@ namespace Benchmark
                 client.Schema.Create(schemaName);
 
                 var bytes = DecompressToString(File.ReadAllBytes(Path.Combine(_DataPath, fileName)));
-                var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes);
-                KbUtility.EnsureNotNull(payloadRows);
+                var payloadRows = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Dictionary<string, string>>>(bytes).EnsureNotNull();
 
                 for (int i = 0; i < _iterationsPerTest; i++)
                 {

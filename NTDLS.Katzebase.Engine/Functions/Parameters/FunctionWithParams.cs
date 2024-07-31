@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Library;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using static NTDLS.Katzebase.Engine.Functions.Parameters.FunctionParameterTypes;
 
 namespace NTDLS.Katzebase.Engine.Functions.Parameters
@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                 throw new KbFunctionException($"Parameter {ordinal} could not be converted to an expression.");
             }
 
-            return Helpers.ConvertTo<T?>(expression.Value);
+            return Converters.ConvertTo<T?>(expression.Value);
         }
 
         public FunctionWithParams(string functionName)

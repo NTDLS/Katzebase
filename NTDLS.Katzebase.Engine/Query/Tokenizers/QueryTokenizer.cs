@@ -252,7 +252,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         /// <returns></returns>
         public static KbInsensitiveDictionary<string> CleanQueryText(ref string query, bool swapLiteralsBackIn = false)
         {
-            query = KbUtility.RemoveComments(query);
+            query = KbTextUtility.RemoveComments(query);
 
             var literalStrings = SwapOutLiteralStrings(ref query);
             query = query.Trim();

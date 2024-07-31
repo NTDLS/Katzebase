@@ -1,6 +1,6 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
-using NTDLS.Katzebase.Engine.Library;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
@@ -44,10 +44,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     {
                         throw new KbGenericException($"Value for {name} cannot be null.");
                     }
-                    return Helpers.ConvertTo<T>(parameter.Parameter.DefaultValue);
+                    return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
                 }
 
-                return Helpers.ConvertTo<T>(paramValue);
+                return Converters.ConvertTo<T>(paramValue);
             }
             catch
             {
@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     return defaultValue;
                 }
 
-                return Helpers.ConvertTo<T>(value);
+                return Converters.ConvertTo<T>(value);
             }
             catch
             {
@@ -91,10 +91,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     {
                         throw new KbGenericException($"Value for {name} cannot be null.");
                     }
-                    return Helpers.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
+                    return Converters.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
                 }
 
-                return Helpers.ConvertToNullable<T>(parameter.Value);
+                return Converters.ConvertToNullable<T>(parameter.Value);
             }
             catch
             {
@@ -113,7 +113,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     return defaultValue;
                 }
 
-                return Helpers.ConvertToNullable<T>(value);
+                return Converters.ConvertToNullable<T>(value);
             }
             catch
             {

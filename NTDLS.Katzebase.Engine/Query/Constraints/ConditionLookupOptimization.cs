@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Schemas;
@@ -64,18 +63,18 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     var potentialIndexs = new List<PotentialIndex>();
 
                     //Loop though each index in the schema.
-                    foreach (var physicalIindex in indexCatalog.Collection)
+                    foreach (var physicalIndex in indexCatalog.Collection)
                     {
                         var handledKeyNames = new List<PrefixedField>();
 
-                        for (int i = 0; i < physicalIindex.Attributes.Count; i++)
+                        for (int i = 0; i < physicalIndex.Attributes.Count; i++)
                         {
-                            if (physicalIindex.Attributes == null || physicalIindex.Attributes[i] == null)
+                            if (physicalIndex.Attributes == null || physicalIndex.Attributes[i] == null)
                             {
-                                throw new KbNullException($"Value should not be null {nameof(physicalIindex.Attributes)}.");
+                                throw new KbNullException($"Value should not be null {nameof(physicalIndex.Attributes)}.");
                             }
 
-                            var keyName = physicalIindex.Attributes[i].Field?.ToLower();
+                            var keyName = physicalIndex.Attributes[i].Field?.ToLower();
                             if (keyName == null)
                             {
                                 throw new KbNullException($"Value should not be null {nameof(keyName)}.");
@@ -98,7 +97,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                         if (handledKeyNames.Count > 0)
                         {
-                            var potentialIndex = new PotentialIndex(physicalIindex, handledKeyNames);
+                            var potentialIndex = new PotentialIndex(physicalIndex, handledKeyNames);
                             potentialIndexs.Add(potentialIndex);
                         }
                     }
@@ -144,16 +143,15 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                         lookupOptimization.IndexSelection.Add(indexSelection);
 
-                        //Mark which condition this index selection satisifies.
+                        //Mark which condition this index selection satisfies.
                         var sourceSubset = lookupOptimization.Conditions.SubsetByKey(subset.SubsetKey);
-                        KbUtility.EnsureNotNull(sourceSubset);
                         sourceSubset.IndexSelection = indexSelection;
 
-                        foreach (var conditon in sourceSubset.Conditions)
+                        foreach (var condition in sourceSubset.Conditions)
                         {
-                            if (indexSelection.CoveredFields.Any(o => o.Key == conditon.Left.Key))
+                            if (indexSelection.CoveredFields.Any(o => o.Key == condition.Left.Key))
                             {
-                                conditon.CoveredByIndex = true;
+                                condition.CoveredByIndex = true;
                             }
                         }
                     }

@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
@@ -64,7 +63,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var root = document.RootElement;
                     var settingsElement = root.GetProperty("Settings");
                     var settings = JsonSerializer.Deserialize<KatzebaseSettings>(settingsElement.ToString());
-                    KbUtility.EnsureNotNull(settings);
 
                     foreach (var settingElement in settingsElement.EnumerateObject())
                     {

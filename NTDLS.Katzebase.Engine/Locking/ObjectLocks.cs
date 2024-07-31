@@ -66,8 +66,6 @@ namespace NTDLS.Katzebase.Engine.Locking
                 return result;
             });
 
-            KbUtility.EnsureNotNull(result);
-
             return result;
         }
 
@@ -365,8 +363,6 @@ namespace NTDLS.Katzebase.Engine.Locking
             explanation.AppendLine($"            Object: {intention.DiskPath}");
             explanation.AppendLine("        }");
 
-            KbUtility.EnsureNotNull(transaction.HeldLockKeys);
-
             explanation.AppendLine("        Held Locks {");
             transaction.HeldLockKeys.Read((obj) =>
             {
@@ -393,8 +389,6 @@ namespace NTDLS.Katzebase.Engine.Locking
                 explanation.AppendLine($"        Operation: {waiter.TopLevelOperation}");
                 //explanation.AppendLine($"        ReferenceCount: {waiter.ReferenceCount}"); //This causes a race condition.
                 explanation.AppendLine($"        StartTime: {waiter.StartTime}");
-
-                KbUtility.EnsureNotNull(waiter.HeldLockKeys);
 
                 explanation.AppendLine("        Held Locks {");
 

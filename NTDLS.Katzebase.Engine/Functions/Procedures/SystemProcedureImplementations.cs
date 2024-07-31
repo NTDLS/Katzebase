@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
@@ -550,8 +551,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
             else
             {
                 //Next check for user procedures in a schema:
-                KbUtility.EnsureNotNull(proc.PhysicalSchema);
-                KbUtility.EnsureNotNull(proc.PhysicalProcedure);
+                proc.PhysicalSchema.EnsureNotNull();
+                proc.PhysicalProcedure.EnsureNotNull();
                 KbQueryResultCollection collection = new();
 
                 var session = core.Sessions.ByProcessId(transaction.ProcessId);

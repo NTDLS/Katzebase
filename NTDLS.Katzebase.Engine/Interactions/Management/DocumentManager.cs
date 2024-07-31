@@ -1,9 +1,8 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
-using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Schemas;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -146,8 +145,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 //Open the document page catalog:
                 var documentPageCatalog = _core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
-                KbUtility.EnsureNotNull(documentPageCatalog);
-
                 uint physicalDocumentId = documentPageCatalog.ConsumeNextDocumentId();
 
                 var physicalDocument = new PhysicalDocument(pageContent)
@@ -164,7 +161,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 PhysicalDocumentPageCatalogItem physicalPageCatalogItem;
 
-                if (Helpers.IsDefault(existingPhysicalPageCatalogItem))
+                if (existingPhysicalPageCatalogItem.IsDefault())
                 {
                     //We didn't find a page with room, we're going to have to create a new "Page Catalog Item" and new "Document Page Map".
                     // add the given document ID to it and add that catalog item to the catalog collection:
@@ -279,7 +276,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 //Open the document page catalog:
                 var documentPageCatalog = _core.IO.GetPBuf<PhysicalDocumentPageCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), LockOperation.Write);
-                KbUtility.EnsureNotNull(documentPageCatalog);
 
                 foreach (var documentPointer in documentPointers)
                 {

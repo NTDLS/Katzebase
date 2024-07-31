@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using NTDLS.Katzebase.Client;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
@@ -143,17 +143,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 foreach (string transactionFile in transactionFiles)
                 {
                     var processIdString = Path.GetFileNameWithoutExtension(Path.GetDirectoryName(transactionFile));
-                    KbUtility.EnsureNotNull(processIdString);
-
-                    ulong processId = ulong.Parse(processIdString);
+                    ulong processId = ulong.Parse(processIdString.EnsureNotNull());
 
                     var transaction = new Transaction(_core, this, processId, true);
 
                     var atoms = File.ReadLines(transactionFile).ToList();
                     foreach (var atom in atoms)
                     {
-                        var ra = JsonConvert.DeserializeObject<Atom>(atom);
-                        KbUtility.EnsureNotNull(ra);
+                        var ra = JsonConvert.DeserializeObject<Atom>(atom).EnsureNotNull();
                         transaction.Atoms.Write((obj) => obj.Add(ra));
                     }
 
@@ -214,8 +211,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     transaction.AddReference();
 
                     ptAcquireTransaction?.StopAndAccumulate((DateTime.UtcNow - startTime).TotalMilliseconds);
-
-                    KbUtility.EnsureNotNull(transaction);
 
                     return new TransactionReference(transaction);
                 });

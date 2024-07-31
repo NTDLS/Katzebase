@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Library;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 
 namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
@@ -23,15 +23,16 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                     {
                         throw new KbGenericException($"Value for {name} cannot be null.");
                     }
-                    return Helpers.ConvertTo<T>(parameter.Parameter.DefaultValue);
+
+                    return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
                 }
 
                 if (typeof(T) == typeof(string) || (Nullable.GetUnderlyingType(typeof(T)) == typeof(string)))
                 {
-                    return Helpers.ConvertTo<T>(parameter.Value.Substring(1, parameter.Value.Length - 2));
+                    return Converters.ConvertTo<T>(parameter.Value.Substring(1, parameter.Value.Length - 2));
                 }
 
-                return Helpers.ConvertTo<T>(parameter.Value);
+                return Converters.ConvertTo<T>(parameter.Value);
             }
             catch
             {
@@ -51,10 +52,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                 if (typeof(T) == typeof(string) || (Nullable.GetUnderlyingType(typeof(T)) == typeof(string)))
                 {
-                    return Helpers.ConvertTo<T>(value.Substring(1, value.Length - 2));
+                    return Converters.ConvertTo<T>(value.Substring(1, value.Length - 2));
                 }
 
-                return Helpers.ConvertTo<T>(value);
+                return Converters.ConvertTo<T>(value);
             }
             catch
             {
@@ -76,15 +77,15 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                 {
                     throw new KbGenericException($"Value for {name} is not optional.");
                 }
-                return Helpers.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
+                return Converters.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
             }
 
             if (typeof(T) == typeof(string) || (Nullable.GetUnderlyingType(typeof(T)) == typeof(string)))
             {
-                return Helpers.ConvertToNullable<T>(parameter.Value.Substring(1, parameter.Value.Length - 2));
+                return Converters.ConvertToNullable<T>(parameter.Value.Substring(1, parameter.Value.Length - 2));
             }
 
-            return Helpers.ConvertToNullable<T>(parameter.Value);
+            return Converters.ConvertToNullable<T>(parameter.Value);
         }
 
         public T? GetNullable<T>(string name, T? defaultValue)
@@ -97,10 +98,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
             if (typeof(T) == typeof(string) || (Nullable.GetUnderlyingType(typeof(T)) == typeof(string)))
             {
-                return Helpers.ConvertToNullable<T>(value.Substring(1, value.Length - 2));
+                return Converters.ConvertToNullable<T>(value.Substring(1, value.Length - 2));
             }
 
-            return Helpers.ConvertToNullable<T>(value);
+            return Converters.ConvertToNullable<T>(value);
         }
     }
 }

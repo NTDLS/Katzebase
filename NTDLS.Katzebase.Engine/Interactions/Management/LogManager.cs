@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Logging;
 using System.Text;
@@ -144,9 +144,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     Console.ForegroundColor = ConsoleColor.Gray;
 
-                    KbUtility.EnsureNotNull(_fileHandle);
-
-                    _fileHandle.WriteLine(message.ToString());
+                    _fileHandle.EnsureNotNull().WriteLine(message.ToString());
 
                     if (_core.Settings.FlushLog)
                     {

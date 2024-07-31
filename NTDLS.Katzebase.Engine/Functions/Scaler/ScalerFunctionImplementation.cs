@@ -3,7 +3,6 @@ using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
-using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using System.Globalization;
 using System.Text;
@@ -192,11 +191,11 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     return DateTime.Now.ToString(proc.Get<string>("format"));
 
                 case "checksum":
-                    return Helpers.Checksum(proc.Get<string>("text")).ToString();
+                    return Library.Helpers.Checksum(proc.Get<string>("text")).ToString();
                 case "sha1":
-                    return Helpers.GetSHA1Hash(proc.Get<string>("text")).ToString();
+                    return Library.Helpers.GetSHA1Hash(proc.Get<string>("text")).ToString();
                 case "sha256":
-                    return Helpers.GetSHA256Hash(proc.Get<string>("text")).ToString();
+                    return Library.Helpers.GetSHA256Hash(proc.Get<string>("text")).ToString();
                 case "indexof":
                     return proc.Get<string>("textToSearch").IndexOf(proc.Get<string>("textToFind")).ToString();
                 case "lastindexof":

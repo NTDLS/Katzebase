@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
@@ -311,9 +311,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var schemaDiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join("\\", segments));
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
-                    KbUtility.EnsureNotNull(parentSchemaDiskPath);
 
-                    var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, SchemaCatalogFile);
+                    var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
 
                     if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Read, out var parentSchemaCatalogLockKey) == false)
                     {
@@ -394,9 +393,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var schemaDiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join("\\", segments));
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
-                    KbUtility.EnsureNotNull(parentSchemaDiskPath);
 
-                    var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath, SchemaCatalogFile);
+                    var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
 
                     if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Read, out var parentSchemaCatalogLockKey) == false)
                     {

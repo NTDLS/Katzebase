@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using NTDLS.Katzebase.Client;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using ProtoBuf;
@@ -98,8 +98,7 @@ namespace NTDLS.Katzebase.Engine.Documents
         public void SetElementsByJson(string jsonString)
         {
             var dictionary = JsonConvert.DeserializeObject<KbInsensitiveDictionary<string?>>(jsonString);
-            KbUtility.EnsureNotNull(dictionary);
-            _dictionary = dictionary;
+            _dictionary = dictionary.EnsureNotNull();
         }
 
         public PhysicalDocument Clone()

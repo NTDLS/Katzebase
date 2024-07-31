@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using NTDLS.Katzebase.Client;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine;
 using NTDLS.Katzebase.Shared;
 using NTDLS.ReliableMessaging;
@@ -77,14 +77,14 @@ namespace NTDLS.Katzebase.Server
 
         private void RmServer_OnDisconnected(RmContext context)
         {
-            _core?.Log.Trace($"Disconnected: {context.ConnectionId}");
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
+            _core.Log.Trace($"Disconnected: {context.ConnectionId}");
 
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
             _core.Sessions.CloseByProcessId(session.ProcessId);
         }
 
-        private void RmServer_OnException(RmContext context, Exception ex, IRmPayload? payload)
+        private void RmServer_OnException(RmContext? context, Exception ex, IRmPayload? payload)
         {
             _core?.Log?.Exception(ex);
         }

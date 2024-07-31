@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Types;
 using static NTDLS.Katzebase.Engine.IO.DeferredDiskIOSnapshot;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -62,7 +62,7 @@ namespace NTDLS.Katzebase.Engine.IO
         /// </summary>
         public void CommitDeferredDiskIO()
         {
-            KbUtility.EnsureNotNull(_core);
+            _core.EnsureNotNull();
 
             lock (this)
             {

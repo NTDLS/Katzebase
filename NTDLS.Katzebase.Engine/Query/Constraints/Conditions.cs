@@ -1,7 +1,5 @@
-﻿using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -118,7 +116,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
             HighLevelExpressionTree = BuildHighlevelExpressionTree();
 
-            KbUtility.Assert(Root.Conditions.Any(), "The root expression cannot contain conditions.");
+            if (Root.Conditions.Any())
+            {
+                throw new Exception("The root expression cannot contain conditions.");
+            }
         }
 
         public string ReplaceFirst(string text, string search, string replace)
@@ -403,7 +404,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 result.Append(')');
             }
 
-            return Helpers.ComputeSHA256(result.ToString());
+            return Library.Helpers.ComputeSHA256(result.ToString());
         }
 
         private void BuildConditionHash(ref StringBuilder result, ConditionSubset conditionSubset, int depth)

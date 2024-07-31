@@ -1,8 +1,7 @@
 ﻿using Newtonsoft.Json;
-using NTDLS.Katzebase.Client;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Locking;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
@@ -34,8 +33,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     result = JsonConvert.DeserializeObject<T>(File.ReadAllText(filePath));
                 }
-                KbUtility.EnsureNotNull(result);
-                return result;
+                return result.EnsureNotNull();
             }
             catch (Exception ex)
             {
@@ -134,7 +132,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             return default;
                         });
 
-                        if (Helpers.IsNotDefault(result))
+                        if (result.IsNotDefault())
                         {
                             return result;
                         }
@@ -212,16 +210,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         _core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
                     }
 
-                    KbUtility.EnsureNotNull(deserializedObject);
-
-                    return deserializedObject;
+                    return deserializedObject.EnsureNotNull();
                 });
-
-                KbUtility.EnsureNotNull(result);
 
                 acquiredLockKey = internalAcquiredLockKey;
 
-                return result;
+                return result.EnsureNotNull();
             }
             catch (Exception ex)
             {
@@ -578,7 +572,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 _core.Log.Trace($"IO:Delete-File:{transaction.ProcessId}->{filePath}");
 
                 File.Delete(filePath);
-                Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(filePath));
+                Library.Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(filePath));
             }
             catch (Exception ex)
             {
