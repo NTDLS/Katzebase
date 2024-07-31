@@ -14,6 +14,7 @@
   <ItemGroup>
     <Content Remove="C:\Users\ntdls\.nuget\packages\ntdls.katzebase.client\1.1.1\contentFiles\any\net8.0\NTDLS.Katzebase.ico" />
     <Content Remove="C:\Users\ntdls\.nuget\packages\ntdls.katzebase.client\1.3.5\contentFiles\any\net8.0\%40Art\IconFull.ico" />
+    <Content Remove="C:\Users\ntdls\.nuget\packages\ntdls.katzebase.client\1.3.6\contentFiles\any\net8.0\%40Art\IconFull.ico" />
   </ItemGroup>
 
   <ItemGroup>

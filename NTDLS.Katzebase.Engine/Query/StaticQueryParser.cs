@@ -217,7 +217,7 @@ namespace NTDLS.Katzebase.Engine.Query
                             if (Enum.TryParse(token, true, out KbProcedureParameterType paramType) == false || Enum.IsDefined(typeof(KbProcedureParameterType), paramType) == false)
                             {
                                 string acceptableValues = string.Join("', '",
-                                    Enum.GetValues< KbProcedureParameterType>().Where(o => o != KbProcedureParameterType.Undefined));
+                                    Enum.GetValues<KbProcedureParameterType>().Where(o => o != KbProcedureParameterType.Undefined));
 
                                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
                             }
