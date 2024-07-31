@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Documents
     /// </summary>
     [ProtoContract]
     [Serializable]
-    public struct PhysicalDocumentPageCatalog
+    public class PhysicalDocumentPageCatalog
     {
         public PhysicalDocumentPageCatalog() { }
 
@@ -30,12 +30,11 @@ namespace NTDLS.Katzebase.Engine.Documents
         }
 
         [ProtoMember(2)]
-        public uint NextDocumentId { get; set; } = 0;
+        public uint NextDocumentId { get; set; } = 1;
 
         public uint ConsumeNextDocumentId()
         {
-            NextDocumentId++;
-            return NextDocumentId;
+            return NextDocumentId++;
         }
         public int NextPageNumber() => Catalog.Count;
 
@@ -74,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.Documents
         }
         */
 
-        public PhysicalDocumentPageCatalogItem GetPageWithRoomForNewDocument(uint pageSize)
+        public PhysicalDocumentPageCatalogItem? GetPageWithRoomForNewDocument(uint pageSize)
         {
             //TODO: Make the page size configurable.
             return Catalog.Where(o => o.DocumentCount < pageSize).FirstOrDefault();

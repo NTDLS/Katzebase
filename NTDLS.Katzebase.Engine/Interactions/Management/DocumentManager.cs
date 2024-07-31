@@ -161,7 +161,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 PhysicalDocumentPageCatalogItem physicalPageCatalogItem;
 
-                if (existingPhysicalPageCatalogItem.IsDefault())
+                if (existingPhysicalPageCatalogItem == null)
                 {
                     //We didn't find a page with room, we're going to have to create a new "Page Catalog Item" and new "Document Page Map".
                     // add the given document ID to it and add that catalog item to the catalog collection:

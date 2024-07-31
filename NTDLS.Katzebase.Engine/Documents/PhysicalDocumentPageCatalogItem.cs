@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Documents
     /// </summary>
     [ProtoContract]
     [Serializable]
-    public struct PhysicalDocumentPageCatalogItem
+    public class PhysicalDocumentPageCatalogItem
     {
         [ProtoMember(1)]
         public int PageNumber { get; set; }

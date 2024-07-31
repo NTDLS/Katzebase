@@ -40,6 +40,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         DiskPath = _core.Settings.DataRootPath,
                         VirtualPath = string.Empty,
                         Name = string.Empty,
+                        IsTemporary = false,
+                        PageSize = _core.Settings.DefaultDocumentPageSize,
                     };
                     return _rootPhysicalSchema;
                 }
@@ -74,6 +76,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         VirtualPath = "Temporary",
                         IsTemporary = false,
                         Id = Guid.NewGuid(),
+                        PageSize = core.Settings.DefaultDocumentPageSize,
                         DiskPath = Path.Combine(core.Settings.DataRootPath, "Temporary")
                     });
 
