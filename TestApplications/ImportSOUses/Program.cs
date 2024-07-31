@@ -40,7 +40,7 @@ namespace ImportSOUses
 
                         if (rowCount++ > 0 && (rowCount % rowsPerTransaction) == 0)
                         {
-                            Console.WriteLine($"Comitting... {rowCount}");
+                            Console.WriteLine($"Committing... {rowCount}");
                             client.Transaction.Commit();
                             client.Transaction.Begin();
                         }

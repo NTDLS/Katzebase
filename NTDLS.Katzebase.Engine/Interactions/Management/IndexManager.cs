@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to instantiate indec manager.", ex);
+                _core.Log.Write("Failed to instantiate index manager.", ex);
                 throw;
             }
         }
@@ -147,9 +147,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 builder.AppendLine($"    Selectivity Score : {selectivityScore:N4}%");
 
                 builder.AppendLine("    Attributes {");
-                foreach (var attri in physicalIndex.Attributes)
+                foreach (var attrib in physicalIndex.Attributes)
                 {
-                    builder.AppendLine($"        {attri.Field}");
+                    builder.AppendLine($"        {attrib.Field}");
                 }
                 builder.AppendLine("    }");
                 builder.AppendLine("}");
@@ -243,7 +243,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Unfortunately, we cant easily eliminate index partitions. Lets gram some threads and scan all of the partitions.
 
                 var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
-                var instance = new MatchConditionValuesDocumentsThreadInstance(transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, conditionValues);
+                var instance = new MatchConditionValuesDocumentsThreadInstance(
+                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, conditionValues);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
                 {
@@ -273,7 +274,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             public MatchConditionValuesDocumentsThreadInstance Instance { get; set; }
             public int IndexPartition { get; set; }
 
-            public MatchConditionValuesDocumentsThreadParameterEnvelope(MatchConditionValuesDocumentsThreadInstance instance, int indexPartition)
+            public MatchConditionValuesDocumentsThreadParameterEnvelope(
+                MatchConditionValuesDocumentsThreadInstance instance, int indexPartition)
             {
                 Instance = instance;
                 IndexPartition = indexPartition;
@@ -290,7 +292,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             public KbInsensitiveDictionary<string> ConditionValues { get; set; }
             public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
 
-            public MatchConditionValuesDocumentsThreadInstance(Transaction transaction, PhysicalIndex physicalIndex, PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubset conditionSubset, KbInsensitiveDictionary<string> conditionValues)
+            public MatchConditionValuesDocumentsThreadInstance(Transaction transaction,
+                PhysicalIndex physicalIndex, PhysicalSchema physicalSchema, IndexSelection indexSelection,
+                ConditionSubset conditionSubset, KbInsensitiveDictionary<string> conditionValues)
             {
                 Transaction = transaction;
                 PhysicalIndex = physicalIndex;
@@ -311,11 +315,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var ptThreadDeQueue = param.Instance.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadDeQueue);
 
-                string pageDiskPath = param.Instance.PhysicalIndex.GetPartitionPagesFileName(param.Instance.PhysicalSchema, (uint)param.IndexPartition);
+                string pageDiskPath = param.Instance.PhysicalIndex.GetPartitionPagesFileName(
+                    param.Instance.PhysicalSchema, (uint)param.IndexPartition);
+
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(param.Instance.Transaction, pageDiskPath, LockOperation.Write);
 
-                var results = MatchDocuments(param.Instance.Transaction, physicalIndexPages, param.Instance.IndexSelection, param.Instance.ConditionSubset, param.Instance.ConditionValues);
-                if (results.Any())
+                var results = MatchDocuments(param.Instance.Transaction, physicalIndexPages,
+                    param.Instance.IndexSelection, param.Instance.ConditionSubset, param.Instance.ConditionValues);
+                if (results.Count != 0)
                 {
                     lock (param.Instance.Results)
                     {
@@ -343,7 +350,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
                 {
-                    var conditionField = conditionSubset.Conditions.Where(o => o.Left.Value == attribute.Field.EnsureNotNull().ToLowerInvariant()).FirstOrDefault();
+                    var conditionField = conditionSubset.Conditions
+                        .FirstOrDefault(o => o.Left.Value?.Equals(attribute.Field.EnsureNotNull(), StringComparison.InvariantCultureIgnoreCase) == true);
+
                     if (conditionField == null)
                     {
                         //This happens when there is no condition on this index, this will be a partial match.
@@ -358,7 +367,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     IEnumerable<PhysicalIndexLeaf>? foundLeaves = null;
 
-                    var conditionValue = conditionValues[attribute.Field.EnsureNotNull().ToLower()];
+                    var conditionValue = conditionValues[attribute.Field.EnsureNotNull().ToLowerInvariant()];
 
                     var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch);
 
@@ -441,7 +450,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Unfortunately, we cant easily eliminate index partitions. Lets fire up some threads and scan all of the partitions.
 
                 var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
-                var instance = new MatchWorkingSchemaDocumentsThreadInstance(transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, workingSchemaPrefix);
+                var instance = new MatchWorkingSchemaDocumentsThreadInstance(
+                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, workingSchemaPrefix);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
                 {
@@ -487,7 +497,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             public string WorkingSchemaPrefix { get; set; }
             public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
 
-            public MatchWorkingSchemaDocumentsThreadInstance(Transaction transaction, PhysicalIndex physicalIndex, PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
+            public MatchWorkingSchemaDocumentsThreadInstance(Transaction transaction, PhysicalIndex physicalIndex,
+                PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
             {
                 Transaction = transaction;
                 PhysicalIndex = physicalIndex;
@@ -506,11 +517,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 param.Instance.Transaction.EnsureActive();
 
-                string pageDiskPath = param.Instance.PhysicalIndex.GetPartitionPagesFileName(param.Instance.PhysicalSchema, (uint)param.IndexPartition);
+                string pageDiskPath = param.Instance.PhysicalIndex.GetPartitionPagesFileName(
+                    param.Instance.PhysicalSchema, (uint)param.IndexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(param.Instance.Transaction, pageDiskPath, LockOperation.Write);
 
-                var results = MatchDocuments(param.Instance.Transaction, physicalIndexPages, param.Instance.IndexSelection, param.Instance.ConditionSubset, param.Instance.WorkingSchemaPrefix);
-                if (results.Any())
+                var results = MatchDocuments(param.Instance.Transaction, physicalIndexPages,
+                    param.Instance.IndexSelection, param.Instance.ConditionSubset, param.Instance.WorkingSchemaPrefix);
+
+                if (results.Count != 0)
                 {
                     lock (param.Instance.Results)
                     {
@@ -533,7 +547,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Finds document IDs given a set of conditions.
         /// </summary>
         private Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction,
-                    PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
+                    PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection,
+                    ConditionSubset conditionSubset, string workingSchemaPrefix)
         {
             try
             {
@@ -544,7 +559,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
                 {
                     var conditionField = conditionSubset.Conditions
-                        .Where(o => o.Left.Prefix == workingSchemaPrefix && o.Left.Value == attribute.Field.EnsureNotNull().ToLowerInvariant()).FirstOrDefault();
+                        .FirstOrDefault(o => o.Left.Prefix == workingSchemaPrefix
+                        && o.Left.Value?.Equals(attribute.Field.EnsureNotNull(), StringComparison.InvariantCultureIgnoreCase) == true);
+
                     if (conditionField == null)
                     {
                         //This happens when there is no condition on this index, this will be a partial match.
@@ -634,7 +651,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Traverse to the bottom of the index tree (from whatever starting point is passed in) and return a list of all nodes containing documents.
+        /// Traverse to the bottom of the index tree (from whatever starting point is passed in) and return
+        /// a list of all nodes containing documents.
         /// </summary>
         /// <param name="indexEntires"></param>
         /// <returns></returns>
@@ -651,13 +669,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         DistillIndexBaseNodesRecursive(child.Value);
                     }
 
-                    if (physicalIndexLeaf?.Documents?.Any() == true)
+                    if (physicalIndexLeaf?.Documents?.Count > 0)
                     {
                         result.Add(physicalIndexLeaf);
                     }
                 }
 
-                if (physicalIndexLeaf?.Documents?.Any() == true)
+                if (physicalIndexLeaf?.Documents?.Count > 0)
                 {
                     result.Add(physicalIndexLeaf);
                 }
@@ -691,7 +709,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Traverse to the bottom of the index tree (from whatever starting point is passed in) and return a list of all documentids.
+        /// Traverse to the bottom of the index tree (from whatever starting point is passed in) and return a list of all documentIds.
         /// </summary>
         /// <param name="indexEntires"></param>
         /// <returns></returns>
@@ -708,13 +726,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         DistillIndexLeavesRecursive(child.Value);
                     }
 
-                    if (physicalIndexLeaf?.Documents?.Any() == true)
+                    if (physicalIndexLeaf?.Documents?.Count > 0)
                     {
                         result.AddRange(physicalIndexLeaf.Documents.Select(o => new DocumentPointer(o.PageNumber, o.DocumentId)));
                     }
                 }
 
-                if (physicalIndexLeaf?.Documents?.Any() == true)
+                if (physicalIndexLeaf?.Documents?.Count > 0)
                 {
                     result.AddRange(physicalIndexLeaf.Documents.Select(o => new DocumentPointer(o.PageNumber, o.DocumentId)));
                 }
@@ -749,11 +767,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal PhysicalIndexCatalog AcquireIndexCatalog(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
+        internal PhysicalIndexCatalog AcquireIndexCatalog(Transaction transaction,
+            PhysicalSchema physicalSchema, LockOperation intendedOperation)
         {
             try
             {
-                var indexCatalog = _core.IO.GetJson<PhysicalIndexCatalog>(transaction, physicalSchema.IndexCatalogFilePath(), intendedOperation);
+                var indexCatalog = _core.IO.GetJson<PhysicalIndexCatalog>(
+                    transaction, physicalSchema.IndexCatalogFilePath(), intendedOperation);
                 indexCatalog.DiskPath = physicalSchema.IndexCatalogFilePath();
                 return indexCatalog;
             }
@@ -776,7 +796,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         if (documentValue != null) //TODO: How do we handle indexed NULL values?
                         {
-                            result.Add(documentValue.ToLower());
+                            result.Add(documentValue.ToLowerInvariant());
                         }
                     }
                 }
@@ -798,7 +818,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="searchTokens"></param>
         /// <param name="indexPageCatalog"></param>
         /// <returns>A reference to a node in the suppliedIndexPageCatalog</returns>
-        private IndexScanResult LocateExtentInGivenIndexPageCatalog(Transaction transaction, List<string> searchTokens, PhysicalIndexPages rootPhysicalIndexPages)
+        private IndexScanResult LocateExtentInGivenIndexPageCatalog(
+            Transaction transaction, List<string> searchTokens, PhysicalIndexPages rootPhysicalIndexPages)
         {
             try
             {
@@ -862,7 +883,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var physicalIndex in indexCatalog.Collection)
                 {
-                    if (listOfModifiedFields == null || physicalIndex.Attributes.Where(o => listOfModifiedFields.Contains(o.Field)).Any())
+                    if (listOfModifiedFields == null || physicalIndex.Attributes.Any(o => listOfModifiedFields.Contains(o.Field)))
                     {
                         RemoveDocumentsFromIndex(transaction, physicalSchema, physicalIndex, documents.Select(o => o.Key));
                         InsertDocumentsIntoIndex(transaction, physicalSchema, physicalIndex, documents);
@@ -882,7 +903,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void InsertDocumentIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema, PhysicalDocument physicalDocument, DocumentPointer documentPointer)
+        internal void InsertDocumentIntoIndexes(Transaction transaction,
+            PhysicalSchema physicalSchema, PhysicalDocument physicalDocument, DocumentPointer documentPointer)
         {
             try
             {
@@ -907,7 +929,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void InsertDocumentsIntoIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIndex, Dictionary<DocumentPointer, PhysicalDocument> documents)
+        internal void InsertDocumentsIntoIndex(Transaction transaction,
+            PhysicalSchema physicalSchema, PhysicalIndex physicalIndex, Dictionary<DocumentPointer, PhysicalDocument> documents)
         {
             try
             {
@@ -930,7 +953,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void InsertDocumentsIntoIndexes(Transaction transaction, PhysicalSchema physicalSchema, Dictionary<DocumentPointer, PhysicalDocument> documents)
+        internal void InsertDocumentsIntoIndexes(Transaction transaction,
+            PhysicalSchema physicalSchema, Dictionary<DocumentPointer, PhysicalDocument> documents)
         {
             try
             {
@@ -955,7 +979,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Inserts an index entry for a single document into a single index using the file name from the index object.
         /// </summary>
-        private void InsertDocumentIntoIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIndex, PhysicalDocument document, DocumentPointer documentPointer)
+        private void InsertDocumentIntoIndex(Transaction transaction,
+            PhysicalSchema physicalSchema, PhysicalIndex physicalIndex, PhysicalDocument document, DocumentPointer documentPointer)
         {
             try
             {
@@ -1017,7 +1042,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
 
                 //Add the document to the lowest index extent.
-                indexScanResult.Leaf.Documents.EnsureNotNull().Add(new PhysicalIndexEntry(documentPointer.DocumentId, documentPointer.PageNumber));
+                indexScanResult.Leaf.Documents.EnsureNotNull().Add(
+                    new PhysicalIndexEntry(documentPointer.DocumentId, documentPointer.PageNumber));
             }
             catch (Exception ex)
             {
@@ -1080,7 +1106,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     throw new KbNullException($"Value should not be null {nameof(param.Instance.PhysicalSchema.DiskPath)}.");
                 }
 
-                var physicalDocument = _core.Documents.AcquireDocument(param.Instance.Transaction, param.Instance.PhysicalSchema, param.DocumentPointer, LockOperation.Read);
+                var physicalDocument = _core.Documents.AcquireDocument(
+                    param.Instance.Transaction, param.Instance.PhysicalSchema, param.DocumentPointer, LockOperation.Read);
 
                 try
                 {
@@ -1091,9 +1118,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     lock (param.Instance.SyncObjects[indexPartition])
                     {
-                        string pageDiskPath = param.Instance.PhysicalIndex.GetPartitionPagesFileName(param.Instance.PhysicalSchema, indexPartition);
-                        var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(param.Instance.Transaction, pageDiskPath, LockOperation.Write);
-                        InsertDocumentIntoIndexPages(param.Instance.Transaction, param.Instance.PhysicalIndex, physicalIndexPages, physicalDocument, param.DocumentPointer);
+                        string pageDiskPath = param.Instance.PhysicalIndex.GetPartitionPagesFileName(
+                            param.Instance.PhysicalSchema, indexPartition);
+
+                        var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(
+                            param.Instance.Transaction, pageDiskPath, LockOperation.Write);
+
+                        InsertDocumentIntoIndexPages(param.Instance.Transaction,
+                            param.Instance.PhysicalIndex, physicalIndexPages, physicalDocument, param.DocumentPointer);
                     }
                 }
                 catch (Exception ex)
@@ -1134,11 +1166,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     var physicalIndexPages = new PhysicalIndexPages();
                     physicalIndexPageMap.Add(indexPartition, physicalIndexPages);
-                    _core.IO.PutPBuf(transaction, physicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPages);
+                    _core.IO.PutPBuf(transaction, physicalIndex.GetPartitionPagesFileName
+                        (physicalSchema, indexPartition), physicalIndexPages);
                 }
 
                 var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
-                var instance = new RebuildIndexThreadInstance(transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);
+                var instance = new RebuildIndexThreadInstance(
+                    transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);
 
                 foreach (var documentPointer in documentPointers)
                 {
@@ -1176,7 +1210,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="transaction"></param>
         /// <param name="physicalSchema"></param>
         /// <param name="documentPointer"></param>
-        internal void RemoveDocumentsFromIndexes(Transaction transaction, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
+        internal void RemoveDocumentsFromIndexes(Transaction transaction,
+            PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
         {
             try
             {
@@ -1210,7 +1245,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     foreach (var documentPointer in documentPointers)
                     {
-                        totalDeletes += leaf?.Documents.RemoveAll(o => o.PageNumber == documentPointer.PageNumber && o.DocumentId == documentPointer.DocumentId) ?? 0;
+                        totalDeletes += leaf?.Documents.RemoveAll(o => o.PageNumber == documentPointer.PageNumber
+                                                                    && o.DocumentId == documentPointer.DocumentId) ?? 0;
                         if (totalDeletes == maxCount)
                         {
                             break;
@@ -1243,7 +1279,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Removes a collection of documents from an index. Locks the index page catalog for write.
         /// </summary>
-        private void RemoveDocumentsFromIndex(Transaction transaction, PhysicalSchema physicalSchema, PhysicalIndex physicalIndex, IEnumerable<DocumentPointer> documentPointers)
+        private void RemoveDocumentsFromIndex(Transaction transaction, PhysicalSchema physicalSchema,
+            PhysicalIndex physicalIndex, IEnumerable<DocumentPointer> documentPointers)
         {
             try
             {
@@ -1313,7 +1350,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             public PhysicalSchema PhysicalSchema { get; set; }
             public IEnumerable<DocumentPointer> DocumentPointers { get; set; }
 
-            public RemoveDocumentsFromIndexThreadInstance(Transaction transaction, PhysicalIndex physicalIndex, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
+            public RemoveDocumentsFromIndexThreadInstance(Transaction transaction,
+                PhysicalIndex physicalIndex, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
             {
                 Transaction = transaction;
                 PhysicalIndex = physicalIndex;
@@ -1330,7 +1368,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 param.Instance.Transaction.EnsureActive();
 
-                string pageDiskPath = param.Instance.PhysicalIndex.GetPartitionPagesFileName(param.Instance.PhysicalSchema, (uint)param.IndexPartition);
+                string pageDiskPath = param.Instance.PhysicalIndex.GetPartitionPagesFileName(
+                    param.Instance.PhysicalSchema, (uint)param.IndexPartition);
+
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(param.Instance.Transaction, pageDiskPath, LockOperation.Write);
 
                 if (RemoveDocumentsFromLeaves(physicalIndexPages.Root, param.Instance.DocumentPointers) > 0)

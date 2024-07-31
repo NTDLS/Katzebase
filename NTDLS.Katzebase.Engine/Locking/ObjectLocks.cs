@@ -50,17 +50,23 @@ namespace NTDLS.Katzebase.Engine.Locking
                 if (intention.Granularity == LockGranularity.File)
                 {
                     var fileLocks = existingLocks.Where(o =>
-                        o.Granularity == LockGranularity.File && o.DiskPath == intention.DiskPath).ToList();
+                        o.Granularity == LockGranularity.File
+                        && o.DiskPath == intention.DiskPath).ToList();
+
                     fileLocks.ForEach(o => result.Add(o));
                 }
 
                 //Check if the intended file or directory is in a locked directory.
                 var exactDirectoryLocks = existingLocks.Where(o =>
-                    (o.Granularity == LockGranularity.Directory) && o.DiskPath == intentionDirectory).ToList();
+                    (o.Granularity == LockGranularity.Directory)
+                    && o.DiskPath == intentionDirectory).ToList();
+
                 exactDirectoryLocks.ForEach(o => result.Add(o));
 
                 var directoryAndSubPathLocks = existingLocks.Where(o =>
-                    o.Granularity == LockGranularity.RecursiveDirectory && intentionDirectory.StartsWith(o.DiskPath)).ToList();
+                    o.Granularity == LockGranularity.RecursiveDirectory
+                    && intentionDirectory.StartsWith(o.DiskPath)).ToList();
+
                 directoryAndSubPathLocks.ForEach(o => result.Add(o));
 
                 return result;
@@ -118,7 +124,8 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                     transaction.CurrentLockIntention = intention;
 
-                    if (_core.Settings.LockWaitTimeoutSeconds > 0 && (DateTime.UtcNow - intention.CreationTime).TotalSeconds > _core.Settings.LockWaitTimeoutSeconds)
+                    if (_core.Settings.LockWaitTimeoutSeconds > 0
+                        && (DateTime.UtcNow - intention.CreationTime).TotalSeconds > _core.Settings.LockWaitTimeoutSeconds)
                     {
                         var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
                         _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
@@ -157,9 +164,11 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 {
                                     lockedObject.Hits++;
 
-                                    if (lockedObject.Keys.Read((obj) => obj).Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
+                                    if (lockedObject.Keys.Read((obj) => obj)
+                                            .Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
                                     {
-                                        //Do we really need to hand out multiple keys to the same object of the same type? I don't think we do. Just continue...
+                                        //Do we really need to hand out multiple keys to the same object
+                                        //  of the same type? I don't think we do. Just continue...
                                         continue;
                                     }
 
@@ -183,7 +192,8 @@ namespace NTDLS.Katzebase.Engine.Locking
                         {
                             //This operation is blocked by: Read and Write.
                             var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                                .Where(o => (o.Operation == LockOperation.Write || o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
+                                .Where(o => (o.Operation == LockOperation.Write || o.Operation == LockOperation.Delete)
+                                && o.ProcessId != transaction.ProcessId).ToList();
 
                             if (blockers.Any() == false)
                             {
@@ -193,9 +203,11 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 {
                                     lockedObject.Hits++;
 
-                                    if (lockedObject.Keys.Read((obj) => obj).Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
+                                    if (lockedObject.Keys.Read((obj) => obj).Any(o
+                                        => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
                                     {
-                                        //Do we really need to hand out multiple keys to the same object of the same type? I don't think we do. Just continue...
+                                        //Do we really need to hand out multiple keys to the same
+                                        //  object of the same type? I don't think we do. Just continue...
                                         continue;
                                     }
 
@@ -229,9 +241,11 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 {
                                     lockedObject.Hits++;
 
-                                    if (lockedObject.Keys.Read((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
+                                    if (lockedObject.Keys.Read((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId
+                                    && o.Operation == intention.Operation)))
                                     {
-                                        //Do we really need to hand out multiple keys to the same object of the same type? I don't think we do.
+                                        //Do we really need to hand out multiple keys to the same object of the same type?
+                                        //I don't think we do.
                                         continue;
                                     }
 
@@ -265,9 +279,11 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 {
                                     lockedObject.Hits++;
 
-                                    if (lockedObject.Keys.Read((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
+                                    if (lockedObject.Keys.Read((obj) => obj.Any(
+                                        o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
                                     {
-                                        //Do we really need to hand out multiple keys to the same object of the same type? I don't think we do.
+                                        //Do we really need to hand out multiple keys to the same object of the same type?
+                                        //I don't think we do.
                                         continue;
                                     }
 
@@ -300,12 +316,15 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                                     //Get a list of transactions that are blocked by the current transaction.
                                     var blockedByMe = waitingTransactions.Where(
-                                        o => o.BlockedByKeys.ReadNullable((obj) => obj.Where(k => k.ProcessId == transaction.ProcessId).Any())).ToList();
+                                        o => o.BlockedByKeys.ReadNullable((obj) => obj.Where(
+                                            k => k.ProcessId == transaction.ProcessId).Any())).ToList();
 
                                     foreach (var blocked in blockedByMe)
                                     {
-                                        //Check to see if the current transaction is waiting on any of those blocked transaction (circular reference).
-                                        if (obj.Where(o => o.ProcessId == blocked.ProcessId).Any())
+                                        //Check to see if the current transaction is waiting
+                                        //  on any of those blocked transaction (circular reference).
+
+                                        if (obj.Any(o => o.ProcessId == blocked.ProcessId))
                                         {
                                             var explanation = GetDeadlockExplanation(transaction, txWaitingForLocks, intention, blockedByMe);
 

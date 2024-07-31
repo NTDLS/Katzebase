@@ -99,10 +99,10 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
         public bool IsNextTokenConsume(string[] tokens)
         {
-            var token = GetNextToken().ToLower();
+            var token = GetNextToken().ToLowerInvariant();
             foreach (var given in tokens)
             {
-                if (token == given.ToLower())
+                if (token.Equals(given, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return true;
                 }
@@ -112,10 +112,10 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
         public bool IsNextToken(string[] tokens)
         {
-            var token = PeekNextToken().ToLower();
+            var token = PeekNextToken().ToLowerInvariant();
             foreach (var given in tokens)
             {
-                if (token == given.ToLower())
+                if (token.Equals(given, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return true;
                 }
@@ -125,12 +125,12 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
         public bool IsNextTokenConsume(string token)
         {
-            return GetNextToken().ToLower() == token.ToLower();
+            return GetNextToken().Equals(token, StringComparison.InvariantCultureIgnoreCase);
         }
 
         public bool IsNextToken(string token)
         {
-            return PeekNextToken().ToLower() == token.ToLower();
+            return PeekNextToken().Equals(token, StringComparison.InvariantCultureIgnoreCase);
         }
 
         public string PeekNextToken()
@@ -286,11 +286,11 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
             foreach (Match match in results)
             {
-                string uuid = $"${Guid.NewGuid()}$";
+                string guid = $"${Guid.NewGuid()}$";
 
-                mappings.Add(uuid, match.ToString());
+                mappings.Add(guid, match.ToString());
 
-                query = query.Replace(match.ToString(), uuid);
+                query = query.Replace(match.ToString(), guid);
             }
 
             return mappings;

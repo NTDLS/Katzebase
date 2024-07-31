@@ -33,18 +33,16 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 
                 return ExecuteFunction(((FunctionWithParams)param).Function, subParams, group);
             }
-            else if (param is FunctionConstantParameter)
+            else if (param is FunctionConstantParameter functionConstantParameter)
             {
-                return ((FunctionConstantParameter)param).RawValue;
+                return functionConstantParameter.RawValue;
             }
             /*
-            else if (param is FunctionDocumentFieldParameter)
+            else if (param is FunctionDocumentFieldParameter functionDocumentFieldParameter)
             {
-                var specificParam = (FunctionDocumentFieldParameter)param;
+                var debug = group.Select(o => o.AuxiliaryFields.Where(m => m.Key == functionDocumentFieldParameter.Value.Key)).ToList();
 
-                var debug = group.Select(o => o.AuxiliaryFields.Where(m => m.Key == specificParam.Value.Key)).ToList();
-
-                var methodValue = group.Select(o => o.AuxiliaryFields.Where(m => m.Key == specificParam.Value.Key)).Single().Select(o => o.Value).Single();
+                var methodValue = group.Select(o => o.AuxiliaryFields.Where(m => m.Key == functionDocumentFieldParameter.Value.Key)).Single().Select(o => o.Value).Single();
                 return methodValue;
             }
             */
@@ -59,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             var proc = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
-            switch (functionName.ToLower())
+            switch (functionName.ToLowerInvariant())
             {
                 case "sum":
                     {
@@ -84,7 +82,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 case "count":
                     {
                         var arrayOfValues = proc.Get<AggregateDecimalArrayParameter>("fieldName");
-                        return arrayOfValues.Values.Count().ToString();
+                        return arrayOfValues.Values.Count.ToString();
                     }
             }
 

@@ -16,8 +16,8 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
         public IndexKeyMatch(string key, LogicalQualifier logicalQualifier, string value)
         {
-            Field = key.ToLower();
-            Value = value.ToLower();
+            Field = key.ToLowerInvariant();
+            Value = value.ToLowerInvariant();
             LogicalQualifier = logicalQualifier;
         }
     }

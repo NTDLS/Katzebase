@@ -11,7 +11,7 @@
         {
             get
             {
-                if (RawValue.StartsWith("'") && RawValue.EndsWith("'"))
+                if (RawValue.StartsWith('\'') && RawValue.EndsWith('\''))
                 {
                     return RawValue.Substring(1, RawValue.Length - 2);
                 }

@@ -47,7 +47,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
                 }
 
-                var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transactionReference.Transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
+                var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(
+                    transactionReference.Transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
 
                 foreach (var item in schemaCatalog.Collection)
                 {
@@ -161,7 +162,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
 
                 var parentSchemaCatalogFile = parentPhysicalSchema.SchemaCatalogFilePath();
-                var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transactionReference.Transaction, parentSchemaCatalogFile, LockOperation.Write);
+                var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(
+                    transactionReference.Transaction, parentSchemaCatalogFile, LockOperation.Write);
 
                 var nsItem = parentCatalog.Collection.FirstOrDefault(o => o.Name == parentSchemaName);
                 if (nsItem != null)

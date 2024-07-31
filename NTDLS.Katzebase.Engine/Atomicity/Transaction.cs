@@ -246,7 +246,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"File:{lockOperation}");
 
-                diskPath = diskPath.ToLower();
+                diskPath = diskPath.ToLowerInvariant();
 
                 var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.File, lockOperation);
                 var result = _core.Locking.Locks.Acquire(this, lockIntention);
@@ -276,7 +276,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
 
-                diskPath = diskPath.ToLower();
+                diskPath = diskPath.ToLowerInvariant();
 
                 var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.Directory, lockOperation);
                 var result = _core.Locking.Locks.Acquire(this, lockIntention);
@@ -306,7 +306,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 var ptLock = PT?.CreateDurationTracker(PerformanceTrace.PerformanceTraceCumulativeMetricType.Lock, $"Directory:{lockOperation}");
 
-                diskPath = diskPath.ToLower();
+                diskPath = diskPath.ToLowerInvariant();
 
                 var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.RecursiveDirectory, lockOperation);
                 var result = _core.Locking.Locks.Acquire(this, lockIntention);
@@ -384,7 +384,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             Atoms.Read((obj) =>
             {
-                result = obj.Exists(o => o.Key == filePath.ToLower());
+                result = obj.Exists(o => o.Key.Equals(filePath, StringComparison.InvariantCultureIgnoreCase));
             });
 
             return result;
@@ -703,7 +703,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     }
 
                     ptRollback?.StopAndAccumulate();
-                    PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
+                    PT?.AddDiscreteMetric(PerformanceTrace.PerformanceTraceDiscreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
                 }
                 catch (Exception ex)
                 {
@@ -760,7 +760,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             ReleaseLocks();
                         }
                         ptCommit?.StopAndAccumulate();
-                        PT?.AddDescreteMetric(PerformanceTrace.PerformanceTraceDescreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
+                        PT?.AddDiscreteMetric(PerformanceTrace.PerformanceTraceDiscreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
                         return true;
                     }
                     else if (_referenceCount < 0)

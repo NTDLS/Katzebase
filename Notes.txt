@@ -4,7 +4,7 @@ Since indexing requires that we can ensure document elimination, in order to imp
 Then we can search the indexes for each group to obtain a list of all possible document IDs,
 	then use those document Ids to early eliminate documents from the main lookup loop.
 
-If any one conditon group does not have an index, then no indexing will be used at all since all documents
+If any one condition group does not have an index, then no indexing will be used at all since all documents
 	will need to be scaned anyway. To prevent unindexed scans, reduce the number of condition groups.
 
 All methods inside "management" namespaces should handle exceptions for logging and then throw the exceptions.

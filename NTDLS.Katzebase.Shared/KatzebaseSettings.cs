@@ -72,7 +72,7 @@
         /// <summary>
         /// The number of seconds between writing health statistics to disk and trimming any instance level counters.
         /// </summary>
-        public int HealthMonitoringChekpointSeconds { get; set; }
+        public int HealthMonitoringCheckpointSeconds { get; set; }
 
         /// <summary>
         /// The TCP/IP listen port for the server.
@@ -87,7 +87,7 @@
             get => dataRootPath;
             set
             {
-                dataRootPath = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+                dataRootPath = value.TrimEnd(['/', '\\']).Trim();
                 if (Path.IsPathRooted(dataRootPath) == false)
                 {
                     dataRootPath = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, dataRootPath));
@@ -104,7 +104,7 @@
             get => transactionDataPath;
             set
             {
-                transactionDataPath = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+                transactionDataPath = value.TrimEnd(['/', '\\']).Trim();
 
                 if (Path.IsPathRooted(dataRootPath) == false)
                 {
@@ -123,7 +123,7 @@
             get => logDirectory;
             set
             {
-                logDirectory = value.TrimEnd(new char[] { '/', '\\' }).Trim();
+                logDirectory = value.TrimEnd(['/', '\\']).Trim();
                 if (Path.IsPathRooted(dataRootPath) == false)
                 {
                     logDirectory = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, logDirectory));
@@ -133,7 +133,7 @@
         private string logDirectory = string.Empty;
 
         /// <summary>
-        /// If true, text logs will be flused at every write. This ensures that the log file is always up-to-date on disk.
+        /// If true, text logs will be flushed at every write. This ensures that the log file is always up-to-date on disk.
         /// </summary>
         public bool FlushLog { get; set; }
 

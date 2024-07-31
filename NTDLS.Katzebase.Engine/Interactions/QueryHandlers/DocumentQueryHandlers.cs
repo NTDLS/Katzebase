@@ -66,9 +66,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
 
-                var duplicateFields = result.Fields.GroupBy(o => o.Name).Where(o => o.Count() > 1).Select(o => o.Key).ToList();
+                var duplicateFields = result.Fields
+                    .GroupBy(o => o.Name)
+                    .Where(o => o.Count() > 1).Select(o => o.Key).ToList();
 
-                if (duplicateFields.Any())
+                if (duplicateFields.Count != 0)
                 {
                     string fields = "[" + string.Join("],[", duplicateFields) + "]";
                     throw new KbEngineException($"The field(s) {fields} was specified more than once.");
@@ -107,7 +109,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
+                var physicalSchema = _core.Schemas.Acquire(
+                    transactionReference.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
 
                 foreach (var upsertValues in preparedQuery.UpsertValues)
                 {
@@ -120,11 +123,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         //Execute functions
                         if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
                         {
-                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(transactionReference.Transaction, updateValue.Value, new KbInsensitiveDictionary<string?>());
+                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(
+                                transactionReference.Transaction, updateValue.Value, new KbInsensitiveDictionary<string?>());
                         }
-                        else if (updateValue.Value is FunctionConstantParameter)
+                        else if (updateValue.Value is FunctionConstantParameter functionConstantParameter)
                         {
-                            fieldValue = ((FunctionConstantParameter)updateValue.Value).RawValue;
+                            fieldValue = functionConstantParameter.RawValue;
                         }
                         else
                         {
@@ -187,9 +191,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         {
                             fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(transactionReference.Transaction, updateValue.Value, physicalDocument.Elements);
                         }
-                        else if (updateValue.Value is FunctionConstantParameter)
+                        else if (updateValue.Value is FunctionConstantParameter functionConstantParameter)
                         {
-                            fieldValue = ((FunctionConstantParameter)updateValue.Value).RawValue;
+                            fieldValue = functionConstantParameter.RawValue;
                         }
                         else
                         {
@@ -229,7 +233,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
                 string schemaName = preparedQuery.Schemas.Single().Name;
-                var result = StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
+                var result = StaticSearcherMethods.SampleSchemaDocuments(
+                    _core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
@@ -246,7 +251,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
                 string schemaName = preparedQuery.Schemas.Single().Name;
-                var result = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
+                var result = StaticSearcherMethods.ListSchemaDocuments(
+                    _core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }

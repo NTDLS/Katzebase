@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.ObjectViewer
 
             public TypeMapping(string identifier, Type type, IOFormat format)
             {
-                Identifier = identifier.ToLower();
+                Identifier = identifier.ToLowerInvariant();
                 Type = type;
                 Format = format;
             }
@@ -86,8 +86,8 @@ namespace NTDLS.Katzebase.ObjectViewer
         {
             try
             {
-                var typeMapping = _types.Where(o => o.Identifier == Path.GetFileName(filePath).ToLower()
-                || o.Identifier == Path.GetExtension(filePath).ToLower()).ToList().FirstOrDefault();
+                var typeMapping = _types.Where(o => o.Identifier.Equals(Path.GetFileName(filePath), StringComparison.InvariantCultureIgnoreCase)
+                || o.Identifier == Path.GetExtension(filePath).ToLowerInvariant()).ToList().FirstOrDefault();
                 if (typeMapping != null)
                 {
                     if (typeMapping.Format == IOFormat.PBuf)
@@ -114,7 +114,7 @@ namespace NTDLS.Katzebase.ObjectViewer
             {
             }
 
-            textBoxObject.Text = $"Could not desearilize the object: '{filePath}'.";
+            textBoxObject.Text = $"Could not deserialize the object: '{filePath}'.";
             textBoxType.Text = "<unknown>";
         }
 
@@ -126,7 +126,7 @@ namespace NTDLS.Katzebase.ObjectViewer
 
                 try
                 {
-                    var serializedData = NTDLS.Katzebase.Engine.Library.Compression.Deflate.Decompress(fileBytes);
+                    var serializedData = Engine.Library.Compression.Deflate.Decompress(fileBytes);
                     fileBytes = serializedData;
                 }
                 catch { }
@@ -134,10 +134,10 @@ namespace NTDLS.Katzebase.ObjectViewer
                 using var input = new MemoryStream(fileBytes);
 
                 var deserializeMethod = typeof(ProtoBuf.Serializer)?
-                    .GetMethod("Deserialize", new Type[] { typeof(Stream) })?
+                    .GetMethod("Deserialize", [typeof(Stream)])?
                     .MakeGenericMethod(type);
 
-                var deserializedObject = deserializeMethod?.Invoke(null, new object[] { input });
+                var deserializedObject = deserializeMethod?.Invoke(null, [input]);
 
                 friendlyText = JsonConvert.SerializeObject(deserializedObject, Formatting.Indented);
                 return true;
@@ -154,13 +154,13 @@ namespace NTDLS.Katzebase.ObjectViewer
             try
             {
                 var fileBytes = File.ReadAllBytes(fileName);
-                var serializedData = NTDLS.Katzebase.Engine.Library.Compression.Deflate.DecompressToString(fileBytes);
+                var serializedData = Engine.Library.Compression.Deflate.DecompressToString(fileBytes);
 
                 var deserializeMethod = typeof(JsonConvert)?
-                        .GetMethod("DeserializeObject", new Type[] { typeof(string), typeof(Type) });
+                        .GetMethod("DeserializeObject", [typeof(string), typeof(Type)]);
 
                 // Invoke the DeserializeObject method to deserialize the JSON string
-                var deserializedObject = deserializeMethod?.Invoke(null, new object[] { serializedData, type });
+                var deserializedObject = deserializeMethod?.Invoke(null, [serializedData, type]);
 
                 friendlyText = JsonConvert.SerializeObject(deserializedObject, Formatting.Indented);
                 return true;

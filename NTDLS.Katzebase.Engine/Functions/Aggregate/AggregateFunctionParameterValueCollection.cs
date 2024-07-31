@@ -12,16 +12,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             try
             {
-                /*
-                if(is List<AggregateDecimalArrayParameter>)
-                        {
-                }
-                */
-                var parameter = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault();
-                if (parameter == null)
-                {
-                    throw new KbGenericException($"Value for {name} cannot be null.");
-                }
+
+                var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                    ?? throw new KbGenericException($"Value for {name} cannot be null.");
 
                 var paramValue = string.Empty;
 
@@ -60,7 +53,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             try
             {
-                var value = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault()?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.ToLowerInvariant() == name.ToLowerInvariant())?.Value;
                 if (value == null)
                 {
                     return defaultValue;
@@ -79,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             try
             {
-                var parameter = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault();
+                var parameter = Values.FirstOrDefault(o => o.Parameter.Name.ToLowerInvariant() == name.ToLowerInvariant());
                 if (parameter == null)
                 {
                     throw new KbGenericException($"Value for {name} cannot be null.");
@@ -107,7 +100,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             try
             {
-                var value = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault()?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.ToLowerInvariant() == name.ToLowerInvariant()).?.Value;
                 if (value == null)
                 {
                     return defaultValue;

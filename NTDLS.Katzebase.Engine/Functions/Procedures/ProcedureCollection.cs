@@ -22,14 +22,17 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
             }
         }
 
-        public static AppliedProcedurePrototype ApplyProcedurePrototype(EngineCore core, Transaction transaction, string procedureName, List<FunctionParameterBase> parameters)
+        public static AppliedProcedurePrototype ApplyProcedurePrototype(EngineCore core,
+            Transaction transaction, string procedureName, List<FunctionParameterBase> parameters)
         {
             if (_systemProcedureProtypes == null)
             {
                 throw new KbFatalException("Procedure prototypes were not initialized.");
             }
 
-            var systemProcedure = _systemProcedureProtypes.Where(o => o.Name.ToLower() == procedureName.ToLower()).FirstOrDefault();
+            var systemProcedure = _systemProcedureProtypes.FirstOrDefault
+                (o => o.Name.Equals(procedureName, StringComparison.InvariantCultureIgnoreCase));
+
             if (systemProcedure != null)
             {
                 return new AppliedProcedurePrototype()
@@ -54,11 +57,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
             var physicalSchema = core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
 
-            var physicalProcedure = core.Procedures.Acquire(transaction, physicalSchema, procedureName, LockOperation.Read);
-            if (physicalProcedure == null)
-            {
-                throw new KbFunctionException($"Undefined procedure: {procedureName}.");
-            }
+            var physicalProcedure = core.Procedures.Acquire(transaction, physicalSchema, procedureName, LockOperation.Read)
+                ?? throw new KbFunctionException($"Undefined procedure: {procedureName}.");
 
             return new AppliedProcedurePrototype()
             {

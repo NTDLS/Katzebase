@@ -142,12 +142,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                 {
-                    var schemaList = _core.Schemas.GetListByPreparedQuery(transactionReference.Transaction, preparedQuery.Schemas.Single().Name, preparedQuery.RowLimit);
+                    var schemaList = _core.Schemas.GetListByPreparedQuery(
+                        transactionReference.Transaction, preparedQuery.Schemas.Single().Name, preparedQuery.RowLimit);
 
                     result.Fields.Add(new KbQueryField("Name"));
                     result.Fields.Add(new KbQueryField("Path"));
 
-                    result.Rows.AddRange(schemaList.Select(o => new KbQueryRow(new List<string?> { o.Item1, o.Item2 })));
+                    result.Rows.AddRange(schemaList.Select(o => new KbQueryRow([o.Item1, o.Item2])));
                 }
                 else
                 {

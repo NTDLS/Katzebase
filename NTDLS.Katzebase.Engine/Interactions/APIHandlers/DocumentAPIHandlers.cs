@@ -64,7 +64,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var nativeResults = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
+                var nativeResults = StaticSearcherMethods.ListSchemaDocuments(
+                    _core, transactionReference.Transaction, param.Schema, param.Count);
 
                 var apiResults = new KbQueryDocumentListReply()
                 {
@@ -101,7 +102,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 using var transactionReference = _core.Transactions.Acquire(session);
                 var result = new KbQueryDocumentStoreReply()
                 {
-                    Value = _core.Documents.InsertDocument(transactionReference.Transaction, param.Schema, param.Document.Content).DocumentId,
+                    Value = _core.Documents.InsertDocument(
+                        transactionReference.Transaction, param.Schema, param.Document.Content).DocumentId,
                 };
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 1);
@@ -131,7 +133,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
                 var result = new KbQueryDocumentCatalogReply();
-                var documentPointers = _core.Documents.AcquireDocumentPointers(transactionReference.Transaction, param.Schema, LockOperation.Read).ToList();
+                var documentPointers = _core.Documents.AcquireDocumentPointers(
+                    transactionReference.Transaction, param.Schema, LockOperation.Read).ToList();
 
                 result.Collection.AddRange(documentPointers.Select(o => new KbDocumentCatalogItem(o.DocumentId)));
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, documentPointers.Count);
@@ -157,12 +160,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, param.Schema, LockOperation.Write);
-                var documentPointers = _core.Documents.AcquireDocumentPointers(transactionReference.Transaction, physicalSchema, LockOperation.Write).ToList();
+                var documentPointers = _core.Documents.AcquireDocumentPointers(
+                    transactionReference.Transaction, physicalSchema, LockOperation.Write).ToList();
                 var pointersToDelete = documentPointers.Where(o => o.DocumentId == param.Id);
 
                 _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, pointersToDelete);
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryDocumentDeleteByIdReply(), documentPointers.Count);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(
+                    new KbQueryDocumentDeleteByIdReply(), documentPointers.Count);
             }
             catch (Exception ex)
             {

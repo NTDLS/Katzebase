@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
         {
             if (_protypes == null)
             {
-                _protypes = new List<ScalerFunction>();
+                _protypes = new();
 
                 foreach (var prototype in ScalerFunctionImplementation.PrototypeStrings)
                 {
@@ -37,12 +37,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 throw new KbFatalException("Function prototypes were not initialized.");
             }
 
-            var function = _protypes.Where(o => o.Name.ToLower() == functionName.ToLower()).FirstOrDefault();
-
-            if (function == null)
-            {
-                throw new KbFunctionException($"Undefined function: {functionName}.");
-            }
+            var function = _protypes.FirstOrDefault(o => o.Name.Equals(functionName, StringComparison.InvariantCultureIgnoreCase))
+                ?? throw new KbFunctionException($"Undefined function: {functionName}.");
 
             return function.ApplyParameters(parameters);
         }

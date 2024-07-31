@@ -66,28 +66,28 @@ namespace TestHarness
 
             ExportSQLServerDatabases();
 
-            //TestSproc();
+            //TestProcedures();
 
             #region Misc. Tests & stuff.
 
             //Handled:
-            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R' AND (a = 1)";
-            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R' AND (A = 10 AND B = 50)";
-            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)";
-            //string stmt = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)";
-            //string stmt = "SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)";
-            //var preparedQuery = ParserEngine.ParseQuery(stmt);
+            //string statement = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R' AND (a = 1)";
+            //string statement = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6	AND Shelf != 'R' AND (A = 10 AND B = 50)";
+            //string statement = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)";
+            //string statement = "SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)";
+            //string statement = "SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)";
+            //var preparedQuery = ParserEngine.ParseQuery(statement);
             //return;
 
 
             //TestIndexCreationProductInventory();
 
             //using KatzebaseClient client = new KatzebaseClient("127.0.0.1", 6858);
-            //client.Query.ExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299 AND productid = 366");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Missing, Shelf, Bin, Quantity, rowguid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)");
+            //client.Query.ExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)");
+            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)");
+            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299 AND productid = 366");
+            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299");
+            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Missing, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)");
             //client.Query.ExecuteQuery("SELECT TOP 10 a.ProductID FROM AdventureWorks2012:Production:ProductInventory as a");
 
             //var result = client.Document.Sample("AdventureWorks2012:Production:Product", 10);
@@ -110,7 +110,7 @@ namespace TestHarness
             Console.ReadLine();
         }
 
-        static void TestSproc()
+        static void TestProcedures()
         {
             using var client = new KbClient(_serverHost, _serverPort);
 
@@ -252,7 +252,7 @@ namespace TestHarness
             personIndex.AddAttribute("Name");
             client.Schema.Indexes.Create(schemaPath, personIndex);
 
-            Console.WriteLine("Comitting transaction.");
+            Console.WriteLine("Committing transaction.");
             client.Transaction.Commit();
 
             Console.WriteLine("Session Completed: {0}", client.ServerConnectionId);
@@ -281,7 +281,7 @@ namespace TestHarness
             personIndex.AddAttribute("FirstName");
             client.Schema.Indexes.Create(schemaPath, personIndex);
 
-            Console.WriteLine("Comitting transaction.");
+            Console.WriteLine("Committing transaction.");
             client.Transaction.Commit();
 
             Console.WriteLine("Session Completed: {0}", client.ServerConnectionId);
@@ -339,7 +339,7 @@ namespace TestHarness
                 }
                 if (i > 0 && i % 1000 == 0)
                 {
-                    Console.WriteLine("Comitting...");
+                    Console.WriteLine("Committing...");
                     client.Transaction.Commit();
                     client.Transaction.Begin();
                 }
@@ -357,7 +357,7 @@ namespace TestHarness
                 client.Document.Store(schemaPath, new KbDocument(student));
             }
 
-            Console.WriteLine("Comitting transaction.");
+            Console.WriteLine("Committing transaction.");
             client.Transaction.Commit();
 
             client.Transaction.Begin();
@@ -371,7 +371,7 @@ namespace TestHarness
                 }
             }
 
-            Console.WriteLine("Comitting transaction.");
+            Console.WriteLine("Committing transaction.");
             client.Transaction.Commit();
 
             Console.WriteLine("Session Completed: {0}", client.ServerConnectionId);
@@ -404,7 +404,7 @@ namespace TestHarness
                 }
                 if (i > 0 && i % 1000 == 0)
                 {
-                    Console.WriteLine("Comitting...");
+                    Console.WriteLine("Committing...");
                     client.Transaction.Commit();
                     client.Transaction.Begin();
                 }
@@ -510,7 +510,7 @@ namespace TestHarness
                 }
                 if (i > 0 && i % 1000 == 0)
                 {
-                    Console.WriteLine("Comitting...");
+                    Console.WriteLine("Committing...");
                     client.Transaction.Commit();
                     client.Transaction.Begin();
                 }
@@ -528,7 +528,7 @@ namespace TestHarness
                 client.Document.Store(schemaPath, new KbDocument(student));
             }
 
-            Console.WriteLine("Comitting transaction.");
+            Console.WriteLine("Committing transaction.");
             client.Transaction.Commit();
         }
 

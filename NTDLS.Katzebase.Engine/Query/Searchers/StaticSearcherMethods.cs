@@ -11,7 +11,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Returns a random sample of all document fields from a schema.
         /// </summary>
-        internal static KbQueryDocumentListResult SampleSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int rowLimit = -1)
+        internal static KbQueryDocumentListResult SampleSchemaDocuments(
+            EngineCore core, Transaction transaction, string schemaName, int rowLimit = -1)
         {
             var result = new KbQueryDocumentListResult();
 
@@ -27,9 +28,14 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     int pageNumber = random.Next(0, physicalDocumentPageCatalog.Catalog.Count - 1);
                     var pageCatalog = physicalDocumentPageCatalog.Catalog[pageNumber];
                     int documentIndex = random.Next(0, pageCatalog.DocumentCount - 1);
-                    var physicalDocumentPageMap = core.Documents.AcquireDocumentPageMap(transaction, physicalSchema, pageNumber, LockOperation.Read);
+
+                    var physicalDocumentPageMap = core.Documents.AcquireDocumentPageMap(
+                        transaction, physicalSchema, pageNumber, LockOperation.Read);
+
                     var documentId = physicalDocumentPageMap.DocumentIDs.ToArray()[documentIndex];
-                    var physicalDocument = core.Documents.AcquireDocument(transaction, physicalSchema, new DocumentPointer(pageNumber, documentId), LockOperation.Read);
+
+                    var physicalDocument = core.Documents.AcquireDocument(
+                        transaction, physicalSchema, new DocumentPointer(pageNumber, documentId), LockOperation.Read);
 
                     if (i == 0)
                     {
@@ -67,9 +73,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             for (int i = 0; i < documentPointers.Count && (i < topCount || topCount < 0); i++)
             {
-                var pageDocuent = documentPointers[i];
+                var pageDocument = documentPointers[i];
 
-                var persistDocument = core.Documents.AcquireDocument(transaction, physicalSchema, pageDocuent, LockOperation.Read);
+                var persistDocument = core.Documents.AcquireDocument(transaction, physicalSchema, pageDocument, LockOperation.Read);
 
                 if (i == 0)
                 {
@@ -110,7 +116,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
 
             /*
-             *  We need to build a generic key/value dataset which is the combined fieldset from each inner joined document.
+             *  We need to build a generic key/value dataset which is the combined field-set from each inner joined document.
              *  Then we use the conditions that were supplied to eliminate results from that dataset.
             */
 
@@ -130,14 +136,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         }
 
         /// <summary>
-        /// Executes a prepared query (select, update, delete, etc) and returns just the distinct document pointers for the specified schema.
+        /// Executes a prepared query (select, update, delete, etc) and returns
+        ///     just the distinct document pointers for the specified schema.
         /// </summary>
         /// <param name="core"></param>
         /// <param name="transaction"></param>
         /// <param name="query"></param>
         /// <param name="schemaPrefix"></param>
         /// <returns></returns>
-        internal static IEnumerable<DocumentPointer> FindDocumentPointersByPreparedQuery(EngineCore core, Transaction transaction, PreparedQuery query, string schemaPrefix)
+        internal static IEnumerable<DocumentPointer> FindDocumentPointersByPreparedQuery(
+            EngineCore core, Transaction transaction, PreparedQuery query, string schemaPrefix)
         {
             var schemaMap = new QuerySchemaMap(core, transaction);
 

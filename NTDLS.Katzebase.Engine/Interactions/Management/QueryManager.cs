@@ -60,11 +60,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             using (var transactionReference = _core.Transactions.Acquire(session))
             {
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, procedure.SchemaName, LockOperation.Read);
-                var physicalProcedure = _core.Procedures.Acquire(transactionReference.Transaction, physicalSchema, procedure.ProcedureName, LockOperation.Read);
-                if (physicalProcedure == null)
-                {
-                    throw new KbEngineException($"Procedure [{procedure.ProcedureName}] was not found in schema [{procedure.SchemaName}]");
-                }
+
+                var physicalProcedure = _core.Procedures.Acquire(transactionReference.Transaction, physicalSchema, procedure.ProcedureName, LockOperation.Read)
+                    ?? throw new KbEngineException($"Procedure [{procedure.ProcedureName}] was not found in schema [{procedure.SchemaName}]");
 
                 if (physicalProcedure.Parameters.Count > 0)
                 {
@@ -72,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     foreach (var parameter in physicalProcedure.Parameters)
                     {
-                        if (procedure.Parameters.Collection.TryGetValue(parameter.Name.ToLower(), out var value) == false)
+                        if (procedure.Parameters.Collection.TryGetValue(parameter.Name.ToLowerInvariant(), out var value) == false)
                         {
                             throw new KbEngineException($"Parameter [{parameter.Name}] was not passed when calling procedure [{procedure.ProcedureName}] in schema [{procedure.SchemaName}]");
                         }

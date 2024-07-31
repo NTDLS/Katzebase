@@ -30,11 +30,11 @@ namespace NTDLS.Katzebase.Engine.Query
             {
                 try
                 {
-                    if (resultType.BaseType?.Name?.ToLower() == "enum")
+                    if (string.Equals(resultType.BaseType?.Name, "enum", StringComparison.InvariantCultureIgnoreCase))
                     {
                         if (Enum.TryParse(resultType, value, true, out var enumValue) == false)
                         {
-                            throw new KbParserException($"Invaild value passed to with option '{name}'.");
+                            throw new KbParserException($"Invalid value passed to with option '{name}'.");
                         }
                         return Convert.ChangeType(enumValue, resultType);
                     }
@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     var resultingValue = Convert.ChangeType(value, resultType);
                     if (resultingValue == null)
                     {
-                        throw new KbParserException($"Invaild NULL value passed to with option '{name}'.");
+                        throw new KbParserException($"Invalid NULL value passed to with option '{name}'.");
                     }
                     return resultingValue;
                 }
@@ -51,13 +51,14 @@ namespace NTDLS.Katzebase.Engine.Query
                     throw new KbParserException($"Failed to convert with option '{name}' value to '{resultType.Name}'.");
                 }
             }
-            throw new KbParserException($"Invaild with option '{name}'.");
+            throw new KbParserException($"Invalid with option '{name}'.");
         }
     }
 
     internal static class StaticWithOptionsParser
     {
-        internal static List<WithOption> ParseWithOptions(ref QueryTokenizer query, ExpectedWithOptions expectedOptions, ref PreparedQuery preparedQuery)
+        internal static List<WithOption> ParseWithOptions(
+            ref QueryTokenizer query, ExpectedWithOptions expectedOptions, ref PreparedQuery preparedQuery)
         {
             var results = new List<WithOption>();
 
@@ -73,14 +74,14 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 while (true)
                 {
-                    string name = query.GetNextToken().ToLower();
+                    string name = query.GetNextToken().ToLowerInvariant();
                     if (query.IsNextCharacter('=') == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
                     }
                     query.SkipNextCharacter();
 
-                    string value = query.GetNextToken().ToLower();
+                    string value = query.GetNextToken().ToLowerInvariant();
 
                     if (expectedOptions.ContainsKey(name) == false)
                     {

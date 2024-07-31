@@ -12,20 +12,22 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         public List<ConditionSubset> Subsets { get; private set; } = new();
 
-        /// Every condition instance starts with a single root node that all others poaint back to given some lineage. This is the name of the root node.
+        /// Every condition instance starts with a single root node that all others point back to given some lineage.
+        /// This is the name of the root node.
         public string RootSubsetKey { get; private set; } = string.Empty;
 
         public string HighLevelExpressionTree { get; private set; } = string.Empty;
 
         /// <summary>
-        /// Every condition instance starts with a single root node that all others poaint back to given some lineage. This is the root node.
+        /// Every condition instance starts with a single root node that all others point back to given some lineage.
+        /// This is the root node.
         /// </summary>
         private ConditionSubset? _root;
         public ConditionSubset Root
         {
             get
             {
-                _root ??= Subsets.Where(o => o.IsRoot).Single();
+                _root ??= Subsets.Single(o => o.IsRoot);
                 return _root;
             }
         }
@@ -82,7 +84,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 conditionsText = $"({conditionsText})";
             }
 
-            //Push the conditions one group deeper since we want to process all expreessions as groups and leave no chace for conditions at the root level.
+            //Push the conditions one group deeper since we want to process all
+            //  expressions as groups and leave no chance for conditions at the root level.
             conditionsText = $"({conditionsText})";
 
             while (true)
@@ -112,9 +115,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             RemoveVariableMarkers();
 
             //Mark the root subset as such.
-            Subsets.Where(o => o.SubsetKey == RootSubsetKey).Single().IsRoot = true;
+            Subsets.Single(o => o.SubsetKey == RootSubsetKey).IsRoot = true;
 
-            HighLevelExpressionTree = BuildHighlevelExpressionTree();
+            HighLevelExpressionTree = BuildHighLevelExpressionTree();
 
             if (Root.Conditions.Any())
             {
@@ -146,14 +149,14 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         {
             while (true)
             {
-                int spos = str.IndexOf("$:"); //Subset-Key.
-                if (spos >= 0)
+                int pos = str.IndexOf("$:"); //Subset-Key.
+                if (pos >= 0)
                 {
-                    int epos = str.IndexOf("$", spos + 1);
-                    if (epos > spos)
+                    int epos = str.IndexOf("$", pos + 1);
+                    if (epos > pos)
                     {
-                        var tok = str.Substring(spos, epos - spos + 1);
-                        var key = str.Substring(spos + 2, (epos - spos) - 2);
+                        var tok = str.Substring(pos, epos - pos + 1);
+                        var key = str.Substring(pos + 2, (epos - pos) - 2);
                         str = str.Replace(tok, key);
                     }
                     else break;
@@ -166,7 +169,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         public ConditionSubset SubsetByKey(string key)
         {
-            return Subsets.Where(o => o.SubsetKey == key).First();
+            return Subsets.First(o => o.SubsetKey == key);
         }
 
         public Conditions Clone()
@@ -211,7 +214,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             {
                 int startPosition = conditionTokenizer.Position;
 
-                string token = conditionTokenizer.GetNextToken().ToLower();
+                string token = conditionTokenizer.GetNextToken().ToLowerInvariant();
 
                 if (token == string.Empty)
                 {
@@ -247,16 +250,16 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     string left = token;
 
                     //Logical Qualifier
-                    token = conditionTokenizer.GetNextToken().ToLower();
+                    token = conditionTokenizer.GetNextToken().ToLowerInvariant();
                     if (token == "not")
                     {
-                        token += " " + conditionTokenizer.GetNextToken().ToLower();
+                        token += " " + conditionTokenizer.GetNextToken().ToLowerInvariant();
                     }
 
                     var logicalQualifier = ConditionTokenizer.ParseLogicalQualifier(token);
 
                     //Righthand value:
-                    string right = conditionTokenizer.GetNextToken().ToLower();
+                    string right = conditionTokenizer.GetNextToken().ToLowerInvariant();
 
                     if (literalStrings.ContainsKey(right))
                     {
@@ -267,13 +270,13 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                     if (logicalQualifier == LogicalQualifier.Between || logicalQualifier == LogicalQualifier.NotBetween)
                     {
-                        string and = conditionTokenizer.GetNextToken().ToLower();
+                        string and = conditionTokenizer.GetNextToken().ToLowerInvariant();
                         if (and != "and")
                         {
                             throw new KbParserException($"Invalid token, Found [{and}] expected [and].");
                         }
 
-                        var rightRange = conditionTokenizer.GetNextToken().ToLower();
+                        var rightRange = conditionTokenizer.GetNextToken().ToLowerInvariant();
 
                         right = $"{right}:{rightRange}";
 
@@ -328,7 +331,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         private void BuildFullVirtualExpression(ref StringBuilder result, ConditionSubset conditionSubset, int depth)
         {
-            //If we have subsets, then we need to satisify those in order to complete the equation.
+            //If we have subsets, then we need to satisfy those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subset = SubsetByKey(subsetKey);
@@ -358,10 +361,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public List<PrefixedField> AllFields { get; private set; } = new();
 
         /// <summary>
-        /// This function is used to build a logical expression at the subset level, it also demonstrates how we process the recursive logic.
+        /// This function is used to build a logical expression at the subset
+        ///     level, it also demonstrates how we process the recursive logic.
         /// </summary>
         /// <returns></returns>
-        public string BuildHighlevelExpressionTree()
+        public string BuildHighLevelExpressionTree()
         {
             var expression = new StringBuilder($"({Root.Expression})");
 
@@ -369,19 +373,19 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             {
                 var subExpression = SubsetByKey(subsetKey);
                 expression.Replace(subsetKey, $"({subExpression.Expression})");
-                BuildHighlevelExpressionTree(ref expression, subExpression);
+                BuildHighLevelExpressionTree(ref expression, subExpression);
             }
 
             return expression.ToString();
         }
 
-        public void BuildHighlevelExpressionTree(ref StringBuilder expression, ConditionSubset conditionSubset)
+        public void BuildHighLevelExpressionTree(ref StringBuilder expression, ConditionSubset conditionSubset)
         {
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = SubsetByKey(subsetKey);
                 expression.Replace(subsetKey, $"({subExpression.Expression})");
-                BuildHighlevelExpressionTree(ref expression, subExpression);
+                BuildHighLevelExpressionTree(ref expression, subExpression);
             }
         }
 
@@ -409,7 +413,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         private void BuildConditionHash(ref StringBuilder result, ConditionSubset conditionSubset, int depth)
         {
-            //If we have subsets, then we need to satisify those in order to complete the equation.
+            //If we have subsets, then we need to satisfy those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subset = SubsetByKey(subsetKey);

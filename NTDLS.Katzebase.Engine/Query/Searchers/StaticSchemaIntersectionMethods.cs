@@ -20,13 +20,14 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
     internal static class StaticSchemaIntersectionMethods
     {
         /// <summary>
-        /// Build a generic key/value dataset which is the combined fieldset from each inner joined document.
+        /// Build a generic key/value dataset which is the combined field-set from each inner joined document.
         /// </summary>
         /// <param name="core"></param>
         /// <param name="transaction"></param>
         /// <param name="schemaMap"></param>
         /// <param name="query"></param>
-        /// <param name="gatherDocumentPointersForSchemaPrefix">When not null, the process will focus on obtaining a list of DocumentPointers instead of key/values. This is used for UPDATES and DELETES.</param>
+        /// <param name="gatherDocumentPointersForSchemaPrefix">When not null, the process will focus on
+        /// obtaining a list of DocumentPointers instead of key/values. This is used for UPDATES and DELETES.</param>
         /// <returns></returns>
         internal static DocumentLookupResults GetDocumentsByConditions(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix = null)
@@ -41,7 +42,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //If we don't have any conditions then we just need to return all rows from the schema.
             if (query.Conditions.Subsets.Count > 0)
             {
-                lookupOptimization = ConditionLookupOptimization.Build(core, transaction, topLevelMap.PhysicalSchema, query.Conditions, topLevelMap.Prefix);
+                lookupOptimization = ConditionLookupOptimization.Build(
+                    core, transaction, topLevelMap.PhysicalSchema, query.Conditions, topLevelMap.Prefix);
 
                 var limitedDocumentPointers = new List<DocumentPointer>();
 
@@ -63,16 +65,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 else
                 {
                     #region Why no indexing? Find out here!
-                    //   * One or more of the conditon subsets lacks an index.
+                    //   * One or more of the condition subsets lacks an index.
                     //   *
                     //   *   Since indexing requires that we can ensure document elimination we will have
-                    //   *      to ensure that we have a covering index on EACH-and-EVERY conditon group.
+                    //   *      to ensure that we have a covering index on EACH-and-EVERY condition group.
                     //   *
                     //   *   Then we can search the indexes for each condition group to obtain a list of all possible
                     //   *       document IDs, then use those document IDs to early eliminate documents from the main lookup loop.
                     //   *
-                    //   *   If any one conditon group does not have an index, then no indexing will be used at all since all
-                    //   *      documents will need to be scaned anyway. To prevent unindexed scans, reduce the number of
+                    //   *   If any one condition group does not have an index, then no indexing will be used at all since all
+                    //   *      documents will need to be scanned anyway. To prevent unindexed scans, reduce the number of
                     //   *      condition groups (nested in parentheses).
                     //   *
                     //   * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we cant use an index.
@@ -117,8 +119,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             #region Grouping.
 
-            if (instance.Results.Collection.Any() && (query.GroupFields.Any()
-                || query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Aggregate).Any())
+            if (instance.Results.Collection.Count != 0 && (query.GroupFields.Count != 0
+                || query.SelectFields.OfType<FunctionWithParams>()
+                .Any(o => o.FunctionType == FunctionParameterTypes.FunctionType.Aggregate))
                )
             {
                 IEnumerable<IGrouping<string, SchemaIntersectionRow>>? groupedValues;
@@ -127,13 +130,14 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 {
                     //Here we are going to build a grouping_key using the concatenated select fields.
                     groupedValues = instance.Results.Collection.GroupBy(arr =>
-                        string.Join("\t", query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => arr.AuxiliaryFields[groupFieldParam.Value.Key])));
+                        string.Join('\t', query.GroupFields.OfType<FunctionDocumentFieldParameter>()
+                        .Select(groupFieldParam => arr.AuxiliaryFields[groupFieldParam.Value.Key])));
                 }
                 else
                 {
                     //We do not have a group by, but we do have aggregate functions. Group by an empty string.
                     groupedValues = instance.Results.Collection.GroupBy(arr =>
-                        string.Join("\t", query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => string.Empty)));
+                        string.Join('\t', query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => string.Empty)));
                 }
 
                 var groupedResults = new SchemaIntersectionRowCollection();
@@ -181,7 +185,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             #region Sorting.
 
-            //Get a list of all the fields we need to sory by.
+            //Get a list of all the fields we need to sort by.
             if (query.SortFields.Any() && instance.Results.Collection.Any())
             {
                 var modelAuxiliaryFields = instance.Results.Collection.First().AuxiliaryFields;
@@ -198,7 +202,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 //Sort the results:
                 var ptSorting = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Sorting);
-                instance.Results.Collection = instance.Results.Collection.OrderBy(row => row.AuxiliaryFields, new ResultValueComparer(sortingColumns)).ToList();
+                instance.Results.Collection = instance.Results.Collection.OrderBy
+                    (row => row.AuxiliaryFields, new ResultValueComparer(sortingColumns)).ToList();
 
                 ptSorting?.StopAndAccumulate();
             }
@@ -219,8 +224,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             if (query.DynamicallyBuildSelectList && instance.Results.Collection.Count > 0)
             {
-                //If this was a "select *", we may have discovered different "fields" in different documents. We need to make sure that all rows
-                //  have the same number of values.
+                //If this was a "select *", we may have discovered different "fields" in different 
+                //  documents. We need to make sure that all rows have the same number of values.
 
                 int maxFieldCount = query.SelectFields.Count;
                 foreach (var row in instance.Results.Collection)
@@ -335,7 +340,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
 
                     //Lets make the method results available for sorting, grouping, etc.
-                    var field = param.Query.SortFields.Where(o => o.Field == methodField.Alias).SingleOrDefault();
+                    var field = param.Query.SortFields.SingleOrDefault(o => o.Field == methodField.Alias);
                     if (field != null && row.AuxiliaryFields.ContainsKey(field.Alias) == false)
                     {
                         row.AuxiliaryFields.Add(field.Alias, methodResult);
@@ -351,7 +356,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
 
                     //Lets make the method results available for sorting, grouping, etc.
-                    var field = param.Query.SortFields.Where(o => o.Alias == methodField.Alias).SingleOrDefault();
+                    var field = param.Query.SortFields.SingleOrDefault(o => o.Alias == methodField.Alias);
                     if (field != null && row.AuxiliaryFields.ContainsKey(field.Alias) == false)
                     {
                         row.AuxiliaryFields.Add(field.Alias, methodResult);
@@ -362,21 +367,23 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         #endregion
 
-        private static void IntersectAllSchemas(LookupThreadInstance param, DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection resultingRows)
+        private static void IntersectAllSchemas(LookupThreadInstance param,
+            DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection resultingRows)
         {
             var topLevelSchemaMap = param.SchemaMap.First();
 
-            var toplevelPhysicalDocument = param.Core.Documents.AcquireDocument(param.Transaction, topLevelSchemaMap.Value.PhysicalSchema, topLevelDocumentPointer, LockOperation.Read);
+            var topLevelPhysicalDocument = param.Core.Documents.AcquireDocument
+                (param.Transaction, topLevelSchemaMap.Value.PhysicalSchema, topLevelDocumentPointer, LockOperation.Read);
 
             var threadScopedContentCache = new KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>
             {
-                { $"{topLevelSchemaMap.Key.ToLower()}:{topLevelDocumentPointer.Key.ToLower()}", toplevelPhysicalDocument.Elements }
+                { $"{topLevelSchemaMap.Key.ToLowerInvariant()}:{topLevelDocumentPointer.Key.ToLowerInvariant()}", topLevelPhysicalDocument.Elements }
             };
 
             //This cache is used to store the content of all documents required for a single row join.
             var joinScopedContentCache = new KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>
             {
-                { topLevelSchemaMap.Key.ToLower(), toplevelPhysicalDocument.Elements }
+                { topLevelSchemaMap.Key.ToLowerInvariant(), topLevelPhysicalDocument.Elements }
             };
 
             var resultingRow = new SchemaIntersectionRow();
@@ -390,11 +397,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 resultingRow.AddSchemaDocumentPointer(topLevelSchemaMap.Key, topLevelDocumentPointer);
             }
 
-            FillInSchemaResultDocumentValues(param, topLevelSchemaMap.Key, topLevelDocumentPointer, ref resultingRow, threadScopedContentCache);
+            FillInSchemaResultDocumentValues(param, topLevelSchemaMap.Key,
+                topLevelDocumentPointer, ref resultingRow, threadScopedContentCache);
 
             if (param.SchemaMap.Count > 1)
             {
-                IntersectAllSchemasRecursive(param, 1, ref resultingRow, ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
+                IntersectAllSchemasRecursive(param, 1, ref resultingRow,
+                    ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
             }
 
             if (param.Query.Conditions.AllFields.Any())
@@ -453,15 +462,15 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             else
             {
                 #region Why no indexing? Find out here!
-                //   * One or more of the conditon subsets lacks an index.
+                //   * One or more of the condition subsets lacks an index.
                 //   *
                 //   *   Since indexing requires that we can ensure document elimination we will have
-                //   *      to ensure that we have a covering index on EACH-and-EVERY conditon group.
+                //   *      to ensure that we have a covering index on EACH-and-EVERY condition group.
                 //   *
                 //   *   Then we can search the indexes for each condition group to obtain a list of all possible
                 //   *       document IDs, then use those document IDs to early eliminate documents from the main lookup loop.
                 //   *
-                //   *   If any one conditon group does not have an index, then no indexing will be used at all since all
+                //   *   If any one condition group does not have an index, then no indexing will be used at all since all
                 //   *      documents will need to be scaned anyway. To prevent unindexed scans, reduce the number of
                 //   *      condition groups (nested in parentheses).
                 //   *
@@ -484,19 +493,22 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             foreach (var documentPointer in limitedDocumentPointers)
             {
-                string threadScopeddocumentCacheKey = $"{currentSchemaKVP.Key}:{documentPointer.Key}";
+                string threadScopedDocumentCacheKey = $"{currentSchemaKVP.Key}:{documentPointer.Key}";
 
                 //Get the document content from the thread cache (or cache it).
-                if (threadScopedContentCache.TryGetValue(threadScopeddocumentCacheKey, out var documentContentNextLevel) == false)
+                if (threadScopedContentCache.TryGetValue(threadScopedDocumentCacheKey, out var documentContentNextLevel) == false)
                 {
-                    var physicalDocumentNextLevel = param.Core.Documents.AcquireDocument(param.Transaction, currentSchemaMap.PhysicalSchema, documentPointer, LockOperation.Read);
+                    var physicalDocumentNextLevel = param.Core.Documents.AcquireDocument(
+                        param.Transaction, currentSchemaMap.PhysicalSchema, documentPointer, LockOperation.Read);
+
                     documentContentNextLevel = physicalDocumentNextLevel.Elements;
-                    threadScopedContentCache.Add(threadScopeddocumentCacheKey, documentContentNextLevel);
+                    threadScopedContentCache.Add(threadScopedDocumentCacheKey, documentContentNextLevel);
                 }
 
-                joinScopedContentCache.Add(currentSchemaKVP.Key.ToLower(), documentContentNextLevel);
+                joinScopedContentCache.Add(currentSchemaKVP.Key.ToLowerInvariant(), documentContentNextLevel);
 
-                SetSchemaIntersectionExpressionParameters(param.Transaction, ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
+                SetSchemaIntersectionExpressionParameters(param.Transaction,
+                    ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
 
                 var ptEvaluate = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
@@ -528,7 +540,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     }
                 }
 
-                joinScopedContentCache.Remove(currentSchemaKVP.Key);//We are no longer working with the document at this level.
+                joinScopedContentCache.Remove(currentSchemaKVP.Key); //We are no longer working with the document at this level.
             }
         }
 
@@ -541,13 +553,15 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <param name="conditions"></param>
         /// <param name="jContent"></param>
         private static void SetSchemaIntersectionExpressionParameters(Transaction transaction,
-            ref NCalc.Expression expression, Conditions conditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
+            ref NCalc.Expression expression, Conditions conditions,
+            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
-            //If we have subsets, then we need to satisify those in order to complete the equation.
+            //If we have subsets, then we need to satisfy those in order to complete the equation.
             foreach (var subsetKey in conditions.Root.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetSchemaIntersectionExpressionParametersRecursive(transaction, ref expression, conditions, subExpression, joinScopedContentCache);
+                SetSchemaIntersectionExpressionParametersRecursive(transaction,
+                    ref expression, conditions, subExpression, joinScopedContentCache);
             }
         }
 
@@ -555,11 +569,12 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             ref NCalc.Expression expression, Conditions conditions, ConditionSubset conditionSubset,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
-            //If we have subsets, then we need to satisify those in order to complete the equation.
+            //If we have subsets, then we need to satisfy those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
-                SetSchemaIntersectionExpressionParametersRecursive(transaction, ref expression, conditions, subExpression, joinScopedContentCache);
+                SetSchemaIntersectionExpressionParametersRecursive(transaction,
+                    ref expression, conditions, subExpression, joinScopedContentCache);
             }
 
             foreach (var condition in conditionSubset.Conditions)
@@ -578,14 +593,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     throw new KbEngineException($"Field not found in document [{condition.Right.Value}].");
                 }
 
-                var singleConditionResult = Condition.IsMatch(transaction, leftDocumentValue?.ToLower(), condition.LogicalQualifier, rightDocumentValue);
+                var singleConditionResult = Condition.IsMatch(transaction,
+                    leftDocumentValue?.ToLowerInvariant(), condition.LogicalQualifier, rightDocumentValue);
 
                 expression.Parameters[condition.ConditionKey] = singleConditionResult;
             }
         }
 
         private static void FillInSchemaResultDocumentValues(LookupThreadInstance param, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
+            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
+            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
             if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
@@ -605,7 +622,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// </summary>
         /// 
         private static void FillInSchemaResultDocumentValuesAtomic(LookupThreadInstance param, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
+            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
+            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
             var documentContent = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
 
@@ -640,7 +658,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 {
                     if (documentContent.TryGetValue(field.Value.Field, out string? documentValue) == false)
                     {
-                        param.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound, $"'{field.Value.Field}' will be treated as null.");
+                        param.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
+                            $"'{field.Value.Field}' will be treated as null.");
                     }
                     schemaResultRow.InsertValue(field.Value.Field, field.Ordinal, documentValue);
                 }
@@ -650,7 +669,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             {
                 if (documentContent.TryGetValue(field.Value.Field, out string? documentValue) == false)
                 {
-                    param.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound, $"'{field.Value.Field}' will be treated as null.");
+                    param.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
+                        $"'{field.Value.Field}' will be treated as null.");
                 }
                 schemaResultRow.InsertValue(field.Value.Field, field.Ordinal, documentValue);
             }
@@ -664,7 +684,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 {
                     if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
                     {
-                        param.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound, $"'{field.Key}' will be treated as null.");
+                        param.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound,
+                            $"'{field.Key}' will be treated as null.");
                     }
                     schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
                 }
@@ -677,7 +698,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 {
                     if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
                     {
-                        param.Transaction.AddWarning(KbTransactionWarning.GroupFieldNotFound, $"'{field.Key}' will be treated as null.");
+                        param.Transaction.AddWarning(KbTransactionWarning.GroupFieldNotFound,
+                            $"'{field.Key}' will be treated as null.");
                     }
                     schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
                 }
@@ -690,7 +712,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 {
                     if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
                     {
-                        param.Transaction.AddWarning(KbTransactionWarning.ConditionFieldNotFound, $"'{field.Key}' will be treated as null.");
+                        param.Transaction.AddWarning(KbTransactionWarning.ConditionFieldNotFound,
+                            $"'{field.Key}' will be treated as null.");
                     }
                     schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
                 }
@@ -703,7 +726,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 {
                     if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
                     {
-                        param.Transaction.AddWarning(KbTransactionWarning.SortFieldNotFound, $"'{field.Key}' will be treated as null.");
+                        param.Transaction.AddWarning(KbTransactionWarning.SortFieldNotFound,
+                            $"'{field.Key}' will be treated as null.");
                     }
                     schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
                 }
@@ -717,7 +741,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
-        private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(Transaction transaction, LookupThreadInstance param, SchemaIntersectionRowCollection inputResults)
+        private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(
+            Transaction transaction, LookupThreadInstance param, SchemaIntersectionRowCollection inputResults)
         {
             var outputResults = new List<SchemaIntersectionRow>();
             var expression = new NCalc.Expression(param.Query.Conditions.HighLevelExpressionTree);
@@ -759,7 +784,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction, ref NCalc.Expression expression,
             Conditions conditions, ConditionSubset conditionSubset, KbInsensitiveDictionary<string?> conditionField)
         {
-            //If we have subsets, then we need to satisify those in order to complete the equation.
+            //If we have subsets, then we need to satisfy those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subExpression = conditions.SubsetByKey(subsetKey);
@@ -775,7 +800,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     //throw new KbEngineException($"Field not found in document [{condition.Left.Key}].");
                 }
 
-                expression.Parameters[condition.ConditionKey] = condition.IsMatch(transaction, value?.ToLower());
+                expression.Parameters[condition.ConditionKey] = condition.IsMatch(transaction, value?.ToLowerInvariant());
             }
         }
 

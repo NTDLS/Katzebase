@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Query
             DefaultDocumentPageSize,
             UseCompression,
             HealthMonitoringEnabled,
-            HealthMonitoringChekpointSeconds,
+            HealthMonitoringCheckpointSeconds,
             HealthMonitoringInstanceLevelEnabled,
             HealthMonitoringInstanceLevelTimeToLiveSeconds,
             MaxIdleConnectionSeconds,

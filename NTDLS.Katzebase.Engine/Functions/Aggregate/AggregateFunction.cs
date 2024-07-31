@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 else if (nameAndDefault.Count() == 2)
                 {
                     parameters.Add(new AggregateFunctionParameterPrototype(paramType, nameAndDefault[0],
-                        nameAndDefault[1].ToLower() == "null" ? null : nameAndDefault[1]));
+                        nameAndDefault[1].Equals("null", StringComparison.InvariantCultureIgnoreCase) ? null : nameAndDefault[1]));
                 }
                 else
                 {

@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
 
         internal ProcedureParameterValueCollection ApplyParameters(List<FunctionParameterBase> values)
         {
-            int requiredParameterCount = Parameters.Where(o => o.Type.ToString().ToLower().Contains("optional") == false).Count();
+            int requiredParameterCount = Parameters.Count(o => o.Type.ToString().Contains("optional", StringComparison.InvariantCultureIgnoreCase) == false);
 
             if (Parameters.Count < requiredParameterCount)
             {
@@ -46,9 +46,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
             {
                 for (int i = 0; i < Parameters.Count; i++)
                 {
-                    if (values[i] is FunctionExpression)
+                    if (values[i] is FunctionExpression expression)
                     {
-                        var expression = (FunctionExpression)values[i];
                         result.Values.Add(new ProcedureParameterValue(Parameters[0].ToProcedureParameterPrototype(), expression.Value));
                     }
                     else
@@ -67,15 +66,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
                     }
                     else
                     {
-                        if (values[i] is FunctionExpression)
+                        if (values[i] is FunctionExpression functionExpression)
                         {
-                            var expression = (FunctionExpression)values[i];
-                            result.Values.Add(new ProcedureParameterValue(Parameters[i].ToProcedureParameterPrototype(), expression.Value));
+                            result.Values.Add(new ProcedureParameterValue(Parameters[i].ToProcedureParameterPrototype(), functionExpression.Value));
                         }
-                        else if (values[i] is FunctionConstantParameter)
+                        else if (values[i] is FunctionConstantParameter functionConstantParameter)
                         {
-                            var expression = (FunctionConstantParameter)values[i];
-                            result.Values.Add(new ProcedureParameterValue(Parameters[i].ToProcedureParameterPrototype(), expression.RawValue));
+                            result.Values.Add(new ProcedureParameterValue(Parameters[i].ToProcedureParameterPrototype(), functionConstantParameter.RawValue));
                         }
                         else
                         {

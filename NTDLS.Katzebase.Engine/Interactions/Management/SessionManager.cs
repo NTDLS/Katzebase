@@ -87,7 +87,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 // automatically retried by the HeartbeatManager.
                 _collection.TryWrite(out bool wasLockObtained, 1000, (obj) =>
                 {
-                    var session = obj.Where(o => o.Value.ProcessId == processId).FirstOrDefault().Value;
+                    var session = obj.FirstOrDefault(o => o.Value.ProcessId == processId).Value;
                     if (session != null)
                     {
                         obj.Remove(session.ConnectionId);
@@ -112,7 +112,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 try
                 {
-                    var result = obj.Where(o => o.Value.ProcessId == processId).FirstOrDefault();
+                    var result = obj.FirstOrDefault(o => o.Value.ProcessId == processId);
                     if (result.Value != null)
                     {
                         return result.Value;

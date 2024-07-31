@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
         /// <param name="key">The alias of the schema</param>
         /// <param name="physicalSchema">The associated schema meta-data.</param>
         /// <param name="documentCatalog">The document catalog contained in the associated schema.</param>
-        /// <param name="conditions">The conditons used to join this schema mapping to the one before it.</param>
+        /// <param name="conditions">The conditions used to join this schema mapping to the one before it.</param>
         public void Add(string prefix, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog documentCatalog, Conditions? conditions)
         {
             Add(prefix, new QuerySchemaMapItem(_core, Transaction, this, physicalSchema, documentCatalog, conditions, prefix));

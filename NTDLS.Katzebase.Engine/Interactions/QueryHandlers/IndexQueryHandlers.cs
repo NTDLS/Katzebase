@@ -37,7 +37,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
-                    _core.Indexes.DropIndex(transactionReference.Transaction, schemaName, preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
+                    _core.Indexes.DropIndex(transactionReference.Transaction, schemaName,
+                        preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.IndexName));
                 }
                 else
                 {
@@ -103,7 +104,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (preparedQuery.SubQueryType == SubQueryType.Index || preparedQuery.SubQueryType == SubQueryType.UniqueKey)
                 {
-                    var indexPartitions = preparedQuery.Attribute(PreparedQuery.QueryAttribute.Partitions, _core.Settings.DefaultIndexPartitions);
+                    var indexPartitions = preparedQuery.Attribute(
+                        PreparedQuery.QueryAttribute.Partitions, _core.Settings.DefaultIndexPartitions);
 
                     var index = new KbIndex
                     {

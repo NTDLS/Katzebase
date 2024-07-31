@@ -143,7 +143,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         });
                     }
 
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= _core.Settings.HealthMonitoringChekpointSeconds)
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= _core.Settings.HealthMonitoringCheckpointSeconds)
                     {
                         Checkpoint();
                     }
@@ -191,7 +191,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         });
                     }
 
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringChekpointSeconds)
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringCheckpointSeconds)
                     {
                         Checkpoint();
                     }
@@ -251,7 +251,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         });
                     }
 
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringChekpointSeconds)
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringCheckpointSeconds)
                     {
                         Checkpoint();
                     }
@@ -273,7 +273,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                if (value == 0 || _core.Settings.HealthMonitoringEnabled == false || _core.Settings.HealthMonitoringInstanceLevelEnabled == false)
+                if (value == 0
+                    || _core.Settings.HealthMonitoringEnabled == false
+                    || _core.Settings.HealthMonitoringInstanceLevelEnabled == false)
                 {
                     return;
                 }
@@ -299,7 +301,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         });
                     }
 
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringChekpointSeconds)
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringCheckpointSeconds)
                     {
                         Checkpoint();
                     }

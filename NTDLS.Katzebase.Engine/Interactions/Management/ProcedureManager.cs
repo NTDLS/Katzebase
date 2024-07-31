@@ -38,7 +38,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void CreateCustomProcedure(Transaction transaction, string schemaName, string objectName, List<PhysicalProcedureParameter> parameters, List<string> Batches)
+        internal void CreateCustomProcedure(Transaction transaction, string schemaName,
+            string objectName, List<PhysicalProcedureParameter> parameters, List<string> Batches)
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             var physicalProcedureCatalog = Acquire(transaction, physicalSchema, LockOperation.Write);
@@ -80,18 +81,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
         }
 
-        internal PhysicalProcedure? Acquire(Transaction transaction, PhysicalSchema physicalSchema, string procedureName, LockOperation intendedOperation)
+        internal PhysicalProcedure? Acquire(Transaction transaction,
+            PhysicalSchema physicalSchema, string procedureName, LockOperation intendedOperation)
         {
-            procedureName = procedureName.ToLower();
+            procedureName = procedureName.ToLowerInvariant();
 
             if (File.Exists(physicalSchema.ProcedureCatalogFilePath()) == false)
             {
                 _core.IO.PutJson(transaction, physicalSchema.ProcedureCatalogFilePath(), new PhysicalProcedureCatalog());
             }
 
-            var procedureCatalog = _core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
+            var procedureCatalog = _core.IO.GetJson<PhysicalProcedureCatalog>(
+                transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
 
-            return procedureCatalog.Collection.Where(o => o.Name.ToLower() == procedureName).FirstOrDefault();
+            return procedureCatalog.Collection.FirstOrDefault(o => o.Name.Equals(procedureName, StringComparison.InvariantCultureIgnoreCase));
         }
 
         internal KbQueryResultCollection ExecuteProcedure(Transaction transaction, FunctionParameterBase procedureCall)

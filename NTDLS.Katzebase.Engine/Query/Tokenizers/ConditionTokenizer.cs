@@ -178,10 +178,10 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
         public bool IsNextToken(string[] tokens)
         {
-            var token = PeekNextToken().ToLower();
+            var token = PeekNextToken().ToLowerInvariant();
             foreach (var given in tokens)
             {
-                if (token == given.ToLower())
+                if (token.Equals(given, StringComparison.InvariantCultureIgnoreCase))
                 {
                     return true;
                 }
@@ -191,7 +191,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
         public bool IsNextToken(string token)
         {
-            return PeekNextToken().ToLower() == token.ToLower();
+            return PeekNextToken().Equals(token, StringComparison.InvariantCultureIgnoreCase);
         }
 
         /// <summary>

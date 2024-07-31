@@ -118,7 +118,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         //Handle escape sequences:
                         _value = _value.Replace("\\'", "\'");
 
-                        _value = value?.Substring(1, _value.Length - 2); //Revert the ToLoeer for strings.
+                        _value = value?.Substring(1, _value.Length - 2);
                         IsString = true;
                         IsConstant = true;
                     }

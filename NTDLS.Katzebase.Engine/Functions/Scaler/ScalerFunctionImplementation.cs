@@ -52,31 +52,27 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
         internal static string? CollapseAllFunctionParameters(Transaction transaction, FunctionParameterBase param, KbInsensitiveDictionary<string?> rowFields)
         {
-            if (param is FunctionConstantParameter)
+            if (param is FunctionConstantParameter functionConstantParameter)
             {
-                var value = ((FunctionConstantParameter)param).RawValue;
+                var value = functionConstantParameter.RawValue;
                 if (value.StartsWith('\'') && value.EndsWith('\''))
                 {
                     return value.Substring(1, value.Length - 2);
                 }
                 return value;
             }
-            else if (param is FunctionDocumentFieldParameter)
+            else if (param is FunctionDocumentFieldParameter functionDocumentFieldParameter)
             {
-                var result = rowFields.Where(o => o.Key == ((FunctionDocumentFieldParameter)param).Value.Key).SingleOrDefault().Value;
-
-                if (result == null)
-                {
-                    throw new KbFunctionException($"Field was not found when processing function: {((FunctionDocumentFieldParameter)param).Value.Key}.");
-                }
+                var result = rowFields.SingleOrDefault(o => o.Key == functionDocumentFieldParameter.Value.Key).Value
+                    ?? throw new KbFunctionException($"Field was not found when processing function: {functionDocumentFieldParameter.Value.Key}.");
 
                 return result;
             }
-            else if (param is FunctionExpression)
+            else if (param is FunctionExpression functionExpression)
             {
-                var expression = new NCalc.Expression(((FunctionExpression)param).Value.Replace("{", "(").Replace("}", ")"));
+                var expression = new NCalc.Expression(functionExpression.Value.Replace("{", "(").Replace("}", ")"));
 
-                foreach (var subParam in ((FunctionExpression)param).Parameters)
+                foreach (var subParam in functionExpression.Parameters)
                 {
                     if (subParam is FunctionWithParams)
                     {
@@ -94,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     else if (subParam is FunctionDocumentFieldParameter)
                     {
                         string variable = ((FunctionDocumentFieldParameter)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
-                        var value = rowFields.Where(o => o.Key == ((FunctionDocumentFieldParameter)subParam).Value.Key).SingleOrDefault().Value;
+                        var value = rowFields.FirstOrDefault(o => o.Key == ((FunctionDocumentFieldParameter)subParam).Value.Key).Value;
                         if (value != null)
                         {
                             expression.Parameters.Add(variable, decimal.Parse(value));
@@ -112,16 +108,16 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
                 return expression.Evaluate()?.ToString() ?? string.Empty;
             }
-            else if (param is FunctionWithParams)
+            else if (param is FunctionWithParams functionWithParams)
             {
                 var subParams = new List<string?>();
 
-                foreach (var subParam in ((FunctionWithParams)param).Parameters)
+                foreach (var subParam in functionWithParams.Parameters)
                 {
                     subParams.Add(CollapseAllFunctionParameters(transaction, subParam, rowFields));
                 }
 
-                return ExecuteFunction(transaction, ((FunctionWithParams)param).Function, subParams, rowFields);
+                return ExecuteFunction(transaction, functionWithParams.Function, subParams, rowFields);
             }
             else
             {
@@ -135,16 +131,16 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
         {
             var proc = ScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
-            switch (functionName.ToLower())
+            switch (functionName.ToLowerInvariant())
             {
                 case "documentuid":
                     {
-                        var rowId = rowFields.Where(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$").FirstOrDefault();
+                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$");
                         return rowId.Value;
                     }
                 case "documentid":
                     {
-                        var rowId = rowFields.Where(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$").FirstOrDefault();
+                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$");
                         if (rowId.Value == null)
                         {
                             return null;
@@ -153,7 +149,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     }
                 case "documentpage":
                     {
-                        var rowId = rowFields.Where(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$").FirstOrDefault();
+                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$");
                         if (rowId.Value == null)
                         {
                             return null;

@@ -12,8 +12,8 @@ namespace NTDLS.Katzebase.Engine.Locking
         public OptimisticCriticalResource<List<ObjectLockKey>> Keys { get; private set; }
 
         /// <summary>
-        /// The total number of times we attmepted to lock this object.
-        /// If this is a directory lock, then this also includes the number of file locks that defered to this higher level lock.
+        /// The total number of times we attempted to lock this object.
+        /// If this is a directory lock, then this also includes the number of file locks that deferred to this higher level lock.
         /// </summary>
         public ulong Hits { get; set; }
 

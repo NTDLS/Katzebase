@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
 
         public KbNameValuePair<KbConnectionSetting, double> UpsertConnectionSetting(KbConnectionSetting name, double value)
         {
-            var result = Variables.Where(o => o.Name == name).FirstOrDefault();
+            var result = Variables.FirstOrDefault(o => o.Name == name);
             if (result != null)
             {
                 result.Value = value;
@@ -61,13 +61,13 @@ namespace NTDLS.Katzebase.Engine.Sessions
 
         public bool IsConnectionSettingSet(KbConnectionSetting name)
         {
-            var result = Variables.Where(o => o.Name == name).FirstOrDefault();
+            var result = Variables.FirstOrDefault(o => o.Name == name);
             return result != null;
         }
 
         public double? GetConnectionSetting(KbConnectionSetting name)
         {
-            var result = Variables.Where(o => o.Name == name).FirstOrDefault();
+            var result = Variables.FirstOrDefault(o => o.Name == name);
             if (result != null)
             {
                 return result.Value;

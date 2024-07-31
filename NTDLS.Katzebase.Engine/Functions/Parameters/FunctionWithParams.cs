@@ -19,8 +19,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                 throw new KbFunctionException($"Parameter {ordinal} was not passed to function.");
             }
 
-            var expression = Parameters[ordinal] as FunctionExpression;
-            if (expression == null)
+            if (Parameters[ordinal] is not FunctionExpression expression)
             {
                 throw new KbFunctionException($"Parameter {ordinal} could not be converted to an expression.");
             }
@@ -32,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
         {
             Function = functionName;
 
-            if (AggregateFunctionNames.Contains(Function.ToLower()))
+            if (AggregateFunctionNames.Contains(Function.ToLowerInvariant()))
             {
                 FunctionType = FunctionType.Aggregate;
             }

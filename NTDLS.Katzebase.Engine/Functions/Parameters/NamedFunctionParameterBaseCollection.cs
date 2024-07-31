@@ -20,37 +20,35 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
         {
             foreach (var param in list)
             {
-                if (param.Value is FunctionConstantParameter)
+                if (param.Value is FunctionConstantParameter functionConstantParameter)
                 {
                     foreach (var literal in literals)
                     {
-                        ((FunctionConstantParameter)param.Value).RawValue = ((FunctionConstantParameter)param.Value).RawValue.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
                     }
                 }
-                else if (param.Value is FunctionExpression)
+                else if (param.Value is FunctionExpression functionExpression)
                 {
                     foreach (var literal in literals)
                     {
-                        ((FunctionExpression)param.Value).Value = ((FunctionExpression)param.Value).Value.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
                     }
+
+                    RefillStringLiterals(functionExpression.Parameters, literals);
                 }
-                else if (param.Value is FunctionDocumentFieldParameter)
+                else if (param.Value is FunctionDocumentFieldParameter functionDocumentFieldParameter)
                 {
                     foreach (var literal in literals)
                     {
-                        ((FunctionDocumentFieldParameter)param.Value).Alias = ((FunctionDocumentFieldParameter)param.Value).Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
-                        ((FunctionDocumentFieldParameter)param.Value).Value.Field = ((FunctionDocumentFieldParameter)param.Value).Value.Field.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
-                        ((FunctionDocumentFieldParameter)param.Value).Value.Alias = ((FunctionDocumentFieldParameter)param.Value).Value.Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
                     }
                 }
 
-                if (param.Value is FunctionExpression)
+                if (param.Value is FunctionWithParams functionWithParams)
                 {
-                    RefillStringLiterals(((FunctionExpression)param.Value).Parameters, literals);
-                }
-                if (param.Value is FunctionWithParams)
-                {
-                    RefillStringLiterals(((FunctionWithParams)param.Value).Parameters, literals);
+                    RefillStringLiterals(functionWithParams.Parameters, literals);
                 }
             }
         }
@@ -59,37 +57,35 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
         {
             foreach (var param in list)
             {
-                if (param is FunctionConstantParameter)
+                if (param is FunctionConstantParameter functionConstantParameter)
                 {
                     foreach (var literal in literals)
                     {
-                        ((FunctionConstantParameter)param).RawValue = ((FunctionConstantParameter)param).RawValue.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
                     }
                 }
-                else if (param is FunctionExpression)
+                else if (param is FunctionExpression functionExpression)
                 {
                     foreach (var literal in literals)
                     {
-                        ((FunctionExpression)param).Value = ((FunctionExpression)param).Value.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
                     }
+
+                    RefillStringLiterals(functionExpression.Parameters, literals);
                 }
-                else if (param is FunctionDocumentFieldParameter)
+                else if (param is FunctionDocumentFieldParameter functionDocumentFieldParameter)
                 {
                     foreach (var literal in literals)
                     {
-                        ((FunctionDocumentFieldParameter)param).Alias = ((FunctionDocumentFieldParameter)param).Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
-                        ((FunctionDocumentFieldParameter)param).Value.Field = ((FunctionDocumentFieldParameter)param).Value.Field.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
-                        ((FunctionDocumentFieldParameter)param).Value.Alias = ((FunctionDocumentFieldParameter)param).Value.Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
                     }
                 }
 
-                if (param is FunctionExpression)
+                if (param is FunctionWithParams functionWithParams)
                 {
-                    RefillStringLiterals(((FunctionExpression)param).Parameters, literals);
-                }
-                if (param is FunctionWithParams)
-                {
-                    RefillStringLiterals(((FunctionWithParams)param).Parameters, literals);
+                    RefillStringLiterals(functionWithParams.Parameters, literals);
                 }
             }
         }
@@ -99,23 +95,23 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
         {
             foreach (var param in list)
             {
-                if (param is FunctionDocumentFieldParameter)
+                if (param is FunctionDocumentFieldParameter functionDocumentFieldParameter)
                 {
-                    var key = ((FunctionDocumentFieldParameter)param).Value.Key;
+                    var key = functionDocumentFieldParameter.Value.Key;
 
                     if (result.Any(o => o.Key == key) == false)
                     {
-                        result.Add(((FunctionDocumentFieldParameter)param).Value);
+                        result.Add(functionDocumentFieldParameter.Value);
                     }
                 }
 
-                if (param is FunctionExpression)
+                if (param is FunctionExpression functionExpression)
                 {
-                    GetAllFieldsRecursive(ref result, ((FunctionExpression)param).Parameters);
+                    GetAllFieldsRecursive(ref result, functionExpression.Parameters);
                 }
-                if (param is FunctionWithParams)
+                else if (param is FunctionWithParams functionWithParams)
                 {
-                    GetAllFieldsRecursive(ref result, ((FunctionWithParams)param).Parameters);
+                    GetAllFieldsRecursive(ref result, functionWithParams.Parameters);
                 }
             }
         }

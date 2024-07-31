@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Engine.IO
 
             public DeferredDiskIOObject(string diskPath, object reference, IOFormat format, bool useCompression)
             {
-                DiskPath = diskPath.ToLower();
+                DiskPath = diskPath.ToLowerInvariant();
                 Reference = reference;
                 Format = format;
                 UseCompression = useCompression;
@@ -91,7 +91,7 @@ namespace NTDLS.Katzebase.Engine.IO
 
         public bool GetDeferredDiskIO<T>(string key, out T? outReference)
         {
-            key = key.ToLower();
+            key = key.ToLowerInvariant();
 
             lock (this)
             {
@@ -107,7 +107,7 @@ namespace NTDLS.Katzebase.Engine.IO
 
         public void Remove(string key)
         {
-            key = key.ToLower();
+            key = key.ToLowerInvariant();
 
             lock (this)
             {
@@ -117,11 +117,11 @@ namespace NTDLS.Katzebase.Engine.IO
 
         public void RemoveItemsWithPrefix(string prefix)
         {
-            prefix = prefix.ToLower();
+            prefix = prefix.ToLowerInvariant();
 
-            if (prefix.EndsWith("\\") == false)
+            if (prefix.EndsWith('\\') == false)
             {
-                prefix += "\\";
+                prefix += '\\';
             }
 
             lock (this)
@@ -143,7 +143,7 @@ namespace NTDLS.Katzebase.Engine.IO
         /// <returns></returns>
         public void PutDeferredDiskIO(string key, string diskPath, object reference, IOFormat deferredFormat, bool useCompression)
         {
-            key = key.ToLower();
+            key = key.ToLowerInvariant();
 
             lock (this)
             {

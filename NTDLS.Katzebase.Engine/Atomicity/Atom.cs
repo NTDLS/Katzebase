@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             Action = action;
             OriginalPath = originalPath;
-            Key = OriginalPath.ToLower();
+            Key = OriginalPath.ToLowerInvariant();
         }
 
         public AtomSnapshot Snapshot()

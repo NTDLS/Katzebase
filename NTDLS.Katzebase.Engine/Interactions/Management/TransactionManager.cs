@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                return _collection.Read((obj) => obj.Where(o => o.ProcessId == processId).FirstOrDefault());
+                return _collection.Read((obj) => obj.FirstOrDefault(o => o.ProcessId == processId));
             }
             catch (Exception ex)
             {
@@ -102,7 +102,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Kills all transactions associated with the given processID. This is typically called from the session manager and probably should not be called otherwise.
+        /// Kills all transactions associated with the given processID.
+        /// This is typically called from the session manager and probably should not be called otherwise.
         /// </summary>
         /// <param name="processIDs"></param>
         internal void CloseByProcessID(ulong processId)
@@ -134,10 +135,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 Directory.CreateDirectory(_core.Settings.TransactionDataPath);
 
-                var transactionFiles = Directory.EnumerateFiles(_core.Settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories).ToList();
-                if (transactionFiles.Any())
+                var transactionFiles = Directory.EnumerateFiles(
+                    _core.Settings.TransactionDataPath, TransactionActionsFile, SearchOption.AllDirectories).ToList();
+
+                if (transactionFiles.Count != 0)
                 {
-                    _core.Log.Write($"Found {transactionFiles.Count()} open transactions.", KbLogSeverity.Warning);
+                    _core.Log.Write($"Found {transactionFiles.Count} open transactions.", KbLogSeverity.Warning);
                 }
 
                 foreach (string transactionFile in transactionFiles)
@@ -168,7 +171,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to recover uncommitted transations.", ex);
+                _core.Log.Write("Failed to recover uncommitted transactions.", ex);
                 throw;
             }
         }

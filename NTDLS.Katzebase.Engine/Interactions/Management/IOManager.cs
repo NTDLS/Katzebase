@@ -382,7 +382,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                         _core.Health.Increment(HealthCounterType.IODeferredIOWrites);
 
-                        return; //We can skip caching because we write this to the deferred IO cache - which is infinitely more deterministic than the memory cache auto-ejections.
+                        //We can skip caching because we write this to the deferred IO cache - which
+                        //  is infinitely more deterministic than the memory cache auto-ejections.
+                        return;
                     }
                 }
 
@@ -458,7 +460,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return DirectoryExists(transaction, diskPath, intendedOperation, out _);
         }
 
-        internal bool DirectoryExists(Transaction transaction, string diskPath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
+        internal bool DirectoryExists(Transaction transaction, string diskPath,
+            LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
         {
             try
             {
@@ -517,7 +520,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                string lowerFilePath = filePath.ToLower();
+                string lowerFilePath = filePath.ToLowerInvariant();
 
                 bool result = false;
 
@@ -557,7 +560,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                string cacheKey = filePath.ToLower();
+                string cacheKey = filePath.ToLowerInvariant();
                 acquiredLockKey = transaction.LockFile(LockOperation.Delete, cacheKey);
 
                 if (_core.Settings.CacheEnabled)

@@ -56,10 +56,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 {
                     parameters.Add(new ScalerFunctionParameterPrototype(paramType, nameAndDefault[0]));
                 }
-                else if (nameAndDefault.Count() == 2)
+                else if (nameAndDefault.Length == 2)
                 {
                     parameters.Add(new ScalerFunctionParameterPrototype(paramType, nameAndDefault[0],
-                        nameAndDefault[1].ToLower() == "null" ? null : nameAndDefault[1]));
+                        nameAndDefault[1].Equals("null", StringComparison.InvariantCultureIgnoreCase) ? null : nameAndDefault[1]));
                 }
                 else
                 {
@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
         internal ScalerFunctionParameterValueCollection ApplyParameters(List<string?> values)
         {
-            int requiredParameterCount = Parameters.Where(o => o.Type.ToString().ToLower().Contains("optional") == false).Count();
+            int requiredParameterCount = Parameters.Count(o => o.Type.ToString().Contains("optional", StringComparison.InvariantCultureIgnoreCase) == false);
 
             if (Parameters.Count < requiredParameterCount)
             {

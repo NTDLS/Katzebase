@@ -20,32 +20,29 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
         {
             foreach (var param in list)
             {
-                if (param is FunctionConstantParameter)
+                if (param is FunctionConstantParameter functionConstantParameter)
                 {
                     foreach (var literal in literals)
                     {
-                        ((FunctionConstantParameter)param).RawValue = ((FunctionConstantParameter)param).RawValue.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
                     }
                 }
-                else if (param is FunctionExpression)
+                else if (param is FunctionExpression functionExpression)
                 {
                     foreach (var literal in literals)
                     {
-                        ((FunctionExpression)param).Value = ((FunctionExpression)param).Value.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
                     }
+
+                    RefillStringLiterals(functionExpression.Parameters, literals);
                 }
 
-                if (param is FunctionExpression)
+                if (param is FunctionWithParams functionWithParams)
                 {
-                    RefillStringLiterals(((FunctionExpression)param).Parameters, literals);
-                }
-                if (param is FunctionWithParams)
-                {
-                    RefillStringLiterals(((FunctionWithParams)param).Parameters, literals);
+                    RefillStringLiterals(functionWithParams.Parameters, literals);
                 }
             }
         }
-
 
         private List<PrefixedField>? _allFields = null;
 
@@ -61,9 +58,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                 {
                     if (_allFields == null)
                     {
-                        _allFields = new();
-
-                        _allFields.AddRange(this.OfType<FunctionDocumentFieldParameter>().Select(o => o.Value).ToList());
+                        _allFields = new(this.OfType<FunctionDocumentFieldParameter>().Select(o => o.Value));
 
                         var children = new List<FunctionParameterBase>();
 
@@ -72,13 +67,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
 
                         foreach (var param in children)
                         {
-                            if (param is FunctionExpression)
+                            if (param is FunctionExpression functionExpression)
                             {
-                                GetAllFieldsRecursive(ref _allFields, ((FunctionExpression)param).Parameters);
+                                GetAllFieldsRecursive(ref _allFields, functionExpression.Parameters);
                             }
-                            if (param is FunctionWithParams)
+                            if (param is FunctionWithParams FunctionWithParams)
                             {
-                                GetAllFieldsRecursive(ref _allFields, ((FunctionWithParams)param).Parameters);
+                                GetAllFieldsRecursive(ref _allFields, FunctionWithParams.Parameters);
                             }
                         }
                     }
@@ -92,23 +87,23 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
         {
             foreach (var param in list)
             {
-                if (param is FunctionDocumentFieldParameter)
+                if (param is FunctionDocumentFieldParameter functionDocumentFieldParameter)
                 {
-                    var key = ((FunctionDocumentFieldParameter)param).Value.Key;
+                    var key = functionDocumentFieldParameter.Value.Key;
 
                     if (result.Any(o => o.Key == key) == false)
                     {
-                        result.Add(((FunctionDocumentFieldParameter)param).Value);
+                        result.Add(functionDocumentFieldParameter.Value);
                     }
                 }
 
-                if (param is FunctionExpression)
+                if (param is FunctionExpression functionExpression)
                 {
-                    GetAllFieldsRecursive(ref result, ((FunctionExpression)param).Parameters);
+                    GetAllFieldsRecursive(ref result, functionExpression.Parameters);
                 }
-                if (param is FunctionWithParams)
+                if (param is FunctionWithParams functionWithParams)
                 {
-                    GetAllFieldsRecursive(ref result, ((FunctionWithParams)param).Parameters);
+                    GetAllFieldsRecursive(ref result, functionWithParams.Parameters);
                 }
             }
         }

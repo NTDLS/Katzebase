@@ -16,7 +16,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public LogicalConnector LogicalConnector { get; private set; } = LogicalConnector.None;
         public LogicalQualifier LogicalQualifier { get; private set; } = LogicalQualifier.None;
 
-        public Condition(string subsetKey, string conditionKey, LogicalConnector logicalConnector, string left, LogicalQualifier logicalQualifier, string right)
+        public Condition(string subsetKey, string conditionKey, LogicalConnector logicalConnector,
+            string left, LogicalQualifier logicalQualifier, string right)
         {
             SubsetKey = subsetKey;
             ConditionKey = conditionKey;
@@ -252,7 +253,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             }
             else
             {
-                throw new KbParserException("Unsupprted condition type.");
+                throw new KbParserException("Unsupported condition type.");
             }
         }
     }

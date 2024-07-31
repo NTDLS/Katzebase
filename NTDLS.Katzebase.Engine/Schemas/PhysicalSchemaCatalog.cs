@@ -35,7 +35,7 @@
 
         public PhysicalSchema? GetById(Guid id)
         {
-            return (from o in Collection where o.Id == id select o).FirstOrDefault();
+            return Collection.FirstOrDefault(o => o.Id == id);
         }
 
         public PhysicalSchemaCatalog Clone()

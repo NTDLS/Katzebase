@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.IO
 
             public DeferredDiskIOObjectSnapshot(string diskPath, IOFormat format, bool useCompression)
             {
-                DiskPath = diskPath.ToLower();
+                DiskPath = diskPath.ToLowerInvariant();
                 Format = format;
                 UseCompression = useCompression;
             }

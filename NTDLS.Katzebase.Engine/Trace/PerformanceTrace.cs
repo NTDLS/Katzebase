@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Trace
             Recording
         }
 
-        internal enum PerformanceTraceDescreteMetricType
+        internal enum PerformanceTraceDiscreteMetricType
         {
             ThreadCount,
             TransactionDuration
@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.Trace
             }
         }
 
-        public void AddDescreteMetric(PerformanceTraceDescreteMetricType type, double value)
+        public void AddDiscreteMetric(PerformanceTraceDiscreteMetricType type, double value)
         {
             lock (Metrics)
             {
@@ -86,7 +86,7 @@ namespace NTDLS.Katzebase.Engine.Trace
                 }
                 else
                 {
-                    var lookup = new KbMetric(KbMetricType.Descrete, key, value);
+                    var lookup = new KbMetric(KbMetricType.Discrete, key, value);
                     lookup.Count++;
                     Metrics.Add(key, lookup);
                 }

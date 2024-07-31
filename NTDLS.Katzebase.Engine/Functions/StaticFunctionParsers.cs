@@ -189,7 +189,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                     query.SkipNextCharacter();
                 }
 
-                var token = query.PeekNextToken(new char[] { ',', '(', ')' });
+                var token = query.PeekNextToken([',', '(', ')']);
 
                 if (token != string.Empty && _mathChars.Contains(token[0]) && !(token[0] == '(' || token[0] == ')'))
                 {
@@ -240,7 +240,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         }
                     }
 
-                    preparseFields.Add(updateFieldName.ToLower(), new PreparseField { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
+                    preparseFields.Add(updateFieldName.ToLowerInvariant(), new() { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
 
                     if (query.IsEnd() || (parenScope == 0 && (query.NextCharacter == ',' || query.NextCharacter == ')')))
                     {
@@ -257,7 +257,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                     query.SkipWhile(',');
                     continue;
                 }
-                else if (token.ToLower() == "as")
+                else if (token.Equals("as", StringComparison.InvariantCultureIgnoreCase))
                 {
                     throw new KbParserException($"Unexpected token found: {token}.");
                 }
@@ -648,8 +648,12 @@ namespace NTDLS.Katzebase.Engine.Functions
                         continue;
                     }
                     else if (
-                            token == string.Empty && query.NextCharacter == ',' && parenScope == 0 || token.ToLower() == "where"
-                            || token == string.Empty && parenScope == 0 && query.IsEnd()
+                            token == string.Empty
+                            && query.NextCharacter == ','
+                            && parenScope == 0
+                            || token.Equals("where", StringComparison.InvariantCultureIgnoreCase)
+                            || token == string.Empty
+                            && parenScope == 0 && query.IsEnd()
                         )
                     {
                         if (parenScope != 0)
@@ -679,7 +683,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                             }
                         }
 
-                        preparseFields.Add(updateFieldName.ToLower(), new PreparseField { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
+                        preparseFields.Add(updateFieldName.ToLowerInvariant(), new PreparseField { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
 
                         updateFieldName = string.Empty;
 
@@ -692,11 +696,11 @@ namespace NTDLS.Katzebase.Engine.Functions
                         query.SkipWhile(',');
 
                         /*
-                        if (token.ToLower() == "from")
+                        if (token.ToLowerInvariant() == "from")
                         {
                             return preparseFields;
                         }
-                        else if (token.ToLower() == "into")
+                        else if (token.ToLowerInvariant() == "into")
                         {
                             return preparseFields;
                         }
@@ -713,7 +717,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         continue;
                     }
                     /*
-                    else if (token.ToLower() == "as")
+                    else if (token.ToLowerInvariant() == "as")
                     {
                         query.SkipNextToken();
                         alias = query.GetNextToken();
@@ -769,7 +773,8 @@ namespace NTDLS.Katzebase.Engine.Functions
                         parenScope--;
                         continue;
                     }
-                    else if (token == string.Empty && query.NextCharacter == ',' && parenScope == 0 || token.ToLower() == "from" || token.ToLower() == "into")
+                    else if (token == string.Empty && query.NextCharacter == ',' && parenScope == 0
+                        || token.Equals("from", StringComparison.InvariantCultureIgnoreCase) || token.ToLowerInvariant() == "into")
                     {
                         if (parenScope != 0)
                         {
@@ -803,11 +808,11 @@ namespace NTDLS.Katzebase.Engine.Functions
                         //Done with this parameter.
                         query.SkipWhile(',');
 
-                        if (token.ToLower() == "from")
+                        if (token.Equals("from", StringComparison.InvariantCultureIgnoreCase))
                         {
                             return preparseFields;
                         }
-                        else if (token.ToLower() == "into")
+                        else if (token.Equals("into", StringComparison.InvariantCultureIgnoreCase))
                         {
                             return preparseFields;
                         }
@@ -822,7 +827,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         query.SkipWhile(',');
                         continue;
                     }
-                    else if (token.ToLower() == "as")
+                    else if (token.Equals("as", StringComparison.InvariantCultureIgnoreCase))
                     {
                         query.SkipNextToken();
                         alias = query.GetNextToken();
@@ -878,7 +883,10 @@ namespace NTDLS.Katzebase.Engine.Functions
                         continue;
                     }
                     else if (
-                            token == string.Empty && query.NextCharacter == ',' && parenScope == 0 || token.ToLower() == "order"
+                            token == string.Empty
+                            && query.NextCharacter == ','
+                            && parenScope == 0
+                            || token.Equals("order", StringComparison.InvariantCultureIgnoreCase)
                             || token == string.Empty && parenScope == 0 && query.IsEnd()
                         )
                     {
@@ -914,7 +922,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         //Done with this parameter.
                         query.SkipWhile(',');
 
-                        if (token.ToLower() == "order")
+                        if (token.Equals("order", StringComparison.InvariantCultureIgnoreCase))
                         {
                             return preparseFields;
                         }
@@ -933,7 +941,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         query.SkipWhile(',');
                         continue;
                     }
-                    else if (token.ToLower() == "as")
+                    else if (token.Equals("as", StringComparison.InvariantCultureIgnoreCase))
                     {
                         throw new KbParserException("Unexpected token [as] found.");
                     }

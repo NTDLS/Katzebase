@@ -11,11 +11,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
         {
             try
             {
-                var parameter = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault();
-                if (parameter == null)
-                {
-                    throw new KbGenericException($"Value for {name} cannot be null.");
-                }
+                var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                    ?? throw new KbGenericException($"Value for {name} cannot be null.");
 
                 if (parameter.Value == null)
                 {
@@ -44,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
         {
             try
             {
-                var value = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault()?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))?.Value;
                 if (value == null)
                 {
                     return defaultValue;
@@ -65,11 +62,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
         public T? GetNullable<T>(string name)
         {
-            var parameter = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault();
-            if (parameter == null)
-            {
-                throw new KbGenericException($"Value for {name} cannot be null.");
-            }
+            var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                ?? throw new KbGenericException($"Value for {name} cannot be null.");
 
             if (parameter.Value == null)
             {
@@ -90,7 +84,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
         public T? GetNullable<T>(string name, T? defaultValue)
         {
-            var value = Values.Where(o => o.Parameter.Name.ToLower() == name.ToLower()).FirstOrDefault()?.Value;
+            var value = Values.FirstOrDefault(o => o.Parameter.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))?.Value;
             if (value == null)
             {
                 return defaultValue;

@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
     {
         public PhysicalIndex PhysicalIndex;
         /// <summary>
-        /// The names of the document fileds that are covered by the index.
+        /// The names of the document fields that are covered by the index.
         /// </summary>
         public List<PrefixedField> CoveredFields { get; private set; }
 

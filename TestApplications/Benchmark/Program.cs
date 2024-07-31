@@ -29,7 +29,7 @@ namespace Benchmark
             ExecuteBenchmark_Scripts();
 
             Console.WriteLine("Executing inserts:");
-            ExecuteBenchamark_Inserts();
+            ExecuteBenchmark_Inserts();
 
             Console.WriteLine("Executing updates:");
             //TODO: implement.
@@ -38,7 +38,7 @@ namespace Benchmark
             //TODO: implement.
         }
 
-        private static void ExecuteBenchamark_Inserts()
+        private static void ExecuteBenchmark_Inserts()
         {
             ExecuteBenchmark_Inserts("Payload.gz", "Benchmarking:Insertion_tx10", 10000, 10);
             ExecuteBenchmark_Inserts("Payload.gz", "Benchmarking:Payload_Insertion_tx100", 10000, 100);

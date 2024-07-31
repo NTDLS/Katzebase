@@ -212,9 +212,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 _core.IO.DeletePath(transaction, physicalSchema.DiskPath);
 
-                var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
+                var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(
+                    transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
-                parentCatalog.Collection.RemoveAll(o => o.Name.ToLower() == physicalSchema.Name.ToLower());
+                parentCatalog.Collection.RemoveAll(o => o.Name.Equals(physicalSchema.Name, StringComparison.InvariantCultureIgnoreCase));
 
                 _core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
             }
@@ -234,7 +235,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (_core.IO.FileExists(transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation))
                 {
-                    var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation);
+                    var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(
+                        transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation);
 
                     foreach (var catalogItem in schemaCatalog.Collection)
                     {
@@ -284,7 +286,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Opens a schema for a desired access. Takes a virtual schema path (schema0:schema2:schema3) and converts to to a physical location
+        /// Opens a schema for a desired access. Takes a virtual schema path 
+        ///     (schema0:schema2:schema3) and converts to to a physical location.
         /// </summary>
         internal PhysicalSchema Acquire(Transaction transaction, string schemaName, LockOperation intendedOperation)
         {
@@ -366,7 +369,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Opens a schema for a desired access even if it does not exist. Takes a virtual schema path (schema:schema2:scheams3) and converts to to a physical location
+        /// Opens a schema for a desired access even if it does not exist. Takes a virtual 
+        ///     schema path (schema:schema2:schema3) and converts to to a physical location.
         /// </summary>
         internal VirtualSchema AcquireVirtual(Transaction transaction, string schemaName, LockOperation intendedOperation)
         {
@@ -462,7 +466,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
-                var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
+                var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(
+                    transaction, physicalSchema.SchemaCatalogFilePath(), LockOperation.Read);
 
                 var result = new List<Tuple<string, string>>();
 
@@ -521,7 +526,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (includePhysicalPages)
                 {
                     //This should not be compressed, right? I intended this to be a raw read.
-                    var physicalDocumentPage = _core.Documents.AcquireDocumentPage(transaction, physicalSchema, page.PageNumber, LockOperation.Read);
+                    var physicalDocumentPage = _core.Documents.AcquireDocumentPage(
+                        transaction, physicalSchema, page.PageNumber, LockOperation.Read);
 
                     values.Add($"{page.PageNumber:n0}");
                     values.Add($"{physicalDocumentPage.Documents.Count:n0}");

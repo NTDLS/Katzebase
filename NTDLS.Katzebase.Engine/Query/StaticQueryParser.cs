@@ -29,12 +29,13 @@ namespace NTDLS.Katzebase.Engine.Query
         {
             var result = new PreparedQuery();
 
-            string token = query.GetNextToken().ToLower();
+            string token = query.GetNextToken().ToLowerInvariant();
 
-            if (Enum.TryParse(token, true, out QueryType queryType) == false || Enum.IsDefined(typeof(QueryType), queryType) == false || int.TryParse(token, out _))
+            if (Enum.TryParse(token, true, out QueryType queryType) == false
+                || Enum.IsDefined(typeof(QueryType), queryType) == false || int.TryParse(token, out _))
             {
-                string acceptibleValues = string.Join("', '", ((QueryType[])Enum.GetValues(typeof(QueryType))).Where(o => o != QueryType.None));
-                throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptibleValues}'.");
+                string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
+                throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
             }
 
             result.QueryType = queryType;
@@ -51,13 +52,13 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Begin ----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Begin)
             {
-                if (query.IsNextToken(new string[] { "transaction" }) == false)
+                if (query.IsNextToken(["transaction"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
                 }
 
                 token = query.GetNextToken();
-                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                if (Enum.TryParse(token, true, out SubQueryType subQueryType) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
                 }
@@ -68,13 +69,13 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Commit ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Commit)
             {
-                if (query.IsNextToken(new string[] { "transaction" }) == false)
+                if (query.IsNextToken(["transaction"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
                 }
 
                 token = query.GetNextToken();
-                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                if (Enum.TryParse(token, true, out SubQueryType subQueryType) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction.");
                 }
@@ -85,13 +86,13 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Rollback -------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Rollback)
             {
-                if (query.IsNextToken(new string[] { "transaction" }) == false)
+                if (query.IsNextToken(["transaction"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
                 }
 
                 token = query.GetNextToken();
-                if (Enum.TryParse<SubQueryType>(token, true, out SubQueryType subQueryType) == false)
+                if (Enum.TryParse(token, true, out SubQueryType subQueryType) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
                 }
@@ -102,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Alter ----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Alter)
             {
-                if (query.IsNextToken(new string[] { "schema", "configuration" }) == false)
+                if (query.IsNextToken(["schema", "configuration"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected 'schema' or 'configuration'.");
                 }
@@ -128,7 +129,7 @@ namespace NTDLS.Katzebase.Engine.Query
                             { "DefaultDocumentPageSize", typeof(int) },
                             { "UseCompression", typeof(bool) },
                             { "HealthMonitoringEnabled", typeof(bool) },
-                            { "HealthMonitoringChekpointSeconds", typeof(int) },
+                            { "HealthMonitoringCheckpointSeconds", typeof(int) },
                             { "HealthMonitoringInstanceLevelEnabled", typeof(bool) },
                             { "HealthMonitoringInstanceLevelTimeToLiveSeconds", typeof(int) },
                             { "MaxIdleConnectionSeconds", typeof(int) },
@@ -174,7 +175,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Create ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Create)
             {
-                if (query.IsNextToken(new string[] { "schema", "index", "uniquekey", "procedure" }) == false)
+                if (query.IsNextToken(["schema", "index", "uniquekey", "procedure"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected 'schema', 'index', 'uniquekey' or 'procedure'.");
                 }
@@ -200,7 +201,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     var parameters = new List<PhysicalProcedureParameter>();
 
-                    if (query.NextCharacter == '(') //Parse paramaters
+                    if (query.NextCharacter == '(') //Parse parameters
                     {
                         query.SkipNextCharacter();
 
@@ -215,8 +216,10 @@ namespace NTDLS.Katzebase.Engine.Query
 
                             if (Enum.TryParse(token, true, out KbProcedureParameterType paramType) == false || Enum.IsDefined(typeof(KbProcedureParameterType), paramType) == false)
                             {
-                                string acceptibleValues = string.Join("', '", ((KbProcedureParameterType[])Enum.GetValues(typeof(KbProcedureParameterType))).Where(o => o != KbProcedureParameterType.Undefined));
-                                throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptibleValues}'.");
+                                string acceptableValues = string.Join("', '",
+                                    Enum.GetValues< KbProcedureParameterType>().Where(o => o != KbProcedureParameterType.Undefined));
+
+                                throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
                             }
 
                             parameters.Add(new PhysicalProcedureParameter(paramName, paramType));
@@ -315,7 +318,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     while (true) //Get fields
                     {
-                        token = query.GetNextToken().ToLower();
+                        token = query.GetNextToken().ToLowerInvariant();
                         if (token == string.Empty)
                         {
                             throw new KbParserException("Invalid query. Found '" + query.PeekNextToken() + "', expected: ',' or ')'.");
@@ -334,7 +337,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         }
                     }
 
-                    token = query.GetNextToken().ToLower();
+                    token = query.GetNextToken().ToLowerInvariant();
                     if (token != "on")
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
@@ -367,7 +370,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Drop -----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Drop)
             {
-                if (query.IsNextToken(new string[] { "schema", "index", "uniquekey" }) == false)
+                if (query.IsNextToken(["schema", "index", "uniquekey"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'schema', 'index' or 'uniquekey'.");
                 }
@@ -388,7 +391,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
                     result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
 
-                    token = query.GetNextToken().ToLower();
+                    token = query.GetNextToken().ToLowerInvariant();
                     if (token != "on")
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
@@ -408,7 +411,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Rebuild --------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Rebuild)
             {
-                if (query.IsNextToken(new string[] { "index", "uniquekey" }) == false)
+                if (query.IsNextToken(["index", "uniquekey"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index' or 'uniquekey'.");
                 }
@@ -427,7 +430,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
                 result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
 
-                token = query.GetNextToken().ToLower();
+                token = query.GetNextToken().ToLowerInvariant();
                 if (token != "on")
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
@@ -462,7 +465,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
-                result.Schemas.Add(new QuerySchema(sourceSchema.ToLower()));
+                result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant()));
 
                 if (query.IsNextTokenConsume("set") == false)
                 {
@@ -473,12 +476,12 @@ namespace NTDLS.Katzebase.Engine.Query
                 result.UpdateValues.RefillStringLiterals(query.LiteralStrings);
 
                 token = query.GetNextToken();
-                if (token != string.Empty && token.ToLower() != "where")
+                if (token != string.Empty && token.ToLowerInvariant() != "where")
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'where' or end of statement.");
                 }
 
-                if (token.ToLower() == "where")
+                if (token.Equals("where", StringComparison.InvariantCultureIgnoreCase))
                 {
                     var conditionTokenizer = new ConditionTokenizer(query.Text, query.Position);
                     int parenthesisScope = 0;
@@ -486,12 +489,12 @@ namespace NTDLS.Katzebase.Engine.Query
                     while (true)
                     {
                         int previousTokenPosition = conditionTokenizer.Position;
-                        var conditonToken = conditionTokenizer.PeekNextToken();
+                        var conditionToken = conditionTokenizer.PeekNextToken();
 
-                        if (conditonToken == "(") parenthesisScope++;
-                        if (conditonToken == ")") parenthesisScope--;
+                        if (conditionToken == "(") parenthesisScope++;
+                        if (conditionToken == ")") parenthesisScope--;
 
-                        if (parenthesisScope < 0 || int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        if (parenthesisScope < 0 || int.TryParse(conditionToken, out _) == false && Enum.TryParse(conditionToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
                             conditionTokenizer.SetPosition(previousTokenPosition);
@@ -501,13 +504,13 @@ namespace NTDLS.Katzebase.Engine.Query
 
                         conditionTokenizer.SkipNextToken();
 
-                        if ((new string[] { "order", "group", "" }).Contains(conditonToken) && conditionTokenizer.IsNextToken("by"))
+                        if ((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.IsNextToken("by"))
                         {
-                            throw new KbParserException("Invalid query. Found '" + conditonToken + "', expected: end of statement.");
+                            throw new KbParserException("Invalid query. Found '" + conditionToken + "', expected: end of statement.");
                         }
-                        else if (conditonToken == string.Empty)
+                        else if (conditionToken == string.Empty)
                         {
-                            //Set both the conditition and query position to the begining of the "ORDER BY" or "GROUP BY".
+                            //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
                             conditionTokenizer.SetPosition(previousTokenPosition);
                             query.SetPosition(previousTokenPosition);
                             break;
@@ -528,7 +531,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Analyze --------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Analyze)
             {
-                if (query.IsNextToken(new string[] { "index", "schema" }) == false)
+                if (query.IsNextToken(["index", "schema"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'index' or 'schema'.");
                 }
@@ -621,7 +624,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region List -----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.List)
             {
-                if (query.IsNextToken(new string[] { "documents", "schemas" }) == false)
+                if (query.IsNextToken(["documents", "schemas"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'documents' or 'schemas'.");
                 }
@@ -709,7 +712,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     schemaAlias = query.GetNextToken();
                 }
 
-                result.Schemas.Add(new QuerySchema(sourceSchema.ToLower(), schemaAlias.ToLower()));
+                result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
 
                 while (query.IsNextToken("inner"))
                 {
@@ -738,7 +741,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
 
                     token = query.GetNextToken();
-                    if (token.ToLower() != "on")
+                    if (token.ToLowerInvariant() != "on")
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "', expected 'on'.");
                     }
@@ -747,12 +750,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     while (true)
                     {
-                        if (query.IsNextToken(new string[] { "where", "inner", "" }))
+                        if (query.IsNextToken(["where", "inner", ""]))
                         {
                             break;
                         }
 
-                        if (query.IsNextToken(new string[] { "and", "or" }))
+                        if (query.IsNextToken(["and", "or"]))
                         {
                             query.SkipNextToken();
                         }
@@ -783,7 +786,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     var joinConditionsText = query.Text.Substring(joinConditionsStartPosition, query.Position - joinConditionsStartPosition).Trim();
                     var joinConditions = Conditions.Create(joinConditionsText, query.LiteralStrings, subSchemaAlias);
 
-                    result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLower(), subSchemaAlias.ToLower(), joinConditions));
+                    result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
 
                 if (query.IsNextToken("where"))
@@ -796,12 +799,12 @@ namespace NTDLS.Katzebase.Engine.Query
                     while (true)
                     {
                         int previousTokenPosition = conditionTokenizer.Position;
-                        var conditonToken = conditionTokenizer.PeekNextToken();
+                        var conditionToken = conditionTokenizer.PeekNextToken();
 
-                        if (conditonToken == "(") parenthesisScope++;
-                        if (conditonToken == ")") parenthesisScope--;
+                        if (conditionToken == "(") parenthesisScope++;
+                        if (conditionToken == ")") parenthesisScope--;
 
-                        if (parenthesisScope < 0 || int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        if (parenthesisScope < 0 || int.TryParse(conditionToken, out _) == false && Enum.TryParse(conditionToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
                             conditionTokenizer.SetPosition(previousTokenPosition);
@@ -811,10 +814,10 @@ namespace NTDLS.Katzebase.Engine.Query
 
                         conditionTokenizer.SkipNextToken();
 
-                        if (((new string[] { "order", "group", "" }).Contains(conditonToken) && conditionTokenizer.IsNextToken("by"))
-                            || conditonToken == string.Empty)
+                        if (((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.IsNextToken("by"))
+                            || conditionToken == string.Empty)
                         {
-                            //Set both the conditition and query position to the begining of the "ORDER BY" or "GROUP BY".
+                            //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
                             conditionTokenizer.SetPosition(previousTokenPosition);
                             query.SetPosition(previousTokenPosition);
                             break;
@@ -864,7 +867,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                         if (((new string[] { "order", "" }).Contains(fieldToken) && query.IsNextToken("by")) || fieldToken == string.Empty)
                         {
-                            //Set query position to the begining of the "ORDER BY"..
+                            //Set query position to the beginning of the "ORDER BY"..
                             query.SetPosition(previousTokenPosition);
                             break;
                         }
@@ -929,7 +932,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         }
 
                         var sortDirection = KbSortDirection.Ascending;
-                        if (query.IsNextToken(new string[] { "asc", "desc" }))
+                        if (query.IsNextToken(["asc", "desc"]))
                         {
                             if (query.IsNextTokenConsume("desc"))
                             {
@@ -946,7 +949,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Delete ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Delete)
             {
-                token = query.GetNextToken().ToLower();
+                token = query.GetNextToken().ToLowerInvariant();
                 if (token != "from")
                 {
                     result.Attributes.Add(PreparedQuery.QueryAttribute.SpecificSchemaPrefix, token);
@@ -970,7 +973,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     schemaAlias = query.GetNextToken();
                 }
 
-                result.Schemas.Add(new QuerySchema(sourceSchema.ToLower(), schemaAlias.ToLower()));
+                result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
 
                 while (query.IsNextToken("inner"))
                 {
@@ -999,7 +1002,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
 
                     token = query.GetNextToken();
-                    if (token.ToLower() != "on")
+                    if (token.ToLowerInvariant() != "on")
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
                     }
@@ -1008,12 +1011,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     while (true)
                     {
-                        if (query.IsNextToken(new string[] { "where", "inner", "" }))
+                        if (query.IsNextToken(["where", "inner", ""]))
                         {
                             break;
                         }
 
-                        if (query.IsNextToken(new string[] { "and", "or" }))
+                        if (query.IsNextToken(["and", "or"]))
                         {
                             query.SkipNextToken();
                         }
@@ -1044,16 +1047,16 @@ namespace NTDLS.Katzebase.Engine.Query
                     var joinConditionsText = query.Text.Substring(joinConditionsStartPosition, query.Position - joinConditionsStartPosition).Trim();
                     var joinConditions = Conditions.Create(joinConditionsText, query.LiteralStrings, subSchemaAlias);
 
-                    result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLower(), subSchemaAlias.ToLower(), joinConditions));
+                    result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
 
                 token = query.GetNextToken();
-                if (token != string.Empty && token.ToLower() != "where")
+                if (token != string.Empty && token.ToLowerInvariant() != "where")
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'where' or end of statement.");
                 }
 
-                if (token.ToLower() == "where")
+                if (token.Equals("where", StringComparison.InvariantCultureIgnoreCase))
                 {
                     var conditionTokenizer = new ConditionTokenizer(query.Text, query.Position);
                     int parenthesisScope = 0;
@@ -1061,25 +1064,25 @@ namespace NTDLS.Katzebase.Engine.Query
                     while (true)
                     {
                         int previousTokenPosition = conditionTokenizer.Position;
-                        var conditonToken = conditionTokenizer.GetNextToken();
+                        var conditionToken = conditionTokenizer.GetNextToken();
 
-                        if (conditonToken == "(") parenthesisScope++;
-                        if (conditonToken == ")") parenthesisScope--;
+                        if (conditionToken == "(") parenthesisScope++;
+                        if (conditionToken == ")") parenthesisScope--;
 
-                        if (parenthesisScope < 0 || int.TryParse(conditonToken, out _) == false && Enum.TryParse(conditonToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        if (parenthesisScope < 0 || int.TryParse(conditionToken, out _) == false && Enum.TryParse(conditionToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
                             conditionTokenizer.SetPosition(previousTokenPosition);
                             query.SetPosition(previousTokenPosition);
                             break;
                         }
-                        else if ((new string[] { "order", "group", "" }).Contains(conditonToken) && conditionTokenizer.IsNextToken("by"))
+                        else if ((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.IsNextToken("by"))
                         {
-                            throw new KbParserException("Invalid query. Found '" + conditonToken + "', expected: end of statement.");
+                            throw new KbParserException("Invalid query. Found '" + conditionToken + "', expected: end of statement.");
                         }
-                        else if (conditonToken == string.Empty)
+                        else if (conditionToken == string.Empty)
                         {
-                            //Set both the conditition and query position to the begining of the "ORDER BY" or "GROUP BY".
+                            //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
                             conditionTokenizer.SetPosition(previousTokenPosition);
                             query.SetPosition(previousTokenPosition);
                             break;
@@ -1205,7 +1208,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     //throw new KbParserException($"The order-by field [{field.Field}] was not found in the query.");
                 }
 
-                //if (result.SelectFields.Where(o => o.Key == field.Key).Any() == false && result.DynamicallyBuildSelectList == false)
+                //if (result.SelectFields.Any(o => o.Key == field.Key) == false && result.DynamicallyBuildSelectList == false)
                 //{
                 //    throw new KbParserException($"The sort-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
                 //}
@@ -1258,10 +1261,10 @@ namespace NTDLS.Katzebase.Engine.Query
                     {
                         break; //Completed successfully.
                     }
-                    throw new KbParserException("Invalid query. Unexpexted end of query found.");
+                    throw new KbParserException("Invalid query. Unexpected end of query found.");
                 }
 
-                if (token.ToLower() == "where")
+                if (token.ToLowerInvariant() == "where")
                 {
                     position = beforeTokenPosition;
                     break; //Completed successfully.

@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 throw new KbFatalException("Function prototypes were not initialized.");
             }
 
-            var function = _protypes.Where(o => o.Name.ToLower() == functionName.ToLower()).FirstOrDefault();
+            var function = _protypes.FirstOrDefault(o => o.Name.Equals(functionName, StringComparison.InvariantCultureIgnoreCase));
 
             if (function == null)
             {

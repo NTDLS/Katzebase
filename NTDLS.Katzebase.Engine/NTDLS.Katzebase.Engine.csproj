@@ -22,7 +22,7 @@
     <PackageReference Include="NTDLS.DelegateThreadPooling" Version="1.2.15" />
     <PackageReference Include="NTDLS.FastMemoryCache" Version="1.5.3" />
     <PackageReference Include="NTDLS.Helpers" Version="1.2.2" />
-    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.3.5" />
+    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.3.6" />
     <PackageReference Include="NTDLS.Semaphore" Version="3.3.2" />
     <PackageReference Include="protobuf-net" Version="3.2.30" />
   </ItemGroup>

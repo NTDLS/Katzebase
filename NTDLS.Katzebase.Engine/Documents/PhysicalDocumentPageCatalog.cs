@@ -76,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.Documents
         public PhysicalDocumentPageCatalogItem? GetPageWithRoomForNewDocument(uint pageSize)
         {
             //TODO: Make the page size configurable.
-            return Catalog.Where(o => o.DocumentCount < pageSize).FirstOrDefault();
+            return Catalog.FirstOrDefault(o => o.DocumentCount < pageSize);
         }
     }
 }

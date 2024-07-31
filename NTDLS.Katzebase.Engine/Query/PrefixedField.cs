@@ -24,15 +24,15 @@
         public PrefixedField(string prefix, string field)
         {
             Alias = field;
-            Prefix = prefix.ToLower();
-            Field = field.ToLower();
+            Prefix = prefix.ToLowerInvariant();
+            Field = field.ToLowerInvariant();
         }
 
         public PrefixedField(string prefix, string field, string alias)
         {
             Alias = alias;
-            Prefix = prefix.ToLower();
-            Field = field.ToLower();
+            Prefix = prefix.ToLowerInvariant();
+            Field = field.ToLowerInvariant();
         }
     }
 }

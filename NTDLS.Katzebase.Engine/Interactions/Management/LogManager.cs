@@ -159,12 +159,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private string GetExceptionText(Exception excpetion)
+        private string GetExceptionText(Exception exception)
         {
             try
             {
                 var message = new StringBuilder();
-                return GetExceptionText(excpetion, 0, ref message);
+                return GetExceptionText(exception, 0, ref message);
             }
             catch (Exception ex)
             {
@@ -207,7 +207,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         Close();
 
                         _recycledTime = DateTime.Now;
-                        string fileName = _core.Settings.LogDirectory + "\\" + $"{_recycledTime.Year}_{_recycledTime.Month:00}_{_recycledTime.Day:00}.txt";
+                        string fileName = $"{_core.Settings.LogDirectory}\\{_recycledTime.Year}_{_recycledTime.Month:00}_{_recycledTime.Day:00}.txt";
                         Directory.CreateDirectory(_core.Settings.LogDirectory);
                         _fileHandle = new StreamWriter(fileName, true);
                     }

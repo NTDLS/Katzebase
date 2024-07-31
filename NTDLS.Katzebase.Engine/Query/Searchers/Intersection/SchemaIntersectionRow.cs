@@ -17,7 +17,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Intersection
 
 
         /// <summary>
-        /// Auxiliary fields are values that may be used for method calls, sorting, grouping, etc. where the fields value may not necessarily be returned directly in the results.
+        /// Auxiliary fields are values that may be used for method calls, sorting, grouping, etc.
+        ///     where the fields value may not necessarily be returned directly in the results.
         /// </summary>
         public KbInsensitiveDictionary<string?> AuxiliaryFields { get; private set; } = new();
 
@@ -33,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Intersection
             }
             if (Values[ordinal] != null)
             {
-                throw new KbEngineException($"Ambigious field [{fieldNameForException}].");
+                throw new KbEngineException($"Ambiguous field [{fieldNameForException}].");
             }
 
             Values[ordinal] = value;

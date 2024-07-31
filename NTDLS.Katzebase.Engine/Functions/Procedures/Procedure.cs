@@ -34,14 +34,14 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                 var nameAndDefault = typeAndName[1].Trim().Split('=');
 
-                if (nameAndDefault.Count() == 1)
+                if (nameAndDefault.Length == 1)
                 {
                     parameters.Add(new ProcedureParameterPrototype(paramType, nameAndDefault[0]));
                 }
-                else if (nameAndDefault.Count() == 2)
+                else if (nameAndDefault.Length == 2)
                 {
                     parameters.Add(new ProcedureParameterPrototype(paramType, nameAndDefault[0],
-                        nameAndDefault[1].ToLower() == "null" ? null : nameAndDefault[1]));
+                        nameAndDefault[1].Equals("null", StringComparison.InvariantCultureIgnoreCase) ? null : nameAndDefault[1]));
                 }
                 else
                 {
@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
         internal ProcedureParameterValueCollection ApplyParameters(List<FunctionParameterBase> values)
         {
-            int requiredParameterCount = Parameters.Where(o => o.Type.ToString().ToLower().Contains("optional") == false).Count();
+            int requiredParameterCount = Parameters.Count(o => o.Type.ToString().Contains("optional", StringComparison.InvariantCultureIgnoreCase) == false);
 
             if (Parameters.Count < requiredParameterCount)
             {
@@ -74,10 +74,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
             {
                 for (int i = 0; i < Parameters.Count; i++)
                 {
-                    if (values[i] is FunctionExpression)
+                    if (values[i] is FunctionExpression functionExpression)
                     {
-                        var expression = (FunctionExpression)values[i];
-                        result.Values.Add(new ProcedureParameterValue(Parameters[0], expression.Value));
+                        result.Values.Add(new ProcedureParameterValue(Parameters[0], functionExpression.Value));
                     }
                     else
                     {
@@ -95,15 +94,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                     }
                     else
                     {
-                        if (values[i] is FunctionExpression)
+                        if (values[i] is FunctionExpression functionExpression)
                         {
-                            var expression = (FunctionExpression)values[i];
-                            result.Values.Add(new ProcedureParameterValue(Parameters[i], expression.Value));
+                            result.Values.Add(new ProcedureParameterValue(Parameters[i], functionExpression.Value));
                         }
-                        else if (values[i] is FunctionConstantParameter)
+                        else if (values[i] is FunctionConstantParameter functionConstantParameter)
                         {
-                            var constant = (FunctionConstantParameter)values[i];
-                            result.Values.Add(new ProcedureParameterValue(Parameters[i], constant.RawValue));
+                            result.Values.Add(new ProcedureParameterValue(Parameters[i], functionConstantParameter.RawValue));
                         }
                         else
                         {

@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
             uint hash = 0;
             if (string.IsNullOrEmpty(value))
                 return hash;
-            value = value.ToLower();
+            value = value.ToLowerInvariant();
             const uint seed = 131;
             foreach (char c in value)
             {

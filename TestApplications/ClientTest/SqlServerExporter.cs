@@ -14,7 +14,7 @@ namespace TestHarness
         private static DateTime LastPerfStatDateTime = DateTime.MinValue;
         private static object PerfStasLockObj = new object();
 
-        public static void ExportSQLServerDatabaseToKatzebase(string sqlServer, string sqlServerDatabase, string katzeBaseServerHost, int katzeBaseServerPort, bool omitSQLSchemaName)
+        public static void ExportSQLServerDatabaseToKatzebase(string sqlServer, string sqlServerDatabase, string katzebaseServerHost, int katzebaseServerPort, bool omitSQLSchemaName)
         {
             using (var connection = new SqlConnection($"Server={sqlServer};Database={sqlServerDatabase};Trusted_Connection=True;"))
             {
@@ -38,7 +38,7 @@ namespace TestHarness
                         while (dataReader.Read() /*&& rowCount++ < 10000*/)
                         {
                             //ExportSQLServerTableToFile(sqlServer, sqlServerDatabase, $"{dataReader["ObjectName"]}", "../../../Outputdata.gz");
-                            ExportSQLServerTableToKatzebase(sqlServer, sqlServerDatabase, $"{dataReader["ObjectName"]}", katzeBaseServerHost, katzeBaseServerPort);
+                            ExportSQLServerTableToKatzebase(sqlServer, sqlServerDatabase, $"{dataReader["ObjectName"]}", katzebaseServerHost, katzebaseServerPort);
                         }
                     }
                 }
@@ -106,7 +106,7 @@ namespace TestHarness
             }
         }
 
-        public static void ExportSQLServerTableToKatzebase(string sqlServer, string sqlServerDatabase, string sqlServerTable, string katzeBaseServerHost, int katzeBaseServerPort)
+        public static void ExportSQLServerTableToKatzebase(string sqlServer, string sqlServerDatabase, string sqlServerTable, string katzebaseServerHost, int katzebaseServerPort)
         {
             int rowsPerTransaction = 10000;
 
@@ -115,7 +115,7 @@ namespace TestHarness
                 rowsPerTransaction = 100;
             }
 
-            using var client = new KbClient(katzeBaseServerHost, katzeBaseServerPort);
+            using var client = new KbClient(katzebaseServerHost, katzebaseServerPort);
 
             string kbSchema = $"{sqlServerDatabase}:{sqlServerTable.Replace("[", "").Replace("]", "").Replace("dbo.", "").Replace('.', ':')}";
 
@@ -180,7 +180,7 @@ namespace TestHarness
 
                                 if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
                                 {
-                                    //Console.WriteLine("Comitting...");
+                                    //Console.WriteLine("Committing...");
                                     client.Transaction.Commit();
                                     client.Transaction.Begin();
                                 }
@@ -211,7 +211,7 @@ namespace TestHarness
             }
         }
 
-        public static void ExportSQLServerTableToKatzebase(string sqlServer, string sqlServerDatabase, string sqlServerTable, string katzeBaseServerHost, int katzeBaseServerPort, string targetSchema)
+        public static void ExportSQLServerTableToKatzebase(string sqlServer, string sqlServerDatabase, string sqlServerTable, string katzebaseServerHost, int katzebaseServerPort, string targetSchema)
         {
             try
             {
@@ -224,7 +224,7 @@ namespace TestHarness
 
                 targetSchema = targetSchema.Replace("[TABLE_NAME]", sqlServerTable);
 
-                using var client = new KbClient(katzeBaseServerHost, katzeBaseServerPort);
+                using var client = new KbClient(katzebaseServerHost, katzebaseServerPort);
 
                 client.Schema.CreateRecursive(targetSchema);
 
@@ -282,7 +282,7 @@ namespace TestHarness
 
                                     if (rowCount > 0 && (rowCount % rowsPerTransaction) == 0)
                                     {
-                                        //Console.WriteLine("Comitting...");
+                                        //Console.WriteLine("Committing...");
                                         client.Transaction.Commit();
                                         client.Transaction.Begin();
                                     }

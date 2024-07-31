@@ -20,17 +20,15 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
             AppliedProcedurePrototype? proc = null;
 
-            if (procedureCall is FunctionConstantParameter)
+            if (procedureCall is FunctionConstantParameter functionConstantParameter)
             {
-                var procCall = (FunctionConstantParameter)procedureCall;
-                procedureName = procCall.RawValue;
-                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, procCall.RawValue, new List<FunctionParameterBase>());
+                procedureName = functionConstantParameter.RawValue;
+                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, functionConstantParameter.RawValue, new List<FunctionParameterBase>());
             }
-            else if (procedureCall is FunctionWithParams)
+            else if (procedureCall is FunctionWithParams functionWithParams)
             {
-                var procCall = (FunctionWithParams)procedureCall;
-                procedureName = procCall.Function;
-                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, procCall.Function, procCall.Parameters);
+                procedureName = functionWithParams.Function;
+                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, functionWithParams.Function, functionWithParams.Parameters);
             }
             else
             {
@@ -40,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
             if (proc.IsSystem)
             {
                 //First check for system procedures:
-                switch (procedureName.ToLower())
+                switch (procedureName.ToLowerInvariant())
                 {
                     //---------------------------------------------------------------------------------------------------------------------------
                     case "clearcacheallocations":
@@ -191,7 +189,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             var blockHeaders = txSnapshots.Where(tx =>
                                 tx.BlockedByKeys.Count == 0 //Transaction is not blocked.
-                                && allBlocks.Where(o => o.ProcessId == tx.ProcessId).Any() //Transaction is blocking other transatransactions.
+                                && allBlocks.Any(o => o.ProcessId == tx.ProcessId) //Transaction is blocking other transactions.
                             ).ToList();
 
                             var helpText = new StringBuilder();
@@ -441,7 +439,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             foreach (var s in sessions)
                             {
-                                var txSnapshot = txSnapshots.Where(o => o.ProcessId == s.Value.ProcessId).FirstOrDefault();
+                                var txSnapshot = txSnapshots.FirstOrDefault(o => o.ProcessId == s.Value.ProcessId);
 
                                 var values = new List<string?> {
                                     $"{s.Key}",
@@ -541,7 +539,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                 wikiPrototype.Append($")");
                                 result.Messages.Add(new KbQueryResultMessage(wikiPrototype.ToString(), KbConstants.KbMessageType.Verbose));
 #endif
-
                             }
 
                             return collection;

@@ -15,7 +15,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public List<IndexSelection> IndexSelection { get; private set; } = new();
 
         /// <summary>
-        /// A clone of the conditions that this set of index selections was built for. Also contains the indexes associated with each subset of conditions.
+        /// A clone of the conditions that this set of index selections was built for.
+        /// Also contains the indexes associated with each subset of conditions.
         /// </summary>
         public Conditions Conditions { get; private set; }
 
@@ -49,18 +50,18 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                 foreach (var subset in conditions.Subsets)
                 {
-                    if (subset.Conditions.Where(o => o.Left.Prefix != workingSchemaPrefix).Any())
+                    if (subset.Conditions.Any(o => o.Left.Prefix != workingSchemaPrefix))
                     {
-                        if (subset.Conditions.Where(o => o.LogicalConnector != LogicalConnector.And).Any() == false)
+                        if (subset.Conditions.Any(o => o.LogicalConnector != LogicalConnector.And) == false)
                         {
                             //We can't yet figure out how to eliminate documents if the conditions are for more
                             //..    than one schema and all of the logical connectors are not AND. This can be done however.
-                            //  We just genrally have alot of optimization trouble with ORs.
+                            //  We just generally have a lot of optimization trouble with ORs.
                             continue;
                         }
                     }
 
-                    var potentialIndexs = new List<PotentialIndex>();
+                    var potentialIndexes = new List<PotentialIndex>();
 
                     //Loop though each index in the schema.
                     foreach (var physicalIndex in indexCatalog.Collection)
@@ -74,22 +75,22 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                                 throw new KbNullException($"Value should not be null {nameof(physicalIndex.Attributes)}.");
                             }
 
-                            var keyName = physicalIndex.Attributes[i].Field?.ToLower();
+                            var keyName = physicalIndex.Attributes[i].Field?.ToLowerInvariant();
                             if (keyName == null)
                             {
                                 throw new KbNullException($"Value should not be null {nameof(keyName)}.");
                             }
 
-                            var matchedNonCovertedConditions =
+                            var matchedNonConvertedConditions =
                                 subset.Conditions.Where(o => o.CoveredByIndex == false
                                     && o.Left.Value == keyName && o.Left.Prefix == workingSchemaPrefix);
 
-                            foreach (var matchedCondition in matchedNonCovertedConditions)
+                            foreach (var matchedCondition in matchedNonConvertedConditions)
                             {
                                 handledKeyNames.Add(PrefixedField.Parse(matchedCondition.Left.Key));
                             }
 
-                            if (matchedNonCovertedConditions.Any() == false)
+                            if (matchedNonConvertedConditions.Any() == false)
                             {
                                 break;
                             }
@@ -98,11 +99,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                         if (handledKeyNames.Count > 0)
                         {
                             var potentialIndex = new PotentialIndex(physicalIndex, handledKeyNames);
-                            potentialIndexs.Add(potentialIndex);
+                            potentialIndexes.Add(potentialIndex);
                         }
                     }
 
-                    List<Condition> GetCovertedConditions(List<Condition> conditions, List<PrefixedField> coveredFields)
+                    List<Condition> GetConvertedConditions(List<Condition> conditions, List<PrefixedField> coveredFields)
                     {
                         var result = new List<Condition>();
 
@@ -122,12 +123,12 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     }
 
                     //Grab the index that matches the most of our supplied keys but also has the least attributes.
-                    var firstIndex = (from o in potentialIndexs where o.Tried == false select o)
+                    var firstIndex = (from o in potentialIndexes where o.Tried == false select o)
                         .OrderByDescending(s => s.CoveredFields.Count)
                         .ThenBy(t => t.Index.Attributes.Count).FirstOrDefault();
                     if (firstIndex != null)
                     {
-                        var handledKeys = GetCovertedConditions(subset.Conditions, firstIndex.CoveredFields);
+                        var handledKeys = GetConvertedConditions(subset.Conditions, firstIndex.CoveredFields);
 
                         //Where the left value is in the covered fields:
 
@@ -176,7 +177,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         {
             //Currently we can only use a partial index match if all of the conditions in a group are "AND"s,
             //  so if we have an "OR" and any of the conditions are not covered then skip the indexing.
-            if (subset.Conditions.Any(o => o.LogicalConnector == LogicalConnector.Or) && subset.Conditions.Any(o => o.CoveredByIndex == false))
+            if (subset.Conditions.Any(o => o.LogicalConnector == LogicalConnector.Or)
+                && subset.Conditions.Any(o => o.CoveredByIndex == false))
             {
                 return false;
             }
@@ -214,10 +216,14 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         #region Optimization explanation.
         /*
-         * Probably need to redo these, there is a better way to explain whats going on. :)
+         * Probably need to redo these, there is a better way to explain what's going on. :)
          */
 
-        string FriendlyExp(string val) => val.ToUpper().Replace("C_", "Condition").Replace("S_", "SubExpression").Replace("||", "OR").Replace("&&", "AND");
+        static string FriendlyExpression(string val) => val.ToUpper()
+            .Replace("C_", "Condition")
+            .Replace("S_", "SubExpression")
+            .Replace("||", "OR")
+            .Replace("&&", "AND");
 
         public string BuildFullVirtualExpression()
         {
@@ -227,7 +233,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             }
 
             var result = new StringBuilder();
-            result.AppendLine($"[{FriendlyExp(Conditions.RootSubsetKey)}]" + (CanApplyIndexing() ? " {Indexable}" : " {non-Indexable}"));
+            result.AppendLine($"[{FriendlyExpression(Conditions.RootSubsetKey)}]"
+                + (CanApplyIndexing() ? " {Indexable}" : " {non-Indexable}"));
 
             if (Conditions.Root.SubsetKeys.Count > 0)
             {
@@ -236,7 +243,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 foreach (var subsetKey in Conditions.Root.SubsetKeys)
                 {
                     var subset = Conditions.SubsetByKey(subsetKey);
-                    result.AppendLine($"  [{FriendlyExp(subset.Expression)}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
+                    result.AppendLine($"  [{FriendlyExpression(subset.Expression)}]"
+                        + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
 
                     result.AppendLine("  (");
                     BuildFullVirtualExpression(ref result, subset, 1);
@@ -251,18 +259,20 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         private void BuildFullVirtualExpression(ref StringBuilder result, ConditionSubset conditionSubset, int depth)
         {
-            //If we have subsets, then we need to satisify those in order to complete the equation.
+            //If we have subsets, then we need to satisfy those in order to complete the equation.
             foreach (var subsetKey in conditionSubset.SubsetKeys)
             {
                 var subset = Conditions.SubsetByKey(subsetKey);
-                result.AppendLine("".PadLeft(depth * 4, ' ') + $"[{FriendlyExp(subset.Expression)}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
+                result.AppendLine("".PadLeft(depth * 4, ' ')
+                    + $"[{FriendlyExpression(subset.Expression)}]" + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
 
                 if (subset.Conditions.Count > 0)
                 {
-                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + FriendlyExp(subsetKey) + "->" + "(");
+                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + FriendlyExpression(subsetKey) + "->" + "(");
                     foreach (var condition in subset.Conditions)
                     {
-                        result.AppendLine("".PadLeft((depth + 1) * 4, ' ') + $"{FriendlyExp(condition.ConditionKey)}: {condition.Left} {condition.LogicalQualifier} '{condition.Right}'");
+                        result.AppendLine("".PadLeft((depth + 1) * 4, ' ')
+                            + $"{FriendlyExpression(condition.ConditionKey)}: {condition.Left} {condition.LogicalQualifier} '{condition.Right}'");
                     }
                     result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
                 }
@@ -280,7 +290,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "(");
                 foreach (var condition in conditionSubset.Conditions)
                 {
-                    result.AppendLine("".PadLeft((depth + 1) * 4, ' ') + $"{FriendlyExp(condition.ConditionKey)}: {condition.Left} {condition.LogicalQualifier} '{condition.Right}'");
+                    result.AppendLine("".PadLeft((depth + 1) * 4, ' ') + $"{FriendlyExpression(condition.ConditionKey)}: {condition.Left} {condition.LogicalQualifier} '{condition.Right}'");
                 }
                 result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
             }
