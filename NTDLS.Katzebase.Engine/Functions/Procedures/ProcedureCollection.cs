@@ -9,6 +9,18 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
     {
         private static List<Procedure>? _systemProcedureProtypes = null;
 
+        public static List<Procedure> Prototypes
+        {
+            get
+            {
+                if (_systemProcedureProtypes == null)
+                {
+                    throw new KbFatalException("Procedure prototypes were not initialized.");
+                }
+                return _systemProcedureProtypes;
+            }
+        }
+
         public static void Initialize()
         {
             if (_systemProcedureProtypes == null)

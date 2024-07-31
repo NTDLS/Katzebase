@@ -6,7 +6,7 @@ using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
     /// <summary>
-    /// Contains all function protype defintions, function implementations and expression collapse functionality.
+    /// Contains all function protype definitions, function implementations and expression collapse functionality.
     /// </summary>
     internal class AggregateFunctionImplementation
     {

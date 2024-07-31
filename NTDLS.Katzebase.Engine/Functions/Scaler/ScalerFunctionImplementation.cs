@@ -10,7 +10,7 @@ using System.Text;
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
     /// <summary>
-    /// Contains all function protype defintions, function implementations and expression collapse functionality.
+    /// Contains all function protype definitions, function implementations and expression collapse functionality.
     /// </summary>
     internal class ScalerFunctionImplementation
     {

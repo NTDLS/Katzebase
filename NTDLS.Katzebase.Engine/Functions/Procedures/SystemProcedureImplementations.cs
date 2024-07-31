@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Query;
@@ -64,16 +65,16 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
-                            result.AddField("WorkingSet64");
-                            result.AddField("MinWorkingSet");
-                            result.AddField("MaxWorkingSet");
-                            result.AddField("PeakWorkingSet64");
-                            result.AddField("PagedMemorySize64");
-                            result.AddField("NonpagedSystemMemorySize64");
-                            result.AddField("PeakVirtualMemorySize64");
-                            result.AddField("VirtualMemorySize64");
-                            result.AddField("PrivateMemorySize64");
-                            result.AddField("TotalCacheSize");
+                            result.AddField("Working Set");
+                            result.AddField("Min. Working Set");
+                            result.AddField("Max. Working Set");
+                            result.AddField("Peak Working Set");
+                            result.AddField("Paged Memory Size ");
+                            result.AddField("Nonpaged System Memory Size");
+                            result.AddField("Peak Virtual MemorySize");
+                            result.AddField("Virtual Memory Size");
+                            result.AddField("Private Memory Size");
+                            result.AddField("Total Cache Size");
 
                             var process = Process.GetCurrentProcess();
                             var values = new List<string?> {
@@ -100,12 +101,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
                             result.AddField("Partition");
-                            result.AddField("ApproximateSizeInBytes");
+                            result.AddField("Approximate Size (B)");
                             result.AddField("Created");
-                            result.AddField("GetCount");
-                            result.AddField("LastGetDate");
-                            result.AddField("SetCount");
-                            result.AddField("LastSetDate");
+                            result.AddField("Get Count");
+                            result.AddField("Last Get Date");
+                            result.AddField("Set Count");
+                            result.AddField("Last Set Date");
                             result.AddField("Key");
 
                             var cachePartitions = core.Cache.GetPartitionAllocationDetails();
@@ -169,7 +170,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             foreach (var counter in counters)
                             {
-                                var values = new List<string?> { counter.Key, counter.Value.Instance, counter.Value.Value.ToString() };
+                                var values = new List<string?>
+                                {
+                                    Text.SeperateCamelCase(counter.Key),
+                                    Text.SeperateCamelCase(counter.Value.Instance),
+                                    counter.Value.Value.ToString()
+                                };
 
                                 result.AddRow(values);
                             }
@@ -266,7 +272,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             result.AddField("ProcessId");
                             result.AddField("Granularity");
                             result.AddField("Operation");
-                            result.AddField("ObjectName");
+                            result.AddField("Object Name");
 
                             var txSnapshots = core.Transactions.Snapshot();
 
@@ -302,7 +308,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             result.AddField("ProcessId");
                             result.AddField("Granularity");
                             result.AddField("Operation");
-                            result.AddField("ObjectName");
+                            result.AddField("Object Name");
 
                             var waitingTxSnapshots = core.Locking.Locks.SnapshotWaitingTransactions().ToList();
 
@@ -331,8 +337,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
 
-                            result.AddField("ProcessId");
-                            result.AddField("BlockedBy");
+                            result.AddField("Process Id");
+                            result.AddField("Blocked By");
 
                             var txSnapshots = core.Transactions.Snapshot();
 
@@ -359,19 +365,19 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
 
-                            result.AddField("ProcessId");
-                            result.AddField("IsBlocked");
-                            result.AddField("BlockedBy");
+                            result.AddField("Process Id");
+                            result.AddField("Blocked?");
+                            result.AddField("Blocked By");
                             result.AddField("References");
-                            result.AddField("StartTime");
-                            result.AddField("HeldLockKeys");
-                            result.AddField("GrantedLocks");
-                            result.AddField("CachedForRead");
-                            result.AddField("DeferredIOs");
-                            result.AddField("IsActive");
-                            result.AddField("IsDeadlocked");
-                            result.AddField("IsCancelled");
-                            result.AddField("IsUserCreated");
+                            result.AddField("Start Time");
+                            result.AddField("Held Lock Keys");
+                            result.AddField("Granted Locks");
+                            result.AddField("Cached for Read");
+                            result.AddField("Deferred IOs");
+                            result.AddField("Active?");
+                            result.AddField("Deadlocked?");
+                            result.AddField("Cancelled?");
+                            result.AddField("User Created?");
 
                             var txSnapshots = core.Transactions.Snapshot();
 
@@ -409,24 +415,24 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
 
-                            result.AddField("SessionId");
-                            result.AddField("ProcessId");
-                            result.AddField("ClientName");
-                            result.AddField("LoginTime");
-                            result.AddField("LastCheckinTime");
+                            result.AddField("Session Id");
+                            result.AddField("Process Id");
+                            result.AddField("Client Name");
+                            result.AddField("Login Time");
+                            result.AddField("Last Check-in");
 
-                            result.AddField("IsBlocked");
-                            result.AddField("BlockedBy");
+                            result.AddField("Blocked?");
+                            result.AddField("Blocked By");
                             result.AddField("References");
-                            result.AddField("StartTime");
-                            result.AddField("HeldLockKeys");
-                            result.AddField("GrantedLocks");
-                            result.AddField("CachedForRead");
-                            result.AddField("DeferredIOs");
-                            result.AddField("IsActive");
-                            result.AddField("IsDeadlocked");
-                            result.AddField("IsCancelled");
-                            result.AddField("IsUserCreated");
+                            result.AddField("Start Time");
+                            result.AddField("Held Lock Keys");
+                            result.AddField("Granted Locks");
+                            result.AddField("Cached for Read");
+                            result.AddField("Deferred IOs");
+                            result.AddField("Active?");
+                            result.AddField("Deadlocked?");
+                            result.AddField("Cancelled?");
+                            result.AddField("User Created?");
 
                             var sessions = core.Sessions.CloneSessions();
                             var txSnapshots = core.Transactions.Snapshot();
@@ -543,6 +549,134 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             return collection;
                         }
+                    case "systemprocedures":
+                        {
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
+
+                            result.AddField("Name");
+                            result.AddField("Parameters");
+
+                            foreach (var prototype in ProcedureCollection.Prototypes)
+                            {
+                                var parameters = new StringBuilder();
+
+                                foreach (var param in prototype.Parameters)
+                                {
+                                    parameters.Append($"{param.Name}:{param.Type}");
+                                    if (param.HasDefault)
+                                    {
+                                        parameters.Append($" = {param.DefaultValue}");
+                                    }
+                                    parameters.Append(", ");
+                                }
+                                if (parameters.Length > 2)
+                                {
+                                    parameters.Length -= 2;
+                                }
+
+                                var values = new List<string?> {
+                                    prototype.Name,
+                                    parameters.ToString()
+                                };
+                                result.AddRow(values);
+
+#if DEBUG
+                                //This is to provide code for the documentation wiki.
+                                var wikiPrototype = new StringBuilder();
+
+                                wikiPrototype.Append($" ##Color(#c6680e, {prototype.Name})(");
+
+                                if (prototype.Parameters.Count > 0)
+                                {
+                                    for (int i = 0; i < prototype.Parameters.Count; i++)
+                                    {
+                                        var param = prototype.Parameters[i];
+
+                                        wikiPrototype.Append($"##Color(#318000, {param.Type}) ##Color(#c6680e, {param.Name})");
+                                        if (param.HasDefault)
+                                        {
+                                            wikiPrototype.Append($" = ##Color(#CC0000, \"'{param.DefaultValue}'\")");
+                                        }
+                                        wikiPrototype.Append(", ");
+                                    }
+                                    if (wikiPrototype.Length > 2)
+                                    {
+                                        wikiPrototype.Length -= 2;
+                                    }
+                                }
+                                wikiPrototype.Append($")");
+                                result.Messages.Add(new KbQueryResultMessage(wikiPrototype.ToString(), KbConstants.KbMessageType.Verbose));
+#endif
+                            }
+
+                            return collection;
+                        }
+
+                    case "systemaggregatefunctions":
+                        {
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
+
+                            result.AddField("Name");
+                            result.AddField("Parameters");
+
+                            foreach (var prototype in AggregateFunctionCollection.Prototypes)
+                            {
+                                var parameters = new StringBuilder();
+
+                                foreach (var param in prototype.Parameters)
+                                {
+                                    parameters.Append($"{param.Name}:{param.Type}");
+                                    if (param.HasDefault)
+                                    {
+                                        parameters.Append($" = {param.DefaultValue}");
+                                    }
+                                    parameters.Append(", ");
+                                }
+                                if (parameters.Length > 2)
+                                {
+                                    parameters.Length -= 2;
+                                }
+
+                                var values = new List<string?> {
+                                    prototype.Name,
+                                    parameters.ToString()
+                                };
+                                result.AddRow(values);
+
+#if DEBUG
+                                //This is to provide code for the documentation wiki.
+                                var wikiPrototype = new StringBuilder();
+
+                                wikiPrototype.Append($" ##Color(#c6680e, {prototype.Name})(");
+
+                                if (prototype.Parameters.Count > 0)
+                                {
+                                    for (int i = 0; i < prototype.Parameters.Count; i++)
+                                    {
+                                        var param = prototype.Parameters[i];
+
+                                        wikiPrototype.Append($"##Color(#318000, {param.Type}) ##Color(#c6680e, {param.Name})");
+                                        if (param.HasDefault)
+                                        {
+                                            wikiPrototype.Append($" = ##Color(#CC0000, \"'{param.DefaultValue}'\")");
+                                        }
+                                        wikiPrototype.Append(", ");
+                                    }
+                                    if (wikiPrototype.Length > 2)
+                                    {
+                                        wikiPrototype.Length -= 2;
+                                    }
+                                }
+                                wikiPrototype.Append($")");
+                                result.Messages.Add(new KbQueryResultMessage(wikiPrototype.ToString(), KbConstants.KbMessageType.Verbose));
+#endif
+                            }
+
+                            return collection;
+                        }
+
                 }
             }
             else

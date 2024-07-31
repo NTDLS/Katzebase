@@ -13,9 +13,14 @@ namespace NTDLS.Katzebase.Engine.Documents
     [ProtoContract]
     public class PhysicalDocument
     {
-        [ProtoMember(1)]
         [ProtoIgnore]
         private KbInsensitiveDictionary<string?>? _dictionary = null;
+
+        /// <summary>
+        /// Tells us whether this page is currently compressed in memory of whether it has been expended to the dictionary.
+        /// </summary>
+        [ProtoIgnore]
+        public bool IsMaterialized { get; private set; }
 
         [ProtoIgnore]
         public KbInsensitiveDictionary<string?> Elements
@@ -30,16 +35,17 @@ namespace NTDLS.Katzebase.Engine.Documents
                     }
 
                     var serializedData = Library.Compression.Deflate.Decompress(CompressedBytes);
+
                     ContentLength = serializedData.Length;
-                    using (var input = new MemoryStream(serializedData))
-                    {
-                        _dictionary = Serializer.Deserialize<KbInsensitiveDictionary<string?>>(input);
-                        if (_dictionary == null)
-                        {
-                            throw new KbNullException("Document dictionary cannot be null.");
-                        }
-                        _compressedBytes = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
-                    }
+
+                    using var input = new MemoryStream(serializedData);
+
+                    _dictionary = Serializer.Deserialize<KbInsensitiveDictionary<string?>>(input) ??
+                        throw new KbNullException("Document dictionary cannot be null.");
+
+                    _compressedBytes = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
+
+                    IsMaterialized = true;
                 }
                 return _dictionary;
             }
@@ -55,15 +61,12 @@ namespace NTDLS.Katzebase.Engine.Documents
             {
                 if (_compressedBytes == null)
                 {
-                    using (var output = new MemoryStream())
-                    {
-                        Serializer.Serialize(output, _dictionary);
-                        ContentLength = (int)output.Length;
-                        _compressedBytes = Library.Compression.Deflate.Compress(output.ToArray());
-                        //TODO: Maybe there's a more optimistic way to do  Other than RAM, there is no need to NULL out the other property
-                        //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
-                        _dictionary = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
-                    }
+                    using var output = new MemoryStream();
+                    Serializer.Serialize(output, _dictionary);
+                    ContentLength = (int)output.Length;
+                    _compressedBytes = Library.Compression.Deflate.Compress(output.ToArray());
+                    _dictionary = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
+                    IsMaterialized = false;
                 }
 
                 return _compressedBytes;
@@ -71,9 +74,8 @@ namespace NTDLS.Katzebase.Engine.Documents
             set
             {
                 _compressedBytes = value;
-                //TODO: Maybe there's a more optimistic way to do  Other than RAM, there is no need to NULL out the other property
-                //TODO:     This could lead to us de/serialize and de/compressing multiple times if we need to write a document.
                 _dictionary = null; //For memory purposes, we want to store either compressed OR uncompressed - but not both.
+                IsMaterialized = false;
             }
         }
 

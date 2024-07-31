@@ -1,13 +1,15 @@
 ﻿namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
     /// <summary>
-    /// Contains procedure protype defintions.
+    /// Contains procedure protype definitions.
     /// </summary>
     internal class SystemProcedurePrototypes
     {
         //These are implemented in ProcedureManager.
 
         internal static string[] PrototypeStrings = {
+                "SystemAggregateFunctions:",
+                "SystemProcedures:",
                 "SystemScalerFunctions:",
                 "CheckpointHealthCounters:",
                 "ClearCacheAllocations:",
