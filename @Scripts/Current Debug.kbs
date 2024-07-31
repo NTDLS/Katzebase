@@ -7,8 +7,8 @@ FROM
 --create schema test
 
 insert into test
-(First='Josh', Last='Patterson')
---(First='Bridget', Last='Patterson')
+(First='Josh', Last='Patterson'),
+(First='Bridget', Last='Patterson')
 GO
 
 --select * from test
