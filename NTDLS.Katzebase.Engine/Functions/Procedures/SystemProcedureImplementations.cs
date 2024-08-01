@@ -6,6 +6,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Query;
 using System.Diagnostics;
 using System.Text;
@@ -111,17 +112,55 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             var cachePartitions = core.Cache.GetPartitionAllocationDetails();
 
-                            foreach (var partition in cachePartitions.Items)
+                            foreach (var item in cachePartitions.Items)
                             {
                                 var values = new List<string?> {
-                                    $"{partition.Partition:n0}",
-                                    $"{partition.AproximateSizeInBytes:n0}",
-                                    $"{partition.Created}",
-                                    $"{partition.GetCount:n0}",
-                                    $"{partition.LastGetDate}",
-                                    $"{partition.SetCount:n0}",
-                                    $"{partition.LastSetDate}",
-                                    $"{partition.Key}",
+                                    $"{item.Partition:n0}",
+                                    $"{item.AproximateSizeInBytes:n0}",
+                                    $"{item.Created}",
+                                    $"{item.GetCount:n0}",
+                                    $"{item.LastGetDate}",
+                                    $"{item.SetCount:n0}",
+                                    $"{item.LastSetDate}",
+                                    $"{item.Key}",
+                                };
+
+                                result.AddRow(values);
+                            }
+
+                            return collection;
+                        }
+
+                    case "showcachepages":
+                        {
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
+                            result.AddField("Partition");
+                            result.AddField("Approximate Size (B)");
+                            result.AddField("Created");
+                            result.AddField("Get Count");
+                            result.AddField("Last Get Date");
+                            result.AddField("Set Count");
+                            result.AddField("Last Set Date");
+                            result.AddField("Key");
+
+                            var cachePartitions = core.Cache.GetPartitionAllocationDetails();
+
+                            foreach (var item in cachePartitions.Items.Where(o => o.Key.EndsWith(EngineConstants.DocumentPageExtension)))
+                            {
+                                if (core.Cache.TryGet(item.Key, out object page))
+                                {
+                                }
+
+                                var values = new List<string?> {
+                                    $"{item.Partition:n0}",
+                                    $"{item.AproximateSizeInBytes:n0}",
+                                    $"{item.Created}",
+                                    $"{item.GetCount:n0}",
+                                    $"{item.LastGetDate}",
+                                    $"{item.SetCount:n0}",
+                                    $"{item.LastSetDate}",
+                                    $"{item.Key}",
                                 };
 
                                 result.AddRow(values);

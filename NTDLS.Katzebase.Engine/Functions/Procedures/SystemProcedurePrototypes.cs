@@ -19,6 +19,7 @@
                 "ShowLocks:Numeric/processId=null",
                 "ShowCacheAllocations:",
                 "ShowCachePartitions:",
+                "ShowCachePages:",
                 "ShowHealthCounters:",
                 "ShowMemoryUtilization:",
                 "ShowBlockTree:",
