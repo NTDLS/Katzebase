@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to instantiate procedures query handler.", ex);
+                _core.Log.Error($"Failed to instantiate procedures query handler.", ex);
                 throw;
             }
         }
@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute procedure create for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute procedure create for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -67,7 +67,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute procedure for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute procedure for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

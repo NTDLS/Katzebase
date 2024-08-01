@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instantiate document API handlers.", ex);
+                core.Log.Error($"Failed to instantiate document API handlers.", ex);
                 throw;
             }
         }
@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document sample for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document sample for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -59,7 +59,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -77,7 +77,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document list for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document list for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -95,7 +95,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -110,7 +110,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document store for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document store for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -127,7 +127,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -141,7 +141,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document catalog for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document catalog for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -154,7 +154,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -171,7 +171,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document delete for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document delete for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

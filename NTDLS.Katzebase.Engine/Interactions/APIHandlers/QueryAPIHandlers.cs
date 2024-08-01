@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instantiate query API handlers.", ex);
+                core.Log.Error($"Failed to instantiate query API handlers.", ex);
                 throw;
             }
         }
@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
 
             session.SetCurrentQuery(param.Statement);
@@ -51,7 +51,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
 
             session.SetCurrentQuery(param.Procedure.ProcedureName);
@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             session.SetCurrentQuery(param.Statement);
 
@@ -86,7 +86,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             var results = new KbQueryQueryExecuteQueriesReply();
 
@@ -112,7 +112,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             session.SetCurrentQuery(param.Statement);
 

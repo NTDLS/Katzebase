@@ -63,7 +63,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to instantiate transaction manager.", ex);
+                _core.Log.Error("Failed to instantiate transaction manager.", ex);
                 throw;
             }
         }
@@ -76,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to get transaction by process id for process id {processId}.", ex);
+                _core.Log.Error($"Failed to get transaction by process id for process id {processId}.", ex);
                 throw;
             }
         }
@@ -96,7 +96,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to remove transaction by process id for process {processId}.", ex);
+                _core.Log.Error($"Failed to remove transaction by process id for process {processId}.", ex);
                 throw;
             }
         }
@@ -124,7 +124,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to remove transactions by processID.", ex);
+                _core.Log.Error($"Failed to remove transactions by processID.", ex);
                 throw;
             }
         }
@@ -140,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (transactionFiles.Count != 0)
                 {
-                    _core.Log.Write($"Found {transactionFiles.Count} open transactions.", KbLogSeverity.Warning);
+                    _core.Log.Warning($"Found {transactionFiles.Count} open transactions.");
                 }
 
                 foreach (string transactionFile in transactionFiles)
@@ -157,7 +157,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         transaction.Atoms.Write((obj) => obj.Add(ra));
                     }
 
-                    _core.Log.Write($"Rolling back session {transaction.ProcessId} with {atoms.Count} actions.", KbLogSeverity.Warning);
+                    _core.Log.Warning($"Rolling back session {transaction.ProcessId} with {atoms.Count} actions.");
 
                     try
                     {
@@ -165,13 +165,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                     catch (Exception ex)
                     {
-                        _core.Log.Write($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
+                        _core.Log.Error($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to recover uncommitted transactions.", ex);
+                _core.Log.Error("Failed to recover uncommitted transactions.", ex);
                 throw;
             }
         }
@@ -220,7 +220,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to acquire transaction for process {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to acquire transaction for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -236,7 +236,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to commit transaction for process {processId}.", ex);
+                _core.Log.Error($"Failed to commit transaction for process {processId}.", ex);
                 throw;
             }
         }
@@ -252,7 +252,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to rollback transaction for process {processId}.", ex);
+                _core.Log.Error($"Failed to rollback transaction for process {processId}.", ex);
                 throw;
             }
         }

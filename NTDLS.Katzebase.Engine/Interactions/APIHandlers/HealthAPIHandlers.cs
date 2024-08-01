@@ -16,7 +16,7 @@
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instantiate health API handlers.", ex);
+                core.Log.Error($"Failed to instantiate health API handlers.", ex);
                 throw;
             }
         }

@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Server
             }
             catch (Exception ex)
             {
-                _core?.Log.Exception(ex);
+                _core?.Log.Error(ex);
                 throw;
             }
         }
@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Server
             }
             catch (Exception ex)
             {
-                _core?.Log.Exception(ex);
+                _core?.Log.Error(ex);
                 throw;
             }
         }
@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Server
             }
             catch (Exception ex)
             {
-                _core?.Log.Exception(ex);
+                _core?.Log.Error(ex);
                 throw;
             }
         }
@@ -78,7 +78,7 @@ namespace NTDLS.Katzebase.Server
         private void RmServer_OnDisconnected(RmContext context)
         {
             _core.EnsureNotNull();
-            _core.Log.Trace($"Disconnected: {context.ConnectionId}");
+            _core.Log.Debug($"Disconnected: {context.ConnectionId}");
 
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
             _core.Sessions.CloseByProcessId(session.ProcessId);
@@ -86,7 +86,7 @@ namespace NTDLS.Katzebase.Server
 
         private void RmServer_OnException(RmContext? context, Exception ex, IRmPayload? payload)
         {
-            _core?.Log?.Exception(ex);
+            _core?.Log?.Error(ex);
         }
     }
 }

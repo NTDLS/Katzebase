@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to instantiate document query handler.", ex);
+                _core.Log.Error($"Failed to instantiate document query handler.", ex);
                 throw;
             }
         }
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document select for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document select for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -93,7 +93,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document select for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document select for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -146,7 +146,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document insert for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document insert for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -222,7 +222,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document update for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document update for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -240,7 +240,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document sample for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document sample for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -258,7 +258,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document list for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document list for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -280,7 +280,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document explain for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document explain for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -306,7 +306,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute document delete for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute document delete for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

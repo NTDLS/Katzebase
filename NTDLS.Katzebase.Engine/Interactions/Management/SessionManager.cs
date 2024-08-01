@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to instantiate session manager.", ex);
+                _core.Log.Error($"Failed to instantiate session manager.", ex);
                 throw;
             }
         }
@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 catch (Exception ex)
                 {
-                    _core.Log.Write($"Failed to upsert session for session {connectionId}.", ex);
+                    _core.Log.Error($"Failed to upsert session for session {connectionId}.", ex);
                     throw;
                 }
             });
@@ -96,12 +96,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (wasLockObtained == false)
                 {
-                    _core.Log.Write($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.", Client.KbConstants.KbLogSeverity.Warning);
+                    _core.Log.Warning($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.");
                 }
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to remove sessions by processIDs.", ex);
+                _core.Log.Error($"Failed to remove sessions by processIDs.", ex);
                 throw;
             }
         }
@@ -121,7 +121,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 catch (Exception ex)
                 {
-                    _core.Log.Write($"Failed to get session state by process id for process id {processId}.", ex);
+                    _core.Log.Error($"Failed to get session state by process id for process id {processId}.", ex);
                     throw;
                 }
             });

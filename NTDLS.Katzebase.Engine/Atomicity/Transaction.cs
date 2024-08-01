@@ -256,7 +256,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to acquire file lock.", ex);
+                _core.Log.Error("Failed to acquire file lock.", ex);
                 throw;
             }
         }
@@ -286,7 +286,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to acquire file lock.", ex);
+                _core.Log.Error("Failed to acquire file lock.", ex);
                 throw;
             }
         }
@@ -316,7 +316,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to acquire file lock.", ex);
+                _core.Log.Error("Failed to acquire file lock.", ex);
                 throw;
             }
         }
@@ -421,7 +421,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to record file creation for process {ProcessId}.", ex);
+                _core.Log.Error($"Failed to record file creation for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -455,7 +455,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to record file creation for process {ProcessId}.", ex);
+                _core.Log.Error($"Failed to record file creation for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -497,7 +497,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to record file deletion for process {ProcessId}.", ex);
+                _core.Log.Error($"Failed to record file deletion for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -538,7 +538,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to record file deletion for process {ProcessId}.", ex);
+                _core.Log.Error($"Failed to record file deletion for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -559,7 +559,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to record file read for process {ProcessId}.", ex);
+                _core.Log.Error($"Failed to record file read for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -598,7 +598,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to record file alteration for process {ProcessId}.", ex);
+                _core.Log.Error($"Failed to record file alteration for process {ProcessId}.", ex);
                 throw;
             }
         }
@@ -707,7 +707,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 }
                 catch (Exception ex)
                 {
-                    _core.Log.Write($"Failed to rollback transaction for process {ProcessId}.", ex);
+                    _core.Log.Error($"Failed to rollback transaction for process {ProcessId}.", ex);
                     throw;
                 }
             });
@@ -770,7 +770,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 }
                 catch (Exception ex)
                 {
-                    _core.Log.Write($"Failed to commit transaction for process {ProcessId}.", ex);
+                    _core.Log.Error($"Failed to commit transaction for process {ProcessId}.", ex);
                     throw;
                 }
                 return false;
@@ -831,7 +831,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to cleanup transaction for process {ProcessId}.", ex);
+                _core.Log.Error($"Failed to cleanup transaction for process {ProcessId}.", ex);
                 throw;
             }
         }

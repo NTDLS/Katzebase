@@ -166,7 +166,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to select indexes for process {transaction.ProcessId}.", ex);
+                core.Log.Error($"Failed to select indexes for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }

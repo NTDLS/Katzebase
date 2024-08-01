@@ -16,7 +16,7 @@
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instantiate procedures API handlers.", ex);
+                core.Log.Error($"Failed to instantiate procedures API handlers.", ex);
                 throw;
             }
         }

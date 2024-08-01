@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Interactions.Management;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Threading.Management;
 using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
@@ -39,9 +40,10 @@ namespace NTDLS.Katzebase.Engine
 
             Log = new LogManager(this);
 
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
-            Log.Verbose($"{fileVersionInfo.ProductName} v{fileVersionInfo.ProductVersion} PID:{Process.GetCurrentProcess().Id}");
+            var fileVersionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
+            var productVersion = string.Join(".", (fileVersionInfo.ProductVersion?.Split('.').Take(3)).EnsureNotNull());
+
+            Log.Verbose($"{fileVersionInfo.ProductName} v{productVersion} PID:{System.Environment.ProcessId}");
 
             Log.Verbose("Initializing cache manager.");
             Cache = new CacheManager(this);
@@ -100,7 +102,6 @@ namespace NTDLS.Katzebase.Engine
             ThreadPool.Stop();
             Cache.Close();
             Health.Close();
-            Log.Close();
         }
     }
 }

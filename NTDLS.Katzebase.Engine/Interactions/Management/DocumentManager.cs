@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to instantiate document manager.", ex);
+                _core.Log.Error("Failed to instantiate document manager.", ex);
                 throw;
             }
         }
@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to acquire document for process {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to acquire document for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -64,7 +64,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to acquire document page for process {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to acquire document page for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -101,7 +101,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to acquire document pointers for process {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to acquire document pointers for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -115,7 +115,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to acquire document page map for process {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to acquire document page map for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -129,7 +129,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to acquire document page catalog for process {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to acquire document page catalog for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -231,7 +231,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to insert document for process {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to insert document for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -270,7 +270,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to update document for process {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to update document for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -325,7 +325,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to delete documents for process {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to delete documents for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }

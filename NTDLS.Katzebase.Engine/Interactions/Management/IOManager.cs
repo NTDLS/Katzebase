@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to get non-tracked json for file {filePath}.", ex);
+                _core.Log.Error($"Failed to get non-tracked json for file {filePath}.", ex);
                 throw;
             }
         }
@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to get non-tracked file length for {filePath}.", ex);
+                _core.Log.Error($"Failed to get non-tracked file length for {filePath}.", ex);
                 throw;
             }
         }
@@ -79,7 +79,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to get non-tracked pbuf for file {filePath}.", ex);
+                _core.Log.Error($"Failed to get non-tracked pbuf for file {filePath}.", ex);
                 throw;
             }
         }
@@ -125,7 +125,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             if (wasDeferred)
                             {
                                 _core.Health.Increment(HealthCounterType.IODeferredIOReads);
-                                _core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
+                                _core.Log.Debug($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
                                 return reference;
                             }
@@ -147,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         if (cacheHit)
                         {
                             _core.Health.Increment(HealthCounterType.IOCacheReadHits);
-                            _core.Log.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
+                            _core.Log.Debug($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
                             return (T?)cachedObject;
                         }
@@ -155,7 +155,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     _core.Health.Increment(HealthCounterType.IOCacheReadMisses);
 
-                    _core.Log.Trace($"IO:Read:{transaction.ProcessId}->{filePath}");
+                    _core.Log.Debug($"IO:Read:{transaction.ProcessId}->{filePath}");
 
                     T? deserializedObject;
                     int approximateSizeInBytes = 0;
@@ -219,7 +219,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to get tracked file for process id {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to get tracked file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -253,7 +253,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to put non-tracked json for file {filePath}.", ex);
+                _core.Log.Error($"Failed to put non-tracked json for file {filePath}.", ex);
                 throw;
             }
         }
@@ -273,7 +273,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to put non-tracked json for file {filePath}.", ex);
+                _core.Log.Error($"Failed to put non-tracked json for file {filePath}.", ex);
                 throw;
             }
         }
@@ -311,7 +311,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to put non-tracked pbuf for file {filePath}.", ex);
+                _core.Log.Error($"Failed to put non-tracked pbuf for file {filePath}.", ex);
                 throw;
             }
         }
@@ -334,7 +334,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to put non-tracked pbuf for file {filePath}.", ex);
+                _core.Log.Error($"Failed to put non-tracked pbuf for file {filePath}.", ex);
                 throw;
             }
         }
@@ -371,7 +371,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (_core.Settings.DeferredIOEnabled)
                     {
-                        _core.Log.Trace($"IO:Write-Deferred:{filePath}");
+                        _core.Log.Debug($"IO:Write-Deferred:{filePath}");
 
                         transaction.DeferredIOs.Write((obj) =>
                         {
@@ -388,7 +388,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                 }
 
-                _core.Log.Trace($"IO:Write:{filePath}");
+                _core.Log.Debug($"IO:Write:{filePath}");
 
                 int approximateSizeInBytes = 0;
 
@@ -448,7 +448,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to put internal tracked file for process id {transaction?.ProcessId ?? 0}.", ex);
+                _core.Log.Error($"Failed to put internal tracked file for process id {transaction?.ProcessId ?? 0}.", ex);
                 throw;
             }
         }
@@ -467,13 +467,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 acquiredLockKey = transaction.LockDirectory(intendedOperation, diskPath);
 
-                _core.Log.Trace($"IO:Exists-Directory:{transaction.ProcessId}->{diskPath}");
+                _core.Log.Debug($"IO:Exists-Directory:{transaction.ProcessId}->{diskPath}");
 
                 return Directory.Exists(diskPath);
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to verify directory for process id {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to verify directory for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -496,7 +496,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 bool doesFileExist = Directory.Exists(diskPath);
 
-                _core.Log.Trace($"IO:Create-Directory:{transaction.ProcessId}->{diskPath}");
+                _core.Log.Debug($"IO:Create-Directory:{transaction.ProcessId}->{diskPath}");
 
                 if (doesFileExist == false)
                 {
@@ -506,7 +506,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to create directory for process id {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to create directory for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -540,13 +540,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 acquiredLockKey = transaction.LockFile(intendedOperation, lowerFilePath);
 
-                _core.Log.Trace($"IO:Exits-File:{transaction.ProcessId}->{filePath}");
+                _core.Log.Debug($"IO:Exits-File:{transaction.ProcessId}->{filePath}");
 
                 return File.Exists(filePath);
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to verify file for process id {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to verify file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -572,14 +572,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 transaction.RecordFileDelete(filePath);
 
-                _core.Log.Trace($"IO:Delete-File:{transaction.ProcessId}->{filePath}");
+                _core.Log.Debug($"IO:Delete-File:{transaction.ProcessId}->{filePath}");
 
                 File.Delete(filePath);
                 Library.Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(filePath));
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to delete file for process id {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to delete file for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -604,13 +604,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 transaction.RecordPathDelete(diskPath);
 
-                _core.Log.Trace($"IO:Delete-Directory:{transaction.ProcessId}->{diskPath}");
+                _core.Log.Debug($"IO:Delete-Directory:{transaction.ProcessId}->{diskPath}");
 
                 Directory.Delete(diskPath, true);
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to delete path for process id {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to delete path for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }

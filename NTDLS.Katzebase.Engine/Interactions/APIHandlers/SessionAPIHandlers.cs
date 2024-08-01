@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instantiate session API handlers.", ex);
+                core.Log.Error($"Failed to instantiate session API handlers.", ex);
                 throw;
             }
         }
@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
 #if DEBUG
                 Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-                _core.Log.Trace(Thread.CurrentThread.Name);
+                _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
 
                 var result = new KbQueryServerStartSessionReply
@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to start session for session id {context.ConnectionId}.", ex);
+                _core.Log.Error($"Failed to start session for session id {context.ConnectionId}.", ex);
                 throw;
             }
         }
@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to close session for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to close session for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -82,7 +82,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to close session for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to close session for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

@@ -1,4 +1,6 @@
+using Serilog;
 using Topshelf;
+using Topshelf.Logging;
 using Topshelf.ServiceConfigurators;
 
 namespace NTDLS.Katzebase.Server
@@ -54,6 +56,13 @@ namespace NTDLS.Katzebase.Server
 
         public static void Main()
         {
+            Log.Logger = new LoggerConfiguration()
+                 .WriteTo.Console()
+                 .MinimumLevel.Verbose()
+                 .CreateLogger();
+
+            HostLogger.UseLogger(new NullLogWriterFactory()); //Prevent topshelf from polluting the console.
+
             HostFactory.Run(x =>
             {
                 x.StartAutomatically(); // Start the service automatically

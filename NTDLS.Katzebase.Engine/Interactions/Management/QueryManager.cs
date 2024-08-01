@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to explain query for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to explain query for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -153,7 +153,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute query for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute query for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -271,7 +271,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute non-query for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute non-query for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

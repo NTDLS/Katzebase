@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to instantiate cache manager.", ex);
+                _core.Log.Error("Failed to instantiate cache manager.", ex);
                 throw;
             }
         }
@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to upsert cache object.", ex);
+                _core.Log.Error("Failed to upsert cache object.", ex);
                 throw;
             }
         }
@@ -62,7 +62,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to clear cache.", ex);
+                _core.Log.Error("Failed to clear cache.", ex);
                 throw;
             }
         }
@@ -75,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to clear cache.", ex);
+                _core.Log.Error("Failed to clear cache.", ex);
                 throw;
             }
         }
@@ -88,7 +88,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to clear cache.", ex);
+                _core.Log.Error("Failed to clear cache.", ex);
                 throw;
             }
         }
@@ -101,7 +101,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to get cache object.", ex);
+                _core.Log.Error("Failed to get cache object.", ex);
                 throw;
             }
         }
@@ -119,7 +119,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to get cache object.", ex);
+                _core.Log.Error("Failed to get cache object.", ex);
                 throw;
             }
         }
@@ -132,7 +132,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to get cache object.", ex);
+                _core.Log.Error("Failed to get cache object.", ex);
                 throw;
             }
         }
@@ -145,7 +145,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to remove cache object.", ex);
+                _core.Log.Error("Failed to remove cache object.", ex);
                 throw;
             }
         }
@@ -158,7 +158,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to remove cache prefixed-object.", ex);
+                _core.Log.Error("Failed to remove cache prefixed-object.", ex);
                 throw;
             }
         }

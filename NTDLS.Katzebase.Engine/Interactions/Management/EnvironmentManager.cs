@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write("Failed to instantiate environment manager.", ex);
+                _core.Log.Error("Failed to instantiate environment manager.", ex);
                 throw;
             }
         }
@@ -102,7 +102,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to alter environment manager for process id {transaction.ProcessId}.", ex);
+                _core.Log.Error($"Failed to alter environment manager for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }

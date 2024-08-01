@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Write($"Failed to instantiate transaction API handlers.", ex);
+                core.Log.Error($"Failed to instantiate transaction API handlers.", ex);
                 throw;
             }
         }
@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             _core.Transactions.Acquire(session, true);
             return new KbQueryTransactionBeginReply()
@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             _core.Transactions.Commit(session.ProcessId);
             return new KbQueryTransactionCommitReply()
@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Trace(Thread.CurrentThread.Name);
+            _core.Log.Debug(Thread.CurrentThread.Name);
 #endif
             _core.Transactions.Rollback(session.ProcessId);
             return new KbQueryTransactionRollbackReply()

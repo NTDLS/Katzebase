@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to instantiate session query handler.", ex);
+                _core.Log.Error($"Failed to instantiate session query handler.", ex);
                 throw;
             }
         }
@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute variable set for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute variable set for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -79,7 +79,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Write($"Failed to execute variable set for process id {session.ProcessId}.", ex);
+                _core.Log.Error($"Failed to execute variable set for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
