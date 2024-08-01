@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using System.Diagnostics;
 using System.Reflection;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace NTDLS.Katzebase.Engine
 {
@@ -41,6 +42,9 @@ namespace NTDLS.Katzebase.Engine
             var productVersion = string.Join(".", (fileVersionInfo.ProductVersion?.Split('.').Take(3)).EnsureNotNull());
 
             LogManager.Verbose($"{fileVersionInfo.ProductName} v{productVersion} PID:{System.Environment.ProcessId}");
+
+            LogManager.Verbose("Creating log directory.");
+            Directory.CreateDirectory(Settings.LogDirectory);
 
             LogManager.Information("Initializing cache manager.");
             Cache = new CacheManager(this);
