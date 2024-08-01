@@ -7,7 +7,7 @@
     {
         //These are implemented in ProcedureManager.
 
-        internal static string[] PrototypeStrings = {
+        internal static string[] PrototypeStrings = [
                 "SystemAggregateFunctions:",
                 "SystemProcedures:",
                 "SystemScalerFunctions:",
@@ -26,6 +26,6 @@
                 "ShowProcesses:Numeric/processId=null",
                 "ShowTransactions:Numeric/processId=null",
                 "ShowWaitingLocks:Numeric/processId=null",
-            };
+            ];
     }
 }

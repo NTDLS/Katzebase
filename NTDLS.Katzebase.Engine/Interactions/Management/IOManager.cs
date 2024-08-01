@@ -21,6 +21,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public T GetJsonNonTracked<T>(string filePath, bool useCompression = true)
         {
+            _core.Log.Debug($"IO:Read:{filePath}");
+
             try
             {
                 T? result;
@@ -44,6 +46,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public long GetDecompressedSizeTracked(string filePath)
         {
+            _core.Log.Debug($"IO:Read:{filePath}");
+
             try
             {
                 if (_core.Settings.UseCompression)
@@ -64,6 +68,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public T GetPBufNonTracked<T>(string filePath)
         {
+            _core.Log.Debug($"IO:Read:{filePath}");
+
             try
             {
                 if (_core.Settings.UseCompression)
@@ -286,21 +292,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (_core.Settings.UseCompression && useCompression)
                 {
-                    using (var output = new MemoryStream())
-                    {
-                        ProtoBuf.Serializer.Serialize(output, deserializedObject);
-                        approximateSizeInBytes = (int)output.Length;
-                        var compressedPbuf = Library.Compression.Deflate.Compress(output.ToArray());
-                        File.WriteAllBytes(filePath, compressedPbuf);
-                    }
+                    using var output = new MemoryStream();
+                    ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                    approximateSizeInBytes = (int)output.Length;
+                    var compressedBytes = Library.Compression.Deflate.Compress(output.ToArray());
+                    File.WriteAllBytes(filePath, compressedBytes);
                 }
                 else
                 {
-                    using (var file = File.Create(filePath))
-                    {
-                        approximateSizeInBytes = (int)file.Length;
-                        ProtoBuf.Serializer.Serialize(file, deserializedObject);
-                    }
+                    using var file = File.Create(filePath);
+                    ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                    approximateSizeInBytes = (int)file.Length;
                 }
 
                 if (_core.Settings.CacheEnabled)
@@ -415,21 +417,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (_core.Settings.UseCompression && useCompression)
                     {
-                        using (var output = new MemoryStream())
-                        {
-                            ProtoBuf.Serializer.Serialize(output, deserializedObject);
-                            approximateSizeInBytes = (int)output.Length;
-                            var compressedPbuf = Library.Compression.Deflate.Compress(output.ToArray());
-                            File.WriteAllBytes(filePath, compressedPbuf);
-                        }
+                        using var output = new MemoryStream();
+                        ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                        approximateSizeInBytes = (int)output.Length;
+                        var compressedBytes = Library.Compression.Deflate.Compress(output.ToArray());
+                        File.WriteAllBytes(filePath, compressedBytes);
                     }
                     else
                     {
-                        using (var file = File.Create(filePath))
-                        {
-                            approximateSizeInBytes = (int)file.Length;
-                            ProtoBuf.Serializer.Serialize(file, deserializedObject);
-                        }
+                        using var file = File.Create(filePath);
+                        approximateSizeInBytes = (int)file.Length;
+                        ProtoBuf.Serializer.Serialize(file, deserializedObject);
                     }
                     ptSerialize?.StopAndAccumulate();
                 }
@@ -540,7 +538,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 acquiredLockKey = transaction.LockFile(intendedOperation, lowerFilePath);
 
-                _core.Log.Debug($"IO:Exits-File:{transaction.ProcessId}->{filePath}");
+                _core.Log.Debug($"IO:Exists-File:{transaction.ProcessId}->{filePath}");
 
                 return File.Exists(filePath);
             }

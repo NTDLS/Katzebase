@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
@@ -25,7 +26,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
             if (procedureCall is FunctionConstantParameter functionConstantParameter)
             {
                 procedureName = functionConstantParameter.RawValue;
-                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, functionConstantParameter.RawValue, new List<FunctionParameterBase>());
+                proc = ProcedureCollection.ApplyProcedurePrototype(core, transaction, functionConstantParameter.RawValue, new());
             }
             else if (procedureCall is FunctionWithParams functionWithParams)
             {
@@ -130,7 +131,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             return collection;
                         }
-
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "showcachepages":
                         {
                             var collection = new KbQueryResultCollection();
@@ -142,28 +143,33 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             result.AddField("Last Get Date");
                             result.AddField("Set Count");
                             result.AddField("Last Set Date");
+                            result.AddField("Documents");
+                            result.AddField("Materialized Count");
                             result.AddField("Key");
 
                             var cachePartitions = core.Cache.GetPartitionAllocationDetails();
 
                             foreach (var item in cachePartitions.Items.Where(o => o.Key.EndsWith(EngineConstants.DocumentPageExtension)))
                             {
-                                if (core.Cache.TryGet(item.Key, out object page))
+                                if (core.Cache.TryGet(item.Key, out var pageObject))
                                 {
+                                    if (pageObject is PhysicalDocumentPage page)
+                                    {
+                                        var values = new List<string?> {
+                                            $"{item.Partition:n0}",
+                                            $"{item.AproximateSizeInBytes:n0}",
+                                            $"{item.Created}",
+                                            $"{item.GetCount:n0}",
+                                            $"{item.LastGetDate}",
+                                            $"{item.SetCount:n0}",
+                                            $"{item.LastSetDate}",
+                                            $"{page.Documents.Count:n0}",
+                                            $"{page.Documents.Where(o => o.Value.IsMaterialized == true).Count():n0}",
+                                            $"{item.Key}"
+                                        };
+                                        result.AddRow(values);
+                                    }
                                 }
-
-                                var values = new List<string?> {
-                                    $"{item.Partition:n0}",
-                                    $"{item.AproximateSizeInBytes:n0}",
-                                    $"{item.Created}",
-                                    $"{item.GetCount:n0}",
-                                    $"{item.LastGetDate}",
-                                    $"{item.SetCount:n0}",
-                                    $"{item.LastSetDate}",
-                                    $"{item.Key}",
-                                };
-
-                                result.AddRow(values);
                             }
 
                             return collection;
@@ -249,7 +255,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                 var blockingSession = sessions.Where(o => o.Value.ProcessId == blockingTx.ProcessId).Select(o => o.Value).First();
 
                                 var blockedTxs = txSnapshots.Where(o => o.BlockedByKeys.Where(o => o.ProcessId == blockingTx.ProcessId).Any()).ToList();
-                                if (blockedTxs.Any() == false)
+                                if (blockedTxs.Count == 0)
                                 {
                                     return;
                                 }
@@ -581,7 +587,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                         wikiPrototype.Length -= 2;
                                     }
                                 }
-                                wikiPrototype.Append($")");
+                                wikiPrototype.Append(')');
                                 result.Messages.Add(new KbQueryResultMessage(wikiPrototype.ToString(), KbConstants.KbMessageType.Verbose));
 #endif
                             }
@@ -644,7 +650,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                         wikiPrototype.Length -= 2;
                                     }
                                 }
-                                wikiPrototype.Append($")");
+                                wikiPrototype.Append(')');
                                 result.Messages.Add(new KbQueryResultMessage(wikiPrototype.ToString(), KbConstants.KbMessageType.Verbose));
 #endif
                             }
@@ -708,7 +714,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                         wikiPrototype.Length -= 2;
                                     }
                                 }
-                                wikiPrototype.Append($")");
+                                wikiPrototype.Append(')');
                                 result.Messages.Add(new KbQueryResultMessage(wikiPrototype.ToString(), KbConstants.KbMessageType.Verbose));
 #endif
                             }

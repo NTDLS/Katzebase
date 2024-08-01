@@ -21,8 +21,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// Lock _core.Locking.Locks.Collection when accessing.
         /// </summary>
         public List<ObjectLockKeySnapshot> BlockedByKeys { get; set; } = new();
+
         /// <summary>
-        /// /// Lock _core.Locking.Locks.Collection when accessing.
+        /// Lock _core.Locking.Locks.Collection when accessing.
         /// </summary>
         public List<ObjectLockKeySnapshot> HeldLockKeys { get; set; } = new();
         public HashSet<string> TemporarySchemas { get; set; } = new();

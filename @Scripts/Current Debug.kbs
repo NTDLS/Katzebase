@@ -11,7 +11,7 @@ insert into test
 (First='Bridget', Last='Patterson')
 GO
 
---select * from test
+select * from test
 
 /*
 drop schema Dummyload
