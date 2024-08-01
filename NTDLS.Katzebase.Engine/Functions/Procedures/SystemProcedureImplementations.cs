@@ -62,35 +62,37 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             long totalCacheSize = 0;
                             foreach (var partition in cachePartitions.Items)
                             {
-                                totalCacheSize += partition.AproximateSizeInBytes;
+                                totalCacheSize += partition.ApproximateSizeInBytes;
                             }
 
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
                             result.AddField("Working Set");
                             result.AddField("Min. Working Set");
-                            result.AddField("Max. Working Set");
+                            result.AddField("Max. WorkingSet");
                             result.AddField("Peak Working Set");
-                            result.AddField("Paged Memory Size ");
-                            result.AddField("Nonpaged System Memory Size");
-                            result.AddField("Peak Virtual MemorySize");
-                            result.AddField("Virtual Memory Size");
-                            result.AddField("Private Memory Size");
-                            result.AddField("Total Cache Size");
+                            result.AddField("Paged Memory");
+                            result.AddField("Non-paged System Memory");
+                            result.AddField("Peak Paged Memory");
+                            result.AddField("Peak Virtual Memory");
+                            result.AddField("Virtual Memory");
+                            result.AddField("Private Memory");
+                            result.AddField("Cache Size");
 
                             var process = Process.GetCurrentProcess();
+
                             var values = new List<string?> {
-                                    $"{process.WorkingSet64:n0}",
-                                    $"{process.MinWorkingSet:n0}",
-                                    $"{process.MaxWorkingSet:n0}",
-                                    $"{process.PeakWorkingSet64:n0}",
-                                    $"{process.PagedMemorySize64:n0}",
-                                    $"{process.NonpagedSystemMemorySize64:n0}",
-                                    $"{process.PeakPagedMemorySize64:n0}",
-                                    $"{process.PeakVirtualMemorySize64:n0}",
-                                    $"{process.VirtualMemorySize64:n0}",
-                                    $"{process.PrivateMemorySize64:n0}",
-                                    $"{totalCacheSize:n0}",
+                                    $"{Formatters.FileSize(process.WorkingSet64)}",
+                                    $"{Formatters.FileSize(process.MinWorkingSet)}",
+                                    $"{Formatters.FileSize(process.MaxWorkingSet)}",
+                                    $"{Formatters.FileSize(process.PeakWorkingSet64)}",
+                                    $"{Formatters.FileSize(process.PagedMemorySize64)}",
+                                    $"{Formatters.FileSize(process.NonpagedSystemMemorySize64)}",
+                                    $"{Formatters.FileSize(process.PeakPagedMemorySize64)}",
+                                    $"{Formatters.FileSize(process.PeakVirtualMemorySize64)}",
+                                    $"{Formatters.FileSize(process.VirtualMemorySize64)}",
+                                    $"{Formatters.FileSize(process.PrivateMemorySize64)}",
+                                    $"{Formatters.FileSize(totalCacheSize)}",
                             };
 
                             result.AddRow(values);
@@ -103,12 +105,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
                             result.AddField("Partition");
-                            result.AddField("Approximate Size (B)");
+                            result.AddField("Approximate Size");
                             result.AddField("Created");
-                            result.AddField("Get Count");
-                            result.AddField("Last Get Date");
-                            result.AddField("Set Count");
-                            result.AddField("Last Set Date");
+                            result.AddField("Reads");
+                            result.AddField("Last Read");
+                            result.AddField("Writes");
+                            result.AddField("Last Write");
                             result.AddField("Key");
 
                             var cachePartitions = core.Cache.GetPartitionAllocationDetails();
@@ -117,12 +119,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             {
                                 var values = new List<string?> {
                                     $"{item.Partition:n0}",
-                                    $"{item.AproximateSizeInBytes:n0}",
+                                    $"{Formatters.FileSize(item.ApproximateSizeInBytes)}",
                                     $"{item.Created}",
-                                    $"{item.GetCount:n0}",
-                                    $"{item.LastGetDate}",
-                                    $"{item.SetCount:n0}",
-                                    $"{item.LastSetDate}",
+                                    $"{item.Reads:n0}",
+                                    $"{item.LastRead}",
+                                    $"{item.Writes:n0}",
+                                    $"{item.LastWrite}",
                                     $"{item.Key}",
                                 };
 
@@ -137,14 +139,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
                             result.AddField("Partition");
-                            result.AddField("Approximate Size (B)");
+                            result.AddField("Approximate Size");
                             result.AddField("Created");
-                            result.AddField("Get Count");
-                            result.AddField("Last Get Date");
-                            result.AddField("Set Count");
-                            result.AddField("Last Set Date");
+                            result.AddField("Reads");
+                            result.AddField("Last Read");
+                            result.AddField("Writes");
+                            result.AddField("Last Write");
                             result.AddField("Documents");
-                            result.AddField("Materialized Count");
                             result.AddField("Key");
 
                             var cachePartitions = core.Cache.GetPartitionAllocationDetails();
@@ -157,14 +158,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                     {
                                         var values = new List<string?> {
                                             $"{item.Partition:n0}",
-                                            $"{item.AproximateSizeInBytes:n0}",
+                                            $"{Formatters.FileSize(item.ApproximateSizeInBytes)}",
                                             $"{item.Created}",
-                                            $"{item.GetCount:n0}",
-                                            $"{item.LastGetDate}",
-                                            $"{item.SetCount:n0}",
-                                            $"{item.LastSetDate}",
+                                            $"{item.Reads:n0}",
+                                            $"{item.LastRead}",
+                                            $"{item.Writes:n0}",
+                                            $"{item.LastWrite}",
                                             $"{page.Documents.Count:n0}",
-                                            $"{page.Documents.Where(o => o.Value.IsMaterialized == true).Count():n0}",
                                             $"{item.Key}"
                                         };
                                         result.AddRow(values);
@@ -182,8 +182,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             result.AddField("Partition");
                             result.AddField("Allocations");
-                            result.AddField("Size (KB)");
-                            result.AddField("MaxSize (KB)");
+                            result.AddField("Size");
+                            result.AddField("Max Size");
 
                             var cachePartitions = core.Cache.GetPartitionAllocationStatistics();
 
@@ -192,8 +192,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                 var values = new List<string?> {
                                     $"{partition.Partition:n0}",
                                     $"{partition.Count:n0}",
-                                    $"{partition.SizeInKilobytes:n2}",
-                                    $"{(partition.Configuration.MaxMemoryMegabytes * 1024.0):n2}"
+                                    $"{Formatters.FileSize(partition.SizeInBytes)}",
+                                    $"{Formatters.FileSize(partition.Configuration.MaxMemoryBytes):n2}"
                                 };
 
                                 result.AddRow(values);
@@ -528,7 +528,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             core.Health.Checkpoint();
                             return new KbQueryResultCollection();
                         }
-                    case "systemscalerfunctions":
+                    case "ShowSystemScalerFunctions":
                         {
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
@@ -594,7 +594,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             return collection;
                         }
-                    case "systemprocedures":
+                    case "ShowSystemProcedures":
                         {
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
@@ -658,7 +658,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             return collection;
                         }
 
-                    case "systemaggregatefunctions":
+                    case "ShowSystemAggregateFunctions":
                         {
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();

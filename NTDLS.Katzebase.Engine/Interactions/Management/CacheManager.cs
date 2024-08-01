@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var config = new PartitionedCacheConfiguration
                 {
-                    MaxMemoryMegabytes = core.Settings.CacheMaxMemoryMegabytes,
+                    MaxMemoryBytes = core.Settings.CacheMaxMemoryMegabytes * 1024 * 1024,
                     IsCaseSensitive = false,
                     PartitionCount = core.Settings.CachePartitions > 0 ? core.Settings.CachePartitions : Environment.ProcessorCount,
                     ScavengeIntervalSeconds = core.Settings.CacheScavengeInterval > 0 ? core.Settings.CacheScavengeInterval : 30
