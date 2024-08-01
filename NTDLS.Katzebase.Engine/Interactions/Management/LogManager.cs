@@ -1,10 +1,5 @@
-﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Logging;
-using Serilog;
+﻿using Serilog;
 using System.Text;
-using static NTDLS.Katzebase.Client.KbConstants;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -28,6 +23,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         public void Verbose(string message) => Log.Verbose(message);
         public void Verbose(Exception ex) => Log.Verbose(GetExceptionText(ex));
 
+        public void Information(string message, Exception ex) => Log.Information($"{message} {GetExceptionText(ex)}");
+        public void Information(string message) => Log.Information(message);
+        public void Information(Exception ex) => Log.Information(GetExceptionText(ex));
+
         public void Warning(string message, Exception ex) => Log.Warning($"{message} {GetExceptionText(ex)}");
         public void Warning(string message) => Log.Warning(message);
         public void Warning(Exception ex) => Log.Warning(GetExceptionText(ex));
@@ -41,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         public void Fatal(Exception ex) => Log.Fatal(GetExceptionText(ex));
 
 
-        private string GetExceptionText(Exception exception)
+        private static string GetExceptionText(Exception exception)
         {
             try
             {
@@ -55,7 +54,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private string GetExceptionText(Exception exception, int level, ref StringBuilder message)
+        private static string GetExceptionText(Exception exception, int level, ref StringBuilder message)
         {
             try
             {
