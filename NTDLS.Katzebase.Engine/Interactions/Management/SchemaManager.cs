@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 catch (Exception ex)
                 {
-                    _core.Log.Error($"Failed to obtain root schema.", ex);
+                    LogManager.Error($"Failed to obtain root schema.", ex);
                     throw;
                 }
             }
@@ -103,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Error("Failed to instantiate SchemaManager.", ex);
+                LogManager.Error("Failed to instantiate SchemaManager.", ex);
                 throw;
             }
         }
@@ -141,7 +141,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to alter schema manager for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to alter schema manager for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -193,7 +193,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -221,7 +221,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to create single schema manager for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -254,7 +254,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to acquire schema children for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to acquire schema children for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -280,7 +280,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to acquire parent schema for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to acquire parent schema for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -359,7 +359,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to acquire schema for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to acquire schema for process id {transaction.ProcessId}.", ex);
                 throw;
             }
             finally
@@ -446,7 +446,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to acquire virtual schema for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to acquire virtual schema for process id {transaction.ProcessId}.", ex);
                 throw;
             }
             finally
@@ -485,7 +485,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to get schema list for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to get schema list for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }

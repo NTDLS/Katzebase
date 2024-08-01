@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to instantiate health manager.", ex);
+                LogManager.Error("Failed to instantiate health manager.", ex);
                 throw;
             }
         }
@@ -102,7 +102,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to checkpoint health manager.", ex);
+                LogManager.Error("Failed to checkpoint health manager.", ex);
                 throw;
             }
 
@@ -151,7 +151,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to increment health counter.", ex);
+                LogManager.Error("Failed to increment health counter.", ex);
                 throw;
             }
         }
@@ -199,7 +199,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to increment health counter.", ex);
+                LogManager.Error("Failed to increment health counter.", ex);
                 throw;
             }
         }
@@ -259,7 +259,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to set health counter.", ex);
+                LogManager.Error("Failed to set health counter.", ex);
                 throw;
             }
         }
@@ -309,7 +309,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to set health counter.", ex);
+                LogManager.Error("Failed to set health counter.", ex);
                 throw;
             }
         }

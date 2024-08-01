@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to instantiate index manager.", ex);
+                LogManager.Error("Failed to instantiate index manager.", ex);
                 throw;
             }
         }
@@ -79,7 +79,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to create index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to create index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -158,7 +158,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to analyze index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to analyze index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -189,7 +189,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to rebuild index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to rebuild index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -220,7 +220,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to drop index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to drop index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -335,7 +335,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to delete from index by thread.", ex);
+                LogManager.Error($"Failed to delete from index by thread.", ex);
                 throw;
             }
         }
@@ -424,7 +424,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -538,7 +538,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to delete from index by thread.", ex);
+                LogManager.Error($"Failed to delete from index by thread.", ex);
                 throw;
             }
         }
@@ -633,7 +633,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -691,7 +691,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to distill index base nodes.", ex);
+                LogManager.Error($"Failed to distill index base nodes.", ex);
                 throw;
             }
         }
@@ -748,7 +748,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to distill index leaves.", ex);
+                LogManager.Error($"Failed to distill index leaves.", ex);
                 throw;
             }
         }
@@ -762,7 +762,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -779,7 +779,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to acquire index catalog for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -805,7 +805,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to get index search tokens for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to get index search tokens for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -863,7 +863,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to locate index extent for process {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to locate index extent for process {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -892,7 +892,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to update document into indexes for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to update document into indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -918,7 +918,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -941,7 +941,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -971,7 +971,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to insert document into indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -998,7 +998,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -1047,7 +1047,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to insert document into index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -1130,13 +1130,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 catch (Exception ex)
                 {
-                    _core.Log.Error($"Failed to insert document into index for process id {param.Instance.Transaction.ProcessId}.", ex);
+                    LogManager.Error($"Failed to insert document into index for process id {param.Instance.Transaction.ProcessId}.", ex);
                     throw;
                 }
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to rebuild index by thread.", ex);
+                LogManager.Error($"Failed to rebuild index by thread.", ex);
                 throw;
             }
         }
@@ -1199,7 +1199,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to rebuild index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to rebuild index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -1225,7 +1225,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to delete document from indexes for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to delete document from indexes for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -1269,7 +1269,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to remove documents from index leaves.", ex);
+                LogManager.Error($"Failed to remove documents from index leaves.", ex);
                 throw;
             }
         }
@@ -1326,7 +1326,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to remove documents from index for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to remove documents from index for process id {transaction.ProcessId}.", ex);
                 throw;
             }
         }
@@ -1380,7 +1380,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to delete from index by thread.", ex);
+                LogManager.Error($"Failed to delete from index by thread.", ex);
                 throw;
             }
         }

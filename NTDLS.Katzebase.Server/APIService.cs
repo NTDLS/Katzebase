@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
-using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Shared;
 using NTDLS.ReliableMessaging;
 
@@ -17,20 +18,20 @@ namespace NTDLS.Katzebase.Server
             try
             {
                 string json = File.ReadAllText("appsettings.json");
-                var settings = JsonConvert.DeserializeObject<KatzebaseSettings>(json);
-                if (settings == null)
-                {
-                    throw new Exception("Failed to load settings");
-                }
+
+                var settings = JsonConvert.DeserializeObject<KatzebaseSettings>(json)
+                    ?? throw new Exception("Failed to load settings");
+
                 _settings = settings;
 
                 _core = new EngineCore(settings);
 
                 _messageServer = new RmServer();
                 _messageServer.OnException += RmServer_OnException;
+                _messageServer.OnConnected += RmServer_OnConnected;
                 _messageServer.OnDisconnected += RmServer_OnDisconnected;
 
-                _core.Log.Verbose($"Listening on {_settings.ListenPort}.");
+                LogManager.Verbose($"Listening on {_settings.ListenPort}.");
 
                 _messageServer.AddHandler(_core.Documents.APIHandlers);
                 _messageServer.AddHandler(_core.Indexes.APIHandlers);
@@ -41,7 +42,7 @@ namespace NTDLS.Katzebase.Server
             }
             catch (Exception ex)
             {
-                _core?.Log.Error(ex);
+                LogManager.Error(ex);
                 throw;
             }
         }
@@ -55,7 +56,7 @@ namespace NTDLS.Katzebase.Server
             }
             catch (Exception ex)
             {
-                _core?.Log.Error(ex);
+                LogManager.Error(ex);
                 throw;
             }
         }
@@ -64,29 +65,66 @@ namespace NTDLS.Katzebase.Server
         {
             try
             {
-                _core.Log.Verbose($"Stopping...");
+                LogManager.Verbose($"Stopping...");
                 _messageServer.Stop();
                 _core.Stop();
             }
             catch (Exception ex)
             {
-                _core?.Log.Error(ex);
+                LogManager.Error(ex);
                 throw;
             }
         }
 
+        private void RmServer_OnConnected(RmContext context)
+        {
+            LogManager.Debug($"Connected: {context.ConnectionId}");
+        }
+
         private void RmServer_OnDisconnected(RmContext context)
         {
-            _core.EnsureNotNull();
-            _core.Log.Debug($"Disconnected: {context.ConnectionId}");
+            LogManager.Debug($"Disconnected: {context.ConnectionId}");
 
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
-            _core.Sessions.CloseByProcessId(session.ProcessId);
+            if (_core.Sessions.TryGetProcessByConnection(context.ConnectionId, out var session))
+            {
+                LogManager.Debug($"Terminated PID: {session.ProcessId}");
+                _core.Sessions.CloseByProcessId(session.ProcessId);
+            }
         }
 
         private void RmServer_OnException(RmContext? context, Exception ex, IRmPayload? payload)
         {
-            _core?.Log?.Error(ex);
+            if (ex is KbExceptionBase kbEx)
+            {
+                switch (kbEx.Severity)
+                {
+                    case Client.KbConstants.KbLogSeverity.Verbose:
+                        LogManager.Verbose(ex);
+                        break;
+                    case Client.KbConstants.KbLogSeverity.Debug:
+                        LogManager.Debug(ex);
+                        break;
+                    case Client.KbConstants.KbLogSeverity.Information:
+                        LogManager.Information(ex);
+                        break;
+                    case Client.KbConstants.KbLogSeverity.Warning:
+                        LogManager.Warning(ex);
+                        break;
+                    case Client.KbConstants.KbLogSeverity.Error:
+                        LogManager.Error(ex);
+                        break;
+                    case Client.KbConstants.KbLogSeverity.Fatal:
+                        LogManager.Fatal(ex);
+                        break;
+                    default:
+                        LogManager.Warning(ex);
+                        break;
+                }
+            }
+            else
+            {
+                LogManager.Warning(ex);
+            }
         }
     }
 }

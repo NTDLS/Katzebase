@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                core.Log.Error($"Failed to instantiate schema API handlers.", ex);
+                Management.LogManager.Error($"Failed to instantiate schema API handlers.", ex);
                 throw;
             }
         }
@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Debug(Thread.CurrentThread.Name);
+            Management.LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -59,7 +59,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to get schema list for process {session.ProcessId}.", ex);
+                Management.LogManager.Error($"Failed to get schema list for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -73,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Debug(Thread.CurrentThread.Name);
+            Management.LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -92,7 +92,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to create schema lineage for process {session.ProcessId}.", ex);
+                Management.LogManager.Error($"Failed to create schema lineage for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -106,7 +106,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Debug(Thread.CurrentThread.Name);
+            Management.LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -133,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to confirm schema for process {session.ProcessId}.", ex);
+                Management.LogManager.Error($"Failed to confirm schema for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -147,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            _core.Log.Debug(Thread.CurrentThread.Name);
+            Management.LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -178,7 +178,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to drop schema for process {session.ProcessId}.", ex);
+                Management.LogManager.Error($"Failed to drop schema for process {session.ProcessId}.", ex);
                 throw;
             }
         }

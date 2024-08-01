@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to instantiate transaction query handler.", ex);
+                LogManager.Error($"Failed to instantiate transaction query handler.", ex);
                 throw;
             }
         }

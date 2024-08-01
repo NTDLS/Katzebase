@@ -8,37 +8,29 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class LogManager
     {
-        private readonly EngineCore _core;
+        public static void Debug(string message, Exception ex) => Log.Debug($"{message} {GetExceptionText(ex)}");
+        public static void Debug(string message) => Log.Debug(message);
+        public static void Debug(Exception ex) => Log.Debug(GetExceptionText(ex));
 
-        public LogManager(EngineCore core)
-        {
-            _core = core;
-        }
+        public static void Verbose(string message, Exception ex) => Log.Verbose($"{message} {GetExceptionText(ex)}");
+        public static void Verbose(string message) => Log.Verbose(message);
+        public static void Verbose(Exception ex) => Log.Verbose(GetExceptionText(ex));
 
-        public void Debug(string message, Exception ex) => Log.Debug($"{message} {GetExceptionText(ex)}");
-        public void Debug(string message) => Log.Debug(message);
-        public void Debug(Exception ex) => Log.Debug(GetExceptionText(ex));
+        public static void Information(string message, Exception ex) => Log.Information($"{message} {GetExceptionText(ex)}");
+        public static void Information(string message) => Log.Information(message);
+        public static void Information(Exception ex) => Log.Information(GetExceptionText(ex));
 
-        public void Verbose(string message, Exception ex) => Log.Verbose($"{message} {GetExceptionText(ex)}");
-        public void Verbose(string message) => Log.Verbose(message);
-        public void Verbose(Exception ex) => Log.Verbose(GetExceptionText(ex));
+        public static void Warning(string message, Exception ex) => Log.Warning($"{message} {GetExceptionText(ex)}");
+        public static void Warning(string message) => Log.Warning(message);
+        public static void Warning(Exception ex) => Log.Warning(GetExceptionText(ex));
 
-        public void Information(string message, Exception ex) => Log.Information($"{message} {GetExceptionText(ex)}");
-        public void Information(string message) => Log.Information(message);
-        public void Information(Exception ex) => Log.Information(GetExceptionText(ex));
+        public static void Error(string message, Exception ex) => Log.Error($"{message} {GetExceptionText(ex)}");
+        public static void Error(string message) => Log.Error(message);
+        public static void Error(Exception ex) => Log.Error(GetExceptionText(ex));
 
-        public void Warning(string message, Exception ex) => Log.Warning($"{message} {GetExceptionText(ex)}");
-        public void Warning(string message) => Log.Warning(message);
-        public void Warning(Exception ex) => Log.Warning(GetExceptionText(ex));
-
-        public void Error(string message, Exception ex) => Log.Error($"{message} {GetExceptionText(ex)}");
-        public void Error(string message) => Log.Error(message);
-        public void Error(Exception ex) => Log.Error(GetExceptionText(ex));
-
-        public void Fatal(string message, Exception ex) => Log.Fatal($"{message} {GetExceptionText(ex)}");
-        public void Fatal(string message) => Log.Fatal(message);
-        public void Fatal(Exception ex) => Log.Fatal(GetExceptionText(ex));
-
+        public static void Fatal(string message, Exception ex) => Log.Fatal($"{message} {GetExceptionText(ex)}");
+        public static void Fatal(string message) => Log.Fatal(message);
+        public static void Fatal(Exception ex) => Log.Fatal(GetExceptionText(ex));
 
         private static string GetExceptionText(Exception exception)
         {

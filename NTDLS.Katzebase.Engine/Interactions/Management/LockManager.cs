@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                core.Log.Error($"Failed to instantiate lock manager.", ex);
+                LogManager.Error($"Failed to instantiate lock manager.", ex);
                 throw;
             }
         }
@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to remove lock.", ex);
+                LogManager.Error($"Failed to remove lock.", ex);
                 throw;
             }
         }

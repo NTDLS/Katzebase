@@ -7,7 +7,6 @@ using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Engine.Trace;
 using NTDLS.Semaphore;
 using System.Diagnostics;
-using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
@@ -63,7 +62,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to instantiate transaction manager.", ex);
+                LogManager.Error("Failed to instantiate transaction manager.", ex);
                 throw;
             }
         }
@@ -76,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to get transaction by process id for process id {processId}.", ex);
+                LogManager.Error($"Failed to get transaction by process id for process id {processId}.", ex);
                 throw;
             }
         }
@@ -96,7 +95,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to remove transaction by process id for process {processId}.", ex);
+                LogManager.Error($"Failed to remove transaction by process id for process {processId}.", ex);
                 throw;
             }
         }
@@ -124,7 +123,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to remove transactions by processID.", ex);
+                LogManager.Error($"Failed to remove transactions by processID.", ex);
                 throw;
             }
         }
@@ -140,7 +139,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (transactionFiles.Count != 0)
                 {
-                    _core.Log.Warning($"Found {transactionFiles.Count} open transactions.");
+                    LogManager.Warning($"Found {transactionFiles.Count} open transactions.");
                 }
 
                 foreach (string transactionFile in transactionFiles)
@@ -157,7 +156,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         transaction.Atoms.Write((obj) => obj.Add(ra));
                     }
 
-                    _core.Log.Warning($"Rolling back session {transaction.ProcessId} with {atoms.Count} actions.");
+                    LogManager.Warning($"Rolling back session {transaction.ProcessId} with {atoms.Count} actions.");
 
                     try
                     {
@@ -165,13 +164,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                     catch (Exception ex)
                     {
-                        _core.Log.Error($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
+                        LogManager.Error($"Failed to rollback transaction for process {transaction.ProcessId}.", ex);
                     }
                 }
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to recover uncommitted transactions.", ex);
+                LogManager.Error("Failed to recover uncommitted transactions.", ex);
                 throw;
             }
         }
@@ -220,7 +219,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to acquire transaction for process {session.ProcessId}.", ex);
+                LogManager.Error($"Failed to acquire transaction for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -236,7 +235,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to commit transaction for process {processId}.", ex);
+                LogManager.Error($"Failed to commit transaction for process {processId}.", ex);
                 throw;
             }
         }
@@ -252,7 +251,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to rollback transaction for process {processId}.", ex);
+                LogManager.Error($"Failed to rollback transaction for process {processId}.", ex);
                 throw;
             }
         }

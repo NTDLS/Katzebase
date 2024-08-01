@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Semaphore;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -28,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to instantiate session manager.", ex);
+                LogManager.Error($"Failed to instantiate session manager.", ex);
                 throw;
             }
         }
@@ -44,9 +45,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 try
                 {
-                    if (obj.ContainsKey(connectionId))
+                    if (obj.TryGetValue(connectionId, out SessionState? value))
                     {
-                        var session = obj[connectionId];
+                        var session = value;
                         session.LastCheckInTime = DateTime.UtcNow;
                         return session;
                     }
@@ -66,7 +67,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 catch (Exception ex)
                 {
-                    _core.Log.Error($"Failed to upsert session for session {connectionId}.", ex);
+                    LogManager.Error($"Failed to upsert session for session {connectionId}.", ex);
                     throw;
                 }
             });
@@ -96,14 +97,32 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (wasLockObtained == false)
                 {
-                    _core.Log.Warning($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.");
+                    LogManager.Warning($"Lock timeout expired while removing session. The task will be deferred to the heartbeat manager.");
                 }
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to remove sessions by processIDs.", ex);
+                LogManager.Error($"Failed to remove sessions by processIDs.", ex);
                 throw;
             }
+        }
+
+        public bool TryGetProcessByConnection(Guid connectionId, [NotNullWhen(true)] out SessionState? value)
+        {
+            value = _collection.Read((obj) =>
+            {
+                if (obj.TryGetValue(connectionId, out var value))
+                {
+                    return value;
+                }
+                return null;
+            });
+
+            if (value != null)
+            {
+                return true;
+            }
+            return false;
         }
 
         public SessionState ByProcessId(ulong processId)
@@ -121,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 catch (Exception ex)
                 {
-                    _core.Log.Error($"Failed to get session state by process id for process id {processId}.", ex);
+                    LogManager.Error($"Failed to get session state by process id for process id {processId}.", ex);
                     throw;
                 }
             });

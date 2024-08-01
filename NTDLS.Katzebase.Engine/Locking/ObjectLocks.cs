@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to remove lock.", ex);
+                Interactions.Management.LogManager.Error("Failed to remove lock.", ex);
                 throw;
             }
         }
@@ -349,7 +349,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to acquire lock for process {transaction.ProcessId}.", ex);
+                Interactions.Management.LogManager.Error($"Failed to acquire lock for process {transaction.ProcessId}.", ex);
                 throw;
             }
             finally

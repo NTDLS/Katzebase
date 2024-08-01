@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to instantiate index query handler.", ex);
+                Management.LogManager.Error($"Failed to instantiate index query handler.", ex);
                 throw;
             }
         }
@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to execute index drop for process id {session.ProcessId}.", ex);
+                Management.LogManager.Error($"Failed to execute index drop for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to execute index rebuild for process id {session.ProcessId}.", ex);
+                Management.LogManager.Error($"Failed to execute index rebuild for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -91,7 +91,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to execute index rebuild for process id {session.ProcessId}.", ex);
+                Management.LogManager.Error($"Failed to execute index rebuild for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -131,7 +131,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to execute index create for process id {session.ProcessId}.", ex);
+                Management.LogManager.Error($"Failed to execute index create for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

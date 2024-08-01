@@ -58,10 +58,10 @@ namespace NTDLS.Katzebase.Server
         {
             Log.Logger = new LoggerConfiguration()
                  .WriteTo.Console()
-                 .MinimumLevel.Verbose()
+                 .MinimumLevel.Debug()
                  .CreateLogger();
 
-            HostLogger.UseLogger(new NullLogWriterFactory()); //Prevent topshelf from polluting the console.
+            HostLogger.UseLogger(new NullLogWriterFactory()); //Prevent top-shelf from polluting the console.
 
             HostFactory.Run(x =>
             {

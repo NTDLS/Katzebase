@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to instantiate environment query handler.", ex);
+                Management.LogManager.Error($"Failed to instantiate environment query handler.", ex);
                 throw;
             }
         }
@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
             catch (Exception ex)
             {
-                _core.Log.Error($"Failed to execute environment alter for process id {session.ProcessId}.", ex);
+                Management.LogManager.Error($"Failed to execute environment alter for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

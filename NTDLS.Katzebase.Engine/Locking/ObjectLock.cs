@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to issue single use lock key.", ex);
+                Interactions.Management.LogManager.Error("Failed to issue single use lock key.", ex);
                 throw;
             }
         }
@@ -87,7 +87,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
             catch (Exception ex)
             {
-                _core.Log.Error("Failed to put turn in lock key.", ex);
+                Interactions.Management.LogManager.Error("Failed to put turn in lock key.", ex);
                 throw;
             }
         }

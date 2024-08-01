@@ -16,7 +16,7 @@
             }
             catch (Exception ex)
             {
-                core.Log.Error($"Failed to instantiate environment API handlers.", ex);
+                Management.LogManager.Error($"Failed to instantiate environment API handlers.", ex);
                 throw;
             }
         }
