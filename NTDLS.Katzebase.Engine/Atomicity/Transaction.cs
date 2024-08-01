@@ -14,7 +14,7 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 namespace NTDLS.Katzebase.Engine.Atomicity
 {
     /// <summary>
-    /// A collection og reversable work and deferred IO.
+    /// A collection of reversable work and deferred IO.
     /// </summary>
     internal class Transaction : IDisposable
     {
