@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Atomicity;
+using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -51,6 +52,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return IsMatch(transaction, passedValue, LogicalQualifier, Right.Value);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchGreaterOrEqual(Transaction transaction, double? left, double? right)
         {
             if (left != null && right != null)
@@ -61,6 +63,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchLesserOrEqual(Transaction transaction, double? left, double? right)
         {
             if (left != null && right != null)
@@ -71,6 +74,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchGreaterOrEqual(Transaction transaction, string? left, string? right)
         {
             if (left != null && right != null && int.TryParse(left, out var iLeft))
@@ -85,6 +89,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchLesserOrEqual(Transaction transaction, string? left, string? right)
         {
             if (left != null && right != null && int.TryParse(left, out var iLeft))
@@ -99,6 +104,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchGreater(Transaction transaction, double? left, double? right)
         {
             if (left != null && right != null)
@@ -109,6 +115,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchLesser(Transaction transaction, double? left, double? right)
         {
             if (left != null && right != null)
@@ -119,6 +126,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchGreater(Transaction transaction, string? left, string? right)
         {
             if (left != null && right != null && int.TryParse(left, out var iLeft))
@@ -133,6 +141,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchLesser(Transaction transaction, string? left, string? right)
         {
             if (left != null && right != null && int.TryParse(left, out var iLeft))
@@ -146,6 +155,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchLike(Transaction transaction, string? input, string? pattern)
         {
             if (input == null || pattern == null)
@@ -158,6 +168,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return Regex.IsMatch(input, regexPattern);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchBetween(Transaction transaction, double? value, double? rangeLow, double? rangeHigh)
         {
             if (value == null || rangeLow == null || rangeHigh == null)
@@ -168,6 +179,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return value >= rangeLow && value <= rangeHigh;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchBetween(Transaction transaction, string? input, string? pattern)
         {
             if (input == null || pattern == null)
@@ -199,16 +211,13 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return value >= rangeLeft && value <= rangeRight;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchEqual(Transaction transaction, string? left, string? right)
         {
-            if (left != null && right != null)
-            {
-                return left == right;
-            }
-            transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
-            return null;
+            return left == right;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsMatch(Transaction transaction, string? leftString, LogicalQualifier logicalQualifier, string? rightString)
         {
             if (logicalQualifier == LogicalQualifier.Equals)
