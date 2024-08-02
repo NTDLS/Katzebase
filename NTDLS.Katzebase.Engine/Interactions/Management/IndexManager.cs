@@ -103,6 +103,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 double diskSize = 0;
                 double decompressedSiskSize = 0;
 
+                int rootNodes = 0;
+
                 for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
                 {
                     string pageDiskPath = physicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
@@ -110,6 +112,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     diskSize += _core.IO.GetDecompressedSizeTracked(pageDiskPath);
                     decompressedSiskSize += new FileInfo(pageDiskPath).Length;
                     physicalIndexPageMapDistilledLeaves.Add(DistillIndexBaseNodes(physicalIndexPageMap[indexPartition].Root));
+                    rootNodes += physicalIndexPageMap[indexPartition].Root.Children.Count();
+
                 }
 
                 var combinedNodes = physicalIndexPageMapDistilledLeaves.SelectMany(o => o);
@@ -139,7 +143,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 builder.AppendLine($"    Disk Size         : {decompressedSiskSize / 1024.0:N2}k");
                 builder.AppendLine($"    Compression Ratio : {decompressedSiskSize / diskSize * 100.0:N2}");
                 builder.AppendLine($"    Node Count        : {combinedNodes.Sum(o => o.Documents?.Count ?? 0):N0}");
-                builder.AppendLine($"    Root Node Count   : {combinedNodes.Count():N0}");
+                builder.AppendLine($"    Root Node Count   : {rootNodes:N0}");
+                builder.AppendLine($"    Distinct Nodes    : {combinedNodes.Count():N0}");
                 builder.AppendLine($"    Max. Node Depth   : {physicalIndex.Attributes.Count:N0}");
                 builder.AppendLine($"    Min. Node Density : {minDocumentsPerNode:N0}");
                 builder.AppendLine($"    Max. Node Density : {maxDocumentsPerNode:N0}" + (maxDocumentsPerNode == 1 ? " (unique)" : ""));

@@ -1,5 +1,14 @@
-select SourceWordId, TargetWordId from WordList:Translation
-where SourceWordId = 817215	and TargetWordId = 792861
+ANALYZE INDEX ix_Translation ON WordList:Translation
+
+/*
+CREATE INDEX ix_Language (
+	Name
+) ON WordList:Language WITH(PARTITIONS = 1)
+
+drop index ix_Language ON WordList:Language
+*/
+--select SourceWordId, TargetWordId from WordList:Translation
+--where SourceWordId = 817215	and TargetWordId = 792861
 
 /*
 SELECT
