@@ -320,13 +320,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
 
-                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Read, out var parentSchemaCatalogLockKey) == false)
+                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath,  LockOperation.Stability, out var parentSchemaCatalogLockKey) == false)
                     {
                         throw new KbObjectNotFoundException($"The schema [{schemaName}] does not exist.");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
-                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Read, out var schemaCatalogLockKey);
+                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), intendedOperation, out var schemaCatalogLockKey);
 
                     var physicalSchema = parentCatalog.GetByName(thisSchemaName);
                     if (physicalSchema != null)
@@ -351,8 +351,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     //We want to acquire the locks as usual, but we do not want to retain a full lock because it causes
                     //  unnecessary blocking. So we will instead convert these locks to "stability" locks so we do not block
                     //  read/writes but only block deletes.
-                    transaction.ConvertLockToStability(parentSchemaCatalogLockKey);
-                    transaction.ConvertLockToStability(schemaCatalogLockKey);
+                    //transaction.ConvertLockToStability(parentSchemaCatalogLockKey);
+                    //transaction.ConvertLockToStability(schemaCatalogLockKey);
 
                     return physicalSchema;
                 }
@@ -403,13 +403,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
 
-                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Read, out var parentSchemaCatalogLockKey) == false)
+                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var parentSchemaCatalogLockKey) == false)
                     {
                         throw new KbObjectNotFoundException($"The schema [{schemaName}] does not exist.");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
-                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Read, out var schemaCatalogLockKey);
+                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), intendedOperation, out var schemaCatalogLockKey);
 
                     var virtualSchema = parentCatalog.GetByName(parentSchemaName)?.ToVirtual();
                     if (virtualSchema != null)
@@ -438,8 +438,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     //We want to acquire the locks as usual, but we do not want to retain a full lock because it causes
                     //  unnecessary blocking. So we will instead convert these locks to "stability" locks so we do not block
                     //  read/writes but only block deletes.
-                    transaction.ConvertLockToStability(parentSchemaCatalogLockKey);
-                    transaction.ConvertLockToStability(schemaCatalogLockKey);
+                    //transaction.ConvertLockToStability(parentSchemaCatalogLockKey);
+                    //transaction.ConvertLockToStability(schemaCatalogLockKey);
 
                     return virtualSchema;
                 }

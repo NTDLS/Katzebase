@@ -181,6 +181,16 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             });
         }
 
+        internal void ReleaseLock(ObjectLockKey objectLock)
+        {
+            GrantedLockCache.Write((obj) => obj.Remove(objectLock.Key));
+
+            HeldLockKeys.Write((obj) =>
+            {
+                obj.Remove(objectLock);
+            });
+        }
+
         public void EnsureActive()
         {
             if (IsCancelled)
@@ -230,14 +240,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         #endregion
 
         #region Locking Helpers.
-
-        public void ConvertLockToStability(ObjectLockKey? lockKey)
-        {
-            if (lockKey != null)
-            {
-                _core.Locking.Locks.ConvertToStability(this, lockKey);
-            }
-        }
 
         public ObjectLockKey? LockFile(LockOperation lockOperation, string diskPath)
         {

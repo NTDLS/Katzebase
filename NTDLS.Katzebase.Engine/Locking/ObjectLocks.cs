@@ -97,18 +97,6 @@ namespace NTDLS.Katzebase.Engine.Locking
             return lockKey;
         }
 
-        /// <summary>
-        /// Allows the lock-key to be converted to an stability lock. This is used when we need to
-        /// temporarily lock an object in a long running transaction but do not want to keep the aggressive lock.
-        /// </summary>
-        public void ConvertToStability(Transaction transaction, ObjectLockKey lockKey)
-            => transaction.GrantedLockCache.Write((obj) =>
-            {
-                obj.Remove(lockKey.Key);
-                lockKey.ConvertToStability();
-                obj.Add(lockKey.Key);
-            });
-
         private ObjectLockKey AcquireInternal(Transaction transaction, ObjectLockIntention intention)
         {
             try
@@ -156,7 +144,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                             var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
                                 .Where(o => (o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
 
-                            if (blockers.Count != 0)
+                            if (blockers.Count == 0)
                             {
                                 transaction.BlockedByKeys.Write((obj) => obj.Clear());
 
@@ -195,7 +183,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                                 .Where(o => (o.Operation == LockOperation.Write || o.Operation == LockOperation.Delete)
                                 && o.ProcessId != transaction.ProcessId).ToList();
 
-                            if (blockers.Any() == false)
+                            if (blockers.Count == 0)
                             {
                                 transaction.BlockedByKeys.Write((obj) => obj.Clear());
 
@@ -233,7 +221,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                             var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
                                 .Where(o => o.Operation != LockOperation.Stability && o.ProcessId != transaction.ProcessId).ToList();
 
-                            if (blockers.Any() == false)
+                            if (blockers.Count == 0)
                             {
                                 transaction.BlockedByKeys.Write((obj) => obj.Clear());
 
@@ -271,7 +259,7 @@ namespace NTDLS.Katzebase.Engine.Locking
                             var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
                                 .Where(o => o.ProcessId != transaction.ProcessId).ToList();
 
-                            if (blockers.Any() == false) //If there are no existing un-owned locks.
+                            if (blockers.Count == 0) //If there are no existing un-owned locks.
                             {
                                 transaction.BlockedByKeys.Write((obj) => obj.Clear());
 

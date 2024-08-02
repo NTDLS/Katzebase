@@ -15,16 +15,6 @@ namespace NTDLS.Katzebase.Engine.Locking
         public void TurnInKey()
             => ObjectLock.TurnInKey(this);
 
-        /// <summary>
-        /// Allows the lock-key to be converted to an observation lock. This is used when we need to
-        /// temporarily lock an object in a long running transaction but do not want to keep the aggressive lock.
-        /// 
-        /// NOTE: Since the lock manager (ObjectLock) housed in the transaction typically caches the acquired
-        /// locks, this function should not be called directly but should only be called via ObjectLock.ConvertToStability(...).
-        /// </summary>
-        internal void ConvertToStability()
-            => Operation = LockOperation.Stability;
-
         public ObjectLockKey(ObjectLock objectLock, ulong processId, LockOperation operation)
         {
             IssueTime = DateTime.UtcNow;
