@@ -138,8 +138,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 builder.AppendLine($"    Pages Size        : {diskSize / 1024.0:N2}k");
                 builder.AppendLine($"    Disk Size         : {decompressedSiskSize / 1024.0:N2}k");
                 builder.AppendLine($"    Compression Ratio : {decompressedSiskSize / diskSize * 100.0:N2}");
-                builder.AppendLine($"    Root Node Count   : {combinedNodes.Sum(o => o.Documents?.Count ?? 0):N0}");
-                builder.AppendLine($"    Node Level Count  : {physicalIndex.Attributes.Count:N0}");
+                builder.AppendLine($"    Node Count        : {combinedNodes.Sum(o => o.Documents?.Count ?? 0):N0}");
+                builder.AppendLine($"    Root Node Count   : {combinedNodes.Count():N0}");
+                builder.AppendLine($"    Max. Node Depth   : {physicalIndex.Attributes.Count:N0}");
                 builder.AppendLine($"    Min. Node Density : {minDocumentsPerNode:N0}");
                 builder.AppendLine($"    Max. Node Density : {maxDocumentsPerNode:N0}" + (maxDocumentsPerNode == 1 ? " (unique)" : ""));
                 builder.AppendLine($"    Avg. Node Density : {avgDocumentsPerNode:N2}");
