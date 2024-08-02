@@ -108,6 +108,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 if (_value == "null")
                 {
+                    IsConstant = true;
                     _value = null;
                 }
 
