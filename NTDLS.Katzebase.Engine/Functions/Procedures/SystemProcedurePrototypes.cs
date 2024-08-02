@@ -13,6 +13,7 @@
                 "ClearHealthCounters:",
                 "ReleaseCacheAllocations:",
                 "ShowBlocks:Numeric/processId=null",
+                "Terminate:Numeric/processId",
                 "ShowBlockTree:",
                 "ShowCacheAllocations:",
                 "ShowCachePages:",

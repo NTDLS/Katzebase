@@ -11,6 +11,7 @@ using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Query;
 using System.Diagnostics;
 using System.Text;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
@@ -377,6 +378,18 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             return collection;
                         }
                     //---------------------------------------------------------------------------------------------------------------------------
+                    case "terminate":
+                        {
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
+
+                            var processId = proc.Parameters.Get<ulong>("processId");
+
+                            core.Sessions.CloseByProcessId(processId);
+
+                            return  new KbQueryResultCollection();
+                        }
+                    //---------------------------------------------------------------------------------------------------------------------------
                     case "showblocks":
                         {
                             var collection = new KbQueryResultCollection();
@@ -528,7 +541,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             core.Health.Checkpoint();
                             return new KbQueryResultCollection();
                         }
-                    case "ShowSystemScalerFunctions":
+                    case "showsystemscalerfunctions":
                         {
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
@@ -594,7 +607,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             return collection;
                         }
-                    case "ShowSystemProcedures":
+                    case "showsystemprocedures":
                         {
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
@@ -658,7 +671,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             return collection;
                         }
 
-                    case "ShowSystemAggregateFunctions":
+                    case "showsystemaggregatefunctions":
                         {
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();
