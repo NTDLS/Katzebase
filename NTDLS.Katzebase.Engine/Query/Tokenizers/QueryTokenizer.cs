@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using System.Text.RegularExpressions;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 {
@@ -121,6 +122,20 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
                 }
             }
             return false;
+        }
+
+        public bool IsNextTokenStartOfQuery()
+        {
+            return IsNextTokenStartOfQuery(out var _);
+        }
+
+        public bool IsNextTokenStartOfQuery(out QueryType type)
+        {
+            var token = PeekNextToken().ToLowerInvariant();
+
+            return Enum.TryParse(token, true, out type) //Enum parse.
+                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lienient.
+                && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
         }
 
         public bool IsNotNextToken(string[] tokens)
