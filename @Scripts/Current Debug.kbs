@@ -1,9 +1,26 @@
 select top 10
 	W.Id,
 	W.Text,
-	L.Name as Language,
+	O.Text
+	--'Text' as Value
+from
+	WordList:Word as W
+inner join WordList:Translation as T
+	on T.SourceWordId = W.Id
+inner join WordList:Word as O
+	on O.Id = T.TargetWordId
+WHERE
+	W.Text = 'Moon'
+	
+	
+/*
+select top 10
+	W.Id,
+	W.Text,
+	L.Name as Language
 	'Text' as Value
 from
 	WordList:Word as W
 inner join WordList:Language as L
 	on L.Id = W.LanguageId
+*/

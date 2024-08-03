@@ -534,6 +534,12 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                     FillInSchemaResultDocumentValues(param, currentSchemaKVP.Key, documentPointer, ref resultingRow, threadScopedContentCache);
 
+                    //Since FillInSchemaResultDocumentValues() will produce a single row, this is where we can fill in any of the constant values.
+                    foreach (var field in param.Query.SelectFields.OfType<FunctionConstantParameter>())
+                    {
+                        resultingRow.InsertValue(field.Alias, field.Ordinal, field.FinalValue);
+                    }
+
                     if (skipSchemaCount < param.SchemaMap.Count - 1)
                     {
                         IntersectAllSchemasRecursive(param, skipSchemaCount + 1, ref resultingRow, ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
@@ -600,6 +606,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
+        /// <summary>
+        /// This function will "produce" a single row.
+        /// </summary>
         private static void FillInSchemaResultDocumentValues(LookupThreadInstance param, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
