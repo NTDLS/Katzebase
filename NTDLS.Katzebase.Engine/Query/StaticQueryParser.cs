@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
             string token;
 
-            if(query.IsNextTokenStartOfQuery(out var queryType) == false)
+            if (query.IsNextTokenStartOfQuery(out var queryType) == false)
             {
                 string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
                 throw new KbParserException($"Invalid query. Found '{query.PeekNextToken()}', expected: '{acceptableValues}'.");

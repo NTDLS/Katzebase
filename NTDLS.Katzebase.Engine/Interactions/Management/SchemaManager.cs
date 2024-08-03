@@ -320,7 +320,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
 
-                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath,  LockOperation.Stability, out var parentSchemaCatalogLockKey) == false)
+                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var parentSchemaCatalogLockKey) == false)
                     {
                         throw new KbObjectNotFoundException($"The schema [{schemaName}] does not exist.");
                     }

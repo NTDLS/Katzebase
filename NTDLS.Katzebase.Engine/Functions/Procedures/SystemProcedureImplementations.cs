@@ -11,7 +11,6 @@ using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Query;
 using System.Diagnostics;
 using System.Text;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
@@ -387,7 +386,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             core.Sessions.CloseByProcessId(processId);
 
-                            return  new KbQueryResultCollection();
+                            return new KbQueryResultCollection();
                         }
                     //---------------------------------------------------------------------------------------------------------------------------
                     case "showblocks":
