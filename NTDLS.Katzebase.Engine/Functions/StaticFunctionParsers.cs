@@ -786,9 +786,15 @@ namespace NTDLS.Katzebase.Engine.Functions
                             throw new KbParserException("Unexpected empty token found at end of statement.");
                         }
 
-                        if (param.Length > 0 && char.IsDigit(param[0]))
+                        if (param.Length > 0)
                         {
-                            isComplex = true;
+                            var str = param.ToString();
+
+                            //Is the parameter a number or a string?
+                            if (char.IsDigit(str[0]) || (str.StartsWith('$') && str.EndsWith('$')))
+                            {
+                                isComplex = true;
+                            }
                         }
 
                         if (alias == null || alias == string.Empty)
@@ -803,7 +809,12 @@ namespace NTDLS.Katzebase.Engine.Functions
                             }
                         }
 
-                        preparseFields.Add(new PreparseField { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
+                        preparseFields.Add(new PreparseField
+                        {
+                            Text = param.ToString(),
+                            Alias = alias,
+                            IsComplex = isComplex
+                        });
 
                         //Done with this parameter.
                         query.SkipWhile(',');

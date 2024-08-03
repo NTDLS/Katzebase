@@ -688,7 +688,6 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, selectIntoSchema);
 
                     result.QueryType = QueryType.SelectInto;
-
                 }
 
                 if (query.IsNextToken("from"))

@@ -1,8 +1,9 @@
 select top 10
-	w.Text
+	W.Id,
+	W.Text,
+	L.Name as Language,
+	'Text' as Value
 from
 	WordList:Word as W
 inner join WordList:Language as L
 	on L.Id = W.LanguageId
-	
-select * from Testh
