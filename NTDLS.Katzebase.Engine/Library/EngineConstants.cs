@@ -2,17 +2,18 @@
 {
     public static class EngineConstants
     {
-        public static string IndexPageExtension { get; } = ".kbixpage";
-        public static string DocumentPageExtension { get; } = ".kbpage";
-        public static string DocumentPageDocumentIdExtension { get; } = ".kbmap";
-        public static string SchemaCatalogFile { get; } = "@schemas.kbcat";
-        public static string DocumentPageCatalogFile { get; } = "@pages.kbcat";
-        public static string IndexCatalogFile { get; } = "@indexes.kbcat";
-        public static string ProcedureCatalogFile { get; } = "@procedures.kbcat";
-        public static string LoginCatalogFile { get; } = "@logins.kbcat";
-        public static string TransactionActionsFile { get; } = "@transaction.kbatom";
-        public static string HealthStatsFile { get; } = "@health.kblog";
-        public static Guid RootSchemaGUID { get; } = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
+        public const string IndexPageExtension = ".kbixpage";
+        public const string DocumentPageExtension = ".kbpage";
+        public const string DocumentPageDocumentIdExtension = ".kbmap";
+        public const string SchemaCatalogFile = "@schemas.kbcat";
+        public const string DocumentPageCatalogFile = "@pages.kbcat";
+        public const string IndexCatalogFile = "@indexes.kbcat";
+        public const string ProcedureCatalogFile = "@procedures.kbcat";
+        public const string LoginCatalogFile = "@logins.kbcat";
+        public const string TransactionActionsFile = "@transaction.kbatom";
+        public const string HealthStatsFile = "@health.kblog";
+        public static readonly Guid RootSchemaGUID = Guid.Parse("0AABFAFA-5736-4BD9-BA74-E4998E137528");
+        public const string UIDMarker = "$UID$";
 
         public enum IOFormat
         {

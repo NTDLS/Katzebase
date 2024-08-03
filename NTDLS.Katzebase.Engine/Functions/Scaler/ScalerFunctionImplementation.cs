@@ -6,6 +6,7 @@ using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using System.Globalization;
 using System.Text;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
@@ -135,12 +136,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             {
                 case "documentuid":
                     {
-                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$");
+                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.{UIDMarker}");
                         return rowId.Value;
                     }
                 case "documentid":
                     {
-                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$");
+                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.{UIDMarker}");
                         if (rowId.Value == null)
                         {
                             return null;
@@ -149,7 +150,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     }
                 case "documentpage":
                     {
-                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.$UID$");
+                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.{UIDMarker}");
                         if (rowId.Value == null)
                         {
                             return null;

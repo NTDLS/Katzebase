@@ -10,6 +10,8 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -102,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     break;
                 }
 
-                var envelope = new LookupThreadParameterEnvelope(instance, documentPointer);
+                var envelope = new LookupThreadInstance.LookupThreadParameterEnvelope(instance, documentPointer);
 
                 var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
                 threadPoolQueue.Enqueue(envelope, LookupThreadWorker);
@@ -244,91 +246,57 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         #region Threading.
 
-        private class LookupThreadParameterEnvelope
-        {
-            public LookupThreadInstance Instance { get; set; }
-            public DocumentPointer DocumentPointer { get; set; }
-
-            public LookupThreadParameterEnvelope(LookupThreadInstance instance, DocumentPointer documentPointer)
-            {
-                Instance = instance;
-                DocumentPointer = documentPointer;
-            }
-        }
-
-        private class LookupThreadInstance
-        {
-            public string? GatherDocumentPointersForSchemaPrefix { get; set; } = null;
-            public SchemaIntersectionRowCollection Results { get; set; } = new();
-            public List<DocumentPointer> DocumentPointers { get; set; } = new();
-
-            public DocumentLookupResults Results_old = new();
-            public QuerySchemaMap SchemaMap { get; private set; }
-            public EngineCore Core { get; private set; }
-            public Transaction Transaction { get; private set; }
-            public PreparedQuery Query { get; private set; }
-
-            public LookupThreadInstance(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
-            {
-                GatherDocumentPointersForSchemaPrefix = gatherDocumentPointersForSchemaPrefix;
-                Core = core;
-                Transaction = transaction;
-                SchemaMap = schemaMap;
-                Query = query;
-            }
-        }
-
         private static void LookupThreadWorker(object? parameter)
         {
-            var param = (LookupThreadParameterEnvelope)parameter.EnsureNotNull();
+            var instanceEnvelope = parameter.EnsureNotNull<LookupThreadInstance.LookupThreadParameterEnvelope>();
 
-            param.Instance.Transaction.EnsureActive();
+            instanceEnvelope.Instance.Transaction.EnsureActive();
 
             var resultingRows = new SchemaIntersectionRowCollection();
 
-            IntersectAllSchemas(param.Instance, param.DocumentPointer, ref resultingRows);
+            IntersectAllSchemas(instanceEnvelope, instanceEnvelope.DocumentPointer, ref resultingRows);
 
             //Limit the results by the rows that have the correct number of schema matches.
             //TODO: This could probably be used to implement OUTER JOINS.
-            if (param.Instance.GatherDocumentPointersForSchemaPrefix == null)
+            if (instanceEnvelope.Instance.GatherDocumentPointersForSchemaPrefix == null)
             {
-                resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaKeys.Count == param.Instance.SchemaMap.Count).ToList();
+                resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaKeys.Count == instanceEnvelope.Instance.SchemaMap.Count).ToList();
             }
             else
             {
-                resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaDocumentPointers.Count == param.Instance.SchemaMap.Count).ToList();
+                resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaDocumentPointers.Count == instanceEnvelope.Instance.SchemaMap.Count).ToList();
             }
 
             //Execute functions
-            if (param.Instance.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
+            if (instanceEnvelope.Instance.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
-                lock (param.Instance.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
+                lock (instanceEnvelope.Instance.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
                 {
-                    ExecuteFunctions(param.Instance.Transaction, param.Instance, resultingRows);
+                    ExecuteFunctions(instanceEnvelope.Instance.Transaction, instanceEnvelope.Instance, resultingRows);
                 }
             }
             else
             {
-                ExecuteFunctions(param.Instance.Transaction, param.Instance, resultingRows);
+                ExecuteFunctions(instanceEnvelope.Instance.Transaction, instanceEnvelope.Instance, resultingRows);
             }
 
-            lock (param.Instance.Results)
+            lock (instanceEnvelope.Instance.Results)
             {
                 //Accumulate the results up to the parent.
-                if (param.Instance.GatherDocumentPointersForSchemaPrefix == null)
+                if (instanceEnvelope.Instance.GatherDocumentPointersForSchemaPrefix == null)
                 {
-                    param.Instance.Results.AddRange(resultingRows);
+                    instanceEnvelope.Instance.Results.AddRange(resultingRows);
                 }
                 else
                 {
-                    param.Instance.DocumentPointers.AddRange(resultingRows.Collection.Select(o => o.SchemaDocumentPointers[param.Instance.GatherDocumentPointersForSchemaPrefix]));
+                    instanceEnvelope.Instance.DocumentPointers.AddRange(resultingRows.Collection.Select(o => o.SchemaDocumentPointers[instanceEnvelope.Instance.GatherDocumentPointersForSchemaPrefix]));
                 }
             }
         }
 
-        static void ExecuteFunctions(Transaction transaction, LookupThreadInstance param, SchemaIntersectionRowCollection resultingRows)
+        static void ExecuteFunctions(Transaction transaction, LookupThreadInstance instance, SchemaIntersectionRowCollection resultingRows)
         {
-            foreach (var methodField in param.Query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
+            foreach (var methodField in instance.Query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
             {
                 foreach (var row in resultingRows.Collection)
                 {
@@ -336,7 +304,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
 
                     //Lets make the method results available for sorting, grouping, etc.
-                    var field = param.Query.SortFields.SingleOrDefault(o => o.Field == methodField.Alias);
+                    var field = instance.Query.SortFields.SingleOrDefault(o => o.Field == methodField.Alias);
                     if (field != null && row.AuxiliaryFields.ContainsKey(field.Alias) == false)
                     {
                         row.AuxiliaryFields.Add(field.Alias, methodResult);
@@ -344,7 +312,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 }
             }
 
-            foreach (var methodField in param.Query.SelectFields.OfType<FunctionExpression>())
+            foreach (var methodField in instance.Query.SelectFields.OfType<FunctionExpression>())
             {
                 foreach (var row in resultingRows.Collection)
                 {
@@ -352,7 +320,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     row.InsertValue(methodField.Alias, methodField.Ordinal, methodResult);
 
                     //Lets make the method results available for sorting, grouping, etc.
-                    var field = param.Query.SortFields.SingleOrDefault(o => o.Alias == methodField.Alias);
+                    var field = instance.Query.SortFields.SingleOrDefault(o => o.Alias == methodField.Alias);
                     if (field != null && row.AuxiliaryFields.ContainsKey(field.Alias) == false)
                     {
                         row.AuxiliaryFields.Add(field.Alias, methodResult);
@@ -363,13 +331,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         #endregion
 
-        private static void IntersectAllSchemas(LookupThreadInstance param,
+        private static void IntersectAllSchemas(LookupThreadInstance.LookupThreadParameterEnvelope instance,
             DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection resultingRows)
         {
-            var topLevelSchemaMap = param.SchemaMap.First();
+            var topLevelSchemaMap = instance.Instance.SchemaMap.First();
 
-            var topLevelPhysicalDocument = param.Core.Documents.AcquireDocument
-                (param.Transaction, topLevelSchemaMap.Value.PhysicalSchema, topLevelDocumentPointer, LockOperation.Read);
+            var topLevelPhysicalDocument = instance.Instance.Core.Documents.AcquireDocument
+                (instance.Instance.Transaction, topLevelSchemaMap.Value.PhysicalSchema, topLevelDocumentPointer, LockOperation.Read);
 
             var threadScopedContentCache = new KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>
             {
@@ -388,33 +356,33 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 resultingRows.Add(resultingRow);
             }
 
-            if (param.GatherDocumentPointersForSchemaPrefix != null)
+            if (instance.Instance.GatherDocumentPointersForSchemaPrefix != null)
             {
                 resultingRow.AddSchemaDocumentPointer(topLevelSchemaMap.Key, topLevelDocumentPointer);
             }
 
-            FillInSchemaResultDocumentValues(param, topLevelSchemaMap.Key,
+            FillInSchemaResultDocumentValues(instance, topLevelSchemaMap.Key,
                 topLevelDocumentPointer, ref resultingRow, threadScopedContentCache);
 
             //Since FillInSchemaResultDocumentValues() will produce a single row, this is where we can fill
             //  in any of the constant values. Additionally, this is the "template row" that will be cloned
             //  for rows produced by any one-to-many relationships.
             //
-            foreach (var field in param.Query.SelectFields.OfType<FunctionConstantParameter>())
+            foreach (var field in instance.Instance.Query.SelectFields.OfType<FunctionConstantParameter>())
             {
                 resultingRow.InsertValue(field.Alias, field.Ordinal, field.FinalValue);
             }
 
-            if (param.SchemaMap.Count > 1)
+            if (instance.Instance.SchemaMap.Count > 1)
             {
-                IntersectAllSchemasRecursive(param, 1, ref resultingRow,
+                IntersectAllSchemasRecursive(instance, 1, ref resultingRow,
                     ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
             }
 
-            if (param.Query.Conditions.AllFields.Any())
+            if (instance.Instance.Query.Conditions.AllFields.Any())
             {
                 //Filter the rows by the global conditions.
-                resultingRows.Collection = ApplyQueryGlobalConditions(param.Transaction, param, resultingRows);
+                resultingRows.Collection = ApplyQueryGlobalConditions(instance.Instance.Transaction, instance, resultingRows);
             }
         }
 
@@ -422,15 +390,35 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// This function is designed to handle one-to-one and one-to-many, so it can produce more than one row.
         /// </summary>
-        private static void IntersectAllSchemasRecursive(LookupThreadInstance param,
+        /// <param name="instance">Thread state</param>
+        /// <param name="skipSchemaCount">The number of schemas to skip. This is the current recursion depth starting at 1.</param>
+        /// <param name="resultingRow">The row reference from the parent call, which is either the top level call or a recursive call.
+        ///                                 This is both populated by the recursion and used as a row tempate for one-to-many relationships.</param>
+        /// <param name="resultingRows">The buffer containing all of the rows which have been found.</param>
+        /// <param name="threadScopedContentCache">Document cache for the lifetime of the entire join operation for this thread.</param>
+        /// <param name="joinScopedContentCache">>Document cache used the lifetime of a single row join for this thread.</param>
+        /// <exception cref="KbEngineException"></exception>
+        private static void IntersectAllSchemasRecursive(LookupThreadInstance.LookupThreadParameterEnvelope instance,
             int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
             ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
-            ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache, int recursionDepth = 0)
+            ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
-            var currentSchemaKVP = param.SchemaMap.Skip(skipSchemaCount).First();
+            var currentSchemaKVP = instance.Instance.SchemaMap.Skip(skipSchemaCount).First();
             var currentSchemaMap = currentSchemaKVP.Value;
 
-            var expression = new NCalc.Expression(currentSchemaMap.Conditions.EnsureNotNull().HighLevelExpressionTree);
+            var expressionHash = currentSchemaMap.Conditions.EnsureNotNull().Hash
+                ?? throw new KbEngineException($"The expression hash cannot be null.");
+
+            NCalc.Expression? expression;
+
+            lock (instance.ExpressionCache)
+            {
+                if (instance.ExpressionCache.TryGetValue(expressionHash, out expression) == false)
+                {
+                    expression = new NCalc.Expression(currentSchemaMap.Conditions.EnsureNotNull().HighLevelExpressionTree);
+                    instance.ExpressionCache.Add(expressionHash, expression);
+                }
+            }
 
             //Create a reference to the entire document catalog.
             IEnumerable<DocumentPointer>? limitedDocumentPointers = null;
@@ -460,8 +448,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     }
 
                     //Match on values from the document.
-                    var documentIds = param.Core.Indexes.MatchConditionValuesDocuments
-                        (param.Transaction, currentSchemaMap.PhysicalSchema, subset.IndexSelection.EnsureNotNull(), subset, keyValuePairs);
+                    var documentIds = instance.Instance.Core.Indexes.MatchConditionValuesDocuments
+                        (instance.Instance.Transaction, currentSchemaMap.PhysicalSchema, subset.IndexSelection.EnsureNotNull(), subset, keyValuePairs);
 
                     furtherLimitedDocumentPointers.AddRange(documentIds.Values);
                 }
@@ -491,7 +479,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             if (limitedDocumentPointers == null)
             {
-                limitedDocumentPointers = param.Core.Documents.AcquireDocumentPointers(param.Transaction, currentSchemaMap.PhysicalSchema, LockOperation.Read);
+                limitedDocumentPointers = instance.Instance.Core.Documents.AcquireDocumentPointers(
+                    instance.Instance.Transaction, currentSchemaMap.PhysicalSchema, LockOperation.Read);
             }
 
             #endregion
@@ -509,8 +498,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 //Get the document content from the thread cache (or cache it).
                 if (threadScopedContentCache.TryGetValue(threadScopedDocumentCacheKey, out var documentContentNextLevel) == false)
                 {
-                    var physicalDocumentNextLevel = param.Core.Documents.AcquireDocument(
-                        param.Transaction, currentSchemaMap.PhysicalSchema, documentPointer, LockOperation.Read);
+                    var physicalDocumentNextLevel = instance.Instance.Core.Documents.AcquireDocument(
+                        instance.Instance.Transaction, currentSchemaMap.PhysicalSchema, documentPointer, LockOperation.Read);
 
                     documentContentNextLevel = physicalDocumentNextLevel.Elements;
                     threadScopedContentCache.Add(threadScopedDocumentCacheKey, documentContentNextLevel);
@@ -518,10 +507,10 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 joinScopedContentCache.Add(currentSchemaKVP.Key.ToLowerInvariant(), documentContentNextLevel);
 
-                SetSchemaIntersectionExpressionParameters(param.Transaction,
+                SetSchemaIntersectionExpressionParameters(instance.Instance.Transaction,
                     ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
 
-                var ptEvaluate = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
+                var ptEvaluate = instance.Instance.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
                 ptEvaluate?.StopAndAccumulate();
 
@@ -543,20 +532,20 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                         }
                     }
 
-                    if (param.GatherDocumentPointersForSchemaPrefix != null)
+                    if (instance.Instance.GatherDocumentPointersForSchemaPrefix != null)
                     {
                         resultingRow.AddSchemaDocumentPointer(currentSchemaKVP.Key, documentPointer);
                     }
 
                     //We fill in the values for the single working row: resultingRow
-                    FillInSchemaResultDocumentValues(param, currentSchemaKVP.Key, documentPointer, ref resultingRow, threadScopedContentCache);
+                    FillInSchemaResultDocumentValues(instance, currentSchemaKVP.Key, documentPointer, ref resultingRow, threadScopedContentCache);
 
-                    if (skipSchemaCount < param.SchemaMap.Count - 1)
+                    if (skipSchemaCount < instance.Instance.SchemaMap.Count - 1)
                     {
                         //We continue to recursively fill in the values for the single working row: resultingRow
                         //Note that "resultingRow" is a reference, but in the case of a one-to-many, then it is a reference to the resultingRow clone.
-                        IntersectAllSchemasRecursive(param, skipSchemaCount + 1,
-                            ref resultingRow, ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache, recursionDepth + 1);
+                        IntersectAllSchemasRecursive(instance, skipSchemaCount + 1,
+                            ref resultingRow, ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
                     }
                 }
 
@@ -623,20 +612,20 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// This function will "produce" a single row.
         /// </summary>
-        private static void FillInSchemaResultDocumentValues(LookupThreadInstance param, string schemaKey,
+        private static void FillInSchemaResultDocumentValues(LookupThreadInstance.LookupThreadParameterEnvelope instance, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
-            if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
+            if (instance.Instance.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
-                lock (param.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
+                lock (instance.Instance.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
                 {
-                    FillInSchemaResultDocumentValuesAtomic(param, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
+                    FillInSchemaResultDocumentValuesAtomic(instance, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
                 }
             }
             else
             {
-                FillInSchemaResultDocumentValuesAtomic(param, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
+                FillInSchemaResultDocumentValuesAtomic(instance, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
             }
         }
 
@@ -644,13 +633,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// Gets the values of all selected fields from document.
         /// </summary>
         /// 
-        private static void FillInSchemaResultDocumentValuesAtomic(LookupThreadInstance param, string schemaKey,
+        private static void FillInSchemaResultDocumentValuesAtomic(LookupThreadInstance.LookupThreadParameterEnvelope instance, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
             var documentContent = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
 
-            if (param.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
+            if (instance.Instance.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
                 var fields = new List<PrefixedField>();
                 foreach (var documentValue in documentContent)
@@ -660,13 +649,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 foreach (var field in fields)
                 {
-                    if (param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
+                    if (instance.Instance.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
                     {
                         var newField = new FunctionDocumentFieldParameter(field.Key)
                         {
                             Alias = field.Alias
                         };
-                        param.Query.SelectFields.Add(newField);
+                        instance.Instance.Query.SelectFields.Add(newField);
                     }
                 }
             }
@@ -677,37 +666,37 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             if (schemaKey != string.Empty)
             {
                 //Grab all of the selected fields from the document.
-                foreach (var field in param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
+                foreach (var field in instance.Instance.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
                 {
                     if (documentContent.TryGetValue(field.Value.Field, out string? documentValue) == false)
                     {
-                        param.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
+                        instance.Instance.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
                             $"'{field.Value.Field}' will be treated as null.");
                     }
                     schemaResultRow.InsertValue(field.Value.Field, field.Ordinal, documentValue);
                 }
             }
 
-            foreach (var field in param.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
+            foreach (var field in instance.Instance.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
             {
                 if (documentContent.TryGetValue(field.Value.Field, out string? documentValue) == false)
                 {
-                    param.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
+                    instance.Instance.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
                         $"'{field.Value.Field}' will be treated as null.");
                 }
                 schemaResultRow.InsertValue(field.Value.Field, field.Ordinal, documentValue);
             }
 
-            schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.$UID$", documentPointer.Key);
+            schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.{UIDMarker}", documentPointer.Key);
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var field in param.Query.SelectFields.AllDocumentFields.Where(o => o.Prefix == schemaKey).Distinct())
+            foreach (var field in instance.Instance.Query.SelectFields.AllDocumentFields.Where(o => o.Prefix == schemaKey).Distinct())
             {
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
                     if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
                     {
-                        param.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound,
+                        instance.Instance.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound,
                             $"'{field.Key}' will be treated as null.");
                     }
                     schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
@@ -715,13 +704,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var field in param.Query.GroupFields.AllDocumentFields.Where(o => o.Prefix == schemaKey).Distinct())
+            foreach (var field in instance.Instance.Query.GroupFields.AllDocumentFields.Where(o => o.Prefix == schemaKey).Distinct())
             {
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
                     if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
                     {
-                        param.Transaction.AddWarning(KbTransactionWarning.GroupFieldNotFound,
+                        instance.Instance.Transaction.AddWarning(KbTransactionWarning.GroupFieldNotFound,
                             $"'{field.Key}' will be treated as null.");
                     }
                     schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
@@ -729,13 +718,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.
-            foreach (var field in param.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey).Distinct())
+            foreach (var field in instance.Instance.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey).Distinct())
             {
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
                     if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
                     {
-                        param.Transaction.AddWarning(KbTransactionWarning.ConditionFieldNotFound,
+                        instance.Instance.Transaction.AddWarning(KbTransactionWarning.ConditionFieldNotFound,
                             $"'{field.Key}' will be treated as null.");
                     }
                     schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
@@ -743,13 +732,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
 
             //We have to make sure that we have all of the sort fields too so we can filter on them.
-            foreach (var field in param.Query.SortFields.Where(o => o.Prefix == schemaKey).Distinct())
+            foreach (var field in instance.Instance.Query.SortFields.Where(o => o.Prefix == schemaKey).Distinct())
             {
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
                     if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
                     {
-                        param.Transaction.AddWarning(KbTransactionWarning.SortFieldNotFound,
+                        instance.Instance.Transaction.AddWarning(KbTransactionWarning.SortFieldNotFound,
                             $"'{field.Key}' will be treated as null.");
                     }
                     schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
@@ -765,16 +754,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
         private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(
-            Transaction transaction, LookupThreadInstance param, SchemaIntersectionRowCollection inputResults)
+            Transaction transaction, LookupThreadInstance.LookupThreadParameterEnvelope instance, SchemaIntersectionRowCollection inputResults)
         {
             var outputResults = new List<SchemaIntersectionRow>();
-            var expression = new NCalc.Expression(param.Query.Conditions.HighLevelExpressionTree);
+            var expression = new NCalc.Expression(instance.Instance.Query.Conditions.HighLevelExpressionTree);
 
             foreach (var inputResult in inputResults.Collection)
             {
-                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, param.Query.Conditions, inputResult.AuxiliaryFields);
+                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, instance.Instance.Query.Conditions, inputResult.AuxiliaryFields);
 
-                var ptEvaluate = param.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
+                var ptEvaluate = instance.Instance.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
                 ptEvaluate?.StopAndAccumulate();
 
