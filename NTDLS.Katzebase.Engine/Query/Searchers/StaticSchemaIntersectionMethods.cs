@@ -22,10 +22,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Build a generic key/value dataset which is the combined field-set from each inner joined document.
         /// </summary>
-        /// <param name="core"></param>
-        /// <param name="transaction"></param>
-        /// <param name="schemaMap"></param>
-        /// <param name="query"></param>
         /// <param name="gatherDocumentPointersForSchemaPrefix">When not null, the process will focus on
         /// obtaining a list of DocumentPointers instead of key/values. This is used for UPDATES and DELETES.</param>
         /// <returns></returns>
@@ -400,6 +396,15 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             FillInSchemaResultDocumentValues(param, topLevelSchemaMap.Key,
                 topLevelDocumentPointer, ref resultingRow, threadScopedContentCache);
 
+            //Since FillInSchemaResultDocumentValues() will produce a single row, this is where we can fill
+            //  in any of the constant values. Additionally, this is the "template row" that will be cloned
+            //  for rows produced by any one-to-many relationships.
+            //
+            foreach (var field in param.Query.SelectFields.OfType<FunctionConstantParameter>())
+            {
+                resultingRow.InsertValue(field.Alias, field.Ordinal, field.FinalValue);
+            }
+
             if (param.SchemaMap.Count > 1)
             {
                 IntersectAllSchemasRecursive(param, 1, ref resultingRow,
@@ -413,10 +418,14 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
+
+        /// <summary>
+        /// This function is designed to handle one-to-one and one-to-many, so it can produce more than one row.
+        /// </summary>
         private static void IntersectAllSchemasRecursive(LookupThreadInstance param,
             int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
             ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
-            ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
+            ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache, int recursionDepth = 0)
         {
             var currentSchemaKVP = param.SchemaMap.Skip(skipSchemaCount).First();
             var currentSchemaMap = currentSchemaKVP.Value;
@@ -489,6 +498,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             int matchesFromThisSchema = 0;
 
+            //Keep a copy of the row as it was at this level of recursion. If we find a one-to-many
+            //  relationship then we will need to use this to make additional copies of the original row.
             var rowTemplate = resultingRow.Clone();
 
             foreach (var documentPointer in limitedDocumentPointers)
@@ -520,6 +531,11 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                     if (matchesFromThisSchema > 1)
                     {
+                        //If durring this level of recursion, we found more than one match then we are working with a one-to-many.
+                        //This means that we will take the a copy of the original partially populated row, and create yet another
+                        //  copy of it. This copy will become our new working row which we will pass recursively down for popualtion
+                        //  with and and all other joins.
+
                         resultingRow = rowTemplate.Clone();
                         lock (resultingRows)
                         {
@@ -532,17 +548,15 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                         resultingRow.AddSchemaDocumentPointer(currentSchemaKVP.Key, documentPointer);
                     }
 
+                    //We fill in the values for the single working row: resultingRow
                     FillInSchemaResultDocumentValues(param, currentSchemaKVP.Key, documentPointer, ref resultingRow, threadScopedContentCache);
-
-                    //Since FillInSchemaResultDocumentValues() will produce a single row, this is where we can fill in any of the constant values.
-                    foreach (var field in param.Query.SelectFields.OfType<FunctionConstantParameter>())
-                    {
-                        resultingRow.InsertValue(field.Alias, field.Ordinal, field.FinalValue);
-                    }
 
                     if (skipSchemaCount < param.SchemaMap.Count - 1)
                     {
-                        IntersectAllSchemasRecursive(param, skipSchemaCount + 1, ref resultingRow, ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
+                        //We continue to recursively fill in the values for the single working row: resultingRow
+                        //Note that "resultingRow" is a reference, but in the case of a one-to-many, then it is a reference to the resultingRow clone.
+                        IntersectAllSchemasRecursive(param, skipSchemaCount + 1,
+                            ref resultingRow, ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache, recursionDepth + 1);
                     }
                 }
 
