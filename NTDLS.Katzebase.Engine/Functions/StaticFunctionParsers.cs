@@ -380,7 +380,7 @@ namespace NTDLS.Katzebase.Engine.Functions
 
                                 expression.Parameters.Add(mathParamParams);
 
-                                //Replace first occurance.
+                                //Replace first occurrence.
                                 var regex = new Regex(Regex.Escape(subParamText));
                                 text = regex.Replace(text, paramKey, 1);
 
@@ -426,7 +426,7 @@ namespace NTDLS.Katzebase.Engine.Functions
 
                             expression.Parameters.Add(mathParamParams);
 
-                            //Replace first occurance.
+                            //Replace first occurrence.
                             var regex = new Regex(Regex.Escape(subParamText));
                             text = regex.Replace(text, paramKey, 1);
 
@@ -499,7 +499,7 @@ namespace NTDLS.Katzebase.Engine.Functions
 
                     if (_mathChars.Contains(c) && !(c == '(' || c == ')'))
                     {
-                        //The paramter contains math characters. '(' and ')' are usre for function calls and do not count.
+                        //The parameter contains math characters. '(' and ')' are usre for function calls and do not count.
                         parseMath = true;
                     }
 

@@ -123,6 +123,11 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             return false;
         }
 
+        public bool IsNotNextToken(string[] tokens)
+        {
+            return !IsNextToken(tokens);
+        }
+
         public bool IsNextTokenConsume(string token)
         {
             return GetNextToken().Equals(token, StringComparison.InvariantCultureIgnoreCase);

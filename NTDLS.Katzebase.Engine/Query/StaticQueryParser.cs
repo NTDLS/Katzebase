@@ -187,8 +187,6 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
                 result.SubQueryType = subQueryType;
 
-                result.AddAttribute(PreparedQuery.QueryAttribute.IsUnique, (subQueryType == SubQueryType.UniqueKey));
-
                 token = query.GetNextToken();
                 if (token == string.Empty)
                 {
@@ -309,6 +307,8 @@ namespace NTDLS.Katzebase.Engine.Query
                 else if (subQueryType == SubQueryType.Index || subQueryType == SubQueryType.UniqueKey)
                 {
                     result.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
+                    result.AddAttribute(PreparedQuery.QueryAttribute.IsUnique, (subQueryType == SubQueryType.UniqueKey));
+
 
                     if (query.NextCharacter != '(')
                     {
@@ -750,15 +750,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     while (true)
                     {
-                        if (query.IsNextToken(["where", "inner", ""]))
+                        if (query.IsNotNextToken(["and", "or"]))
                         {
                             break;
                         }
 
-                        if (query.IsNextToken(["and", "or"]))
-                        {
-                            query.SkipNextToken();
-                        }
+                        query.SkipNextToken();
 
                         var joinLeftCondition = query.GetNextToken();
                         if (joinLeftCondition == string.Empty || TokenHelpers.IsValidIdentifier(joinLeftCondition, ".") == false)
@@ -771,7 +768,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         token = ConditionTokenizer.GetNextToken(query.Text, ref logicalQualifierPos);
                         if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
                         {
-                            throw new KbParserException("Invalid query. Found '" + token + "], logical qualifier.");
+                            throw new KbParserException("Invalid query. Found '" + token + "], expected logical qualifier.");
                         }
 
                         query.SetPosition(logicalQualifierPos);
@@ -1179,11 +1176,24 @@ namespace NTDLS.Katzebase.Engine.Query
                 //}
             }
 
+            foreach (var schema in result.Schemas)
+            {
+                if (query.LiteralStrings.TryGetValue(schema.Name, out var name))
+                {
+                    schema.Name = name.Substring(1, name.Length - 2);
+                }
+
+                if (query.LiteralStrings.TryGetValue(schema.Prefix, out var prefix))
+                {
+                    schema.Prefix = prefix.Substring(1, prefix.Length - 2);
+                }
+            }
+
             foreach (var field in result.SelectFields) //Top level fields.
             {
-                if (query.LiteralStrings.ContainsKey(field.Alias))
+                if (query.LiteralStrings.TryGetValue(field.Alias, out var alias))
                 {
-                    field.Alias = query.LiteralStrings[field.Alias].Substring(1, query.LiteralStrings[field.Alias].Length - 2);
+                    field.Alias = alias.Substring(1, alias.Length - 2);
                 }
             }
 
@@ -1197,9 +1207,9 @@ namespace NTDLS.Katzebase.Engine.Query
 
             foreach (var field in result.SortFields)
             {
-                if (query.LiteralStrings.ContainsKey(field.Alias))
+                if (query.LiteralStrings.TryGetValue(field.Alias, out string? alias))
                 {
-                    field.Alias = query.LiteralStrings[field.Alias].Substring(1, query.LiteralStrings[field.Alias].Length - 2);
+                    field.Alias = alias.Substring(1, alias.Length - 2);
                     field.Field = field.Alias;
                 }
 
