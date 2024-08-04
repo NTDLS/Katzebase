@@ -10,8 +10,6 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;

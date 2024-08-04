@@ -1,9 +1,44 @@
-select top 10
-	W.Id,
-	W.Text,
-	L.Name as Language,
-	'Text' as Value
+--This query returns data.
+select
+	sw.Id as SourceWordId,
+	sw.Text as SourceWord,
+	sl.Name as SourceLanguage,
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+	tl.Name as TargetLanguage
 from
-	WordList:Word as W
-inner join WordList:Language as L
-	on L.Id = W.LanguageId
+	WordList:Word as sw
+inner join WordList:Language as sl
+	on sl.Id = sw.LanguageId
+inner join WordList:Synonym as S
+	on S.SourceWordId = sw.Id
+inner join WordList:Word as tw
+	on tw.Id = S.TargetWordId
+inner join WordList:Language as tl
+	on tl.Id = TW.LanguageId
+where
+	sw.Text = 'Gym'
+	and sl.Name = 'English'
+go
+
+--This query does not return data.... ????
+select
+	sw.Id as SourceWordId,
+	sw.Text as SourceWord,
+	sl.Name as SourceLanguage,
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+	tl.Name as TargetLanguage
+from
+	WordList:Word as sw
+inner join WordList:Language as sl
+	on sl.Id = sw.LanguageId
+inner join WordList:Synonym as S
+	on S.SourceWordId = sw.Id
+inner join WordList:Word as tw
+	on tw.Id = S.TargetWordId
+inner join WordList:Language as tl
+	on tl.Id = TW.LanguageId
+where
+	sl.Name = 'English'
+	and sw.Text = 'Gym'

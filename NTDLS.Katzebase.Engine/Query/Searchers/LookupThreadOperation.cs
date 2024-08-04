@@ -6,7 +6,7 @@ using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
     /// <summary>
-    /// Thread parameters for a lookup operation. Shared across all threads.
+    /// Thread parameters for a lookup operation. Shared across all threads in a single lookup operation.
     /// </summary>
     internal class LookupThreadOperation
     {

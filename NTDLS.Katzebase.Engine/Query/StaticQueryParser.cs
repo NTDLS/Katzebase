@@ -283,12 +283,20 @@ namespace NTDLS.Katzebase.Engine.Query
                             _ = PrepareNextQuery(query);
 
                             string queryText = query.Text.Substring(previousPosition, query.Position - previousPosition).Trim();
+
+                            foreach (var literalString in query.LiteralStrings)
+                            {
+                                queryText = queryText.Replace(literalString.Key, literalString.Value);
+                            }
+
                             batches.Add(queryText);
 
                             previousPosition = query.Position;
                             var nextToken = query.PeekNextToken();
                         }
                     }
+
+
 
                     result.AddAttribute(PreparedQuery.QueryAttribute.Batches, batches);
                 }
@@ -1235,6 +1243,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
             foreach (var field in result.Conditions.AllFields)
             {
+                if(field.Field.StartsWith('@'))
+                {
+                    //This is a variable.
+                    continue;
+                }
+
                 if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
                 {
                     throw new KbParserException($"The condition schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
