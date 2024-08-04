@@ -10,6 +10,8 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
+using System;
+using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -43,16 +45,80 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 var limitedDocumentPointers = new List<DocumentPointer>();
 
+
                 if (lookupOptimization.CanApplyIndexing())
                 {
+                    transaction.AddMessage($"Applying {lookupOptimization.IndexSelection.Count} indexe(s).", KbMessageType.Verbose);
+
+                    foreach (var index in lookupOptimization.IndexSelection)
+                    {
+                        var coveredFields = string.Join("', '", index.CoveredFields.Select(o => o.Key)).Trim();
+                        transaction.AddMessage($"Index '{index.PhysicalIndex.Name}' covers {coveredFields}", KbMessageType.Verbose);
+                    }
+
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                     documentPointers = new List<DocumentPointer>();
 
                     //All condition subsets have a selected index. Start building a list of possible document IDs.
                     foreach (var subset in lookupOptimization.Conditions.NonRootSubsets)
                     {
+                        transaction.AddMessage($"Expression: ({subset.Expression}) {{", KbMessageType.Verbose);
+
+                        foreach (var cond in subset.Conditions)
+                        {
+                            string leftIndex = string.Empty;
+                            string rightIndex = string.Empty;
+
+                            if (cond.CoveredByIndex)
+                            {
+                                foreach (var index in lookupOptimization.IndexSelection)
+                                {
+                                    if (index.CoveredFields.Any(o => o.Key == cond.Left.Key))
+                                    {
+                                        leftIndex = index.PhysicalIndex.Name;
+                                    }
+                                    if (index.CoveredFields.Any(o => o.Key == cond.Right.Key))
+                                    {
+                                        rightIndex = index.PhysicalIndex.Name;
+                                    }
+                                }
+                            }
+
+                            string leftValue = cond.Left.IsConstant ? $"'{cond.Left.Key}'" : cond.Left.Key;
+                            string rightValue = cond.Right.IsConstant ? $"'{cond.Right.Key}'" : cond.Right.Key;
+
+                            string indexInfo = string.Empty;
+
+                            if (string.IsNullOrEmpty(leftIndex) == false || string.IsNullOrEmpty(rightIndex) == false)
+                            {
+                                indexInfo += ", Indexes (";
+
+                                if (string.IsNullOrEmpty(leftIndex) == false)
+                                {
+                                    indexInfo += $"Left: [{leftIndex}] ";
+                                }
+
+                                if (string.IsNullOrEmpty(rightIndex) == false)
+                                {
+                                    indexInfo += $"Right: [{rightIndex}] ";
+                                }
+
+                                indexInfo = indexInfo.Trim();
+
+                                indexInfo += ")";
+                            }
+
+                            transaction.AddMessage($"\t'{cond.ConditionKey}: ({leftValue} {cond.LogicalQualifier} {rightValue}){indexInfo}", KbMessageType.Verbose);
+                        }
+                        transaction.AddMessage("}", KbMessageType.Verbose);
+
                         var indexMatchedDocuments = core.Indexes.MatchWorkingSchemaDocuments
                             (transaction, topLevelMap.PhysicalSchema, subset.IndexSelection.EnsureNotNull(), subset, topLevelMap.Prefix);
+
+                        transaction.AddMessage("}", KbMessageType.Verbose);
+
+
+
                         limitedDocumentPointers.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
 
@@ -60,6 +126,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 }
                 else
                 {
+                    transaction.AddMessage("Will not use indexing.", KbMessageType.Verbose);
+
+
                     #region Why no indexing? Find out here!
                     //   * One or more of the condition subsets lacks an index.
                     //   *
@@ -79,10 +148,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 }
             }
 
-            if (documentPointers == null)
-            {
-                documentPointers = core.Documents.AcquireDocumentPointers(transaction, topLevelMap.PhysicalSchema, LockOperation.Read);
-            }
+            //If we do not have any documents, then get the whole schema.
+            documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, topLevelMap.PhysicalSchema, LockOperation.Read);
 
             var threadPoolQueue = core.ThreadPool.Generic.CreateQueueStateTracker();
 
@@ -237,6 +304,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             var results = new DocumentLookupResults();
 
             results.DocumentPointers.AddRange(operation.DocumentPointers);
+
             results.AddRange(operation.Results);
 
             return results;
