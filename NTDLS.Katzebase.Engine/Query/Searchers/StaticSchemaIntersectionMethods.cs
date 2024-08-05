@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 if (lookupOptimization.CanApplyIndexing())
                 {
-                    transaction.AddMessage($"Applying {lookupOptimization.IndexSelection.Count} indexe(s).", KbMessageType.Verbose);
+                    transaction.AddMessage($"Applying {lookupOptimization.IndexSelection.Count} index(s).", KbMessageType.Verbose);
 
                     foreach (var index in lookupOptimization.IndexSelection)
                     {
@@ -112,10 +112,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                         var indexMatchedDocuments = core.Indexes.MatchWorkingSchemaDocuments
                             (transaction, topLevelMap.PhysicalSchema, subset.IndexSelection.EnsureNotNull(), subset, topLevelMap.Prefix);
-
-                        transaction.AddMessage("}", KbMessageType.Verbose);
-
-
 
                         limitedDocumentPointers.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }

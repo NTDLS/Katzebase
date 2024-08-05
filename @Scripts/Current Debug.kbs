@@ -1,5 +1,3 @@
-select * for ff
-
 /*
 --This query returns data.
 select
@@ -23,7 +21,7 @@ where
 	sw.Text = 'Gym'
 	and sl.Name = 'English'
 go
-
+*/
 --This query does not return data.... ????
 select
 	sw.Id as SourceWordId,
@@ -45,4 +43,4 @@ inner join WordList:Language as tl
 where
 	sl.Name = 'English'
 	and sw.Text = 'Gym'
-*/
+

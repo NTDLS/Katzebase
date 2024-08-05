@@ -3,7 +3,7 @@
 namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
     /// <summary>
-    /// Thread parameters for a lookup operation. Used by a single thread.
+    /// Thread parameters for a lookup operations. Used by a single thread.
     /// </summary>
     /// <param name="operation"></param>
     /// <param name="documentPointer"></param>
