@@ -765,17 +765,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             batchResults.Add(core.Query.ExecuteQuery(session, preparedQuery));
                         }
 
-                        if (batchResults.Success != true)
-                        {
-                            throw new KbEngineException("Procedure batch was unsuccessful.");
-                        }
-
                         collection.Add(batchResults);
                     }
                     transactionReference.Commit();
                 }
-
-                collection.Success = true;
 
                 return collection;
             }

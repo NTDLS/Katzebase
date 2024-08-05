@@ -395,7 +395,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                 {
                     param += c;
                 }
-                else if (c == '$') //Literl string placeholder.
+                else if (c == '$') //Literal string placeholder.
                 {
                     param += '$';
 
@@ -499,7 +499,7 @@ namespace NTDLS.Katzebase.Engine.Functions
 
                     if (_mathChars.Contains(c) && !(c == '(' || c == ')'))
                     {
-                        //The parameter contains math characters. '(' and ')' are usre for function calls and do not count.
+                        //The parameter contains math characters. '(' and ')' are used for function calls and do not count.
                         parseMath = true;
                     }
 
@@ -509,7 +509,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         parseMath = true;
                     }
 
-                    if (c == '$') //Literl string placeholder.
+                    if (c == '$') //Literal string placeholder.
                     {
                         param += '$';
 

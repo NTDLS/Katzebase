@@ -39,8 +39,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 {
                     ProcessId = session.ProcessId,
                     ConnectionId = context.ConnectionId,
-                    ServerTimeUTC = DateTime.UtcNow,
-                    Success = true
+                    ServerTimeUTC = DateTime.UtcNow
                 };
 
                 return result;
@@ -63,12 +62,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 _core.Sessions.CloseByProcessId(session.ProcessId);
 
-                var result = new KbQueryServerCloseSessionReply
-                {
-                    Success = true
-                };
-
-                return result;
+                return new KbQueryServerCloseSessionReply();
             }
             catch (Exception ex)
             {
@@ -88,12 +82,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 _core.Sessions.CloseByProcessId(param.ReferencedProcessId);
 
-                var result = new KbQueryServerTerminateProcessReply
-                {
-                    Success = true
-                };
-
-                return result;
+                return new KbQueryServerTerminateProcessReply(); ;
             }
             catch (Exception ex)
             {

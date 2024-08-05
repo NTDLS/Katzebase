@@ -10,8 +10,6 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
-using System;
-using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -153,7 +151,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             var threadPoolQueue = core.ThreadPool.Generic.CreateQueueStateTracker();
 
-            var operation = new LookupThreadOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);            
+            var operation = new LookupThreadOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
 
             foreach (var documentPointer in documentPointers)
             {

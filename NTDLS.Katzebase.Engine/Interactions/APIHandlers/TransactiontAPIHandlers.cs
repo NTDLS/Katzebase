@@ -32,10 +32,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Management.LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             _core.Transactions.Acquire(session, true);
-            return new KbQueryTransactionBeginReply()
-            {
-                Success = true,
-            };
+            return new KbQueryTransactionBeginReply();
         }
 
         public KbQueryTransactionCommitReply Commit(RmContext context, KbQueryTransactionCommit param)
@@ -46,10 +43,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Management.LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             _core.Transactions.Commit(session.ProcessId);
-            return new KbQueryTransactionCommitReply()
-            {
-                Success = true,
-            };
+            return new KbQueryTransactionCommitReply();
         }
 
         public KbQueryTransactionRollbackReply Rollback(RmContext context, KbQueryTransactionRollback param)
@@ -60,10 +54,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Management.LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             _core.Transactions.Rollback(session.ProcessId);
-            return new KbQueryTransactionRollbackReply()
-            {
-                Success = true,
-            };
+            return new KbQueryTransactionRollbackReply();
         }
     }
 }

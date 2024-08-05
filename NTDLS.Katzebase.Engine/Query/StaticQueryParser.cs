@@ -1243,7 +1243,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
             foreach (var field in result.Conditions.AllFields)
             {
-                if(field.Field.StartsWith('@'))
+                if (field.Field.StartsWith('@'))
                 {
                     //This is a variable.
                     continue;

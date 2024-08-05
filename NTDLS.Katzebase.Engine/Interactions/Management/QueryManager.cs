@@ -242,7 +242,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (preparedQuery.SubQueryType == SubQueryType.Transaction)
                     {
                         _core.Transactions.QueryHandlers.Begin(session);
-                        return new KbActionResponse { Success = true };
+                        return new KbActionResponse();
                     }
                     throw new NotImplementedException();
                 }
@@ -251,7 +251,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (preparedQuery.SubQueryType == SubQueryType.Transaction)
                     {
                         _core.Transactions.QueryHandlers.Rollback(session);
-                        return new KbActionResponse { Success = true };
+                        return new KbActionResponse();
                     }
                     throw new NotImplementedException();
                 }
@@ -260,7 +260,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (preparedQuery.SubQueryType == SubQueryType.Transaction)
                     {
                         _core.Transactions.QueryHandlers.Commit(session);
-                        return new KbActionResponse { Success = true };
+                        return new KbActionResponse();
                     }
                     throw new NotImplementedException();
                 }
