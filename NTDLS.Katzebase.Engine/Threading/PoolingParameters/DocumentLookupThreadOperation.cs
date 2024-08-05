@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 
-namespace NTDLS.Katzebase.Engine.Threading
+namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
 {
     /// <summary>
     /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.

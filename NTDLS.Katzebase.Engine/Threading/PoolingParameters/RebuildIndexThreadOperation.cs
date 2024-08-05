@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Schemas;
 
-namespace NTDLS.Katzebase.Engine.Threading
+namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
 {
     /// <summary>
     /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.

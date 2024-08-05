@@ -10,7 +10,7 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
-using NTDLS.Katzebase.Engine.Threading;
+using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -122,7 +122,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 else
                 {
                     transaction.AddMessage("Will not use indexing.", KbMessageType.Verbose);
-
 
                     #region Why no indexing? Find out here!
                     //   * One or more of the condition subsets lacks an index.

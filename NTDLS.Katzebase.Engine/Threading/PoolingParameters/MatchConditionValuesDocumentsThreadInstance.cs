@@ -1,4 +1,4 @@
-﻿namespace NTDLS.Katzebase.Engine.Threading
+﻿namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
 {
     /// <summary>
     /// Thread parameters for a lookup operations. Used by a single thread.

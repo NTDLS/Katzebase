@@ -11,6 +11,7 @@ using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading;
+using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
