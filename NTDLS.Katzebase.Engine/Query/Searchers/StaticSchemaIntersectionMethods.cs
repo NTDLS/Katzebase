@@ -10,6 +10,7 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
+using NTDLS.Katzebase.Engine.Threading;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -147,7 +148,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             var threadPoolQueue = core.ThreadPool.Generic.CreateQueueStateTracker();
 
-            var operation = new LookupThreadOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
+            var operation = new DocumentLookupThreadOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
 
             foreach (var documentPointer in documentPointers)
             {
@@ -163,7 +164,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     break;
                 }
 
-                var instance = new LookupThreadInstance(operation, documentPointer);
+                var instance = new DocumentLookupThreadInstance(operation, documentPointer);
 
                 var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
                 threadPoolQueue.Enqueue(instance, LookupThreadWorker);
@@ -304,11 +305,11 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             return results;
         }
 
-        #region Threading.
+        #region Threading: DocumentLookupThreadInstance.
 
         private static void LookupThreadWorker(object? parameter)
         {
-            var instance = parameter.EnsureNotNull<LookupThreadInstance>();
+            var instance = parameter.EnsureNotNull<DocumentLookupThreadInstance>();
 
             instance.Operation.Transaction.EnsureActive();
 
@@ -354,7 +355,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
-        static void ExecuteFunctions(Transaction transaction, LookupThreadOperation operation, SchemaIntersectionRowCollection resultingRows)
+        static void ExecuteFunctions(Transaction transaction, DocumentLookupThreadOperation operation, SchemaIntersectionRowCollection resultingRows)
         {
             foreach (var methodField in operation.Query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
             {
@@ -391,7 +392,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         #endregion
 
-        private static void IntersectAllSchemas(LookupThreadInstance instance,
+        private static void IntersectAllSchemas(DocumentLookupThreadInstance instance,
             DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection resultingRows)
         {
             var topLevelSchemaMap = instance.Operation.SchemaMap.First();
@@ -458,7 +459,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <param name="threadScopedContentCache">Document cache for the lifetime of the entire join operation for this thread.</param>
         /// <param name="joinScopedContentCache">>Document cache used the lifetime of a single row join for this thread.</param>
         /// <exception cref="KbEngineException"></exception>
-        private static void IntersectAllSchemasRecursive(LookupThreadInstance instance,
+        private static void IntersectAllSchemasRecursive(DocumentLookupThreadInstance instance,
             int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
             ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
             ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
@@ -672,7 +673,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// This function will "produce" a single row.
         /// </summary>
-        private static void FillInSchemaResultDocumentValues(LookupThreadInstance instance, string schemaKey,
+        private static void FillInSchemaResultDocumentValues(DocumentLookupThreadInstance instance, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
@@ -693,7 +694,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// Gets the values of all selected fields from document.
         /// </summary>
         /// 
-        private static void FillInSchemaResultDocumentValuesAtomic(LookupThreadInstance instance, string schemaKey,
+        private static void FillInSchemaResultDocumentValuesAtomic(DocumentLookupThreadInstance instance, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
@@ -814,7 +815,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
         private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(
-            Transaction transaction, LookupThreadInstance instance, SchemaIntersectionRowCollection inputResults)
+            Transaction transaction, DocumentLookupThreadInstance instance, SchemaIntersectionRowCollection inputResults)
         {
             var outputResults = new List<SchemaIntersectionRow>();
             var expression = new NCalc.Expression(instance.Operation.Query.Conditions.HighLevelExpressionTree);

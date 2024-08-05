@@ -10,6 +10,7 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.Engine.Threading;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -275,48 +276,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         }
 
-        /// <summary>
-        /// Thread parameters for a lookup operations. Used by a single thread.
-        /// </summary>
-        private class MatchConditionValuesDocumentsThreadInstance
-        {
-            public MatchConditionValuesDocumentsThreadOperation Operation { get; set; }
-            public int IndexPartition { get; set; }
-
-            public MatchConditionValuesDocumentsThreadInstance(
-                MatchConditionValuesDocumentsThreadOperation operation, int indexPartition)
-            {
-                Operation = operation;
-                IndexPartition = indexPartition;
-            }
-        }
-
-        /// <summary>
-        /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.
-        /// </summary>
-        private class MatchConditionValuesDocumentsThreadOperation
-        {
-            public Transaction Transaction { get; set; }
-            public PhysicalIndex PhysicalIndex { get; set; }
-            public PhysicalSchema PhysicalSchema { get; set; }
-            public IndexSelection IndexSelection { get; set; }
-            public ConditionSubset ConditionSubset { get; set; }
-            public KbInsensitiveDictionary<string> ConditionValues { get; set; }
-            public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
-
-            public MatchConditionValuesDocumentsThreadOperation(Transaction transaction,
-                PhysicalIndex physicalIndex, PhysicalSchema physicalSchema, IndexSelection indexSelection,
-                ConditionSubset conditionSubset, KbInsensitiveDictionary<string> conditionValues)
-            {
-                Transaction = transaction;
-                PhysicalIndex = physicalIndex;
-                PhysicalSchema = physicalSchema;
-                IndexSelection = indexSelection;
-                ConditionSubset = conditionSubset;
-                ConditionValues = conditionValues;
-            }
-        }
-
         private void MatchConditionValuesDocumentsThreadWorker(object? parameter)
         {
             try
@@ -516,46 +475,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 ptThreadCompletion?.StopAndAccumulate();
 
                 return operation.Results;
-            }
-        }
-
-        /// <summary>
-        /// Thread parameters for a index operations. Used by a single thread.
-        /// </summary>
-        private class MatchWorkingSchemaDocumentsThreadInstance
-        {
-            public MatchWorkingSchemaDocumentsThreadOperation Operation { get; set; }
-            public int IndexPartition { get; set; }
-
-            public MatchWorkingSchemaDocumentsThreadInstance(MatchWorkingSchemaDocumentsThreadOperation operation, int indexPartition)
-            {
-                Operation = operation;
-                IndexPartition = indexPartition;
-            }
-        }
-
-        /// <summary>
-        /// Thread parameters for a index operations. Shared across all threads in a single lookup operation.
-        /// </summary>
-        private class MatchWorkingSchemaDocumentsThreadOperation
-        {
-            public Transaction Transaction { get; set; }
-            public PhysicalIndex PhysicalIndex { get; set; }
-            public PhysicalSchema PhysicalSchema { get; set; }
-            public IndexSelection IndexSelection { get; set; }
-            public ConditionSubset ConditionSubset { get; set; }
-            public string WorkingSchemaPrefix { get; set; }
-            public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
-
-            public MatchWorkingSchemaDocumentsThreadOperation(Transaction transaction, PhysicalIndex physicalIndex,
-                PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
-            {
-                Transaction = transaction;
-                PhysicalIndex = physicalIndex;
-                PhysicalSchema = physicalSchema;
-                IndexSelection = indexSelection;
-                ConditionSubset = conditionSubset;
-                WorkingSchemaPrefix = workingSchemaPrefix;
             }
         }
 
@@ -1101,53 +1020,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 throw;
             }
         }
-
-        #region Threading.
-
-        /// <summary>
-        /// Thread parameters for a lookup operations. Used by a single thread.
-        /// </summary>
-        private class RebuildIndexThreadParameterInstance
-        {
-            public RebuildIndexThreadOperation Operation { get; set; }
-            public DocumentPointer DocumentPointer { get; set; }
-
-            public RebuildIndexThreadParameterInstance(RebuildIndexThreadOperation operation, DocumentPointer documentPointer)
-            {
-                Operation = operation;
-                DocumentPointer = documentPointer;
-            }
-        }
-
-        /// <summary>
-        /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.
-        /// </summary>
-        private class RebuildIndexThreadOperation
-        {
-            public Transaction Transaction { get; set; }
-            public PhysicalSchema PhysicalSchema { get; set; }
-            public PhysicalIndex PhysicalIndex { get; set; }
-            public Dictionary<uint, PhysicalIndexPages> PhysicalIndexPageMap { get; set; }
-            public object[] SyncObjects { get; private set; }
-
-            public RebuildIndexThreadOperation(Transaction transaction, PhysicalSchema physicalSchema,
-                Dictionary<uint, PhysicalIndexPages> physicalIndexPageMap, PhysicalIndex physicalIndex, uint indexPartitions)
-            {
-                SyncObjects = new object[indexPartitions];
-
-                for (uint indexPartition = 0; indexPartition < indexPartitions; indexPartition++)
-                {
-                    SyncObjects[indexPartition] = new object();
-                }
-
-                Transaction = transaction;
-                PhysicalSchema = physicalSchema;
-                PhysicalIndex = physicalIndex;
-                PhysicalIndexPageMap = physicalIndexPageMap;
-            }
-        }
-
-        #endregion
 
         private void RebuildIndexThreadWorker(object? parameter)
         {

@@ -1,14 +1,15 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 
-namespace NTDLS.Katzebase.Engine.Query.Searchers
+namespace NTDLS.Katzebase.Engine.Threading
 {
     /// <summary>
     /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.
     /// </summary>
-    internal class LookupThreadOperation
+    internal class DocumentLookupThreadOperation
     {
         public string? GatherDocumentPointersForSchemaPrefix { get; set; } = null;
         public SchemaIntersectionRowCollection Results { get; set; } = new();
@@ -18,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         public Transaction Transaction { get; private set; }
         public PreparedQuery Query { get; private set; }
 
-        public LookupThreadOperation(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
+        public DocumentLookupThreadOperation(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
         {
             GatherDocumentPointersForSchemaPrefix = gatherDocumentPointersForSchemaPrefix;
             Core = core;
