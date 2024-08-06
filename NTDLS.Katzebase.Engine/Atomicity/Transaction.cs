@@ -365,7 +365,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             if (isRecovery == false)
             {
                 var session = core.Sessions.ByProcessId(processId);
-                if (session.GetConnectionSetting(Sessions.SessionState.KbConnectionSetting.TraceWaitTimes) == 1)
+                if (session.GetConnectionSetting(SessionState.KbConnectionSetting.TraceWaitTimes) == 1)
                 {
                     PT = new PerformanceTrace();
                 }

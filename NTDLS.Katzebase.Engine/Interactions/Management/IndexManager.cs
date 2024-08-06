@@ -248,15 +248,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             else
             {
-                //Unfortunately, we cant easily eliminate index partitions. Lets gram some threads and scan all of the partitions.
+                //Unfortunately, we can't easily eliminate index partitions. Lets gram some threads and scan all of the partitions.
 
-                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
+                var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchConditionValuesDocumentsThreadInstance>();
                 var operation = new MatchConditionValuesDocumentsThreadOperation(
                     transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, conditionValues);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
                 {
-                    if (threadPoolQueue.ExceptionOccurred())
+                    if (queue.ExceptionOccurred())
                     {
                         break;
                     }
@@ -264,12 +264,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var instance = new MatchConditionValuesDocumentsThreadInstance(operation, indexPartition);
 
                     var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
-                    threadPoolQueue.Enqueue(instance, MatchConditionValuesDocumentsThreadWorker);
+                    queue.Enqueue(instance, MatchConditionValuesDocumentsThreadWorker);
                     ptThreadQueue?.StopAndAccumulate();
                 }
 
                 var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
-                threadPoolQueue.WaitForCompletion();
+                queue.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
                 return operation.Results;
@@ -277,12 +277,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         }
 
-        private void MatchConditionValuesDocumentsThreadWorker(object? parameter)
+        private void MatchConditionValuesDocumentsThreadWorker(MatchConditionValuesDocumentsThreadInstance instance)
         {
             try
             {
-                var instance = parameter.EnsureNotNull<MatchConditionValuesDocumentsThreadInstance>();
-
                 instance.Operation.Transaction.EnsureActive();
 
                 var ptThreadDeQueue = instance.Operation.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadDeQueue);
@@ -451,15 +449,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 //Index scan.
 
-                //Unfortunately, we cant easily eliminate index partitions. Lets fire up some threads and scan all of the partitions.
+                //Unfortunately, we can't easily eliminate index partitions. Lets fire up some threads and scan all of the partitions.
 
-                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
+                var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchWorkingSchemaDocumentsThreadInstance>();
                 var operation = new MatchWorkingSchemaDocumentsThreadOperation(
                     transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubset, workingSchemaPrefix);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
                 {
-                    if (threadPoolQueue.ExceptionOccurred())
+                    if (queue.ExceptionOccurred())
                     {
                         break;
                     }
@@ -467,24 +465,22 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var instance = new MatchWorkingSchemaDocumentsThreadInstance(operation, indexPartition);
 
                     var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
-                    threadPoolQueue.Enqueue(instance, MatchWorkingSchemaDocumentsThreadWorker);
+                    queue.Enqueue(instance, MatchWorkingSchemaDocumentsThreadWorker);
                     ptThreadQueue?.StopAndAccumulate();
                 }
 
                 var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
-                threadPoolQueue.WaitForCompletion();
+                queue.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
                 return operation.Results;
             }
         }
 
-        private void MatchWorkingSchemaDocumentsThreadWorker(object? parameter)
+        private void MatchWorkingSchemaDocumentsThreadWorker(MatchWorkingSchemaDocumentsThreadInstance instance)
         {
             try
             {
-                var instance = parameter.EnsureNotNull<MatchWorkingSchemaDocumentsThreadInstance>();
-
                 instance.Operation.Transaction.EnsureActive();
 
                 string pageDiskPath = instance.Operation.PhysicalIndex.GetPartitionPagesFileName(
@@ -1022,12 +1018,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private void RebuildIndexThreadWorker(object? parameter)
+        private void RebuildIndexThreadWorker(RebuildIndexThreadParameterInstance instance)
         {
             try
             {
-                var instance = parameter.EnsureNotNull<RebuildIndexThreadParameterInstance>();
-
                 instance.Operation.Transaction.EnsureActive();
 
                 if (instance.Operation.PhysicalSchema.DiskPath == null)
@@ -1099,13 +1093,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         (physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
+                var queue = _core.ThreadPool.Generic.CreateChildQueue<RebuildIndexThreadParameterInstance>();
                 var operation = new RebuildIndexThreadOperation(
                     transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);
 
                 foreach (var documentPointer in documentPointers)
                 {
-                    if (threadPoolQueue.ExceptionOccurred())
+                    if (queue.ExceptionOccurred())
                     {
                         break;
                     }
@@ -1113,12 +1107,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var instance = new RebuildIndexThreadParameterInstance(operation, documentPointer);
 
                     var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
-                    threadPoolQueue.Enqueue(instance, RebuildIndexThreadWorker);
+                    queue.Enqueue(instance, RebuildIndexThreadWorker);
                     ptThreadQueue?.StopAndAccumulate();
                 }
 
                 var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
-                threadPoolQueue.WaitForCompletion();
+                queue.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
                 for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
@@ -1231,12 +1225,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    var threadPoolQueue = _core.ThreadPool.Generic.CreateQueueStateTracker();
+                    var queue = _core.ThreadPool.Generic.CreateChildQueue<RemoveDocumentsFromIndexThreadInstance>();
                     var operation = new RemoveDocumentsFromIndexThreadOperation(transaction, physicalIndex, physicalSchema, documentPointers);
 
                     for (int indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
                     {
-                        if (threadPoolQueue.ExceptionOccurred())
+                        if (queue.ExceptionOccurred())
                         {
                             break;
                         }
@@ -1244,12 +1238,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         var instance = new RemoveDocumentsFromIndexThreadInstance(operation, indexPartition);
 
                         var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
-                        threadPoolQueue.Enqueue(instance, RemoveDocumentsFromIndexThreadWorker);
+                        queue.Enqueue(instance, RemoveDocumentsFromIndexThreadWorker);
                         ptThreadQueue?.StopAndAccumulate();
                     }
 
                     var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
-                    threadPoolQueue.WaitForCompletion();
+                    queue.WaitForCompletion();
                     ptThreadCompletion?.StopAndAccumulate();
                 }
             }
@@ -1295,12 +1289,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private void RemoveDocumentsFromIndexThreadWorker(object? parameter)
+        private void RemoveDocumentsFromIndexThreadWorker(RemoveDocumentsFromIndexThreadInstance instance)
         {
             try
             {
-                var instance = parameter.EnsureNotNull<RemoveDocumentsFromIndexThreadInstance>();
-
                 instance.Operation.Transaction.EnsureActive();
 
                 string pageDiskPath = instance.Operation.PhysicalIndex.GetPartitionPagesFileName(

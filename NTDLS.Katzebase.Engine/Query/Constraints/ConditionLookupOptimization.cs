@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Schemas;
 using System.Text;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Query.Constraints
@@ -20,8 +21,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// </summary>
         public Conditions Conditions { get; private set; }
 
-        public ConditionLookupOptimization(Conditions conditions)
+        private readonly Transaction _transaction;
+
+        public ConditionLookupOptimization(Transaction transaction, Conditions conditions)
         {
+            _transaction = transaction;
             Conditions = conditions.Clone();
         }
 
@@ -46,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                 var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
-                var lookupOptimization = new ConditionLookupOptimization(conditions);
+                var lookupOptimization = new ConditionLookupOptimization(transaction, conditions);
 
                 foreach (var subset in conditions.Subsets)
                 {
@@ -103,29 +107,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                         }
                     }
 
-                    List<Condition> GetConvertedConditions(List<Condition> conditions, List<PrefixedField> coveredFields)
-                    {
-                        var result = new List<Condition>();
-
-                        foreach (var coveredField in coveredFields)
-                        {
-                            foreach (var condition in conditions)
-                            {
-                                if (condition.Left.Key == coveredField.Key)
-                                {
-
-                                    result.Add(condition);
-                                }
-                            }
-                        }
-
-                        return result;
-                    }
-
                     //Grab the index that matches the most of our supplied keys but also has the least attributes.
                     var firstIndex = (from o in potentialIndexes where o.Tried == false select o)
                         .OrderByDescending(s => s.CoveredFields.Count)
                         .ThenBy(t => t.Index.Attributes.Count).FirstOrDefault();
+
                     if (firstIndex != null)
                     {
                         var handledKeys = GetConvertedConditions(subset.Conditions, firstIndex.CoveredFields);
@@ -173,7 +159,25 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         #endregion
 
-        public bool CanApplyIndexing(ConditionSubset subset)
+        public static List<Condition> GetConvertedConditions(List<Condition> conditions, List<PrefixedField> coveredFields)
+        {
+            var result = new List<Condition>();
+
+            foreach (var coveredField in coveredFields)
+            {
+                foreach (var condition in conditions)
+                {
+                    if (condition.Left.Key == coveredField.Key)
+                    {
+                        result.Add(condition);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public static bool CanApplyIndexing(ConditionSubset subset)
         {
             //Currently we can only use a partial index match if all of the conditions in a group are "AND"s,
             //  so if we have an "OR" and any of the conditions are not covered then skip the indexing.
@@ -187,7 +191,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         private bool? _canApplyIndexingResultCached = null;
 
-        public bool CanApplyIndexing()
+        public bool CanApplyIndexing(bool explain = false)
         {
             if (_canApplyIndexingResultCached != null)
             {
@@ -196,18 +200,105 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
             if (Conditions.NonRootSubsets.Any(o => o.IndexSelection == null) == false)
             {
-                //All condition subsets have a selected index. Start building a list of possible document IDs.
+                //All condition subsets have a selected index.
                 foreach (var subset in Conditions.NonRootSubsets)
                 {
                     if (CanApplyIndexing(subset) == false)
                     {
+                        if (explain)
+                        {
+                            _transaction.AddMessage($"Indexing invalidated by subset expression: {subset.Expression}.", KbMessageType.Verbose);
+                        }
                         _canApplyIndexingResultCached = false;
                         return false;
                     }
-
                 }
+
+                #region Index usage reporting.
+
+                if (explain)
+                {
+                    var message = new StringBuilder();
+
+                    var friendlyExpression = new StringBuilder();
+                    BuildFullVirtualExpression(ref friendlyExpression, Conditions.Root, 1);
+
+                    message.AppendLine($"Expression: ({friendlyExpression}) {{");
+
+                    message.AppendLine($"Applying {IndexSelection.Count} index(s).");
+
+                    foreach (var index in IndexSelection)
+                    {
+                        var coveredFields = string.Join("', '", index.CoveredFields.Select(o => o.Key)).Trim();
+                        message.AppendLine($"Index '{index.PhysicalIndex.Name}' covers {coveredFields}");
+                    }
+
+                    //All condition subsets have a selected index. Start building a list of possible document IDs.
+                    foreach (var subset in Conditions.NonRootSubsets)
+                    {
+                        message.AppendLine($"Expression: ({subset.Expression}) {{");
+
+                        foreach (var condition in subset.Conditions)
+                        {
+                            string leftIndex = string.Empty;
+                            string rightIndex = string.Empty;
+
+                            if (condition.CoveredByIndex)
+                            {
+                                foreach (var index in IndexSelection)
+                                {
+                                    if (index.CoveredFields.Any(o => o.Key == condition.Left.Key))
+                                    {
+                                        leftIndex = index.PhysicalIndex.Name;
+                                    }
+                                    if (index.CoveredFields.Any(o => o.Key == condition.Right.Key))
+                                    {
+                                        rightIndex = index.PhysicalIndex.Name;
+                                    }
+                                }
+                            }
+
+                            string leftValue = condition.Left.IsConstant ? $"'{condition.Left.Key}'" : condition.Left.Key;
+                            string rightValue = condition.Right.IsConstant ? $"'{condition.Right.Key}'" : condition.Right.Key;
+
+                            string indexInfo = string.Empty;
+
+                            if (string.IsNullOrEmpty(leftIndex) == false || string.IsNullOrEmpty(rightIndex) == false)
+                            {
+                                indexInfo += ", Indexes (";
+
+                                if (string.IsNullOrEmpty(leftIndex) == false)
+                                {
+                                    indexInfo += $"Left: [{leftIndex}] ";
+                                }
+
+                                if (string.IsNullOrEmpty(rightIndex) == false)
+                                {
+                                    indexInfo += $"Right: [{rightIndex}] ";
+                                }
+
+                                indexInfo = indexInfo.Trim();
+
+                                indexInfo += ")";
+                            }
+
+                            message.AppendLine($"\t'{condition.ConditionKey}: ({leftValue} {condition.LogicalQualifier} {rightValue}){indexInfo}");
+                        }
+                        message.AppendLine("}");
+                    }
+
+                    _transaction.AddMessage(message.ToString(), KbMessageType.Verbose);
+                }
+
+                #endregion
+
                 _canApplyIndexingResultCached = true;
                 return true;
+            }
+
+            if (explain)
+            {
+                _transaction.AddMessage($"Indexing invalidated by root expression: {Conditions.Root.Expression}.", KbMessageType.Verbose);
             }
 
             _canApplyIndexingResultCached = false;
