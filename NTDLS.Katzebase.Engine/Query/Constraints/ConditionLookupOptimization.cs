@@ -182,7 +182,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             //Currently we can only use a partial index match if all of the conditions in a group are "AND"s,
             //  so if we have an "OR" and any of the conditions are not covered then skip the indexing.
             if (subset.Conditions.Any(o => o.LogicalConnector == LogicalConnector.Or)
-                && subset.Conditions.Any(o => o.CoveredByIndex == false))
+                || subset.Conditions.Any(o => o.CoveredByIndex == true) == false)
             {
                 return false;
             }
@@ -191,7 +191,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         private bool? _canApplyIndexingResultCached = null;
 
-        public bool CanApplyIndexing(bool explain = false)
+        public bool CanApplyIndexing()
         {
             if (_canApplyIndexingResultCached != null)
             {
@@ -205,10 +205,6 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 {
                     if (CanApplyIndexing(subset) == false)
                     {
-                        if (explain)
-                        {
-                            _transaction.AddMessage($"Indexing invalidated by subset expression: {subset.Expression}.", KbMessageType.Verbose);
-                        }
                         _canApplyIndexingResultCached = false;
                         return false;
                     }
@@ -216,12 +212,13 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                 #region Index usage reporting.
 
+                /*
                 if (explain)
                 {
-                    var message = new StringBuilder();
-
-                    var friendlyExpression = new StringBuilder();
-                    BuildFullVirtualExpression(ref friendlyExpression, Conditions.Root, 1);
+                    //var message = new StringBuilder();
+                    //var friendlyExpression = new StringBuilder();
+                    //BuildFullVirtualExpression(ref friendlyExpression, Conditions.Root, 0);
+                    //message.AppendLine(friendlyExpression.ToString());
 
                     message.AppendLine($"Expression: ({friendlyExpression}) {{");
 
@@ -236,7 +233,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     //All condition subsets have a selected index. Start building a list of possible document IDs.
                     foreach (var subset in Conditions.NonRootSubsets)
                     {
-                        message.AppendLine($"Expression: ({subset.Expression}) {{");
+                        message.AppendLine($"Expression: ({FriendlyExpression(subset.Expression)}) {{");
 
                         foreach (var condition in subset.Conditions)
                         {
@@ -282,39 +279,29 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                                 indexInfo += ")";
                             }
 
-                            message.AppendLine($"\t'{condition.ConditionKey}: ({leftValue} {condition.LogicalQualifier} {rightValue}){indexInfo}");
+                            message.AppendLine($"\t'{FriendlyExpression(condition.ConditionKey)}: ({leftValue} {condition.LogicalQualifier} {rightValue}){indexInfo}");
                         }
                         message.AppendLine("}");
                     }
 
-                    _transaction.AddMessage(message.ToString(), KbMessageType.Verbose);
+                    //_transaction.AddMessage(message.ToString(), KbMessageType.Explain);
                 }
+                */
 
                 #endregion
 
                 _canApplyIndexingResultCached = true;
                 return true;
             }
-
-            if (explain)
-            {
-                _transaction.AddMessage($"Indexing invalidated by root expression: {Conditions.Root.Expression}.", KbMessageType.Verbose);
-            }
-
             _canApplyIndexingResultCached = false;
             return false;
         }
 
         #region Optimization explanation.
-        /*
-         * Probably need to redo these, there is a better way to explain what's going on. :)
-         */
 
         static string FriendlyExpression(string val) => val.ToUpper()
-            .Replace("C_", "Condition")
-            .Replace("S_", "SubExpression")
-            .Replace("||", "OR")
-            .Replace("&&", "AND");
+            .Replace("C_", "Expr")
+            .Replace("S_", "SubExpr");
 
         public string BuildFullVirtualExpression()
         {
@@ -334,6 +321,12 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 foreach (var subsetKey in Conditions.Root.SubsetKeys)
                 {
                     var subset = Conditions.SubsetByKey(subsetKey);
+
+                    var dbg = CanApplyIndexing(subset);
+                    if (dbg == true)
+                    {
+                    }
+
                     result.AppendLine($"  [{FriendlyExpression(subset.Expression)}]"
                         + (CanApplyIndexing(subset) ? " {Indexable (" + subset.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
 
@@ -363,7 +356,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     foreach (var condition in subset.Conditions)
                     {
                         result.AppendLine("".PadLeft((depth + 1) * 4, ' ')
-                            + $"{FriendlyExpression(condition.ConditionKey)}: {condition.Left} {condition.LogicalQualifier} '{condition.Right}'");
+                            + $"{FriendlyExpression(condition.ConditionKey)}: ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
                     }
                     result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
                 }
@@ -381,7 +374,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "(");
                 foreach (var condition in conditionSubset.Conditions)
                 {
-                    result.AppendLine("".PadLeft((depth + 1) * 4, ' ') + $"{FriendlyExpression(condition.ConditionKey)}: {condition.Left} {condition.LogicalQualifier} '{condition.Right}'");
+                    result.AppendLine("".PadLeft((depth + 1) * 4, ' ') + $"{FriendlyExpression(condition.ConditionKey)}: ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
                 }
                 result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
             }

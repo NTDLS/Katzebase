@@ -66,16 +66,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         case KbConnectionSetting.ExplainQuery:
                             session.UpsertConnectionSetting(connectionSetting, bool.Parse(variable.Value) ? 1 : 0);
                             break;
-                        /*
-                        case KbConnectionSetting.SomeVariableOfDoubleType:
-                        case KbConnectionSetting.SomeOtherVariableOfDoubleType:
-                            session.UpsertConnectionSetting(connectionSetting, double.Parse(variable.Value));
-                            break;
-                        */
                         default:
                             throw new KbNotImplementedException();
                     }
-
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();

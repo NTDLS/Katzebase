@@ -1,3 +1,4 @@
+set ExplainQuery true
 /*
 --This query returns data.
 select

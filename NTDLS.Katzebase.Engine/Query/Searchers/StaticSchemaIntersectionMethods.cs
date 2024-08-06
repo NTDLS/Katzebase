@@ -12,6 +12,7 @@ using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
+using System.Linq;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -45,9 +46,15 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 lookupOptimization = ConditionLookupOptimization.Build(
                     core, transaction, topLevelMap.PhysicalSchema, query.Conditions, topLevelMap.Prefix);
 
+                if (explain)
+                {
+                    var friendlyExpression = lookupOptimization.BuildFullVirtualExpression();
+                    transaction.AddMessage(friendlyExpression, KbMessageType.Explain);
+                }
+
                 var limitedDocumentPointers = new List<DocumentPointer>();
 
-                if (lookupOptimization.CanApplyIndexing(explain))
+                if (lookupOptimization.CanApplyIndexing())
                 {
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                     documentPointers = new List<DocumentPointer>();
@@ -386,7 +393,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
-
         /// <summary>
         /// This function is designed to handle one-to-one and one-to-many, so it can produce more than one row.
         /// </summary>
@@ -427,7 +433,28 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             bool explain = instance.Operation.Transaction.Session.GetConnectionSetting(SessionState.KbConnectionSetting.ExplainQuery) == 1;
 
-            if (currentSchemaMap.Optimization?.CanApplyIndexing(explain) == true)
+            if (explain && currentSchemaMap.Optimization != null)
+            {
+                lock (instance.Operation.ExplainHash)
+                {
+                    if (instance.Operation.ExplainHash.Contains(currentSchemaMap.Optimization.Conditions.Hash ?? string.Empty))
+                    {
+                        explain = false;
+                    }
+                    else
+                    {
+                        instance.Operation.ExplainHash.Add(currentSchemaMap.Optimization.Conditions.Hash ?? string.Empty);
+                    }
+                }
+
+                if (explain)
+                {
+                    var friendlyExpression = currentSchemaMap.Optimization.BuildFullVirtualExpression();
+                    instance.Operation.Transaction.AddMessage(friendlyExpression, KbMessageType.Explain);
+                }
+            }
+
+            if (currentSchemaMap.Optimization?.CanApplyIndexing() == true)
             {
                 //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                 var furtherLimitedDocumentPointers = new List<DocumentPointer>();

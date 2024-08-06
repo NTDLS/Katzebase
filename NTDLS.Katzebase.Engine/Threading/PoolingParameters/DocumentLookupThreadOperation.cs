@@ -11,6 +11,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// </summary>
     internal class DocumentLookupThreadOperation
     {
+        public HashSet<string> ExplainHash { get; set; } = new();
         public string? GatherDocumentPointersForSchemaPrefix { get; set; } = null;
         public SchemaIntersectionRowCollection Results { get; set; } = new();
         public List<DocumentPointer> DocumentPointers { get; set; } = new();
