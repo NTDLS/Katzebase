@@ -60,7 +60,18 @@ namespace NTDLS.Katzebase.Engine.Sessions
             return result;
         }
 
+        /// <summary>
+        /// Shortcut to determine if a value is set to 1 (boolean true).
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public bool IsConnectionSettingSet(KbConnectionSetting name)
+        {
+            var result = Variables.FirstOrDefault(o => o.Name == name);
+            return result?.Value == 1;
+        }
+
+        public bool IsConnectionSettingPresent(KbConnectionSetting name)
         {
             var result = Variables.FirstOrDefault(o => o.Name == name);
             return result != null;

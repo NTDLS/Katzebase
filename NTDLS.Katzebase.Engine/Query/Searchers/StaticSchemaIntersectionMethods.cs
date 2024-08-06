@@ -15,6 +15,7 @@ using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Sessions.SessionState;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace NTDLS.Katzebase.Engine.Query.Searchers
@@ -36,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             IEnumerable<DocumentPointer>? documentPointers = null;
             ExpressionOptimization? lookupOptimization = null;
 
-            bool explain = transaction.Session.GetConnectionSetting(SessionState.KbConnectionSetting.ExplainQuery) == 1;
+            bool explain = transaction.Session.IsConnectionSettingSet(KbConnectionSetting.ExplainQuery);
 
             //TODO: Here we should evaluate whatever conditions we can to early eliminate the top level document scans.
             //If we don't have any conditions then we just need to return all rows from the schema.
@@ -45,11 +46,15 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 lookupOptimization = ExpressionOptimization.Build(
                     core, transaction, topLevelMap.PhysicalSchema, query.Conditions, topLevelMap.Prefix);
 
+                #region Explain.
+
                 if (explain)
                 {
                     var friendlyExpression = lookupOptimization.BuildFullVirtualExpression();
                     transaction.AddMessage(friendlyExpression, KbMessageType.Explain);
                 }
+
+                #endregion
 
                 var limitedDocumentPointers = new List<DocumentPointer>();
 
@@ -430,7 +435,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             #region Indexing to reduce the number of document pointers in "limitedDocumentPointers".
 
-            bool explain = instance.Operation.Transaction.Session.GetConnectionSetting(SessionState.KbConnectionSetting.ExplainQuery) == 1;
+            #region Explain.
+
+            bool explain = instance.Operation.Transaction.Session.IsConnectionSettingSet(KbConnectionSetting.ExplainQuery);
 
             if (explain && currentSchemaMap.Optimization != null)
             {
@@ -452,6 +459,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     instance.Operation.Transaction.AddMessage(friendlyExpression, KbMessageType.Explain);
                 }
             }
+
+            #endregion
 
             if (currentSchemaMap.Optimization?.CanApplyIndexing() == true)
             {
