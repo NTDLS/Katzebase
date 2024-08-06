@@ -272,7 +272,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 using var transaction = core.Transactions.Begin(processId);
                 var physicalSchema = core.Schemas.Acquire(transaction, preparedQuery.Schemas[0].n, LockOperation.Read);
 
-                var lookupOptimization = ConditionLookupOptimization.Build(core, transaction, physicalSchema, preparedQuery.Conditions);
+                var lookupOptimization = ConditionLookupOptimization.Build(core, transaction, physicalSchema, preparedQuery.Expressions);
                 result.Explanation = lookupOptimization.BuildFullVirtualExpression();
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);

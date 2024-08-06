@@ -120,16 +120,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
              *  Then we use the conditions that were supplied to eliminate results from that dataset.
             */
 
-            var subsetResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query);
+            var subExpressionResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query);
 
             foreach (var field in query.SelectFields)
             {
                 result.Fields.Add(new KbQueryField(field.Alias));
             }
 
-            foreach (var subsetResult in subsetResults.Collection)
+            foreach (var subExpressionResult in subExpressionResults.Collection)
             {
-                result.Rows.Add(new KbQueryRow(subsetResult.Values));
+                result.Rows.Add(new KbQueryRow(subExpressionResult.Values));
             }
 
             return result;
@@ -157,8 +157,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 schemaMap.Add(querySchema.Prefix, physicalSchema, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
-            var subsetResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, schemaPrefix);
-            return subsetResults.DocumentPointers;
+            var subExpressionResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, schemaPrefix);
+            return subExpressionResults.DocumentPointers;
         }
 
     }

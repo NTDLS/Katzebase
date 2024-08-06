@@ -16,18 +16,18 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         public PhysicalIndex PhysicalIndex { get; set; }
         public PhysicalSchema PhysicalSchema { get; set; }
         public IndexSelection IndexSelection { get; set; }
-        public ConditionSubset ConditionSubset { get; set; }
+        public ConditionSubExpression ConditionSubExpression { get; set; }
         public string WorkingSchemaPrefix { get; set; }
         public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
 
         public MatchWorkingSchemaDocumentsThreadOperation(Transaction transaction, PhysicalIndex physicalIndex,
-            PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubset conditionSubset, string workingSchemaPrefix)
+            PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubExpression conditionSubExpression, string workingSchemaPrefix)
         {
             Transaction = transaction;
             PhysicalIndex = physicalIndex;
             PhysicalSchema = physicalSchema;
             IndexSelection = indexSelection;
-            ConditionSubset = conditionSubset;
+            ConditionSubExpression = conditionSubExpression;
             WorkingSchemaPrefix = workingSchemaPrefix;
         }
     }
