@@ -1,12 +1,13 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
+using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Trace
 {
     internal class PerformanceTrace
     {
-        internal KbInsensitiveDictionary<KbMetric> Metrics { get; private set; } = new();
+        private readonly OptimisticCriticalResource<KbInsensitiveDictionary<KbMetric>> _metrics = new();
 
         internal enum PerformanceTraceCumulativeMetricType
         {
@@ -55,11 +56,11 @@ namespace NTDLS.Katzebase.Engine.Trace
         public void AccumulateDuration(PerformanceTraceDurationTracker item)
         {
 
-            lock (Metrics)
+            _metrics.Write(o =>
             {
-                if (Metrics.ContainsKey(item.Key))
+                if (o.ContainsKey(item.Key))
                 {
-                    var lookup = Metrics[item.Key];
+                    var lookup = o[item.Key];
                     lookup.Value += item.Duration;
                     lookup.Count++;
                 }
@@ -67,20 +68,20 @@ namespace NTDLS.Katzebase.Engine.Trace
                 {
                     var lookup = new KbMetric(KbMetricType.Cumulative, item.Key, item.Duration);
                     lookup.Count++;
-                    Metrics.Add(item.Key, lookup);
+                    o.Add(item.Key, lookup);
                 }
-            }
+            });
         }
 
         public void AddDiscreteMetric(PerformanceTraceDiscreteMetricType type, double value)
         {
-            lock (Metrics)
+            _metrics.Write(o =>
             {
                 var key = $"{type}";
 
-                if (Metrics.ContainsKey(key))
+                if (o.ContainsKey(key))
                 {
-                    var lookup = Metrics[key];
+                    var lookup = o[key];
                     lookup.Value = value;
                     lookup.Count++;
                 }
@@ -88,16 +89,19 @@ namespace NTDLS.Katzebase.Engine.Trace
                 {
                     var lookup = new KbMetric(KbMetricType.Discrete, key, value);
                     lookup.Count++;
-                    Metrics.Add(key, lookup);
+                    o.Add(key, lookup);
                 }
-            }
+            });
         }
 
         internal KbMetricCollection ToCollection()
         {
-            var result = new KbMetricCollection();
-            result.AddRange(Metrics.Select(o => o.Value));
-            return result;
+            return _metrics.Read(o =>
+            {
+                var result = new KbMetricCollection();
+                result.AddRange(o.Select(o => o.Value));
+                return result;
+            });
         }
     }
 }

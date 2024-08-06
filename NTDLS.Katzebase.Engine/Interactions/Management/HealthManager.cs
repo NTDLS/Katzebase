@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Engine.Health;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
+using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -11,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class HealthManager
     {
-        public NTDLS.Semaphore.OptimisticCriticalResource<KbInsensitiveDictionary<HealthCounter>> Counters { get; private set; } = new();
+        public OptimisticCriticalResource<KbInsensitiveDictionary<HealthCounter>> Counters { get; private set; } = new();
 
         private readonly EngineCore _core;
         private DateTime lastCheckpoint = DateTime.MinValue;
@@ -53,59 +54,31 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public KbInsensitiveDictionary<HealthCounter> CloneCounters()
         {
-            lock (Counters)
-            {
-                return Counters.Read(o => o.Clone());
-            }
+            return Counters.Read(o => o.Clone());
         }
 
         public void ClearCounters()
         {
-            lock (Counters)
-            {
-                Counters.Write(o => o.Clear());
-                Checkpoint();
-            }
+            Counters.Write(o => o.Clear());
+            Checkpoint();
         }
 
         public void Checkpoint()
         {
             try
             {
-                lock (Counters)
+                lastCheckpoint = DateTime.UtcNow;
+
+                Counters.Read(o =>
                 {
-                    lastCheckpoint = DateTime.UtcNow;
-                    /* TODO: Cleanup the counters - can't keep them forever.
-                    var physicalCounters = Counters.Values.Where(o => o.Value > 0).ToList();
-
-                    //All counters have a non-null instance because we use it for a key, but the ones that are really per-instance
-                    //  will have an instance different than the type. Here we want to find the most recent instance counter and
-                    //  remove any other instance counters that are n-seconds older than it is. Otherwise this grows forever.
-                    //  As for the non-instance counters, we leave those forever. The user can clear them as they see fit.
-                    var instanceCounters = physicalCounters.Where(o => o.Instance == o.Type.ToString());
-                    if (instanceCounters.Any())
-                    {
-                        var mostRecentCounter = instanceCounters.Max(o => o.WaitDateTimeUtc);
-                        var itemsToRemove = physicalCounters.Where(o => o.Instance == o.Type.ToString()
-                                        && (mostRecentCounter - o.WaitDateTimeUtc).TotalSeconds > core.Settings.HealthMonitoringInstanceLevelTimeToLiveSeconds).ToList();
-
-                        foreach (var itemToRemove in itemsToRemove)
-                        {
-                            physicalCounters.Remove(itemToRemove);
-                            Counters.Remove(itemToRemove.Instance);
-                        }
-                    }
-                    */
-
-                    _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.LogDirectory, HealthStatsFile), Counters, false);
-                }
+                    _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.LogDirectory, HealthStatsFile), o, false);
+                });
             }
             catch (Exception ex)
             {
                 LogManager.Error("Failed to checkpoint health manager.", ex);
                 throw;
             }
-
         }
 
         /// <summary>

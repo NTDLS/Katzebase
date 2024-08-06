@@ -1,5 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Types;
+using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Engine.IO.DeferredDiskIOSnapshot;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -24,9 +25,10 @@ namespace NTDLS.Katzebase.Engine.IO
         }
 
         private EngineCore? _core;
-        private readonly KbInsensitiveDictionary<DeferredDiskIOObject> _collection = new();
+        private readonly PessimisticCriticalResource<KbInsensitiveDictionary<DeferredDiskIOObject>> _collection = new();
 
-        public bool ContainsKey(string key) => _collection.ContainsKey(key);
+        public bool ContainsKey(string key)
+            => _collection.Use(o => o.ContainsKey(key));
 
         public void SetCore(EngineCore core)
         {
@@ -37,25 +39,20 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             var snapshot = new DeferredDiskIOSnapshot();
 
-            lock (this)
+            _collection.Use(o =>
             {
-                foreach (var kvp in _collection)
+                foreach (var kvp in o)
                 {
                     snapshot.Collection.Add(kvp.Key, new DeferredDiskIOObjectSnapshot(
                         kvp.Value.DiskPath, kvp.Value.Format, kvp.Value.UseCompression));
                 }
-            }
+            });
 
             return snapshot;
         }
 
         public int Count()
-        {
-            lock (this)
-            {
-                return _collection.Count;
-            }
-        }
+            => _collection.Use(o => o.Count);
 
         /// <summary>
         /// Writes all deferred IOs to disk.
@@ -64,9 +61,9 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             _core.EnsureNotNull();
 
-            lock (this)
+            _collection.Use(o =>
             {
-                foreach (var obj in _collection)
+                foreach (var obj in o)
                 {
                     if (obj.Value.Reference != null)
                     {
@@ -85,34 +82,31 @@ namespace NTDLS.Katzebase.Engine.IO
                     }
                 }
 
-                _collection.Clear();
-            }
+                o.Clear();
+            });
         }
 
         public bool GetDeferredDiskIO<T>(string key, out T? outReference)
         {
             key = key.ToLowerInvariant();
 
-            lock (this)
+            outReference = _collection.Use(o =>
             {
-                if (_collection.TryGetValue(key, out var deferredIO))
+                if (o.TryGetValue(key, out var deferredIO))
                 {
-                    outReference = (T)deferredIO.Reference;
-                    return true;
+                    return (T)deferredIO.Reference;
                 }
-            }
-            outReference = default;
-            return false;
+                return default;
+            });
+
+            return outReference != null;
         }
 
         public void Remove(string key)
         {
             key = key.ToLowerInvariant();
 
-            lock (this)
-            {
-                _collection.Remove(key);
-            }
+            _collection.Use(o => o.Remove(key));
         }
 
         public void RemoveItemsWithPrefix(string prefix)
@@ -124,15 +118,15 @@ namespace NTDLS.Katzebase.Engine.IO
                 prefix += '\\';
             }
 
-            lock (this)
+            _collection.Use(o =>
             {
-                var keysToRemove = _collection.Where(o => o.Key.StartsWith(prefix)).Select(o => o.Key).ToList();
+                var keysToRemove = o.Where(o => o.Key.StartsWith(prefix)).Select(o => o.Key).ToList();
 
                 foreach (var key in keysToRemove)
                 {
-                    _collection.Remove(key);
+                    o.Remove(key);
                 }
-            }
+            });
         }
 
         /// <summary>
@@ -145,17 +139,17 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             key = key.ToLowerInvariant();
 
-            lock (this)
+            _collection.Use(o =>
             {
-                if (_collection.TryGetValue(key, out var value))
+                if (o.TryGetValue(key, out var value))
                 {
                     value.Reference = reference;
                 }
                 else
                 {
-                    _collection.Add(key, new DeferredDiskIOObject(diskPath, reference, deferredFormat, useCompression));
+                    o.Add(key, new DeferredDiskIOObject(diskPath, reference, deferredFormat, useCompression));
                 }
-            }
+            });
         }
     }
 }
