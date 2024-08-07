@@ -11,26 +11,35 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// <summary>
     /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.
     /// </summary>
-    internal class MatchConditionValuesDocumentsThreadOperation
+    internal class MatchConditionValuesDocumentsOperation
     {
         public Transaction Transaction { get; set; }
         public PhysicalIndex PhysicalIndex { get; set; }
         public PhysicalSchema PhysicalSchema { get; set; }
         public IndexSelection IndexSelection { get; set; }
-        public ConditionSubExpression ConditionSubExpression { get; set; }
+        public SubCondition ConditionSubCondition { get; set; }
         public KbInsensitiveDictionary<string> ConditionValues { get; set; }
         public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
 
-        public MatchConditionValuesDocumentsThreadOperation(Transaction transaction,
+        public MatchConditionValuesDocumentsOperation(Transaction transaction,
             PhysicalIndex physicalIndex, PhysicalSchema physicalSchema, IndexSelection indexSelection,
-            ConditionSubExpression conditionSubExpression, KbInsensitiveDictionary<string> conditionValues)
+            SubCondition conditionSubCondition, KbInsensitiveDictionary<string> conditionValues)
         {
             Transaction = transaction;
             PhysicalIndex = physicalIndex;
             PhysicalSchema = physicalSchema;
             IndexSelection = indexSelection;
-            ConditionSubExpression = conditionSubExpression;
+            ConditionSubCondition = conditionSubCondition;
             ConditionValues = conditionValues;
+        }
+
+        /// <summary>
+        /// Thread parameters for a lookup operations. Used by a single thread.
+        /// </summary>
+        internal class MatchConditionValuesDocumentsInstance(MatchConditionValuesDocumentsOperation operation, int indexPartition)
+        {
+            public MatchConditionValuesDocumentsOperation Operation { get; set; } = operation;
+            public int IndexPartition { get; set; } = indexPartition;
         }
     }
 }

@@ -10,31 +10,31 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
     {
         private string _lastLetter = string.Empty;
 
-        public List<ConditionSubExpression> SubExpressions { get; private set; } = new();
+        public List<SubCondition> SubConditions { get; private set; } = new();
 
         /// Every condition instance starts with a single root node that all others point back to given some lineage.
         /// This is the name of the root node.
-        public string RootSubExpressionKey { get; private set; } = string.Empty;
+        public string RootSubConditionKey { get; private set; } = string.Empty;
 
-        public string HighLevelExpressionTree { get; private set; } = string.Empty;
+        public string HighLevelConditionTree { get; private set; } = string.Empty;
 
         /// <summary>
         /// Every condition instance starts with a single root node that all others point back to given some lineage.
         /// This is the root node.
         /// </summary>
-        private ConditionSubExpression? _root;
-        public ConditionSubExpression Root
+        private SubCondition? _root;
+        public SubCondition Root
         {
             get
             {
-                _root ??= SubExpressions.Single(o => o.IsRoot);
+                _root ??= SubConditions.Single(o => o.IsRoot);
                 return _root;
             }
         }
 
         public string? Hash { get; private set; }
 
-        public IEnumerable<ConditionSubExpression> NonRootSubExpressions => SubExpressions.Where(o => !o.IsRoot);
+        public IEnumerable<SubCondition> NonRootSubConditions => SubConditions.Where(o => !o.IsRoot);
 
         private static string VariableToKey(string str)
         {
@@ -78,14 +78,14 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         private void Parse(string conditionsText, KbInsensitiveDictionary<string> literalStrings, string leftHandAlias)
         {
-            //We parse by parentheses so wrap the expression in them if it is not already.
+            //We parse by parentheses so wrap the condition in them if it is not already.
             if (conditionsText.StartsWith('(') == false || conditionsText.StartsWith(')') == false)
             {
                 conditionsText = $"({conditionsText})";
             }
 
             //Push the conditions one group deeper since we want to process all
-            //  expressions as groups and leave no chance for conditions at the root level.
+            //  conditions as groups and leave no chance for conditions at the root level.
             conditionsText = $"({conditionsText})";
 
             while (true)
@@ -96,12 +96,12 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     int endPos = conditionsText.IndexOf(')', startPos);
                     if (endPos > startPos)
                     {
-                        string subExpressionVariable = $"s_{GetNextVariableLetter()}"; //S=SubExpression-Key
-                        string subExpressionText = conditionsText.Substring(startPos, endPos - startPos + 1).Trim();
-                        string parenTrimmedSubExpressionText = subExpressionText.Substring(1, subExpressionText.Length - 2).Trim();
-                        var subExpression = new ConditionSubExpression(subExpressionVariable, parenTrimmedSubExpressionText);
-                        AddSubExpression(literalStrings, subExpression, leftHandAlias);
-                        conditionsText = conditionsText.Replace(subExpressionText, VariableToKey(subExpressionVariable));
+                        string subConditionVariable = $"s_{GetNextVariableLetter()}"; //S=SubCondition-Key
+                        string subConditionText = conditionsText.Substring(startPos, endPos - startPos + 1).Trim();
+                        string parenTrimmedSubConditionText = subConditionText.Substring(1, subConditionText.Length - 2).Trim();
+                        var subCondition = new SubCondition(subConditionVariable, parenTrimmedSubConditionText);
+                        AddSubCondition(literalStrings, subCondition, leftHandAlias);
+                        conditionsText = conditionsText.Replace(subConditionText, VariableToKey(subConditionVariable));
                     }
                 }
                 else
@@ -110,18 +110,18 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 }
             }
 
-            RootSubExpressionKey = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
+            RootSubConditionKey = conditionsText.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
 
             RemoveVariableMarkers();
 
-            //Mark the root SubExpression as such.
-            SubExpressions.Single(o => o.SubExpressionKey == RootSubExpressionKey).IsRoot = true;
+            //Mark the root SubCondition as such.
+            SubConditions.Single(o => o.SubConditionKey == RootSubConditionKey).IsRoot = true;
 
-            HighLevelExpressionTree = BuildHighLevelExpressionTree();
+            HighLevelConditionTree = BuildHighLevelConditionTree();
 
-            if (Root.Expressions.Any())
+            if (Root.Conditions.Any())
             {
-                throw new Exception("The root expression cannot contain conditions.");
+                throw new Exception("The root condition cannot contain conditions.");
             }
         }
 
@@ -137,11 +137,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         private void RemoveVariableMarkers()
         {
-            RootSubExpressionKey = RemoveVariableMarker(RootSubExpressionKey);
+            RootSubConditionKey = RemoveVariableMarker(RootSubConditionKey);
 
-            foreach (var subExpression in SubExpressions)
+            foreach (var subCondition in SubConditions)
             {
-                subExpression.Expression = RemoveVariableMarker(subExpression.Expression);
+                subCondition.Condition = RemoveVariableMarker(subCondition.Condition);
             }
         }
 
@@ -149,7 +149,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         {
             while (true)
             {
-                int pos = str.IndexOf("$:"); //SubExpression-Key.
+                int pos = str.IndexOf("$:"); //SubCondition-Key.
                 if (pos >= 0)
                 {
                     int epos = str.IndexOf("$", pos + 1);
@@ -167,36 +167,36 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return str;
         }
 
-        public ConditionSubExpression SubExpressionByKey(string key)
+        public SubCondition SubConditionByKey(string key)
         {
-            return SubExpressions.First(o => o.SubExpressionKey == key);
+            return SubConditions.First(o => o.SubConditionKey == key);
         }
 
         public Conditions Clone()
         {
             var clone = new Conditions()
             {
-                RootSubExpressionKey = RootSubExpressionKey,
-                HighLevelExpressionTree = HighLevelExpressionTree
+                RootSubConditionKey = RootSubConditionKey,
+                HighLevelConditionTree = HighLevelConditionTree
             };
 
             clone.AllFields.AddRange(AllFields);
 
-            foreach (var subExpression in SubExpressions)
+            foreach (var subCondition in SubConditions)
             {
-                var subExpressionClone = new ConditionSubExpression(subExpression.SubExpressionKey, subExpression.Expression)
+                var subConditionClone = new SubCondition(subCondition.SubConditionKey, subCondition.Condition)
                 {
-                    IsRoot = subExpression.IsRoot,
+                    IsRoot = subCondition.IsRoot,
                 };
 
-                foreach (var condition in subExpression.Expressions)
+                foreach (var condition in subCondition.Conditions)
                 {
-                    subExpressionClone.Expressions.Add(condition.Clone());
+                    subConditionClone.Conditions.Add(condition.Clone());
                 }
-                subExpressionClone.ConditionKeys.UnionWith(subExpression.ConditionKeys);
-                subExpressionClone.SubExpressionKeys.UnionWith(subExpression.SubExpressionKeys);
+                subConditionClone.ConditionKeys.UnionWith(subCondition.ConditionKeys);
+                subConditionClone.SubConditionKeys.UnionWith(subCondition.SubConditionKeys);
 
-                clone.SubExpressions.Add(subExpressionClone);
+                clone.SubConditions.Add(subConditionClone);
             }
 
             clone.Hash = clone.BuildConditionHash();
@@ -204,11 +204,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return clone;
         }
 
-        public void AddSubExpression(KbInsensitiveDictionary<string> literalStrings, ConditionSubExpression subExpression, string leftHandAlias)
+        public void AddSubCondition(KbInsensitiveDictionary<string> literalStrings, SubCondition subCondition, string leftHandAlias)
         {
             var logicalConnector = LogicalConnector.None;
 
-            var conditionTokenizer = new ConditionTokenizer(subExpression.Expression);
+            var conditionTokenizer = new ConditionTokenizer(subCondition.Condition);
 
             while (true)
             {
@@ -224,11 +224,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 {
                     if (token.StartsWith("$:c"))
                     {
-                        subExpression.ConditionKeys.Add(token.Substring(2, token.Length - 3));
+                        subCondition.ConditionKeys.Add(token.Substring(2, token.Length - 3));
                     }
                     else if (token.StartsWith("$:s"))
                     {
-                        subExpression.SubExpressionKeys.Add(token.Substring(2, token.Length - 3));
+                        subCondition.SubConditionKeys.Add(token.Substring(2, token.Length - 3));
                     }
 
                     continue;
@@ -288,39 +288,39 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                         (left, right) = (right, left); //Swap the left and right.
                     }
 
-                    var expression = new ConditionExpression(subExpression.SubExpressionKey, conditionKey, logicalConnector, left, logicalQualifier, right);
+                    var condition = new Condition(subCondition.SubConditionKey, conditionKey, logicalConnector, left, logicalQualifier, right);
 
-                    subExpression.Expression = subExpression.Expression.Remove(startPosition, endPosition - startPosition);
-                    subExpression.Expression = subExpression.Expression.Insert(startPosition, VariableToKey(conditionKey) + " ");
+                    subCondition.Condition = subCondition.Condition.Remove(startPosition, endPosition - startPosition);
+                    subCondition.Condition = subCondition.Condition.Insert(startPosition, VariableToKey(conditionKey) + " ");
 
-                    conditionTokenizer.SetText(subExpression.Expression, 0);
+                    conditionTokenizer.SetText(subCondition.Condition, 0);
 
-                    subExpression.Expressions.Add(expression);
+                    subCondition.Conditions.Add(condition);
                     logicalConnector = LogicalConnector.None;
                 }
             }
 
-            subExpression.Expression = subExpression.Expression.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
+            subCondition.Condition = subCondition.Condition.Replace(" or ", " || ").Replace(" and ", " && ").Trim();
 
-            SubExpressions.Add(subExpression);
+            SubConditions.Add(subCondition);
         }
 
         #region Debug.
 
-        public string BuildFullVirtualExpression()
+        public string BuildFullVirtualCondition()
         {
             var result = new StringBuilder();
-            result.AppendLine($"[{RootSubExpressionKey}]");
+            result.AppendLine($"[{RootSubConditionKey}]");
 
-            if (Root.SubExpressionKeys.Count > 0)
+            if (Root.SubConditionKeys.Count > 0)
             {
                 result.AppendLine("(");
 
-                foreach (var subExpressionKey in Root.SubExpressionKeys)
+                foreach (var subConditionKey in Root.SubConditionKeys)
                 {
-                    var subExpression = SubExpressionByKey(subExpressionKey);
-                    result.AppendLine($"  [{subExpression.Expression}]");
-                    BuildFullVirtualExpression(ref result, subExpression, 1);
+                    var subCondition = SubConditionByKey(subConditionKey);
+                    result.AppendLine($"  [{subCondition.Condition}]");
+                    BuildFullVirtualCondition(ref result, subCondition, 1);
                 }
 
                 result.AppendLine(")");
@@ -329,26 +329,26 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return result.ToString();
         }
 
-        private void BuildFullVirtualExpression(ref StringBuilder result, ConditionSubExpression conditionSubExpression, int depth)
+        private void BuildFullVirtualCondition(ref StringBuilder result, SubCondition conditionSubCondition, int depth)
         {
-            //If we have SubExpressions, then we need to satisfy those in order to complete the equation.
-            foreach (var subExpressionKey in conditionSubExpression.SubExpressionKeys)
+            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
+            foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
             {
-                var subExpression = SubExpressionByKey(subExpressionKey);
-                result.AppendLine("".PadLeft((depth) * 2, ' ') + $"[{subExpression.Expression}]");
+                var subCondition = SubConditionByKey(subConditionKey);
+                result.AppendLine("".PadLeft((depth) * 2, ' ') + $"[{subCondition.Condition}]");
 
-                if (subExpression.SubExpressionKeys.Count > 0)
+                if (subCondition.SubConditionKeys.Count > 0)
                 {
                     result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "(");
-                    BuildFullVirtualExpression(ref result, subExpression, depth + 1);
+                    BuildFullVirtualCondition(ref result, subCondition, depth + 1);
                     result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
                 }
             }
 
-            if (conditionSubExpression.Expressions.Count > 0)
+            if (conditionSubCondition.Conditions.Count > 0)
             {
                 result.AppendLine("".PadLeft((depth + 1) * 1, ' ') + "(");
-                foreach (var condition in conditionSubExpression.Expressions)
+                foreach (var condition in conditionSubCondition.Conditions)
                 {
                     result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + $"{condition.ConditionKey}: {condition.Left} {condition.LogicalQualifier}");
                 }
@@ -361,48 +361,48 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public List<PrefixedField> AllFields { get; private set; } = new();
 
         /// <summary>
-        /// This function is used to build a logical expression at the SubExpression
+        /// This function is used to build a logical condition at the SubCondition
         ///     level, it also demonstrates how we process the recursive logic.
         /// </summary>
         /// <returns></returns>
-        public string BuildHighLevelExpressionTree()
+        public string BuildHighLevelConditionTree()
         {
-            var expression = new StringBuilder($"({Root.Expression})");
+            var condition = new StringBuilder($"({Root.Condition})");
 
-            foreach (var subExpressionKey in Root.SubExpressionKeys)
+            foreach (var subConditionKey in Root.SubConditionKeys)
             {
-                var subExpression = SubExpressionByKey(subExpressionKey);
-                expression.Replace(subExpressionKey, $"({subExpression.Expression})");
-                BuildHighLevelExpressionTree(ref expression, subExpression);
+                var subCondition = SubConditionByKey(subConditionKey);
+                condition.Replace(subConditionKey, $"({subCondition.Condition})");
+                BuildHighLevelConditionTree(ref condition, subCondition);
             }
 
-            return expression.ToString();
+            return condition.ToString();
         }
 
-        public void BuildHighLevelExpressionTree(ref StringBuilder expression, ConditionSubExpression conditionSubExpression)
+        public void BuildHighLevelConditionTree(ref StringBuilder condition, SubCondition conditionSubCondition)
         {
-            foreach (var subExpressionKey in conditionSubExpression.SubExpressionKeys)
+            foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
             {
-                var subExpression = SubExpressionByKey(subExpressionKey);
-                expression.Replace(subExpressionKey, $"({subExpression.Expression})");
-                BuildHighLevelExpressionTree(ref expression, subExpression);
+                var subCondition = SubConditionByKey(subConditionKey);
+                condition.Replace(subConditionKey, $"({subCondition.Condition})");
+                BuildHighLevelConditionTree(ref condition, subCondition);
             }
         }
 
         public string BuildConditionHash()
         {
             var result = new StringBuilder();
-            result.Append($"[{RootSubExpressionKey}]");
+            result.Append($"[{RootSubConditionKey}]");
 
-            if (Root.SubExpressionKeys.Count > 0)
+            if (Root.SubConditionKeys.Count > 0)
             {
                 result.Append('(');
 
-                foreach (var subExpressionKey in Root.SubExpressionKeys)
+                foreach (var subConditionKey in Root.SubConditionKeys)
                 {
-                    var subExpression = SubExpressionByKey(subExpressionKey);
-                    result.Append($"[{subExpression.Expression}]");
-                    BuildConditionHash(ref result, subExpression, 1);
+                    var subCondition = SubConditionByKey(subConditionKey);
+                    result.Append($"[{subCondition.Condition}]");
+                    BuildConditionHash(ref result, subCondition, 1);
                 }
 
                 result.Append(')');
@@ -411,18 +411,18 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return Library.Helpers.ComputeSHA256(result.ToString());
         }
 
-        private void BuildConditionHash(ref StringBuilder result, ConditionSubExpression conditionSubExpression, int depth)
+        private void BuildConditionHash(ref StringBuilder result, SubCondition conditionSubCondition, int depth)
         {
-            //If we have SubExpressions, then we need to satisfy those in order to complete the equation.
-            foreach (var subExpressionKey in conditionSubExpression.SubExpressionKeys)
+            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
+            foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
             {
-                var subExpression = SubExpressionByKey(subExpressionKey);
-                result.Append($"[{subExpression.Expression}]");
+                var subCondition = SubConditionByKey(subConditionKey);
+                result.Append($"[{subCondition.Condition}]");
 
-                if (subExpression.Expressions.Count > 0)
+                if (subCondition.Conditions.Count > 0)
                 {
                     result.Append('(');
-                    foreach (var condition in subExpression.Expressions)
+                    foreach (var condition in subCondition.Conditions)
                     {
                         if (condition.Left?.IsConstant == false)
                         {
@@ -437,18 +437,18 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     result.Append(')');
                 }
 
-                if (subExpression.SubExpressionKeys.Count > 0)
+                if (subCondition.SubConditionKeys.Count > 0)
                 {
                     result.Append('(');
-                    BuildConditionHash(ref result, subExpression, depth + 1);
+                    BuildConditionHash(ref result, subCondition, depth + 1);
                     result.Append(')');
                 }
             }
 
-            if (conditionSubExpression.Expressions.Count > 0)
+            if (conditionSubCondition.Conditions.Count > 0)
             {
                 result.Append('(');
-                foreach (var condition in conditionSubExpression.Expressions)
+                foreach (var condition in conditionSubCondition.Conditions)
                 {
                     if (condition.Left?.IsConstant == false)
                     {

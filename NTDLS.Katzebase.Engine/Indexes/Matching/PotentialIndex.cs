@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         public PhysicalIndex Index { get; private set; }
         public bool Tried { get; private set; }
         public string CoveredHash => string.Join(":", CoveredFields.OrderBy(o => o)).ToLowerInvariant();
-        public Guid SourceSubExpressionUID { get; private set; }
+        public Guid SourceSubConditionUID { get; private set; }
 
         public void SetTried()
         {

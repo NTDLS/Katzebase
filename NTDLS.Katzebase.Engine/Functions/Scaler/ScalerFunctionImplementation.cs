@@ -159,25 +159,25 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     }
 
                 case "isgreater":
-                    return (ConditionExpression.IsMatchGreater(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
+                    return (Condition.IsMatchGreater(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
                 case "isless":
-                    return (ConditionExpression.IsMatchLesser(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
+                    return (Condition.IsMatchLesser(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
                 case "isgreaterorequal":
-                    return (ConditionExpression.IsMatchGreater(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
+                    return (Condition.IsMatchGreater(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
                 case "islessorequal":
-                    return (ConditionExpression.IsMatchLesserOrEqual(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
+                    return (Condition.IsMatchLesserOrEqual(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
                 case "isbetween":
-                    return (ConditionExpression.IsMatchBetween(transaction, proc.Get<int>("value"), proc.Get<int>("rangeLow"), proc.Get<int>("rangeHigh")) == true).ToString();
+                    return (Condition.IsMatchBetween(transaction, proc.Get<int>("value"), proc.Get<int>("rangeLow"), proc.Get<int>("rangeHigh")) == true).ToString();
                 case "isnotbetween":
-                    return (ConditionExpression.IsMatchBetween(transaction, proc.Get<int>("value"), proc.Get<int>("rangeLow"), proc.Get<int>("rangeHigh")) == false).ToString();
+                    return (Condition.IsMatchBetween(transaction, proc.Get<int>("value"), proc.Get<int>("rangeLow"), proc.Get<int>("rangeHigh")) == false).ToString();
                 case "isequal":
-                    return (ConditionExpression.IsMatchEqual(transaction, proc.Get<string>("text1"), proc.Get<string>("text2")) == true).ToString();
+                    return (Condition.IsMatchEqual(transaction, proc.Get<string>("text1"), proc.Get<string>("text2")) == true).ToString();
                 case "isnotequal":
-                    return (ConditionExpression.IsMatchEqual(transaction, proc.Get<string>("text1"), proc.Get<string>("text2")) == false).ToString();
+                    return (Condition.IsMatchEqual(transaction, proc.Get<string>("text1"), proc.Get<string>("text2")) == false).ToString();
                 case "islike":
-                    return (ConditionExpression.IsMatchLike(transaction, proc.Get<string>("text"), proc.Get<string>("pattern")) == true).ToString();
+                    return (Condition.IsMatchLike(transaction, proc.Get<string>("text"), proc.Get<string>("pattern")) == true).ToString();
                 case "isnotlike":
-                    return (ConditionExpression.IsMatchLike(transaction, proc.Get<string>("text"), proc.Get<string>("pattern")) == false).ToString();
+                    return (Condition.IsMatchLike(transaction, proc.Get<string>("text"), proc.Get<string>("pattern")) == false).ToString();
 
                 case "guid":
                     return Guid.NewGuid().ToString();

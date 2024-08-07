@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// <summary>
     /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.
     /// </summary>
-    internal class DocumentLookupThreadOperation
+    internal class DocumentLookupOperation
     {
         public HashSet<string> ExplainHash { get; set; } = new();
         public string? GatherDocumentPointersForSchemaPrefix { get; set; } = null;
@@ -20,13 +20,26 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         public Transaction Transaction { get; private set; }
         public PreparedQuery Query { get; private set; }
 
-        public DocumentLookupThreadOperation(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
+        public DocumentLookupOperation(EngineCore core, Transaction transaction,
+            QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
         {
             GatherDocumentPointersForSchemaPrefix = gatherDocumentPointersForSchemaPrefix;
             Core = core;
             Transaction = transaction;
             SchemaMap = schemaMap;
             Query = query;
+        }
+
+        /// <summary>
+        /// Thread parameters for a lookup operations. Used by a single thread.
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="documentPointer"></param>
+        internal class DocumentLookupOperationInstance(DocumentLookupOperation operation, DocumentPointer documentPointer)
+        {
+            public DocumentLookupOperation Operation { get; set; } = operation;
+            public DocumentPointer DocumentPointer { get; set; } = documentPointer;
+            public Dictionary<string, NCalc.Expression> ExpressionCache { get; set; } = new();
         }
     }
 }

@@ -14,6 +14,7 @@ using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Threading.PoolingParameters.MatchConditionValuesDocumentsOperation;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -233,9 +234,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal Dictionary<uint, DocumentPointer> MatchConditionValuesDocuments(Transaction transaction, PhysicalSchema physicalSchema,
-            IndexSelection indexSelection, ConditionSubExpression conditionSubExpression, KbInsensitiveDictionary<string> conditionValues)
+            IndexSelection indexSelection, SubCondition conditionSubCondition, KbInsensitiveDictionary<string> conditionValues)
         {
-            var firstCondition = conditionSubExpression.Expressions.First();
+            var firstCondition = conditionSubCondition.Conditions.First();
 
             if (firstCondition.LogicalQualifier == LogicalQualifier.Equals)
             {
@@ -243,15 +244,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(conditionValues.First().Value);
                 string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubExpression, conditionValues);
+                return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubCondition, conditionValues);
             }
             else
             {
                 //Unfortunately, we can't easily eliminate index partitions. Lets gram some threads and scan all of the partitions.
 
-                var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchConditionValuesDocumentsThreadInstance>();
-                var operation = new MatchConditionValuesDocumentsThreadOperation(
-                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubExpression, conditionValues);
+                var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchConditionValuesDocumentsInstance>();
+                var operation = new MatchConditionValuesDocumentsOperation(
+                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubCondition, conditionValues);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
                 {
@@ -260,7 +261,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         break;
                     }
 
-                    var instance = new MatchConditionValuesDocumentsThreadInstance(operation, indexPartition);
+                    var instance = new MatchConditionValuesDocumentsInstance(operation, indexPartition);
 
                     var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
                     queue.Enqueue(instance, MatchConditionValuesDocumentsThreadWorker);
@@ -276,7 +277,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         }
 
-        private void MatchConditionValuesDocumentsThreadWorker(MatchConditionValuesDocumentsThreadInstance instance)
+        private void MatchConditionValuesDocumentsThreadWorker(MatchConditionValuesDocumentsInstance instance)
         {
             try
             {
@@ -290,7 +291,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
 
                 var results = MatchDocuments(instance.Operation.Transaction, physicalIndexPages,
-                    instance.Operation.IndexSelection, instance.Operation.ConditionSubExpression, instance.Operation.ConditionValues);
+                    instance.Operation.IndexSelection, instance.Operation.ConditionSubCondition, instance.Operation.ConditionValues);
                 if (results.Count != 0)
                 {
                     lock (instance.Operation.Results)
@@ -310,7 +311,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         private Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
-            IndexSelection indexSelection, ConditionSubExpression conditionSubExpression, KbInsensitiveDictionary<string> conditionValues)
+            IndexSelection indexSelection, SubCondition conditionSubCondition, KbInsensitiveDictionary<string> conditionValues)
         {
             try
             {
@@ -319,7 +320,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
                 {
-                    var conditionField = conditionSubExpression.Expressions
+                    var conditionField = conditionSubCondition.Conditions
                         .FirstOrDefault(o => o.Left.Value?.Equals(attribute.Field.EnsureNotNull(), StringComparison.InvariantCultureIgnoreCase) == true);
 
                     if (conditionField == null)
@@ -341,25 +342,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch);
 
                     if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchEqual(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchEqual(transaction, w.Key, conditionValue) == false).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, conditionValue) == false).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThan)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchGreater(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreater(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchGreaterOrEqual(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterOrEqual(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.LessThan)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchLesser(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesser(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.LessThanOrEqual)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchLesserOrEqual(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqual(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.Like)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchLike(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, conditionValue) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotLike)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchLike(transaction, w.Key, conditionValue) == false).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, conditionValue) == false).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.Between)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchBetween(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotBetween)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchBetween(transaction, w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(transaction, w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
                     else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {conditionField.LogicalQualifier}");
 
                     ptIndexSeek?.StopAndAccumulate();
@@ -399,50 +400,50 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal Dictionary<uint, DocumentPointer> MatchWorkingSchemaDocuments(Transaction transaction,
-                    PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubExpression conditionSubExpression, string workingSchemaPrefix)
+                    PhysicalSchema physicalSchema, IndexSelection indexSelection, SubCondition conditionSubCondition, string workingSchemaPrefix)
         {
-            ConditionExpression? firstExpressionLeft = null;
-            ConditionExpression? firstExpressionRight = null;
+            Condition? firstConditionLeft = null;
+            Condition? firstConditionRight = null;
 
-            foreach (var condition in conditionSubExpression.Expressions)
+            foreach (var condition in conditionSubCondition.Conditions)
             {
                 if (indexSelection.CoveredFields.Any(o => o.Key == condition.Left.Key))
                 {
-                    firstExpressionLeft = condition;
+                    firstConditionLeft = condition;
                 }
                 if (indexSelection.CoveredFields.Any(o => o.Key == condition.Right.Key))
                 {
-                    firstExpressionRight = condition;
+                    firstConditionRight = condition;
                 }
             }
 
-            if (firstExpressionLeft?.LogicalQualifier == LogicalQualifier.Equals)
+            if (firstConditionLeft?.LogicalQualifier == LogicalQualifier.Equals)
             {
                 //Index seek.
 
                 //Yay, we have an "equals" condition so we can eliminate all but one partition.
 
                 //Yes, we matched the index on the left field, so the indexed value is on the right.
-                var firstValue = firstExpressionLeft?.Right.Value.EnsureNotNull();
+                var firstValue = firstConditionLeft?.Right.Value.EnsureNotNull();
 
                 uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(firstValue);
                 string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubExpression, workingSchemaPrefix);
+                return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubCondition, workingSchemaPrefix);
             }
-            else if (firstExpressionRight?.LogicalQualifier == LogicalQualifier.Equals)
+            else if (firstConditionRight?.LogicalQualifier == LogicalQualifier.Equals)
             {
                 //Index seek.
 
                 //Yay, we have an "equals" condition so we can eliminate all but one partition.
 
                 //Yes, we matched the index on the right field, so the indexed value is on the left.
-                var firstValue = firstExpressionRight.Left.Value.EnsureNotNull();
+                var firstValue = firstConditionRight.Left.Value.EnsureNotNull();
 
                 uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(firstValue);
                 string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubExpression, workingSchemaPrefix);
+                return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubCondition, workingSchemaPrefix);
             }
             else
             {
@@ -450,9 +451,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 //Unfortunately, we can't easily eliminate index partitions. Lets fire up some threads and scan all of the partitions.
 
-                var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchWorkingSchemaDocumentsThreadInstance>();
-                var operation = new MatchWorkingSchemaDocumentsThreadOperation(
-                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubExpression, workingSchemaPrefix);
+                var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchWorkingSchemaDocumentsOperation.MatchWorkingSchemaDocumentsInstance>();
+                var operation = new MatchWorkingSchemaDocumentsOperation(
+                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubCondition, workingSchemaPrefix);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
                 {
@@ -461,7 +462,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         break;
                     }
 
-                    var instance = new MatchWorkingSchemaDocumentsThreadInstance(operation, indexPartition);
+                    var instance = new MatchWorkingSchemaDocumentsOperation.MatchWorkingSchemaDocumentsInstance(operation, indexPartition);
 
                     var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
                     queue.Enqueue(instance, MatchWorkingSchemaDocumentsThreadWorker);
@@ -476,7 +477,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private void MatchWorkingSchemaDocumentsThreadWorker(MatchWorkingSchemaDocumentsThreadInstance instance)
+        private void MatchWorkingSchemaDocumentsThreadWorker(MatchWorkingSchemaDocumentsOperation.MatchWorkingSchemaDocumentsInstance instance)
         {
             try
             {
@@ -487,7 +488,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
 
                 var results = MatchDocuments(instance.Operation.Transaction, physicalIndexPages,
-                    instance.Operation.IndexSelection, instance.Operation.ConditionSubExpression, instance.Operation.WorkingSchemaPrefix);
+                    instance.Operation.IndexSelection, instance.Operation.ConditionSubCondition, instance.Operation.WorkingSchemaPrefix);
 
                 if (results.Count != 0)
                 {
@@ -513,7 +514,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         private Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction,
                     PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection,
-                    ConditionSubExpression conditionSubExpression, string workingSchemaPrefix)
+                    SubCondition conditionSubCondition, string workingSchemaPrefix)
         {
             try
             {
@@ -523,7 +524,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
                 {
-                    var conditionField = conditionSubExpression.Expressions
+                    var conditionField = conditionSubCondition.Conditions
                         .FirstOrDefault(o => o.Left.Prefix == workingSchemaPrefix
                         && o.Left.Value?.Equals(attribute.Field.EnsureNotNull(), StringComparison.InvariantCultureIgnoreCase) == true);
 
@@ -544,25 +545,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var ptIndexSeek = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch);
 
                     if (conditionField.LogicalQualifier == LogicalQualifier.Equals)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchEqual(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotEquals)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchEqual(transaction, w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThan)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchGreater(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreater(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchGreaterOrEqual(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterOrEqual(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.LessThan)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchLesser(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesser(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.LessThanOrEqual)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchLesserOrEqual(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqual(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.Like)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchLike(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotLike)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchLike(transaction, w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.Between)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchBetween(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(transaction, w.Key, conditionField.Right.Value) == true).Select(s => s.Value));
                     else if (conditionField.LogicalQualifier == LogicalQualifier.NotBetween)
-                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => ConditionExpression.IsMatchBetween(transaction, w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
+                        foundLeaves = workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(transaction, w.Key, conditionField.Right.Value) == false).Select(s => s.Value));
                     else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {conditionField.LogicalQualifier}");
 
                     ptIndexSeek?.StopAndAccumulate();
@@ -1017,7 +1018,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private void RebuildIndexThreadWorker(RebuildIndexThreadParameterInstance instance)
+        private void RebuildIndexThreadWorker(RebuildIndexOperation.RebuildIndexInstance instance)
         {
             try
             {
@@ -1092,8 +1093,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         (physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var queue = _core.ThreadPool.Generic.CreateChildQueue<RebuildIndexThreadParameterInstance>();
-                var operation = new RebuildIndexThreadOperation(
+                var queue = _core.ThreadPool.Generic.CreateChildQueue<RebuildIndexOperation.RebuildIndexInstance>();
+
+                var operation = new RebuildIndexOperation(
                     transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);
 
                 foreach (var documentPointer in documentPointers)
@@ -1103,7 +1105,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         break;
                     }
 
-                    var instance = new RebuildIndexThreadParameterInstance(operation, documentPointer);
+                    var instance = new RebuildIndexOperation.RebuildIndexInstance(operation, documentPointer);
 
                     var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
                     queue.Enqueue(instance, RebuildIndexThreadWorker);

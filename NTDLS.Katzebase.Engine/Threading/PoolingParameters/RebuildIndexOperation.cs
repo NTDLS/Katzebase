@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Schemas;
 
@@ -7,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// <summary>
     /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.
     /// </summary>
-    internal class RebuildIndexThreadOperation
+    internal class RebuildIndexOperation
     {
         public Transaction Transaction { get; set; }
         public PhysicalSchema PhysicalSchema { get; set; }
@@ -15,7 +16,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         public Dictionary<uint, PhysicalIndexPages> PhysicalIndexPageMap { get; set; }
         public object[] SyncObjects { get; private set; }
 
-        public RebuildIndexThreadOperation(Transaction transaction, PhysicalSchema physicalSchema,
+        public RebuildIndexOperation(Transaction transaction, PhysicalSchema physicalSchema,
             Dictionary<uint, PhysicalIndexPages> physicalIndexPageMap, PhysicalIndex physicalIndex, uint indexPartitions)
         {
             SyncObjects = new object[indexPartitions];
@@ -29,6 +30,15 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
             PhysicalSchema = physicalSchema;
             PhysicalIndex = physicalIndex;
             PhysicalIndexPageMap = physicalIndexPageMap;
+        }
+
+        /// <summary>
+        /// Thread parameters for a lookup operations. Used by a single thread.
+        /// </summary>
+        internal class RebuildIndexInstance(RebuildIndexOperation operation, DocumentPointer documentPointer)
+        {
+            public RebuildIndexOperation Operation { get; set; } = operation;
+            public DocumentPointer DocumentPointer { get; set; } = documentPointer;
         }
     }
 }

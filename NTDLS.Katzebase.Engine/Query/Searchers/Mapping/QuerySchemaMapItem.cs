@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
         public PhysicalDocumentPageCatalog DocumentPageCatalog { get; private set; }
         public Conditions? Conditions { get; private set; }
 
-        public ExpressionOptimization? Optimization { get; private set; }
+        public ConditionOptimization? Optimization { get; private set; }
 
         public QuerySchemaMapItem(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PhysicalSchema physicalSchema,
             PhysicalDocumentPageCatalog documentPageCatalog, Conditions? conditions, string prefix)
@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
 
             if (conditions != null)
             {
-                Optimization = ExpressionOptimization.Build(core, transaction, physicalSchema, conditions, prefix);
+                Optimization = ConditionOptimization.Build(core, transaction, physicalSchema, conditions, prefix);
             }
         }
     }

@@ -15,6 +15,7 @@ using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Sessions.SessionState;
+using static NTDLS.Katzebase.Engine.Threading.PoolingParameters.DocumentLookupOperation;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace NTDLS.Katzebase.Engine.Query.Searchers
@@ -34,23 +35,23 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             var topLevelMap = topLevel.Value;
 
             IEnumerable<DocumentPointer>? documentPointers = null;
-            ExpressionOptimization? lookupOptimization = null;
+            ConditionOptimization? lookupOptimization = null;
 
             bool explain = transaction.Session.IsConnectionSettingSet(KbConnectionSetting.ExplainQuery);
 
             //TODO: Here we should evaluate whatever conditions we can to early eliminate the top level document scans.
             //If we don't have any conditions then we just need to return all rows from the schema.
-            if (query.Conditions.SubExpressions.Count > 0)
+            if (query.Conditions.SubConditions.Count > 0)
             {
-                lookupOptimization = ExpressionOptimization.Build(
+                lookupOptimization = ConditionOptimization.Build(
                     core, transaction, topLevelMap.PhysicalSchema, query.Conditions, topLevelMap.Prefix);
 
                 #region Explain.
 
                 if (explain)
                 {
-                    var friendlyExpression = lookupOptimization.BuildFullVirtualExpression();
-                    transaction.AddMessage(friendlyExpression, KbMessageType.Explain);
+                    var friendlyCondition = lookupOptimization.ExplainOptimization();
+                    transaction.AddMessage(friendlyCondition, KbMessageType.Explain);
                 }
 
                 #endregion
@@ -62,11 +63,11 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                     documentPointers = new List<DocumentPointer>();
 
-                    //All condition SubExpressions have a selected index. Start building a list of possible document IDs.
-                    foreach (var subExpression in lookupOptimization.Conditions.NonRootSubExpressions)
+                    //All condition SubConditions have a selected index. Start building a list of possible document IDs.
+                    foreach (var subCondition in lookupOptimization.Conditions.NonRootSubConditions)
                     {
                         var indexMatchedDocuments = core.Indexes.MatchWorkingSchemaDocuments
-                            (transaction, topLevelMap.PhysicalSchema, subExpression.IndexSelection.EnsureNotNull(), subExpression, topLevelMap.Prefix);
+                            (transaction, topLevelMap.PhysicalSchema, subCondition.IndexSelection.EnsureNotNull(), subCondition, topLevelMap.Prefix);
 
                         limitedDocumentPointers.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
@@ -76,7 +77,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 else
                 {
                     #region Why no indexing? Find out here!
-                    //   * One or more of the condition SubExpressions lacks an index.
+                    //   * One or more of the condition SubConditions lacks an index.
                     //   *
                     //   *   Since indexing requires that we can ensure document elimination we will have
                     //   *      to ensure that we have a covering index on EACH-and-EVERY condition group.
@@ -88,8 +89,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     //   *      documents will need to be scanned anyway. To prevent unindexed scans, reduce the number of
                     //   *      condition groups (nested in parentheses).
                     //   *
-                    //   * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we can't use an index.
-                    //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
+                    //   * ConditionLookupOptimization:BuildFullVirtualCondition() Will tell you why we can't use an index.
+                    //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualCondition();
                     #endregion
                 }
             }
@@ -97,9 +98,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //If we do not have any documents, then get the whole schema.
             documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, topLevelMap.PhysicalSchema, LockOperation.Read);
 
-            var queue = core.ThreadPool.Generic.CreateChildQueue<DocumentLookupThreadInstance>();
+            var queue = core.ThreadPool.Generic.CreateChildQueue<DocumentLookupOperationInstance>();
 
-            var operation = new DocumentLookupThreadOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
+            var operation = new DocumentLookupOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
 
             foreach (var documentPointer in documentPointers)
             {
@@ -115,7 +116,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     break;
                 }
 
-                var instance = new DocumentLookupThreadInstance(operation, documentPointer);
+                var instance = new DocumentLookupOperationInstance(operation, documentPointer);
 
                 var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
                 queue.Enqueue(instance, LookupThreadWorker);
@@ -258,7 +259,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         #region Threading: DocumentLookupThreadInstance.
 
-        private static void LookupThreadWorker(DocumentLookupThreadInstance instance)
+        private static void LookupThreadWorker(DocumentLookupOperationInstance instance)
         {
             instance.Operation.Transaction.EnsureActive();
 
@@ -304,7 +305,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
-        static void ExecuteFunctions(Transaction transaction, DocumentLookupThreadOperation operation, SchemaIntersectionRowCollection resultingRows)
+        static void ExecuteFunctions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRowCollection resultingRows)
         {
             foreach (var methodField in operation.Query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
             {
@@ -341,7 +342,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         #endregion
 
-        private static void IntersectAllSchemas(DocumentLookupThreadInstance instance,
+        private static void IntersectAllSchemas(DocumentLookupOperationInstance instance,
             DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection resultingRows)
         {
             var topLevelSchemaMap = instance.Operation.SchemaMap.First();
@@ -407,7 +408,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <param name="threadScopedContentCache">Document cache for the lifetime of the entire join operation for this thread.</param>
         /// <param name="joinScopedContentCache">>Document cache used the lifetime of a single row join for this thread.</param>
         /// <exception cref="KbEngineException"></exception>
-        private static void IntersectAllSchemasRecursive(DocumentLookupThreadInstance instance,
+        private static void IntersectAllSchemasRecursive(DocumentLookupOperationInstance instance,
             int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
             ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
             ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
@@ -415,17 +416,17 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             var currentSchemaKVP = instance.Operation.SchemaMap.Skip(skipSchemaCount).First();
             var currentSchemaMap = currentSchemaKVP.Value;
 
-            var expressionHash = currentSchemaMap.Conditions.EnsureNotNull().Hash
-                ?? throw new KbEngineException($"The expression hash cannot be null.");
+            var conditionHash = currentSchemaMap.Conditions.EnsureNotNull().Hash
+                ?? throw new KbEngineException($"The condition hash cannot be null.");
 
             NCalc.Expression? expression;
 
             lock (instance.ExpressionCache)
             {
-                if (instance.ExpressionCache.TryGetValue(expressionHash, out expression) == false)
+                if (instance.ExpressionCache.TryGetValue(conditionHash, out expression) == false)
                 {
-                    expression = new NCalc.Expression(currentSchemaMap.Conditions.EnsureNotNull().HighLevelExpressionTree);
-                    instance.ExpressionCache.Add(expressionHash, expression);
+                    expression = new NCalc.Expression(currentSchemaMap.Conditions.EnsureNotNull().HighLevelConditionTree);
+                    instance.ExpressionCache.Add(conditionHash, expression);
                 }
             }
 
@@ -454,8 +455,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 if (explain)
                 {
-                    var friendlyExpression = currentSchemaMap.Optimization.BuildFullVirtualExpression();
-                    instance.Operation.Transaction.AddMessage(friendlyExpression, KbMessageType.Explain);
+                    var friendlyCondition = currentSchemaMap.Optimization.ExplainOptimization();
+                    instance.Operation.Transaction.AddMessage(friendlyCondition, KbMessageType.Explain);
                 }
             }
 
@@ -466,13 +467,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                 var furtherLimitedDocumentPointers = new List<DocumentPointer>();
 
-                //All condition SubExpressions have a selected index. Start building a list of possible document IDs.
-                foreach (var subExpression in currentSchemaMap.Optimization.Conditions.NonRootSubExpressions)
+                //All condition SubConditions have a selected index. Start building a list of possible document IDs.
+                foreach (var subCondition in currentSchemaMap.Optimization.Conditions.NonRootSubConditions)
                 {
                     var keyValuePairs = new KbInsensitiveDictionary<string>();
 
                     //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
-                    foreach (var condition in subExpression.Expressions)
+                    foreach (var condition in subCondition.Conditions)
                     {
                         var documentContent = joinScopedContentCache[condition.Right?.Prefix ?? ""];
 
@@ -485,7 +486,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                     //Match on values from the document.
                     var documentIds = instance.Operation.Core.Indexes.MatchConditionValuesDocuments
-                        (instance.Operation.Transaction, currentSchemaMap.PhysicalSchema, subExpression.IndexSelection.EnsureNotNull(), subExpression, keyValuePairs);
+                        (instance.Operation.Transaction, currentSchemaMap.PhysicalSchema, subCondition.IndexSelection.EnsureNotNull(), subCondition, keyValuePairs);
 
                     furtherLimitedDocumentPointers.AddRange(documentIds.Values);
                 }
@@ -495,7 +496,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             else
             {
                 #region Why no indexing? Find out here!
-                //   * One or more of the condition SubExpressions lacks an index.
+                //   * One or more of the condition SubConditions lacks an index.
                 //   *
                 //   *   Since indexing requires that we can ensure document elimination we will have
                 //   *      to ensure that we have a covering index on EACH-and-EVERY condition group.
@@ -507,8 +508,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 //   *      documents will need to be scanned anyway. To prevent unindexed scans, reduce the number of
                 //   *      condition groups (nested in parentheses).
                 //   *
-                //   * ConditionLookupOptimization:BuildFullVirtualExpression() Will tell you why we can't use an index.
-                //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualExpression();
+                //   * ConditionLookupOptimization:BuildFullVirtualCondition() Will tell you why we can't use an index.
+                //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualCondition();
                 //*
                 #endregion
             }
@@ -543,7 +544,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 joinScopedContentCache.Add(currentSchemaKVP.Key.ToLowerInvariant(), documentContentNextLevel);
 
-                SetSchemaIntersectionExpressionParameters(instance.Operation.Transaction,
+                SetSchemaIntersectionConditionParameters(instance.Operation.Transaction,
                     ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
 
                 var ptEvaluate = instance.Operation.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
@@ -597,32 +598,32 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <param name="expression"></param>
         /// <param name="conditions"></param>
         /// <param name="jContent"></param>
-        private static void SetSchemaIntersectionExpressionParameters(Transaction transaction,
+        private static void SetSchemaIntersectionConditionParameters(Transaction transaction,
             ref NCalc.Expression expression, Conditions conditions,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
-            //If we have SubExpressions, then we need to satisfy those in order to complete the equation.
-            foreach (var subExpressionKey in conditions.Root.SubExpressionKeys)
+            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
+            foreach (var subConditionKey in conditions.Root.SubConditionKeys)
             {
-                var subExpression = conditions.SubExpressionByKey(subExpressionKey);
-                SetSchemaIntersectionExpressionParametersRecursive(transaction,
-                    ref expression, conditions, subExpression, joinScopedContentCache);
+                var subCondition = conditions.SubConditionByKey(subConditionKey);
+                SetSchemaIntersectionConditionParametersRecursive(transaction,
+                    ref expression, conditions, subCondition, joinScopedContentCache);
             }
         }
 
-        private static void SetSchemaIntersectionExpressionParametersRecursive(Transaction transaction,
-            ref NCalc.Expression expression, Conditions conditions, ConditionSubExpression conditionSubExpression,
+        private static void SetSchemaIntersectionConditionParametersRecursive(Transaction transaction,
+            ref NCalc.Expression expression, Conditions conditions, SubCondition conditionSubCondition,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
-            //If we have SubExpressions, then we need to satisfy those in order to complete the equation.
-            foreach (var subExpressionKey in conditionSubExpression.SubExpressionKeys)
+            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
+            foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
             {
-                var subExpression = conditions.SubExpressionByKey(subExpressionKey);
-                SetSchemaIntersectionExpressionParametersRecursive(transaction,
-                    ref expression, conditions, subExpression, joinScopedContentCache);
+                var subCondition = conditions.SubConditionByKey(subConditionKey);
+                SetSchemaIntersectionConditionParametersRecursive(transaction,
+                    ref expression, conditions, subCondition, joinScopedContentCache);
             }
 
-            foreach (var condition in conditionSubExpression.Expressions)
+            foreach (var condition in conditionSubCondition.Conditions)
             {
                 //Get the value of the condition:
                 var documentContent = joinScopedContentCache[condition.Left.Prefix];
@@ -638,7 +639,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     throw new KbEngineException($"Field not found in document [{condition.Right.Value}].");
                 }
 
-                var singleConditionResult = ConditionExpression.IsMatch(transaction,
+                var singleConditionResult = Condition.IsMatch(transaction,
                     leftDocumentValue?.ToLowerInvariant(), condition.LogicalQualifier, rightDocumentValue);
 
                 expression.Parameters[condition.ConditionKey] = singleConditionResult;
@@ -648,7 +649,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// This function will "produce" a single row.
         /// </summary>
-        private static void FillInSchemaResultDocumentValues(DocumentLookupThreadInstance instance, string schemaKey,
+        private static void FillInSchemaResultDocumentValues(DocumentLookupOperationInstance instance, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
@@ -669,7 +670,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// Gets the values of all selected fields from document.
         /// </summary>
         /// 
-        private static void FillInSchemaResultDocumentValuesAtomic(DocumentLookupThreadInstance instance, string schemaKey,
+        private static void FillInSchemaResultDocumentValuesAtomic(DocumentLookupOperationInstance instance, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
@@ -790,10 +791,10 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
         private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(
-            Transaction transaction, DocumentLookupThreadInstance instance, SchemaIntersectionRowCollection inputResults)
+            Transaction transaction, DocumentLookupOperationInstance instance, SchemaIntersectionRowCollection inputResults)
         {
             var outputResults = new List<SchemaIntersectionRow>();
-            var expression = new NCalc.Expression(instance.Operation.Query.Conditions.HighLevelExpressionTree);
+            var expression = new NCalc.Expression(instance.Operation.Query.Conditions.HighLevelConditionTree);
 
             foreach (var inputResult in inputResults.Collection)
             {
@@ -818,11 +819,11 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction,
             ref NCalc.Expression expression, Conditions conditions, KbInsensitiveDictionary<string?> conditionField)
         {
-            //If we have SubExpressions, then we need to satisfy those in order to complete the equation.
-            foreach (var subExpressionKey in conditions.Root.SubExpressionKeys)
+            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
+            foreach (var subConditionKey in conditions.Root.SubConditionKeys)
             {
-                var subExpression = conditions.SubExpressionByKey(subExpressionKey);
-                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subExpression, conditionField);
+                var subCondition = conditions.SubConditionByKey(subConditionKey);
+                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
             }
         }
 
@@ -830,16 +831,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction, ref NCalc.Expression expression,
-            Conditions conditions, ConditionSubExpression conditionSubExpression, KbInsensitiveDictionary<string?> conditionField)
+            Conditions conditions, SubCondition conditionSubCondition, KbInsensitiveDictionary<string?> conditionField)
         {
-            //If we have SubExpressions, then we need to satisfy those in order to complete the equation.
-            foreach (var subExpressionKey in conditionSubExpression.SubExpressionKeys)
+            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
+            foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
             {
-                var subExpression = conditions.SubExpressionByKey(subExpressionKey);
-                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subExpression, conditionField);
+                var subCondition = conditions.SubConditionByKey(subConditionKey);
+                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
             }
 
-            foreach (var condition in conditionSubExpression.Expressions)
+            foreach (var condition in conditionSubCondition.Conditions)
             {
                 //Get the value of the condition:
                 if (conditionField.TryGetValue(condition.Left.Key, out string? value) == false)

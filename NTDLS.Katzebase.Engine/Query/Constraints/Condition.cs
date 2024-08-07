@@ -7,20 +7,20 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Query.Constraints
 {
-    internal class ConditionExpression
+    internal class Condition
     {
         public bool CoveredByIndex { get; set; } = false;
-        public string SubExpressionKey { get; private set; }
+        public string SubConditionKey { get; private set; }
         public string ConditionKey { get; private set; }
         public SmartValue Left { get; private set; } = new();
         public SmartValue Right { get; private set; } = new();
         public LogicalConnector LogicalConnector { get; private set; } = LogicalConnector.None;
         public LogicalQualifier LogicalQualifier { get; private set; } = LogicalQualifier.None;
 
-        public ConditionExpression(string subExpressionKey, string conditionKey, LogicalConnector logicalConnector,
+        public Condition(string subConditionKey, string conditionKey, LogicalConnector logicalConnector,
             string left, LogicalQualifier logicalQualifier, string right)
         {
-            SubExpressionKey = subExpressionKey;
+            SubConditionKey = subConditionKey;
             ConditionKey = conditionKey;
             Left.Value = left;
             Right.Value = right;
@@ -28,18 +28,18 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             LogicalQualifier = logicalQualifier;
         }
 
-        public ConditionExpression(string subExpressionKey, string conditionKey,
+        public Condition(string subConditionKey, string conditionKey,
             LogicalConnector logicalConnector, LogicalQualifier logicalQualifier)
         {
-            SubExpressionKey = subExpressionKey;
+            SubConditionKey = subConditionKey;
             ConditionKey = conditionKey;
             LogicalConnector = logicalConnector;
             LogicalQualifier = logicalQualifier;
         }
 
-        public ConditionExpression Clone()
+        public Condition Clone()
         {
-            var clone = new ConditionExpression(SubExpressionKey, ConditionKey, LogicalConnector, LogicalQualifier)
+            var clone = new Condition(SubConditionKey, ConditionKey, LogicalConnector, LogicalQualifier)
             {
                 Left = Left.Clone(),
                 Right = Right.Clone()

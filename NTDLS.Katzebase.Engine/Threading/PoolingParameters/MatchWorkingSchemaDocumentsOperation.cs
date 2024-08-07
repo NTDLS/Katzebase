@@ -10,25 +10,35 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// <summary>
     /// Thread parameters for a index operations. Shared across all threads in a single lookup operation.
     /// </summary>
-    internal class MatchWorkingSchemaDocumentsThreadOperation
+    internal class MatchWorkingSchemaDocumentsOperation
     {
         public Transaction Transaction { get; set; }
         public PhysicalIndex PhysicalIndex { get; set; }
         public PhysicalSchema PhysicalSchema { get; set; }
         public IndexSelection IndexSelection { get; set; }
-        public ConditionSubExpression ConditionSubExpression { get; set; }
+        public SubCondition ConditionSubCondition { get; set; }
         public string WorkingSchemaPrefix { get; set; }
         public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
 
-        public MatchWorkingSchemaDocumentsThreadOperation(Transaction transaction, PhysicalIndex physicalIndex,
-            PhysicalSchema physicalSchema, IndexSelection indexSelection, ConditionSubExpression conditionSubExpression, string workingSchemaPrefix)
+        public MatchWorkingSchemaDocumentsOperation(Transaction transaction, PhysicalIndex physicalIndex,
+            PhysicalSchema physicalSchema, IndexSelection indexSelection,
+            SubCondition conditionSubCondition, string workingSchemaPrefix)
         {
             Transaction = transaction;
             PhysicalIndex = physicalIndex;
             PhysicalSchema = physicalSchema;
             IndexSelection = indexSelection;
-            ConditionSubExpression = conditionSubExpression;
+            ConditionSubCondition = conditionSubCondition;
             WorkingSchemaPrefix = workingSchemaPrefix;
+        }
+
+        /// <summary>
+        /// Thread parameters for a index operations. Used by a single thread.
+        /// </summary>
+        internal class MatchWorkingSchemaDocumentsInstance(MatchWorkingSchemaDocumentsOperation operation, int indexPartition)
+        {
+            public MatchWorkingSchemaDocumentsOperation Operation { get; set; } = operation;
+            public int IndexPartition { get; set; } = indexPartition;
         }
     }
 }
