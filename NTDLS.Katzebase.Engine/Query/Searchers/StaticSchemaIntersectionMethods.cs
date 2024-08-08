@@ -234,7 +234,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 operation.DocumentPointers = operation.DocumentPointers.Distinct(new DocumentPageEqualityComparer()).ToList();
             }
 
-            if (query.DynamicallyBuildSelectList && operation.Results.Collection.Count > 0)
+            if (query.DynamicSchemaFieldFilter != null && operation.Results.Collection.Count > 0)
             {
                 //If this was a "select *", we may have discovered different "fields" in different 
                 //  documents. We need to make sure that all rows have the same number of values.
@@ -281,7 +281,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
 
             //Execute functions
-            if (instance.Operation.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
+            if (instance.Operation.Query.DynamicSchemaFieldFilter != null) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
                 lock (instance.Operation.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
                 {
@@ -662,7 +662,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
-            if (instance.Operation.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
+            if (instance.Operation.Query.DynamicSchemaFieldFilter != null) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
                 lock (instance.Operation.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
                 {
@@ -685,23 +685,27 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         {
             var documentContent = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
 
-            if (instance.Operation.Query.DynamicallyBuildSelectList) //The script is a "SELECT *". This is not optimal, but neither is select *...
+            if (instance.Operation.Query.DynamicSchemaFieldFilter != null) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
-                var fields = new List<PrefixedField>();
-                foreach (var documentValue in documentContent)
+                if (instance.Operation.Query.DynamicSchemaFieldFilter.Count == 0 ||
+                    instance.Operation.Query.DynamicSchemaFieldFilter.Contains(schemaKey))
                 {
-                    fields.Add(new PrefixedField(schemaKey, documentValue.Key, documentValue.Key));
-                }
-
-                foreach (var field in fields)
-                {
-                    if (instance.Operation.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
+                    var fields = new List<PrefixedField>();
+                    foreach (var documentValue in documentContent)
                     {
-                        var newField = new FunctionDocumentFieldParameter(field.Key)
+                        fields.Add(new PrefixedField(schemaKey, documentValue.Key, documentValue.Key));
+                    }
+
+                    foreach (var field in fields)
+                    {
+                        if (instance.Operation.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
                         {
-                            Alias = field.Alias
-                        };
-                        instance.Operation.Query.SelectFields.Add(newField);
+                            var newField = new FunctionDocumentFieldParameter(field.Key)
+                            {
+                                Alias = field.Alias
+                            };
+                            instance.Operation.Query.SelectFields.Add(newField);
+                        }
                     }
                 }
             }

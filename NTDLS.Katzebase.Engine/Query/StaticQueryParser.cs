@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Engine.Functions.Procedures;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
+using System.Linq;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -678,10 +679,22 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.RowLimit = query.GetNextTokenAsInt();
                 }
 
-                if (query.IsNextToken("*"))
+                var starPeek = query.PeekNextToken();
+                if (starPeek == "*")
                 {
+                    //Select all fields from all schemas.
                     query.SkipNextToken();
-                    result.DynamicallyBuildSelectList = true;
+
+                    result.DynamicSchemaFieldFilter ??= new();
+                }
+                else if (starPeek.EndsWith(".*"))
+                {
+                    //Select all fields from given schema.
+                    query.SkipNextToken();
+
+                    result.DynamicSchemaFieldFilter ??= new();
+                    var starSchemaAlias = starPeek.Substring(0, starPeek.Length - 2); //Trim off the trailing .*
+                    result.DynamicSchemaFieldFilter.Add(starSchemaAlias.ToLowerInvariant());
                 }
                 else
                 {
@@ -1193,6 +1206,17 @@ namespace NTDLS.Katzebase.Engine.Query
                 //}
             }
 
+            if (result.DynamicSchemaFieldFilter != null)
+            {
+                foreach (var filterSchema in result.DynamicSchemaFieldFilter)
+                {
+                    if (result.Schemas.Any(o => o.Prefix == filterSchema) == false)
+                    {
+                        throw new KbParserException($"The select schema alias [{filterSchema}] for [*] was not found in the query.");
+                    }
+                }
+            }
+
             if (result.Schemas.Count > 0 && result.Conditions.AllFields.Count > 0)
             {
                 //If we have a schema, then we will associate the conditions with the first schema
@@ -1264,7 +1288,13 @@ namespace NTDLS.Katzebase.Engine.Query
 
             if (result.QueryType == QueryType.Select)
             {
-                if (result.DynamicallyBuildSelectList == false && result.SelectFields.Count == 0)
+                //result.DynamicallyBuildSelectListFromSchemas ??= new();
+
+                //var starTokens = starPeek.Split('.');
+                //var starSchema = string.Join('.', starTokens.Take(starTokens.Length - 1));
+                //result.DynamicallyBuildSelectListFromSchemas.Add(starSchema);
+
+                if (result.DynamicSchemaFieldFilter == null && result.SelectFields.Count == 0)
                 {
                     throw new KbParserException("No fields were selected.");
                 }
@@ -1274,7 +1304,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     throw new KbParserException("No schemas were selected.");
                 }
 
-                if (result.DynamicallyBuildSelectList == true && result.SelectFields.Count > 0)
+                if (result.DynamicSchemaFieldFilter != null && result.SelectFields.Count > 0)
                 {
                     throw new KbParserException("Queries with dynamic field-sets cannot also contain explicit fields.");
                 }

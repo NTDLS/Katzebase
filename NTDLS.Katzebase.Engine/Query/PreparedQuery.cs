@@ -49,7 +49,12 @@ namespace NTDLS.Katzebase.Engine.Query
             //----------Configuration (END)----------
         }
 
-        public bool DynamicallyBuildSelectList { get; set; } = false;
+        /// <summary>
+        /// When this is non-null, it will cause the searcher methods to pull fields from all schemas,
+        ///     unless it also contains a list of schema aliases, in which case they will be used to filter
+        ///     which schemas we pull fields from.
+        /// </summary>
+        public List<string>? DynamicSchemaFieldFilter { get; set; }
 
         public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
         public List<QuerySchema> Schemas { get; private set; } = new();

@@ -1,3 +1,19 @@
+select top 10
+	hhh.* --Validate this schema.
+from
+	WordList:Word as L
+
+/*
+select top 10
+	h.*
+from
+	WordList:Word as W
+inner join WordList:Language as L
+	on L.Id = W.LanguageId
+where
+	W.Text = 'Gym'
+*/
+/*
 select
 	sw.Text
 from
@@ -5,6 +21,7 @@ from
 where
 	sw.Text = 'Gym'
 	--'Gym' = sw.Text
+*/
 
 --set ExplainQuery true
 --no indexes: 741,185ms
