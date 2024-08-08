@@ -612,9 +612,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in conditions.Root.SubConditionKeys)
+            foreach (var subConditionKey in conditions.Root.Keys)
             {
-                var subCondition = conditions.SubConditionByKey(subConditionKey);
+                var subCondition = conditions.SubConditionFromKey(subConditionKey);
                 SetSchemaIntersectionConditionParametersRecursive(transaction,
                     ref expression, conditions, subCondition, joinScopedContentCache);
             }
@@ -625,9 +625,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in givenSubCondition.SubConditionKeys)
+            foreach (var subConditionKey in givenSubCondition.Keys)
             {
-                var subCondition = conditions.SubConditionByKey(subConditionKey);
+                var subCondition = conditions.SubConditionFromKey(subConditionKey);
                 SetSchemaIntersectionConditionParametersRecursive(transaction,
                     ref expression, conditions, subCondition, joinScopedContentCache);
             }
@@ -829,9 +829,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             ref NCalc.Expression expression, Conditions conditions, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in conditions.Root.SubConditionKeys)
+            foreach (var subConditionKey in conditions.Root.Keys)
             {
-                var subCondition = conditions.SubConditionByKey(subConditionKey);
+                var subCondition = conditions.SubConditionFromKey(subConditionKey);
                 SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
             }
         }
@@ -843,9 +843,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             Conditions conditions, SubCondition givenSubCondition, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in givenSubCondition.SubConditionKeys)
+            foreach (var subConditionKey in givenSubCondition.Keys)
             {
-                var subCondition = conditions.SubConditionByKey(subConditionKey);
+                var subCondition = conditions.SubConditionFromKey(subConditionKey);
                 SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
             }
 

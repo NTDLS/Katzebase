@@ -1,7 +1,14 @@
---set ExplainQuery true
+select
+	sw.Text
+from
+	WordList:Word as sw
+where
+	'Gym' = sw.Text
 
+--set ExplainQuery true
 --no indexes: 741,185ms
 
+/*
 select
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
@@ -21,8 +28,8 @@ inner join WordList:Language as tl
 	on tl.Id = TW.LanguageId
 where
 	sl.Name = 'English'
-	sw.Text = 'Gym'
-	--and (
-	--	sw.Text = 'Gym'
-	--	or sw.Text = 'Arm'
-	--)
+	and (
+		sw.Text = 'Gym'
+		or sw.Text = 'Arm'
+	)
+*/

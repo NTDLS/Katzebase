@@ -5,10 +5,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
     internal class SubCondition
     {
         public bool IsRoot { get; set; } = false;
-        public string SubConditionKey { get; set; }
-        public string Condition { get; set; }
+        public string Key { get; set; }
+        public string Expression { get; set; }
         public List<Condition> Conditions { get; set; } = new();
-        public HashSet<string> SubConditionKeys { get; set; } = new();
+        public HashSet<string> Keys { get; set; } = new();
         public HashSet<string> ConditionKeys { get; set; } = new();
 
         /// <summary>
@@ -16,10 +16,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// </summary>
         public IndexSelection? IndexSelection { get; set; }
 
-        public SubCondition(string subConditionKey, string condition)
+        public SubCondition(string key, string condition)
         {
-            SubConditionKey = subConditionKey;
-            Condition = condition;
+            Key = key;
+            Expression = condition;
         }
     }
 }

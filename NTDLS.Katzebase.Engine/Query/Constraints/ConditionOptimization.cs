@@ -130,7 +130,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                         optimization.IndexSelection.Add(indexSelection);
 
                         //Mark which condition this index selection satisfies.
-                        var sourceSubCondition = optimization.Conditions.SubConditionByKey(subCondition.SubConditionKey);
+                        var sourceSubCondition = optimization.Conditions.SubConditionFromKey(subCondition.Key);
                         sourceSubCondition.IndexSelection = indexSelection;
 
                         foreach (var condition in sourceSubCondition.Conditions)
@@ -224,10 +224,6 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         #region Optimization explanation.
 
-        private static string FriendlyCondition(string val) => val.ToUpper()
-            .Replace("C_", "Cond")
-            .Replace("S_", "Expr");
-
         private static string Pad(int indentation) => "".PadLeft(indentation * 2, ' ');
 
         /// <summary>
@@ -239,10 +235,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         {
             var result = new StringBuilder();
 
-            if (Conditions.Root.SubConditionKeys.Count > 0)
+            if (Conditions.Root.Keys.Count > 0)
             {
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
-                var rootCondition = Conditions.SubConditionByKey(Conditions.Root.SubConditionKey);
+                var rootCondition = Conditions.SubConditionFromKey(Conditions.Root.Key);
                 ExplainSubCondition(ref result, rootCondition, indentation);
             }
 
@@ -257,14 +253,14 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// </summary>
         private void ExplainSubCondition(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
         {
-            foreach (var subConditionKey in givenSubCondition.SubConditionKeys)
+            foreach (var subConditionKey in givenSubCondition.Keys)
             {
-                var subCondition = Conditions.SubConditionByKey(subConditionKey);
+                var subCondition = Conditions.SubConditionFromKey(subConditionKey);
 
                 var indexName = subCondition.IndexSelection?.PhysicalIndex?.Name;
 
                 result.AppendLine(Pad(indentation + 1)
-                    + $"{FriendlyCondition(subCondition.SubConditionKey)} is ({FriendlyCondition(subCondition.Condition)})"
+                    + $"{Conditions.FriendlyPlaceholder(subCondition.Key)} is ({Conditions.FriendlyPlaceholder(subCondition.Expression)})"
                     + (CanApplyIndexing(subCondition) && indexName != null ? $" [{indexName}]" : ""));
 
                 result.AppendLine(Pad(indentation + 1) + "(");
@@ -274,11 +270,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     foreach (var condition in subCondition.Conditions)
                     {
                         result.AppendLine(Pad(indentation + 2)
-                            + $"{FriendlyCondition(condition.ConditionKey)} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                            + $"{Conditions.FriendlyPlaceholder(condition.ConditionKey)} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
                     }
                 }
 
-                if (subCondition.SubConditionKeys.Count > 0)
+                if (subCondition.Keys.Count > 0)
                 {
                     result.AppendLine(Pad(indentation + 2) + "(");
                     ExplainSubCondition(ref result, subCondition, indentation + 2);
