@@ -332,7 +332,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 var indexName = subCondition.IndexSelection?.PhysicalIndex?.Name;
 
                 result.AppendLine(Pad(indentation + 1)
-                    + $"{FriendlyCondition(subCondition.SubConditionKey)} is ({FriendlyCondition(subCondition.Condition)})";
+                    + $"{FriendlyCondition(subCondition.SubConditionKey)} is ({FriendlyCondition(subCondition.Condition)})");
 
                 result.AppendLine(Pad(indentation + 1) + "(");
 
