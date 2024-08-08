@@ -1193,6 +1193,13 @@ namespace NTDLS.Katzebase.Engine.Query
                 //}
             }
 
+            if (result.Schemas.Count > 0)
+            {
+                //If we have a schema, then we will associate the conditions with the first schema
+                //  because it is the one with the WHERE clause, the other conditions are for joins.
+                result.Schemas.First().Conditions = result.Conditions;
+            }
+
             foreach (var schema in result.Schemas)
             {
                 if (query.LiteralStrings.TryGetValue(schema.Name, out var name))

@@ -21,8 +21,12 @@ inner join WordList:Language as tl
 	on tl.Id = TW.LanguageId
 where
 	sl.Name = 'English'
+	and sw.Text = 'Gym'
+
+/*
+	sl.Name = 'English'
 	and (
 		sw.Text = 'Gym'
 		or sw.Text = 'Arm'
 	)
-
+*/

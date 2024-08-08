@@ -7,8 +7,10 @@ using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
@@ -263,20 +265,29 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteExplain(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryExplain ExecuteExplain(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
-                throw new KbNotImplementedException();
-                /*
-                using var transaction = core.Transactions.Begin(processId);
-                var physicalSchema = core.Schemas.Acquire(transaction, preparedQuery.Schemas[0].n, LockOperation.Read);
+                using var transactionReference = _core.Transactions.Acquire(session);
 
-                var lookupOptimization = ConditionLookupOptimization.Build(core, transaction, physicalSchema, preparedQuery.Conditions);
-                result.Explanation = lookupOptimization.BuildFullVirtualCondition();
+                var result = new KbQueryExplain();
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
-                */
+                foreach (var schema in preparedQuery.Schemas)
+                {
+                    if (schema.Conditions != null)
+                    {
+                        var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schema.Name, LockOperation.Read);
+
+                        var lookupOptimization = ConditionOptimization.Build(_core,
+                            transactionReference.Transaction, physicalSchema, schema.Conditions, schema.Prefix);
+
+                        var friendlyCondition = lookupOptimization.ExplainOptimization();
+                        transactionReference.Transaction.AddMessage(friendlyCondition, KbMessageType.Explain);
+                    }
+                }
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result);
             }
             catch (Exception ex)
             {

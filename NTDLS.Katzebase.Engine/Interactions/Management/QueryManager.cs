@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             AggregateFunctionCollection.Initialize();
         }
 
-        internal KbQueryDocumentListResult ExplainQuery(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryExplain ExplainQuery(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else if (preparedQuery.QueryType == QueryType.Set)
                 {
-                    return new KbQueryDocumentListResult();
+                    return new KbQueryExplain();
                 }
                 else
                 {

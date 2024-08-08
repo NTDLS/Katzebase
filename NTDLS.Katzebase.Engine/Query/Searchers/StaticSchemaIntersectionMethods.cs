@@ -31,26 +31,21 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         internal static DocumentLookupResults GetDocumentsByConditions(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix = null)
         {
-            var topLevel = schemaMap.First();
-            var topLevelMap = topLevel.Value;
+            var topLevelSchemaMap = schemaMap.First().Value;
 
             IEnumerable<DocumentPointer>? documentPointers = null;
-            ConditionOptimization? lookupOptimization = null;
 
             bool explain = transaction.Session.IsConnectionSettingSet(KbConnectionSetting.ExplainQuery);
 
             //TODO: Here we should evaluate whatever conditions we can to early eliminate the top level document scans.
             //If we don't have any conditions then we just need to return all rows from the schema.
-            if (query.Conditions.SubConditions.Count > 0)
+            if (topLevelSchemaMap.Optimization != null)
             {
-                lookupOptimization = ConditionOptimization.Build(
-                    core, transaction, topLevelMap.PhysicalSchema, query.Conditions, topLevelMap.Prefix);
-
                 #region Explain.
 
                 if (explain)
                 {
-                    var friendlyCondition = lookupOptimization.ExplainOptimization();
+                    var friendlyCondition = topLevelSchemaMap.Optimization.ExplainOptimization();
                     transaction.AddMessage(friendlyCondition, KbMessageType.Explain);
                 }
 
@@ -58,16 +53,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 var limitedDocumentPointers = new List<DocumentPointer>();
 
-                if (lookupOptimization.CanApplyIndexing())
+                if (topLevelSchemaMap.Optimization.CanApplyIndexing())
                 {
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                     documentPointers = new List<DocumentPointer>();
 
                     //All condition SubConditions have a selected index. Start building a list of possible document IDs.
-                    foreach (var subCondition in lookupOptimization.Conditions.NonRootSubConditions)
+                    foreach (var subCondition in topLevelSchemaMap.Optimization.Conditions.NonRootSubConditions)
                     {
                         var indexMatchedDocuments = core.Indexes.MatchWorkingSchemaDocuments
-                            (transaction, topLevelMap.PhysicalSchema, subCondition.IndexSelection.EnsureNotNull(), subCondition, topLevelMap.Prefix);
+                            (transaction, topLevelSchemaMap.PhysicalSchema, subCondition.IndexSelection.EnsureNotNull(), subCondition, topLevelSchemaMap.Prefix);
 
                         limitedDocumentPointers.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
@@ -96,7 +91,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
 
             //If we do not have any documents, then get the whole schema.
-            documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, topLevelMap.PhysicalSchema, LockOperation.Read);
+            documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, topLevelSchemaMap.PhysicalSchema, LockOperation.Read);
 
             var queue = core.ThreadPool.Generic.CreateChildQueue<DocumentLookupOperationInstance>();
 

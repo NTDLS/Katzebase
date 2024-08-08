@@ -147,6 +147,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                 //When we get here, we have one index that seems to want to cover multiple tables - no cool man. Not cool.
 
+                foreach (var index in optimization.IndexSelection)
+                {
+                    Interactions.Management.LogManager.Information($"{physicalSchema.Name}->{index.PhysicalIndex.Name}.");
+                }
+
                 return optimization;
             }
             catch (Exception ex)

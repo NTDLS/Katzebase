@@ -119,6 +119,12 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             return snapshot;
         }
 
+        /// <summary>
+        /// A warning is different than a "message" warning. Warnings in this context
+        ///     are used to report on query warnings such as nulls in documents.
+        /// </summary>
+        /// <param name="warning"></param>
+        /// <param name="message"></param>
         public void AddWarning(KbTransactionWarning warning, string message = "")
         {
             _warnings.Use((warnings) =>

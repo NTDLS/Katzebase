@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryQueryExplainReply ExecuteStatementExplain(RmContext context, KbQueryQueryExplain param)
+        public KbQueryQueryExplainQueriesReply ExecuteStatementExplains(RmContext context, KbQueryQueryExplainQueries param)
         {
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
@@ -33,12 +33,42 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Management.LogManager.Debug(Thread.CurrentThread.Name);
 #endif
 
+            var results = new KbQueryQueryExplainQueriesReply();
+
+            foreach (var statement in param.Statements)
+            {
+                session.SetCurrentQuery(statement);
+
+                foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
+                {
+                    var intermediateResult = _core.Query.ExplainQuery(session, preparedQuery);
+
+                    results.Add(intermediateResult);
+                }
+            }
+
+            session.ClearCurrentQuery();
+
+            return results;
+        }
+
+        public KbQueryQueryExplainQueryReply ExecuteStatementExplain(RmContext context, KbQueryQueryExplainQuery param)
+        {
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
+            Management.LogManager.Debug(Thread.CurrentThread.Name);
+#endif
+
+            var results = new KbQueryQueryExplainQueryReply();
+
             session.SetCurrentQuery(param.Statement);
 
-            var results = new KbQueryQueryExplainReply();
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
-                results.Add(_core.Query.ExplainQuery(session, preparedQuery));
+                var intermediateResult = _core.Query.ExplainQuery(session, preparedQuery);
+
+                results.Add(intermediateResult);
             }
 
             session.ClearCurrentQuery();
