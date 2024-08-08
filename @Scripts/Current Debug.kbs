@@ -1,3 +1,8 @@
+select top 10 * 
+from
+	WordList:Word as sw
+	
+/*
 --set ExplainQuery true
 
 --no indexes: 741,185ms
@@ -25,3 +30,4 @@ where
 		sw.Text = 'Gym'
 		or sw.Text = 'Arm'
 	)
+*/

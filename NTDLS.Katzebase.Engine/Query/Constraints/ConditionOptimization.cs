@@ -225,79 +225,57 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         #region Optimization explanation.
 
-        static string FriendlyCondition(string val) => val.ToUpper()
-            .Replace("C_", "Expr")
-            .Replace("S_", "SubExpr");
+        private static string FriendlyCondition(string val) => val.ToUpper()
+            .Replace("C_", "Cond")
+            .Replace("S_", "Expr");
+
+        private static string Pad(int indentation) => "".PadLeft(indentation * 2, ' ');
 
         public string ExplainOptimization(int indentation = 0)
         {
-            if (Conditions.SubConditions.Count == 0)
-            {
-                return string.Empty;
-            }
-
             var result = new StringBuilder();
-            result.AppendLine("".PadLeft(indentation * 2, ' ') + $"[{FriendlyCondition(Conditions.RootSubConditionKey)}]"
-                + (CanApplyIndexing() ? " {Indexable}" : " {non-Indexable}"));
 
             if (Conditions.Root.SubConditionKeys.Count > 0)
             {
-                result.AppendLine("".PadLeft(indentation * 2, ' ') + "(");
-
-                foreach (var subConditionKey in Conditions.Root.SubConditionKeys)
-                {
-                    var subCondition = Conditions.SubConditionByKey(subConditionKey);
-                    result.AppendLine("".PadLeft(indentation * 2, ' ') + $"  [{FriendlyCondition(subCondition.Condition)}]"
-                        + (CanApplyIndexing(subCondition) ? " {Indexable (" + subCondition.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
-
-                    result.AppendLine("".PadLeft(indentation * 2, ' ') + "  (");
-                    ExplainSubCondition(ref result, subCondition, indentation + 1);
-                    result.AppendLine("".PadLeft(indentation * 2, ' ') + "  )");
-                }
-
-                result.AppendLine("".PadLeft(indentation * 2, ' ') + ")");
+                //The root condition is just a pointer to a child condition, so get the "root" child condition.
+                var rootCondition = Conditions.SubConditionByKey(Conditions.Root.SubConditionKey);
+                ExplainSubCondition(ref result, rootCondition, indentation);
             }
 
             return result.ToString();
         }
 
-        private void ExplainSubCondition(ref StringBuilder result, SubCondition conditionSubCondition, int indentation)
+        private void ExplainSubCondition(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
         {
-            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
+            foreach (var subConditionKey in givenSubCondition.SubConditionKeys)
             {
                 var subCondition = Conditions.SubConditionByKey(subConditionKey);
-                result.Append("".PadLeft((indentation + 1) * 2, ' '));
-                result.AppendLine($"[{FriendlyCondition(subCondition.Condition)}]" + (CanApplyIndexing(subCondition) ? " {Indexable (" + subCondition.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
+
+                var indexName = subCondition.IndexSelection?.PhysicalIndex?.Name;
+
+                result.AppendLine(Pad(indentation + 1)
+                    + $"{FriendlyCondition(subCondition.SubConditionKey)} is ({FriendlyCondition(subCondition.Condition)})"
+                    + (CanApplyIndexing(subCondition) && indexName != null ? $" [{indexName}]" : ""));
+
+                result.AppendLine(Pad(indentation + 1) + "(");
 
                 if (subCondition.Conditions.Count > 0)
                 {
-                    result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + FriendlyCondition(subConditionKey) + "->" + "(");
                     foreach (var condition in subCondition.Conditions)
                     {
-                        result.Append("".PadLeft((indentation + 2) * 2, ' '));
-                        result.AppendLine($"{FriendlyCondition(condition.ConditionKey)}: ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                        result.AppendLine(Pad(indentation + 2)
+                            + $"{FriendlyCondition(condition.ConditionKey)} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
                     }
-                    result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + ")");
                 }
 
                 if (subCondition.SubConditionKeys.Count > 0)
                 {
-                    result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + "(");
-                    ExplainSubCondition(ref result, subCondition, indentation + 1);
-                    result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + ")");
+                    result.AppendLine(Pad(indentation + 2) + "(");
+                    ExplainSubCondition(ref result, subCondition, indentation + 2);
+                    result.AppendLine(Pad(indentation + 2) + ")");
                 }
-            }
 
-            if (conditionSubCondition.Conditions.Count > 0)
-            {
-                result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + "(");
-                foreach (var condition in conditionSubCondition.Conditions)
-                {
-                    result.Append("".PadLeft((indentation + 2) * 2, ' '));
-                    result.AppendLine($"{FriendlyCondition(condition.ConditionKey)}: ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
-                }
-                result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + ")");
+                result.AppendLine(Pad(indentation + 1) + ")");
             }
         }
 

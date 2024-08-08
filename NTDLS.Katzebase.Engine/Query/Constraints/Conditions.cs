@@ -8,7 +8,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 {
     internal class Conditions
     {
-        private string _lastLetter = string.Empty;
+        private int _lastNumber = 0;
+
+        public int Number { get => _lastNumber; }
 
         public List<SubCondition> SubConditions { get; private set; } = new();
 
@@ -43,26 +45,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         private string GetNextVariableLetter()
         {
-            if (_lastLetter == string.Empty)
-            {
-                _lastLetter = "a";
-                return _lastLetter;
-            }
-            char[] chars = _lastLetter.ToCharArray();
-            char lastChar = chars[chars.Length - 1];
-            char nextChar = (char)(lastChar + 1);
-
-            if (nextChar > 'z')
-            {
-                _lastLetter = _lastLetter + "a";
-            }
-            else
-            {
-                chars[chars.Length - 1] = nextChar;
-                _lastLetter = new string(chars);
-            }
-
-            return _lastLetter;
+            return (_lastNumber++).ToString();
         }
 
         public static Conditions Create(string conditionsText, KbInsensitiveDictionary<string> literalStrings, string leftHandAlias = "")
@@ -394,7 +377,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             var result = new StringBuilder();
             result.Append($"[{RootSubConditionKey}]");
 
-            if (Root.SubConditionKeys.Count > 0)
+            if (Root?.SubConditionKeys?.Count > 0)
             {
                 result.Append('(');
 
