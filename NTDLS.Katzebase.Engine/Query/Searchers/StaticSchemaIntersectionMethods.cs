@@ -45,8 +45,15 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 if (explain)
                 {
-                    var friendlyCondition = topLevelSchemaMap.Optimization.ExplainOptimization();
-                    transaction.AddMessage(friendlyCondition, KbMessageType.Explain);
+                    string schemaIdentifier = $"Schema: {topLevelSchemaMap.PhysicalSchema.Name}";
+                    if (!string.IsNullOrEmpty(topLevelSchemaMap.Prefix))
+                    {
+                        schemaIdentifier += $" (Alias: {topLevelSchemaMap.Prefix})";
+                    }
+                    schemaIdentifier += "\r\n";
+
+                    var explanation = schemaIdentifier + topLevelSchemaMap.Optimization.ExplainOptimization();
+                    transaction.AddMessage(explanation, KbMessageType.Explain);
                 }
 
                 #endregion
@@ -450,8 +457,15 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 if (explain)
                 {
-                    var friendlyCondition = currentSchemaMap.Optimization.ExplainOptimization();
-                    instance.Operation.Transaction.AddMessage(friendlyCondition, KbMessageType.Explain);
+                    string schemaIdentifier = $"Schema: {currentSchemaMap.PhysicalSchema.Name}";
+                    if (!string.IsNullOrEmpty(currentSchemaMap.Prefix))
+                    {
+                        schemaIdentifier += $" (Alias: {currentSchemaMap.Prefix})";
+                    }
+                    schemaIdentifier += "\r\n";
+
+                    var explanation = schemaIdentifier + currentSchemaMap.Optimization.ExplainOptimization();
+                    instance.Operation.Transaction.AddMessage(explanation, KbMessageType.Explain);
                 }
             }
 

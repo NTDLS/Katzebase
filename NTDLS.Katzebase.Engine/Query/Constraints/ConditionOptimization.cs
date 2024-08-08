@@ -229,7 +229,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             .Replace("C_", "Expr")
             .Replace("S_", "SubExpr");
 
-        public string ExplainOptimization()
+        public string ExplainOptimization(int indentation = 0)
         {
             if (Conditions.SubConditions.Count == 0)
             {
@@ -237,66 +237,67 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             }
 
             var result = new StringBuilder();
-            result.AppendLine($"[{FriendlyCondition(Conditions.RootSubConditionKey)}]"
+            result.AppendLine("".PadLeft(indentation * 2, ' ') + $"[{FriendlyCondition(Conditions.RootSubConditionKey)}]"
                 + (CanApplyIndexing() ? " {Indexable}" : " {non-Indexable}"));
 
             if (Conditions.Root.SubConditionKeys.Count > 0)
             {
-                result.AppendLine("(");
+                result.AppendLine("".PadLeft(indentation * 2, ' ') + "(");
 
                 foreach (var subConditionKey in Conditions.Root.SubConditionKeys)
                 {
                     var subCondition = Conditions.SubConditionByKey(subConditionKey);
-                    result.AppendLine($"  [{FriendlyCondition(subCondition.Condition)}]"
+                    result.AppendLine("".PadLeft(indentation * 2, ' ') + $"  [{FriendlyCondition(subCondition.Condition)}]"
                         + (CanApplyIndexing(subCondition) ? " {Indexable (" + subCondition.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
 
-                    result.AppendLine("  (");
-                    BuildFullVirtualCondition(ref result, subCondition, 1);
-                    result.AppendLine("  )");
+                    result.AppendLine("".PadLeft(indentation * 2, ' ') + "  (");
+                    ExplainSubCondition(ref result, subCondition, indentation + 1);
+                    result.AppendLine("".PadLeft(indentation * 2, ' ') + "  )");
                 }
 
-                result.AppendLine(")");
+                result.AppendLine("".PadLeft(indentation * 2, ' ') + ")");
             }
 
             return result.ToString();
         }
 
-        private void BuildFullVirtualCondition(ref StringBuilder result, SubCondition conditionSubCondition, int depth)
+        private void ExplainSubCondition(ref StringBuilder result, SubCondition conditionSubCondition, int indentation)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
             foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
             {
                 var subCondition = Conditions.SubConditionByKey(subConditionKey);
-                result.AppendLine("".PadLeft(depth * 4, ' ')
-                    + $"[{FriendlyCondition(subCondition.Condition)}]" + (CanApplyIndexing(subCondition) ? " {Indexable (" + subCondition.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
+                result.Append("".PadLeft((indentation + 1) * 2, ' '));
+                result.AppendLine($"[{FriendlyCondition(subCondition.Condition)}]" + (CanApplyIndexing(subCondition) ? " {Indexable (" + subCondition.IndexSelection?.PhysicalIndex.Name + ")}" : " {non-Indexable}"));
 
                 if (subCondition.Conditions.Count > 0)
                 {
-                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + FriendlyCondition(subConditionKey) + "->" + "(");
+                    result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + FriendlyCondition(subConditionKey) + "->" + "(");
                     foreach (var condition in subCondition.Conditions)
                     {
-                        result.AppendLine("".PadLeft((depth + 1) * 4, ' ')
-                            + $"{FriendlyCondition(condition.ConditionKey)}: ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                        result.Append("".PadLeft((indentation + 2) * 2, ' '));
+                        result.AppendLine($"{FriendlyCondition(condition.ConditionKey)}: ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
                     }
-                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
+                    result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + ")");
                 }
 
                 if (subCondition.SubConditionKeys.Count > 0)
                 {
-                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "(");
-                    BuildFullVirtualCondition(ref result, subCondition, depth + 1);
-                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
+                    result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + "(");
+                    ExplainSubCondition(ref result, subCondition, indentation + 1);
+                    result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + ")");
                 }
             }
 
             if (conditionSubCondition.Conditions.Count > 0)
             {
-                result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "(");
+                result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + "(");
                 foreach (var condition in conditionSubCondition.Conditions)
                 {
-                    result.AppendLine("".PadLeft((depth + 1) * 4, ' ') + $"{FriendlyCondition(condition.ConditionKey)}: ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                    result.Append("".PadLeft((indentation + 2) * 2, ' '));
+                    result.AppendLine($"{FriendlyCondition(condition.ConditionKey)}: ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
                 }
-                result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
+                result.AppendLine("".PadLeft((indentation + 1) * 2, ' ') + ")");
             }
         }
 

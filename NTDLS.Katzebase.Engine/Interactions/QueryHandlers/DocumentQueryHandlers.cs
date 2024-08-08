@@ -277,13 +277,21 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 {
                     if (schema.Conditions != null)
                     {
+                        string schemaIdentifier = $"Schema: {schema.Name}";
+                        if (!string.IsNullOrEmpty(schema.Prefix))
+                        {
+                            schemaIdentifier += $" (Alias: {schema.Prefix})";
+                        }
+                        schemaIdentifier += "\r\n";
+
                         var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schema.Name, LockOperation.Read);
 
                         var lookupOptimization = ConditionOptimization.Build(_core,
                             transactionReference.Transaction, physicalSchema, schema.Conditions, schema.Prefix);
 
-                        var friendlyCondition = lookupOptimization.ExplainOptimization();
-                        transactionReference.Transaction.AddMessage(friendlyCondition, KbMessageType.Explain);
+                        var explanation = schemaIdentifier + lookupOptimization.ExplainOptimization(1);
+
+                        transactionReference.Transaction.AddMessage(explanation, KbMessageType.Explain);
                     }
                 }
 
