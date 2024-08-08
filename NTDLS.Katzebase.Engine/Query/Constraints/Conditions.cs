@@ -378,9 +378,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return condition.ToString();
         }
 
-        public void CollapseToExpression(ref StringBuilder condition, SubCondition conditionSubCondition)
+        public void CollapseToExpression(ref StringBuilder condition, SubCondition givenSubCondition)
         {
-            foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
+            foreach (var subConditionKey in givenSubCondition.SubConditionKeys)
             {
                 var subCondition = SubConditionByKey(subConditionKey);
                 condition.Replace(subConditionKey, $"({subCondition.Condition})");
@@ -410,10 +410,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return Library.Helpers.ComputeSHA256(result.ToString());
         }
 
-        private void BuildConditionHash(ref StringBuilder result, SubCondition conditionSubCondition, int depth)
+        private void BuildConditionHash(ref StringBuilder result, SubCondition givenSubCondition, int depth)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
+            foreach (var subConditionKey in givenSubCondition.SubConditionKeys)
             {
                 var subCondition = SubConditionByKey(subConditionKey);
                 result.Append($"[{subCondition.Condition}]");
@@ -444,10 +444,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 }
             }
 
-            if (conditionSubCondition.Conditions.Count > 0)
+            if (givenSubCondition.Conditions.Count > 0)
             {
                 result.Append('(');
-                foreach (var condition in conditionSubCondition.Conditions)
+                foreach (var condition in givenSubCondition.Conditions)
                 {
                     if (condition.Left?.IsConstant == false)
                     {

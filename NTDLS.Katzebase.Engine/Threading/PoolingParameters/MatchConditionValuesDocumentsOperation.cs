@@ -17,19 +17,19 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         public PhysicalIndex PhysicalIndex { get; set; }
         public PhysicalSchema PhysicalSchema { get; set; }
         public IndexSelection IndexSelection { get; set; }
-        public SubCondition ConditionSubCondition { get; set; }
+        public SubCondition GivenSubCondition { get; set; }
         public KbInsensitiveDictionary<string> ConditionValues { get; set; }
         public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
 
         public MatchConditionValuesDocumentsOperation(Transaction transaction,
             PhysicalIndex physicalIndex, PhysicalSchema physicalSchema, IndexSelection indexSelection,
-            SubCondition conditionSubCondition, KbInsensitiveDictionary<string> conditionValues)
+            SubCondition givenSubCondition, KbInsensitiveDictionary<string> conditionValues)
         {
             Transaction = transaction;
             PhysicalIndex = physicalIndex;
             PhysicalSchema = physicalSchema;
             IndexSelection = indexSelection;
-            ConditionSubCondition = conditionSubCondition;
+            GivenSubCondition = givenSubCondition;
             ConditionValues = conditionValues;
         }
 

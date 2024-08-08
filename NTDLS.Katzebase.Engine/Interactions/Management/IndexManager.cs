@@ -234,9 +234,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal Dictionary<uint, DocumentPointer> MatchConditionValuesDocuments(Transaction transaction, PhysicalSchema physicalSchema,
-            IndexSelection indexSelection, SubCondition conditionSubCondition, KbInsensitiveDictionary<string> conditionValues)
+            IndexSelection indexSelection, SubCondition givenSubCondition, KbInsensitiveDictionary<string> conditionValues)
         {
-            var firstCondition = conditionSubCondition.Conditions.First();
+            var firstCondition = givenSubCondition.Conditions.First();
 
             if (firstCondition.LogicalQualifier == LogicalQualifier.Equals)
             {
@@ -244,7 +244,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(conditionValues.First().Value);
                 string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubCondition, conditionValues);
+                return MatchDocuments(transaction, physicalIndexPages, indexSelection, givenSubCondition, conditionValues);
             }
             else
             {
@@ -252,7 +252,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchConditionValuesDocumentsInstance>();
                 var operation = new MatchConditionValuesDocumentsOperation(
-                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubCondition, conditionValues);
+                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, givenSubCondition, conditionValues);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
                 {
@@ -291,7 +291,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
 
                 var results = MatchDocuments(instance.Operation.Transaction, physicalIndexPages,
-                    instance.Operation.IndexSelection, instance.Operation.ConditionSubCondition, instance.Operation.ConditionValues);
+                    instance.Operation.IndexSelection, instance.Operation.GivenSubCondition, instance.Operation.ConditionValues);
                 if (results.Count != 0)
                 {
                     lock (instance.Operation.Results)
@@ -311,7 +311,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         private Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
-            IndexSelection indexSelection, SubCondition conditionSubCondition, KbInsensitiveDictionary<string> conditionValues)
+            IndexSelection indexSelection, SubCondition givenSubCondition, KbInsensitiveDictionary<string> conditionValues)
         {
             try
             {
@@ -320,7 +320,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
                 {
-                    var conditionField = conditionSubCondition.Conditions
+                    var conditionField = givenSubCondition.Conditions
                         .FirstOrDefault(o => o.Left.Value?.Equals(attribute.Field.EnsureNotNull(), StringComparison.InvariantCultureIgnoreCase) == true);
 
                     if (conditionField == null)
@@ -400,12 +400,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal Dictionary<uint, DocumentPointer> MatchWorkingSchemaDocuments(Transaction transaction,
-                    PhysicalSchema physicalSchema, IndexSelection indexSelection, SubCondition conditionSubCondition, string workingSchemaPrefix)
+                    PhysicalSchema physicalSchema, IndexSelection indexSelection, SubCondition givenSubCondition, string workingSchemaPrefix)
         {
             Condition? firstConditionLeft = null;
             Condition? firstConditionRight = null;
 
-            foreach (var condition in conditionSubCondition.Conditions)
+            foreach (var condition in givenSubCondition.Conditions)
             {
                 if (indexSelection.CoveredFields.Any(o => o.Key == condition.Left.Key))
                 {
@@ -429,7 +429,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(firstValue);
                 string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubCondition, workingSchemaPrefix);
+                return MatchDocuments(transaction, physicalIndexPages, indexSelection, givenSubCondition, workingSchemaPrefix);
             }
             else if (firstConditionRight?.LogicalQualifier == LogicalQualifier.Equals)
             {
@@ -443,7 +443,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(firstValue);
                 string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                return MatchDocuments(transaction, physicalIndexPages, indexSelection, conditionSubCondition, workingSchemaPrefix);
+                return MatchDocuments(transaction, physicalIndexPages, indexSelection, givenSubCondition, workingSchemaPrefix);
             }
             else
             {
@@ -453,7 +453,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchWorkingSchemaDocumentsOperation.MatchWorkingSchemaDocumentsInstance>();
                 var operation = new MatchWorkingSchemaDocumentsOperation(
-                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, conditionSubCondition, workingSchemaPrefix);
+                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, givenSubCondition, workingSchemaPrefix);
 
                 for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
                 {
@@ -488,7 +488,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
 
                 var results = MatchDocuments(instance.Operation.Transaction, physicalIndexPages,
-                    instance.Operation.IndexSelection, instance.Operation.ConditionSubCondition, instance.Operation.WorkingSchemaPrefix);
+                    instance.Operation.IndexSelection, instance.Operation.GivenSubCondition, instance.Operation.WorkingSchemaPrefix);
 
                 if (results.Count != 0)
                 {
@@ -514,7 +514,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         private Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction,
                     PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection,
-                    SubCondition conditionSubCondition, string workingSchemaPrefix)
+                    SubCondition givenSubCondition, string workingSchemaPrefix)
         {
             try
             {
@@ -524,7 +524,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
                 {
-                    var conditionField = conditionSubCondition.Conditions
+                    var conditionField = givenSubCondition.Conditions
                         .FirstOrDefault(o => o.Left.Prefix == workingSchemaPrefix
                         && o.Left.Value?.Equals(attribute.Field.EnsureNotNull(), StringComparison.InvariantCultureIgnoreCase) == true);
 

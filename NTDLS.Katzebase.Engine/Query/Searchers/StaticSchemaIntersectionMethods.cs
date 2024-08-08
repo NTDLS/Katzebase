@@ -621,18 +621,18 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         }
 
         private static void SetSchemaIntersectionConditionParametersRecursive(Transaction transaction,
-            ref NCalc.Expression expression, Conditions conditions, SubCondition conditionSubCondition,
+            ref NCalc.Expression expression, Conditions conditions, SubCondition givenSubCondition,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
+            foreach (var subConditionKey in givenSubCondition.SubConditionKeys)
             {
                 var subCondition = conditions.SubConditionByKey(subConditionKey);
                 SetSchemaIntersectionConditionParametersRecursive(transaction,
                     ref expression, conditions, subCondition, joinScopedContentCache);
             }
 
-            foreach (var condition in conditionSubCondition.Conditions)
+            foreach (var condition in givenSubCondition.Conditions)
             {
                 //Get the value of the condition:
                 var documentContent = joinScopedContentCache[condition.Left.Prefix];
@@ -840,16 +840,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction, ref NCalc.Expression expression,
-            Conditions conditions, SubCondition conditionSubCondition, KbInsensitiveDictionary<string?> conditionField)
+            Conditions conditions, SubCondition givenSubCondition, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
+            foreach (var subConditionKey in givenSubCondition.SubConditionKeys)
             {
                 var subCondition = conditions.SubConditionByKey(subConditionKey);
                 SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
             }
 
-            foreach (var condition in conditionSubCondition.Conditions)
+            foreach (var condition in givenSubCondition.Conditions)
             {
                 //Get the value of the condition:
                 if (conditionField.TryGetValue(condition.Left.Key, out string? value) == false)
