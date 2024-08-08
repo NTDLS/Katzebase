@@ -1212,7 +1212,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 {
                     if (result.Schemas.Any(o => o.Prefix == filterSchema) == false)
                     {
-                        throw new KbParserException($"The select schema alias [{filterSchema}] for [*] was not found in the query.");
+                        throw new KbParserException($"The select * schema alias [{filterSchema}] was not found in the query.");
                     }
                 }
             }
