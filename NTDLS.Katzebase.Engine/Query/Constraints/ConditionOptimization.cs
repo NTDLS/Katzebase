@@ -147,10 +147,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                 //When we get here, we have one index that seems to want to cover multiple tables - no cool man. Not cool.
 
-                foreach (var index in optimization.IndexSelection)
-                {
-                    Interactions.Management.LogManager.Information($"{physicalSchema.Name}->{index.PhysicalIndex.Name}.");
-                }
+                //foreach (var index in optimization.IndexSelection)
+                //{
+                //    Interactions.Management.LogManager.Information($"{physicalSchema.Name}->{index.PhysicalIndex.Name}.");
+                //}
 
                 return optimization;
             }
@@ -167,7 +167,6 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             List<Condition> conditions, List<PrefixedField> coveredFields)
         {
             var result = new List<Condition>();
-
 
             foreach (var coveredField in coveredFields)
             {
@@ -231,6 +230,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         private static string Pad(int indentation) => "".PadLeft(indentation * 2, ' ');
 
+        /// <summary>
+        /// This function makes a (somewhat) user readable expression tree, used for debugging and explanations.
+        /// It includes indexes where they can be applied.
+        /// It also demonstrates how we process the recursive condition logic.
+        /// </summary>
         public string ExplainOptimization(int indentation = 0)
         {
             var result = new StringBuilder();
@@ -245,6 +249,12 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return result.ToString();
         }
 
+        /// <summary>
+        /// This function makes a (somewhat) user readable expression tree, used for debugging and explanations.
+        /// It includes indexes where they can be applied.
+        /// It also demonstrates how we process the recursive condition logic.
+        /// Called by parent ExplainOptimization()
+        /// </summary>
         private void ExplainSubCondition(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
         {
             foreach (var subConditionKey in givenSubCondition.SubConditionKeys)

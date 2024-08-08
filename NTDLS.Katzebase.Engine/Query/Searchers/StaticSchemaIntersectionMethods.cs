@@ -427,7 +427,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             {
                 if (instance.ExpressionCache.TryGetValue(conditionHash, out expression) == false)
                 {
-                    expression = new NCalc.Expression(currentSchemaMap.Conditions.EnsureNotNull().HighLevelConditionTree);
+                    expression = new NCalc.Expression(currentSchemaMap.Conditions.EnsureNotNull().Expression);
                     instance.ExpressionCache.Add(conditionHash, expression);
                 }
             }
@@ -803,7 +803,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             Transaction transaction, DocumentLookupOperationInstance instance, SchemaIntersectionRowCollection inputResults)
         {
             var outputResults = new List<SchemaIntersectionRow>();
-            var expression = new NCalc.Expression(instance.Operation.Query.Conditions.HighLevelConditionTree);
+            var expression = new NCalc.Expression(instance.Operation.Query.Conditions.Expression);
 
             foreach (var inputResult in inputResults.Collection)
             {

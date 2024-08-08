@@ -1,8 +1,3 @@
-select top 10 * 
-from
-	WordList:Word as sw
-	
-/*
 --set ExplainQuery true
 
 --no indexes: 741,185ms
@@ -26,8 +21,8 @@ inner join WordList:Language as tl
 	on tl.Id = TW.LanguageId
 where
 	sl.Name = 'English'
-	and (
-		sw.Text = 'Gym'
-		or sw.Text = 'Arm'
-	)
-*/
+	sw.Text = 'Gym'
+	--and (
+	--	sw.Text = 'Gym'
+	--	or sw.Text = 'Arm'
+	--)

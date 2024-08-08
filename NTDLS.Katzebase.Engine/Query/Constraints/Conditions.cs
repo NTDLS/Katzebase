@@ -18,7 +18,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// This is the name of the root node.
         public string RootSubConditionKey { get; private set; } = string.Empty;
 
-        public string HighLevelConditionTree { get; private set; } = string.Empty;
+        /// <summary>
+        /// This contains the representative mathematical expression for the condition tree.
+        /// It is built at compile-time by a call to CollapseToExpression().
+        /// </summary>
+        public string Expression { get; private set; } = string.Empty;
 
         /// <summary>
         /// Every condition instance starts with a single root node that all others point back to given some lineage.
@@ -100,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             //Mark the root SubCondition as such.
             SubConditions.Single(o => o.SubConditionKey == RootSubConditionKey).IsRoot = true;
 
-            HighLevelConditionTree = BuildHighLevelConditionTree();
+            Expression = CollapseToExpression();
 
             if (Root.Conditions.Any())
             {
@@ -160,7 +164,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             var clone = new Conditions()
             {
                 RootSubConditionKey = RootSubConditionKey,
-                HighLevelConditionTree = HighLevelConditionTree
+                Expression = Expression
             };
 
             clone.AllFields.AddRange(AllFields);
@@ -290,52 +294,65 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         #region Debug.
 
-        public string BuildFullVirtualCondition()
+        private static string FriendlyCondition(string val) => val.ToUpper()
+            .Replace("C_", "Cond")
+            .Replace("S_", "Expr");
+
+        private static string Pad(int indentation) => "".PadLeft(indentation * 2, ' ');
+
+        /// <summary>
+        /// This function makes a (somewhat) user readable expression tree, used for debugging and explanations.
+        /// It also demonstrates how we process the recursive condition logic.
+        /// </summary>
+        public string ExplainConditionTree(int indentation = 0)
         {
             var result = new StringBuilder();
-            result.AppendLine($"[{RootSubConditionKey}]");
 
             if (Root.SubConditionKeys.Count > 0)
             {
-                result.AppendLine("(");
-
-                foreach (var subConditionKey in Root.SubConditionKeys)
-                {
-                    var subCondition = SubConditionByKey(subConditionKey);
-                    result.AppendLine($"  [{subCondition.Condition}]");
-                    BuildFullVirtualCondition(ref result, subCondition, 1);
-                }
-
-                result.AppendLine(")");
+                //The root condition is just a pointer to a child condition, so get the "root" child condition.
+                var rootCondition = SubConditionByKey(Root.SubConditionKey);
+                ExplainConditionTree(ref result, rootCondition, indentation);
             }
 
             return result.ToString();
         }
 
-        private void BuildFullVirtualCondition(ref StringBuilder result, SubCondition conditionSubCondition, int depth)
+        /// <summary>
+        /// This function makes a (somewhat) user readable expression tree, used for debugging and explanations.
+        /// It also demonstrates how we process the recursive condition logic.
+        /// Called by parent ExplainConditionTree()
+        /// </summary>
+        private void ExplainConditionTree(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
         {
-            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
+            foreach (var subConditionKey in givenSubCondition.SubConditionKeys)
             {
                 var subCondition = SubConditionByKey(subConditionKey);
-                result.AppendLine("".PadLeft((depth) * 2, ' ') + $"[{subCondition.Condition}]");
+
+                var indexName = subCondition.IndexSelection?.PhysicalIndex?.Name;
+
+                result.AppendLine(Pad(indentation + 1)
+                    + $"{FriendlyCondition(subCondition.SubConditionKey)} is ({FriendlyCondition(subCondition.Condition)})";
+
+                result.AppendLine(Pad(indentation + 1) + "(");
+
+                if (subCondition.Conditions.Count > 0)
+                {
+                    foreach (var condition in subCondition.Conditions)
+                    {
+                        result.AppendLine(Pad(indentation + 2)
+                            + $"{FriendlyCondition(condition.ConditionKey)} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                    }
+                }
 
                 if (subCondition.SubConditionKeys.Count > 0)
                 {
-                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + "(");
-                    BuildFullVirtualCondition(ref result, subCondition, depth + 1);
-                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + ")");
+                    result.AppendLine(Pad(indentation + 2) + "(");
+                    ExplainConditionTree(ref result, subCondition, indentation + 2);
+                    result.AppendLine(Pad(indentation + 2) + ")");
                 }
-            }
 
-            if (conditionSubCondition.Conditions.Count > 0)
-            {
-                result.AppendLine("".PadLeft((depth + 1) * 1, ' ') + "(");
-                foreach (var condition in conditionSubCondition.Conditions)
-                {
-                    result.AppendLine("".PadLeft((depth + 1) * 2, ' ') + $"{condition.ConditionKey}: {condition.Left} {condition.LogicalQualifier}");
-                }
-                result.AppendLine("".PadLeft((depth + 1) * 1, ' ') + ")");
+                result.AppendLine(Pad(indentation + 1) + ")");
             }
         }
 
@@ -344,11 +361,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public List<PrefixedField> AllFields { get; private set; } = new();
 
         /// <summary>
-        /// This function is used to build a logical condition at the SubCondition
-        ///     level, it also demonstrates how we process the recursive logic.
+        /// Builds mathematical expression that represents the entire condition tree.
+        /// It also demonstrates how we process the recursive condition logic.
         /// </summary>
-        /// <returns></returns>
-        public string BuildHighLevelConditionTree()
+        public string CollapseToExpression()
         {
             var condition = new StringBuilder($"({Root.Condition})");
 
@@ -356,19 +372,19 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             {
                 var subCondition = SubConditionByKey(subConditionKey);
                 condition.Replace(subConditionKey, $"({subCondition.Condition})");
-                BuildHighLevelConditionTree(ref condition, subCondition);
+                CollapseToExpression(ref condition, subCondition);
             }
 
             return condition.ToString();
         }
 
-        public void BuildHighLevelConditionTree(ref StringBuilder condition, SubCondition conditionSubCondition)
+        public void CollapseToExpression(ref StringBuilder condition, SubCondition conditionSubCondition)
         {
             foreach (var subConditionKey in conditionSubCondition.SubConditionKeys)
             {
                 var subCondition = SubConditionByKey(subConditionKey);
                 condition.Replace(subConditionKey, $"({subCondition.Condition})");
-                BuildHighLevelConditionTree(ref condition, subCondition);
+                CollapseToExpression(ref condition, subCondition);
             }
         }
 
