@@ -3,7 +3,8 @@ select
 from
 	WordList:Word as sw
 where
-	'Gym' = sw.Text
+	sw.Text = 'Gym'
+	--'Gym' = sw.Text
 
 --set ExplainQuery true
 --no indexes: 741,185ms

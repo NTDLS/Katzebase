@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -63,18 +64,18 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return $"{ConditionMarker}_{_lastCondition++}";
         }
 
-        public static Conditions Create(string conditionsText, KbInsensitiveDictionary<string> literalStrings, string leftHandAlias = "")
+        public static Conditions Create(string conditionsText, KbInsensitiveDictionary<string> literalStrings, string leftHandAliasOfJoin = "")
         {
             var conditions = new Conditions();
             conditionsText = conditionsText.ToLowerInvariant();
-            conditions.Parse(conditionsText, literalStrings, leftHandAlias);
+            conditions.Parse(conditionsText, literalStrings, leftHandAliasOfJoin);
 
             conditions.Hash = conditions.BuildConditionHash();
 
             return conditions;
         }
 
-        private void Parse(string conditionsText, KbInsensitiveDictionary<string> literalStrings, string leftHandAlias)
+        private void Parse(string conditionsText, KbInsensitiveDictionary<string> literalStrings, string leftHandAliasOfJoin)
         {
             //We parse by parentheses so wrap the condition in them if it is not already.
             if (conditionsText.StartsWith('(') == false || conditionsText.StartsWith(')') == false)
@@ -97,9 +98,14 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                         string expressionPlaceholder = NextExpressionPlaceholder();
                         string subConditionText = conditionsText.Substring(startPos, endPos - startPos + 1).Trim();
                         string parenTrimmedSubConditionText = subConditionText.Substring(1, subConditionText.Length - 2).Trim();
+
+                        LogManager.Trace(parenTrimmedSubConditionText);
+
                         var subCondition = new SubCondition(expressionPlaceholder, parenTrimmedSubConditionText);
-                        AddSubCondition(literalStrings, subCondition, leftHandAlias);
+                        AddSubCondition(literalStrings, subCondition, leftHandAliasOfJoin);
                         conditionsText = conditionsText.Replace(subConditionText, VariableToKey(expressionPlaceholder));
+
+                        LogManager.Trace(conditionsText);
                     }
                 }
                 else
@@ -116,6 +122,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             SubConditions.Single(o => o.Key == RootKey).IsRoot = true;
 
             Expression = CollapseToExpression();
+
+            LogManager.Trace(Expression);
 
             if (Root.Conditions.Any())
             {
@@ -207,7 +215,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return clone;
         }
 
-        public void AddSubCondition(KbInsensitiveDictionary<string> literalStrings, SubCondition subCondition, string leftHandAlias)
+        public void AddSubCondition(KbInsensitiveDictionary<string> literalStrings, SubCondition subCondition, string leftHandAliasOfJoin)
         {
             var logicalConnector = LogicalConnector.None;
 
@@ -223,7 +231,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 {
                     break; //Done.
                 }
-                else if (token.StartsWith('$') && token.EndsWith('$'))
+                else if (token.StartsWith('$')
+                    && token.EndsWith('$')
+                    && (token.StartsWith($"$:{ConditionMarker}") || token.StartsWith($"$:{ExpressionMarker}"))
+                    )
                 {
                     if (token.StartsWith($"$:{ConditionMarker}"))
                     {
@@ -264,9 +275,13 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     //Righthand value:
                     string right = conditionTokenizer.GetNextToken().ToLowerInvariant();
 
-                    if (literalStrings.ContainsKey(right))
+                    if (literalStrings.TryGetValue(left, out string? leftLiteral))
                     {
-                        right = literalStrings[right].ToLowerInvariant();
+                        left = leftLiteral.ToLowerInvariant();
+                    }
+                    if (literalStrings.TryGetValue(right, out string? rightLiteral))
+                    {
+                        right = rightLiteral.ToLowerInvariant();
                     }
 
                     int endPosition = conditionTokenizer.Position;
@@ -286,12 +301,23 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                         endPosition = conditionTokenizer.Position;
                     }
 
-                    if (right.StartsWith($"{leftHandAlias}."))
+                    var condition = new Condition(subCondition.Key, conditionPlaceholder, logicalConnector, left, logicalQualifier, right);
+
+
+                    if (right.StartsWith($"{leftHandAliasOfJoin}."))
                     {
-                        (left, right) = (right, left); //Swap the left and right.
+                        //For joins, keep the left and right values on the side that I prefer.
+                        LogManager.Trace($"Conditions.AddSubCondition: Inverting schema join condition.");
+                        condition.Invert();
                     }
 
-                    var condition = new Condition(subCondition.Key, conditionPlaceholder, logicalConnector, left, logicalQualifier, right);
+                    if (condition.Left.IsConstant && !condition.Right.IsConstant)
+                    {
+                        LogManager.Trace($"Conditions.AddSubCondition: Inverting constant condition.");
+                        condition.Invert();
+                    }
+
+                    LogManager.Trace("{condition.Left} {condition.LogicalQualifier} {condition.Right}");
 
                     subCondition.Expression = subCondition.Expression.Remove(startPosition, endPosition - startPosition);
                     subCondition.Expression = subCondition.Expression.Insert(startPosition, VariableToKey(conditionPlaceholder) + " ");

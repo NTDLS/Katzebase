@@ -131,7 +131,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             if (wasDeferred)
                             {
                                 _core.Health.Increment(HealthCounterType.IODeferredIOReads);
-                                LogManager.Verbose($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
+                                LogManager.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
                                 return reference;
                             }
@@ -153,7 +153,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         if (cacheHit)
                         {
                             _core.Health.Increment(HealthCounterType.IOCacheReadHits);
-                            LogManager.Verbose($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
+                            LogManager.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
                             return (T?)cachedObject;
                         }
@@ -161,7 +161,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     _core.Health.Increment(HealthCounterType.IOCacheReadMisses);
 
-                    LogManager.Debug($"IO:Read:{transaction.ProcessId}->{filePath}");
+                    LogManager.Trace($"IO:Read:{transaction.ProcessId}->{filePath}");
 
                     T? deserializedObject;
                     int approximateSizeInBytes = 0;

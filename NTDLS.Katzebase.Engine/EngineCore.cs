@@ -38,11 +38,11 @@ namespace NTDLS.Katzebase.Engine
             Settings = settings;
 
             var fileVersionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
-            var productVersion = string.Join(".", (fileVersionInfo.ProductVersion?.Split('.').Take(3)).EnsureNotNull());
+            var fileVersion = string.Join(".", (fileVersionInfo.FileVersion?.Split('.').Take(3)).EnsureNotNull());
 
-            LogManager.Verbose($"{fileVersionInfo.ProductName} v{productVersion} PID:{System.Environment.ProcessId}");
+            LogManager.Information($"{fileVersionInfo.ProductName} v{fileVersion} PID:{System.Environment.ProcessId}");
 
-            LogManager.Verbose("Creating log directory.");
+            LogManager.Information("Creating log directory.");
             Directory.CreateDirectory(Settings.LogDirectory);
 
             LogManager.Information("Initializing cache manager.");
@@ -88,7 +88,7 @@ namespace NTDLS.Katzebase.Engine
 
         public void Start()
         {
-            LogManager.Information("Starting the server.");
+            LogManager.Information("Starting server engine.");
 
             LogManager.Information("Starting recovery.");
             Transactions.Recover();
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Engine
 
         public void Stop()
         {
-            LogManager.Information("Stopping the server.");
+            LogManager.Information("Stopping server engine.");
 
             ThreadPool.Stop();
             Cache.Close();

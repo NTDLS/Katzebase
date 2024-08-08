@@ -1,3 +1,4 @@
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using Serilog;
 using Topshelf;
 using Topshelf.Logging;
@@ -48,7 +49,7 @@ namespace NTDLS.Katzebase.Server
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"An error occurred while starting or the service: {ex.Message}");
+                    LogManager.Error($"An error occurred while starting or the service: {ex.Message}");
                     return;
                 }
             }

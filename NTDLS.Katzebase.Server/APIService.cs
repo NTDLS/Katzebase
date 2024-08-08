@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Server
                 _messageServer.OnConnected += RmServer_OnConnected;
                 _messageServer.OnDisconnected += RmServer_OnDisconnected;
 
-                LogManager.Verbose($"Listening on {_settings.ListenPort}.");
+                LogManager.Information($"Listening on {_settings.ListenPort}.");
 
                 _messageServer.AddHandler(_core.Documents.APIHandlers);
                 _messageServer.AddHandler(_core.Indexes.APIHandlers);
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Server
         {
             try
             {
-                LogManager.Verbose($"Stopping...");
+                LogManager.Information($"Stopping...");
                 _messageServer.Stop();
                 _core.Stop();
             }

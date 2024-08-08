@@ -37,6 +37,13 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             LogicalQualifier = logicalQualifier;
         }
 
+        /// <summary>
+        /// Swaps the left and right values.
+        /// </summary>
+        public void Invert()
+        {
+            (Right, Left) = (Left, Right);
+        }
         public Condition Clone()
         {
             var clone = new Condition(SubConditionKey, ConditionKey, LogicalConnector, LogicalQualifier)

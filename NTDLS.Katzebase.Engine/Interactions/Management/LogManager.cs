@@ -1,4 +1,5 @@
 ﻿using Serilog;
+using System.Diagnostics;
 using System.Text;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -6,15 +7,46 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to logging.
     /// </summary>
-    public class LogManager
+    public static class LogManager
     {
-        public static void Debug(string message, Exception ex) => Log.Debug($"{message} {GetExceptionText(ex)}");
-        public static void Debug(string message) => Log.Debug(message);
-        public static void Debug(Exception ex) => Log.Debug(GetExceptionText(ex));
+        private static string GetCallerFunctionName()
+        {
+            var frame = (new StackTrace()).GetFrame(2); // 0 would be this method itself, 1 is the caller
+            if (frame == null)
+            {
+                return string.Empty;
+            }
+
+            var methodBase = frame.GetMethod();
+            if (methodBase == null)
+            {
+                return string.Empty;
+            }
+
+            var classType = methodBase.DeclaringType;
+            if (classType == null || classType.Namespace == null)
+            {
+                return string.Empty;
+            }
+
+            string namespaceName = classType.Namespace;
+            string className = classType.Name;
+            string methodName = methodBase.Name;
+
+            return $"{namespaceName}.{className}.{methodName}";
+        }
+
+        public static void Trace(string message, Exception ex) => Log.Verbose($"{GetCallerFunctionName()}: {message} {GetExceptionText(ex)}");
+        public static void Trace(string message) => Log.Verbose($"{GetCallerFunctionName()}: {message}");
+        public static void Trace(Exception ex) => Log.Verbose($"{GetCallerFunctionName()}: {GetExceptionText(ex)}");
 
         public static void Verbose(string message, Exception ex) => Log.Verbose($"{message} {GetExceptionText(ex)}");
         public static void Verbose(string message) => Log.Verbose(message);
         public static void Verbose(Exception ex) => Log.Verbose(GetExceptionText(ex));
+
+        public static void Debug(string message, Exception ex) => Log.Debug($"{message} {GetExceptionText(ex)}");
+        public static void Debug(string message) => Log.Debug(message);
+        public static void Debug(Exception ex) => Log.Debug(GetExceptionText(ex));
 
         public static void Information(string message, Exception ex) => Log.Information($"{message} {GetExceptionText(ex)}");
         public static void Information(string message) => Log.Information(message);
@@ -41,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Critical log exception. Failed to get exception text: {ex.Message}.");
+                Error($"Critical log exception. Failed to get exception text: {ex.Message}.");
                 throw;
             }
         }
@@ -64,7 +96,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Critical log exception. Failed to get exception text: {ex.Message}.");
+                Error($"Critical log exception. Failed to get exception text: {ex.Message}.");
                 throw;
             }
         }
