@@ -1202,7 +1202,7 @@ namespace NTDLS.Katzebase.Engine.Query
             {
                 //if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
                 //{
-                //    throw new KbParserException($"The group-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
+                //    throw new KbParserException($"Group-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
                 //}
             }
 
@@ -1212,7 +1212,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 {
                     if (result.Schemas.Any(o => o.Prefix == filterSchema) == false)
                     {
-                        throw new KbParserException($"The select * schema alias [{filterSchema}] was not found in the query.");
+                        throw new KbParserException($"Select schema alias [{filterSchema}] was not found in the query.");
                     }
                 }
             }
@@ -1249,7 +1249,7 @@ namespace NTDLS.Katzebase.Engine.Query
             {
                 if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
                 {
-                    throw new KbParserException($"The select schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
+                    throw new KbParserException($"Select schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
                 }
             }
 
@@ -1263,12 +1263,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 if (result.SelectFields.Any(o => o.Alias == field.Alias) == false)
                 {
-                    //throw new KbParserException($"The order-by field [{field.Field}] was not found in the query.");
+                    //throw new KbParserException($"Order-by field [{field.Field}] was not found in the query.");
                 }
 
                 //if (result.SelectFields.Any(o => o.Key == field.Key) == false && result.DynamicallyBuildSelectList == false)
                 //{
-                //    throw new KbParserException($"The sort-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
+                //    throw new KbParserException($Sort-by schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
                 //}
             }
 
@@ -1282,7 +1282,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 if (result.Schemas.Any(o => o.Prefix == field.Prefix) == false)
                 {
-                    throw new KbParserException($"The condition schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
+                    throw new KbParserException($"Condition schema alias [{field.Prefix}] for [{field.Field}] was not found in the query.");
                 }
             }
 

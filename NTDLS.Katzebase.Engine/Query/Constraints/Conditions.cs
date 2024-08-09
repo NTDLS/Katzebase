@@ -127,7 +127,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
             if (Root.Conditions.Any())
             {
-                throw new Exception("The root condition cannot contain conditions.");
+                throw new Exception("Root condition cannot contain conditions.");
             }
         }
 

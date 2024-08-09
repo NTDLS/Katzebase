@@ -90,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
             if (value.All(char.IsDigit) == false)
             {
-                throw new KbInvalidArgumentException("The value must be numeric.");
+                throw new KbInvalidArgumentException("Value must be numeric.");
             }
         }
         */

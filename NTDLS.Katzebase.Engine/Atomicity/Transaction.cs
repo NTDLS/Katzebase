@@ -201,15 +201,15 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             if (IsCancelled)
             {
-                throw new KbTransactionCancelledException("The transaction was cancelled");
+                throw new KbTransactionCancelledException("Transaction was cancelled");
             }
             else if (IsDeadlocked)
             {
-                throw new KbTransactionCancelledException("The transaction was deadlocked");
+                throw new KbTransactionCancelledException("Transaction was deadlocked");
             }
             else if (IsCommittedOrRolledBack)
             {
-                throw new KbTransactionCancelledException("The transaction was committed or rolled back.");
+                throw new KbTransactionCancelledException("Transaction was committed or rolled back.");
             }
         }
 

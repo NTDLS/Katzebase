@@ -265,7 +265,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 if (child == RootPhysicalSchema)
                 {
-                    throw new KbGenericException("The root schema does not have a parent.");
+                    throw new KbGenericException("Root schema does not have a parent.");
                 }
 
                 if (child.VirtualPath == null)
@@ -322,7 +322,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var parentSchemaCatalogLockKey) == false)
                     {
-                        throw new KbObjectNotFoundException($"The schema [{schemaName}] does not exist.");
+                        throw new KbObjectNotFoundException($"Schema [{schemaName}] does not exist.");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
@@ -405,7 +405,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var parentSchemaCatalogLockKey) == false)
                     {
-                        throw new KbObjectNotFoundException($"The schema [{schemaName}] does not exist.");
+                        throw new KbObjectNotFoundException($"Schema [{schemaName}] does not exist.");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,

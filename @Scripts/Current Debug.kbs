@@ -1,7 +1,11 @@
 select top 10
-	hhh.* --Validate this schema.
+	L.*
 from
 	WordList:Word as L
+where
+	L.Text = 'Gym'
+	L.Text = 'Gym'
+	
 
 /*
 select top 10

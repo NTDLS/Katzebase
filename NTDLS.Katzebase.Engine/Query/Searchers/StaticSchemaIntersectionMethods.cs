@@ -129,6 +129,22 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             queue.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
 
+            if (queue.ExceptionOccurred())
+            {
+                var exceptions = new List<Exception>();
+
+                foreach (var item in queue.Exceptions())
+                {
+                    if (item.Exception != null)
+                    {
+                        exceptions.Add(item.Exception);
+                    }
+                }
+
+                throw new AggregateException(exceptions);
+            }
+
+
             #region Grouping.
 
             if (operation.Results.Collection.Count != 0 && (query.GroupFields.Count != 0
@@ -178,7 +194,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                         }
                         else
                         {
-                            throw new KbNotImplementedException($"The aggregate type is not implemented.");
+                            throw new KbNotImplementedException($"Aggregate type is not implemented.");
                         }
                     }
 
@@ -419,7 +435,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             var currentSchemaMap = currentSchemaKVP.Value;
 
             var conditionHash = currentSchemaMap.Conditions.EnsureNotNull().Hash
-                ?? throw new KbEngineException($"The condition hash cannot be null.");
+                ?? throw new KbEngineException($"Condition hash cannot be null.");
 
             NCalc.Expression? expression;
 

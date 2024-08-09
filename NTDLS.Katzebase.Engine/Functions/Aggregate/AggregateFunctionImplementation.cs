@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             */
             else
             {
-                throw new KbNotImplementedException($"The aggregate function type {param.GetType} is not implemented.");
+                throw new KbNotImplementedException($"Aggregate function type {param.GetType} is not implemented.");
             }
 
         }

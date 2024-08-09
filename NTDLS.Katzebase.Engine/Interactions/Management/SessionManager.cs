@@ -136,7 +136,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         return result.Value;
                     }
-                    throw new KbSessionNotFoundException($"The session was not found: {processId}");
+                    throw new KbSessionNotFoundException($"Session was not found: {processId}");
                 }
                 catch (Exception ex)
                 {

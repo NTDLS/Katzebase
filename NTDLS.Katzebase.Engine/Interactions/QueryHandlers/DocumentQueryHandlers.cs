@@ -75,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 if (duplicateFields.Count != 0)
                 {
                     string fields = "[" + string.Join("],[", duplicateFields) + "]";
-                    throw new KbEngineException($"The field(s) {fields} was specified more than once.");
+                    throw new KbEngineException($"Field(s) {fields} were specified more than once.");
                 }
 
                 foreach (var row in result.Rows)
@@ -134,7 +134,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         }
                         else
                         {
-                            throw new KbNotImplementedException($"The function type {updateValue.Value.GetType().Name} is not implemented.");
+                            throw new KbNotImplementedException($"Function type {updateValue.Value.GetType().Name} is not implemented.");
                         }
 
                         keyValuePairs.Add(updateValue.Key, fieldValue);
@@ -199,7 +199,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         }
                         else
                         {
-                            throw new KbNotImplementedException($"The function type {updateValue.Value.GetType().Name} is not implemented.");
+                            throw new KbNotImplementedException($"Function type {updateValue.Value.GetType().Name} is not implemented.");
                         }
 
                         if (physicalDocument.Elements.ContainsKey(updateValue.Key))
