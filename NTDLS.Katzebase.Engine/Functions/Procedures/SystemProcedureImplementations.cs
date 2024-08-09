@@ -736,7 +736,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                     //---------------------------------------------------------------------------------------------------------------------------
                     case "showversion":
                         {
-                            var showAll = proc.Parameters.Get<bool>("showAll", false);
+                            var showAll = proc.Parameters.Get("showAll", false);
 
                             var collection = new KbQueryResultCollection();
                             var result = collection.AddNew();

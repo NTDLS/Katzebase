@@ -17,8 +17,18 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             return false;
         }
 
-        static public bool IsValidIdentifier(string text, string ignoreCharacters)
+        static public bool IsValidIdentifier(string text, char ignoreCharacter)
         {
+            return IsValidIdentifier(text, [ignoreCharacter]);
+        }
+
+        static public bool IsValidIdentifier(string text, char[] ignoreCharacters)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return false;
+            }
+
             foreach (char ignore in ignoreCharacters)
             {
                 text = text.Replace(ignore.ToString(), "");

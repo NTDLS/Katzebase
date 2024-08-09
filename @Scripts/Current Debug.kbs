@@ -1,4 +1,9 @@
-select * from WordList:Word where Text like '%George%'
+select
+	*
+from
+	WordList:Word
+where
+	Text like '%George%'
 
 --exec showversion(null)
 

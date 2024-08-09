@@ -1,7 +1,6 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Shared;
 using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -9,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 {
     public class QueryTokenizer
     {
-        static readonly char[] DefaultTokenDelimiters = new char[] { ',', '=' };
+        static readonly char[] DefaultTokenDelimiters = [',', '='];
 
         private readonly string _text;
         private int _position = 0;
@@ -83,109 +82,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             return _text.Substring(_position).Trim();
         }
 
-        public int GetNextTokenAsInt()
-        {
-            string token = GetNextToken();
-            if (int.TryParse(token, out int value) == false)
-            {
-                throw new KbParserException("Invalid query. Found [" + token + "], expected numeric row limit.");
-            }
-
-            return value;
-        }
-
-        public string GetNextToken()
-        {
-            return GetNextToken(DefaultTokenDelimiters);
-        }
-
-        public bool IsNextTokenConsume(string[] tokens)
-        {
-            var token = GetNextToken().ToLowerInvariant();
-            foreach (var given in tokens)
-            {
-                if (token.Is(given))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public bool IsNextToken(string[] tokens)
-        {
-            var token = PeekNextToken().ToLowerInvariant();
-            foreach (var given in tokens)
-            {
-                if (token.Is(given))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public bool IsNextTokenStartOfQuery()
-        {
-            return IsNextTokenStartOfQuery(out var _);
-        }
-
-        public bool IsNextTokenStartOfQuery(out QueryType type)
-        {
-            var token = PeekNextToken().ToLowerInvariant();
-
-            return Enum.TryParse(token, true, out type) //Enum parse.
-                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lienient.
-                && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
-        }
-
-        public bool IsNotNextToken(string[] tokens)
-        {
-            return !IsNextToken(tokens);
-        }
-
-        public bool IsNextTokenConsume(string token)
-        {
-            return GetNextToken().Is(token);
-        }
-
-        public bool IsNextToken(string token)
-        {
-            return PeekNextToken().Is(token);
-        }
-
-        public string PeekNextToken()
-        {
-            int originalPosition = _position;
-            var result = GetNextToken(DefaultTokenDelimiters);
-            _position = originalPosition;
-            return result;
-        }
-
-        public void SkipNextToken()
-        {
-            GetNextToken(DefaultTokenDelimiters);
-        }
-
-        public void SkipToEnd()
-        {
-            _position = _text.Length;
-        }
-
-        public string PeekNextToken(char[] delimiters)
-        {
-            int originalPosition = _position;
-            var result = GetNextToken(delimiters);
-            _position = originalPosition;
-            return result;
-        }
-
-        public void SkipNextToken(char[] delimiters)
-        {
-            GetNextToken(delimiters);
-        }
-
-        public string GetNextToken(char[] delimiters)
+        public string GetNext(char[] delimiters)
         {
             var token = string.Empty;
 
@@ -213,9 +110,83 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             return token;
         }
 
+        public string GetNext()
+        {
+            return GetNext(DefaultTokenDelimiters);
+        }
+
+        public int GetNextAsInt()
+        {
+            string token = GetNext();
+            if (int.TryParse(token, out int value) == false)
+            {
+                throw new KbParserException("Invalid query. Found [" + token + "], expected numeric row limit.");
+            }
+
+            return value;
+        }
+
+        public bool IsNextStartOfQuery()
+        {
+            return IsNextStartOfQuery(out var _);
+        }
+
+        public bool IsNextStartOfQuery(out QueryType type)
+        {
+            var token = PeekNext().ToLowerInvariant();
+
+            return Enum.TryParse(token, true, out type) //Enum parse.
+                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
+                && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
+        }
+
+        public string PeekNext()
+        {
+            int originalPosition = _position;
+            var result = GetNext(DefaultTokenDelimiters);
+            _position = originalPosition;
+            return result;
+        }
+
+        public string PeekNext(char[] delimiters)
+        {
+            int originalPosition = _position;
+            var result = GetNext(delimiters);
+            _position = originalPosition;
+            return result;
+        }
+
+        public void SkipNext()
+        {
+            GetNext(DefaultTokenDelimiters);
+        }
+
+        public void SkipNext(char[] delimiters)
+        {
+            GetNext(delimiters);
+        }
+
+        public void SkipToEnd()
+        {
+            _position = _text.Length;
+        }
+
         public void SkipDelimiters()
         {
             SkipDelimiters(DefaultTokenDelimiters);
+        }
+
+        public void SkipDelimiters(char delimiter)
+        {
+            SkipDelimiters([delimiter]);
+        }
+
+        public void SkipDelimiters(char[] delimiters)
+        {
+            while (_position < _text.Length && (char.IsWhiteSpace(_text[_position]) || delimiters.Contains(_text[_position]) == true))
+            {
+                _position++;
+            }
         }
 
         public void SkipWhile(char[] chs)
@@ -247,19 +218,6 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         public void SkipWhiteSpace()
         {
             while (_position < _text.Length && char.IsWhiteSpace(_text[_position]))
-            {
-                _position++;
-            }
-        }
-
-        public void SkipDelimiters(char delimiter)
-        {
-            SkipDelimiters([delimiter]);
-        }
-
-        public void SkipDelimiters(char[] delimiters)
-        {
-            while (_position < _text.Length && (char.IsWhiteSpace(_text[_position]) || delimiters.Contains(_text[_position]) == true))
             {
                 _position++;
             }

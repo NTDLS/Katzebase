@@ -1,12 +1,17 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 {
+    /// <summary>
+    /// Used for parsing WHERE clauses and join expressions.
+    /// </summary>
+    /// <param name="query"></param>
+    /// <param name="position"></param>
+    /// <returns></returns>
     public class ConditionTokenizer
     {
-        static readonly char[] DefaultTokenDelimiters = new char[] { ',' };
+        static readonly char[] DefaultTokenDelimiters = [','];
 
         private string _text;
         private int _position = 0;
@@ -31,55 +36,36 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
         static public LogicalQualifier ParseLogicalQualifier(string text)
         {
-            switch (text)
+            return text.ToLowerInvariant() switch
             {
-                case "=":
-                    return LogicalQualifier.Equals;
-                case "!=":
-                    return LogicalQualifier.NotEquals;
-                case ">":
-                    return LogicalQualifier.GreaterThan;
-                case "<":
-                    return LogicalQualifier.LessThan;
-                case ">=":
-                    return LogicalQualifier.GreaterThanOrEqual;
-                case "<=":
-                    return LogicalQualifier.LessThanOrEqual;
-                case "like":
-                    return LogicalQualifier.Like;
-                case "not like":
-                    return LogicalQualifier.NotLike;
-                case "between":
-                    return LogicalQualifier.Between;
-                case "not between":
-                    return LogicalQualifier.NotBetween;
-            }
-            return LogicalQualifier.None;
+                "=" => LogicalQualifier.Equals,
+                "!=" => LogicalQualifier.NotEquals,
+                ">" => LogicalQualifier.GreaterThan,
+                "<" => LogicalQualifier.LessThan,
+                ">=" => LogicalQualifier.GreaterThanOrEqual,
+                "<=" => LogicalQualifier.LessThanOrEqual,
+                "like" => LogicalQualifier.Like,
+                "not like" => LogicalQualifier.NotLike,
+                "between" => LogicalQualifier.Between,
+                "not between" => LogicalQualifier.NotBetween,
+                _ => LogicalQualifier.None,
+            };
         }
 
         public static string LogicalQualifierToString(LogicalQualifier logicalQualifier)
         {
-            switch (logicalQualifier)
+            return logicalQualifier switch
             {
-                case LogicalQualifier.Equals:
-                    return "=";
-                case LogicalQualifier.NotEquals:
-                    return "!=";
-                case LogicalQualifier.GreaterThanOrEqual:
-                    return ">=";
-                case LogicalQualifier.LessThanOrEqual:
-                    return "<=";
-                case LogicalQualifier.LessThan:
-                    return "<";
-                case LogicalQualifier.GreaterThan:
-                    return ">";
-                case LogicalQualifier.Like:
-                    return "~";
-                case LogicalQualifier.NotLike:
-                    return "!~";
-            }
-
-            return "";
+                LogicalQualifier.Equals => "=",
+                LogicalQualifier.NotEquals => "!=",
+                LogicalQualifier.GreaterThanOrEqual => ">=",
+                LogicalQualifier.LessThanOrEqual => "<=",
+                LogicalQualifier.LessThan => "<",
+                LogicalQualifier.GreaterThan => ">",
+                LogicalQualifier.Like => "~",
+                LogicalQualifier.NotLike => "!~",
+                _ => "",
+            };
         }
 
         public static string LogicalConnectorToString(LogicalConnector logicalConnector)
@@ -106,7 +92,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             _position = position;
             if (_position >= _text.Length)
             {
-                throw new KbParserException("Skip position is greater than query length.");
+                throw new KbParserException("Skip position is greater than text length.");
             }
         }
 
@@ -115,7 +101,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             _text = text;
             if (_position >= _text.Length)
             {
-                throw new KbParserException("Skip position is greater than query length.");
+                throw new KbParserException("Skip position is greater than text length.");
             }
         }
 
@@ -124,7 +110,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             _position = position;
             if (_position > _text.Length)
             {
-                throw new KbParserException("Skip position is greater than query length.");
+                throw new KbParserException("Skip position is greater than text length.");
             }
         }
 
@@ -136,19 +122,6 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         public static void SkipDelimiters(string text, ref int position)
         {
             SkipDelimiters(text, ref position, DefaultTokenDelimiters);
-        }
-
-        public void SkipWhiteSpace()
-        {
-            SkipWhiteSpace(_text, ref _position);
-        }
-
-        public static void SkipWhiteSpace(string text, ref int position)
-        {
-            while (position < text.Length && char.IsWhiteSpace(text[position]))
-            {
-                position++;
-            }
         }
 
         public void SkipDelimiters(char[] delimiters)
@@ -164,49 +137,38 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             }
         }
 
-        public string PeekNextToken()
+        public void SkipWhiteSpace()
+        {
+            SkipWhiteSpace(_text, ref _position);
+        }
+
+        public static void SkipWhiteSpace(string text, ref int position)
+        {
+            while (position < text.Length && char.IsWhiteSpace(text[position]))
+            {
+                position++;
+            }
+        }
+
+        public string PeekNext()
         {
             int originalPosition = _position;
-            var result = GetNextToken();
+            var result = GetNext();
             _position = originalPosition;
             return result;
         }
 
-        public void SkipNextToken()
+        public void SkipNext()
         {
-            _ = GetNextToken();
+            _ = GetNext();
         }
 
-        public bool IsNextToken(string[] tokens)
+        public string GetNext()
         {
-            var token = PeekNextToken().ToLowerInvariant();
-            foreach (var given in tokens)
-            {
-                if (token.Is(given))
-                {
-                    return true;
-                }
-            }
-            return false;
+            return GetNext(_text, ref _position);
         }
 
-        public bool IsNextToken(string token)
-        {
-            return PeekNextToken().Is(token);
-        }
-
-        /// <summary>
-        /// Used for parsing WHERE clauses.
-        /// </summary>
-        /// <param name="query"></param>
-        /// <param name="position"></param>
-        /// <returns></returns>
-        public string GetNextToken()
-        {
-            return GetNextToken(_text, ref _position);
-        }
-
-        public static string GetNextToken(string text, ref int position)
+        public static string GetNext(string text, ref int position)
         {
             var token = string.Empty;
 

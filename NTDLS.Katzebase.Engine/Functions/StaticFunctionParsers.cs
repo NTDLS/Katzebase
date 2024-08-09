@@ -176,7 +176,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             {
                 if (updateFieldName == string.Empty)
                 {
-                    updateFieldName = query.GetNextToken();
+                    updateFieldName = query.GetNext();
 
                     if (string.IsNullOrEmpty(updateFieldName))
                     {
@@ -190,7 +190,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                     query.SkipNextCharacter();
                 }
 
-                var token = query.PeekNextToken([',', '(', ')']);
+                var token = query.PeekNext([',', '(', ')']);
 
                 if (token != string.Empty && _mathChars.Contains(token[0]) && !(token[0] == '(' || token[0] == ')'))
                 {
@@ -241,7 +241,13 @@ namespace NTDLS.Katzebase.Engine.Functions
                         }
                     }
 
-                    preparseFields.Add(updateFieldName.ToLowerInvariant(), new() { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
+                    preparseFields.Add(updateFieldName.ToLowerInvariant(),
+                        new()
+                        {
+                            Text = param.ToString(),
+                            Alias = alias,
+                            IsComplex = isComplex
+                        });
 
                     if (query.IsEnd() || (parenScope == 0 && (query.NextCharacter == ',' || query.NextCharacter == ')')))
                     {
@@ -269,7 +275,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         throw new KbParserException("Unexpected empty token found.");
                     }
 
-                    param.Append(query.GetNextToken());
+                    param.Append(query.GetNext());
                 }
             }
         }
@@ -304,7 +310,7 @@ namespace NTDLS.Katzebase.Engine.Functions
 
         private static bool IsNextNonIdentifier(string text, int startPos, char c)
         {
-            return IsNextNonIdentifier(text, startPos, new char[] { c });
+            return IsNextNonIdentifier(text, startPos, [c]);
         }
 
         private static bool IsNextNonIdentifier(string text, int startPos, char[] c)
@@ -616,7 +622,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                 {
                     if (updateFieldName == string.Empty)
                     {
-                        updateFieldName = query.GetNextToken();
+                        updateFieldName = query.GetNext();
 
                         if (string.IsNullOrEmpty(updateFieldName))
                         {
@@ -630,7 +636,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         query.SkipNextCharacter();
                     }
 
-                    var token = query.PeekNextToken(new char[] { ',', '(', ')' });
+                    var token = query.PeekNext([',', '(', ')']);
 
                     if (token != string.Empty && _mathChars.Contains(token[0]) && !(token[0] == '(' || token[0] == ')'))
                     {
@@ -688,7 +694,8 @@ namespace NTDLS.Katzebase.Engine.Functions
                             }
                         }
 
-                        preparseFields.Add(updateFieldName.ToLowerInvariant(), new PreparseField { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
+                        preparseFields.Add(updateFieldName.ToLowerInvariant(), new PreparseField
+                        { Text = param.ToString(), Alias = alias, IsComplex = isComplex });
 
                         updateFieldName = string.Empty;
 
@@ -701,11 +708,11 @@ namespace NTDLS.Katzebase.Engine.Functions
                         query.SkipWhile(',');
 
                         /*
-                        if (token.ToLowerInvariant() == "from")
+                        if (token.Is("from"))
                         {
                             return preparseFields;
                         }
-                        else if (token.ToLowerInvariant() == "into")
+                        else if (token.Is("into"))
                         {
                             return preparseFields;
                         }
@@ -722,7 +729,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         continue;
                     }
                     /*
-                    else if (token.ToLowerInvariant() == "as")
+                    else if (token.Is("as"))
                     {
                         query.SkipNextToken();
                         alias = query.GetNextToken();
@@ -736,7 +743,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                             throw new KbParserException("Unexpected empty token found.");
                         }
 
-                        param.Append(query.GetNextToken());
+                        param.Append(query.GetNext());
                     }
                 }
             }
@@ -756,7 +763,7 @@ namespace NTDLS.Katzebase.Engine.Functions
 
                 while (true)
                 {
-                    var token = query.PeekNextToken(new char[] { ',', '(', ')' });
+                    var token = query.PeekNext([',', '(', ')']);
 
                     if (token != string.Empty && _mathChars.Contains(token[0]) && !(token[0] == '(' || token[0] == ')'))
                     {
@@ -779,7 +786,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         continue;
                     }
                     else if (token == string.Empty && query.NextCharacter == ',' && parenScope == 0
-                        || token.Is("from") || token.ToLowerInvariant() == "into")
+                        || token.IsOneOf(["from", "into"]))
                     {
                         if (parenScope != 0)
                         {
@@ -845,8 +852,8 @@ namespace NTDLS.Katzebase.Engine.Functions
                     }
                     else if (token.Is("as"))
                     {
-                        query.SkipNextToken();
-                        alias = query.GetNextToken();
+                        query.SkipNext();
+                        alias = query.GetNext();
                         continue;
                     }
                     else
@@ -856,7 +863,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                             throw new KbParserException("Unexpected empty token found.");
                         }
 
-                        param.Append(query.GetNextToken());
+                        param.Append(query.GetNext());
                     }
                 }
             }
@@ -876,7 +883,7 @@ namespace NTDLS.Katzebase.Engine.Functions
 
                 while (true)
                 {
-                    var token = query.PeekNextToken(new char[] { ',', '(', ')' });
+                    var token = query.PeekNext([',', '(', ')']);
 
                     if (token != string.Empty && _mathChars.Contains(token[0]) && !(token[0] == '(' || token[0] == ')'))
                     {
@@ -968,7 +975,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                             throw new KbParserException("Unexpected empty token found.");
                         }
 
-                        param.Append(query.GetNextToken());
+                        param.Append(query.GetNext());
                     }
                 }
             }
@@ -981,7 +988,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                 var param = new StringBuilder();
                 int parenScope = 0;
 
-                var token = query.GetNextToken();
+                var token = query.GetNext();
                 if (token == null || token == string.Empty)
                 {
                     throw new KbParserException("Found empty token, expected procedure name");
@@ -991,7 +998,7 @@ namespace NTDLS.Katzebase.Engine.Functions
 
                 while (true)
                 {
-                    token = query.PeekNextToken(new char[] { ',', '(', ')' });
+                    token = query.PeekNext([',', '(', ')']);
 
                     if (query.NextCharacter == '(')
                     {
@@ -1024,7 +1031,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                             throw new KbParserException("Unexpected empty token found.");
                         }
 
-                        param.Append(query.GetNextToken());
+                        param.Append(query.GetNext());
                     }
                 }
             }

@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
+using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -196,13 +197,13 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         {
             var logicalConnector = LogicalConnector.None;
 
-            var conditionTokenizer = new ConditionTokenizer(subCondition.Expression);
+            var tokenizer = new ConditionTokenizer(subCondition.Expression);
 
             while (true)
             {
-                int startPosition = conditionTokenizer.Position;
+                int startPosition = tokenizer.Position;
 
-                string token = conditionTokenizer.GetNextToken().ToLowerInvariant();
+                string token = tokenizer.GetNext().ToLowerInvariant();
 
                 if (token == string.Empty)
                 {
@@ -224,12 +225,12 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                     continue;
                 }
-                else if (token == "and")
+                else if (token.Is("and"))
                 {
                     logicalConnector = LogicalConnector.And;
                     continue;
                 }
-                else if (token == "or")
+                else if (token.Is("or"))
                 {
                     logicalConnector = LogicalConnector.Or;
                     continue;
@@ -241,16 +242,16 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     string left = token;
 
                     //Logical Qualifier
-                    token = conditionTokenizer.GetNextToken().ToLowerInvariant();
-                    if (token == "not")
+                    token = tokenizer.GetNext().ToLowerInvariant();
+                    if (token.Is("not"))
                     {
-                        token += " " + conditionTokenizer.GetNextToken().ToLowerInvariant();
+                        token += " " + tokenizer.GetNext().ToLowerInvariant();
                     }
 
                     var logicalQualifier = ConditionTokenizer.ParseLogicalQualifier(token);
 
                     //Righthand value:
-                    string right = conditionTokenizer.GetNextToken().ToLowerInvariant();
+                    string right = tokenizer.GetNext().ToLowerInvariant();
 
                     if (literalStrings.TryGetValue(left, out string? leftLiteral))
                     {
@@ -261,21 +262,21 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                         right = rightLiteral.ToLowerInvariant();
                     }
 
-                    int endPosition = conditionTokenizer.Position;
+                    int endPosition = tokenizer.Position;
 
                     if (logicalQualifier == LogicalQualifier.Between || logicalQualifier == LogicalQualifier.NotBetween)
                     {
-                        string and = conditionTokenizer.GetNextToken().ToLowerInvariant();
-                        if (and != "and")
+                        string and = tokenizer.GetNext().ToLowerInvariant();
+                        if (and.Is("and") == false)
                         {
                             throw new KbParserException($"Invalid token, Found [{and}] expected [and].");
                         }
 
-                        var rightRange = conditionTokenizer.GetNextToken().ToLowerInvariant();
+                        var rightRange = tokenizer.GetNext().ToLowerInvariant();
 
                         right = $"{right}:{rightRange}";
 
-                        endPosition = conditionTokenizer.Position;
+                        endPosition = tokenizer.Position;
                     }
 
                     var condition = new Condition(subCondition.Key, conditionPlaceholder, logicalConnector, left, logicalQualifier, right);
@@ -298,7 +299,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     subCondition.Expression = subCondition.Expression.Remove(startPosition, endPosition - startPosition);
                     subCondition.Expression = subCondition.Expression.Insert(startPosition, VariableToKey(conditionPlaceholder) + " ");
 
-                    conditionTokenizer.SetText(subCondition.Expression, 0);
+                    tokenizer.SetText(subCondition.Expression, 0);
 
                     if (subCondition.Conditions.Count > 0)
                     {

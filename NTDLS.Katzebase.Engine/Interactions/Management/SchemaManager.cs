@@ -305,7 +305,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
 
                 ptLockSchema = transaction.PT?.CreateDurationTracker<PhysicalSchema>(PerformanceTraceCumulativeMetricType.Lock);
-                schemaName = schemaName.Trim(new char[] { ':' }).Trim();
+                schemaName = schemaName.Trim([':']).Trim();
 
                 if (schemaName == string.Empty)
                 {
@@ -388,7 +388,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
 
                 ptLockSchema = transaction.PT?.CreateDurationTracker<PhysicalSchema>(PerformanceTraceCumulativeMetricType.Lock);
-                schemaName = schemaName.Trim(new char[] { ':' }).Trim();
+                schemaName = schemaName.Trim([':']).Trim();
 
                 if (schemaName == string.Empty)
                 {

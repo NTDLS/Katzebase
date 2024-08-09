@@ -63,9 +63,9 @@ namespace NTDLS.Katzebase.Engine.Query
         {
             var results = new List<WithOption>();
 
-            if (query.IsNextToken("with"))
+            if (query.PeekNext().Is("with"))
             {
-                query.SkipNextToken();
+                query.SkipNext();
 
                 if (query.IsNextCharacter('(') == false)
                 {
@@ -75,14 +75,14 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 while (true)
                 {
-                    string name = query.GetNextToken().ToLowerInvariant();
+                    string name = query.GetNext().ToLowerInvariant();
                     if (query.IsNextCharacter('=') == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
                     }
                     query.SkipNextCharacter();
 
-                    string tokenValue = query.GetNextToken().ToLowerInvariant();
+                    string tokenValue = query.GetNext().ToLowerInvariant();
 
                     if (expectedOptions.ContainsKey(name) == false)
                     {
