@@ -12,7 +12,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             try
             {
-
                 var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
                     ?? throw new KbGenericException($"Value for {name} cannot be null.");
 
@@ -26,9 +25,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     }
                     throw new KbEngineException("Requested type must be AggregateDecimalArrayParameter.");
                 }
-                else if (parameter.Value is AggregateSingleParameter)
+                else if (parameter.Value is AggregateSingleParameter aggregateSingleParameter)
                 {
-                    paramValue = ((AggregateSingleParameter)parameter.Value).Value;
+                    paramValue = aggregateSingleParameter.Value;
                 }
 
                 if (paramValue == null)

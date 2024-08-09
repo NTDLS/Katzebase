@@ -34,11 +34,11 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 
                 var nameAndDefault = typeAndName[1].Trim().Split('=');
 
-                if (nameAndDefault.Count() == 1)
+                if (nameAndDefault.Length == 1)
                 {
                     parameters.Add(new AggregateFunctionParameterPrototype(paramType, nameAndDefault[0]));
                 }
-                else if (nameAndDefault.Count() == 2)
+                else if (nameAndDefault.Length == 2)
                 {
                     parameters.Add(new AggregateFunctionParameterPrototype(paramType, nameAndDefault[0],
                         nameAndDefault[1].Equals("null", StringComparison.InvariantCultureIgnoreCase) ? null : nameAndDefault[1]));

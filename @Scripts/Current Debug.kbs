@@ -1,11 +1,26 @@
-select top 10
-	L.*
+select
+	sw.Id as SourceWordId,
+	sw.Text as SourceWord,
+	sl.Name as SourceLanguage,
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+	tl.Name as TargetLanguage
 from
-	WordList:Word as L
+	WordList:Word as sw
+inner join WordList:Language as sl
+	on sl.Id = sw.LanguageId
+inner join WordList:Synonym as S
+	on S.SourceWordId = sw.Id
+inner join WordList:Word as tw
+	on tw.Id = S.TargetWordId
+inner join WordList:Language as tl
+	on tl.Id = TW.LanguageId
 where
-	L.Text = 'Gym'
-	L.Text = 'Gym'
-	
+	sl.Name = 'English'
+	and (
+		sw.Text = 'Gym'
+		or sw.Text = 'Arm'
+	)	
 
 /*
 select top 10

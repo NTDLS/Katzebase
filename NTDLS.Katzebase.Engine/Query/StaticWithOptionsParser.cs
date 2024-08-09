@@ -81,7 +81,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
                     query.SkipNextCharacter();
 
-                    string value = query.GetNextToken().ToLowerInvariant();
+                    string tokenValue = query.GetNextToken().ToLowerInvariant();
 
                     if (expectedOptions.ContainsKey(name) == false)
                     {
@@ -89,13 +89,13 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException($"Invalid query. Found '{name}', expected {expectedValues}.");
                     }
 
-                    if (query.LiteralStrings.ContainsKey(value))
+                    if (query.LiteralStrings.TryGetValue(tokenValue, out string? value))
                     {
-                        value = query.LiteralStrings[value];
-                        value = value.Substring(1, value.Length - 2);
+                        tokenValue = value;
+                        tokenValue = tokenValue.Substring(1, tokenValue.Length - 2);
                     }
 
-                    var convertedValue = expectedOptions.ValidateAndConvert(name, value);
+                    var convertedValue = expectedOptions.ValidateAndConvert(name, tokenValue);
 
                     results.Add(new WithOption(name, convertedValue, convertedValue.GetType()));
 

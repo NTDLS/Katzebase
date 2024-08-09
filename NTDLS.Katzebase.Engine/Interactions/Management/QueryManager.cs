@@ -57,36 +57,35 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             var statement = new StringBuilder($"EXEC {procedure.SchemaName}:{procedure.ProcedureName}");
 
-            using (var transactionReference = _core.Transactions.Acquire(session))
+            using var transactionReference = _core.Transactions.Acquire(session);
+
+            var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, procedure.SchemaName, LockOperation.Read);
+
+            var physicalProcedure = _core.Procedures.Acquire(transactionReference.Transaction, physicalSchema, procedure.ProcedureName, LockOperation.Read)
+                ?? throw new KbEngineException($"Procedure [{procedure.ProcedureName}] was not found in schema [{procedure.SchemaName}]");
+
+            if (physicalProcedure.Parameters.Count > 0)
             {
-                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, procedure.SchemaName, LockOperation.Read);
+                statement.Append('(');
 
-                var physicalProcedure = _core.Procedures.Acquire(transactionReference.Transaction, physicalSchema, procedure.ProcedureName, LockOperation.Read)
-                    ?? throw new KbEngineException($"Procedure [{procedure.ProcedureName}] was not found in schema [{procedure.SchemaName}]");
-
-                if (physicalProcedure.Parameters.Count > 0)
+                foreach (var parameter in physicalProcedure.Parameters)
                 {
-                    statement.Append('(');
-
-                    foreach (var parameter in physicalProcedure.Parameters)
+                    if (procedure.Parameters.Collection.TryGetValue(parameter.Name.ToLowerInvariant(), out var value) == false)
                     {
-                        if (procedure.Parameters.Collection.TryGetValue(parameter.Name.ToLowerInvariant(), out var value) == false)
-                        {
-                            throw new KbEngineException($"Parameter [{parameter.Name}] was not passed when calling procedure [{procedure.ProcedureName}] in schema [{procedure.SchemaName}]");
-                        }
-                        statement.Append($"'{value}',");
+                        throw new KbEngineException($"Parameter [{parameter.Name}] was not passed when calling procedure [{procedure.ProcedureName}] in schema [{procedure.SchemaName}]");
                     }
-                    statement.Length--; //Remove the trailing ','.
-                    statement.Append(')');
+                    statement.Append($"'{value}',");
                 }
-
-                var batch = StaticQueryParser.PrepareBatch(statement.ToString());
-                if (batch.Count > 1)
-                {
-                    throw new KbEngineException("Expected only one procedure call per batch.");
-                }
-                return _core.Procedures.QueryHandlers.ExecuteExec(session, batch.First());
+                statement.Length--; //Remove the trailing ','.
+                statement.Append(')');
             }
+
+            var batch = StaticQueryParser.PrepareBatch(statement.ToString());
+            if (batch.Count > 1)
+            {
+                throw new KbEngineException("Expected only one procedure call per batch.");
+            }
+            return _core.Procedures.QueryHandlers.ExecuteExec(session, batch.First());
         }
 
         internal KbQueryResultCollection ExecuteQuery(SessionState session, PreparedQuery preparedQuery)

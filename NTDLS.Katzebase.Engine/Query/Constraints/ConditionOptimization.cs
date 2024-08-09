@@ -235,7 +235,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         {
             var result = new StringBuilder();
 
-            if (Conditions.Root.Keys.Count > 0)
+            if (Conditions.Root.ExpressionKeys.Count > 0)
             {
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
                 var rootCondition = Conditions.SubConditionFromKey(Conditions.Root.Key);
@@ -253,7 +253,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// </summary>
         private void ExplainSubCondition(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
         {
-            foreach (var subConditionKey in givenSubCondition.Keys)
+            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
             {
                 var subCondition = Conditions.SubConditionFromKey(subConditionKey);
 
@@ -274,7 +274,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     }
                 }
 
-                if (subCondition.Keys.Count > 0)
+                if (subCondition.ExpressionKeys.Count > 0)
                 {
                     result.AppendLine(Pad(indentation + 2) + "(");
                     ExplainSubCondition(ref result, subCondition, indentation + 2);

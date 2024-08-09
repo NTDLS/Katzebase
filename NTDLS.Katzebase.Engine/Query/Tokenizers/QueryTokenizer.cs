@@ -37,15 +37,15 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             LiteralStrings = CleanQueryText(ref _text);
         }
 
-        public void SwapFieldLiteral(ref string value)
+        public void SwapFieldLiteral(ref string givenValue)
         {
-            if (string.IsNullOrEmpty(value) == false && LiteralStrings.ContainsKey(value))
+            if (string.IsNullOrEmpty(givenValue) == false && LiteralStrings.TryGetValue(givenValue, out string? value))
             {
-                value = LiteralStrings[value];
+                givenValue = value;
 
-                if (value.StartsWith('\'') && value.EndsWith('\''))
+                if (givenValue.StartsWith('\'') && givenValue.EndsWith('\''))
                 {
-                    value = value.Substring(1, value.Length - 2);
+                    givenValue = givenValue.Substring(1, givenValue.Length - 2);
                 }
             }
         }
@@ -253,7 +253,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
         public void SkipDelimiters(char delimiter)
         {
-            SkipDelimiters(new char[] { delimiter });
+            SkipDelimiters([delimiter]);
         }
 
         public void SkipDelimiters(char[] delimiters)

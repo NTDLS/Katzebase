@@ -295,7 +295,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                         transaction.BlockedByKeys.Read((obj) =>
                         {
-                            if (obj.Any())
+                            if (obj.Count != 0)
                             {
                                 _transactionWaitingForLocks.Read((txWaitingForLocks) =>
                                 {

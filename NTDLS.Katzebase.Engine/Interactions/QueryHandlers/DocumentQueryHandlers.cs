@@ -169,9 +169,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
 
-                if (preparedQuery.Attributes.ContainsKey(PreparedQuery.QueryAttribute.SpecificSchemaPrefix))
+                if (preparedQuery.Attributes.TryGetValue(PreparedQuery.QueryAttribute.SpecificSchemaPrefix, out object? value))
                 {
-                    getDocumentPointsForSchemaPrefix = preparedQuery.Attributes[PreparedQuery.QueryAttribute.SpecificSchemaPrefix] as string;
+                    getDocumentPointsForSchemaPrefix = value as string;
                 }
 
                 var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
@@ -313,9 +313,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
                 var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
 
-                if (preparedQuery.Attributes.ContainsKey(PreparedQuery.QueryAttribute.SpecificSchemaPrefix))
+                if (preparedQuery.Attributes.TryGetValue(PreparedQuery.QueryAttribute.SpecificSchemaPrefix, out object? value))
                 {
-                    getDocumentPointsForSchemaPrefix = preparedQuery.Attributes[PreparedQuery.QueryAttribute.SpecificSchemaPrefix] as string;
+                    getDocumentPointsForSchemaPrefix = value as string;
                 }
 
                 var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery

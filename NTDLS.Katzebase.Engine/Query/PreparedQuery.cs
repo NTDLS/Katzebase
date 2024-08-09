@@ -86,9 +86,9 @@ namespace NTDLS.Katzebase.Engine.Query
 
         public T Attribute<T>(QueryAttribute attribute, T defaultValue)
         {
-            if (Attributes.ContainsKey(attribute))
+            if (Attributes.TryGetValue(attribute, out object? value))
             {
-                return (T)Attributes[attribute];
+                return (T)value;
             }
             return defaultValue;
         }
@@ -100,13 +100,9 @@ namespace NTDLS.Katzebase.Engine.Query
 
         public void AddAttribute(QueryAttribute key, object value)
         {
-            if (Attributes.ContainsKey(key))
+            if (!Attributes.TryAdd(key, value))
             {
                 Attributes[key] = value;
-            }
-            else
-            {
-                Attributes.Add(key, value);
             }
         }
     }

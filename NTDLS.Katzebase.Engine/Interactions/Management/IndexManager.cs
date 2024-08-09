@@ -115,7 +115,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     diskSize += _core.IO.GetDecompressedSizeTracked(pageDiskPath);
                     decompressedSiskSize += new FileInfo(pageDiskPath).Length;
                     physicalIndexPageMapDistilledLeaves.Add(DistillIndexBaseNodes(physicalIndexPageMap[indexPartition].Root));
-                    rootNodes += physicalIndexPageMap[indexPartition].Root.Children.Count();
+                    rootNodes += physicalIndexPageMap[indexPartition].Root.Children.Count;
 
                 }
 
@@ -273,19 +273,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 queue.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
-                if (queue.ExceptionOccurred())
-                {
-                    var exceptions = new List<Exception>();
-                    foreach (var item in queue.Exceptions())
-                    {
-                        if (item.Exception != null)
-                        {
-                            exceptions.Add(item.Exception);
-                        }
-                    }
-                    throw new AggregateException(exceptions);
-                }
-
                 return operation.Results;
             }
         }
@@ -328,7 +315,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = new() { physicalIndexPages.Root };
+                List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
                 bool foundAnything = false;
 
                 foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
@@ -486,19 +473,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 queue.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
-                if (queue.ExceptionOccurred())
-                {
-                    var exceptions = new List<Exception>();
-                    foreach (var item in queue.Exceptions())
-                    {
-                        if (item.Exception != null)
-                        {
-                            exceptions.Add(item.Exception);
-                        }
-                    }
-                    throw new AggregateException(exceptions);
-                }
-
                 return operation.Results;
             }
         }
@@ -544,7 +518,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = new() { physicalIndexPages.Root };
+                List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
 
                 bool foundAnything = false;
 
@@ -594,9 +568,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     ptIndexSeek?.StopAndAccumulate();
 
-                    if (foundLeaves.EnsureNotNull().FirstOrDefault()?.Documents?.Count() > 0) //We found documents, we are at the base of the index.
+                    if (foundLeaves.EnsureNotNull().FirstOrDefault()?.Documents?.Count > 0) //We found documents, we are at the base of the index.
                     {
-                        return foundLeaves.SelectMany(o => o.Documents ?? new List<PhysicalIndexEntry>()).ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
+                        return foundLeaves.SelectMany(o => o.Documents ?? new()).ToDictionary(o => o.DocumentId, o => new DocumentPointer(o.PageNumber, o.DocumentId));
                     }
 
                     //Drop down to the next leaf in the virtual tree we are building.
@@ -835,10 +809,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         break;
                     }
 
-                    if (result.Leaf.Children.ContainsKey(token))
+                    if (result.Leaf.Children.TryGetValue(token, out PhysicalIndexLeaf? value))
                     {
                         result.ExtentLevel++;
-                        result.Leaf = result.Leaf.Children[token]; //Move one level lower in the extent tree.
+                        result.Leaf = value; //Move one level lower in the extent tree.
                     }
                     else
                     {
@@ -1030,7 +1004,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
 
-                    indexScanResult.Leaf.EnsureNotNull().Documents ??= new List<PhysicalIndexEntry>();
+                    indexScanResult.Leaf.EnsureNotNull().Documents ??= new();
                 }
 
                 //Add the document to the lowest index extent.
@@ -1142,19 +1116,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 queue.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
-                if (queue.ExceptionOccurred())
-                {
-                    var exceptions = new List<Exception>();
-                    foreach (var item in queue.Exceptions())
-                    {
-                        if (item.Exception != null)
-                        {
-                            exceptions.Add(item.Exception);
-                        }
-                    }
-                    throw new AggregateException(exceptions);
-                }
-
                 for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
                 {
                     _core.IO.PutPBuf(transaction, physicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPageMap[indexPartition]);
@@ -1204,7 +1165,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             try
             {
-                if (leaf.Documents?.Any() == true)
+                if (leaf.Documents?.Count > 0)
                 {
                     foreach (var documentPointer in documentPointers)
                     {
@@ -1285,19 +1246,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
                     queue.WaitForCompletion();
                     ptThreadCompletion?.StopAndAccumulate();
-
-                    if (queue.ExceptionOccurred())
-                    {
-                        var exceptions = new List<Exception>();
-                        foreach (var item in queue.Exceptions())
-                        {
-                            if (item.Exception != null)
-                            {
-                                exceptions.Add(item.Exception);
-                            }
-                        }
-                        throw new AggregateException(exceptions);
-                    }
                 }
             }
             catch (Exception ex)

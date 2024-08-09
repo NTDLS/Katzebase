@@ -8,7 +8,15 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public string Key { get; set; }
         public string Expression { get; set; }
         public List<Condition> Conditions { get; set; } = new();
-        public HashSet<string> Keys { get; set; } = new();
+
+        /// <summary>
+        /// List of all expression keys referenced by the expression.
+        /// </summary>
+        public HashSet<string> ExpressionKeys { get; set; } = new();
+
+        /// <summary>
+        /// List of all condition keys referenced by the expression.
+        /// </summary>
         public HashSet<string> ConditionKeys { get; set; } = new();
 
         /// <summary>

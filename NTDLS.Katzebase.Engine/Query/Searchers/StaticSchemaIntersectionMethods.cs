@@ -129,19 +129,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             queue.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
 
-            if (queue.ExceptionOccurred())
-            {
-                var exceptions = new List<Exception>();
-                foreach (var item in queue.Exceptions())
-                {
-                    if (item.Exception != null)
-                    {
-                        exceptions.Add(item.Exception);
-                    }
-                }
-                throw new AggregateException(exceptions);
-            }
-
             #region Grouping.
 
             if (operation.Results.Collection.Count != 0 && (query.GroupFields.Count != 0
@@ -177,16 +164,14 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     {
                         var field = query.SelectFields[i];
 
-                        if (field is FunctionDocumentFieldParameter)
+                        if (field is FunctionDocumentFieldParameter functionDocumentFieldParameter)
                         {
-                            var specific = (FunctionDocumentFieldParameter)field;
-                            var specificValue = group.First().AuxiliaryFields[specific.Value.Key];
+                            var specificValue = group.First().AuxiliaryFields[functionDocumentFieldParameter.Value.Key];
                             values.Add(specificValue);
                         }
-                        else if (field is FunctionWithParams)
+                        else if (field is FunctionWithParams functionWithParams)
                         {
-                            var proc = (FunctionWithParams)field;
-                            var value = AggregateFunctionImplementation.CollapseAllFunctionParameters(proc, group);
+                            var value = AggregateFunctionImplementation.CollapseAllFunctionParameters(functionWithParams, group);
                             values.Add(value);
                         }
                         else
@@ -211,7 +196,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             #region Sorting.
 
             //Get a list of all the fields we need to sort by.
-            if (query.SortFields.Any() && operation.Results.Collection.Any())
+            if (query.SortFields.Any() && operation.Results.Collection.Count != 0)
             {
                 var modelAuxiliaryFields = operation.Results.Collection.First().AuxiliaryFields;
 
@@ -405,7 +390,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
             }
 
-            if (instance.Operation.Query.Conditions.AllFields.Any())
+            if (instance.Operation.Query.Conditions.AllFields.Count != 0)
             {
                 //Filter the rows by the global conditions.
                 resultingRows.Collection = ApplyQueryGlobalConditions(instance.Operation.Transaction, instance, resultingRows);
@@ -536,11 +521,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 #endregion
             }
 
-            if (limitedDocumentPointers == null)
-            {
-                limitedDocumentPointers = instance.Operation.Core.Documents.AcquireDocumentPointers(
+            limitedDocumentPointers ??= instance.Operation.Core.Documents.AcquireDocumentPointers(
                     instance.Operation.Transaction, currentSchemaMap.PhysicalSchema, LockOperation.Read);
-            }
 
             #endregion
 
@@ -625,7 +607,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in conditions.Root.Keys)
+            foreach (var subConditionKey in conditions.Root.ExpressionKeys)
             {
                 var subCondition = conditions.SubConditionFromKey(subConditionKey);
                 SetSchemaIntersectionConditionParametersRecursive(transaction,
@@ -638,7 +620,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in givenSubCondition.Keys)
+            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
             {
                 var subCondition = conditions.SubConditionFromKey(subConditionKey);
                 SetSchemaIntersectionConditionParametersRecursive(transaction,
@@ -846,7 +828,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             ref NCalc.Expression expression, Conditions conditions, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in conditions.Root.Keys)
+            foreach (var subConditionKey in conditions.Root.ExpressionKeys)
             {
                 var subCondition = conditions.SubConditionFromKey(subConditionKey);
                 SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
@@ -860,7 +842,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             Conditions conditions, SubCondition givenSubCondition, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in givenSubCondition.Keys)
+            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
             {
                 var subCondition = conditions.SubConditionFromKey(subConditionKey);
                 SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);

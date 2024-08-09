@@ -486,7 +486,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 result.UpdateValues.RefillStringLiterals(query.LiteralStrings);
 
                 token = query.GetNextToken();
-                if (token != string.Empty && token.ToLowerInvariant() != "where")
+                if (token != string.Empty && !token.Equals("where", StringComparison.InvariantCultureIgnoreCase))
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'where' or end of statement.");
                 }
@@ -762,7 +762,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
 
                     token = query.GetNextToken();
-                    if (token.ToLowerInvariant() != "on")
+                    if (!token.Equals("on", StringComparison.InvariantCultureIgnoreCase))
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "', expected 'on'.");
                     }
@@ -1029,7 +1029,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
 
                     token = query.GetNextToken();
-                    if (token.ToLowerInvariant() != "on")
+                    if (!token.Equals("on", StringComparison.InvariantCultureIgnoreCase))
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
                     }
@@ -1078,7 +1078,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
 
                 token = query.GetNextToken();
-                if (token != string.Empty && token.ToLowerInvariant() != "where")
+                if (token != string.Empty && !token.Equals("where", StringComparison.InvariantCultureIgnoreCase))
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'where' or end of statement.");
                 }

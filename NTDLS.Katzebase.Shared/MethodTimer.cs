@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Shared
         public static void DebugPrintTime(string friendlyName, MethodTimerProc proc) => proc();
 #endif
 
-        public double TimeExecution(MethodTimerProc proc)
+        public static double TimeExecution(MethodTimerProc proc)
         {
             var startTime = DateTime.UtcNow;
             proc();

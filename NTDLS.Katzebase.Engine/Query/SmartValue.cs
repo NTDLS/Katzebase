@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         if (_value.Contains('.'))
                         {
                             var parts = _value.Split('.');
-                            if (parts.Count() != 2)
+                            if (parts.Length != 2)
                             {
                                 throw new KbParserException("Invalid query. Found [" + _value + "], Expected a multi-part condition field.");
                             }

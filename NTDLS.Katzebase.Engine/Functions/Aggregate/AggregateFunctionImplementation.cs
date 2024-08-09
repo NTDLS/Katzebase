@@ -20,18 +20,18 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 
         internal static string? CollapseAllFunctionParameters(FunctionParameterBase param, IGrouping<string, SchemaIntersectionRow> group)
         {
-            if (param is FunctionWithParams)
+            if (param is FunctionWithParams functionWithParams)
             {
                 var subParams = new List<AggregateGenericParameter>();
 
-                foreach (var subParam in ((FunctionWithParams)param).Parameters)
+                foreach (var subParam in functionWithParams.Parameters)
                 {
                     var specificParam = (FunctionDocumentFieldParameter)subParam;
                     var values = group.SelectMany(o => o.AuxiliaryFields.Where(m => m.Key == specificParam.Value.Key)).Select(s => s.Value);
                     subParams.Add(new AggregateDecimalArrayParameter() { Values = values.Select(o => decimal.Parse(o ?? "0")).ToList() });
                 }
 
-                return ExecuteFunction(((FunctionWithParams)param).Function, subParams, group);
+                return ExecuteFunction(functionWithParams.Function, subParams, group);
             }
             else if (param is FunctionConstantParameter functionConstantParameter)
             {
