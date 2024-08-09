@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
@@ -37,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 throw new KbFatalException("Function prototypes were not initialized.");
             }
 
-            var function = _protypes.FirstOrDefault(o => o.Name.Equals(functionName, StringComparison.InvariantCultureIgnoreCase))
+            var function = _protypes.FirstOrDefault(o => o.Name.Is(functionName))
                 ?? throw new KbFunctionException($"Undefined function: {functionName}.");
 
             return function.ApplyParameters(parameters);

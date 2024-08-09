@@ -8,6 +8,7 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Trace;
+using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Schemas.PhysicalSchema;
@@ -215,7 +216,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(
                     transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
-                parentCatalog.Collection.RemoveAll(o => o.Name.Equals(physicalSchema.Name, StringComparison.InvariantCultureIgnoreCase));
+                parentCatalog.Collection.RemoveAll(o => o.Name.Is(physicalSchema.Name));
 
                 _core.IO.PutJson(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), parentCatalog);
             }

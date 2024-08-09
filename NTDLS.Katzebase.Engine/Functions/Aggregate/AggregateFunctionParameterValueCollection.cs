@@ -1,6 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
+using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
@@ -12,7 +13,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             try
             {
-                var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))
                     ?? throw new KbGenericException($"Value for {name} cannot be null.");
 
                 var paramValue = string.Empty;

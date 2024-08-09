@@ -1,5 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
@@ -11,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
         {
             try
             {
-                var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))
                     ?? throw new KbGenericException($"Value for {name} cannot be null.");
 
                 if (parameter.Value == null)
@@ -41,7 +42,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
         {
             try
             {
-                var value = Values.FirstOrDefault(o => o.Parameter.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
                 if (value == null)
                 {
                     return defaultValue;
@@ -62,7 +63,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
         public T? GetNullable<T>(string name)
         {
-            var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+            var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))
                 ?? throw new KbGenericException($"Value for {name} cannot be null.");
 
             if (parameter.Value == null)
@@ -84,7 +85,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
         public T? GetNullable<T>(string name, T? defaultValue)
         {
-            var value = Values.FirstOrDefault(o => o.Parameter.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))?.Value;
+            var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
             if (value == null)
             {
                 return defaultValue;

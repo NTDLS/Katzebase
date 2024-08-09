@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Indexes
 {
@@ -29,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
         {
             foreach (var item in Collection)
             {
-                if (string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase))
+                if (item.Name.Is(name))
                 {
                     return item;
                 }

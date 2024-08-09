@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
+using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Procedures
 {
@@ -41,7 +42,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                 else if (nameAndDefault.Length == 2)
                 {
                     parameters.Add(new ProcedureParameterPrototype(paramType, nameAndDefault[0],
-                        nameAndDefault[1].Equals("null", StringComparison.InvariantCultureIgnoreCase) ? null : nameAndDefault[1]));
+                        nameAndDefault[1].Is("null") ? null : nameAndDefault[1]));
                 }
                 else
                 {
@@ -54,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
         internal ProcedureParameterValueCollection ApplyParameters(List<FunctionParameterBase> values)
         {
-            int requiredParameterCount = Parameters.Count(o => o.Type.ToString().Contains("optional", StringComparison.InvariantCultureIgnoreCase) == false);
+            int requiredParameterCount = Parameters.Count(o => o.Type.ToString().ContainsInsensitive("optional") == false);
 
             if (Parameters.Count < requiredParameterCount)
             {

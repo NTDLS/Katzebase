@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Engine.Functions.Procedures;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
-using System.Linq;
+using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -486,12 +486,12 @@ namespace NTDLS.Katzebase.Engine.Query
                 result.UpdateValues.RefillStringLiterals(query.LiteralStrings);
 
                 token = query.GetNextToken();
-                if (token != string.Empty && !token.Equals("where", StringComparison.InvariantCultureIgnoreCase))
+                if (token != string.Empty && !token.Is("where"))
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'where' or end of statement.");
                 }
 
-                if (token.Equals("where", StringComparison.InvariantCultureIgnoreCase))
+                if (token.Is("where"))
                 {
                     var conditionTokenizer = new ConditionTokenizer(query.Text, query.Position);
                     int parenthesisScope = 0;
@@ -762,7 +762,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
 
                     token = query.GetNextToken();
-                    if (!token.Equals("on", StringComparison.InvariantCultureIgnoreCase))
+                    if (!token.Is("on"))
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "', expected 'on'.");
                     }
@@ -1029,7 +1029,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
 
                     token = query.GetNextToken();
-                    if (!token.Equals("on", StringComparison.InvariantCultureIgnoreCase))
+                    if (!token.Is("on"))
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
                     }
@@ -1078,12 +1078,12 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
 
                 token = query.GetNextToken();
-                if (token != string.Empty && !token.Equals("where", StringComparison.InvariantCultureIgnoreCase))
+                if (token != string.Empty && !token.Is("where"))
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: 'where' or end of statement.");
                 }
 
-                if (token.Equals("where", StringComparison.InvariantCultureIgnoreCase))
+                if (token.Is("where"))
                 {
                     var conditionTokenizer = new ConditionTokenizer(query.Text, query.Position);
                     int parenthesisScope = 0;

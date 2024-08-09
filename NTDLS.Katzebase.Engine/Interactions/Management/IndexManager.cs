@@ -11,7 +11,7 @@ using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
-using System.Collections.Generic;
+using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -321,7 +321,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
                 {
                     var conditionField = givenSubCondition.Conditions
-                        .FirstOrDefault(o => o.Left.Value?.Equals(attribute.Field.EnsureNotNull(), StringComparison.InvariantCultureIgnoreCase) == true);
+                        .FirstOrDefault(o => o.Left.Value?.Is(attribute.Field.EnsureNotNull()) == true);
 
                     if (conditionField == null)
                     {
@@ -526,7 +526,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     var conditionField = givenSubCondition.Conditions
                         .FirstOrDefault(o => o.Left.Prefix == workingSchemaPrefix
-                        && o.Left.Value?.Equals(attribute.Field.EnsureNotNull(), StringComparison.InvariantCultureIgnoreCase) == true);
+                        && o.Left.Value?.Is(attribute.Field.EnsureNotNull()) == true);
 
                     if (conditionField == null)
                     {

@@ -14,6 +14,7 @@
                 "ReleaseCacheAllocations:",
                 "ShowBlocks:Numeric/processId=null",
                 "Terminate:Numeric/processId",
+                "ShowVersion:Boolean/showAll=false",
                 "ShowBlockTree:",
                 "ShowCacheAllocations:",
                 "ShowCachePages:",

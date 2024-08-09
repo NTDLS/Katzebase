@@ -1,5 +1,6 @@
 ﻿using NTDLS.FastMemoryCache;
 using NTDLS.FastMemoryCache.Metrics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -106,7 +107,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public bool TryGet(string key, out object? value)
+        public bool TryGet(string key, [NotNullWhen(true)] out object? value)
+        {
+            try
+            {
+                if (_cache.TryGet(key, out value))
+                {
+                    return true;
+                }
+                value = default;
+                return false;
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error("Failed to get cache object.", ex);
+                throw;
+            }
+        }
+
+        public bool TryGet<T>(string key, [NotNullWhen(true)] out T? value)
         {
             try
             {

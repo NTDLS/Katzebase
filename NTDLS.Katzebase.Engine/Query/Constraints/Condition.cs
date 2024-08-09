@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Shared;
 using System.Runtime.CompilerServices;
-using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -171,9 +171,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 transaction.AddWarning(KbTransactionWarning.ResultDisqualifiedByNullValue);
                 return null;
             }
-
-            string regexPattern = "^" + Regex.Escape(pattern).Replace("%", ".*").Replace("_", ".") + "$";
-            return Regex.IsMatch(input, regexPattern);
+            return input.IsLike(pattern);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

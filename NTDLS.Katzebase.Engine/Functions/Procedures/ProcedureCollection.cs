@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
+using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Functions.Procedures
@@ -42,8 +43,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                 throw new KbFatalException("Procedure prototypes were not initialized.");
             }
 
-            var systemProcedure = _systemProcedureProtypes.FirstOrDefault
-                (o => o.Name.Equals(procedureName, StringComparison.InvariantCultureIgnoreCase));
+            var systemProcedure = _systemProcedureProtypes.FirstOrDefault(o => o.Name.Is(procedureName));
 
             if (systemProcedure != null)
             {

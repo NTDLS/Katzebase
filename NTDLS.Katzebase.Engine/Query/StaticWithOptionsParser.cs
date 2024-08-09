@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
+using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Query
 {
@@ -30,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Query
             {
                 try
                 {
-                    if (string.Equals(resultType.BaseType?.Name, "enum", StringComparison.InvariantCultureIgnoreCase))
+                    if (resultType.BaseType?.Name.Is("enum") == true)
                     {
                         if (Enum.TryParse(resultType, value, true, out var enumValue) == false)
                         {

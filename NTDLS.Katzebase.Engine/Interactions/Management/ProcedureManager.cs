@@ -6,6 +6,7 @@ using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -94,7 +95,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             var procedureCatalog = _core.IO.GetJson<PhysicalProcedureCatalog>(
                 transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
 
-            return procedureCatalog.Collection.FirstOrDefault(o => o.Name.Equals(procedureName, StringComparison.InvariantCultureIgnoreCase));
+            return procedureCatalog.Collection.FirstOrDefault(o => o.Name.Is(procedureName));
         }
 
         internal KbQueryResultCollection ExecuteProcedure(Transaction transaction, FunctionParameterBase procedureCall)

@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Shared;
 using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -103,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             var token = GetNextToken().ToLowerInvariant();
             foreach (var given in tokens)
             {
-                if (token.Equals(given, StringComparison.InvariantCultureIgnoreCase))
+                if (token.Is(given))
                 {
                     return true;
                 }
@@ -116,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             var token = PeekNextToken().ToLowerInvariant();
             foreach (var given in tokens)
             {
-                if (token.Equals(given, StringComparison.InvariantCultureIgnoreCase))
+                if (token.Is(given))
                 {
                     return true;
                 }
@@ -145,12 +146,12 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
         public bool IsNextTokenConsume(string token)
         {
-            return GetNextToken().Equals(token, StringComparison.InvariantCultureIgnoreCase);
+            return GetNextToken().Is(token);
         }
 
         public bool IsNextToken(string token)
         {
-            return PeekNextToken().Equals(token, StringComparison.InvariantCultureIgnoreCase);
+            return PeekNextToken().Is(token);
         }
 
         public string PeekNextToken()

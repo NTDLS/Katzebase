@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
+using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
@@ -39,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 throw new KbFatalException("Function prototypes were not initialized.");
             }
 
-            var function = _protypes.FirstOrDefault(o => o.Name.Equals(functionName, StringComparison.InvariantCultureIgnoreCase));
+            var function = _protypes.FirstOrDefault(o => o.Name.Is(functionName));
 
             if (function == null)
             {

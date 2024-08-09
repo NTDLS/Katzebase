@@ -1,4 +1,6 @@
-﻿namespace NTDLS.Katzebase.Engine.Schemas
+﻿using NTDLS.Katzebase.Shared;
+
+namespace NTDLS.Katzebase.Engine.Schemas
 {
     public class PhysicalSchemaCatalog
     {
@@ -13,7 +15,7 @@
         {
             foreach (var item in Collection)
             {
-                if (string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase))
+                if (item.Name.Is(name))
                 {
                     return true;
                 }
@@ -25,7 +27,7 @@
         {
             foreach (var item in Collection)
             {
-                if (string.Equals(item.Name, name, StringComparison.OrdinalIgnoreCase))
+                if (item.Name.Is(name))
                 {
                     return item;
                 }

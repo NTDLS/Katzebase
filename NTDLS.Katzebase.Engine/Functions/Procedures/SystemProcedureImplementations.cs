@@ -733,7 +733,51 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
                             return collection;
                         }
+                    //---------------------------------------------------------------------------------------------------------------------------
+                    case "showversion":
+                        {
+                            var showAll = proc.Parameters.Get<bool>("showAll", false);
 
+                            var collection = new KbQueryResultCollection();
+                            var result = collection.AddNew();
+
+                            result.AddField("Assembly");
+                            result.AddField("Version");
+
+                            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies().OrderBy(o => o.FullName))
+                            {
+                                try
+                                {
+                                    var assemblyName = assembly.GetName();
+
+                                    if (string.IsNullOrEmpty(assembly.Location))
+                                    {
+                                        continue;
+                                    }
+
+                                    if (showAll == false)
+                                    {
+                                        var versionInfo = FileVersionInfo.GetVersionInfo(assembly.Location);
+                                        string? companyName = versionInfo.CompanyName;
+
+                                        if (companyName?.ToLower()?.Contains("networkdls") != true)
+                                        {
+                                            continue;
+                                        }
+                                    }
+
+                                    var values = new List<string?> {
+                                            $"{assemblyName.Name}",
+                                            $"{assemblyName.Version}"
+                                        };
+                                    result.AddRow(values);
+                                }
+                                catch
+                                {
+                                }
+                            }
+                            return collection;
+                        }
                 }
             }
             else

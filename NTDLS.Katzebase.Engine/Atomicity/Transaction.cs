@@ -7,6 +7,7 @@ using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Engine.Trace;
+using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -395,7 +396,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             Atoms.Read((obj) =>
             {
-                result = obj.Exists(o => o.Key.Equals(filePath, StringComparison.InvariantCultureIgnoreCase));
+                result = obj.Exists(o => o.Key.Is(filePath));
             });
 
             return result;

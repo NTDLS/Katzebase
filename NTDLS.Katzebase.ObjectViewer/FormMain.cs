@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.ObjectViewer
@@ -86,8 +87,10 @@ namespace NTDLS.Katzebase.ObjectViewer
         {
             try
             {
-                var typeMapping = _types.Where(o => o.Identifier.Equals(Path.GetFileName(filePath), StringComparison.InvariantCultureIgnoreCase)
-                || o.Identifier == Path.GetExtension(filePath).ToLowerInvariant()).ToList().FirstOrDefault();
+                var typeMapping = _types.FirstOrDefault(
+                    o => o.Identifier.Is(Path.GetFileName(filePath))
+                    || o.Identifier.Is(Path.GetExtension(filePath)));
+
                 if (typeMapping != null)
                 {
                     if (typeMapping.Format == IOFormat.PBuf)
