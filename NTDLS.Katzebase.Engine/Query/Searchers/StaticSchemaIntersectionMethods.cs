@@ -132,7 +132,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             if (queue.ExceptionOccurred())
             {
                 var exceptions = new List<Exception>();
-
                 foreach (var item in queue.Exceptions())
                 {
                     if (item.Exception != null)
@@ -140,10 +139,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                         exceptions.Add(item.Exception);
                     }
                 }
-
                 throw new AggregateException(exceptions);
             }
-
 
             #region Grouping.
 

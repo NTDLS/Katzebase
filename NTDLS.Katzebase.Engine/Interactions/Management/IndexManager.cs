@@ -11,6 +11,7 @@ using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
+using System.Collections.Generic;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -272,9 +273,21 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 queue.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
+                if (queue.ExceptionOccurred())
+                {
+                    var exceptions = new List<Exception>();
+                    foreach (var item in queue.Exceptions())
+                    {
+                        if (item.Exception != null)
+                        {
+                            exceptions.Add(item.Exception);
+                        }
+                    }
+                    throw new AggregateException(exceptions);
+                }
+
                 return operation.Results;
             }
-
         }
 
         private void MatchConditionValuesDocumentsThreadWorker(MatchConditionValuesDocumentsInstance instance)
@@ -472,6 +485,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
                 queue.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
+
+                if (queue.ExceptionOccurred())
+                {
+                    var exceptions = new List<Exception>();
+                    foreach (var item in queue.Exceptions())
+                    {
+                        if (item.Exception != null)
+                        {
+                            exceptions.Add(item.Exception);
+                        }
+                    }
+                    throw new AggregateException(exceptions);
+                }
 
                 return operation.Results;
             }
@@ -1116,6 +1142,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 queue.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
+                if (queue.ExceptionOccurred())
+                {
+                    var exceptions = new List<Exception>();
+                    foreach (var item in queue.Exceptions())
+                    {
+                        if (item.Exception != null)
+                        {
+                            exceptions.Add(item.Exception);
+                        }
+                    }
+                    throw new AggregateException(exceptions);
+                }
+
                 for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
                 {
                     _core.IO.PutPBuf(transaction, physicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition), physicalIndexPageMap[indexPartition]);
@@ -1246,6 +1285,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
                     queue.WaitForCompletion();
                     ptThreadCompletion?.StopAndAccumulate();
+
+                    if (queue.ExceptionOccurred())
+                    {
+                        var exceptions = new List<Exception>();
+                        foreach (var item in queue.Exceptions())
+                        {
+                            if (item.Exception != null)
+                            {
+                                exceptions.Add(item.Exception);
+                            }
+                        }
+                        throw new AggregateException(exceptions);
+                    }
                 }
             }
             catch (Exception ex)
