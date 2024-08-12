@@ -74,6 +74,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         public KbQueryServerTerminateProcessReply TerminateSession(RmContext context, KbQueryServerTerminateProcess param)
         {
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);

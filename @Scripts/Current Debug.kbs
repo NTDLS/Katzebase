@@ -1,10 +1,11 @@
+/*
 select
 	*
 from
 	WordList:Word
 where
 	Text like '%George%'
-
+*/
 --exec showversion(null)
 
 /*
@@ -30,7 +31,7 @@ where
 --set ExplainQuery true
 --no indexes: 741,185ms
 
-/*
+
 select
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
@@ -54,4 +55,3 @@ where
 		sw.Text = 'Gym'
 		or sw.Text = 'Arm'
 	)
-*/

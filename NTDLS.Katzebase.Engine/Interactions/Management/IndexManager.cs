@@ -251,7 +251,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 //Unfortunately, we can't easily eliminate index partitions. Lets gram some threads and scan all of the partitions.
 
-                var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchConditionValuesDocumentsInstance>();
+                var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchConditionValuesDocumentsInstance>(_core.Settings.ChildThreadPoolQueueDepth);
                 var operation = new MatchConditionValuesDocumentsOperation(
                     transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, givenSubCondition, conditionValues);
 
@@ -292,6 +292,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var results = MatchDocuments(instance.Operation.Transaction, physicalIndexPages,
                     instance.Operation.IndexSelection, instance.Operation.GivenSubCondition, instance.Operation.ConditionValues);
+
                 if (results.Count != 0)
                 {
                     lock (instance.Operation.Results)
@@ -451,7 +452,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 //Unfortunately, we can't easily eliminate index partitions. Lets fire up some threads and scan all of the partitions.
 
-                var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchWorkingSchemaDocumentsOperation.MatchWorkingSchemaDocumentsInstance>();
+                var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchWorkingSchemaDocumentsOperation.MatchWorkingSchemaDocumentsInstance>(_core.Settings.ChildThreadPoolQueueDepth);
                 var operation = new MatchWorkingSchemaDocumentsOperation(
                     transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, givenSubCondition, workingSchemaPrefix);
 
@@ -1093,7 +1094,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         (physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var queue = _core.ThreadPool.Generic.CreateChildQueue<RebuildIndexOperation.RebuildIndexInstance>();
+                var queue = _core.ThreadPool.Generic.CreateChildQueue<RebuildIndexOperation.RebuildIndexInstance>(_core.Settings.ChildThreadPoolQueueDepth);
 
                 var operation = new RebuildIndexOperation(
                     transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);
@@ -1226,7 +1227,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    var queue = _core.ThreadPool.Generic.CreateChildQueue<RemoveDocumentsFromIndexThreadInstance>();
+                    var queue = _core.ThreadPool.Generic.CreateChildQueue<RemoveDocumentsFromIndexThreadInstance>(_core.Settings.ChildThreadPoolQueueDepth);
                     var operation = new RemoveDocumentsFromIndexThreadOperation(transaction, physicalIndex, physicalSchema, documentPointers);
 
                     for (int indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)

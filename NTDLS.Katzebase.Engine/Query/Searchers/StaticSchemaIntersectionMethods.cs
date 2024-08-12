@@ -100,7 +100,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //If we do not have any documents, then get the whole schema.
             documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, topLevelSchemaMap.PhysicalSchema, LockOperation.Read);
 
-            var queue = core.ThreadPool.Generic.CreateChildQueue<DocumentLookupOperationInstance>();
+            var queue = core.ThreadPool.Generic.CreateChildQueue<DocumentLookupOperationInstance>(core.Settings.ChildThreadPoolQueueDepth);
 
             var operation = new DocumentLookupOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
 

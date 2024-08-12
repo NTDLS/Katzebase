@@ -44,9 +44,20 @@
         public uint DefaultIndexPartitions { get; set; }
 
         /// <summary>
-        /// The number of threads to initially allocate to the tread pool.
+        /// The number of threads to allocate to the thread pool.
         /// </summary>
-        public int InitialThreadPoolSize { get; set; }
+        public int ThreadPoolSize { get; set; }
+
+        /// <summary>
+        /// The maximum number of items to queue in the thread pool.
+        /// </summary>
+        public int ThreadPoolQueueDepth { get; set; }
+
+        /// <summary>
+        /// The maximum number of items to queue in each child thread pool per operation.
+        /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
+        /// </summary>
+        public int ChildThreadPoolQueueDepth { get; set; }
 
         /// <summary>
         /// Whether the engine will keep health metrics.
