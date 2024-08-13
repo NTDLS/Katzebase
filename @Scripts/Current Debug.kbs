@@ -1,3 +1,14 @@
+select
+	sw.Id,
+	sw.Text,
+	sw.LanguageId
+from
+	WordList::Word as sw --25 rows
+where
+	sw.Text = 'Aalto'
+	or sw.Text = 'Tulee'
+	or sw.Text = 'savi'
+	
 /*
 select
 	*
@@ -31,7 +42,7 @@ where
 --set ExplainQuery true
 --no indexes: 741,185ms
 
-
+/*
 select
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
@@ -55,3 +66,4 @@ where
 		sw.Text = 'Gym'
 		or sw.Text = 'Arm'
 	)
+*/
