@@ -112,7 +112,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 ObjectLockKey? internalAcquiredLockKey = null;
 
-                var result = transaction.CriticalSectionTransaction.Write(() =>
+                var result = transaction.TransactionSemaphore.Write(() =>
                 {
                     transaction.EnsureActive();
 
@@ -485,10 +485,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                if (diskPath == null)
-                {
-                    throw new ArgumentNullException(nameof(diskPath));
-                }
+                ArgumentNullException.ThrowIfNull(diskPath);
 
                 acquiredLockKey = transaction.LockDirectory(LockOperation.Write, diskPath);
 

@@ -50,8 +50,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                     foreach (var field in result.Fields.Skip(1))
                     {
-                        physicalDocument.Elements.TryGetValue(field.Name, out string? jToken);
-                        resultRow.AddValue(jToken?.ToString() ?? string.Empty);
+                        physicalDocument.Elements.TryGetValue(field.Name, out string? element);
+                        resultRow.AddValue(element?.ToString() ?? string.Empty);
                     }
 
                     result.Rows.Add(resultRow);
@@ -79,17 +79,17 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 if (i == 0)
                 {
-                    foreach (var jToken in persistDocument.Elements)
+                    foreach (var element in persistDocument.Elements)
                     {
-                        result.Fields.Add(new KbQueryField(jToken.Key));
+                        result.Fields.Add(new KbQueryField(element.Key));
                     }
                 }
 
                 var resultRow = new KbQueryRow();
                 foreach (var field in result.Fields)
                 {
-                    persistDocument.Elements.TryGetValue(field.Name, out string? jToken);
-                    resultRow.AddValue(jToken?.ToString() ?? string.Empty);
+                    persistDocument.Elements.TryGetValue(field.Name, out string? element);
+                    resultRow.AddValue(element?.ToString() ?? string.Empty);
                 }
 
                 result.Rows.Add(resultRow);

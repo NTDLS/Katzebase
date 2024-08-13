@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Engine
         public QueryManager Query;
         public ThreadPoolManager ThreadPool;
 
-        internal OptimisticSemaphore CriticalSectionLockManagement { get; private set; } = new();
+        internal OptimisticSemaphore LockManagementSemaphore { get; private set; } = new();
 
         public EngineCore(KatzebaseSettings settings)
         {

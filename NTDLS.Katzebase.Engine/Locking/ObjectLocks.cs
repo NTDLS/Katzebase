@@ -16,8 +16,8 @@ namespace NTDLS.Katzebase.Engine.Locking
         public ObjectLocks(EngineCore core)
         {
             _core = core;
-            _collection = new(core.CriticalSectionLockManagement);
-            _transactionWaitingForLocks = new(core.CriticalSectionLockManagement);
+            _collection = new(core.LockManagementSemaphore);
+            _transactionWaitingForLocks = new(core.LockManagementSemaphore);
         }
 
         public void Release(ObjectLock objectLock)
@@ -124,7 +124,7 @@ namespace NTDLS.Katzebase.Engine.Locking
 
                     //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical
                     //  section "Locking.CriticalSectionLockManagement", we will only need:
-                    var acquiredLockKey = _collection.TryWriteAll([transaction.CriticalSectionTransaction], out bool isLockHeld, (obj) =>
+                    var acquiredLockKey = _collection.TryWriteAll([transaction.TransactionSemaphore], out bool isLockHeld, (obj) =>
                     {
                         ObjectLockKey? lockKey = null;
 

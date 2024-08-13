@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public DateTime StartTime { get; private set; }
         public bool IsDeadlocked { get; private set; }
         public PerformanceTrace? PT { get; private set; } = null;
-        public OptimisticSemaphore CriticalSectionTransaction { get; } = new();
+        public OptimisticSemaphore TransactionSemaphore { get; } = new();
 
         /// <summary>
         /// Whether the transaction was user created or not. The server implicitly creates lightweight transactions for everything.
@@ -47,8 +47,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         private int _referenceCount = 0;
         public int ReferenceCount
         {
-            set => CriticalSectionTransaction.Write(() => _referenceCount = value);
-            get => CriticalSectionTransaction.Read(() => _referenceCount);
+            set => TransactionSemaphore.Write(() => _referenceCount = value);
+            get => TransactionSemaphore.Read(() => _referenceCount);
         }
 
         #region Critical objects (Any object in this region must be locked for access).
@@ -357,9 +357,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             _core = core;
             _transactionManager = transactionManager;
 
-            GrantedLockCache = new(core.CriticalSectionLockManagement);
-            BlockedByKeys = new(core.CriticalSectionLockManagement);
-            HeldLockKeys = new(core.CriticalSectionLockManagement);
+            GrantedLockCache = new(core.LockManagementSemaphore);
+            BlockedByKeys = new(core.LockManagementSemaphore);
+            HeldLockKeys = new(core.LockManagementSemaphore);
 
             StartTime = DateTime.UtcNow;
             ProcessId = processId;
@@ -618,13 +618,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         #endregion
 
         public void AddReference()
-           => CriticalSectionTransaction.Write(() => _referenceCount++);
+           => TransactionSemaphore.Write(() => _referenceCount++);
 
         public void Rollback()
         {
             _core.EnsureNotNull();
 
-            CriticalSectionTransaction.Write(() =>
+            TransactionSemaphore.Write(() =>
             {
                 if (IsCommittedOrRolledBack)
                 {
@@ -735,7 +735,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             _core.EnsureNotNull();
 
-            return CriticalSectionTransaction.Write(() =>
+            return TransactionSemaphore.Write(() =>
             {
                 if (IsCancelled)
                 {
@@ -795,16 +795,14 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
             TemporarySchemas.Write((obj) =>
             {
-                if (obj.Any())
+                if (obj.Count != 0)
                 {
-                    using (var ephemeralTxRef = _core.Transactions.Acquire(Session))
+                    using var ephemeralTxRef = _core.Transactions.Acquire(Session);
+                    foreach (var tempSchema in obj)
                     {
-                        foreach (var tempSchema in obj)
-                        {
-                            _core.Schemas.Drop(ephemeralTxRef.Transaction, tempSchema);
-                        }
-                        ephemeralTxRef.Commit();
+                        _core.Schemas.Drop(ephemeralTxRef.Transaction, tempSchema);
                     }
+                    ephemeralTxRef.Commit();
                 }
             });
         }
