@@ -299,8 +299,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 {
                     break; //Done.
                 }
-                else if (token.StartsWith('$')
-                    && token.EndsWith('$')
+                else if (token.StartsWith('$') && token.EndsWith('$')
                     && (token.StartsWith($"$:{ConditionKeyMarker}") || token.StartsWith($"$:{ExpressionKeyMarker}"))
                     )
                 {
