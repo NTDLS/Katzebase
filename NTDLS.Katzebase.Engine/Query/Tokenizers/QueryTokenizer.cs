@@ -24,6 +24,12 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         public char? NextCharacter => _position < _text.Length ? _text[_position] : null;
         public bool IsEnd() => _position >= _text.Length;
 
+        /// <summary>
+        /// After the constructor is called, this will contain the same hash
+        ///     for the same query regardless of string or numeric constants.
+        /// </summary>
+        public string LogicHash { get; private set; }
+
         private readonly KbInsensitiveDictionary<string> _stringLiterals;
         private readonly KbInsensitiveDictionary<string> _numericLiterals;
 
@@ -31,6 +37,8 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         {
             _text = text.Trim().TrimEnd(';').Trim();
             CleanQueryText(ref _text, out _stringLiterals, out _numericLiterals);
+
+            LogicHash = Library.Helpers.GetSHA256Hash(_text);
         }
 
         public QueryTokenizer(string text, int startPosition)
@@ -39,6 +47,8 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             _position = startPosition;
             _startPosition = startPosition;
             CleanQueryText(ref _text, out _stringLiterals, out _numericLiterals);
+
+            LogicHash = Library.Helpers.GetSHA256Hash(_text);
         }
 
         public void SwapFieldLiteral(ref string givenValue)
@@ -286,18 +296,39 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         /// <returns></returns>
         public static KbInsensitiveDictionary<string> SwapOutLiteralStrings(ref string query)
         {
+            //TODO: Replace with NTDLS.Helpers.Text when nugets get updated.
+            static string ReplaceRange(string original, int startIndex, int length, string replacement)
+            {
+                // Remove the range of text to be replaced
+                string removed = original.Remove(startIndex, length);
+                // Insert the replacement string at the start index
+                string result = removed.Insert(startIndex, replacement);
+                return result;
+            }
+
             var mappings = new KbInsensitiveDictionary<string>();
 
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
-            var results = regex.Matches(query);
 
             int literalKey = 0;
 
-            foreach (Match match in results)
+            while (true)
             {
-                string key = $"$S_{literalKey++}$";
-                mappings.Add(key, match.ToString());
-                query = query.Replace(match.ToString(), key);
+                var match = regex.Match(query);
+
+                if (match.Success)
+                {
+                    string key = $"$S_{literalKey++}$";
+                    mappings.Add(key, match.ToString());
+
+                    query = ReplaceRange(query, match.Index, match.Length, key);
+
+                    //query = query.Replace(match.ToString(), key);
+                }
+                else
+                {
+                    break;
+                }
             }
 
             return mappings;
@@ -305,7 +336,6 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
         public static KbInsensitiveDictionary<string> SwapOutLiteralNumeric(ref string query)
         {
-
             //TODO: Replace with NTDLS.Helpers.Text when nugets get updated.
             static string ReplaceRange(string original, int startIndex, int length, string replacement)
             {
@@ -320,9 +350,10 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
             int literalKey = 0;
 
+            var regex = new Regex(@"(?<=\s|^)(?:\d+\.?\d*|\.\d+)(?=\s|$)");
+
             while (true)
             {
-                var regex = new Regex(@"(?<=\s|^)(?:\d+\.?\d*|\.\d+)(?=\s|$)");
                 var match = regex.Match(query);
 
                 if (match.Success)

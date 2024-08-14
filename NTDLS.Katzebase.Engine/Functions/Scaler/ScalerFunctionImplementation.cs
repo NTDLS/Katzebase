@@ -190,9 +190,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 case "checksum":
                     return Library.Helpers.Checksum(proc.Get<string>("text")).ToString();
                 case "sha1":
-                    return Library.Helpers.GetSHA1Hash(proc.Get<string>("text")).ToString();
+                    return Library.Helpers.GetSHA1Hash(proc.Get<string>("text"));
                 case "sha256":
-                    return Library.Helpers.GetSHA256Hash(proc.Get<string>("text")).ToString();
+                    return Library.Helpers.GetSHA256Hash(proc.Get<string>("text"));
                 case "indexof":
                     return proc.Get<string>("textToSearch").IndexOf(proc.Get<string>("textToFind")).ToString();
                 case "lastindexof":
