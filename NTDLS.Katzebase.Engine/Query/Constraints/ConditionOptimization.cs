@@ -60,7 +60,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                             //We can't yet figure out how to eliminate documents if the conditions are for more
                             //..    than one schema and all of the logical connectors are not AND. This can be done however.
                             //  We just generally have a lot of optimization trouble with ORs.
-                            continue;
+                            //continue;
                         }
                     }
 
@@ -162,9 +162,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         }
 
         #endregion
-
-        public static List<Condition> GetConvertedConditions(
-            List<Condition> conditions, List<PrefixedField> coveredFields)
+        public static List<Condition> GetConvertedConditions(List<Condition> conditions, List<PrefixedField> coveredFields)
         {
             var result = new List<Condition>();
 
@@ -203,7 +201,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 return (bool)_canApplyIndexingResultCached;
             }
 
-            if (Conditions.NonRootSubConditions.Any(o => o.IndexSelection == null) == false)
+            if (Conditions.NonRootSubConditions.Any(o => o.IndexSelection != null))
             {
                 //All condition SubConditions have a selected index.
                 foreach (var subCondition in Conditions.NonRootSubConditions)

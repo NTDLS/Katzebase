@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
@@ -11,6 +12,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
     internal class Conditions
     {
         private SubCondition? _root;
+
+        public const string TempKeyMarker = "t";
+        private int _lastTempKey = 0;
 
         public const string ExpressionKeyMarker = "e";
         public const string ConditionKeyMarker = "c";
@@ -39,17 +43,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public string Expression { get; private set; } = string.Empty;
 
         /// <summary>
-        /// Every condition instance starts with a single root node that all others point back to given some lineage.
-        /// This is the root node.
+        /// Every condition instance starts with a single root node that all others 
+        ///     point back to (given some lineage). This is it, the root node.
         /// </summary>
         public SubCondition Root
-        {
-            get
-            {
-                _root ??= SubConditions.Single(o => o.IsRoot);
-                return _root;
-            }
-        }
+            => _root.EnsureNotNull();
 
         public IEnumerable<SubCondition> NonRootSubConditions
             => SubConditions.Where(o => !o.IsRoot);
@@ -85,7 +83,74 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             //  conditions as groups and leave no chance for conditions at the root level.
             givenConditionText = $"({givenConditionText})";
 
-            int startPos, endPos;
+            int startPos = 0, endPos = 0;
+
+            var orLiterals = new Dictionary<string, string>();
+
+            //Extract all sub-expressions, check each one of them for OR conditions and then push
+            //   all of those OR conditions lower into sub expressions by wrapping them in parentheses.
+            while (true)
+            {
+                if ((startPos = givenConditionText.LastIndexOf('(')) >= 0)
+                {
+                    if ((endPos = givenConditionText.IndexOf(')', startPos)) > startPos)
+                    {
+                        string subConditionText = givenConditionText.Substring(startPos, endPos - startPos + 1).Trim();
+                        string parenTrimmedSubConditionText = subConditionText.Substring(1, subConditionText.Length - 2).Trim();
+
+                        var orConditions = parenTrimmedSubConditionText.Split(" or ").ToList();
+                        if (orConditions.Count > 1)
+                        {
+                            string orConditionWithConnector = string.Empty;
+                            for (int i = 0; i < orConditions.Count; i++)
+                            {
+                                orConditionWithConnector += $"({orConditions[i]})";
+                                if (i < orConditions.Count - 1)
+                                {
+                                    orConditionWithConnector += " or ";
+                                }
+                            }
+
+                            //We have to store keys to point to the sub-expressions so we can know when we are done parsing.
+                            var key = NextTempKey();
+                            orLiterals.Add(key, orConditionWithConnector);
+
+                            givenConditionText = ReplaceRange(givenConditionText, startPos, endPos - startPos + 1, key);
+                        }
+                        else
+                        {
+                            //We have to store keys to point to the sub-expressions so we can know when we are done parsing.
+                            var key = NextTempKey();
+                            orLiterals.Add(key, subConditionText);
+
+                            givenConditionText = ReplaceRange(givenConditionText, startPos, endPos - startPos + 1, key);
+                        }
+                    }
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            //TODO: Replace with NTDLS.Helpers.Text when nugets get updated.
+            static string ReplaceRange(string original, int startIndex, int length, string replacement)
+            {
+                // Remove the range of text to be replaced
+                string removed = original.Remove(startIndex, length);
+                // Insert the replacement string at the start index
+                string result = removed.Insert(startIndex, replacement);
+                return result;
+            }
+
+            //Swap back in all of the temporarily stored sub-expressions from the OR parsing.
+            foreach (var kvp in orLiterals.Reverse())
+            {
+                if (givenConditionText.Contains(kvp.Key))
+                {
+                    givenConditionText = givenConditionText.Replace(kvp.Key, kvp.Value);
+                }
+            }
 
             //Roll through the condition text looking for groups of conditions wrapped in parentheses.
             //Extract each sub-condition text from those parentheses, process them and then replace the
@@ -102,13 +167,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                         var subCondition = new SubCondition(subExpressionKey, parenTrimmedSubConditionText);
 
-                        LogManager.Trace(parenTrimmedSubConditionText);
-
                         AddSubCondition(literalStrings, subCondition, leftHandAliasOfJoin);
 
-                        givenConditionText = givenConditionText.Replace(subConditionText, VariableToKey(subExpressionKey));
-
-                        LogManager.Trace(givenConditionText);
+                        givenConditionText = ReplaceRange(givenConditionText, startPos, endPos - startPos + 1, VariableToKey(subExpressionKey));
                     }
                 }
                 else
@@ -121,8 +182,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
             RemoveVariableMarkers();
 
-            //Mark the root SubCondition as such.
-            SubConditions.Single(o => o.Key == RootKey).IsRoot = true;
+            _root = SubConditions.Single(o => o.Key == RootKey);
+            _root.IsRoot = true;
 
             Expression = CollapseToExpression();
 
@@ -139,6 +200,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         private static string VariableToKey(string str)
         {
             return $"$:{str}$";
+        }
+        private string NextTempKey()
+        {
+            return $"{TempKeyMarker}_{_lastTempKey++}";
         }
 
         private string NextExpressionKey()
@@ -437,9 +502,12 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
             foreach (var subCondition in SubConditions)
             {
-                var subConditionClone = new SubCondition(subCondition.Key, subCondition.Expression)
+                var subConditionClone = new SubCondition(subCondition.Key, subCondition.Expression);
+
+                if (subCondition.IsRoot)
                 {
-                    IsRoot = subCondition.IsRoot,
+                    subCondition.IsRoot = true;
+                    clone._root = subConditionClone;
                 };
 
                 foreach (var condition in subCondition.Conditions)
