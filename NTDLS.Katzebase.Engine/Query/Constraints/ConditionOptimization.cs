@@ -1,7 +1,8 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -31,137 +32,120 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         #region Builder.
 
         /// <summary>
-        /// Takes a nested set of conditions and returns a selection of indexes as well as a clone of the conditions with associated indexes.
+        /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// </summary>
-        /// <returns>A selection of indexes as well as a clone of the conditions with associated indexes</returns>
-        public static ConditionOptimization Build(EngineCore core,
-            Transaction transaction, PhysicalSchema physicalSchema, Conditions conditions, string workingSchemaPrefix)
+        public static ConditionOptimization BuildTree(EngineCore core, Transaction transaction,
+            PhysicalSchema physicalSchema, Conditions allConditions, string workingSchemaPrefix)
         {
-            try
+            var optimization = new ConditionOptimization(transaction, allConditions);
+
+            var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
+
+            if (optimization.Conditions.Root.ExpressionKeys.Count > 0)
             {
-                /* This still has condition values in it, that wont work. *Face palm*
-                var cacheItem = core.LookupOptimizationCache.Get(conditions.Hash) as MSQConditionLookupOptimization;
-                if (cacheItem != null)
+                //The root condition is just a pointer to a child condition, so get the "root" child condition.
+                var rootCondition = optimization.Conditions.SubConditionFromKey(optimization.Conditions.Root.Key);
+                if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, optimization.Conditions, workingSchemaPrefix, rootCondition))
                 {
-                    return cacheItem;
+                    //Invalidate indexing optimization.
+                    return new ConditionOptimization(transaction, allConditions);
                 }
-                */
+            }
 
-                var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
+            return optimization;
+        }
 
-                var optimization = new ConditionOptimization(transaction, conditions);
+        /// <summary>
+        /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
+        /// Called reclusively by BuildTree().
+        /// </summary>
+        private static bool BuildTree(ConditionOptimization optimization, EngineCore core, Transaction transaction, PhysicalIndexCatalog indexCatalog,
+            PhysicalSchema physicalSchema, Conditions allConditions, string workingSchemaPrefix, SubCondition givenSubCondition)
+        {
+            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
+            {
+                var subCondition = allConditions.SubConditionFromKey(subConditionKey);
 
-                foreach (var subCondition in conditions.SubConditions)
+                if (subCondition.Conditions.Count > 0)
                 {
-                    if (subCondition.Conditions.Any(o => o.Left.Prefix != workingSchemaPrefix))
+                    if (subCondition.LogicalConnector == LogicalConnector.Or)
                     {
-                        if (subCondition.Conditions.Any(o => o.LogicalConnector != LogicalConnector.And) == false)
+                        if (subCondition.Conditions.Any(o => o.Left.Prefix.Is(workingSchemaPrefix)) == false
+                            && subCondition.Conditions.Any(o => o.Right.Prefix.Is(workingSchemaPrefix)) == false)
                         {
-                            //We can't yet figure out how to eliminate documents if the conditions are for more
-                            //..    than one schema and all of the logical connectors are not AND. This can be done however.
-                            //  We just generally have a lot of optimization trouble with ORs.
-                            //continue;
+                            //Each "OR" condition group must have at least one potential indexable match for the selected schema,
+                            //  this is because we need to be able to create a full list of all possible documents for this schema,
+                            //  and if we have an "OR" group that does not further limit these documents by the given schema then
+                            //  we will have to do a full namespace scan anyway.
+                            return false; //Invalidate indexing optimization.
                         }
                     }
 
-                    var potentialIndexes = new List<PotentialIndex>();
+                    bool locatedGroupIndex = false;
 
-                    //Loop though each index in the schema.
+                    //Loop through all indexes, all their attributes and all conditions in this sub-condition
+                    //  for the given schema. Keep track of which indexes match each condition field.
                     foreach (var physicalIndex in indexCatalog.Collection)
                     {
-                        var handledKeyNames = new List<PrefixedField>();
+                        Console.WriteLine($"Considering index: {physicalIndex.Name}");
 
-                        for (int i = 0; i < physicalIndex.Attributes.Count; i++)
+                        bool locatedIndexAttribute = false;
+
+                        var indexSelection = new IndexSelection(physicalIndex);
+                        foreach (var attribute in physicalIndex.Attributes)
                         {
-                            if (physicalIndex.Attributes == null || physicalIndex.Attributes[i] == null)
+                            locatedIndexAttribute = false;
+                            foreach (var condition in subCondition.Conditions.Where(o => o.Left.Prefix.Is(workingSchemaPrefix)))
                             {
-                                throw new KbNullException($"Value should not be null {nameof(physicalIndex.Attributes)}.");
+                                if (condition.Left.Value?.Is(attribute.Field) == true)
+                                {
+                                    indexSelection.CoveredFields.Add(PrefixedField.Parse(condition.Left.Key));
+                                    Console.WriteLine($"Indexed: {condition.ConditionKey} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                                    locatedIndexAttribute = true;
+                                    locatedGroupIndex = true;
+                                }
                             }
 
-                            var keyName = physicalIndex.Attributes[i].Field?.ToLowerInvariant();
-                            if (keyName == null)
+                            if (locatedIndexAttribute)
                             {
-                                throw new KbNullException($"Value should not be null {nameof(keyName)}.");
-                            }
-
-                            var matchedNonConvertedConditions =
-                                subCondition.Conditions.Where(o => o.CoveredByIndex == false
-                                    && o.Left.Value == keyName && o.Left.Prefix == workingSchemaPrefix);
-
-                            foreach (var matchedCondition in matchedNonConvertedConditions)
-                            {
-                                handledKeyNames.Add(PrefixedField.Parse(matchedCondition.Left.Key));
-                            }
-
-                            if (matchedNonConvertedConditions.Any() == false)
-                            {
-                                break;
+                                break; //We want to match the index attributes in order, so if we find
+                                       //one that we do not match then we need to break.
                             }
                         }
 
-                        if (handledKeyNames.Count > 0)
+                        if (indexSelection.CoveredFields.Count > 0)
                         {
-                            var potentialIndex = new PotentialIndex(physicalIndex, handledKeyNames);
-                            potentialIndexes.Add(potentialIndex);
+                            subCondition.IndexSelections.Add(indexSelection);
                         }
                     }
 
-                    //Grab the index that matches the most of our supplied keys but also has the least attributes.
-                    var firstIndex = (from o in potentialIndexes where o.Tried == false select o)
-                        .OrderByDescending(s => s.CoveredFields.Count)
-                        .ThenBy(t => t.Index.Attributes.Count).FirstOrDefault();
-
-                    if (firstIndex != null)
+                    if (locatedGroupIndex == false)
                     {
-                        var handledKeys = GetConvertedConditions(subCondition.Conditions, firstIndex.CoveredFields);
+                        //This group has no indexing, but since it does reference the
+                        //  given schema, we are going to have to do a full schema scan.
+                        return false; //Invalidate indexing optimization.
+                    }
 
-                        //Where the left value is in the covered fields:
-
-                        //var handledKeys = (from o in SubCondition.Conditions where firstIndex.CoveredFields.Contains(o.Left.Value ?? string.Empty) select o).ToList();
-                        foreach (var handledKey in handledKeys)
-                        {
-                            handledKey.CoveredByIndex = true;
-                        }
-
-                        firstIndex.SetTried();
-
-                        var indexSelection = new IndexSelection(firstIndex.Index, firstIndex.CoveredFields);
-
-                        optimization.IndexSelection.Add(indexSelection);
-
-                        //Mark which condition this index selection satisfies.
-                        var sourceSubCondition = optimization.Conditions.SubConditionFromKey(subCondition.Key);
-                        sourceSubCondition.IndexSelection = indexSelection;
-
-                        foreach (var condition in sourceSubCondition.Conditions)
-                        {
-                            if (indexSelection.CoveredFields.Any(o => o.Key == condition.Left.Key))
-                            {
-                                condition.CoveredByIndex = true;
-                            }
-                        }
+                    foreach (var indexSelection in subCondition.IndexSelections)
+                    {
+                        Console.WriteLine($"{indexSelection.Index.Name}, CoveredFields: ({indexSelection.CoveredFields.Count})");
                     }
                 }
 
-                //core.LookupOptimizationCache.Add(conditions.Hash, lookupOptimization, DateTime.Now.AddMinutes(10));
-
-                //When we get here, we have one index that seems to want to cover multiple tables - no cool man. Not cool.
-
-                //foreach (var index in optimization.IndexSelection)
-                //{
-                //    Interactions.Management.LogManager.Information($"{physicalSchema.Name}->{index.PhysicalIndex.Name}.");
-                //}
-
-                return optimization;
+                if (subCondition.ExpressionKeys.Count > 0)
+                {
+                    if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, allConditions, workingSchemaPrefix, subCondition))
+                    {
+                        return false; //Invalidate indexing optimization.
+                    }
+                }
             }
-            catch (Exception ex)
-            {
-                Interactions.Management.LogManager.Error($"Failed to select indexes for process {transaction.ProcessId}.", ex);
-                throw;
-            }
+
+            return true;
         }
 
         #endregion
+
         public static List<Condition> GetConvertedConditions(List<Condition> conditions, List<PrefixedField> coveredFields)
         {
             var result = new List<Condition>();
@@ -178,46 +162,6 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             }
 
             return result;
-        }
-
-        public static bool CanApplyIndexing(SubCondition subCondition)
-        {
-            //Currently we can only use a index match if all of the conditions in a group are "AND"s, so if
-            //  we have an "OR" or none of the conditions are not covered by an index then we cant optimize.
-            if (subCondition.Conditions.Any(o => o.LogicalConnector == LogicalConnector.Or)
-                || subCondition.Conditions.Any(o => o.CoveredByIndex == true) == false)
-            {
-                return false;
-            }
-            return true;
-        }
-
-        private bool? _canApplyIndexingResultCached = null;
-
-        public bool CanApplyIndexing()
-        {
-            if (_canApplyIndexingResultCached != null)
-            {
-                return (bool)_canApplyIndexingResultCached;
-            }
-
-            if (Conditions.NonRootSubConditions.Any(o => o.IndexSelection != null))
-            {
-                //All condition SubConditions have a selected index.
-                foreach (var subCondition in Conditions.NonRootSubConditions)
-                {
-                    if (CanApplyIndexing(subCondition) == false)
-                    {
-                        _canApplyIndexingResultCached = false;
-                        return false;
-                    }
-                }
-
-                _canApplyIndexingResultCached = true;
-                return true;
-            }
-            _canApplyIndexingResultCached = false;
-            return false;
         }
 
         #region Optimization explanation.
@@ -255,11 +199,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             {
                 var subCondition = Conditions.SubConditionFromKey(subConditionKey);
 
-                var indexName = subCondition.IndexSelection?.PhysicalIndex?.Name;
+                var indexName = subCondition.IndexSelection?.Index?.Name;
 
                 result.AppendLine(Pad(indentation + 1)
                     + $"{Conditions.FriendlyPlaceholder(subCondition.Key)} is ({Conditions.FriendlyPlaceholder(subCondition.Expression)})"
-                    + (CanApplyIndexing(subCondition) && indexName != null ? $" [{indexName}]" : ""));
+                    + (indexName != null ? $" [{indexName}]" : ""));
 
                 result.AppendLine(Pad(indentation + 1) + "(");
 

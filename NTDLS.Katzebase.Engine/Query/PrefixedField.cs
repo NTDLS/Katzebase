@@ -34,5 +34,19 @@
             Prefix = prefix.ToLowerInvariant();
             Field = field.ToLowerInvariant();
         }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is PrefixedField other)
+            {
+                return Key.Equals(other.Key);
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return Key.GetHashCode();
+        }
     }
 }

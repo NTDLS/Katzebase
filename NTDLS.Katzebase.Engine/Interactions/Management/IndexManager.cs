@@ -8,6 +8,7 @@ using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
+using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
@@ -242,8 +243,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             if (firstCondition.LogicalQualifier == LogicalQualifier.Equals)
             {
                 //Yay, we have an "equals" condition so we can eliminate all but one partition.
-                uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(conditionValues.First().Value);
-                string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                uint indexPartition = indexSelection.Index.ComputePartition(conditionValues.First().Value);
+                string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
                 return MatchDocuments(transaction, physicalIndexPages, indexSelection, givenSubCondition, conditionValues);
             }
@@ -253,9 +254,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchConditionValuesDocumentsInstance>(_core.Settings.ChildThreadPoolQueueDepth);
                 var operation = new MatchConditionValuesDocumentsOperation(
-                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, givenSubCondition, conditionValues);
+                    transaction, indexSelection.Index, physicalSchema, indexSelection, givenSubCondition, conditionValues);
 
-                for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
+                for (int indexPartition = 0; indexPartition < indexSelection.Index.Partitions; indexPartition++)
                 {
                     if (queue.ExceptionOccurred())
                     {
@@ -319,7 +320,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
                 bool foundAnything = false;
 
-                foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
+                foreach (var attribute in indexSelection.Index.Attributes)
                 {
                     var conditionField = givenSubCondition.Conditions
                         .FirstOrDefault(o => o.Left.Value?.Is(attribute.Field.EnsureNotNull()) == true);
@@ -400,49 +401,123 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal Dictionary<uint, DocumentPointer> MatchWorkingSchemaDocuments(Transaction transaction,
-                    PhysicalSchema physicalSchema, IndexSelection indexSelection, SubCondition givenSubCondition, string workingSchemaPrefix)
+        internal Dictionary<uint, DocumentPointer>? MatchSchemaDocumentsByConditions(Transaction transaction,
+                    PhysicalSchema physicalSchema, ConditionOptimization optimization, string workingSchemaPrefix)
         {
-            Condition? firstConditionLeft = null;
-            Condition? firstConditionRight = null;
+            var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
+
+            if (optimization.Conditions.Root.ExpressionKeys.Count > 0)
+            {
+                //The root condition is just a pointer to a child condition, so get the "root" child condition.
+                var rootCondition = optimization.Conditions.SubConditionFromKey(optimization.Conditions.Root.Key);
+                if (!MatchSchemaDocumentsByConditions(optimization, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, rootCondition))
+                {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
+        private bool MatchSchemaDocumentsByConditions(ConditionOptimization optimization, Transaction transaction, PhysicalIndexCatalog indexCatalog,
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, SubCondition givenSubCondition)
+        {
+            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
+            {
+                var subCondition = optimization.Conditions.SubConditionFromKey(subConditionKey);
+
+                if (subCondition.Conditions.Count > 0)
+                {
+                    if (subCondition.LogicalConnector == LogicalConnector.Or)
+                    {
+                        if (subCondition.Conditions.Any(o => o.Left.Prefix.Is(workingSchemaPrefix)) == false)
+                        {
+                            //Each "OR" condition group must have at least one potential indexable match for the selected schema,
+                            //  this is because we need to be able to create a full list of all possible documents for this schema,
+                            //  and if we have an "OR" group that does not further limit these documents by the given schema then
+                            //  we will have to do a full namespace scan anyway.
+                            return false; //Invalidate indexing optimization.
+                        }
+                    }
+
+                    //Loop through all indexes, all their attributes and all conditions in this sub-condition
+                    //  for the given schema. Keep track of which indexes match each condition field.
+                    foreach (var physicalIndex in indexCatalog.Collection)
+                    {
+                        var potentialIndex = new IndexSelection(physicalIndex);
+                        foreach (var attribute in physicalIndex.Attributes)
+                        {
+                            foreach (var condition in subCondition.Conditions.Where(o => o.Left.Prefix.Is(workingSchemaPrefix)))
+                            {
+                                if (condition.Left.Value?.Is(attribute.Field) == true)
+                                {
+                                    potentialIndex.CoveredFields.Add(PrefixedField.Parse(condition.Left.Key));
+
+                                    //Console.WriteLine($"{condition.ConditionKey} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                                }
+                            }
+                        }
+
+                        if (potentialIndex.CoveredFields.Count > 0)
+                        {
+                            subCondition.IndexSelections.Add(potentialIndex);
+                        }
+                        else
+                        {
+                            //This group has no indexing, but since it does reference the
+                            //  given schema, we are going to have to do a full schema scan.
+                            return false; //Invalidate indexing optimization.
+                        }
+                    }
+
+                    foreach (var indexSelection in subCondition.IndexSelections)
+                    {
+                        Console.WriteLine($"{indexSelection.Index.Name}, CoveredFields: ({indexSelection.CoveredFields.Count})");
+                    }
+                }
+
+                if (subCondition.ExpressionKeys.Count > 0)
+                {
+                    if (!MatchSchemaDocumentsByConditions(optimization, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, subCondition))
+                    {
+                        return false; //Invalidate indexing optimization.
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        internal Dictionary<uint, DocumentPointer> OLD__MatchSchemaDocumentsByConditions(Transaction transaction,
+                    PhysicalSchema physicalSchema, SubCondition givenSubCondition, string workingSchemaPrefix)
+        {
+            Condition? firstCoveredCondition = null;
+            string? firstCoveredConditionValue = null;
+
+            var indexSelection = givenSubCondition.IndexSelection.EnsureNotNull();
+
+            //Scenarios to handle:
+            //TODO: oh boy....
 
             foreach (var condition in givenSubCondition.Conditions)
             {
                 if (indexSelection.CoveredFields.Any(o => o.Key == condition.Left.Key))
                 {
-                    firstConditionLeft = condition;
-                }
-                if (indexSelection.CoveredFields.Any(o => o.Key == condition.Right.Key))
-                {
-                    firstConditionRight = condition;
+                    firstCoveredCondition = condition;
+                    //Yes, we matched the index on the right field, so the indexed value is on the left.
+                    firstCoveredConditionValue = firstCoveredCondition?.Right.Value.EnsureNotNull();
+                    break;
                 }
             }
 
-            if (firstConditionLeft?.LogicalQualifier == LogicalQualifier.Equals)
+            if (firstCoveredCondition?.LogicalQualifier == LogicalQualifier.Equals)
             {
-                //Index seek.
+                //Specific index partition seek.
 
-                //Yay, we have an "equals" condition so we can eliminate all but one partition.
+                //We have an "equals" condition so we can eliminate all but one partition.
 
-                //Yes, we matched the index on the left field, so the indexed value is on the right.
-                var firstValue = firstConditionLeft?.Right.Value.EnsureNotNull();
-
-                uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(firstValue);
-                string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                return MatchDocuments(transaction, physicalIndexPages, indexSelection, givenSubCondition, workingSchemaPrefix);
-            }
-            else if (firstConditionRight?.LogicalQualifier == LogicalQualifier.Equals)
-            {
-                //Index seek.
-
-                //Yay, we have an "equals" condition so we can eliminate all but one partition.
-
-                //Yes, we matched the index on the right field, so the indexed value is on the left.
-                var firstValue = firstConditionRight.Left.Value.EnsureNotNull();
-
-                uint indexPartition = indexSelection.PhysicalIndex.ComputePartition(firstValue);
-                string pageDiskPath = indexSelection.PhysicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                uint indexPartition = indexSelection.Index.ComputePartition(firstCoveredConditionValue);
+                string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
                 return MatchDocuments(transaction, physicalIndexPages, indexSelection, givenSubCondition, workingSchemaPrefix);
             }
@@ -454,9 +529,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchWorkingSchemaDocumentsOperation.MatchWorkingSchemaDocumentsInstance>(_core.Settings.ChildThreadPoolQueueDepth);
                 var operation = new MatchWorkingSchemaDocumentsOperation(
-                    transaction, indexSelection.PhysicalIndex, physicalSchema, indexSelection, givenSubCondition, workingSchemaPrefix);
+                    transaction, indexSelection.Index, physicalSchema, indexSelection, givenSubCondition, workingSchemaPrefix);
 
-                for (int indexPartition = 0; indexPartition < indexSelection.PhysicalIndex.Partitions; indexPartition++)
+                for (int indexPartition = 0; indexPartition < indexSelection.Index.Partitions; indexPartition++)
                 {
                     if (queue.ExceptionOccurred())
                     {
@@ -523,7 +598,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 bool foundAnything = false;
 
-                foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
+                foreach (var attribute in indexSelection.Index.Attributes)
                 {
                     var conditionField = givenSubCondition.Conditions
                         .FirstOrDefault(o => o.Left.Prefix == workingSchemaPrefix

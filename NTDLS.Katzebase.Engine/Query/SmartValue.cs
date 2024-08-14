@@ -24,7 +24,11 @@ namespace NTDLS.Katzebase.Engine.Query
         public bool IsSet { get; private set; }
         public string Prefix { get; private set; } = string.Empty;
 
-        public string Key => string.IsNullOrEmpty(Prefix) ? (_value ?? "") : $"{Prefix}.{_value}";
+        /// <summary>
+        /// The schema.field key for the field. Can be parsed to PrefixedField via PrefixedField.Parse(this.Key).
+        /// </summary>
+        public string Key
+            => string.IsNullOrEmpty(Prefix) ? (_value ?? "") : $"{Prefix}.{_value}";
 
         public SmartValue()
         {

@@ -3,13 +3,29 @@ select
 	sw.Text,
 	sw.LanguageId
 from
-	WordList::Word as sw --25 rows
+	WordList::Word as sw --11 rows
 where
-	sw.Text = 'Aalto'
-	or sw.Text = 'Tulee'
-	or sw.Text = 'savi'
-	
+	sw.Text LIKE 'As%'
+	and sw.Text LIKE '%to'
+	and sw.Text like '%in%'
+	and sw.LanguageId = 3
+	OR sw.Text like 'Ca%'
+	and sw.Text like '%al'
+	and sw.Text like '%na%'
+	and sw.LanguageId = 4
+	OR sw.Text like 'Ca%'
+	and sw.Text like '%al'
+	and sw.Text like '%na%'
+	and sw.LanguageId = 5
+
+--select * from WordList::FlatTranslate
+--where German = 'einbruch' and Dutch = 'inbraak'
+
 /*
+	sw.Text = 'Aalto'
+	and sw.Text = 'Tulee'
+	and sw.Text = 'savi'
+
 select
 	*
 from

@@ -9,13 +9,13 @@ namespace NTDLS.Katzebase.Shared
         private static readonly MemoryCache _cache = MemoryCache.Default;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Is(this string value, string otherValue)
+        public static bool Is(this string value, string? otherValue)
         {
             return string.Equals(value, otherValue, StringComparison.InvariantCultureIgnoreCase);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsOneOf(this string value, string[] otherValues)
+        public static bool IsOneOf(this string value, string?[] otherValues)
         {
             foreach (var otherValue in otherValues)
             {

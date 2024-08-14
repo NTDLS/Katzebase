@@ -6,6 +6,7 @@ using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
@@ -60,17 +61,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 var limitedDocumentPointers = new List<DocumentPointer>();
 
-                if (topLevelSchemaMap.Optimization.CanApplyIndexing())
+                if (topLevelSchemaMap.Optimization != null)
                 {
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                     documentPointers = new List<DocumentPointer>();
 
-                    //All condition SubConditions have a selected index. Start building a list of possible document IDs.
-                    foreach (var subCondition in topLevelSchemaMap.Optimization.Conditions.NonRootSubConditions)
-                    {
-                        var indexMatchedDocuments = core.Indexes.MatchWorkingSchemaDocuments
-                            (transaction, topLevelSchemaMap.PhysicalSchema, subCondition.IndexSelection.EnsureNotNull(), subCondition, topLevelSchemaMap.Prefix);
+                    var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditions(transaction,
+                        topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, topLevelSchemaMap.Prefix);
 
+                    if (indexMatchedDocuments != null)
+                    {
                         limitedDocumentPointers.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
 
@@ -104,6 +104,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             var operation = new DocumentLookupOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
 
+            LogManager.Information($"Starting document scan with {documentPointers.Count()} documents.");
+
             foreach (var documentPointer in documentPointers)
             {
                 //We can't stop when we hit the row limit if we are sorting or grouping.
@@ -121,7 +123,11 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 var instance = new DocumentLookupOperationInstance(operation, documentPointer);
 
                 var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
-                queue.Enqueue(instance, LookupThreadWorker);
+                queue.Enqueue(instance, LookupThreadWorker/*, (QueueItemState<DocumentLookupOperationInstance> o) =>
+                {
+                    LogManager.Information($"CompletionTime: {o.CompletionTime?.TotalMilliseconds:n0}.");
+
+                }*/);
                 ptThreadQueue?.StopAndAccumulate();
             }
 
@@ -469,7 +475,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             #endregion
 
-            if (currentSchemaMap.Optimization?.CanApplyIndexing() == true)
+            if (currentSchemaMap.Optimization != null)
             {
                 //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                 var furtherLimitedDocumentPointers = new List<DocumentPointer>();

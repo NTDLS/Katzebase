@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Indexes.Matching;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Query.Constraints
 {
@@ -23,9 +24,13 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// If this condition is covered by an index, this is the index which we will use.
         /// </summary>
         public IndexSelection? IndexSelection { get; set; }
+        public LogicalConnector LogicalConnector { get; private set; } = LogicalConnector.None;
 
-        public SubCondition(string key, string condition)
+        public HashSet<IndexSelection> IndexSelections { get; set; } = new();
+
+        public SubCondition(string key, LogicalConnector logicalConnector, string condition)
         {
+            LogicalConnector = logicalConnector;
             Key = key;
             Expression = condition;
         }

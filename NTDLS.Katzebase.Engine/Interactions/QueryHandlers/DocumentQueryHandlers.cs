@@ -286,7 +286,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                         var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schema.Name, LockOperation.Read);
 
-                        var lookupOptimization = ConditionOptimization.Build(_core,
+                        var lookupOptimization = ConditionOptimization.BuildTree(_core,
                             transactionReference.Transaction, physicalSchema, schema.Conditions, schema.Prefix);
 
                         var explanation = schemaIdentifier + lookupOptimization.ExplainOptimization(1);

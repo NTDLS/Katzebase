@@ -165,7 +165,27 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                         string subConditionText = givenConditionText.Substring(startPos, endPos - startPos + 1).Trim();
                         string parenTrimmedSubConditionText = subConditionText.Substring(1, subConditionText.Length - 2).Trim();
 
-                        var subCondition = new SubCondition(subExpressionKey, parenTrimmedSubConditionText);
+                        LogicalConnector logicalConnector = LogicalConnector.None;
+
+                        if (startPos > 4)
+                        {
+                            var logicalConnectorString = givenConditionText.Substring(startPos - 4, 3).Trim();
+
+                            if (logicalConnectorString.Is("or"))
+                            {
+                                logicalConnector = LogicalConnector.Or;
+                            }
+                            else if (logicalConnectorString.Is("and"))
+                            {
+                                logicalConnector = LogicalConnector.And;
+                            }
+                            else
+                            {
+                                throw new KbParserException($"Expected [and] or [or].");
+                            }
+                        }
+
+                        var subCondition = new SubCondition(subExpressionKey, logicalConnector, parenTrimmedSubConditionText);
 
                         AddSubCondition(literalStrings, subCondition, leftHandAliasOfJoin);
 
@@ -344,7 +364,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                         endPosition = tokenizer.Position;
                     }
 
-                    var condition = new Condition(subCondition.Key, conditionPlaceholder, logicalConnector, left, logicalQualifier, right);
+                    var condition = new Condition(conditionPlaceholder, logicalConnector, left, logicalQualifier, right);
 
                     if (right.StartsWith($"{leftHandAliasOfJoin}."))
                     {
@@ -502,7 +522,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
             foreach (var subCondition in SubConditions)
             {
-                var subConditionClone = new SubCondition(subCondition.Key, subCondition.Expression);
+                var subConditionClone = new SubCondition(subCondition.Key, subCondition.LogicalConnector, subCondition.Expression);
 
                 if (subCondition.IsRoot)
                 {
@@ -561,7 +581,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             {
                 var subCondition = SubConditionFromKey(subConditionKey);
 
-                var indexName = subCondition.IndexSelection?.PhysicalIndex?.Name;
+                var indexName = subCondition.IndexSelection?.Index?.Name;
 
                 result.AppendLine(Pad(indentation + 1)
                     + $"{FriendlyPlaceholder(subCondition.Key)} is ({FriendlyPlaceholder(subCondition.Expression)})");
