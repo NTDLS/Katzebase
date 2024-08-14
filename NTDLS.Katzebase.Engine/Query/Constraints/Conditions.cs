@@ -60,18 +60,22 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public SubCondition SubConditionFromKey(string key)
             => SubConditions.First(o => o.Key == key);
 
-        public static Conditions Create(string conditionsText, KbInsensitiveDictionary<string> literalStrings, string leftHandAliasOfJoin = "")
+        public static Conditions Create(string conditionsText,
+            KbInsensitiveDictionary<string> stringLiterals,
+            KbInsensitiveDictionary<string> numericLiterals,
+            string leftHandAliasOfJoin = "")
         {
             var conditions = new Conditions();
 
-            conditions.Parse(conditionsText.ToLowerInvariant(), literalStrings, leftHandAliasOfJoin);
+            conditions.Parse(conditionsText.ToLowerInvariant(), stringLiterals, numericLiterals, leftHandAliasOfJoin);
 
             return conditions;
         }
 
         #region Parser.
 
-        private void Parse(string givenConditionText, KbInsensitiveDictionary<string> literalStrings, string leftHandAliasOfJoin)
+        private void Parse(string givenConditionText, KbInsensitiveDictionary<string> stringLiterals,
+            KbInsensitiveDictionary<string> numericLiterals, string leftHandAliasOfJoin)
         {
             //We parse by parentheses so wrap the condition in them if it is not already.
             if (givenConditionText.StartsWith('(') == false || givenConditionText.StartsWith(')') == false)
@@ -187,7 +191,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                         var subCondition = new SubCondition(subExpressionKey, logicalConnector, parenTrimmedSubConditionText);
 
-                        AddSubCondition(literalStrings, subCondition, leftHandAliasOfJoin);
+                        AddSubCondition(stringLiterals, numericLiterals, subCondition, leftHandAliasOfJoin);
 
                         givenConditionText = ReplaceRange(givenConditionText, startPos, endPos - startPos + 1, VariableToKey(subExpressionKey));
                     }
@@ -278,7 +282,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return str;
         }
 
-        private void AddSubCondition(KbInsensitiveDictionary<string> literalStrings, SubCondition subCondition, string leftHandAliasOfJoin)
+        private void AddSubCondition(KbInsensitiveDictionary<string> stringLiterals,
+            KbInsensitiveDictionary<string> numericLiterals, SubCondition subCondition, string leftHandAliasOfJoin)
         {
             var logicalConnector = LogicalConnector.None;
 
@@ -338,13 +343,21 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     //Righthand value:
                     string right = tokenizer.GetNext().ToLowerInvariant();
 
-                    if (literalStrings.TryGetValue(left, out string? leftLiteral))
+                    if (stringLiterals.TryGetValue(left, out string? leftLiteral))
                     {
                         left = leftLiteral.ToLowerInvariant();
                     }
-                    if (literalStrings.TryGetValue(right, out string? rightLiteral))
+                    if (stringLiterals.TryGetValue(right, out string? rightLiteral))
                     {
                         right = rightLiteral.ToLowerInvariant();
+                    }
+                    if (numericLiterals.TryGetValue(left, out string? leftLiteralNumeric))
+                    {
+                        left = leftLiteralNumeric.ToLowerInvariant();
+                    }
+                    if (numericLiterals.TryGetValue(right, out string? rightLiteralNumeric))
+                    {
+                        right = rightLiteralNumeric.ToLowerInvariant();
                     }
 
                     int endPosition = tokenizer.Position;
@@ -581,7 +594,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             {
                 var subCondition = SubConditionFromKey(subConditionKey);
 
-                var indexName = subCondition.IndexSelection?.Index?.Name;
+                //var indexName = subCondition.IndexSelection?.Index?.Name;
 
                 result.AppendLine(Pad(indentation + 1)
                     + $"{FriendlyPlaceholder(subCondition.Key)} is ({FriendlyPlaceholder(subCondition.Expression)})");

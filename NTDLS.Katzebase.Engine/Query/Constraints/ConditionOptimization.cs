@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Schemas;
@@ -45,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             {
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
                 var rootCondition = optimization.Conditions.SubConditionFromKey(optimization.Conditions.Root.Key);
-                if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, optimization.Conditions, workingSchemaPrefix, rootCondition))
+                if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, rootCondition))
                 {
                     //Invalidate indexing optimization.
                     return new ConditionOptimization(transaction, allConditions);
@@ -60,11 +61,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// Called reclusively by BuildTree().
         /// </summary>
         private static bool BuildTree(ConditionOptimization optimization, EngineCore core, Transaction transaction, PhysicalIndexCatalog indexCatalog,
-            PhysicalSchema physicalSchema, Conditions allConditions, string workingSchemaPrefix, SubCondition givenSubCondition)
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, SubCondition givenSubCondition)
         {
             foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
             {
-                var subCondition = allConditions.SubConditionFromKey(subConditionKey);
+                var subCondition = optimization.Conditions.SubConditionFromKey(subConditionKey);
 
                 if (subCondition.Conditions.Count > 0)
                 {
@@ -139,12 +140,14 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                 if (subCondition.ExpressionKeys.Count > 0)
                 {
-                    if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, allConditions, workingSchemaPrefix, subCondition))
+                    if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, subCondition))
                     {
                         return false; //Invalidate indexing optimization.
                     }
                 }
             }
+
+            Console.WriteLine(optimization.Conditions.Expression);
 
             return true;
         }
@@ -204,7 +207,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             {
                 var subCondition = Conditions.SubConditionFromKey(subConditionKey);
 
-                var indexName = subCondition.IndexSelection?.Index?.Name;
+                //TODO: definitely not correct!! Just unbreaking the build.
+                var indexName = subCondition.IndexSelections.First().EnsureNotNull().Index.Name;
 
                 result.AppendLine(Pad(indentation + 1)
                     + $"{Conditions.FriendlyPlaceholder(subCondition.Key)} is ({Conditions.FriendlyPlaceholder(subCondition.Expression)})"

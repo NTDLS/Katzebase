@@ -20,12 +20,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// </summary>
         public HashSet<string> ConditionKeys { get; set; } = new();
 
-        /// <summary>
-        /// If this condition is covered by an index, this is the index which we will use.
-        /// </summary>
-        public IndexSelection? IndexSelection { get; set; }
         public LogicalConnector LogicalConnector { get; private set; } = LogicalConnector.None;
 
+        /// <summary>
+        /// A selection of indexes which can be used to satisfy the Conditions.
+        /// </summary>
         public HashSet<IndexSelection> IndexSelections { get; set; } = new();
 
         public SubCondition(string key, LogicalConnector logicalConnector, string condition)

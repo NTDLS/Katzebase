@@ -236,8 +236,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal Dictionary<uint, DocumentPointer> MatchConditionValuesDocuments(Transaction transaction, PhysicalSchema physicalSchema,
-            IndexSelection indexSelection, SubCondition givenSubCondition, KbInsensitiveDictionary<string> conditionValues)
+            ConditionOptimization optimization, SubCondition givenSubCondition, KbInsensitiveDictionary<string> conditionValues)
         {
+
+            return new Dictionary<uint, DocumentPointer>();
+            /*
             var firstCondition = givenSubCondition.Conditions.First();
 
             if (firstCondition.LogicalQualifier == LogicalQualifier.Equals)
@@ -276,6 +279,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 return operation.Results;
             }
+            */
         }
 
         private void MatchConditionValuesDocumentsThreadWorker(MatchConditionValuesDocumentsInstance instance)
@@ -494,7 +498,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             Condition? firstCoveredCondition = null;
             string? firstCoveredConditionValue = null;
 
-            var indexSelection = givenSubCondition.IndexSelection.EnsureNotNull();
+            //TODO: definitely not correct!! Just unbreaking the build.
+            var indexSelection = givenSubCondition.IndexSelections.First().EnsureNotNull();
 
             //Scenarios to handle:
             //TODO: oh boy....

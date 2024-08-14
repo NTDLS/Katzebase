@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             var preParsed = PreParseFunctionCall(query);
             if (preParsed != null)
             {
-                return ParseFunctionCall(preParsed.Text, query.LiteralStrings);
+                return ParseFunctionCall(preParsed.Text, query.StringLiterals);
             }
 
             return new FunctionParameterBase();
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             {
                 if (field.IsComplex)
                 {
-                    var functionCall = ParseFunctionCall(field.Text, query.LiteralStrings);
+                    var functionCall = ParseFunctionCall(field.Text, query.StringLiterals);
                     functionCall.Alias = field.Alias;
                     result.Add(functionCall);
                 }
@@ -68,7 +68,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             {
                 if (field.IsComplex)
                 {
-                    var functionCall = ParseFunctionCall(field.Text, query.LiteralStrings);
+                    var functionCall = ParseFunctionCall(field.Text, query.StringLiterals);
                     functionCall.Alias = field.Alias;
                     result.Add(functionCall);
                 }
@@ -112,7 +112,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         {
                             if (field.Value.IsComplex)
                             {
-                                var functionCall = ParseFunctionCall(field.Value.Text, query.LiteralStrings);
+                                var functionCall = ParseFunctionCall(field.Value.Text, query.StringLiterals);
                                 functionCall.Alias = field.Value.Alias;
                                 intermediateResult.Add(field.Key, functionCall);
                             }
@@ -291,7 +291,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             {
                 if (field.Value.IsComplex)
                 {
-                    var functionCall = ParseFunctionCall(field.Value.Text, query.LiteralStrings);
+                    var functionCall = ParseFunctionCall(field.Value.Text, query.StringLiterals);
                     functionCall.Alias = field.Value.Alias;
                     result.Add(field.Key, functionCall);
                 }
@@ -454,18 +454,18 @@ namespace NTDLS.Katzebase.Engine.Functions
             return expression;
         }
 
-        private static FunctionParameterBase ParseFunctionCall(string text, KbInsensitiveDictionary<string> literalValues, string expressionKey = "")
+        private static FunctionParameterBase ParseFunctionCall(string text, KbInsensitiveDictionary<string> stringLiterals, string expressionKey = "")
         {
             char firstChar = text[0];
 
             if (char.IsNumber(firstChar))
             {
                 //Parse math expression.
-                return ParseMathExpression(text, literalValues);
+                return ParseMathExpression(text, stringLiterals);
             }
             else if (char.IsLetter(firstChar) && IsNextNonIdentifier(text, 0, "+-/*!~^".ToCharArray()))
             {
-                return ParseMathExpression(text, literalValues);
+                return ParseMathExpression(text, stringLiterals);
             }
             else if (char.IsLetter(firstChar) && IsNextNonIdentifier(text, 0, '('))
             {
@@ -501,7 +501,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                     if (parenScopeFellToZero && _mathChars.Contains(c))
                     {
                         //We have finished parsing a full (...) scope for a function and now we are finding math. Reset and just parse math.
-                        return ParseMathExpression(text, literalValues);
+                        return ParseMathExpression(text, stringLiterals);
                     }
 
                     if (_mathChars.Contains(c) && !(c == '(' || c == ')'))
@@ -568,19 +568,19 @@ namespace NTDLS.Katzebase.Engine.Functions
                     {
                         if (param.IsOneOf(["true", "false"]))
                         {
-                            results.Parameters.Add(ParseMathExpression(param.Is("true") ? "1" : "0", literalValues));
+                            results.Parameters.Add(ParseMathExpression(param.Is("true") ? "1" : "0", stringLiterals));
                         }
                         else if (parseMath)
                         {
-                            results.Parameters.Add(ParseMathExpression(param, literalValues));
+                            results.Parameters.Add(ParseMathExpression(param, stringLiterals));
                         }
                         else if (isComplex)
                         {
-                            results.Parameters.Add(ParseFunctionCall(param, literalValues));
+                            results.Parameters.Add(ParseFunctionCall(param, stringLiterals));
                         }
                         else if (param.StartsWith("$") && param.EndsWith("$"))
                         {
-                            results.Parameters.Add(new FunctionConstantParameter(literalValues[param]));
+                            results.Parameters.Add(new FunctionConstantParameter(stringLiterals[param]));
                         }
                         else
                         {

@@ -11,12 +11,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
             base.Add(key, param);
         }
 
-        public void RefillStringLiterals(KbInsensitiveDictionary<string> literals)
+        public void RefillLiterals(KbInsensitiveDictionary<string> literals, bool isString)
         {
-            RefillStringLiterals(this, literals);
+            RefillLiterals(this, literals, isString);
         }
 
-        private void RefillStringLiterals(KbInsensitiveDictionary<FunctionParameterBase> list, KbInsensitiveDictionary<string> literals)
+        private void RefillLiterals(KbInsensitiveDictionary<FunctionParameterBase> list, KbInsensitiveDictionary<string> literals, bool isString)
         {
             foreach (var param in list)
             {
@@ -24,14 +24,17 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                 {
                     foreach (var literal in literals)
                     {
-                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
+                        string value = isString ? literal.Value.Substring(1, literal.Value.Length - 2) : literal.Value;
+
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, value);
                     }
                 }
                 else if (param.Value is FunctionExpression functionExpression)
                 {
                     foreach (var literal in literals)
                     {
-                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        string value = isString ? "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"" : literal.Value;
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, value);
                     }
 
                     RefillStringLiterals(functionExpression.Parameters, literals);
@@ -40,9 +43,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                 {
                     foreach (var literal in literals)
                     {
-                        functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
-                        functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
-                        functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        string value = isString ? "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"" : literal.Value;
+                        functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, value);
+                        functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, value);
+                        functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, value);
                     }
                 }
 

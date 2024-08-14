@@ -499,7 +499,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                     //Match on values from the document.
                     var documentIds = instance.Operation.Core.Indexes.MatchConditionValuesDocuments
-                        (instance.Operation.Transaction, currentSchemaMap.PhysicalSchema, subCondition.IndexSelection.EnsureNotNull(), subCondition, keyValuePairs);
+                        (instance.Operation.Transaction, currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, subCondition, keyValuePairs);
 
                     furtherLimitedDocumentPointers.AddRange(documentIds.Values);
                 }

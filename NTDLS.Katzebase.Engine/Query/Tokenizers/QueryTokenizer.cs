@@ -18,15 +18,19 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         public int Position => _position;
         public int Length => _text.Length;
         public int StartPosition => _startPosition;
-        public KbInsensitiveDictionary<string> LiteralStrings { get; private set; }
+        public KbInsensitiveDictionary<string> StringLiterals { get => _stringLiterals; }
+        public KbInsensitiveDictionary<string> NumericLiterals { get => _numericLiterals; }
         public List<string> Breadcrumbs { get; private set; } = new();
         public char? NextCharacter => _position < _text.Length ? _text[_position] : null;
         public bool IsEnd() => _position >= _text.Length;
 
+        private readonly KbInsensitiveDictionary<string> _stringLiterals;
+        private readonly KbInsensitiveDictionary<string> _numericLiterals;
+
         public QueryTokenizer(string text)
         {
             _text = text.Trim().TrimEnd(';').Trim();
-            LiteralStrings = CleanQueryText(ref _text);
+            CleanQueryText(ref _text, out _stringLiterals, out _numericLiterals);
         }
 
         public QueryTokenizer(string text, int startPosition)
@@ -34,12 +38,12 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             _text = text;
             _position = startPosition;
             _startPosition = startPosition;
-            LiteralStrings = CleanQueryText(ref _text);
+            CleanQueryText(ref _text, out _stringLiterals, out _numericLiterals);
         }
 
         public void SwapFieldLiteral(ref string givenValue)
         {
-            if (string.IsNullOrEmpty(givenValue) == false && LiteralStrings.TryGetValue(givenValue, out string? value))
+            if (string.IsNullOrEmpty(givenValue) == false && StringLiterals.TryGetValue(givenValue, out string? value))
             {
                 givenValue = value;
 
@@ -229,26 +233,50 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         /// <param name="query"></param>
         /// <param name="swapLiteralsBackIn"></param>
         /// <returns></returns>
-        public static KbInsensitiveDictionary<string> CleanQueryText(ref string query, bool swapLiteralsBackIn = false)
+        public static void CleanQueryText(ref string query,
+            out KbInsensitiveDictionary<string> stringLiterals,
+            out KbInsensitiveDictionary<string> numericLiterals)
         {
             query = KbTextUtility.RemoveComments(query);
 
-            var literalStrings = SwapOutLiteralStrings(ref query);
+            stringLiterals = SwapOutLiteralStrings(ref query);
+
+            //We replace numeric constants and we want to make sure we have 
+            //  no numbers next to any conditional operators before we do so.
+            query = query.Replace(">", " > ");
+            query = query.Replace(">", " < ");
+            query = query.Replace("=", " = ");
+            query = query.Replace("!=", " != ");
+            query = query.Replace("> =", ">=");
+            query = query.Replace("< =", "<=");
+            query = query.Replace(">=", " >= ");
+            query = query.Replace("<=", " <= ");
+            query = query.Replace("||", " || ");
+            query = query.Replace("&&", " && ");
+
+            numericLiterals = SwapOutLiteralNumeric(ref query);
+
+            int length;
+            do
+            {
+                length = query.Length;
+                query = query.Replace("\t", " ");
+                query = query.Replace("  ", " ");
+            }
+            while (length != query.Length);
+
             query = query.Trim();
 
             query = query.Replace("(", " ( ").Replace(")", " ) ");
 
             RemoveComments(ref query);
-            if (swapLiteralsBackIn)
-            {
-                SwapInLiteralStrings(ref query, literalStrings);
-            }
+
             TrimAllLines(ref query);
             RemoveEmptyLines(ref query);
             RemoveNewlines(ref query);
             RemoveDoubleWhitespace(ref query);
+
             query = query.Trim();
-            return literalStrings;
         }
 
         /// <summary>
@@ -263,13 +291,53 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
             var results = regex.Matches(query);
 
+            int literalKey = 0;
+
             foreach (Match match in results)
             {
-                string guid = $"${Guid.NewGuid()}$";
+                string key = $"$S_{literalKey++}$";
+                mappings.Add(key, match.ToString());
+                query = query.Replace(match.ToString(), key);
+            }
 
-                mappings.Add(guid, match.ToString());
+            return mappings;
+        }
 
-                query = query.Replace(match.ToString(), guid);
+        public static KbInsensitiveDictionary<string> SwapOutLiteralNumeric(ref string query)
+        {
+
+            //TODO: Replace with NTDLS.Helpers.Text when nugets get updated.
+            static string ReplaceRange(string original, int startIndex, int length, string replacement)
+            {
+                // Remove the range of text to be replaced
+                string removed = original.Remove(startIndex, length);
+                // Insert the replacement string at the start index
+                string result = removed.Insert(startIndex, replacement);
+                return result;
+            }
+
+            var mappings = new KbInsensitiveDictionary<string>();
+
+            int literalKey = 0;
+
+            while (true)
+            {
+                var regex = new Regex(@"(?<=\s|^)(?:\d+\.?\d*|\.\d+)(?=\s|$)");
+                var match = regex.Match(query);
+
+                if (match.Success)
+                {
+                    string key = $"%N_{literalKey++}%";
+                    mappings.Add(key, match.ToString());
+
+                    query = ReplaceRange(query, match.Index, match.Length, key);
+
+                    //query = query.Replace(match.ToString(), key);
+                }
+                else
+                {
+                    break;
+                }
             }
 
             return mappings;
