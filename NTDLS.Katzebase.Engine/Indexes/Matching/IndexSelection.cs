@@ -7,6 +7,11 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         public HashSet<PrefixedField> CoveredFields { get; private set; } = new();
         public PhysicalIndex Index { get; private set; }
 
+        /// <summary>
+        /// When true, this means that we have all the fields we need to satisfy all index attributes for a index seek operation.
+        /// </summary>
+        public bool IsFullIndexMatch { get; set; } = false;
+
         public IndexSelection(PhysicalIndex index)
         {
             Index = index;

@@ -106,15 +106,20 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                                 }
                             }
 
-                            if (locatedIndexAttribute)
+                            if (locatedIndexAttribute == false)
                             {
-                                break; //We want to match the index attributes in order, so if we find
-                                       //one that we do not match then we need to break.
+                                //We want to match the index attributes in the order which they appear in the index, so if we find 
+                                //  one index attribute that we can not match to a condition then we need to break. In this case, we 
+                                //  will either use a better index (if found) or use this partial index match with leaf-distillation.
+                                break;
                             }
                         }
 
                         if (indexSelection.CoveredFields.Count > 0)
                         {
+                            //We either have a full or a partial index match.
+                            indexSelection.IsFullIndexMatch = indexSelection.CoveredFields.Count == indexSelection.Index.Attributes.Count;
+
                             subCondition.IndexSelections.Add(indexSelection);
                         }
                     }
