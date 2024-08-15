@@ -8,7 +8,6 @@ using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
-using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
@@ -238,7 +237,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal Dictionary<uint, DocumentPointer> MatchConditionValuesDocuments(Transaction transaction, PhysicalSchema physicalSchema,
             ConditionOptimization optimization, SubCondition givenSubCondition, KbInsensitiveDictionary<string> conditionValues)
         {
-
             return new Dictionary<uint, DocumentPointer>();
             /*
             var firstCondition = givenSubCondition.Conditions.First();
@@ -413,7 +411,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             if (optimization.Conditions.Root.ExpressionKeys.Count > 0)
             {
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
-                var rootCondition = optimization.Conditions.SubConditionFromKey(optimization.Conditions.Root.Key);
+                var rootCondition = optimization.Conditions.SubConditionFromExpressionKey(optimization.Conditions.Root.Key);
                 if (!MatchSchemaDocumentsByConditions(optimization, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, rootCondition))
                 {
                     return null;
@@ -426,9 +424,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private bool MatchSchemaDocumentsByConditions(ConditionOptimization optimization, Transaction transaction, PhysicalIndexCatalog indexCatalog,
             PhysicalSchema physicalSchema, string workingSchemaPrefix, SubCondition givenSubCondition)
         {
-            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
+            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
-                var subCondition = optimization.Conditions.SubConditionFromKey(subConditionKey);
+                var subCondition = optimization.Conditions.SubConditionFromExpressionKey(expressionKey);
 
                 if (subCondition.Conditions.Count > 0)
                 {
@@ -455,14 +453,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             {
                                 if (condition.Left.Value?.Is(attribute.Field) == true)
                                 {
-                                    potentialIndex.CoveredFields.Add(PrefixedField.Parse(condition.Left.Key));
+                                    potentialIndex.CoveredConditions.Add(condition);
 
                                     //Console.WriteLine($"{condition.ConditionKey} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
                                 }
                             }
                         }
 
-                        if (potentialIndex.CoveredFields.Count > 0)
+                        if (potentialIndex.CoveredConditions.Count > 0)
                         {
                             subCondition.IndexSelections.Add(potentialIndex);
                         }
@@ -476,7 +474,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     foreach (var indexSelection in subCondition.IndexSelections)
                     {
-                        Console.WriteLine($"{indexSelection.Index.Name}, CoveredFields: ({indexSelection.CoveredFields.Count})");
+                        Console.WriteLine($"{indexSelection.Index.Name}, CoveredFields: ({indexSelection.CoveredConditions.Count})");
                     }
                 }
 
@@ -506,7 +504,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             foreach (var condition in givenSubCondition.Conditions)
             {
-                if (indexSelection.CoveredFields.Any(o => o.Key == condition.Left.Key))
+                if (indexSelection.CoveredConditions.Any(o => o.Left.Key == condition.Left.Key))
                 {
                     firstCoveredCondition = condition;
                     //Yes, we matched the index on the right field, so the indexed value is on the left.

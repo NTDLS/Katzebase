@@ -16,6 +16,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// </summary>
         public List<IndexSelection> IndexSelection { get; private set; } = new();
 
+        public List<IndexingOperation> IndexingOperations { get; set; } = new();
+
         /// <summary>
         /// A clone of the conditions that this set of index selections was built for.
         /// Also contains the indexes associated with each SubCondition of conditions.
@@ -45,8 +47,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             if (optimization.Conditions.Root.ExpressionKeys.Count > 0)
             {
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
-                var rootCondition = optimization.Conditions.SubConditionFromKey(optimization.Conditions.Root.Key);
-                if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, rootCondition))
+                var rootCondition = optimization.Conditions.SubConditionFromExpressionKey(optimization.Conditions.Root.Key);
+
+                if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, rootCondition, optimization.IndexingOperations))
                 {
                     //Invalidate indexing optimization.
                     return new ConditionOptimization(transaction, allConditions);
@@ -61,11 +64,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// Called reclusively by BuildTree().
         /// </summary>
         private static bool BuildTree(ConditionOptimization optimization, EngineCore core, Transaction transaction, PhysicalIndexCatalog indexCatalog,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, SubCondition givenSubCondition)
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, SubCondition givenSubCondition, List<IndexingOperation> indexingOperations)
         {
-            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
+            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
-                var subCondition = optimization.Conditions.SubConditionFromKey(subConditionKey);
+                var subCondition = optimization.Conditions.SubConditionFromExpressionKey(expressionKey);
 
                 if (subCondition.Conditions.Count > 0)
                 {
@@ -88,7 +91,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     //  for the given schema. Keep track of which indexes match each condition field.
                     foreach (var physicalIndex in indexCatalog.Collection)
                     {
-                        Console.WriteLine($"Considering index: {physicalIndex.Name}");
+                        //Console.WriteLine($"Considering index: {physicalIndex.Name}");
 
                         bool locatedIndexAttribute = false;
 
@@ -100,8 +103,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                             {
                                 if (condition.Left.Value?.Is(attribute.Field) == true)
                                 {
-                                    indexSelection.CoveredFields.Add(PrefixedField.Parse(condition.Left.Key));
-                                    Console.WriteLine($"Indexed: {condition.ConditionKey} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                                    indexSelection.CoveredConditions.Add(condition);
+                                    //Console.WriteLine($"Indexed: {condition.ConditionKey} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
                                     locatedIndexAttribute = true;
                                     locatedGroupIndex = true;
                                 }
@@ -116,10 +119,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                             }
                         }
 
-                        if (indexSelection.CoveredFields.Count > 0)
+                        if (indexSelection.CoveredConditions.Count > 0)
                         {
                             //We either have a full or a partial index match.
-                            indexSelection.IsFullIndexMatch = indexSelection.CoveredFields.Count == indexSelection.Index.Attributes.Count;
+                            indexSelection.IsFullIndexMatch = indexSelection.CoveredConditions.Count == indexSelection.Index.Attributes.Count;
 
                             subCondition.IndexSelections.Add(indexSelection);
                         }
@@ -134,22 +137,223 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                     foreach (var indexSelection in subCondition.IndexSelections)
                     {
-                        Console.WriteLine($"{indexSelection.Index.Name}, CoveredFields: ({indexSelection.CoveredFields.Count})");
+                        //Console.WriteLine($"{indexSelection.Index.Name}, CoveredFields: ({indexSelection.CoveredFields.Count})");
                     }
                 }
 
-                if (subCondition.ExpressionKeys.Count > 0)
+                if (subCondition.IndexSelections.Count > 0)
                 {
-                    if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, subCondition))
+                    IndexingOperation indexingOperation = new(subCondition.LogicalConnector);
+
+                    //At this point, we have settled on the possible indexes for the conditions in this expression, now we need
+                    //to create some kind of new "indexing operation" class where we layout exactly how each condition will be used.
+                    //Fist lets find out if we have any fields that are using composite indexes where we have the fields to satisfy it.
+
+                    #region Composite index matching.
+
+                    while (true)
                     {
-                        return false; //Invalidate indexing optimization.
+                        var compositeIndex = subCondition
+                            .IndexSelections.Where(o => o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 1 && o.IsFullIndexMatch)
+                            .OrderByDescending(o => o.CoveredConditions.Count).FirstOrDefault();
+
+                        if (compositeIndex != null)
+                        {
+                            IndexingOperationConditions indexingOperationConditions = new(compositeIndex.Index);
+
+                            //Find the condition fields that match the index attributes.
+                            foreach (var attribute in compositeIndex.Index.Attributes)
+                            {
+                                var matchedConditions = subCondition.Conditions
+                                    .Where(o => o.Left.Prefix == workingSchemaPrefix && o.IsIndexOptimized == false && o.Left.Value?.Is(attribute.Field) == true).ToList();
+
+                                if (matchedConditions.Count == 0)
+                                {
+                                    //No condition fields were found for this index attribute.
+                                    break;
+                                }
+
+                                foreach (var condition in matchedConditions)
+                                {
+                                    //Set these matched conditions as IsIndexOptimized so that we can
+                                    //  break out of this loop when we run out of conditions to evaluate.
+                                    condition.IsIndexOptimized = true;
+                                }
+
+                                indexingOperationConditions.Conditions.Add(attribute.Field.EnsureNotNull(), matchedConditions);
+                            }
+
+                            if (indexingOperationConditions.Conditions.Count > 0)
+                            {
+                                indexingOperation.Conditions.Add(indexingOperationConditions);
+                            }
+                        }
+                        else
+                        {
+                            //No suitable composite index was found.
+                            break;
+                        }
+                    }
+
+                    #endregion
+
+                    #region non-Composite index matching (exact).
+
+                    while (true)
+                    {
+                        //First try to match conditions to exact non-composite indexes, meaning indexes
+                        //  that have only one attribute and that attribute matches the condition field.
+                        var nonCompositeIndex = subCondition
+                            .IndexSelections.Where(o => o.CoveredConditions.Count(c => c.IsIndexOptimized == false) == 1 && o.IsFullIndexMatch)
+                            .FirstOrDefault();
+
+                        if (nonCompositeIndex != null)
+                        {
+                            IndexingOperationConditions indexingOperationConditions = new(nonCompositeIndex.Index);
+
+                            //Find the condition fields that match the index attributes.
+                            foreach (var attribute in nonCompositeIndex.Index.Attributes)
+                            {
+                                var matchedConditions = subCondition.Conditions
+                                    .Where(o => o.Left.Prefix == workingSchemaPrefix && o.IsIndexOptimized == false && o.Left.Value?.Is(attribute.Field) == true).ToList();
+
+                                if (matchedConditions.Count == 0)
+                                {
+                                    //No condition fields were found for this index attribute.
+                                    break;
+                                }
+
+                                foreach (var condition in matchedConditions)
+                                {
+                                    //Set these matched conditions as IsIndexOptimized so that we can
+                                    //  break out of this loop when we run out of conditions to evaluate.
+                                    condition.IsIndexOptimized = true;
+                                }
+
+                                indexingOperationConditions.Conditions.Add(attribute.Field.EnsureNotNull(), matchedConditions);
+                            }
+
+                            if (indexingOperationConditions.Conditions.Count > 0)
+                            {
+                                indexingOperation.Conditions.Add(indexingOperationConditions);
+                            }
+                        }
+                        else
+                        {
+                            //No suitable composite index was found.
+                            break;
+                        }
+                    }
+
+                    #endregion
+
+                    #region non-Composite index matching (partial).
+
+                    /*
+                    I believe this is handled by the composite index matching.
+                    while (true)
+                    {
+                        //First try to match conditions to non-exact composite indexes, meaning indexes
+                        //  that have only one attribute and that attribute matches the condition field.
+                        var nonCompositeIndex = subCondition
+                            .IndexSelections.Where(o => o.CoveredConditions.Count(c => c.IsIndexOptimized == false) == 1)
+                            .FirstOrDefault();
+
+                        if (nonCompositeIndex != null)
+                        {
+                            IndexingOperationConditions indexingOperationConditions = new(nonCompositeIndex.Index);
+
+                            //Find the condition fields that match the index attributes.
+                            foreach (var attribute in nonCompositeIndex.Index.Attributes)
+                            {
+                                var matchedConditions = subCondition.Conditions
+                                    .Where(o => o.Left.Prefix == workingSchemaPrefix && o.IsIndexOptimized == false && o.Left.Value?.Is(attribute.Field) == true).ToList();
+
+                                if (matchedConditions.Count == 0)
+                                {
+                                    //No condition fields were found for this index attribute.
+                                    break;
+                                }
+
+                                foreach (var condition in matchedConditions)
+                                {
+                                    //Set these matched conditions as IsIndexOptimized so that we can
+                                    //  break out of this loop when we run out of conditions to evaluate.
+                                    condition.IsIndexOptimized = true;
+                                }
+
+                                indexingOperationConditions.Conditions.Add(attribute.Field.EnsureNotNull(), matchedConditions);
+                            }
+
+                            if (indexingOperationConditions.Conditions.Count > 0)
+                            {
+                                indexingOperation.Conditions.Add(indexingOperationConditions);
+                            }
+                        }
+                        else
+                        {
+                            //No suitable composite index was found.
+                            break;
+                        }
+                    }
+                    */
+
+                    #endregion
+
+                    if (indexingOperation.Conditions.Count > 0)
+                    {
+                        indexingOperations.Add(indexingOperation);
+                    }
+
+                    if (subCondition.ExpressionKeys.Count > 0)
+                    {
+                        if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, subCondition, indexingOperation.SubIndexingOperations))
+                        {
+                            return false; //Invalidate indexing optimization.
+                        }
                     }
                 }
+
+                Console.WriteLine(subCondition.Expression);
             }
 
-            Console.WriteLine(optimization.Conditions.Expression);
-
             return true;
+        }
+
+        public class IndexingOperation
+        {
+            public LogicalConnector LogicalConnector { get; set; } = LogicalConnector.None;
+
+            /// <summary>
+            /// These are the conditions that we need to process first.
+            /// </summary>
+            public List<IndexingOperationConditions> Conditions { get; set; } = new();
+
+            /// <summary>
+            /// If there are any sub-indexing-operations, then we need to process them after Conditions and then
+            ///     either merge or intersect depending on the LogicalConnector of the sub-indexing-operations.
+            /// </summary>
+            public List<IndexingOperation> SubIndexingOperations { get; set; } = new();
+
+            public IndexingOperation(LogicalConnector logicalConnector)
+            {
+                LogicalConnector = logicalConnector;
+            }
+        }
+
+        public class IndexingOperationConditions
+        {
+            public PhysicalIndex Index { get; set; }
+
+            /// <summary>
+            /// Dictionary of index attribute field name that contains the conditions that need to be matched on that index attribute level.
+            /// </summary>
+            public Dictionary<string, List<Condition>> Conditions { get; set; } = new();
+
+            public IndexingOperationConditions(PhysicalIndex index)
+            {
+                Index = index;
+            }
         }
 
         #endregion
@@ -188,7 +392,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             if (Conditions.Root.ExpressionKeys.Count > 0)
             {
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
-                var rootCondition = Conditions.SubConditionFromKey(Conditions.Root.Key);
+                var rootCondition = Conditions.SubConditionFromExpressionKey(Conditions.Root.Key);
                 ExplainSubCondition(ref result, rootCondition, indentation);
             }
 
@@ -203,9 +407,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// </summary>
         private void ExplainSubCondition(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
         {
-            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
+            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
-                var subCondition = Conditions.SubConditionFromKey(subConditionKey);
+                var subCondition = Conditions.SubConditionFromExpressionKey(expressionKey);
 
                 //TODO: definitely not correct!! Just unbreaking the build.
                 var indexName = subCondition.IndexSelections.First().EnsureNotNull().Index.Name;

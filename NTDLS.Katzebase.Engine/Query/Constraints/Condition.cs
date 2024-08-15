@@ -14,6 +14,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public SmartValue Right { get; private set; } = new();
 
         /// <summary>
+        /// Used by ConditionOptimization.BuildTree() do determine when an index has already been matched to this condition.
+        /// </summary>
+        public bool IsIndexOptimized { get; set; } = false;
+
+        /// <summary>
         /// Logical connector: AND or OR
         /// </summary>
         public LogicalConnector LogicalConnector { get; private set; } = LogicalConnector.None;
@@ -38,6 +43,20 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             ConditionKey = conditionKey;
             LogicalConnector = logicalConnector;
             LogicalQualifier = logicalQualifier;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is Condition other)
+            {
+                return Left.Key.Equals(other.Left.Key);
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return Left.Key.GetHashCode();
         }
 
         /// <summary>

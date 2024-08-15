@@ -1,10 +1,11 @@
 ﻿using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Query.Constraints;
 
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
-    public class IndexSelection
+    internal class IndexSelection
     {
-        public HashSet<PrefixedField> CoveredFields { get; private set; } = new();
+        public HashSet<Condition> CoveredConditions { get; private set; } = new();
         public PhysicalIndex Index { get; private set; }
 
         /// <summary>

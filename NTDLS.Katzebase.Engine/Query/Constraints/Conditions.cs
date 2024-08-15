@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public SubCondition SubConditionFromKey(string key)
+        public SubCondition SubConditionFromExpressionKey(string key)
             => SubConditions.First(o => o.Key == key);
 
         public static Conditions Create(string conditionsText,
@@ -299,7 +299,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 {
                     break; //Done.
                 }
-                else if (token.StartsWith('$') && token.EndsWith('$')
+                else if (token.StartsWith("$:") && token.EndsWith('$')
                     && (token.StartsWith($"$:{ConditionKeyMarker}") || token.StartsWith($"$:{ExpressionKeyMarker}"))
                     )
                 {
@@ -310,6 +310,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     else if (token.StartsWith($"$:{ExpressionKeyMarker}"))
                     {
                         subCondition.ExpressionKeys.Add(token.Substring(2, token.Length - 3));
+                    }
+                    else
+                    {
+                        throw new KbParserException($"Invalid token, Found [{token}] expected [ConditionKeyMarker] or [ExpressionKeyMarker].");
                     }
 
                     continue;
@@ -426,7 +430,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
             foreach (var key in Root.ExpressionKeys)
             {
-                var condition = SubConditionFromKey(key);
+                var condition = SubConditionFromExpressionKey(key);
                 result.Replace(key, $"({condition.Expression})");
                 CollapseToExpression(ref result, condition);
             }
@@ -438,7 +442,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         {
             foreach (var key in givenSubCondition.ExpressionKeys)
             {
-                var condition = SubConditionFromKey(key);
+                var condition = SubConditionFromExpressionKey(key);
                 result.Replace(key, $"({condition.Expression})");
                 CollapseToExpression(ref result, condition);
             }
@@ -453,9 +457,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             {
                 result.Append('(');
 
-                foreach (var subConditionKey in Root.ExpressionKeys)
+                foreach (var expressionKey in Root.ExpressionKeys)
                 {
-                    var subCondition = SubConditionFromKey(subConditionKey);
+                    var subCondition = SubConditionFromExpressionKey(expressionKey);
                     result.Append($"[{subCondition.Expression}]");
                     BuildConditionHash(ref result, subCondition, 1);
                 }
@@ -469,9 +473,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         private void BuildConditionHash(ref StringBuilder result, SubCondition givenSubCondition, int depth)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
+            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
-                var subCondition = SubConditionFromKey(subConditionKey);
+                var subCondition = SubConditionFromExpressionKey(expressionKey);
                 result.Append($"[{subCondition.Expression}]");
 
                 if (subCondition.Conditions.Count > 0)
@@ -538,7 +542,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                 if (subCondition.IsRoot)
                 {
-                    subCondition.IsRoot = true;
+                    subConditionClone.IsRoot = true;
                     clone._root = subConditionClone;
                 };
 
@@ -575,7 +579,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             if (Root.ExpressionKeys.Count > 0)
             {
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
-                var rootCondition = SubConditionFromKey(Root.Key);
+                var rootCondition = SubConditionFromExpressionKey(Root.Key);
                 ExplainConditionTree(ref result, rootCondition, indentation);
             }
 
@@ -589,9 +593,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// </summary>
         private void ExplainConditionTree(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
         {
-            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
+            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
-                var subCondition = SubConditionFromKey(subConditionKey);
+                var subCondition = SubConditionFromExpressionKey(expressionKey);
 
                 //var indexName = subCondition.IndexSelection?.Index?.Name;
 

@@ -6,9 +6,12 @@ from
 	WordList::Word as sw --11 rows
 where
 	sw.Text LIKE 'As%'
-	and sw.Text LIKE '%to'
-	and sw.Text like '%in%'
+	and (
+		sw.Text LIKE '%to'
+		and sw.Text like '%in%'
+	)
 	and sw.LanguageId = 3
+	and sw.Id = 100 --This is to test non-composite index mathcing.
 	OR sw.Text like 'Ca%'
 	and sw.Text like '%al'
 	and sw.Text like '%na%'
