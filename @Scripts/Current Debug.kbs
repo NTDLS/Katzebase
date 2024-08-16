@@ -6,6 +6,20 @@ from
 	WordList::Word as sw --11 rows
 where
 	sw.Text LIKE 'As%'
+	and sw.Text LIKE '%to'
+	and sw.Text like '%in%'
+	and sw.LanguageId = 3
+	OR sw.Text like 'Ca%'
+	and sw.Text like '%al'
+	and sw.Text like '%na%'
+	and sw.LanguageId = 4
+	OR sw.Text like 'Ca%'
+	and sw.Text like '%al'
+	and sw.Text like '%na%'
+	and sw.LanguageId = 5
+	
+	/*
+	sw.Text LIKE 'As%'
 	and (
 		sw.Text LIKE '%to'
 		and sw.Text like '%in%'
@@ -20,6 +34,7 @@ where
 	and sw.Text like '%al'
 	and sw.Text like '%na%'
 	and sw.LanguageId = 5
+	*/
 
 --select * from WordList::FlatTranslate
 --where German = 'einbruch' and Dutch = 'inbraak'

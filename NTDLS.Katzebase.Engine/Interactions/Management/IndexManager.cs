@@ -12,6 +12,8 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using NTDLS.Katzebase.Shared;
+using System.Collections.Generic;
+using System;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -240,11 +242,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal Dictionary<uint, DocumentPointer> MatchConditionValuesDocuments(Transaction transaction, PhysicalSchema physicalSchema,
             IndexingConditionOptimization optimization, SubCondition givenSubCondition, KbInsensitiveDictionary<string> conditionValues)
         {
-            foreach (var indexingOperations in optimization.IndexingConditionGroup)
-            {
-            }
-
-
             return new Dictionary<uint, DocumentPointer>();
             /*
             var firstCondition = givenSubCondition.Conditions.First();
@@ -301,7 +298,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
 
-                var results = MatchDocuments(instance.Operation.Transaction, physicalIndexPages,
+                var results = MatchDocumentsForJoin(instance.Operation.Transaction, physicalIndexPages,
                     instance.Operation.IndexSelection, instance.Operation.GivenSubCondition, instance.Operation.ConditionValues);
 
                 if (results.Count != 0)
@@ -322,7 +319,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction, PhysicalIndexPages physicalIndexPages,
+        private Dictionary<uint, DocumentPointer> MatchDocumentsForJoin(Transaction transaction, PhysicalIndexPages physicalIndexPages,
             IndexSelection indexSelection, SubCondition givenSubCondition, KbInsensitiveDictionary<string> conditionValues)
         {
             try
@@ -419,6 +416,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
+            foreach (var indexingConditionGroup in optimization.IndexingConditionGroup)
+            {
+                foreach (var lookup in indexingConditionGroup.Lookups)
+                {
+                    ProcessIndexConditionLookup(lookup);
+
+                }
+            }
+
             if (optimization.Conditions.Root.ExpressionKeys.Count > 0)
             {
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
@@ -430,6 +436,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
 
             return null;
+        }
+
+        private void ProcessIndexConditionLookup(IndexingConditionLookup lookup)
+        {
+            var firstCondition = lookup.Conditions[lookup.Index.Attributes[0].Field.EnsureNotNull()];
+
+            //if (lookup.Conditions.First().Value..LogicalQualifier == LogicalQualifier.Equals)
+            {
+                //uint indexPartition = lookup.Index.ComputePartition(firstCoveredConditionValue);
+                //string pageDiskPath = lookup.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                //var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+                //return MatchDocumentsForWhere(transaction, physicalIndexPages, lookup.Index, givenSubCondition, workingSchemaPrefix);
+            }
         }
 
         /*
@@ -535,7 +554,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 uint indexPartition = indexSelection.Index.ComputePartition(firstCoveredConditionValue);
                 string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                return MatchDocuments(transaction, physicalIndexPages, indexSelection, givenSubCondition, workingSchemaPrefix);
+                return MatchDocumentsForWhere(transaction, physicalIndexPages, indexSelection, givenSubCondition, workingSchemaPrefix);
             }
             else
             {
@@ -579,7 +598,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     instance.Operation.PhysicalSchema, (uint)instance.IndexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
 
-                var results = MatchDocuments(instance.Operation.Transaction, physicalIndexPages,
+                var results = MatchDocumentsForWhere(instance.Operation.Transaction, physicalIndexPages,
                     instance.Operation.IndexSelection, instance.Operation.GivenSubCondition, instance.Operation.WorkingSchemaPrefix);
 
                 if (results.Count != 0)
@@ -604,7 +623,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Finds document IDs given a set of conditions.
         /// </summary>
-        private Dictionary<uint, DocumentPointer> MatchDocuments(Transaction transaction,
+        private Dictionary<uint, DocumentPointer> MatchDocumentsForWhere(Transaction transaction,
                     PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection,
                     SubCondition givenSubCondition, string workingSchemaPrefix)
         {
