@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 
@@ -15,7 +16,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
         public PhysicalDocumentPageCatalog DocumentPageCatalog { get; private set; }
         public Conditions? Conditions { get; private set; }
 
-        public ConditionOptimization? Optimization { get; private set; }
+        public IndexingConditionOptimization? Optimization { get; private set; }
 
         public QuerySchemaMapItem(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PhysicalSchema physicalSchema,
             PhysicalDocumentPageCatalog documentPageCatalog, Conditions? conditions, string prefix)
@@ -27,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
 
             if (conditions != null)
             {
-                Optimization = ConditionOptimization.BuildTree(core, transaction, physicalSchema, conditions, prefix);
+                Optimization = IndexingConditionOptimization.BuildTree(core, transaction, physicalSchema, conditions, prefix);
             }
         }
     }

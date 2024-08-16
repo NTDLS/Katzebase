@@ -1,32 +1,31 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Indexes;
-using NTDLS.Katzebase.Engine.Indexes.Matching;
+using NTDLS.Katzebase.Engine.Interactions.Management;
+using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Query.Constraints
+namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
-    internal class ConditionOptimization
+    internal class IndexingConditionOptimization
     {
         /// <summary>
-        /// A list of the indexes that have been selected by the optimizer for the specified conditions.
+        /// Contains a list of nested operations that will be used for indexing operations.
         /// </summary>
-        public List<IndexSelection> IndexSelection { get; private set; } = new();
-
-        public List<IndexingOperation> IndexingOperations { get; set; } = new();
+        public List<IndexingConditionGroup> IndexingConditionGroup { get; set; } = new();
 
         /// <summary>
-        /// A clone of the conditions that this set of index selections was built for.
+        /// A clone of the conditions that this optimization was built for.
         /// Also contains the indexes associated with each SubCondition of conditions.
         /// </summary>
         public Conditions Conditions { get; private set; }
 
         private readonly Transaction _transaction;
 
-        public ConditionOptimization(Transaction transaction, Conditions conditions)
+        public IndexingConditionOptimization(Transaction transaction, Conditions conditions)
         {
             _transaction = transaction;
             Conditions = conditions.Clone();
@@ -37,10 +36,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// <summary>
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// </summary>
-        public static ConditionOptimization BuildTree(EngineCore core, Transaction transaction,
+        public static IndexingConditionOptimization BuildTree(EngineCore core, Transaction transaction,
             PhysicalSchema physicalSchema, Conditions allConditions, string workingSchemaPrefix)
         {
-            var optimization = new ConditionOptimization(transaction, allConditions);
+            var optimization = new IndexingConditionOptimization(transaction, allConditions);
 
             var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
@@ -49,10 +48,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
                 var rootCondition = optimization.Conditions.SubConditionFromExpressionKey(optimization.Conditions.Root.Key);
 
-                if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, rootCondition, optimization.IndexingOperations))
+                if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, rootCondition, optimization.IndexingConditionGroup))
                 {
                     //Invalidate indexing optimization.
-                    return new ConditionOptimization(transaction, allConditions);
+                    return new IndexingConditionOptimization(transaction, allConditions);
                 }
             }
 
@@ -63,8 +62,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// Called reclusively by BuildTree().
         /// </summary>
-        private static bool BuildTree(ConditionOptimization optimization, EngineCore core, Transaction transaction, PhysicalIndexCatalog indexCatalog,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, SubCondition givenSubCondition, List<IndexingOperation> indexingOperations)
+        private static bool BuildTree(IndexingConditionOptimization optimization, EngineCore core, Transaction transaction, PhysicalIndexCatalog indexCatalog,
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, SubCondition givenSubCondition, List<IndexingConditionGroup> indexingConditionGroups)
         {
             foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
@@ -143,7 +142,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                 if (subCondition.IndexSelections.Count > 0)
                 {
-                    IndexingOperation indexingOperation = new(subCondition.LogicalConnector);
+                    IndexingConditionGroup indexingConditionGroup = new(subCondition.LogicalConnector);
 
                     //At this point, we have settled on the possible indexes for the conditions in this expression, now we need
                     //to create some kind of new "indexing operation" class where we layout exactly how each condition will be used.
@@ -159,7 +158,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                         if (compositeIndex != null)
                         {
-                            IndexingOperationConditions indexingOperationConditions = new(compositeIndex.Index);
+                            IndexingConditionLookup indexingConditionLookup = new(compositeIndex.Index);
 
                             //Find the condition fields that match the index attributes.
                             foreach (var attribute in compositeIndex.Index.Attributes)
@@ -180,12 +179,12 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                                     condition.IsIndexOptimized = true;
                                 }
 
-                                indexingOperationConditions.Conditions.Add(attribute.Field.EnsureNotNull(), matchedConditions);
+                                indexingConditionLookup.Conditions.Add(attribute.Field.EnsureNotNull(), matchedConditions);
                             }
 
-                            if (indexingOperationConditions.Conditions.Count > 0)
+                            if (indexingConditionLookup.Conditions.Count > 0)
                             {
-                                indexingOperation.Conditions.Add(indexingOperationConditions);
+                                indexingConditionGroup.Lookups.Add(indexingConditionLookup);
                             }
                         }
                         else
@@ -209,7 +208,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                         if (nonCompositeIndex != null)
                         {
-                            IndexingOperationConditions indexingOperationConditions = new(nonCompositeIndex.Index);
+                            IndexingConditionLookup indexingConditionLookup = new(nonCompositeIndex.Index);
 
                             //Find the condition fields that match the index attributes.
                             foreach (var attribute in nonCompositeIndex.Index.Attributes)
@@ -230,12 +229,12 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                                     condition.IsIndexOptimized = true;
                                 }
 
-                                indexingOperationConditions.Conditions.Add(attribute.Field.EnsureNotNull(), matchedConditions);
+                                indexingConditionLookup.Conditions.Add(attribute.Field.EnsureNotNull(), matchedConditions);
                             }
 
-                            if (indexingOperationConditions.Conditions.Count > 0)
+                            if (indexingConditionLookup.Conditions.Count > 0)
                             {
-                                indexingOperation.Conditions.Add(indexingOperationConditions);
+                                indexingConditionGroup.Lookups.Add(indexingConditionLookup);
                             }
                         }
                         else
@@ -300,60 +299,25 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                     #endregion
 
-                    if (indexingOperation.Conditions.Count > 0)
+                    if (indexingConditionGroup.Lookups.Count > 0)
                     {
-                        indexingOperations.Add(indexingOperation);
+                        indexingConditionGroups.Add(indexingConditionGroup);
                     }
 
                     if (subCondition.ExpressionKeys.Count > 0)
                     {
-                        if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, subCondition, indexingOperation.SubIndexingOperations))
+                        if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema,
+                            workingSchemaPrefix, subCondition, indexingConditionGroup.SubIndexingConditionGroups))
                         {
                             return false; //Invalidate indexing optimization.
                         }
                     }
                 }
 
-                Console.WriteLine(subCondition.Expression);
+                LogManager.Debug($"SubExpression: {subCondition.Expression}");
             }
 
             return true;
-        }
-
-        public class IndexingOperation
-        {
-            public LogicalConnector LogicalConnector { get; set; } = LogicalConnector.None;
-
-            /// <summary>
-            /// These are the conditions that we need to process first.
-            /// </summary>
-            public List<IndexingOperationConditions> Conditions { get; set; } = new();
-
-            /// <summary>
-            /// If there are any sub-indexing-operations, then we need to process them after Conditions and then
-            ///     either merge or intersect depending on the LogicalConnector of the sub-indexing-operations.
-            /// </summary>
-            public List<IndexingOperation> SubIndexingOperations { get; set; } = new();
-
-            public IndexingOperation(LogicalConnector logicalConnector)
-            {
-                LogicalConnector = logicalConnector;
-            }
-        }
-
-        public class IndexingOperationConditions
-        {
-            public PhysicalIndex Index { get; set; }
-
-            /// <summary>
-            /// Dictionary of index attribute field name that contains the conditions that need to be matched on that index attribute level.
-            /// </summary>
-            public Dictionary<string, List<Condition>> Conditions { get; set; } = new();
-
-            public IndexingOperationConditions(PhysicalIndex index)
-            {
-                Index = index;
-            }
         }
 
         #endregion

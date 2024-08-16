@@ -234,9 +234,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        /// <summary>
+        /// Used for indexing operations for JOIN operations.
+        /// </summary>
         internal Dictionary<uint, DocumentPointer> MatchConditionValuesDocuments(Transaction transaction, PhysicalSchema physicalSchema,
-            ConditionOptimization optimization, SubCondition givenSubCondition, KbInsensitiveDictionary<string> conditionValues)
+            IndexingConditionOptimization optimization, SubCondition givenSubCondition, KbInsensitiveDictionary<string> conditionValues)
         {
+            foreach (var indexingOperations in optimization.IndexingConditionGroup)
+            {
+            }
+
+
             return new Dictionary<uint, DocumentPointer>();
             /*
             var firstCondition = givenSubCondition.Conditions.First();
@@ -403,8 +411,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
+        /// <summary>
+        /// Used for indexing operations for a WHERE clause.
+        /// </summary>
         internal Dictionary<uint, DocumentPointer>? MatchSchemaDocumentsByConditions(Transaction transaction,
-                    PhysicalSchema physicalSchema, ConditionOptimization optimization, string workingSchemaPrefix)
+                    PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, string workingSchemaPrefix)
         {
             var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
@@ -412,16 +423,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
                 var rootCondition = optimization.Conditions.SubConditionFromExpressionKey(optimization.Conditions.Root.Key);
-                if (!MatchSchemaDocumentsByConditions(optimization, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, rootCondition))
-                {
-                    return null;
-                }
+                //if (!MatchSchemaDocumentsByConditions(optimization, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, rootCondition))
+                //{
+                //    return null;
+                //}
             }
 
             return null;
         }
 
-        private bool MatchSchemaDocumentsByConditions(ConditionOptimization optimization, Transaction transaction, PhysicalIndexCatalog indexCatalog,
+        /*
+        private bool MatchSchemaDocumentsByConditions(IndexingConditionOptimization optimization, Transaction transaction, PhysicalIndexCatalog indexCatalog,
             PhysicalSchema physicalSchema, string workingSchemaPrefix, SubCondition givenSubCondition)
         {
             foreach (var expressionKey in givenSubCondition.ExpressionKeys)
@@ -489,6 +501,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             return true;
         }
+        */
 
         internal Dictionary<uint, DocumentPointer> OLD__MatchSchemaDocumentsByConditions(Transaction transaction,
                     PhysicalSchema physicalSchema, SubCondition givenSubCondition, string workingSchemaPrefix)

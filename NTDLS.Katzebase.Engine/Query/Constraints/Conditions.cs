@@ -74,6 +74,13 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         #region Parser.
 
+        /// <summary>
+        /// Flattens the conditions into the SubConditions.
+        /// </summary>
+        /// <param name="givenConditionText">Query text for the entire condition section.</param>
+        /// <param name="stringLiterals">Collection of string literals that were stripped from the query text.</param>
+        /// <param name="numericLiterals">Collection of numeric literals that were stripped from the query text.</param>
+        /// <param name="leftHandAliasOfJoin">When parsing a JOIN, this is the schema that we are joining to.</param>
         private void Parse(string givenConditionText, KbInsensitiveDictionary<string> stringLiterals,
             KbInsensitiveDictionary<string> numericLiterals, string leftHandAliasOfJoin)
         {
