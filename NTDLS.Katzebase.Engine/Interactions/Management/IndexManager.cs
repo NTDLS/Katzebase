@@ -12,14 +12,11 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using NTDLS.Katzebase.Shared;
-using System.Collections.Generic;
-using System;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Threading.PoolingParameters.MatchConditionValuesDocumentsOperation;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
-using System.Linq;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -516,9 +513,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
             List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
 
-            //First process the condition at the attributeDepth that was passed in.
-            workingPhysicalIndexLeaves = IndexingConditionLookup_Seek(transaction, condition, workingPhysicalIndexLeaves.EnsureNotNull());
+            //First process the condition at the AttributeDepth that was passed in.
+            workingPhysicalIndexLeaves = IndexingConditionLookup_Seek(transaction, condition, workingPhysicalIndexLeaves);
 
+            //Further, recursively, process additional compound index attribute condition matches.
             var partialResults = MatchDocumentsForWhereRecurse_NEW(transaction, lookup, physicalSchema,
                 workingSchemaPrefix, indexPartition, 1, workingPhysicalIndexLeaves);
 
@@ -544,7 +542,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (attributeDepth < lookup.AttributeConditionSets.Count - 1)
                 {
-                    //Further process additional compound index attribute condition matches.
+                    //Further, recursively, process additional compound index attribute condition matches.
                     var partialResults = MatchDocumentsForWhereRecurse_NEW(transaction, lookup, physicalSchema,
                         workingSchemaPrefix, indexPartition, attributeDepth + 1, workingPhysicalIndexLeaves);
 
@@ -566,27 +564,50 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private List<PhysicalIndexLeaf> IndexingConditionLookup_Seek(Transaction transaction,
                     Condition condition, List<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
         {
-            if (condition.LogicalQualifier == LogicalQualifier.Equals)
-                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
-            else if (condition.LogicalQualifier == LogicalQualifier.NotEquals)
-                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, condition.Right.Value) == false).Select(s => s.Value)).ToList();
-            else if (condition.LogicalQualifier == LogicalQualifier.GreaterThan)
-                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreater(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
-            else if (condition.LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
-                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterOrEqual(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
-            else if (condition.LogicalQualifier == LogicalQualifier.LessThan)
-                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesser(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
-            else if (condition.LogicalQualifier == LogicalQualifier.LessThanOrEqual)
-                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqual(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
-            else if (condition.LogicalQualifier == LogicalQualifier.Like)
-                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
-            else if (condition.LogicalQualifier == LogicalQualifier.NotLike)
-                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, condition.Right.Value) == false).Select(s => s.Value)).ToList();
-            else if (condition.LogicalQualifier == LogicalQualifier.Between)
-                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
-            else if (condition.LogicalQualifier == LogicalQualifier.NotBetween)
-                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(transaction, w.Key, condition.Right.Value) == false).Select(s => s.Value)).ToList();
-            else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {condition.LogicalQualifier}");
+            return condition.LogicalQualifier switch
+            {
+                LogicalQualifier.Equals => workingPhysicalIndexLeaves
+                                        .SelectMany(o => o.Children
+                                        .Where(w => Condition.IsMatchEqual(transaction, w.Key, condition.Right.Value) == true)
+                                        .Select(s => s.Value)).ToList(),
+                LogicalQualifier.NotEquals => workingPhysicalIndexLeaves
+                                        .SelectMany(o => o.Children
+                                        .Where(w => Condition.IsMatchEqual(transaction, w.Key, condition.Right.Value) == false)
+                                        .Select(s => s.Value)).ToList(),
+                LogicalQualifier.GreaterThan => workingPhysicalIndexLeaves
+                                        .SelectMany(o => o.Children
+                                        .Where(w => Condition.IsMatchGreater(transaction, w.Key, condition.Right.Value) == true)
+                                        .Select(s => s.Value)).ToList(),
+                LogicalQualifier.GreaterThanOrEqual => workingPhysicalIndexLeaves
+                                        .SelectMany(o => o.Children
+                                        .Where(w => Condition.IsMatchGreaterOrEqual(transaction, w.Key, condition.Right.Value) == true)
+                                        .Select(s => s.Value)).ToList(),
+                LogicalQualifier.LessThan => workingPhysicalIndexLeaves
+                                        .SelectMany(o => o.Children
+                                        .Where(w => Condition.IsMatchLesser(transaction, w.Key, condition.Right.Value) == true)
+                                        .Select(s => s.Value)).ToList(),
+                LogicalQualifier.LessThanOrEqual => workingPhysicalIndexLeaves
+                                        .SelectMany(o => o.Children
+                                        .Where(w => Condition.IsMatchLesserOrEqual(transaction, w.Key, condition.Right.Value) == true)
+                                        .Select(s => s.Value)).ToList(),
+                LogicalQualifier.Like => workingPhysicalIndexLeaves
+                                        .SelectMany(o => o.Children
+                                        .Where(w => Condition.IsMatchLike(transaction, w.Key, condition.Right.Value) == true)
+                                        .Select(s => s.Value)).ToList(),
+                LogicalQualifier.NotLike => workingPhysicalIndexLeaves
+                                        .SelectMany(o => o.Children
+                                        .Where(w => Condition.IsMatchLike(transaction, w.Key, condition.Right.Value) == false)
+                                        .Select(s => s.Value)).ToList(),
+                LogicalQualifier.Between => workingPhysicalIndexLeaves
+                                        .SelectMany(o => o.Children
+                                        .Where(w => Condition.IsMatchBetween(transaction, w.Key, condition.Right.Value) == true)
+                                        .Select(s => s.Value)).ToList(),
+                LogicalQualifier.NotBetween => workingPhysicalIndexLeaves
+                                        .SelectMany(o => o.Children
+                                        .Where(w => Condition.IsMatchBetween(transaction, w.Key, condition.Right.Value) == false)
+                                        .Select(s => s.Value)).ToList(),
+                _ => throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {condition.LogicalQualifier}"),
+            };
         }
 
         /*
