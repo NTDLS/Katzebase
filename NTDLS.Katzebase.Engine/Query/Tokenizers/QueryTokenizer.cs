@@ -254,7 +254,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             //We replace numeric constants and we want to make sure we have 
             //  no numbers next to any conditional operators before we do so.
             query = query.Replace(">", " > ");
-            query = query.Replace(">", " < ");
+            query = query.Replace("<", " < ");
             query = query.Replace("=", " = ");
             query = query.Replace("!=", " != ");
             query = query.Replace("> =", ">=");

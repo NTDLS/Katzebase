@@ -164,7 +164,8 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                             foreach (var attribute in compositeIndex.Index.Attributes)
                             {
                                 var matchedConditions = subCondition.Conditions
-                                    .Where(o => o.Left.Prefix == workingSchemaPrefix && o.IsIndexOptimized == false && o.Left.Value?.Is(attribute.Field) == true).ToList();
+                                    .Where(o => o.Left.Prefix == workingSchemaPrefix
+                                    && o.IsIndexOptimized == false && o.Left.Value?.Is(attribute.Field) == true).ToList();
 
                                 if (matchedConditions.Count == 0)
                                 {
@@ -179,10 +180,10 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                                     condition.IsIndexOptimized = true;
                                 }
 
-                                indexingConditionLookup.Conditions.Add(attribute.Field.EnsureNotNull(), matchedConditions);
+                                indexingConditionLookup.AttributeConditionSets.Add(attribute.Field.EnsureNotNull(), matchedConditions);
                             }
 
-                            if (indexingConditionLookup.Conditions.Count > 0)
+                            if (indexingConditionLookup.AttributeConditionSets.Count > 0)
                             {
                                 indexingConditionGroup.Lookups.Add(indexingConditionLookup);
                             }
@@ -229,10 +230,10 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                                     condition.IsIndexOptimized = true;
                                 }
 
-                                indexingConditionLookup.Conditions.Add(attribute.Field.EnsureNotNull(), matchedConditions);
+                                indexingConditionLookup.AttributeConditionSets.Add(attribute.Field.EnsureNotNull(), matchedConditions);
                             }
 
-                            if (indexingConditionLookup.Conditions.Count > 0)
+                            if (indexingConditionLookup.AttributeConditionSets.Count > 0)
                             {
                                 indexingConditionGroup.Lookups.Add(indexingConditionLookup);
                             }
@@ -316,6 +317,8 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
                 LogManager.Debug($"SubExpression: {subCondition.Expression}");
             }
+
+            Console.WriteLine(optimization.ToString());
 
             return true;
         }

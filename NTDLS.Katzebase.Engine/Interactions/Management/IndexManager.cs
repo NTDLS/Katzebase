@@ -19,6 +19,7 @@ using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Threading.PoolingParameters.MatchConditionValuesDocumentsOperation;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
+using System.Linq;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -420,15 +421,30 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 foreach (var lookup in indexingConditionGroup.Lookups)
                 {
-                    ProcessIndexConditionLookup(lookup);
+                    //uint indexPartition = indexSelection.Index.ComputePartition(firstCoveredConditionValue);
+                    //string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                    //var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+                    var ffffff = MatchDocumentsForWhere_NEW(transaction, lookup, physicalSchema, workingSchemaPrefix);
 
+                    //if (allConditions.Any(o => o.LogicalQualifier != LogicalQualifier.Equals) == false)
+                    {
+                        //If all of the conditions for the first index attribute are EQUAL operators,
+                        //  then we can isolate specific index partitions from the value.
+
+                        //IndexingConditionLookup_Seek(transaction, physicalSchema, workingSchemaPrefix, lookup);
+                    }
+                    //else
+                    {
+                        //throw new NotImplementedException();
+                    }
                 }
             }
 
             if (optimization.Conditions.Root.ExpressionKeys.Count > 0)
             {
+                //var allConditions = lookup.AttributeConditions[lookup.Index.Attributes[0].Field.EnsureNotNull()].ToList();
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
-                var rootCondition = optimization.Conditions.SubConditionFromExpressionKey(optimization.Conditions.Root.Key);
+                //var rootCondition = optimization.Conditions.SubConditionFromExpressionKey(optimization.Conditions.Root.Key);
                 //if (!MatchSchemaDocumentsByConditions(optimization, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, rootCondition))
                 //{
                 //    return null;
@@ -438,17 +454,139 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return null;
         }
 
-        private void ProcessIndexConditionLookup(IndexingConditionLookup lookup)
+        private Dictionary<uint, DocumentPointer> MatchDocumentsForWhere_NEW(Transaction transaction,
+                  IndexingConditionLookup lookup,
+                  //PhysicalIndexPages physicalIndexPages, IndexSelection indexSelection,
+                  //SubCondition givenSubCondition,
+                  PhysicalSchema physicalSchema,
+                  string workingSchemaPrefix
+            )
         {
-            var firstCondition = lookup.Conditions[lookup.Index.Attributes[0].Field.EnsureNotNull()];
+            HashSet<KeyValuePair<uint, DocumentPointer>> results = new();
 
-            //if (lookup.Conditions.First().Value..LogicalQualifier == LogicalQualifier.Equals)
+            try
             {
-                //uint indexPartition = lookup.Index.ComputePartition(firstCoveredConditionValue);
-                //string pageDiskPath = lookup.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                //var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                //return MatchDocumentsForWhere(transaction, physicalIndexPages, lookup.Index, givenSubCondition, workingSchemaPrefix);
+                var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[0].Field.EnsureNotNull()];
+
+                foreach (var condition in conditionSet)
+                {
+                    List<uint> indexPartitions = new();
+
+                    if (condition.LogicalQualifier == LogicalQualifier.Equals)
+                    {
+                        indexPartitions.Add(lookup.Index.ComputePartition(condition.Right.Value));
+                    }
+                    else
+                    {
+                        for (uint indexPartition = 0; indexPartition < lookup.Index.Partitions; indexPartition++)
+                        {
+                            indexPartitions.Add(indexPartition);
+                        }
+                    }
+
+                    foreach (var indexPartition in indexPartitions)
+                    {
+                        var partitionResults = MatchDocumentsForWhereRecurse_TopLevel_This_Will_Be_A_Thread(
+                            transaction, lookup, physicalSchema, workingSchemaPrefix, indexPartition, condition);
+                    }
+                }
+
+                return results.ToDictionary();
+
+                //return results.Select(new Dictionary<uint, DocumentPointer>(
             }
+            catch (Exception ex)
+            {
+                LogManager.Error($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        private Dictionary<uint, DocumentPointer> MatchDocumentsForWhereRecurse_TopLevel_This_Will_Be_A_Thread(Transaction transaction,
+          IndexingConditionLookup lookup,
+          PhysicalSchema physicalSchema,
+          string workingSchemaPrefix,
+          uint indexPartition,
+          Condition condition
+        )
+        {
+            HashSet<KeyValuePair<uint, DocumentPointer>> results = new();
+
+            string pageDiskPath = lookup.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
+            var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+            List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
+
+            //First process the condition at the attributeDepth that was passed in.
+            workingPhysicalIndexLeaves = IndexingConditionLookup_Seek(transaction, condition, workingPhysicalIndexLeaves.EnsureNotNull());
+
+            var partialResults = MatchDocumentsForWhereRecurse_NEW(transaction, lookup, physicalSchema,
+                workingSchemaPrefix, indexPartition, 1, workingPhysicalIndexLeaves);
+
+            return results.ToDictionary();
+        }
+
+        private Dictionary<uint, DocumentPointer> MatchDocumentsForWhereRecurse_NEW(Transaction transaction,
+          IndexingConditionLookup lookup,
+          PhysicalSchema physicalSchema,
+          string workingSchemaPrefix,
+          uint indexPartition,
+          int attributeDepth, //Used for recursion.
+          List<PhysicalIndexLeaf> workingPhysicalIndexLeaves //Used for recursion.
+        )
+        {
+            HashSet<KeyValuePair<uint, DocumentPointer>> results = new();
+
+            var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[attributeDepth].Field.EnsureNotNull()];
+
+            foreach (var condition in conditionSet)
+            {
+                var partitionResults = IndexingConditionLookup_Seek(transaction, condition, workingPhysicalIndexLeaves.EnsureNotNull());
+
+                if (attributeDepth < lookup.AttributeConditionSets.Count - 1)
+                {
+                    //Further process additional compound index attribute condition matches.
+                    var partialResults = MatchDocumentsForWhereRecurse_NEW(transaction, lookup, physicalSchema,
+                        workingSchemaPrefix, indexPartition, attributeDepth + 1, workingPhysicalIndexLeaves);
+
+                    //foreach (var result in partialResults)
+                    //{
+                    //    results.Add(result);
+                    //}
+                }
+                else
+                {
+                    //Satisfied the index operation.
+                    return DistillIndexLeaves(workingPhysicalIndexLeaves);
+                }
+            }
+
+            return results.ToDictionary();
+        }
+
+        private List<PhysicalIndexLeaf> IndexingConditionLookup_Seek(Transaction transaction,
+                    Condition condition, List<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
+        {
+            if (condition.LogicalQualifier == LogicalQualifier.Equals)
+                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
+            else if (condition.LogicalQualifier == LogicalQualifier.NotEquals)
+                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchEqual(transaction, w.Key, condition.Right.Value) == false).Select(s => s.Value)).ToList();
+            else if (condition.LogicalQualifier == LogicalQualifier.GreaterThan)
+                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreater(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
+            else if (condition.LogicalQualifier == LogicalQualifier.GreaterThanOrEqual)
+                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchGreaterOrEqual(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
+            else if (condition.LogicalQualifier == LogicalQualifier.LessThan)
+                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesser(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
+            else if (condition.LogicalQualifier == LogicalQualifier.LessThanOrEqual)
+                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLesserOrEqual(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
+            else if (condition.LogicalQualifier == LogicalQualifier.Like)
+                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
+            else if (condition.LogicalQualifier == LogicalQualifier.NotLike)
+                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchLike(transaction, w.Key, condition.Right.Value) == false).Select(s => s.Value)).ToList();
+            else if (condition.LogicalQualifier == LogicalQualifier.Between)
+                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(transaction, w.Key, condition.Right.Value) == true).Select(s => s.Value)).ToList();
+            else if (condition.LogicalQualifier == LogicalQualifier.NotBetween)
+                return workingPhysicalIndexLeaves.SelectMany(o => o.Children.Where(w => Condition.IsMatchBetween(transaction, w.Key, condition.Right.Value) == false).Select(s => s.Value)).ToList();
+            else throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {condition.LogicalQualifier}");
         }
 
         /*
@@ -551,10 +689,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 //We have an "equals" condition so we can eliminate all but one partition.
 
-                uint indexPartition = indexSelection.Index.ComputePartition(firstCoveredConditionValue);
-                string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                return MatchDocumentsForWhere(transaction, physicalIndexPages, indexSelection, givenSubCondition, workingSchemaPrefix);
+                //uint indexPartition = indexSelection.Index.ComputePartition(firstCoveredConditionValue);
+                //string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
+                //var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+                //return MatchDocumentsForWhere(transaction, physicalIndexPages, indexSelection, givenSubCondition, workingSchemaPrefix);
+                throw new NotImplementedException();
             }
             else
             {

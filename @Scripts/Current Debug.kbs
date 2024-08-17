@@ -8,7 +8,8 @@ where
 	sw.Text LIKE 'As%'
 	and sw.Text LIKE '%to'
 	and sw.Text like '%in%'
-	and sw.LanguageId = 3
+	and sw.LanguageId > 1
+	and sw.LanguageId < 10
 	OR sw.Text like 'Ca%'
 	and sw.Text like '%al'
 	and sw.Text like '%na%'
