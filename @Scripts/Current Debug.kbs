@@ -5,13 +5,16 @@ select
 from
 	WordList::Word as sw --11 rows
 where
+	--This should return atleast the word "assassinato" which is 
+	--	is in index partition 8 of ix_LanguageId_Id_Text.
+
 	sw.Text LIKE 'As%'
 	and sw.Text LIKE '%to'
 	and sw.Text like '%in%'
 	and sw.LanguageId >= 3
 	and sw.LanguageId <= 5
+	and sw.Id > 1000
 	/*
-	--and sw.LanguageId < 10
 	OR sw.Text like 'Ca%'
 	and sw.Text like '%al'
 	and sw.Text like '%na%'

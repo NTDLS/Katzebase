@@ -10,35 +10,35 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// <summary>
     /// Thread parameters for a index operations. Shared across all threads in a single lookup operation.
     /// </summary>
-    internal class MatchWorkingSchemaDocumentsOperation
+    class MatchWorkingSchemaDocumentsOperation
     {
+        public Dictionary<uint, DocumentPointer> ThreadResults = new();
         public Transaction Transaction { get; set; }
-        public PhysicalIndex PhysicalIndex { get; set; }
+        public IndexingConditionLookup Lookup { get; set; }
         public PhysicalSchema PhysicalSchema { get; set; }
-        public IndexSelection IndexSelection { get; set; }
-        public SubCondition GivenSubCondition { get; set; }
         public string WorkingSchemaPrefix { get; set; }
-        public Dictionary<uint, DocumentPointer> Results { get; set; } = new();
+        public Condition Condition { get; set; }
 
-        public MatchWorkingSchemaDocumentsOperation(Transaction transaction, PhysicalIndex physicalIndex,
-            PhysicalSchema physicalSchema, IndexSelection indexSelection,
-            SubCondition givenSubCondition, string workingSchemaPrefix)
+        public class MatchWorkingSchemaDocumentsInstance
         {
-            Transaction = transaction;
-            PhysicalIndex = physicalIndex;
-            PhysicalSchema = physicalSchema;
-            IndexSelection = indexSelection;
-            GivenSubCondition = givenSubCondition;
-            WorkingSchemaPrefix = workingSchemaPrefix;
+            public MatchWorkingSchemaDocumentsOperation Operation { get; set; }
+            public uint IndexPartition { get; set; }
+
+            public MatchWorkingSchemaDocumentsInstance(MatchWorkingSchemaDocumentsOperation operation, uint indexPartition)
+            {
+                Operation = operation;
+                IndexPartition = indexPartition;
+            }
         }
 
-        /// <summary>
-        /// Thread parameters for a index operations. Used by a single thread.
-        /// </summary>
-        internal class MatchWorkingSchemaDocumentsInstance(MatchWorkingSchemaDocumentsOperation operation, int indexPartition)
+        public MatchWorkingSchemaDocumentsOperation(Transaction transaction, IndexingConditionLookup lookup,
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition)
         {
-            public MatchWorkingSchemaDocumentsOperation Operation { get; set; } = operation;
-            public int IndexPartition { get; set; } = indexPartition;
+            Transaction = transaction;
+            Lookup = lookup;
+            PhysicalSchema = physicalSchema;
+            WorkingSchemaPrefix = workingSchemaPrefix;
+            Condition = condition;
         }
     }
 }
