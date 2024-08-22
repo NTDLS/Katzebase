@@ -425,8 +425,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     //var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
                     var partialResults = MatchDocumentsForWhere_NEW(transaction, lookup, physicalSchema, workingSchemaPrefix);
 
-                    //accumulatedResults = MergeCommonEntries(accumulatedResults, partialResults);
-                    MergeDictionary(ref accumulatedResults, partialResults);
+                    //accumulatedResults = Intersect(accumulatedResults, partialResults);
+                    UnionWith(ref accumulatedResults, partialResults);
 
                     //if (allConditions.Any(o => o.LogicalQualifier != LogicalQualifier.Equals) == false)
                     {
@@ -456,7 +456,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return accumulatedResults;
         }
 
-        public void MergeDictionary<K, V>(ref Dictionary<K, V> full, Dictionary<K, V> partial) where K : notnull
+        /// <summary>
+        /// Adds the values of the given dictionary to the referenced dictionary.
+        /// </summary>
+        public void UnionWith<K, V>(ref Dictionary<K, V> full, Dictionary<K, V> partial) where K : notnull
         {
             foreach (var kvp in partial)
             {
@@ -464,13 +467,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public Dictionary<K, V> MergeCommonEntries<K, V>(Dictionary<K, V> full, Dictionary<K, V> partial) where K : notnull
+        /// <summary>
+        /// Produces a new dictionary that is the product of the common keys between the two.
+        /// </summary>
+        public Dictionary<K, V> Intersect<K, V>(Dictionary<K, V> one, Dictionary<K, V> two) where K : notnull
         {
+            //return one.Where(o => two.ContainsKey(o.Key)).ToDictionary(o => o.Key, o => o.Value);
+
             Dictionary<K, V> commonEntries = new();
 
-            foreach (var kvp in partial)
+            foreach (var kvp in one)
             {
-                if (full.ContainsKey(kvp.Key))
+                if (two.ContainsKey(kvp.Key))
                 {
                     commonEntries[kvp.Key] = kvp.Value;
                 }
@@ -516,7 +524,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         var partitionResults = MatchDocumentsForWhereRecurse_TopLevel_This_Will_Be_A_Thread(
                             transaction, lookup, physicalSchema, workingSchemaPrefix, indexPartition, condition);
 
-                        MergeDictionary(ref accumulatedResults, partitionResults);
+                        UnionWith(ref accumulatedResults, partitionResults);
                     }
                 }
 
@@ -546,6 +554,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //First process the condition at the AttributeDepth that was passed in.
                 workingPhysicalIndexLeaves = IndexingConditionLookup_Seek(transaction, condition, workingPhysicalIndexLeaves);
 
+                if(lookup.Index.Attributes.Count == 1)
+                {
+                    //The index only has one attribute, so we are at the base where the document pointers are.
+                    //(workingPhysicalIndexLeaves.FirstOrDefault()?.Documents?.Count > 0) //We found documents, we are at the base of the index.
+                    return DistillIndexLeaves(workingPhysicalIndexLeaves);
+                }
                 if (workingPhysicalIndexLeaves.Count > 0)
                 {
                     //Further, recursively, process additional compound index attribute condition matches.
