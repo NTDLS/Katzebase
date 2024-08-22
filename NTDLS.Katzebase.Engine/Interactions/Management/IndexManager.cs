@@ -414,6 +414,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
+            Dictionary<uint, DocumentPointer> accumulatedResults = new(); //This might need to be a HashSet so we can Except and Union.
+
             foreach (var indexingConditionGroup in optimization.IndexingConditionGroup)
             {
                 foreach (var lookup in indexingConditionGroup.Lookups)
@@ -421,7 +423,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     //uint indexPartition = indexSelection.Index.ComputePartition(firstCoveredConditionValue);
                     //string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
                     //var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
-                    var ffffff = MatchDocumentsForWhere_NEW(transaction, lookup, physicalSchema, workingSchemaPrefix);
+                    var partialResults = MatchDocumentsForWhere_NEW(transaction, lookup, physicalSchema, workingSchemaPrefix);
+
+                    //accumulatedResults = MergeCommonEntries(accumulatedResults, partialResults);
+                    MergeDictionary(ref accumulatedResults, partialResults);
 
                     //if (allConditions.Any(o => o.LogicalQualifier != LogicalQualifier.Equals) == false)
                     {
@@ -448,7 +453,30 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //}
             }
 
-            return null;
+            return accumulatedResults;
+        }
+
+        public void MergeDictionary<K, V>(ref Dictionary<K, V> full, Dictionary<K, V> partial) where K : notnull
+        {
+            foreach (var kvp in partial)
+            {
+                full[kvp.Key] = kvp.Value;
+            }
+        }
+
+        public Dictionary<K, V> MergeCommonEntries<K, V>(Dictionary<K, V> full, Dictionary<K, V> partial) where K : notnull
+        {
+            Dictionary<K, V> commonEntries = new();
+
+            foreach (var kvp in partial)
+            {
+                if (full.ContainsKey(kvp.Key))
+                {
+                    commonEntries[kvp.Key] = kvp.Value;
+                }
+            }
+
+            return commonEntries;
         }
 
         private Dictionary<uint, DocumentPointer> MatchDocumentsForWhere_NEW(Transaction transaction,
@@ -459,7 +487,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                   string workingSchemaPrefix
             )
         {
-            HashSet<KeyValuePair<uint, DocumentPointer>> results = new();
+            Dictionary<uint, DocumentPointer> accumulatedResults = new();
 
             try
             {
@@ -471,10 +499,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (condition.LogicalQualifier == LogicalQualifier.Equals)
                     {
+                        //Eliminated all but one index partitions.
                         indexPartitions.Add(lookup.Index.ComputePartition(condition.Right.Value));
                     }
                     else
                     {
+                        //We have to search all index partitions.
                         for (uint indexPartition = 0; indexPartition < lookup.Index.Partitions; indexPartition++)
                         {
                             indexPartitions.Add(indexPartition);
@@ -485,12 +515,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         var partitionResults = MatchDocumentsForWhereRecurse_TopLevel_This_Will_Be_A_Thread(
                             transaction, lookup, physicalSchema, workingSchemaPrefix, indexPartition, condition);
+
+                        MergeDictionary(ref accumulatedResults, partitionResults);
                     }
                 }
 
-                return results.ToDictionary();
-
-                //return results.Select(new Dictionary<uint, DocumentPointer>(
+                return accumulatedResults;
             }
             catch (Exception ex)
             {
@@ -507,20 +537,24 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
           Condition condition
         )
         {
-            HashSet<KeyValuePair<uint, DocumentPointer>> results = new();
-
             string pageDiskPath = lookup.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
             var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+
             List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
+            if (workingPhysicalIndexLeaves.Count > 0)
+            {
+                //First process the condition at the AttributeDepth that was passed in.
+                workingPhysicalIndexLeaves = IndexingConditionLookup_Seek(transaction, condition, workingPhysicalIndexLeaves);
 
-            //First process the condition at the AttributeDepth that was passed in.
-            workingPhysicalIndexLeaves = IndexingConditionLookup_Seek(transaction, condition, workingPhysicalIndexLeaves);
+                if (workingPhysicalIndexLeaves.Count > 0)
+                {
+                    //Further, recursively, process additional compound index attribute condition matches.
+                    return MatchDocumentsForWhereRecurse_NEW(transaction, lookup, physicalSchema,
+                        workingSchemaPrefix, indexPartition, 1, workingPhysicalIndexLeaves);
+                }
+            }
 
-            //Further, recursively, process additional compound index attribute condition matches.
-            var partialResults = MatchDocumentsForWhereRecurse_NEW(transaction, lookup, physicalSchema,
-                workingSchemaPrefix, indexPartition, 1, workingPhysicalIndexLeaves);
-
-            return results.ToDictionary();
+            return new(); //No results found at the top level.
         }
 
         private Dictionary<uint, DocumentPointer> MatchDocumentsForWhereRecurse_NEW(Transaction transaction,
@@ -546,6 +580,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var partialResults = MatchDocumentsForWhereRecurse_NEW(transaction, lookup, physicalSchema,
                         workingSchemaPrefix, indexPartition, attributeDepth + 1, workingPhysicalIndexLeaves);
 
+                    if (partialResults.Count > 0)
+                    {
+                    }
+
                     //foreach (var result in partialResults)
                     //{
                     //    results.Add(result);
@@ -554,7 +592,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 else
                 {
                     //Satisfied the index operation.
-                    return DistillIndexLeaves(workingPhysicalIndexLeaves);
+                    return DistillIndexLeaves(partitionResults);
                 }
             }
 

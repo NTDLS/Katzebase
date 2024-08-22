@@ -156,6 +156,8 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                             .IndexSelections.Where(o => o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 1 && o.IsFullIndexMatch)
                             .OrderByDescending(o => o.CoveredConditions.Count).FirstOrDefault();
 
+                        List<Condition> conditionsOptimizedByThisIndex = new();
+
                         if (compositeIndex != null)
                         {
                             IndexingConditionLookup indexingConditionLookup = new(compositeIndex.Index);
@@ -178,6 +180,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                                     //Set these matched conditions as IsIndexOptimized so that we can
                                     //  break out of this loop when we run out of conditions to evaluate.
                                     condition.IsIndexOptimized = true;
+                                    conditionsOptimizedByThisIndex.Add(condition);
                                 }
 
                                 indexingConditionLookup.AttributeConditionSets.Add(attribute.Field.EnsureNotNull(), matchedConditions);
@@ -191,6 +194,11 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         else
                         {
                             //No suitable composite index was found.
+                            //Make the conditions available for other indexing operations.
+                            foreach (var condition in conditionsOptimizedByThisIndex)
+                            {
+                                condition.IsIndexOptimized = false;
+                            }
                             break;
                         }
                     }
@@ -206,6 +214,8 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         var nonCompositeIndex = subCondition
                             .IndexSelections.Where(o => o.CoveredConditions.Count(c => c.IsIndexOptimized == false) == 1 && o.IsFullIndexMatch)
                             .FirstOrDefault();
+
+                        List<Condition> conditionsOptimizedByThisIndex = new();
 
                         if (nonCompositeIndex != null)
                         {
@@ -228,6 +238,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                                     //Set these matched conditions as IsIndexOptimized so that we can
                                     //  break out of this loop when we run out of conditions to evaluate.
                                     condition.IsIndexOptimized = true;
+                                    conditionsOptimizedByThisIndex.Add(condition);
                                 }
 
                                 indexingConditionLookup.AttributeConditionSets.Add(attribute.Field.EnsureNotNull(), matchedConditions);
@@ -240,7 +251,12 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         }
                         else
                         {
-                            //No suitable composite index was found.
+                            //No suitable composite index was found. 
+                            //Make the conditions available for other indexing operations.
+                            foreach (var condition in conditionsOptimizedByThisIndex)
+                            {
+                                condition.IsIndexOptimized = false;
+                            }
                             break;
                         }
                     }
@@ -258,6 +274,8 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         var nonCompositeIndex = subCondition
                             .IndexSelections.Where(o => o.CoveredConditions.Count(c => c.IsIndexOptimized == false) == 1)
                             .FirstOrDefault();
+
+                        List<Condition> conditionsOptimizedByThisIndex = new();
 
                         if (nonCompositeIndex != null)
                         {
@@ -280,6 +298,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                                     //Set these matched conditions as IsIndexOptimized so that we can
                                     //  break out of this loop when we run out of conditions to evaluate.
                                     condition.IsIndexOptimized = true;
+                                    conditionsOptimizedByThisIndex.Add(condition);
                                 }
 
                                 indexingOperationConditions.Conditions.Add(attribute.Field.EnsureNotNull(), matchedConditions);
@@ -293,6 +312,12 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         else
                         {
                             //No suitable composite index was found.
+
+                            //Make the conditions available for other indexing operations.
+                            foreach (var condition in conditionsOptimizedByThisIndex)
+                            {
+                                condition.IsIndexOptimized = false;
+                            }
                             break;
                         }
                     }

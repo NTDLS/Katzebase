@@ -8,8 +8,10 @@ where
 	sw.Text LIKE 'As%'
 	and sw.Text LIKE '%to'
 	and sw.Text like '%in%'
-	and sw.LanguageId > 1
-	and sw.LanguageId < 10
+	and sw.LanguageId >= 3
+	and sw.LanguageId <= 5
+	/*
+	--and sw.LanguageId < 10
 	OR sw.Text like 'Ca%'
 	and sw.Text like '%al'
 	and sw.Text like '%na%'
@@ -18,6 +20,7 @@ where
 	and sw.Text like '%al'
 	and sw.Text like '%na%'
 	and sw.LanguageId = 5
+	*/
 	
 	/*
 	sw.Text LIKE 'As%'
@@ -36,7 +39,7 @@ where
 	and sw.Text like '%na%'
 	and sw.LanguageId = 5
 	*/
-
+order by sw.Text
 --select * from WordList::FlatTranslate
 --where German = 'einbruch' and Dutch = 'inbraak'
 
