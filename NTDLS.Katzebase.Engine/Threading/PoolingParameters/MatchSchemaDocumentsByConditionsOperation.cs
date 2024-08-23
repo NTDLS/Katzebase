@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Query.Constraints;
@@ -9,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// <summary>
     /// Thread parameters for a index operations. Shared across all threads in a single lookup operation.
     /// </summary>
-    class MatchSchemaDocumentsByWhereClauseOperation
+    class MatchSchemaDocumentsByConditionsOperation
     {
         public Dictionary<uint, DocumentPointer> ThreadResults = new();
         public Transaction Transaction { get; set; }
@@ -18,22 +19,25 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         public string WorkingSchemaPrefix { get; set; }
         public Condition Condition { get; set; }
 
-        public MatchSchemaDocumentsByWhereClauseOperation(Transaction transaction, IndexingConditionLookup lookup,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition)
+        public KbInsensitiveDictionary<string>? KeyValues { get; set; }
+
+        public MatchSchemaDocumentsByConditionsOperation(Transaction transaction, IndexingConditionLookup lookup,
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition, KbInsensitiveDictionary<string>? keyValues = null)
         {
             Transaction = transaction;
             Lookup = lookup;
             PhysicalSchema = physicalSchema;
             WorkingSchemaPrefix = workingSchemaPrefix;
             Condition = condition;
+            KeyValues = keyValues;
         }
 
         public class Parameter
         {
-            public MatchSchemaDocumentsByWhereClauseOperation Operation { get; set; }
+            public MatchSchemaDocumentsByConditionsOperation Operation { get; set; }
             public uint IndexPartition { get; set; }
 
-            public Parameter(MatchSchemaDocumentsByWhereClauseOperation operation, uint indexPartition)
+            public Parameter(MatchSchemaDocumentsByConditionsOperation operation, uint indexPartition)
             {
                 Operation = operation;
                 IndexPartition = indexPartition;

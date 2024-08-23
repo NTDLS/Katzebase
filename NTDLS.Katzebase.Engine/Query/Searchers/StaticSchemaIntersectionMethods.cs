@@ -76,25 +76,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                     documentPointers = limitedDocumentPointers;
                 }
-                else
-                {
-                    #region Why no indexing? Find out here!
-                    //   * One or more of the condition SubConditions lacks an index.
-                    //   *
-                    //   *   Since indexing requires that we can ensure document elimination we will have
-                    //   *      to ensure that we have a covering index on EACH-and-EVERY condition group.
-                    //   *
-                    //   *   Then we can search the indexes for each condition group to obtain a list of all possible
-                    //   *       document IDs, then use those document IDs to early eliminate documents from the main lookup loop.
-                    //   *
-                    //   *   If any one condition group does not have an index, then no indexing will be used at all since all
-                    //   *      documents will need to be scanned anyway. To prevent unindexed scans, reduce the number of
-                    //   *      condition groups (nested in parentheses).
-                    //   *
-                    //   * ConditionLookupOptimization:BuildFullVirtualCondition() Will tell you why we can't use an index.
-                    //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualCondition();
-                    #endregion
-                }
             }
 
             //If we do not have any documents, then get the whole schema.
@@ -477,6 +458,36 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             if (currentSchemaMap.Optimization != null)
             {
+                var joinKeyValues = new KbInsensitiveDictionary<string>();
+
+                //All condition SubConditions have a selected index. Start building a list of possible document IDs.
+                foreach (var subCondition in currentSchemaMap.Optimization.Conditions.NonRootSubConditions)
+                {
+                    //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
+                    foreach (var condition in subCondition.Conditions)
+                    {
+                        var documentContent = joinScopedContentCache[condition.Right?.Prefix ?? ""];
+
+                        if (!documentContent.TryGetValue(condition.Right?.Value ?? "", out string? documentValue))
+                        {
+                            throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
+                        }
+                        joinKeyValues[condition.Right?.Key ?? ""] = documentValue?.ToString() ?? "";
+                    }
+                }
+
+                //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
+                var furtherLimitedDocumentPointers = new Dictionary<uint, DocumentPointer>();
+
+                furtherLimitedDocumentPointers = instance.Operation.Core.Indexes.MatchSchemaDocumentsByWhereClause(instance.Operation.Transaction,
+                    currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix, joinKeyValues);
+
+                limitedDocumentPointers = furtherLimitedDocumentPointers.Select(o => o.Value);
+            }
+
+            /*
+            if (currentSchemaMap.Optimization != null)
+            {
                 //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                 var furtherLimitedDocumentPointers = new List<DocumentPointer>();
 
@@ -506,26 +517,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 limitedDocumentPointers = furtherLimitedDocumentPointers;
             }
-            else
-            {
-                #region Why no indexing? Find out here!
-                //   * One or more of the condition SubConditions lacks an index.
-                //   *
-                //   *   Since indexing requires that we can ensure document elimination we will have
-                //   *      to ensure that we have a covering index on EACH-and-EVERY condition group.
-                //   *
-                //   *   Then we can search the indexes for each condition group to obtain a list of all possible
-                //   *       document IDs, then use those document IDs to early eliminate documents from the main lookup loop.
-                //   *
-                //   *   If any one condition group does not have an index, then no indexing will be used at all since all
-                //   *      documents will need to be scanned anyway. To prevent unindexed scans, reduce the number of
-                //   *      condition groups (nested in parentheses).
-                //   *
-                //   * ConditionLookupOptimization:BuildFullVirtualCondition() Will tell you why we can't use an index.
-                //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualCondition();
-                //*
-                #endregion
-            }
+            */
+
 
             limitedDocumentPointers ??= instance.Operation.Core.Documents.AcquireDocumentPointers(
                     instance.Operation.Transaction, currentSchemaMap.PhysicalSchema, LockOperation.Read);

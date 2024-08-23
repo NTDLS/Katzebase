@@ -1,5 +1,15 @@
 set TraceWaitTimes true
 
+select top 10
+	W.*
+from
+	WordList:Word as W
+inner join WordList:Language as L
+	on L.Id = W.LanguageId
+where
+	W.Text = 'Gym'
+	
+/*
 select
 	sw.Id,
 	sw.Text,
@@ -24,7 +34,8 @@ where
 	and sw.LanguageId = 5
 order by
 	sw.Text
-	
+*/
+
 	/*
 	sw.Text LIKE 'As%'
 	and (
