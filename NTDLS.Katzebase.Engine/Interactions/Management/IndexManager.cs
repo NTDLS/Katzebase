@@ -8,6 +8,7 @@ using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
+using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
@@ -411,88 +412,37 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Used for indexing operations for a WHERE clause.
         /// </summary>
-        internal Dictionary<uint, DocumentPointer>? MatchSchemaDocumentsByConditions(Transaction transaction,
+        internal Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditions(Transaction transaction,
                     PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, string workingSchemaPrefix)
         {
-            var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
-
-            Dictionary<uint, DocumentPointer> accumulatedResults = new(); //This might need to be a HashSet so we can Except and Union.
+            Dictionary<uint, DocumentPointer> accumulatedResults = new();
 
             foreach (var indexingConditionGroup in optimization.IndexingConditionGroup)
             {
+                Dictionary<uint, DocumentPointer>? groupResults = null;
+
                 foreach (var lookup in indexingConditionGroup.Lookups)
                 {
-                    //uint indexPartition = indexSelection.Index.ComputePartition(firstCoveredConditionValue);
-                    //string pageDiskPath = indexSelection.Index.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                    //var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
                     var partialResults = MatchDocumentsForWhere(transaction, lookup, physicalSchema, workingSchemaPrefix);
 
-                    //accumulatedResults = Intersect(accumulatedResults, partialResults);
-                    UnionWith(ref accumulatedResults, partialResults);
-
-                    //if (allConditions.Any(o => o.LogicalQualifier != LogicalQualifier.Equals) == false)
+                    groupResults = groupResults.Intersect(partialResults);
+                    Console.WriteLine($"Depth: <root>, Count: {partialResults.Count}, Total: {groupResults.Count}");
+                    if (groupResults.Count == 0)
                     {
-                        //If all of the conditions for the first index attribute are EQUAL operators,
-                        //  then we can isolate specific index partitions from the value.
-
-                        //IndexingConditionLookup_Seek(transaction, physicalSchema, workingSchemaPrefix, lookup);
-                    }
-                    //else
-                    {
-                        //throw new NotImplementedException();
+                        break; //Condition eliminated all possible results on this level.
                     }
                 }
-            }
 
-            if (optimization.Conditions.Root.ExpressionKeys.Count > 0)
-            {
-                //var allConditions = lookup.AttributeConditions[lookup.Index.Attributes[0].Field.EnsureNotNull()].ToList();
-                //The root condition is just a pointer to a child condition, so get the "root" child condition.
-                //var rootCondition = optimization.Conditions.SubConditionFromExpressionKey(optimization.Conditions.Root.Key);
-                //if (!MatchSchemaDocumentsByConditions(optimization, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, rootCondition))
-                //{
-                //    return null;
-                //}
+                accumulatedResults.UnionWith(groupResults); //Each group is an OR condition, so just union them.
             }
 
             return accumulatedResults;
         }
 
-        /// <summary>
-        /// Adds the values of the given dictionary to the referenced dictionary.
-        /// </summary>
-        public void UnionWith<K, V>(ref Dictionary<K, V> full, Dictionary<K, V> partial) where K : notnull
-        {
-            foreach (var kvp in partial)
-            {
-                full[kvp.Key] = kvp.Value;
-            }
-        }
-
-        /// <summary>
-        /// Produces a new dictionary that is the product of the common keys between the two.
-        /// </summary>
-        public Dictionary<K, V> Intersect<K, V>(Dictionary<K, V> one, Dictionary<K, V> two) where K : notnull
-        {
-            //return one.Where(o => two.ContainsKey(o.Key)).ToDictionary(o => o.Key, o => o.Value);
-
-            Dictionary<K, V> commonEntries = new();
-
-            foreach (var kvp in one)
-            {
-                if (two.ContainsKey(kvp.Key))
-                {
-                    commonEntries[kvp.Key] = kvp.Value;
-                }
-            }
-
-            return commonEntries;
-        }
-
         private Dictionary<uint, DocumentPointer> MatchDocumentsForWhere(
             Transaction transaction, IndexingConditionLookup lookup, PhysicalSchema physicalSchema, string workingSchemaPrefix)
         {
-            Dictionary<uint, DocumentPointer> accumulatedResults = new();
+            Dictionary<uint, DocumentPointer>? accumulatedResults = null;
 
             try
             {
@@ -502,7 +452,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     List<uint> indexPartitions = new();
 
-                    /*
                     if (condition.LogicalQualifier == LogicalQualifier.Equals)
                     {
                         //Eliminated all but one index partitions.
@@ -516,10 +465,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             indexPartitions.Add(indexPartition);
                         }
                     }
-                    */
 
-                    indexPartitions.Add(8);
-
+                    //indexPartitions.Add(1);
 
                     var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchWorkingSchemaDocumentsOperation.Parameter>(_core.Settings.ChildThreadPoolQueueDepth);
 
@@ -534,10 +481,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     queue.WaitForCompletion();
 
-                    UnionWith(ref accumulatedResults, operation.ThreadResults);
+                    accumulatedResults = accumulatedResults.Intersect(operation.ThreadResults);
+                    Console.WriteLine($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
+                    if (accumulatedResults.Count == 0)
+                    {
+                        break; //Condition eliminated all possible results on this level.
+                    }
                 }
 
-                return accumulatedResults;
+                return accumulatedResults ?? new();
             }
             catch (Exception ex)
             {
@@ -579,7 +531,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     lock (parameter.Operation.ThreadResults)
                     {
-                        UnionWith(ref parameter.Operation.ThreadResults, threadResults);
+                        parameter.Operation.ThreadResults.UnionWith(threadResults);
                     }
                 }
             }
@@ -593,7 +545,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private Dictionary<uint, DocumentPointer> MatchWorkingSchemaDocumentsRecursive(Transaction transaction, IndexingConditionLookup lookup,
           PhysicalSchema physicalSchema, string workingSchemaPrefix, uint indexPartition, int attributeDepth, HashSet<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
         {
-            HashSet<PhysicalIndexLeaf>? results = null;
+            Dictionary<uint, DocumentPointer>? results = null;
 
             var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[attributeDepth].Field.EnsureNotNull()];
 
@@ -601,46 +553,34 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 var partitionResults = IndexingConditionLookup_Seek(transaction, condition, workingPhysicalIndexLeaves);
 
-                if (partitionResults.Count == 0)
+                if (attributeDepth == lookup.AttributeConditionSets.Count - 1)
                 {
-                    return new(); //We eliminated all possible values, bail out.
-                }
+                    //This is the bottom of the condition tree, as low as we can go in this index given the fields we have, so just distill the leaves.
+                    var partialResults = DistillIndexLeaves(partitionResults);
 
-                if (results == null)
-                {
-                    results = partitionResults;
-                }
-                else
-                {
-                    if (attributeDepth == 2)
+                    results = results.Intersect(partialResults);
+                    Console.WriteLine($"Partition: {indexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
+                    if (results.Count == 0)
                     {
+                        break; //Condition eliminated all possible results on this level.
                     }
-
-                    results.IntersectWith(partitionResults);
                 }
-
-                if (attributeDepth < lookup.AttributeConditionSets.Count - 1)
+                else if (attributeDepth < lookup.AttributeConditionSets.Count - 1)
                 {
                     //Further, recursively, process additional compound index attribute condition matches.
                     var partialResults = MatchWorkingSchemaDocumentsRecursive(transaction, lookup, physicalSchema,
                         workingSchemaPrefix, indexPartition, attributeDepth + 1, partitionResults);
 
-                    if (partialResults.Count == 0)
+                    results = results.Intersect(partialResults);
+                    Console.WriteLine($"Partition: {indexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
+                    if (results.Count == 0)
                     {
-                        return new(); //We eliminated all possible values, bail out.
+                        break; //Condition eliminated all possible results on this level.
                     }
-
-                    //TODO: This has not been tested, this will require an index of more then 2 attributes.
-                    results.IntersectWith(partitionResults);
-                }
-
-                if (results.Count == 0)
-                {
-                    return new(); //We eliminated all possible values, bail out.
                 }
             }
 
-            return DistillIndexLeaves(results ?? new());
+            return results ?? new();
         }
 
         private HashSet<PhysicalIndexLeaf> IndexingConditionLookup_Seek(Transaction transaction,
