@@ -13,9 +13,7 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using NTDLS.Katzebase.Shared;
-using System.Linq;
 using System.Text;
-using System.Xml.Linq;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Threading.PoolingParameters.MatchConditionValuesDocumentsOperation;
@@ -507,7 +505,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 string pageDiskPath = parameter.Operation.Lookup.Index.GetPartitionPagesFileName(parameter.Operation.PhysicalSchema, parameter.IndexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(parameter.Operation.Transaction, pageDiskPath, LockOperation.Read);
 
-                HashSet<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
+                List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
                 if (workingPhysicalIndexLeaves.Count > 0)
                 {
                     //First process the condition at the AttributeDepth that was passed in.
@@ -543,7 +541,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         private Dictionary<uint, DocumentPointer> MatchWorkingSchemaDocumentsRecursive(Transaction transaction, IndexingConditionLookup lookup,
-          PhysicalSchema physicalSchema, string workingSchemaPrefix, uint indexPartition, int attributeDepth, HashSet<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
+          PhysicalSchema physicalSchema, string workingSchemaPrefix, uint indexPartition, int attributeDepth, List<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
         {
             Dictionary<uint, DocumentPointer>? results = null;
 
@@ -583,136 +581,53 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return results ?? new();
         }
 
-        private HashSet<PhysicalIndexLeaf> IndexingConditionLookup_Seek(Transaction transaction,
-                    Condition condition, HashSet<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
+        private List<PhysicalIndexLeaf> IndexingConditionLookup_Seek(
+            Transaction transaction, Condition condition, List<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
         {
             return condition.LogicalQualifier switch
             {
                 LogicalQualifier.Equals => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
                                         .Where(w => Condition.IsMatchEqual(transaction, w.Key, condition.Right.Value) == true)
-                                        .Select(s => s.Value)).ToHashSet(),
+                                        .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotEquals => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
                                         .Where(w => Condition.IsMatchEqual(transaction, w.Key, condition.Right.Value) == false)
-                                        .Select(s => s.Value)).ToHashSet(),
+                                        .Select(s => s.Value)).ToList(),
                 LogicalQualifier.GreaterThan => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
                                         .Where(w => Condition.IsMatchGreater(transaction, w.Key, condition.Right.Value) == true)
-                                        .Select(s => s.Value)).ToHashSet(),
+                                        .Select(s => s.Value)).ToList(),
                 LogicalQualifier.GreaterThanOrEqual => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
                                         .Where(w => Condition.IsMatchGreaterOrEqual(transaction, w.Key, condition.Right.Value) == true)
-                                        .Select(s => s.Value)).ToHashSet(),
+                                        .Select(s => s.Value)).ToList(),
                 LogicalQualifier.LessThan => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
                                         .Where(w => Condition.IsMatchLesser(transaction, w.Key, condition.Right.Value) == true)
-                                        .Select(s => s.Value)).ToHashSet(),
+                                        .Select(s => s.Value)).ToList(),
                 LogicalQualifier.LessThanOrEqual => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
                                         .Where(w => Condition.IsMatchLesserOrEqual(transaction, w.Key, condition.Right.Value) == true)
-                                        .Select(s => s.Value)).ToHashSet(),
+                                        .Select(s => s.Value)).ToList(),
                 LogicalQualifier.Like => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
                                         .Where(w => Condition.IsMatchLike(transaction, w.Key, condition.Right.Value) == true)
-                                        .Select(s => s.Value)).ToHashSet(),
+                                        .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotLike => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
                                         .Where(w => Condition.IsMatchLike(transaction, w.Key, condition.Right.Value) == false)
-                                        .Select(s => s.Value)).ToHashSet(),
+                                        .Select(s => s.Value)).ToList(),
                 LogicalQualifier.Between => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
                                         .Where(w => Condition.IsMatchBetween(transaction, w.Key, condition.Right.Value) == true)
-                                        .Select(s => s.Value)).ToHashSet(),
+                                        .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotBetween => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
                                         .Where(w => Condition.IsMatchBetween(transaction, w.Key, condition.Right.Value) == false)
-                                        .Select(s => s.Value)).ToHashSet(),
+                                        .Select(s => s.Value)).ToList(),
                 _ => throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {condition.LogicalQualifier}"),
             };
-        }
-
-        /*
-        private bool MatchSchemaDocumentsByConditions(IndexingConditionOptimization optimization, Transaction transaction, PhysicalIndexCatalog indexCatalog,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, SubCondition givenSubCondition)
-        {
-            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
-            {
-                var subCondition = optimization.Conditions.SubConditionFromExpressionKey(expressionKey);
-
-                if (subCondition.Conditions.Count > 0)
-                {
-                    if (subCondition.LogicalConnector == LogicalConnector.Or)
-                    {
-                        if (subCondition.Conditions.Any(o => o.Left.Prefix.Is(workingSchemaPrefix)) == false)
-                        {
-                            //Each "OR" condition group must have at least one potential indexable match for the selected schema,
-                            //  this is because we need to be able to create a full list of all possible documents for this schema,
-                            //  and if we have an "OR" group that does not further limit these documents by the given schema then
-                            //  we will have to do a full namespace scan anyway.
-                            return false; //Invalidate indexing optimization.
-                        }
-                    }
-
-                    //Loop through all indexes, all their attributes and all conditions in this sub-condition
-                    //  for the given schema. Keep track of which indexes match each condition field.
-                    foreach (var physicalIndex in indexCatalog.Collection)
-                    {
-                        var potentialIndex = new IndexSelection(physicalIndex);
-                        foreach (var attribute in physicalIndex.Attributes)
-                        {
-                            foreach (var condition in subCondition.Conditions.Where(o => o.Left.Prefix.Is(workingSchemaPrefix)))
-                            {
-                                if (condition.Left.Value?.Is(attribute.Field) == true)
-                                {
-                                    potentialIndex.CoveredConditions.Add(condition);
-
-                                    //Console.WriteLine($"{condition.ConditionKey} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
-                                }
-                            }
-                        }
-
-                        if (potentialIndex.CoveredConditions.Count > 0)
-                        {
-                            subCondition.IndexSelections.Add(potentialIndex);
-                        }
-                        else
-                        {
-                            //This group has no indexing, but since it does reference the
-                            //  given schema, we are going to have to do a full schema scan.
-                            return false; //Invalidate indexing optimization.
-                        }
-                    }
-
-                    foreach (var indexSelection in subCondition.IndexSelections)
-                    {
-                        Console.WriteLine($"{indexSelection.Index.Name}, CoveredFields: ({indexSelection.CoveredConditions.Count})");
-                    }
-                }
-
-                if (subCondition.ExpressionKeys.Count > 0)
-                {
-                    if (!MatchSchemaDocumentsByConditions(optimization, transaction, indexCatalog, physicalSchema, workingSchemaPrefix, subCondition))
-                    {
-                        return false; //Invalidate indexing optimization.
-                    }
-                }
-            }
-
-            return true;
-        }
-        */
-
-        private List<PhysicalIndexLeaf> DistillIndexBaseNodes(List<PhysicalIndexLeaf> physicalIndexLeaves)
-        {
-            var result = new List<PhysicalIndexLeaf>();
-
-            foreach (var leaf in physicalIndexLeaves)
-            {
-                result.AddRange(DistillIndexBaseNodes(leaf));
-            }
-
-            return result;
         }
 
         /// <summary>
@@ -762,18 +677,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         private Dictionary<uint, DocumentPointer> DistillIndexLeaves(List<PhysicalIndexLeaf> physicalIndexLeaves)
-        {
-            var result = new List<DocumentPointer>();
-
-            foreach (var leaf in physicalIndexLeaves)
-            {
-                result.AddRange(DistillIndexLeaves(leaf));
-            }
-
-            return result.ToDictionary(o => o.DocumentId, o => o);
-        }
-
-        private Dictionary<uint, DocumentPointer> DistillIndexLeaves(HashSet<PhysicalIndexLeaf> physicalIndexLeaves)
         {
             var result = new List<DocumentPointer>();
 

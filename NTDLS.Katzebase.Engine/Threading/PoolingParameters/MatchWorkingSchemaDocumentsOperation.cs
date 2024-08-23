@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
