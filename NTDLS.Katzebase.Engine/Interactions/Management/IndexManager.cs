@@ -261,10 +261,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (condition.LogicalQualifier == LogicalQualifier.Equals)
                     {
-                        string? keyValue = null;
-
                         //For join operations, check the keyValues for the raw value to lookup.
-                        if (keyValues?.TryGetValue(condition.Right.Key, out keyValue) != true)
+                        if (keyValues?.TryGetValue(condition.Right.Key, out string? keyValue) != true)
                         {
                             keyValue = condition.Right.Value;
                         }
@@ -284,8 +282,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             indexPartitions.Add(indexPartition);
                         }
                     }
-
-                    //indexPartitions.Add(1);
 
                     var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchSchemaDocumentsByConditionsOperation.Parameter>(_core.Settings.ChildThreadPoolQueueDepth);
 
@@ -373,7 +369,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseRecursive(
+        private static Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseRecursive(
             MatchSchemaDocumentsByConditionsOperation.Parameter parameter, int attributeDepth, List<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
         {
             Dictionary<uint, DocumentPointer>? results = null;
@@ -426,19 +422,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region Matching / Seeking / Scanning.
 
-        private List<PhysicalIndexLeaf> MatchIndexLeaves(Transaction transaction, Condition condition,
+        private static List<PhysicalIndexLeaf> MatchIndexLeaves(Transaction transaction, Condition condition,
             List<PhysicalIndexLeaf> workingPhysicalIndexLeaves, KbInsensitiveDictionary<string>? keyValues)
         {
-            string? keyValue = null;
-
             //For join operations, check the keyValues for the raw value to lookup.
-            if (keyValues?.TryGetValue(condition.Right.Key, out keyValue) != true)
+            if (keyValues?.TryGetValue(condition.Right.Key, out string? keyValue) != true)
             {
-                keyValue = condition.Right.Value;
-            }
-            else
-            {
-                //This is a join clause.
+                keyValue = condition.Right.Value; //Otherwise default to the value in the condition.
             }
 
             return condition.LogicalQualifier switch
@@ -497,7 +487,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         /// <param name="indexEntires"></param>
         /// <returns></returns>
-        private List<PhysicalIndexLeaf> DistillIndexBaseNodes(PhysicalIndexLeaf physicalIndexLeaf)
+        private static List<PhysicalIndexLeaf> DistillIndexBaseNodes(PhysicalIndexLeaf physicalIndexLeaf)
         {
             try
             {
@@ -537,7 +527,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private Dictionary<uint, DocumentPointer> DistillIndexLeaves(List<PhysicalIndexLeaf> physicalIndexLeaves)
+        private static Dictionary<uint, DocumentPointer> DistillIndexLeaves(List<PhysicalIndexLeaf> physicalIndexLeaves)
         {
             var result = new List<DocumentPointer>();
 
@@ -554,7 +544,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         /// <param name="indexEntires"></param>
         /// <returns></returns>
-        private List<DocumentPointer> DistillIndexLeaves(PhysicalIndexLeaf physicalIndexLeaf)
+        private static List<DocumentPointer> DistillIndexLeaves(PhysicalIndexLeaf physicalIndexLeaf)
         {
             try
             {
@@ -752,7 +742,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private List<string> GetIndexSearchTokens(Transaction transaction, PhysicalIndex physicalIndex, PhysicalDocument document)
+        private static List<string> GetIndexSearchTokens(Transaction transaction, PhysicalIndex physicalIndex, PhysicalDocument document)
         {
             try
             {
@@ -786,7 +776,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="searchTokens"></param>
         /// <param name="indexPageCatalog"></param>
         /// <returns>A reference to a node in the suppliedIndexPageCatalog</returns>
-        private IndexScanResult LocateExtentInGivenIndexPageCatalog(
+        private static IndexScanResult LocateExtentInGivenIndexPageCatalog(
             Transaction transaction, List<string> searchTokens, PhysicalIndexPages rootPhysicalIndexPages)
         {
             try
@@ -1010,26 +1000,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 Operation = operation;
                 IndexPartition = indexPartition;
-            }
-        }
-
-        /// <summary>
-        /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.
-        /// </summary>
-        private class RemoveDocumentsFromIndexThreadOperation
-        {
-            public Transaction Transaction { get; set; }
-            public PhysicalIndex PhysicalIndex { get; set; }
-            public PhysicalSchema PhysicalSchema { get; set; }
-            public IEnumerable<DocumentPointer> DocumentPointers { get; set; }
-
-            public RemoveDocumentsFromIndexThreadOperation(Transaction transaction,
-                PhysicalIndex physicalIndex, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
-            {
-                Transaction = transaction;
-                PhysicalIndex = physicalIndex;
-                PhysicalSchema = physicalSchema;
-                DocumentPointers = documentPointers;
             }
         }
 

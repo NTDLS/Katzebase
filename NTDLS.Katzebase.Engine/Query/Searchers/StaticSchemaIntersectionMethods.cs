@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 var limitedDocumentPointers = new List<DocumentPointer>();
 
-                if (topLevelSchemaMap.Optimization != null)
+                if (topLevelSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
                 {
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                     documentPointers = new List<DocumentPointer>();
@@ -456,7 +456,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             #endregion
 
-            if (currentSchemaMap.Optimization != null)
+            if (currentSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
             {
                 var joinKeyValues = new KbInsensitiveDictionary<string>();
 
@@ -484,41 +484,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 limitedDocumentPointers = furtherLimitedDocumentPointers.Select(o => o.Value);
             }
-
-            /*
-            if (currentSchemaMap.Optimization != null)
-            {
-                //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                var furtherLimitedDocumentPointers = new List<DocumentPointer>();
-
-                //All condition SubConditions have a selected index. Start building a list of possible document IDs.
-                foreach (var subCondition in currentSchemaMap.Optimization.Conditions.NonRootSubConditions)
-                {
-                    var keyValuePairs = new KbInsensitiveDictionary<string>();
-
-                    //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
-                    foreach (var condition in subCondition.Conditions)
-                    {
-                        var documentContent = joinScopedContentCache[condition.Right?.Prefix ?? ""];
-
-                        if (!documentContent.TryGetValue(condition.Right?.Value ?? "", out string? documentValue))
-                        {
-                            throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
-                        }
-                        keyValuePairs.Add(condition.Left?.Value ?? "", documentValue?.ToString() ?? "");
-                    }
-
-                    //Match on values from the document.
-                    var documentIds = instance.Operation.Core.Indexes.MatchConditionValuesDocuments
-                        (instance.Operation.Transaction, currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, subCondition, keyValuePairs);
-
-                    furtherLimitedDocumentPointers.AddRange(documentIds.Values);
-                }
-
-                limitedDocumentPointers = furtherLimitedDocumentPointers;
-            }
-            */
-
 
             limitedDocumentPointers ??= instance.Operation.Core.Documents.AcquireDocumentPointers(
                     instance.Operation.Transaction, currentSchemaMap.PhysicalSchema, LockOperation.Read);

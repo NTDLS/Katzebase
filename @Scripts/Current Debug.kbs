@@ -1,5 +1,27 @@
 set TraceWaitTimes true
 
+select
+	sw.Id as SourceWordId,
+	sw.Text as SourceWord,
+	sl.Name as SourceLanguage,
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+	tl.Name as TargetLanguage
+from
+	WordList:Word as sw
+inner join WordList:Language as sl
+	on sl.Id = sw.LanguageId
+inner join WordList:Synonym as S
+	on S.SourceWordId = sw.Id
+inner join WordList:Word as tw
+	on tw.Id = S.TargetWordId
+inner join WordList:Language as tl
+	on tl.Id = TW.LanguageId
+where
+	sl.Name = 'English'
+	and tl.Name = 'Latin'
+
+/*
 select top 10
 	W.*
 from
@@ -7,8 +29,9 @@ from
 inner join WordList:Language as L
 	on L.Id = W.LanguageId
 where
-	W.Text = 'Gym'
-	
+	W.Text like 'Gym'
+*/
+
 /*
 select
 	sw.Id,
