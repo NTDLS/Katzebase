@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                     documentPointers = new List<DocumentPointer>();
 
-                    var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditions(transaction,
+                    var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByWhereClause(transaction,
                         topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, topLevelSchemaMap.Prefix);
 
                     if (indexMatchedDocuments != null)

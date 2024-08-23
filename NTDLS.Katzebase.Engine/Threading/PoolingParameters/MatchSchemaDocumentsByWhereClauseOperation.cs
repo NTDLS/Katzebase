@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// <summary>
     /// Thread parameters for a index operations. Shared across all threads in a single lookup operation.
     /// </summary>
-    class MatchWorkingSchemaDocumentsOperation
+    class MatchSchemaDocumentsByWhereClauseOperation
     {
         public Dictionary<uint, DocumentPointer> ThreadResults = new();
         public Transaction Transaction { get; set; }
@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         public string WorkingSchemaPrefix { get; set; }
         public Condition Condition { get; set; }
 
-        public MatchWorkingSchemaDocumentsOperation(Transaction transaction, IndexingConditionLookup lookup,
+        public MatchSchemaDocumentsByWhereClauseOperation(Transaction transaction, IndexingConditionLookup lookup,
             PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition)
         {
             Transaction = transaction;
@@ -30,10 +30,10 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
 
         public class Parameter
         {
-            public MatchWorkingSchemaDocumentsOperation Operation { get; set; }
+            public MatchSchemaDocumentsByWhereClauseOperation Operation { get; set; }
             public uint IndexPartition { get; set; }
 
-            public Parameter(MatchWorkingSchemaDocumentsOperation operation, uint indexPartition)
+            public Parameter(MatchSchemaDocumentsByWhereClauseOperation operation, uint indexPartition)
             {
                 Operation = operation;
                 IndexPartition = indexPartition;

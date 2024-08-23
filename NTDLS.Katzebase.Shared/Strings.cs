@@ -56,7 +56,7 @@ namespace NTDLS.Katzebase.Shared
         {
             string cacheKey = $"IsMatchLike:{pattern}";
 
-            if(_cache.TryGetValue<Regex>(cacheKey, out var regex) == false)
+            if (_cache.TryGetValue<Regex>(cacheKey, out var regex) == false)
             {
                 regex = new Regex("^" + Regex.Escape(pattern).Replace("%", ".*").Replace("_", ".") + "$",
                     RegexOptions.IgnoreCase | RegexOptions.Compiled);
