@@ -1,4 +1,4 @@
-﻿using System.Runtime.Caching;
+﻿using Microsoft.Extensions.Caching.Memory;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 
@@ -6,7 +6,10 @@ namespace NTDLS.Katzebase.Shared
 {
     public static class Strings
     {
-        private static readonly MemoryCache _cache = MemoryCache.Default;
+        private static readonly MemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
+
+        private static readonly MemoryCacheEntryOptions _oneMinuteSlidingExpiration
+            = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromMinutes(1));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Is(this string value, string? otherValue)
@@ -53,19 +56,15 @@ namespace NTDLS.Katzebase.Shared
         {
             string cacheKey = $"IsMatchLike:{pattern}";
 
-            var regex = (Regex?)_cache.Get(cacheKey);
-            if (regex == null)
+            if(_cache.TryGetValue<Regex>(cacheKey, out var regex) == false)
             {
                 regex = new Regex("^" + Regex.Escape(pattern).Replace("%", ".*").Replace("_", ".") + "$",
                     RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
-                var cacheItemPolicy = new CacheItemPolicy
-                {
-                    SlidingExpiration = TimeSpan.FromMinutes(1)
-                };
-
-                _cache.Add(cacheKey, regex, cacheItemPolicy);
+                _cache.Set(cacheKey, regex, _oneMinuteSlidingExpiration);
             }
+
+            ArgumentNullException.ThrowIfNull(regex);
 
             return regex.IsMatch(value);
         }
