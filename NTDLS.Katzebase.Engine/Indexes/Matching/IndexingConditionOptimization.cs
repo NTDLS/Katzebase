@@ -343,8 +343,6 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                 LogManager.Debug($"SubExpression: {subCondition.Expression}");
             }
 
-            Console.WriteLine(optimization.ToString());
-
             return true;
         }
 

@@ -85,7 +85,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             var operation = new DocumentLookupOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
 
-            LogManager.Information($"Starting document scan with {documentPointers.Count()} documents.");
+            LogManager.Debug($"Starting document scan with {documentPointers.Count()} documents.");
 
             foreach (var documentPointer in documentPointers)
             {
@@ -418,7 +418,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
 
             //Create a reference to the entire document catalog.
-            IEnumerable<DocumentPointer>? limitedDocumentPointers = null;
+            IEnumerable<DocumentPointer>? documentPointers = null;
 
             #region Indexing to reduce the number of document pointers in "limitedDocumentPointers".
 
@@ -477,16 +477,17 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 }
 
                 //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                var furtherLimitedDocumentPointers = new Dictionary<uint, DocumentPointer>();
 
-                furtherLimitedDocumentPointers = instance.Operation.Core.Indexes.MatchSchemaDocumentsByConditionsClause(instance.Operation.Transaction,
+                var limitedDocumentPointers = instance.Operation.Core.Indexes.MatchSchemaDocumentsByConditionsClause(instance.Operation.Transaction,
                     currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix, joinKeyValues);
 
-                limitedDocumentPointers = furtherLimitedDocumentPointers.Select(o => o.Value);
+                documentPointers = limitedDocumentPointers.Select(o => o.Value);
             }
 
-            limitedDocumentPointers ??= instance.Operation.Core.Documents.AcquireDocumentPointers(
+            documentPointers ??= instance.Operation.Core.Documents.AcquireDocumentPointers(
                     instance.Operation.Transaction, currentSchemaMap.PhysicalSchema, LockOperation.Read);
+
+            LogManager.Debug($"Starting join document scan with {documentPointers.Count()} documents.");
 
             #endregion
 
@@ -496,7 +497,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //  relationship then we will need to use this to make additional copies of the original row.
             var rowTemplate = resultingRow.Clone();
 
-            foreach (var documentPointer in limitedDocumentPointers)
+            foreach (var documentPointer in documentPointers)
             {
                 string threadScopedDocumentCacheKey = $"{currentSchemaKVP.Key}:{documentPointer.Key}";
 
