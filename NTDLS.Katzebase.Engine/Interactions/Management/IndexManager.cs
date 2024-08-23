@@ -207,7 +207,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #endregion
 
-
         #region Match Schema Documents by Conditions.
 
         /// <summary>
@@ -220,11 +219,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             Dictionary<uint, DocumentPointer> accumulatedResults = new();
 
-            foreach (var indexingConditionGroup in optimization.IndexingConditionGroup)
+            foreach (var indexingConditionGroup in optimization.IndexingConditionGroup) //Loop through the OR groups
             {
                 Dictionary<uint, DocumentPointer>? groupResults = null;
 
-                foreach (var lookup in indexingConditionGroup.Lookups)
+                foreach (var lookup in indexingConditionGroup.Lookups) //Loop thorough the AND conditions.
                 {
                     var partialResults = MatchSchemaDocumentsByConditionsClauseGroup(transaction, lookup, physicalSchema, workingSchemaPrefix, keyValues);
 
