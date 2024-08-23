@@ -502,6 +502,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     List<uint> indexPartitions = new();
 
+                    /*
                     if (condition.LogicalQualifier == LogicalQualifier.Equals)
                     {
                         //Eliminated all but one index partitions.
@@ -515,6 +516,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             indexPartitions.Add(indexPartition);
                         }
                     }
+                    */
+
+                    indexPartitions.Add(8);
+
 
                     var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchWorkingSchemaDocumentsOperation.MatchWorkingSchemaDocumentsInstance>(_core.Settings.ChildThreadPoolQueueDepth);
 
@@ -565,7 +570,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     else if (workingPhysicalIndexLeaves.Count > 0)
                     {
                         //Further, recursively, process additional compound index attribute condition matches.
-                        threadResults = MatchDocumentsForWhereRecurse(instance.Operation.Transaction, instance.Operation.Lookup, instance.Operation.PhysicalSchema,
+                        threadResults = MatchWorkingSchemaDocumentsRecursive(instance.Operation.Transaction, instance.Operation.Lookup, instance.Operation.PhysicalSchema,
                             instance.Operation.WorkingSchemaPrefix, instance.IndexPartition, 1, workingPhysicalIndexLeaves);
                     }
                 }
@@ -585,7 +590,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private Dictionary<uint, DocumentPointer> MatchDocumentsForWhereRecurse(Transaction transaction, IndexingConditionLookup lookup,
+        private Dictionary<uint, DocumentPointer> MatchWorkingSchemaDocumentsRecursive(Transaction transaction, IndexingConditionLookup lookup,
           PhysicalSchema physicalSchema, string workingSchemaPrefix, uint indexPartition, int attributeDepth, HashSet<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
         {
             HashSet<PhysicalIndexLeaf>? results = null;
@@ -594,7 +599,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             foreach (var condition in conditionSet)
             {
-                var partitionResults = IndexingConditionLookup_Seek(transaction, condition, workingPhysicalIndexLeaves.EnsureNotNull());
+                var partitionResults = IndexingConditionLookup_Seek(transaction, condition, workingPhysicalIndexLeaves);
 
                 if (partitionResults.Count == 0)
                 {
@@ -617,8 +622,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (attributeDepth < lookup.AttributeConditionSets.Count - 1)
                 {
                     //Further, recursively, process additional compound index attribute condition matches.
-                    var partialResults = MatchDocumentsForWhereRecurse(transaction, lookup, physicalSchema,
-                        workingSchemaPrefix, indexPartition, attributeDepth + 1, workingPhysicalIndexLeaves);
+                    var partialResults = MatchWorkingSchemaDocumentsRecursive(transaction, lookup, physicalSchema,
+                        workingSchemaPrefix, indexPartition, attributeDepth + 1, partitionResults);
 
                     if (partialResults.Count == 0)
                     {
