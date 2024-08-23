@@ -382,6 +382,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                         var rightRange = tokenizer.GetNext().ToLowerInvariant();
 
+                        if (numericLiterals.TryGetValue(rightRange, out string? rightRangeNumeric))
+                        {
+                            rightRange = rightRangeNumeric.ToLowerInvariant();
+                        }
+
                         right = $"{right}:{rightRange}";
 
                         endPosition = tokenizer.Position;

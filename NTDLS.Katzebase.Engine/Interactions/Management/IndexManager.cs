@@ -424,7 +424,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var partialResults = MatchDocumentsForWhere(transaction, lookup, physicalSchema, workingSchemaPrefix);
 
                     groupResults = groupResults.Intersect(partialResults);
-                    Console.WriteLine($"Depth: <root>, Count: {partialResults.Count}, Total: {groupResults.Count}");
+
+                    LogManager.Debug($"Depth: <root>, Count: {partialResults.Count}, Total: {groupResults.Count}");
                     if (groupResults.Count == 0)
                     {
                         break; //Condition eliminated all possible results on this level.
@@ -474,13 +475,17 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         var parameter = new MatchWorkingSchemaDocumentsOperation.Parameter(operation, indexPartition);
 
+                        var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
                         queue.Enqueue(parameter, MatchWorkingSchemaDocumentsThreadWorker);
+                        ptThreadQueue?.StopAndAccumulate();
                     }
 
+                    var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
                     queue.WaitForCompletion();
+                    ptThreadCompletion?.StopAndAccumulate();
 
                     accumulatedResults = accumulatedResults.Intersect(operation.ThreadResults);
-                    Console.WriteLine($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
+                    LogManager.Debug($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
                     if (accumulatedResults.Count == 0)
                     {
                         break; //Condition eliminated all possible results on this level.
@@ -557,7 +562,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var partialResults = DistillIndexLeaves(partitionResults);
 
                     results = results.Intersect(partialResults);
-                    Console.WriteLine($"Partition: {indexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
+                    LogManager.Debug($"Partition: {indexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
                     if (results.Count == 0)
                     {
                         break; //Condition eliminated all possible results on this level.
@@ -570,7 +575,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         workingSchemaPrefix, indexPartition, attributeDepth + 1, partitionResults);
 
                     results = results.Intersect(partialResults);
-                    Console.WriteLine($"Partition: {indexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
+                    LogManager.Debug($"Partition: {indexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
                     if (results.Count == 0)
                     {
                         break; //Condition eliminated all possible results on this level.
