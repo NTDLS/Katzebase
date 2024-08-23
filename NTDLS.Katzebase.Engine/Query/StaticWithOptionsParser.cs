@@ -90,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException($"Invalid query. Found '{name}', expected {expectedValues}.");
                     }
 
-                    if (query.LiteralStrings.TryGetValue(tokenValue, out string? value))
+                    if (query.StringLiterals.TryGetValue(tokenValue, out string? value))
                     {
                         tokenValue = value;
                         tokenValue = tokenValue.Substring(1, tokenValue.Length - 2);

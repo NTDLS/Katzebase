@@ -9,18 +9,27 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 {
     internal class Condition
     {
-        public bool CoveredByIndex { get; set; } = false;
-        public string SubConditionKey { get; private set; }
         public string ConditionKey { get; private set; }
         public SmartValue Left { get; private set; } = new();
         public SmartValue Right { get; private set; } = new();
+
+        /// <summary>
+        /// Used by ConditionOptimization.BuildTree() do determine when an index has already been matched to this condition.
+        /// </summary>
+        public bool IsIndexOptimized { get; set; } = false;
+
+        /// <summary>
+        /// Logical connector: AND or OR
+        /// </summary>
         public LogicalConnector LogicalConnector { get; private set; } = LogicalConnector.None;
+        /// <summary>
+        /// Logical qualifier: Equals, greater than, not equal, etc.
+        /// </summary>
         public LogicalQualifier LogicalQualifier { get; private set; } = LogicalQualifier.None;
 
-        public Condition(string subConditionKey, string conditionKey, LogicalConnector logicalConnector,
+        public Condition(string conditionKey, LogicalConnector logicalConnector,
             string left, LogicalQualifier logicalQualifier, string right)
         {
-            SubConditionKey = subConditionKey;
             ConditionKey = conditionKey;
             Left.Value = left;
             Right.Value = right;
@@ -28,13 +37,26 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             LogicalQualifier = logicalQualifier;
         }
 
-        public Condition(string subConditionKey, string conditionKey,
+        public Condition(string conditionKey,
             LogicalConnector logicalConnector, LogicalQualifier logicalQualifier)
         {
-            SubConditionKey = subConditionKey;
             ConditionKey = conditionKey;
             LogicalConnector = logicalConnector;
             LogicalQualifier = logicalQualifier;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is Condition other)
+            {
+                return Left.Key.Equals(other.Left.Key);
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return Left.Key.GetHashCode();
         }
 
         /// <summary>
@@ -46,7 +68,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         }
         public Condition Clone()
         {
-            var clone = new Condition(SubConditionKey, ConditionKey, LogicalConnector, LogicalQualifier)
+            var clone = new Condition(ConditionKey, LogicalConnector, LogicalQualifier)
             {
                 Left = Left.Clone(),
                 Right = Right.Clone()

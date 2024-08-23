@@ -6,8 +6,8 @@ using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Query;
-using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Client.KbConstants;
@@ -286,7 +286,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                         var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schema.Name, LockOperation.Read);
 
-                        var lookupOptimization = ConditionOptimization.Build(_core,
+                        var lookupOptimization = IndexingConditionOptimization.BuildTree(_core,
                             transactionReference.Transaction, physicalSchema, schema.Conditions, schema.Prefix);
 
                         var explanation = schemaIdentifier + lookupOptimization.ExplainOptimization(1);

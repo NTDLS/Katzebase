@@ -6,6 +6,46 @@ namespace NTDLS.Katzebase.Engine.Library
 {
     public static class Helpers
     {
+        /// <summary>
+        /// Adds the values of the given dictionary to the referenced dictionary.
+        /// </summary>
+        public static void UnionWith<K, V>(this Dictionary<K, V> full, Dictionary<K, V>? partial) where K : notnull
+        {
+            if (partial != null)
+            {
+                foreach (var kvp in partial)
+                {
+                    full[kvp.Key] = kvp.Value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Produces a new dictionary that is the product of the common keys between the two.
+        /// If the given dictionary is null, a clone of dictionary two is returned.
+        /// </summary>
+        public static Dictionary<K, V> Intersect<K, V>(this Dictionary<K, V>? one, Dictionary<K, V> two) where K : notnull
+        {
+            //return one.Where(o => two.ContainsKey(o.Key)).ToDictionary(o => o.Key, o => o.Value);
+
+            if (one == null)
+            {
+                return two.ToDictionary(o => o.Key, o => o.Value);
+            }
+
+            Dictionary<K, V> commonEntries = new();
+
+            foreach (var kvp in one)
+            {
+                if (two.ContainsKey(kvp.Key))
+                {
+                    commonEntries[kvp.Key] = kvp.Value;
+                }
+            }
+
+            return commonEntries;
+        }
+
         public static void CopyDirectory(string sourcePath, string destinationPath)
         {
             Directory.CreateDirectory(destinationPath);

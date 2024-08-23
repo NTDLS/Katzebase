@@ -13,6 +13,8 @@ namespace NTDLS.Katzebase.Engine.Trace
         {
             IndexSearch,
             IndexDistillation,
+            DocumentPointerUnion,
+            DocumentPointerIntersect,
             AcquireTransaction,
             Optimization,
             Lock,

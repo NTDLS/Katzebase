@@ -6,6 +6,7 @@ using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
@@ -60,49 +61,31 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 var limitedDocumentPointers = new List<DocumentPointer>();
 
-                if (topLevelSchemaMap.Optimization.CanApplyIndexing())
+                if (topLevelSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
                 {
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                     documentPointers = new List<DocumentPointer>();
 
-                    //All condition SubConditions have a selected index. Start building a list of possible document IDs.
-                    foreach (var subCondition in topLevelSchemaMap.Optimization.Conditions.NonRootSubConditions)
-                    {
-                        var indexMatchedDocuments = core.Indexes.MatchWorkingSchemaDocuments
-                            (transaction, topLevelSchemaMap.PhysicalSchema, subCondition.IndexSelection.EnsureNotNull(), subCondition, topLevelSchemaMap.Prefix);
+                    var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(transaction,
+                        topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, topLevelSchemaMap.Prefix);
 
+                    if (indexMatchedDocuments != null)
+                    {
                         limitedDocumentPointers.AddRange(indexMatchedDocuments.Select(o => o.Value));
                     }
 
                     documentPointers = limitedDocumentPointers;
-                }
-                else
-                {
-                    #region Why no indexing? Find out here!
-                    //   * One or more of the condition SubConditions lacks an index.
-                    //   *
-                    //   *   Since indexing requires that we can ensure document elimination we will have
-                    //   *      to ensure that we have a covering index on EACH-and-EVERY condition group.
-                    //   *
-                    //   *   Then we can search the indexes for each condition group to obtain a list of all possible
-                    //   *       document IDs, then use those document IDs to early eliminate documents from the main lookup loop.
-                    //   *
-                    //   *   If any one condition group does not have an index, then no indexing will be used at all since all
-                    //   *      documents will need to be scanned anyway. To prevent unindexed scans, reduce the number of
-                    //   *      condition groups (nested in parentheses).
-                    //   *
-                    //   * ConditionLookupOptimization:BuildFullVirtualCondition() Will tell you why we can't use an index.
-                    //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualCondition();
-                    #endregion
                 }
             }
 
             //If we do not have any documents, then get the whole schema.
             documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, topLevelSchemaMap.PhysicalSchema, LockOperation.Read);
 
-            var queue = core.ThreadPool.Generic.CreateChildQueue<DocumentLookupOperationInstance>(core.Settings.ChildThreadPoolQueueDepth);
+            var queue = core.ThreadPool.Generic.CreateChildQueue<Parameter>(core.Settings.ChildThreadPoolQueueDepth);
 
             var operation = new DocumentLookupOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
+
+            LogManager.Debug($"Starting document scan with {documentPointers.Count()} documents.");
 
             foreach (var documentPointer in documentPointers)
             {
@@ -118,10 +101,14 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     break;
                 }
 
-                var instance = new DocumentLookupOperationInstance(operation, documentPointer);
+                var instance = new Parameter(operation, documentPointer);
 
                 var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
-                queue.Enqueue(instance, LookupThreadWorker);
+                queue.Enqueue(instance, LookupThreadWorker/*, (QueueItemState<DocumentLookupOperationInstance> o) =>
+                {
+                    LogManager.Information($"CompletionTime: {o.CompletionTime?.TotalMilliseconds:n0}.");
+
+                }*/);
                 ptThreadQueue?.StopAndAccumulate();
             }
 
@@ -259,7 +246,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         #region Threading: DocumentLookupThreadInstance.
 
-        private static void LookupThreadWorker(DocumentLookupOperationInstance instance)
+        private static void LookupThreadWorker(Parameter instance)
         {
             instance.Operation.Transaction.EnsureActive();
 
@@ -342,7 +329,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         #endregion
 
-        private static void IntersectAllSchemas(DocumentLookupOperationInstance instance,
+        private static void IntersectAllSchemas(Parameter instance,
             DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection resultingRows)
         {
             var topLevelSchemaMap = instance.Operation.SchemaMap.First();
@@ -408,7 +395,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <param name="threadScopedContentCache">Document cache for the lifetime of the entire join operation for this thread.</param>
         /// <param name="joinScopedContentCache">>Document cache used the lifetime of a single row join for this thread.</param>
         /// <exception cref="KbEngineException"></exception>
-        private static void IntersectAllSchemasRecursive(DocumentLookupOperationInstance instance,
+        private static void IntersectAllSchemasRecursive(Parameter instance,
             int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
             ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
             ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
@@ -431,7 +418,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
 
             //Create a reference to the entire document catalog.
-            IEnumerable<DocumentPointer>? limitedDocumentPointers = null;
+            IEnumerable<DocumentPointer>? documentPointers = null;
 
             #region Indexing to reduce the number of document pointers in "limitedDocumentPointers".
 
@@ -469,16 +456,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             #endregion
 
-            if (currentSchemaMap.Optimization?.CanApplyIndexing() == true)
+            if (currentSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
             {
-                //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                var furtherLimitedDocumentPointers = new List<DocumentPointer>();
+                var joinKeyValues = new KbInsensitiveDictionary<string>();
 
                 //All condition SubConditions have a selected index. Start building a list of possible document IDs.
                 foreach (var subCondition in currentSchemaMap.Optimization.Conditions.NonRootSubConditions)
                 {
-                    var keyValuePairs = new KbInsensitiveDictionary<string>();
-
                     //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
                     foreach (var condition in subCondition.Conditions)
                     {
@@ -488,41 +472,22 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                         {
                             throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
                         }
-                        keyValuePairs.Add(condition.Left?.Value ?? "", documentValue?.ToString() ?? "");
+                        joinKeyValues[condition.Right?.Key ?? ""] = documentValue?.ToString() ?? "";
                     }
-
-                    //Match on values from the document.
-                    var documentIds = instance.Operation.Core.Indexes.MatchConditionValuesDocuments
-                        (instance.Operation.Transaction, currentSchemaMap.PhysicalSchema, subCondition.IndexSelection.EnsureNotNull(), subCondition, keyValuePairs);
-
-                    furtherLimitedDocumentPointers.AddRange(documentIds.Values);
                 }
 
-                limitedDocumentPointers = furtherLimitedDocumentPointers;
-            }
-            else
-            {
-                #region Why no indexing? Find out here!
-                //   * One or more of the condition SubConditions lacks an index.
-                //   *
-                //   *   Since indexing requires that we can ensure document elimination we will have
-                //   *      to ensure that we have a covering index on EACH-and-EVERY condition group.
-                //   *
-                //   *   Then we can search the indexes for each condition group to obtain a list of all possible
-                //   *       document IDs, then use those document IDs to early eliminate documents from the main lookup loop.
-                //   *
-                //   *   If any one condition group does not have an index, then no indexing will be used at all since all
-                //   *      documents will need to be scanned anyway. To prevent unindexed scans, reduce the number of
-                //   *      condition groups (nested in parentheses).
-                //   *
-                //   * ConditionLookupOptimization:BuildFullVirtualCondition() Will tell you why we can't use an index.
-                //   * var explanationOfIndexability = lookupOptimization.BuildFullVirtualCondition();
-                //*
-                #endregion
+                //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
+
+                var limitedDocumentPointers = instance.Operation.Core.Indexes.MatchSchemaDocumentsByConditionsClause(instance.Operation.Transaction,
+                    currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix, joinKeyValues);
+
+                documentPointers = limitedDocumentPointers.Select(o => o.Value);
             }
 
-            limitedDocumentPointers ??= instance.Operation.Core.Documents.AcquireDocumentPointers(
+            documentPointers ??= instance.Operation.Core.Documents.AcquireDocumentPointers(
                     instance.Operation.Transaction, currentSchemaMap.PhysicalSchema, LockOperation.Read);
+
+            LogManager.Debug($"Starting join document scan with {documentPointers.Count()} documents.");
 
             #endregion
 
@@ -532,7 +497,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //  relationship then we will need to use this to make additional copies of the original row.
             var rowTemplate = resultingRow.Clone();
 
-            foreach (var documentPointer in limitedDocumentPointers)
+            foreach (var documentPointer in documentPointers)
             {
                 string threadScopedDocumentCacheKey = $"{currentSchemaKVP.Key}:{documentPointer.Key}";
 
@@ -607,9 +572,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in conditions.Root.ExpressionKeys)
+            foreach (var expressionKey in conditions.Root.ExpressionKeys)
             {
-                var subCondition = conditions.SubConditionFromKey(subConditionKey);
+                var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
                 SetSchemaIntersectionConditionParametersRecursive(transaction,
                     ref expression, conditions, subCondition, joinScopedContentCache);
             }
@@ -620,9 +585,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
+            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
-                var subCondition = conditions.SubConditionFromKey(subConditionKey);
+                var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
                 SetSchemaIntersectionConditionParametersRecursive(transaction,
                     ref expression, conditions, subCondition, joinScopedContentCache);
             }
@@ -653,7 +618,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// This function will "produce" a single row.
         /// </summary>
-        private static void FillInSchemaResultDocumentValues(DocumentLookupOperationInstance instance, string schemaKey,
+        private static void FillInSchemaResultDocumentValues(Parameter instance, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
@@ -674,7 +639,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// Gets the values of all selected fields from document.
         /// </summary>
         /// 
-        private static void FillInSchemaResultDocumentValuesAtomic(DocumentLookupOperationInstance instance, string schemaKey,
+        private static void FillInSchemaResultDocumentValuesAtomic(Parameter instance, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
@@ -799,7 +764,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
         private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(
-            Transaction transaction, DocumentLookupOperationInstance instance, SchemaIntersectionRowCollection inputResults)
+            Transaction transaction, Parameter instance, SchemaIntersectionRowCollection inputResults)
         {
             var outputResults = new List<SchemaIntersectionRow>();
             var expression = new NCalc.Expression(instance.Operation.Query.Conditions.Expression);
@@ -828,9 +793,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             ref NCalc.Expression expression, Conditions conditions, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in conditions.Root.ExpressionKeys)
+            foreach (var expressionKey in conditions.Root.ExpressionKeys)
             {
-                var subCondition = conditions.SubConditionFromKey(subConditionKey);
+                var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
                 SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
             }
         }
@@ -842,9 +807,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             Conditions conditions, SubCondition givenSubCondition, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var subConditionKey in givenSubCondition.ExpressionKeys)
+            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
-                var subCondition = conditions.SubConditionFromKey(subConditionKey);
+                var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
                 SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
             }
 

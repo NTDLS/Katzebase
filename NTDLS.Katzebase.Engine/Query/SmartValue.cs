@@ -24,7 +24,11 @@ namespace NTDLS.Katzebase.Engine.Query
         public bool IsSet { get; private set; }
         public string Prefix { get; private set; } = string.Empty;
 
-        public string Key => string.IsNullOrEmpty(Prefix) ? (_value ?? "") : $"{Prefix}.{_value}";
+        /// <summary>
+        /// The schema.field key for the field. Can be parsed to PrefixedField via PrefixedField.Parse(this.Key).
+        /// </summary>
+        public string Key
+            => string.IsNullOrEmpty(Prefix) ? (_value ?? "") : $"{Prefix}.{_value}";
 
         public SmartValue()
         {
@@ -52,48 +56,6 @@ namespace NTDLS.Katzebase.Engine.Query
         {
             return _value?.ToString() ?? string.Empty;
         }
-
-        /*
-        public void SetString(string value)
-        {
-            Value = value;
-
-            IsConstant = true;
-            IsNumeric = false;
-            IsString = true;
-        }
-
-        /// <summary>
-        /// This is a field name, not a string.
-        /// </summary>
-        /// <param name="value"></param>
-        public void SetField(string value)
-        {
-            Value = value;
-
-            IsConstant = false;
-            IsNumeric = false;
-            IsString = false;
-        }
-
-        /// <summary>
-        /// This is a constant number.
-        /// </summary>
-        /// <param name="value"></param>
-        public void SetNumeric(string value)
-        {
-            Value = value;
-
-            IsConstant = true;
-            IsNumeric = true;
-            IsString = false;
-
-            if (value.All(char.IsDigit) == false)
-            {
-                throw new KbInvalidArgumentException("Value must be numeric.");
-            }
-        }
-        */
 
         public string? Value
         {
@@ -125,7 +87,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
                     else
                     {
-                        if (_value.Contains('.'))
+                        if (_value.Contains('.') && double.TryParse(_value, out _) == false)
                         {
                             var parts = _value.Split('.');
                             if (parts.Length != 2)
@@ -138,10 +100,22 @@ namespace NTDLS.Katzebase.Engine.Query
                         }
                     }
 
-                    if (_value != null && _value.All(char.IsDigit))
+                    if (_value != null && double.TryParse(_value, out _))
                     {
                         IsConstant = true;
                         IsNumeric = true;
+                    }
+                    else if (_value != null && _value.Contains(':'))
+                    {
+                        //Check to see if this is a "between" expression "number:number" e.g. 5:10
+                        var parts = _value.Split(':');
+                        if (parts.Length == 2)
+                        {
+                            if (double.TryParse(parts[0], out _) && double.TryParse(parts[1], out _))
+                            {
+                                IsConstant = true;
+                            }
+                        }
                     }
                 }
 

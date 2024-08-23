@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// <summary>
         /// Thread parameters for a lookup operations. Used by a single thread.
         /// </summary>
-        internal class RebuildIndexInstance(RebuildIndexOperation operation, DocumentPointer documentPointer)
+        internal class Parameter(RebuildIndexOperation operation, DocumentPointer documentPointer)
         {
             public RebuildIndexOperation Operation { get; set; } = operation;
             public DocumentPointer DocumentPointer { get; set; } = documentPointer;

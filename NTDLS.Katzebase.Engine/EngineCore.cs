@@ -83,7 +83,6 @@ namespace NTDLS.Katzebase.Engine
 
             LogManager.Information("Initializing procedure manager.");
             Procedures = new ProcedureManager(this);
-
         }
 
         public void Start()

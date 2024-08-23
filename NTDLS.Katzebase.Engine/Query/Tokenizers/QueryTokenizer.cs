@@ -18,15 +18,27 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         public int Position => _position;
         public int Length => _text.Length;
         public int StartPosition => _startPosition;
-        public KbInsensitiveDictionary<string> LiteralStrings { get; private set; }
+        public KbInsensitiveDictionary<string> StringLiterals { get => _stringLiterals; }
+        public KbInsensitiveDictionary<string> NumericLiterals { get => _numericLiterals; }
         public List<string> Breadcrumbs { get; private set; } = new();
         public char? NextCharacter => _position < _text.Length ? _text[_position] : null;
         public bool IsEnd() => _position >= _text.Length;
 
+        /// <summary>
+        /// After the constructor is called, this will contain the same hash
+        ///     for the same query regardless of string or numeric constants.
+        /// </summary>
+        public string LogicHash { get; private set; }
+
+        private readonly KbInsensitiveDictionary<string> _stringLiterals;
+        private readonly KbInsensitiveDictionary<string> _numericLiterals;
+
         public QueryTokenizer(string text)
         {
             _text = text.Trim().TrimEnd(';').Trim();
-            LiteralStrings = CleanQueryText(ref _text);
+            CleanQueryText(ref _text, out _stringLiterals, out _numericLiterals);
+
+            LogicHash = Library.Helpers.GetSHA256Hash(_text);
         }
 
         public QueryTokenizer(string text, int startPosition)
@@ -34,12 +46,14 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             _text = text;
             _position = startPosition;
             _startPosition = startPosition;
-            LiteralStrings = CleanQueryText(ref _text);
+            CleanQueryText(ref _text, out _stringLiterals, out _numericLiterals);
+
+            LogicHash = Library.Helpers.GetSHA256Hash(_text);
         }
 
         public void SwapFieldLiteral(ref string givenValue)
         {
-            if (string.IsNullOrEmpty(givenValue) == false && LiteralStrings.TryGetValue(givenValue, out string? value))
+            if (string.IsNullOrEmpty(givenValue) == false && StringLiterals.TryGetValue(givenValue, out string? value))
             {
                 givenValue = value;
 
@@ -118,6 +132,12 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         public int GetNextAsInt()
         {
             string token = GetNext();
+
+            if (NumericLiterals.TryGetValue(token, out var literal))
+            {
+                token = literal;
+            }
+
             if (int.TryParse(token, out int value) == false)
             {
                 throw new KbParserException("Invalid query. Found [" + token + "], expected numeric row limit.");
@@ -229,26 +249,51 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         /// <param name="query"></param>
         /// <param name="swapLiteralsBackIn"></param>
         /// <returns></returns>
-        public static KbInsensitiveDictionary<string> CleanQueryText(ref string query, bool swapLiteralsBackIn = false)
+        public static void CleanQueryText(ref string query,
+            out KbInsensitiveDictionary<string> stringLiterals,
+            out KbInsensitiveDictionary<string> numericLiterals)
         {
             query = KbTextUtility.RemoveComments(query);
 
-            var literalStrings = SwapOutLiteralStrings(ref query);
+            stringLiterals = SwapOutlStringLiterals(ref query);
+
+            //We replace numeric constants and we want to make sure we have 
+            //  no numbers next to any conditional operators before we do so.
+            query = query.Replace("!=", "$$NotEqual$$");
+            query = query.Replace(">=", "$$GreaterOrEqual$$");
+            query = query.Replace("<=", "$$LesserOrEqual$$");
+            query = query.Replace(">", " > ");
+            query = query.Replace("<", " < ");
+            query = query.Replace("=", " = ");
+            query = query.Replace("$$NotEqual$$", " != ");
+            query = query.Replace("$$GreaterOrEqual$$", " >= ");
+            query = query.Replace("$$LesserOrEqual$$", " <= ");
+            query = query.Replace("||", " || ");
+            query = query.Replace("&&", " && ");
+
+            numericLiterals = SwapOutNumericLiterals(ref query);
+
+            int length;
+            do
+            {
+                length = query.Length;
+                query = query.Replace("\t", " ");
+                query = query.Replace("  ", " ");
+            }
+            while (length != query.Length);
+
             query = query.Trim();
 
             query = query.Replace("(", " ( ").Replace(")", " ) ");
 
             RemoveComments(ref query);
-            if (swapLiteralsBackIn)
-            {
-                SwapInLiteralStrings(ref query, literalStrings);
-            }
+
             TrimAllLines(ref query);
             RemoveEmptyLines(ref query);
             RemoveNewlines(ref query);
             RemoveDoubleWhitespace(ref query);
+
             query = query.Trim();
-            return literalStrings;
         }
 
         /// <summary>
@@ -256,20 +301,53 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public static KbInsensitiveDictionary<string> SwapOutLiteralStrings(ref string query)
+        public static KbInsensitiveDictionary<string> SwapOutlStringLiterals(ref string query)
         {
             var mappings = new KbInsensitiveDictionary<string>();
-
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
-            var results = regex.Matches(query);
+            int literalKey = 0;
 
-            foreach (Match match in results)
+            while (true)
             {
-                string guid = $"${Guid.NewGuid()}$";
+                var match = regex.Match(query);
 
-                mappings.Add(guid, match.ToString());
+                if (match.Success)
+                {
+                    string key = $"$S_{literalKey++}$";
+                    mappings.Add(key, match.ToString());
 
-                query = query.Replace(match.ToString(), guid);
+                    query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return mappings;
+        }
+
+        public static KbInsensitiveDictionary<string> SwapOutNumericLiterals(ref string query)
+        {
+            var mappings = new KbInsensitiveDictionary<string>();
+            var regex = new Regex(@"(?<=\s|^)(?:\d+\.?\d*|\.\d+)(?=\s|$)");
+            int literalKey = 0;
+
+            while (true)
+            {
+                var match = regex.Match(query);
+
+                if (match.Success)
+                {
+                    string key = $"%N_{literalKey++}%";
+                    mappings.Add(key, match.ToString());
+
+                    query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                }
+                else
+                {
+                    break;
+                }
             }
 
             return mappings;

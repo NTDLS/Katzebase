@@ -286,7 +286,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                             string queryText = tokenizer.Text.Substring(previousPosition, tokenizer.Position - previousPosition).Trim();
 
-                            foreach (var literalString in tokenizer.LiteralStrings)
+                            foreach (var literalString in tokenizer.StringLiterals)
                             {
                                 queryText = queryText.Replace(literalString.Key, literalString.Value);
                             }
@@ -481,7 +481,8 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
 
                 result.UpdateValues = StaticFunctionParsers.ParseUpdateFields(tokenizer);
-                result.UpdateValues.RefillStringLiterals(tokenizer.LiteralStrings);
+                result.UpdateValues.RefillLiterals(tokenizer.StringLiterals, true);
+                result.UpdateValues.RefillLiterals(tokenizer.NumericLiterals, false);
 
                 token = tokenizer.GetNext();
                 if (token != string.Empty && !token.Is("where"))
@@ -531,7 +532,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: list of conditions.");
                     }
 
-                    result.Conditions = Conditions.Create(conditionText, tokenizer.LiteralStrings);
+                    result.Conditions = Conditions.Create(conditionText, tokenizer.StringLiterals, tokenizer.NumericLiterals);
                 }
             }
             #endregion
@@ -697,7 +698,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 else
                 {
                     result.SelectFields = StaticFunctionParsers.ParseQueryFields(tokenizer);
-                    result.SelectFields.RefillStringLiterals(tokenizer.LiteralStrings);
+                    result.SelectFields.RefillStringLiterals(tokenizer.StringLiterals);
                 }
 
                 if (tokenizer.PeekNext().Is("into"))
@@ -809,7 +810,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
 
                     var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Position - joinConditionsStartPosition).Trim();
-                    var joinConditions = Conditions.Create(joinConditionsText, tokenizer.LiteralStrings, subSchemaAlias);
+                    var joinConditions = Conditions.Create(joinConditionsText, tokenizer.StringLiterals, tokenizer.NumericLiterals, subSchemaAlias);
 
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
@@ -855,7 +856,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + conditionText + "', expected: list of conditions.");
                     }
 
-                    result.Conditions = Conditions.Create(conditionText, tokenizer.LiteralStrings);
+                    result.Conditions = Conditions.Create(conditionText, tokenizer.StringLiterals, tokenizer.NumericLiterals);
                 }
 
                 if (tokenizer.PeekNext().Is("group"))
@@ -1070,7 +1071,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
 
                     var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Position - joinConditionsStartPosition).Trim();
-                    var joinConditions = Conditions.Create(joinConditionsText, tokenizer.LiteralStrings, subSchemaAlias);
+                    var joinConditions = Conditions.Create(joinConditionsText, tokenizer.StringLiterals, tokenizer.NumericLiterals, subSchemaAlias);
 
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
@@ -1120,7 +1121,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: list of conditions.");
                     }
 
-                    result.Conditions = Conditions.Create(conditionText, tokenizer.LiteralStrings);
+                    result.Conditions = Conditions.Create(conditionText, tokenizer.StringLiterals, tokenizer.NumericLiterals);
                 }
             }
             #endregion
@@ -1173,7 +1174,8 @@ namespace NTDLS.Katzebase.Engine.Query
                 result.UpsertValues = StaticFunctionParsers.ParseInsertFields(tokenizer);
                 foreach (var upsertValue in result.UpsertValues)
                 {
-                    upsertValue.RefillStringLiterals(tokenizer.LiteralStrings);
+                    upsertValue.RefillLiterals(tokenizer.StringLiterals, true);
+                    upsertValue.RefillLiterals(tokenizer.NumericLiterals, false);
                 }
             }
             #endregion
@@ -1224,12 +1226,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
             foreach (var schema in result.Schemas)
             {
-                if (tokenizer.LiteralStrings.TryGetValue(schema.Name, out var name))
+                if (tokenizer.StringLiterals.TryGetValue(schema.Name, out var name))
                 {
                     schema.Name = name.Substring(1, name.Length - 2);
                 }
 
-                if (tokenizer.LiteralStrings.TryGetValue(schema.Prefix, out var prefix))
+                if (tokenizer.StringLiterals.TryGetValue(schema.Prefix, out var prefix))
                 {
                     schema.Prefix = prefix.Substring(1, prefix.Length - 2);
                 }
@@ -1237,7 +1239,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
             foreach (var field in result.SelectFields) //Top level fields.
             {
-                if (tokenizer.LiteralStrings.TryGetValue(field.Alias, out var alias))
+                if (tokenizer.StringLiterals.TryGetValue(field.Alias, out var alias))
                 {
                     field.Alias = alias.Substring(1, alias.Length - 2);
                 }
@@ -1253,7 +1255,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
             foreach (var field in result.SortFields)
             {
-                if (tokenizer.LiteralStrings.TryGetValue(field.Alias, out string? alias))
+                if (tokenizer.StringLiterals.TryGetValue(field.Alias, out string? alias))
                 {
                     field.Alias = alias.Substring(1, alias.Length - 2);
                     field.Field = field.Alias;
