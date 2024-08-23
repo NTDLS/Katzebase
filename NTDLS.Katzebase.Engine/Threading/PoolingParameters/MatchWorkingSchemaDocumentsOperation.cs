@@ -19,18 +19,6 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         public string WorkingSchemaPrefix { get; set; }
         public Condition Condition { get; set; }
 
-        public class MatchWorkingSchemaDocumentsInstance
-        {
-            public MatchWorkingSchemaDocumentsOperation Operation { get; set; }
-            public uint IndexPartition { get; set; }
-
-            public MatchWorkingSchemaDocumentsInstance(MatchWorkingSchemaDocumentsOperation operation, uint indexPartition)
-            {
-                Operation = operation;
-                IndexPartition = indexPartition;
-            }
-        }
-
         public MatchWorkingSchemaDocumentsOperation(Transaction transaction, IndexingConditionLookup lookup,
             PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition)
         {
@@ -39,6 +27,18 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
             PhysicalSchema = physicalSchema;
             WorkingSchemaPrefix = workingSchemaPrefix;
             Condition = condition;
+        }
+
+        public class Parameter
+        {
+            public MatchWorkingSchemaDocumentsOperation Operation { get; set; }
+            public uint IndexPartition { get; set; }
+
+            public Parameter(MatchWorkingSchemaDocumentsOperation operation, uint indexPartition)
+            {
+                Operation = operation;
+                IndexPartition = indexPartition;
+            }
         }
     }
 }

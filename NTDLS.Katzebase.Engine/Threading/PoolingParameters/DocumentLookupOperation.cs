@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// </summary>
         /// <param name="operation"></param>
         /// <param name="documentPointer"></param>
-        internal class DocumentLookupOperationInstance(DocumentLookupOperation operation, DocumentPointer documentPointer)
+        internal class Parameter(DocumentLookupOperation operation, DocumentPointer documentPointer)
         {
             public DocumentLookupOperation Operation { get; set; } = operation;
             public DocumentPointer DocumentPointer { get; set; } = documentPointer;

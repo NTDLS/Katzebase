@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// <summary>
         /// Thread parameters for a lookup operations. Used by a single thread.
         /// </summary>
-        internal class MatchConditionValuesDocumentsInstance(MatchConditionValuesDocumentsOperation operation, int indexPartition)
+        internal class Parameter(MatchConditionValuesDocumentsOperation operation, int indexPartition)
         {
             public MatchConditionValuesDocumentsOperation Operation { get; set; } = operation;
             public int IndexPartition { get; set; } = indexPartition;

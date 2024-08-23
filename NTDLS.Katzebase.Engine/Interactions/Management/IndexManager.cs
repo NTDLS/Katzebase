@@ -285,7 +285,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             */
         }
 
-        private void MatchConditionValuesDocumentsThreadWorker(MatchConditionValuesDocumentsInstance instance)
+        private void MatchConditionValuesDocumentsThreadWorker(Parameter instance)
         {
             try
             {
@@ -521,15 +521,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     indexPartitions.Add(8);
 
 
-                    var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchWorkingSchemaDocumentsOperation.MatchWorkingSchemaDocumentsInstance>(_core.Settings.ChildThreadPoolQueueDepth);
+                    var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchWorkingSchemaDocumentsOperation.Parameter>(_core.Settings.ChildThreadPoolQueueDepth);
 
                     var operation = new MatchWorkingSchemaDocumentsOperation(transaction, lookup, physicalSchema, workingSchemaPrefix, condition);
 
                     foreach (var indexPartition in indexPartitions)
                     {
-                        var instance = new MatchWorkingSchemaDocumentsOperation.MatchWorkingSchemaDocumentsInstance(operation, indexPartition);
+                        var parameter = new MatchWorkingSchemaDocumentsOperation.Parameter(operation, indexPartition);
 
-                        queue.Enqueue(instance, MatchWorkingSchemaDocumentsThreadWorker);
+                        queue.Enqueue(parameter, MatchWorkingSchemaDocumentsThreadWorker);
                     }
 
                     queue.WaitForCompletion();
@@ -546,22 +546,22 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private void MatchWorkingSchemaDocumentsThreadWorker(MatchWorkingSchemaDocumentsOperation.MatchWorkingSchemaDocumentsInstance instance)
+        private void MatchWorkingSchemaDocumentsThreadWorker(MatchWorkingSchemaDocumentsOperation.Parameter parameter)
         {
             try
             {
                 Dictionary<uint, DocumentPointer> threadResults = new();
 
-                string pageDiskPath = instance.Operation.Lookup.Index.GetPartitionPagesFileName(instance.Operation.PhysicalSchema, instance.IndexPartition);
-                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Read);
+                string pageDiskPath = parameter.Operation.Lookup.Index.GetPartitionPagesFileName(parameter.Operation.PhysicalSchema, parameter.IndexPartition);
+                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(parameter.Operation.Transaction, pageDiskPath, LockOperation.Read);
 
                 HashSet<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
                 if (workingPhysicalIndexLeaves.Count > 0)
                 {
                     //First process the condition at the AttributeDepth that was passed in.
-                    workingPhysicalIndexLeaves = IndexingConditionLookup_Seek(instance.Operation.Transaction, instance.Operation.Condition, workingPhysicalIndexLeaves);
+                    workingPhysicalIndexLeaves = IndexingConditionLookup_Seek(parameter.Operation.Transaction, parameter.Operation.Condition, workingPhysicalIndexLeaves);
 
-                    if (instance.Operation.Lookup.Index.Attributes.Count == 1)
+                    if (parameter.Operation.Lookup.Index.Attributes.Count == 1)
                     {
                         //The index only has one attribute, so we are at the base where the document pointers are.
                         //(workingPhysicalIndexLeaves.FirstOrDefault()?.Documents?.Count > 0) //We found documents, we are at the base of the index.
@@ -570,16 +570,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     else if (workingPhysicalIndexLeaves.Count > 0)
                     {
                         //Further, recursively, process additional compound index attribute condition matches.
-                        threadResults = MatchWorkingSchemaDocumentsRecursive(instance.Operation.Transaction, instance.Operation.Lookup, instance.Operation.PhysicalSchema,
-                            instance.Operation.WorkingSchemaPrefix, instance.IndexPartition, 1, workingPhysicalIndexLeaves);
+                        threadResults = MatchWorkingSchemaDocumentsRecursive(parameter.Operation.Transaction, parameter.Operation.Lookup, parameter.Operation.PhysicalSchema,
+                            parameter.Operation.WorkingSchemaPrefix, parameter.IndexPartition, 1, workingPhysicalIndexLeaves);
                     }
                 }
 
                 if (threadResults.Count > 0)
                 {
-                    lock (instance.Operation.ThreadResults)
+                    lock (parameter.Operation.ThreadResults)
                     {
-                        UnionWith(ref instance.Operation.ThreadResults, threadResults);
+                        UnionWith(ref parameter.Operation.ThreadResults, threadResults);
                     }
                 }
             }
@@ -1189,42 +1189,42 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private void RebuildIndexThreadWorker(RebuildIndexOperation.RebuildIndexInstance instance)
+        private void RebuildIndexThreadWorker(RebuildIndexOperation.Parameter parameter)
         {
             try
             {
-                instance.Operation.Transaction.EnsureActive();
+                parameter.Operation.Transaction.EnsureActive();
 
-                if (instance.Operation.PhysicalSchema.DiskPath == null)
+                if (parameter.Operation.PhysicalSchema.DiskPath == null)
                 {
-                    throw new KbNullException($"Value should not be null {nameof(instance.Operation.PhysicalSchema.DiskPath)}.");
+                    throw new KbNullException($"Value should not be null {nameof(parameter.Operation.PhysicalSchema.DiskPath)}.");
                 }
 
                 var physicalDocument = _core.Documents.AcquireDocument(
-                    instance.Operation.Transaction, instance.Operation.PhysicalSchema, instance.DocumentPointer, LockOperation.Read);
+                    parameter.Operation.Transaction, parameter.Operation.PhysicalSchema, parameter.DocumentPointer, LockOperation.Read);
 
                 try
                 {
-                    var documentField = instance.Operation.PhysicalIndex.Attributes[0].Field;
+                    var documentField = parameter.Operation.PhysicalIndex.Attributes[0].Field;
                     physicalDocument.Elements.TryGetValue(documentField.EnsureNotNull(), out string? value);
 
-                    uint indexPartition = instance.Operation.PhysicalIndex.ComputePartition(value);
+                    uint indexPartition = parameter.Operation.PhysicalIndex.ComputePartition(value);
 
-                    lock (instance.Operation.SyncObjects[indexPartition])
+                    lock (parameter.Operation.SyncObjects[indexPartition])
                     {
-                        string pageDiskPath = instance.Operation.PhysicalIndex.GetPartitionPagesFileName(
-                            instance.Operation.PhysicalSchema, indexPartition);
+                        string pageDiskPath = parameter.Operation.PhysicalIndex.GetPartitionPagesFileName(
+                            parameter.Operation.PhysicalSchema, indexPartition);
 
                         var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(
-                            instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
+                            parameter.Operation.Transaction, pageDiskPath, LockOperation.Write);
 
-                        InsertDocumentIntoIndexPages(instance.Operation.Transaction,
-                            instance.Operation.PhysicalIndex, physicalIndexPages, physicalDocument, instance.DocumentPointer);
+                        InsertDocumentIntoIndexPages(parameter.Operation.Transaction,
+                            parameter.Operation.PhysicalIndex, physicalIndexPages, physicalDocument, parameter.DocumentPointer);
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogManager.Error($"Failed to insert document into index for process id {instance.Operation.Transaction.ProcessId}.", ex);
+                    LogManager.Error($"Failed to insert document into index for process id {parameter.Operation.Transaction.ProcessId}.", ex);
                     throw;
                 }
             }
@@ -1264,7 +1264,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         (physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var queue = _core.ThreadPool.Generic.CreateChildQueue<RebuildIndexOperation.RebuildIndexInstance>(_core.Settings.ChildThreadPoolQueueDepth);
+                var queue = _core.ThreadPool.Generic.CreateChildQueue<RebuildIndexOperation.Parameter>(_core.Settings.ChildThreadPoolQueueDepth);
 
                 var operation = new RebuildIndexOperation(
                     transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);
@@ -1276,10 +1276,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         break;
                     }
 
-                    var instance = new RebuildIndexOperation.RebuildIndexInstance(operation, documentPointer);
+                    var parameter = new RebuildIndexOperation.Parameter(operation, documentPointer);
 
                     var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
-                    queue.Enqueue(instance, RebuildIndexThreadWorker);
+                    queue.Enqueue(parameter, RebuildIndexThreadWorker);
                     ptThreadQueue?.StopAndAccumulate();
                 }
 
