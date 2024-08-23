@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                     documentPointers = new List<DocumentPointer>();
 
-                    var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByWhereClause(transaction,
+                    var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(transaction,
                         topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, topLevelSchemaMap.Prefix);
 
                     if (indexMatchedDocuments != null)
@@ -479,7 +479,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                 var furtherLimitedDocumentPointers = new Dictionary<uint, DocumentPointer>();
 
-                furtherLimitedDocumentPointers = instance.Operation.Core.Indexes.MatchSchemaDocumentsByWhereClause(instance.Operation.Transaction,
+                furtherLimitedDocumentPointers = instance.Operation.Core.Indexes.MatchSchemaDocumentsByConditionsClause(instance.Operation.Transaction,
                     currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix, joinKeyValues);
 
                 limitedDocumentPointers = furtherLimitedDocumentPointers.Select(o => o.Value);
