@@ -14,6 +14,7 @@ using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using NTDLS.Katzebase.Shared;
 using System.Text;
+
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Threading.PoolingParameters.MatchConditionValuesDocumentsOperation;
@@ -423,7 +424,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     var partialResults = MatchDocumentsForWhere(transaction, lookup, physicalSchema, workingSchemaPrefix);
 
+                    var ptDocumentPointerIntersect = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
                     groupResults = groupResults.Intersect(partialResults);
+                    ptDocumentPointerIntersect?.StopAndAccumulate();
 
                     LogManager.Debug($"Depth: <root>, Count: {partialResults.Count}, Total: {groupResults.Count}");
                     if (groupResults.Count == 0)
@@ -432,7 +435,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                 }
 
+                var ptDocumentPointerUnion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerUnion);
                 accumulatedResults.UnionWith(groupResults); //Each group is an OR condition, so just union them.
+                ptDocumentPointerUnion?.StopAndAccumulate();
             }
 
             return accumulatedResults;
@@ -484,7 +489,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     queue.WaitForCompletion();
                     ptThreadCompletion?.StopAndAccumulate();
 
+                    var ptDocumentPointerIntersect = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
                     accumulatedResults = accumulatedResults.Intersect(operation.ThreadResults);
+                    ptDocumentPointerIntersect?.StopAndAccumulate();
+
                     LogManager.Debug($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
                     if (accumulatedResults.Count == 0)
                     {
@@ -520,7 +528,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         //The index only has one attribute, so we are at the base where the document pointers are.
                         //(workingPhysicalIndexLeaves.FirstOrDefault()?.Documents?.Count > 0) //We found documents, we are at the base of the index.
+                        var ptIndexDistillation = parameter.Operation.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
                         threadResults = DistillIndexLeaves(workingPhysicalIndexLeaves);
+                        ptIndexDistillation?.StopAndAccumulate();
+
                     }
                     else if (workingPhysicalIndexLeaves.Count > 0)
                     {
@@ -532,10 +543,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (threadResults.Count > 0)
                 {
+                    var ptDocumentPointerUnion = parameter.Operation.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerUnion);
                     lock (parameter.Operation.ThreadResults)
                     {
                         parameter.Operation.ThreadResults.UnionWith(threadResults);
                     }
+                    ptDocumentPointerUnion?.StopAndAccumulate();
                 }
             }
             catch (Exception ex)
@@ -559,9 +572,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (attributeDepth == lookup.AttributeConditionSets.Count - 1)
                 {
                     //This is the bottom of the condition tree, as low as we can go in this index given the fields we have, so just distill the leaves.
-                    var partialResults = DistillIndexLeaves(partitionResults);
 
+                    var ptIndexDistillation = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
+                    var partialResults = DistillIndexLeaves(partitionResults);
+                    ptIndexDistillation?.StopAndAccumulate();
+
+                    var ptDocumentPointerIntersect = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
                     results = results.Intersect(partialResults);
+                    ptDocumentPointerIntersect?.StopAndAccumulate();
+
                     LogManager.Debug($"Partition: {indexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
                     if (results.Count == 0)
                     {
@@ -574,7 +593,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var partialResults = MatchWorkingSchemaDocumentsRecursive(transaction, lookup, physicalSchema,
                         workingSchemaPrefix, indexPartition, attributeDepth + 1, partitionResults);
 
+                    var ptDocumentPointerIntersect = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
                     results = results.Intersect(partialResults);
+                    ptDocumentPointerIntersect?.StopAndAccumulate();
+
                     LogManager.Debug($"Partition: {indexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
                     if (results.Count == 0)
                     {
