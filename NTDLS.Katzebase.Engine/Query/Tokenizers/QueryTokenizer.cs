@@ -132,6 +132,12 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         public int GetNextAsInt()
         {
             string token = GetNext();
+
+            if (NumericLiterals.TryGetValue(token, out var literal))
+            {
+                token = literal;
+            }
+
             if (int.TryParse(token, out int value) == false)
             {
                 throw new KbParserException("Invalid query. Found [" + token + "], expected numeric row limit.");
