@@ -1,6 +1,6 @@
 set TraceWaitTimes true
 
-select top 10
+select top 1
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
 	sl.Name as SourceLanguage,

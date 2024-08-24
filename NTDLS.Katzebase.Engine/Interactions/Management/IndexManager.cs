@@ -12,6 +12,7 @@ using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
+using System.Linq;
 using System.Text;
 
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
@@ -219,6 +220,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             Dictionary<uint, DocumentPointer> accumulatedResults = new();
 
+            var ptIndexSearch = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch, $"Schema: {workingSchemaPrefix}");
+
             foreach (var indexingConditionGroup in optimization.IndexingConditionGroup) //Loop through the OR groups
             {
                 Dictionary<uint, DocumentPointer>? groupResults = null;
@@ -242,6 +245,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 accumulatedResults.UnionWith(groupResults); //Each group is an OR condition, so just union them.
                 ptDocumentPointerUnion?.StopAndAccumulate();
             }
+
+            ptIndexSearch?.StopAndAccumulate();
 
             return accumulatedResults;
         }
@@ -301,7 +306,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             ptThreadQueue?.StopAndAccumulate();
                         }
 
-                        var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
+                        var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion, $"Index: {lookup.Index.Name}");
                         queue.WaitForCompletion();
                         ptThreadCompletion?.StopAndAccumulate();
 
@@ -999,7 +1004,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         ptThreadQueue?.StopAndAccumulate();
                     }
 
-                    var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
+                    var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion, $"Index: {physicalIndex.Name}");
                     queue.WaitForCompletion();
                     ptThreadCompletion?.StopAndAccumulate();
                 }
@@ -1177,7 +1182,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     ptThreadQueue?.StopAndAccumulate();
                 }
 
-                var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
+                var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion, $"Index: {physicalIndex.Name}");
                 queue.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 
