@@ -12,14 +12,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     internal class IOManager
     {
         private readonly EngineCore _core;
-        public IOManager(EngineCore core)
+        internal IOManager(EngineCore core)
         {
             _core = core;
         }
 
         #region Getters.
 
-        public T GetJsonNonTracked<T>(string filePath, bool useCompression = true)
+        internal T GetJsonNonTracked<T>(string filePath, bool useCompression = true)
         {
             LogManager.Debug($"IO:Read:{filePath}");
 
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public long GetDecompressedSizeTracked(string filePath)
+        internal long GetDecompressedSizeTracked(string filePath)
         {
             LogManager.Debug($"IO:Read:{filePath}");
 
@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public T GetPBufNonTracked<T>(string filePath)
+        internal T GetPBufNonTracked<T>(string filePath)
         {
             LogManager.Debug($"IO:Read:{filePath}");
 

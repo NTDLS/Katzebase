@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal IndexQueryHandlers QueryHandlers { get; private set; }
         public IndexAPIHandlers APIHandlers { get; private set; }
 
-        public IndexManager(EngineCore core)
+        internal IndexManager(EngineCore core)
         {
             _core = core;
             try
@@ -1016,10 +1016,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         private class RemoveDocumentsFromIndexThreadInstance
         {
-            public RemoveDocumentsFromIndexThreadOperation Operation { get; set; }
-            public int IndexPartition { get; set; }
+            internal RemoveDocumentsFromIndexThreadOperation Operation { get; set; }
+            internal int IndexPartition { get; set; }
 
-            public RemoveDocumentsFromIndexThreadInstance(RemoveDocumentsFromIndexThreadOperation operation, int indexPartition)
+            internal RemoveDocumentsFromIndexThreadInstance(RemoveDocumentsFromIndexThreadOperation operation, int indexPartition)
             {
                 Operation = operation;
                 IndexPartition = indexPartition;

@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal ProcedureQueryHandlers QueryHandlers { get; private set; }
         public ProcedureAPIHandlers APIHandlers { get; private set; }
 
-        public ProcedureManager(EngineCore core)
+        internal ProcedureManager(EngineCore core)
         {
             _core = core;
 

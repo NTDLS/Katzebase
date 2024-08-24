@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     public class HealthManager
     {
-        public OptimisticCriticalResource<KbInsensitiveDictionary<HealthCounter>> Counters { get; private set; } = new();
+        internal OptimisticCriticalResource<KbInsensitiveDictionary<HealthCounter>> Counters { get; private set; } = new();
 
         private readonly EngineCore _core;
         private DateTime lastCheckpoint = DateTime.MinValue;
@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal HealthQueryHandlers QueryHandlers { get; private set; }
         public HealthAPIHandlers APIHandlers { get; private set; }
 
-        public HealthManager(EngineCore core)
+        internal HealthManager(EngineCore core)
         {
             _core = core;
 

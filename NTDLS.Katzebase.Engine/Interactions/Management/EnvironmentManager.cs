@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal EnvironmentQueryHandlers QueryHandlers { get; private set; }
         public EnvironmentAPIHandlers APIHandlers { get; private set; }
 
-        public EnvironmentManager(EngineCore core)
+        internal EnvironmentManager(EngineCore core)
         {
             _core = core;
 

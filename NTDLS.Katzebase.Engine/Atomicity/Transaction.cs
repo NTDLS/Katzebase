@@ -261,7 +261,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 diskPath = diskPath.ToLowerInvariant();
 
                 var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.File, lockOperation);
-                var result = _core.Locking.Locks.Acquire(this, lockIntention);
+                var result = _core.Locking.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
                 return result;
@@ -291,7 +291,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 diskPath = diskPath.ToLowerInvariant();
 
                 var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.Directory, lockOperation);
-                var result = _core.Locking.Locks.Acquire(this, lockIntention);
+                var result = _core.Locking.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
                 return result;
@@ -321,7 +321,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                 diskPath = diskPath.ToLowerInvariant();
 
                 var lockIntention = new ObjectLockIntention(diskPath, LockGranularity.RecursiveDirectory, lockOperation);
-                var result = _core.Locking.Locks.Acquire(this, lockIntention);
+                var result = _core.Locking.Acquire(this, lockIntention);
                 ptLock?.StopAndAccumulate();
 
                 return result;

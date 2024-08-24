@@ -30,11 +30,6 @@ namespace NTDLS.Katzebase.Engine
 
         public EngineCore(KatzebaseSettings settings)
         {
-            if (Debugger.IsAttached)
-            {
-                ThreadOwnershipTracking.Enable();
-            }
-
             Settings = settings;
 
             var fileVersionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);

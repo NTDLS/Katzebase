@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         public SchemaAPIHandlers APIHandlers { get; private set; }
 
-        public PhysicalSchema RootPhysicalSchema
+        internal PhysicalSchema RootPhysicalSchema
         {
             get
             {
@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public SchemaManager(EngineCore core)
+        internal SchemaManager(EngineCore core)
         {
             _core = core;
 

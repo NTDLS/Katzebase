@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal DocumentQueryHandlers QueryHandlers { get; private set; }
         public DocumentAPIHandlers APIHandlers { get; private set; }
 
-        public DocumentManager(EngineCore core)
+        internal DocumentManager(EngineCore core)
         {
             _core = core;
 

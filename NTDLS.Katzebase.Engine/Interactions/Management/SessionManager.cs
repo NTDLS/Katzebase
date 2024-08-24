@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         public SessionAPIHandlers APIHandlers { get; private set; }
         internal SessionQueryHandlers QueryHandlers { get; private set; }
 
-        public SessionManager(EngineCore core)
+        internal SessionManager(EngineCore core)
         {
             _core = core;
             try
@@ -34,12 +34,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public Dictionary<Guid, SessionState> CloneSessions()
+        internal Dictionary<Guid, SessionState> CloneSessions()
         {
             return _collection.Read((obj) => obj.ToDictionary(o => o.Key, o => o.Value));
         }
 
-        public SessionState UpsertConnectionId(Guid connectionId, string clientName = "")
+        internal SessionState UpsertConnectionId(Guid connectionId, string clientName = "")
         {
             return _collection.Write((obj) =>
             {
@@ -125,7 +125,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return false;
         }
 
-        public SessionState ByProcessId(ulong processId)
+        internal SessionState ByProcessId(ulong processId)
         {
             return _collection.Read((obj) =>
             {

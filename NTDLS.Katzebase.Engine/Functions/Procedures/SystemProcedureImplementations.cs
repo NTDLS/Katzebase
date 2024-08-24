@@ -355,7 +355,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             result.AddField("Operation");
                             result.AddField("Object Name");
 
-                            var waitingTxSnapshots = core.Locking.Locks.SnapshotWaitingTransactions().ToList();
+                            var waitingTxSnapshots = core.Locking.SnapshotWaitingTransactions().ToList();
 
                             var processId = proc.Parameters.GetNullable<ulong?>("processId");
                             if (processId != null)

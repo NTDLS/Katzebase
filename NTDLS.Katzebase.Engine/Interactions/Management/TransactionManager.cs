@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return clones;
         }
 
-        public TransactionManager(EngineCore core)
+        internal TransactionManager(EngineCore core)
         {
             _core = core;
             try
@@ -224,10 +224,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public void Commit(SessionState session)
+        internal void Commit(SessionState session)
             => Commit(session.ProcessId);
 
-        public void Commit(ulong processId)
+        internal void Commit(ulong processId)
         {
             try
             {
@@ -240,10 +240,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public void Rollback(SessionState session)
+        internal void Rollback(SessionState session)
             => Rollback(session.ProcessId);
 
-        public void Rollback(ulong processId)
+        internal void Rollback(ulong processId)
         {
             try
             {

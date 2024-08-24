@@ -3,7 +3,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
-    public class TransactionReference : IDisposable
+    internal class TransactionReference : IDisposable
     {
         internal Transaction Transaction { get; private set; }
 
@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             GC.SuppressFinalize(this);
         }
 
-        public void Rollback()
+        internal void Rollback()
         {
             if (_isCommittedOrRolledBack == false)
             {
@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public void Commit()
+        internal void Commit()
         {
             if (_isCommittedOrRolledBack == false)
             {
@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public KbActionResponse CommitAndApplyMetricsThenReturnResults(int rowCount)
+        internal KbActionResponse CommitAndApplyMetricsThenReturnResults(int rowCount)
         {
             Commit();
 
@@ -51,12 +51,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             };
         }
 
-        public KbActionResponse CommitAndApplyMetricsThenReturnResults()
+        internal KbActionResponse CommitAndApplyMetricsThenReturnResults()
         {
             return CommitAndApplyMetricsThenReturnResults(0);
         }
 
-        public T CommitAndApplyMetricsThenReturnResults<T>(T result) where T : KbBaseActionResponse
+        internal T CommitAndApplyMetricsThenReturnResults<T>(T result) where T : KbBaseActionResponse
         {
             Commit();
 
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return result;
         }
 
-        public T CommitAndApplyMetricsThenReturnResults<T>(T result, int rowCount) where T : KbBaseActionResponse
+        internal T CommitAndApplyMetricsThenReturnResults<T>(T result, int rowCount) where T : KbBaseActionResponse
         {
             Commit();
 

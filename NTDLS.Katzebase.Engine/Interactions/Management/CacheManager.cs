@@ -12,9 +12,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private readonly EngineCore _core;
         private readonly PartitionedMemoryCache _cache;
 
-        public int PartitionCount { get; private set; }
+        internal int PartitionCount { get; private set; }
 
-        public CacheManager(EngineCore core)
+        internal CacheManager(EngineCore core)
         {
             _core = core;
 
@@ -37,12 +37,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public void Close()
+        internal void Close()
         {
             _cache.Dispose();
         }
 
-        public void Upsert(string key, object value, int approximateSizeInBytes = 0)
+        internal void Upsert(string key, object value, int approximateSizeInBytes = 0)
         {
             try
             {
@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public void Clear()
+        internal void Clear()
         {
             try
             {
@@ -68,7 +68,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public CachePartitionAllocationStats GetPartitionAllocationStatistics()
+        internal CachePartitionAllocationStats GetPartitionAllocationStatistics()
         {
             try
             {
@@ -81,7 +81,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public CachePartitionAllocationDetails GetPartitionAllocationDetails()
+        internal CachePartitionAllocationDetails GetPartitionAllocationDetails()
         {
             try
             {
@@ -94,7 +94,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public object? TryGet(string key)
+        internal object? TryGet(string key)
         {
             try
             {
@@ -107,7 +107,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public bool TryGet(string key, [NotNullWhen(true)] out object? value)
+        internal bool TryGet(string key, [NotNullWhen(true)] out object? value)
         {
             try
             {
@@ -125,7 +125,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public bool TryGet<T>(string key, [NotNullWhen(true)] out T? value)
+        internal bool TryGet<T>(string key, [NotNullWhen(true)] out T? value)
         {
             try
             {
@@ -143,7 +143,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public object Get(string key)
+        internal object Get(string key)
         {
             try
             {
@@ -156,7 +156,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public bool Remove(string key)
+        internal bool Remove(string key)
         {
             try
             {
@@ -169,7 +169,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public void RemoveItemsWithPrefix(string prefix)
+        internal void RemoveItemsWithPrefix(string prefix)
         {
             try
             {
