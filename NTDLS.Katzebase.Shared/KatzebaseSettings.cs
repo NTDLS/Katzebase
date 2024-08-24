@@ -46,18 +46,34 @@
         /// <summary>
         /// The number of threads to allocate to the thread pool.
         /// </summary>
-        public int ThreadPoolSize { get; set; }
+        public int IndexingThreadPoolSize { get; set; }
 
         /// <summary>
         /// The maximum number of items to queue in the thread pool.
         /// </summary>
-        public int ThreadPoolQueueDepth { get; set; }
+        public int IndexingThreadPoolQueueDepth { get; set; }
 
         /// <summary>
         /// The maximum number of items to queue in each child thread pool per operation.
         /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
         /// </summary>
-        public int ChildThreadPoolQueueDepth { get; set; }
+        public int IndexingOperationThreadPoolQueueDepth { get; set; }
+
+        /// <summary>
+        /// The number of threads to allocate to the thread pool.
+        /// </summary>
+        public int LookupThreadPoolSize { get; set; }
+
+        /// <summary>
+        /// The maximum number of items to queue in the thread pool.
+        /// </summary>
+        public int LookupThreadPoolQueueDepth { get; set; }
+
+        /// <summary>
+        /// The maximum number of items to queue in each child thread pool per operation.
+        /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
+        /// </summary>
+        public int LookupOperationThreadPoolQueueDepth { get; set; }
 
         /// <summary>
         /// Whether the engine will keep health metrics.

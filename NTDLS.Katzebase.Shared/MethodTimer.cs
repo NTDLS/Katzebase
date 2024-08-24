@@ -1,6 +1,4 @@
-﻿using System.Diagnostics;
-
-namespace NTDLS.Katzebase.Shared
+﻿namespace NTDLS.Katzebase.Shared
 {
     public class MethodTimer
     {

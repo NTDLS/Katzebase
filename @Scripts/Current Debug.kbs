@@ -1,6 +1,6 @@
 set TraceWaitTimes true
 
-select
+select top 10
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
 	sl.Name as SourceLanguage,
@@ -22,6 +22,12 @@ where
 	and tl.Name = 'Latin'
 
 /*
+exec showcachepartitions
+
+exec showcacheallocations
+
+exec showlocks
+
 select top 10
 	W.*
 from

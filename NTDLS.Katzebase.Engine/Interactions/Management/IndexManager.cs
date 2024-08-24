@@ -231,7 +231,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     groupResults = groupResults.Intersect(partialResults);
                     ptDocumentPointerIntersect?.StopAndAccumulate();
 
-                    LogManager.Debug($"Depth: <root>, Count: {partialResults.Count}, Total: {groupResults.Count}");
+                    //LogManager.Debug($"Depth: <root>, Count: {partialResults.Count}, Total: {groupResults.Count}");
                     if (groupResults.Count == 0)
                     {
                         break; //Condition eliminated all possible results on this level.
@@ -283,31 +283,52 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
                     }
 
-                    var queue = _core.ThreadPool.Generic.CreateChildQueue<MatchSchemaDocumentsByConditionsOperation.Parameter>(_core.Settings.ChildThreadPoolQueueDepth);
-
                     var operation = new MatchSchemaDocumentsByConditionsOperation(transaction, lookup, physicalSchema, workingSchemaPrefix, condition, keyValues);
 
-                    foreach (var indexPartition in indexPartitions)
+                    if (indexPartitions.Count > 1)
                     {
-                        var parameter = new MatchSchemaDocumentsByConditionsOperation.Parameter(operation, indexPartition);
+                        var queue = _core.ThreadPool.Indexing.CreateChildQueue<MatchSchemaDocumentsByConditionsOperation.Parameter>(_core.Settings.IndexingThreadPoolQueueDepth);
 
-                        var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
-                        queue.Enqueue(parameter, MatchSchemaDocumentsByConditionsClauseThread);
-                        ptThreadQueue?.StopAndAccumulate();
+                        foreach (var indexPartition in indexPartitions)
+                        {
+                            var parameter = new MatchSchemaDocumentsByConditionsOperation.Parameter(operation, indexPartition);
+
+                            var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
+                            queue.Enqueue(parameter, MatchSchemaDocumentsByConditionsClauseThread/*, (QueueItemState<MatchSchemaDocumentsByConditionsOperation.Parameter> o) =>
+                        {
+                            LogManager.Information($"Indexing:CompletionTime: {o.CompletionTime?.TotalMilliseconds:n0}.");
+                        }*/);
+                            ptThreadQueue?.StopAndAccumulate();
+                        }
+
+                        var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
+                        queue.WaitForCompletion();
+                        ptThreadCompletion?.StopAndAccumulate();
+
+                        var ptDocumentPointerIntersect = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
+                        accumulatedResults = accumulatedResults.Intersect(operation.ThreadResults);
+                        ptDocumentPointerIntersect?.StopAndAccumulate();
+
+                        //LogManager.Debug($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
+                        if (accumulatedResults.Count == 0)
+                        {
+                            break; //Condition eliminated all possible results on this level.
+                        }
                     }
-
-                    var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
-                    queue.WaitForCompletion();
-                    ptThreadCompletion?.StopAndAccumulate();
-
-                    var ptDocumentPointerIntersect = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
-                    accumulatedResults = accumulatedResults.Intersect(operation.ThreadResults);
-                    ptDocumentPointerIntersect?.StopAndAccumulate();
-
-                    LogManager.Debug($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
-                    if (accumulatedResults.Count == 0)
+                    else
                     {
-                        break; //Condition eliminated all possible results on this level.
+                        //No need for additional threads, its just a single partition.
+                        MatchSchemaDocumentsByConditionsClauseThread(new MatchSchemaDocumentsByConditionsOperation.Parameter(operation, indexPartitions.First()));
+
+                        var ptDocumentPointerIntersect = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
+                        accumulatedResults = accumulatedResults.Intersect(operation.ThreadResults);
+                        ptDocumentPointerIntersect?.StopAndAccumulate();
+
+                        //LogManager.Debug($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
+                        if (accumulatedResults.Count == 0)
+                        {
+                            break; //Condition eliminated all possible results on this level.
+                        }
                     }
                 }
 
@@ -322,6 +343,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         private void MatchSchemaDocumentsByConditionsClauseThread(MatchSchemaDocumentsByConditionsOperation.Parameter parameter)
         {
+            Thread.CurrentThread.Name = $"@Thread_{parameter.Operation.PhysicalSchema.Name}:{parameter.IndexPartition}";
+
             try
             {
                 Dictionary<uint, DocumentPointer> threadResults = new();
@@ -392,7 +415,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     results = results.Intersect(partialResults);
                     ptDocumentPointerIntersect?.StopAndAccumulate();
 
-                    LogManager.Debug($"Partition: {parameter.IndexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
+                    //LogManager.Debug($"Partition: {parameter.IndexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
                     if (results.Count == 0)
                     {
                         break; //Condition eliminated all possible results on this level.
@@ -407,7 +430,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     results = results.Intersect(partialResults);
                     ptDocumentPointerIntersect?.StopAndAccumulate();
 
-                    LogManager.Debug($"Partition: {parameter.IndexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
+                    //LogManager.Debug($"Partition: {parameter.IndexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
                     if (results.Count == 0)
                     {
                         break; //Condition eliminated all possible results on this level.
@@ -959,7 +982,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    var queue = _core.ThreadPool.Generic.CreateChildQueue<RemoveDocumentsFromIndexThreadInstance>(_core.Settings.ChildThreadPoolQueueDepth);
+                    var queue = _core.ThreadPool.Indexing.CreateChildQueue<RemoveDocumentsFromIndexThreadInstance>(_core.Settings.IndexingThreadPoolQueueDepth);
                     var operation = new RemoveDocumentsFromIndexThreadOperation(transaction, physicalIndex, physicalSchema, documentPointers);
 
                     for (int indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
@@ -1135,7 +1158,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         (physicalSchema, indexPartition), physicalIndexPages);
                 }
 
-                var queue = _core.ThreadPool.Generic.CreateChildQueue<RebuildIndexOperation.Parameter>(_core.Settings.ChildThreadPoolQueueDepth);
+                var queue = _core.ThreadPool.Indexing.CreateChildQueue<RebuildIndexOperation.Parameter>(_core.Settings.IndexingThreadPoolQueueDepth);
 
                 var operation = new RebuildIndexOperation(
                     transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);

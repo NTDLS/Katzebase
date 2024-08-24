@@ -7,7 +7,8 @@ namespace NTDLS.Katzebase.Engine.Threading.Management
     /// </summary>
     public class ThreadPoolManager
     {
-        public DelegateThreadPool Generic { get; set; }
+        public DelegateThreadPool Lookup { get; set; }
+        public DelegateThreadPool Indexing { get; set; }
 
         private readonly EngineCore _core;
 
@@ -15,12 +16,13 @@ namespace NTDLS.Katzebase.Engine.Threading.Management
         {
             _core = core;
 
-            Generic = new DelegateThreadPool(_core.Settings.ThreadPoolSize, _core.Settings.ThreadPoolQueueDepth);
+            Indexing = new DelegateThreadPool(_core.Settings.IndexingThreadPoolSize, _core.Settings.IndexingThreadPoolQueueDepth);
+            Lookup = new DelegateThreadPool(_core.Settings.LookupThreadPoolSize, _core.Settings.LookupThreadPoolQueueDepth);
         }
 
         public void Stop()
         {
-            Generic.Stop();
+            Lookup.Stop();
         }
     }
 }
