@@ -18,10 +18,13 @@ inner join WordList:Word as tw
 inner join WordList:Language as tl
 	on tl.Id = TW.LanguageId
 where
-	sw.Text LIKE 'Ass%'
-	and sw.Text LIKE 'ion%'
-	--and sl.Name = 'English'
-	--and tl.Name = 'Latin'
+	sw.Text LIKE 'Ta%'
+	and sw.Text LIKE '%le'
+	and sl.Name = 'English'
+	and tl.Name = 'English'
+	and sw.Text != tw.Text
+
+
 --assumption
 /*
 exec showcachepartitions

@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// This does not block the the same transaction or other transactions from locking other files.
         /// Other transactions can also lock the same file too, they just have to wait for the pending grant.
         /// </summary>
-        private static readonly KbInsensitiveDictionary<FileConcurrencyLock> _concurrentGrantLocks = new();
+        private static readonly KbInsensitiveDictionary<ObjectConcurrencyLock> _concurrentGrantLocks = new();
 
         /// <summary>
         //We keep track of all files/transactions that are waiting on locks for a few reasons:
@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         //          threads to access multiple files. So we know the transaction is still present in the engine collection, but other
         //          transactions may be changed.
         /// </summary>
-        private readonly OptimisticCriticalResource<KbInsensitiveDictionary<PendingLockIntention>> _pendingGrants;
+        private readonly OptimisticCriticalResource<KbInsensitiveDictionary<ObjectPendingLockIntention>> _pendingGrants;
 
         internal LockManager(EngineCore core)
         {
@@ -115,14 +115,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 obj.ToDictionary(o => o.Value.Transaction.Snapshot(), o => o.Value.Intention)
             );
 
-        class FileConcurrencyLock()
-        {
-            public int ReferenceCount { get; set; } = 1;
-        }
-
         internal ObjectLockKey? Acquire(Transaction transaction, ObjectLockIntention intention)
         {
-            FileConcurrencyLock? concurrencyLock = null;
+            ObjectConcurrencyLock? concurrencyLock = null;
 
             lock (_concurrentGrantLocks)
             {
@@ -133,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    concurrencyLock = new FileConcurrencyLock();
+                    concurrencyLock = new ObjectConcurrencyLock();
                     _concurrentGrantLocks.Add(intention.Key, concurrencyLock);
                 }
             }
@@ -443,7 +438,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         private string GetDeadlockExplanation(Transaction transaction,
-            Dictionary<string /*${TransactionId:FilePath}*/, PendingLockIntention> txWaitingForLocks,
+            Dictionary<string /*${TransactionId:FilePath}*/, ObjectPendingLockIntention> txWaitingForLocks,
             ObjectLockIntention intention, List<Transaction> blockedByMe)
         {
             var deadLockId = Guid.NewGuid().ToString();
