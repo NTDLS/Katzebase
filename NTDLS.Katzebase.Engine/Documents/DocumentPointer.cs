@@ -39,6 +39,9 @@
                 => obj.GetHashCode();
         }
 
+        public override string ToString()
+            => Key;
+
         public int GetHashCode(DocumentPointer? obj)
             => HashCode.Combine(obj?.PageNumber, obj?.DocumentId);
 

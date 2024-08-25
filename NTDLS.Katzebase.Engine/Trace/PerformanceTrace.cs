@@ -60,9 +60,8 @@ namespace NTDLS.Katzebase.Engine.Trace
             {
                 if (o.TryGetValue(item.Key, out var metric))
                 {
-                    var lookup = metric;
-                    lookup.Value += item.Duration;
-                    lookup.Count++;
+                    metric.Value += item.Duration;
+                    metric.Count++;
                 }
                 else
                 {
@@ -79,9 +78,8 @@ namespace NTDLS.Katzebase.Engine.Trace
 
                 if (o.TryGetValue(key, out var metric))
                 {
-                    var lookup = metric;
-                    lookup.Value = eventValue;
-                    lookup.Count++;
+                    metric.Value = eventValue;
+                    metric.Count++;
                 }
                 else
                 {

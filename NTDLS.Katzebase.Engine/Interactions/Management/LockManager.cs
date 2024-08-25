@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// This does not block the the same transaction or other transactions from locking other files.
         /// Other transactions can also lock the same file too, they just have to wait for the pending grant.
         /// </summary>
-        private static readonly KbInsensitiveDictionary<object> _concurrentGrantLocks = new();
+        private static readonly KbInsensitiveDictionary<FileConcurrencyLock> _concurrentGrantLocks = new();
 
         /// <summary>
         //We keep track of all files/transactions that are waiting on locks for a few reasons:
@@ -115,16 +115,25 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 obj.ToDictionary(o => o.Value.Transaction.Snapshot(), o => o.Value.Intention)
             );
 
+        class FileConcurrencyLock()
+        {
+            public int ReferenceCount { get; set; } = 1;
+        }
+
         internal ObjectLockKey? Acquire(Transaction transaction, ObjectLockIntention intention)
         {
-            object? concurrencyLock = null;
+            FileConcurrencyLock? concurrencyLock = null;
 
             lock (_concurrentGrantLocks)
             {
                 /// Produces a lock object that is used to ensure that we do not operate on the same file at the same time from different threads.
-                if (_concurrentGrantLocks.TryGetValue(intention.Key, out concurrencyLock) == false)
+                if (_concurrentGrantLocks.TryGetValue(intention.Key, out concurrencyLock))
                 {
-                    concurrencyLock = new object();
+                    concurrencyLock.ReferenceCount++;
+                }
+                else
+                {
+                    concurrencyLock = new FileConcurrencyLock();
                     _concurrentGrantLocks.Add(intention.Key, concurrencyLock);
                 }
             }
@@ -153,7 +162,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     lock (_concurrentGrantLocks)
                     {
-                        _concurrentGrantLocks.Remove(intention.Key);
+                        _concurrentGrantLocks[intention.Key].ReferenceCount--;
+                        if (_concurrentGrantLocks[intention.Key].ReferenceCount == 0)
+                        {
+                            _concurrentGrantLocks.Remove(intention.Key);
+                        }
                     }
                 }
             }

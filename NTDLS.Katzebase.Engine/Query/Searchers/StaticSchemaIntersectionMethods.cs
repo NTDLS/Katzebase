@@ -85,6 +85,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             //LogManager.Debug($"Starting document scan with {documentPointers.Count()} documents.");
 
+            //documentPointers = documentPointers.Where(o => o.ToString() == "0:20");
+
             foreach (var documentPointer in documentPointers)
             {
                 //We can't stop when we hit the row limit if we are sorting or grouping.
@@ -104,7 +106,17 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
                 queue.Enqueue(instance, LookupThreadWorker/*, (QueueItemState<DocumentLookupOperation.Parameter> o) =>
                 {
-                    LogManager.Information($"Lookup:CompletionTime: {o.CompletionTime?.TotalMilliseconds:n0}.");
+
+                    if (documentPointer.ToString() == "0:20")
+                    {
+                        Console.WriteLine($"{documentPointer} = {o.CompletionTime?.TotalMilliseconds:n0}");
+                    }
+                    if (o.CompletionTime?.TotalMilliseconds > 10000)
+                    {
+                        //Console.WriteLine($"{documentPointer} = {o.CompletionTime?.TotalMilliseconds:n0}");
+                    }
+
+                    //LogManager.Information($"Lookup:CompletionTime: {o.CompletionTime?.TotalMilliseconds:n0}.");
                 }*/);
                 ptThreadQueue?.StopAndAccumulate();
             }

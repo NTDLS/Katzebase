@@ -176,6 +176,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var ptDeserialize = transaction.PT?.CreateDurationTracker<T>(PerformanceTraceCumulativeMetricType.Deserialize);
                     deserializedObject = JsonConvert.DeserializeObject<T>(text);
                     ptDeserialize?.StopAndAccumulate();
+
+                    //Console.WriteLine($"{ptIORead?.Duration:n0}: '{filePath}'");
                 }
                 else if (format == IOFormat.PBuf)
                 {
@@ -194,6 +196,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         deserializedObject = ProtoBuf.Serializer.Deserialize<T>(file);
                     }
                     ptIORead?.StopAndAccumulate();
+
+                    //Console.WriteLine($"{ptIORead?.Duration:n0}: '{filePath}'");
                 }
                 else
                 {
