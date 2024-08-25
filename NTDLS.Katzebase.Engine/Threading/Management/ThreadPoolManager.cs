@@ -16,8 +16,8 @@ namespace NTDLS.Katzebase.Engine.Threading.Management
         {
             _core = core;
 
-            Indexing = new DelegateThreadPool(_core.Settings.IndexingThreadPoolSize, _core.Settings.IndexingThreadPoolQueueDepth);
-            Lookup = new DelegateThreadPool(_core.Settings.LookupThreadPoolSize, _core.Settings.LookupThreadPoolQueueDepth);
+            Indexing = new DelegateThreadPool(_core.Settings.IndexingThreadPoolSize <= 0 ? Environment.ProcessorCount : _core.Settings.IndexingThreadPoolSize, _core.Settings.IndexingThreadPoolQueueDepth);
+            Lookup = new DelegateThreadPool(_core.Settings.LookupThreadPoolSize <= 0 ? Environment.ProcessorCount : _core.Settings.LookupThreadPoolSize, _core.Settings.LookupThreadPoolQueueDepth);
         }
 
         public void Stop()

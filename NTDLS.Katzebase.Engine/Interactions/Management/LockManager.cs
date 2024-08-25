@@ -14,15 +14,29 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     internal class LockManager
     {
-        private class WaitingObjectLockIntention(Transaction transaction, ObjectLockIntention intention)
-        {
-            public Transaction Transaction { get; set; } = transaction;
-            public ObjectLockIntention Intention { get; set; } = intention;
-        }
-
-        private readonly OptimisticCriticalResource<List<ObjectLock>> _collection;
-        private readonly OptimisticCriticalResource<KbInsensitiveDictionary<WaitingObjectLockIntention>> _pendingFileLocks;
         private readonly EngineCore _core;
+
+        /// <summary>
+        /// Collection of all locks across all transactions.
+        /// </summary>
+        private readonly OptimisticCriticalResource<List<ObjectLock>> _collection;
+
+        /// <summary>
+        /// Used to ensure that across all transactions, we only allow 1 thread at a time to lock any individual files.
+        /// This does not block the the same transaction or other transactions from locking other files.
+        /// Other transactions can also lock the same file too, they just have to wait for the pending grant.
+        /// </summary>
+        private static readonly KbInsensitiveDictionary<object> _concurrentGrantLocks = new();
+
+        /// <summary>
+        //We keep track of all files/transactions that are waiting on locks for a few reasons:
+        // (1) When we suspect a deadlock we know what all transactions are potentially involved.
+        // (2) We are safe to poke around those transaction's properties because we know their threads are working in this function.
+        // (2.1) Point number 2 is now only half true, the transaction is working in this function - but it can be using multiple
+        //          threads to access multiple files. So we know the transaction is still present in the engine collection, but other
+        //          transactions may be changed.
+        /// </summary>
+        private readonly OptimisticCriticalResource<KbInsensitiveDictionary<PendingLockIntention>> _pendingGrants;
 
         internal LockManager(EngineCore core)
         {
@@ -32,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 _core = core;
                 _collection = new(core.LockManagementSemaphore);
-                _pendingFileLocks = new(core.LockManagementSemaphore);
+                _pendingGrants = new(core.LockManagementSemaphore);
             }
             catch (Exception ex)
             {
@@ -96,10 +110,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return result;
         }
 
-        private static readonly Dictionary<string, object> _concurrentFileLocks = new();
-
         internal Dictionary<TransactionSnapshot, ObjectLockIntention> SnapshotWaitingTransactions()
-            => _pendingFileLocks.Read((obj) =>
+            => _pendingGrants.Read((obj) =>
                 obj.ToDictionary(o => o.Value.Transaction.Snapshot(), o => o.Value.Intention)
             );
 
@@ -107,13 +119,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             object? concurrencyLock = null;
 
-            lock (_concurrentFileLocks)
+            lock (_concurrentGrantLocks)
             {
                 /// Produces a lock object that is used to ensure that we do not operate on the same file at the same time from different threads.
-                if (_concurrentFileLocks.TryGetValue(intention.Key, out concurrencyLock) == false)
+                if (_concurrentGrantLocks.TryGetValue(intention.Key, out concurrencyLock) == false)
                 {
                     concurrencyLock = new object();
-                    _concurrentFileLocks.Add(intention.Key, concurrencyLock);
+                    _concurrentGrantLocks.Add(intention.Key, concurrencyLock);
                 }
             }
 
@@ -139,9 +151,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 finally
                 {
-                    lock (_concurrentFileLocks)
+                    lock (_concurrentGrantLocks)
                     {
-                        _concurrentFileLocks.Remove(intention.Key);
+                        _concurrentGrantLocks.Remove(intention.Key);
                     }
                 }
             }
@@ -149,20 +161,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         private ObjectLockKey AcquireInternal(Transaction transaction, ObjectLockIntention intention)
         {
-            string pendingFileLockKey = $"{transaction.Id}:{intention.Key}";
-
             try
             {
-                //We keep track of all files/transactions that are waiting on locks for a few reasons:
-                // (1) When we suspect a deadlock we know what all transactions are potentially involved.
-                // (2) We are safe to poke around those transaction's properties because we know their threads are working in this function.
-                // (2.1) Point number 2 is now only half true, the transaction is working in this function - but it can be using multiple
-                //          threads to access multiple files. So we know the transaction is still present in the engine collection, but other
-                //          transactions may be changed.
-
-                _pendingFileLocks.Write((obj) =>
-                    obj.Add(pendingFileLockKey, new(transaction, intention))
-                );
+                _pendingGrants.Write((o) => o.Add(intention.Key, new(transaction, intention)));
 
                 while (true)
                 {
@@ -192,8 +193,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             var lockedObject = new ObjectLock(_core, intention);
                             obj.Add(lockedObject);
                             lockedObjects.Add(lockedObject);
+
+                            lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+                            transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
+
+                            var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
+                            _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
+                            _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+
+                            return lockKey;
                         }
 
+                        #region Stability.
                         if (intention.Operation == LockOperation.Stability)
                         {
                             //This operation is blocked by: Delete.
@@ -232,6 +243,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
                             }
                         }
+                        #endregion
+
+                        #region Read.
                         else if (intention.Operation == LockOperation.Read)
                         {
                             //This operation is blocked by: Read and Write.
@@ -271,6 +285,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
                             }
                         }
+                        #endregion
+
+                        #region Write.
                         else if (intention.Operation == LockOperation.Write)
                         {
                             //This operation is blocked by: Read, Write, Delete.
@@ -309,6 +326,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
                             }
                         }
+                        #endregion
+
+                        #region Delete.
                         else if (intention.Operation == LockOperation.Delete)
                         {
                             //This operation is blocked by: Everything
@@ -348,19 +368,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
                             }
                         }
+                        #endregion
+
+                        #region Deadlock detection.
 
                         transaction.BlockedByKeys.Read((obj) =>
                         {
                             if (obj.Count != 0)
                             {
-                                _pendingFileLocks.Read((waitingLocks) =>
+                                _pendingGrants.Read((waitingLocks) =>
                                 {
                                     var waitingTransactions = waitingLocks
                                         .Where(o => o.Value.Transaction.IsDeadlocked == false)
                                         .Select(o => o.Value.Transaction).ToList();
-
-                                    //Get a list of all valid transactions.
-                                    //var waitingTransactions = txWaitingForLocks.Keys.Where(o => o.IsDeadlocked == false);
 
                                     //Get a list of transactions that are blocked by the current transaction.
                                     var blockedByMe = waitingTransactions.Where(
@@ -384,6 +404,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                 });
                             }
                         });
+
+                        #endregion
+
                         return null;
                     });
 
@@ -402,12 +425,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             finally
             {
-                _pendingFileLocks.Write((obj) => obj.Remove(pendingFileLockKey));
+                _pendingGrants.Write((obj) => obj.Remove(intention.Key));
             }
         }
 
         private string GetDeadlockExplanation(Transaction transaction,
-            Dictionary<string /*${TransactionId:FilePath}*/, WaitingObjectLockIntention> txWaitingForLocks,
+            Dictionary<string /*${TransactionId:FilePath}*/, PendingLockIntention> txWaitingForLocks,
             ObjectLockIntention intention, List<Transaction> blockedByMe)
         {
             var deadLockId = Guid.NewGuid().ToString();
@@ -419,7 +442,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             explanation.AppendLine("    Blocking Transactions {");
             explanation.AppendLine($"        ProcessId: {transaction.ProcessId}");
             explanation.AppendLine($"        Operation: {transaction.TopLevelOperation}");
-            //explanation.AppendLine($"        ReferenceCount: {transaction.ReferenceCount}"); //This causes a race condition.
+            explanation.AppendLine($"        ReferenceCount: {transaction.ReferenceCount}");
             explanation.AppendLine($"        StartTime: {transaction.StartTime}");
 
             explanation.AppendLine("        Lock Intention {");
@@ -453,7 +476,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 explanation.AppendLine($"        ProcessId: {waiter.ProcessId}");
                 explanation.AppendLine($"        Operation: {waiter.TopLevelOperation}");
-                //explanation.AppendLine($"        ReferenceCount: {waiter.ReferenceCount}"); //This causes a race condition.
+                explanation.AppendLine($"        ReferenceCount: {waiter.ReferenceCount}");
                 explanation.AppendLine($"        StartTime: {waiter.StartTime}");
 
                 explanation.AppendLine("        Held Locks {");
