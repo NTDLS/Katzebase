@@ -3,8 +3,6 @@ using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Locking;
-using NTDLS.Katzebase.Shared;
-using System.Collections.Concurrent;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
@@ -364,12 +362,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         LogManager.Debug($"IO:Write-Deferred:{filePath}");
 
-                        CrudeInstrumentation.Witness(() => transaction.DeferredIOs.Write((obj) =>
+                        transaction.DeferredIOs.Write((obj) =>
                         {
                             var ptDeferredWrite = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DeferredWrite);
                             obj.PutDeferredDiskIO(filePath, filePath, deserializedObject, format, useCompression);
                             ptDeferredWrite?.StopAndAccumulate();
-                        }));
+                        });
 
                         _core.Health.Increment(HealthCounterType.IODeferredIOWrites);
 

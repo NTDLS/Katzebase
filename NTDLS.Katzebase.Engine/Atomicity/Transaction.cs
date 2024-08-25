@@ -44,11 +44,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public bool IsCommittedOrRolledBack { get; private set; } = false;
         public bool IsCancelled { get; private set; } = false;
 
-        private int _referenceCount = 0;
-        public int ReferenceCount
+        private long _referenceCount = 0;
+        public long ReferenceCount
         {
-            set => TransactionSemaphore.Write(() => _referenceCount = value);
-            get => TransactionSemaphore.Read(() => _referenceCount);
+            set => Interlocked.Exchange(ref _referenceCount, value);
+            get => Interlocked.Read(ref _referenceCount);
         }
 
         #region Critical objects (Any object in this region must be locked for access).
@@ -618,7 +618,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         #endregion
 
         public void AddReference()
-           => TransactionSemaphore.Write(() => _referenceCount++);
+           => Interlocked.Increment(ref _referenceCount);
 
         public void Rollback()
         {

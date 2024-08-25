@@ -18,7 +18,6 @@ namespace NTDLS.Katzebase.Shared
                 => Collection.OrderByDescending(o => o.Value.Milliseconds).ToList();
         }
 
-
         public class InstrumentationMetric
         {
             public ulong Count { get; set; }

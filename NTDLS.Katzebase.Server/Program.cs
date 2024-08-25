@@ -10,8 +10,8 @@ namespace NTDLS.Katzebase.Server
     {
         public class KatzebaseService
         {
-            private SemaphoreSlim _semaphoreToRequestStop;
-            private Thread _thread;
+            private readonly SemaphoreSlim _semaphoreToRequestStop;
+            private readonly Thread _thread;
 
             public KatzebaseService(ServiceConfigurator<KatzebaseService> s)
             {
