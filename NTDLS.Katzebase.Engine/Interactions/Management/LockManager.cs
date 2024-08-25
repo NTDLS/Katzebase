@@ -1,7 +1,9 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Semaphore;
+using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -11,20 +13,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// </summary>
     internal class LockManager
     {
-        class WaitingObjectLockIntention
+        private class WaitingObjectLockIntention(Transaction transaction, ObjectLockIntention intention)
         {
-            public Transaction Transaction { get; set; }
-            public ObjectLockIntention Intention { get; set; }
-
-            public WaitingObjectLockIntention(Transaction transaction, ObjectLockIntention intention)
-            {
-                Transaction = transaction;
-                Intention = intention;
-            }
+            public Transaction Transaction { get; set; } = transaction;
+            public ObjectLockIntention Intention { get; set; } = intention;
         }
 
         private readonly OptimisticCriticalResource<List<ObjectLock>> _collection;
-        private readonly OptimisticCriticalResource<Dictionary<string /*TransactionId:FilePath*/, WaitingObjectLockIntention>> _transactionWaitingForLocks;
+        private readonly OptimisticCriticalResource<Dictionary<string /*${TransactionId:FilePath}*/, WaitingObjectLockIntention>> _transactionWaitingForLocks;
         private readonly EngineCore _core;
 
         internal LockManager(EngineCore core)
@@ -102,10 +98,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private static readonly Dictionary<string, object> _concurrentFileLocks = new();
 
         internal Dictionary<TransactionSnapshot, ObjectLockIntention> SnapshotWaitingTransactions()
-        {
-            throw new NotImplementedException();
-            //=> _transactionWaitingForLocks.Read((obj) => obj.ToDictionary(o => o.Key.Snapshot(), o => o.Value));
-        }
+            => _transactionWaitingForLocks.Read((obj) =>
+                obj.ToDictionary(o => o.Value.Transaction.Snapshot(), o => o.Value.Intention)
+            );
 
         internal ObjectLockKey? Acquire(Transaction transaction, ObjectLockIntention intention)
         {
@@ -410,11 +405,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         private string GetDeadlockExplanation(Transaction transaction,
-            Dictionary<string /*TransactionId:FilePath*/, WaitingObjectLockIntention> txWaitingForLocks,
+            Dictionary<string /*${TransactionId:FilePath}*/, WaitingObjectLockIntention> txWaitingForLocks,
             ObjectLockIntention intention, List<Transaction> blockedByMe)
         {
-            return "";
-            /*
             var deadLockId = Guid.NewGuid().ToString();
 
             var explanation = new StringBuilder();
@@ -445,7 +438,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             explanation.AppendLine("        }");
 
             explanation.AppendLine("        Awaiting Locks {");
-            foreach (var waitingFor in txWaitingForLocks.Where(o => o.Key == transaction))
+            foreach (var waitingFor in txWaitingForLocks.Where(o => o.Value.Transaction == transaction))
             {
                 explanation.AppendLine($"            {waitingFor.Value.ToString()}");
             }
@@ -473,7 +466,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 explanation.AppendLine("        }");
 
                 explanation.AppendLine("        Awaiting Locks {");
-                foreach (var waitingFor in txWaitingForLocks.Where(o => o.Key == waiter))
+                foreach (var waitingFor in txWaitingForLocks.Where(o => o.Value.Transaction == waiter))
                 {
                     explanation.AppendLine($"            {waitingFor.Value.ToString()}");
                 }
@@ -489,8 +482,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             transaction.AddMessage(explanation.ToString(), KbConstants.KbMessageType.Deadlock);
 
             return explanation.ToString();
-            */
         }
-
     }
 }
