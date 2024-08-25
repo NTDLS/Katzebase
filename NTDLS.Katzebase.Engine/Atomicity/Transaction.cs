@@ -19,7 +19,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
     /// </summary>
     internal class Transaction : IDisposable
     {
-        public ObjectLockIntention? CurrentLockIntention { get; set; }
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; private set; } = Guid.NewGuid();
         public List<KbQueryResultMessage> Messages { get; private set; } = new();
@@ -99,7 +98,6 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 Id = Id,
                 ProcessId = ProcessId,
-                CurrentLockIntention = CurrentLockIntention,
                 StartTime = StartTime,
                 ReferenceCount = ReferenceCount,
                 IsDeadlocked = IsDeadlocked,
