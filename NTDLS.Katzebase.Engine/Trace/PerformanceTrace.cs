@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Client.KbConstants;
 
@@ -7,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Trace
 {
     internal class PerformanceTrace
     {
-        private readonly OptimisticCriticalResource<KbInsensitiveDictionary<KbMetric>> _metrics = new();
+        private readonly OptimisticCriticalResource<Dictionary<string, KbMetric>> _metrics = new();
 
         internal enum PerformanceTraceCumulativeMetricType
         {
@@ -57,43 +58,38 @@ namespace NTDLS.Katzebase.Engine.Trace
 
         public void AccumulateDuration(PerformanceTraceDurationTracker item)
         {
-
-            _metrics.Write(o =>
+            CrudeInstrumentation.Witness(() => _metrics.Write(o =>
             {
-                if (o.ContainsKey(item.Key))
+                if (o.TryGetValue(item.Key, out var metric))
                 {
-                    var lookup = o[item.Key];
+                    var lookup = metric;
                     lookup.Value += item.Duration;
                     lookup.Count++;
                 }
                 else
                 {
-                    var lookup = new KbMetric(KbMetricType.Cumulative, item.Key, item.Duration);
-                    lookup.Count++;
-                    o.Add(item.Key, lookup);
+                    o.Add(item.Key, new KbMetric(KbMetricType.Cumulative, item.Key, item.Duration) { Count = 1 });
                 }
-            });
+            }));
         }
 
-        public void AddDiscreteMetric(PerformanceTraceDiscreteMetricType type, double value)
+        public void AddDiscreteMetric(PerformanceTraceDiscreteMetricType type, double eventValue)
         {
-            _metrics.Write(o =>
+            CrudeInstrumentation.Witness(() => _metrics.Write(o =>
             {
                 var key = $"{type}";
 
-                if (o.ContainsKey(key))
+                if (o.TryGetValue(key, out var metric))
                 {
-                    var lookup = o[key];
-                    lookup.Value = value;
+                    var lookup = metric;
+                    lookup.Value = eventValue;
                     lookup.Count++;
                 }
                 else
                 {
-                    var lookup = new KbMetric(KbMetricType.Discrete, key, value);
-                    lookup.Count++;
-                    o.Add(key, lookup);
+                    o.Add(key, new KbMetric(KbMetricType.Discrete, key, eventValue) { Count = 1 });
                 }
-            });
+            }));
         }
 
         internal KbMetricCollection ToCollection()
