@@ -1,11 +1,15 @@
+/*
+Create schema WordList
+Create schema WordList:Words with (PageSize = 100)
+*/
 set TraceWaitTimes true
 
 select top 100
 	sw.Id as SourceWordId,
-	sw.Text as SourceWord,
+	ToProper(sw.Text) as SourceWord,
 	sl.Name as SourceLanguage,
 	tw.Id as TargetWordId,	
-	tw.Text as TargetWord,
+	ToProper(tw.Text) as TargetWord,
 	tl.Name as TargetLanguage
 from
 	WordList:Word as sw
@@ -23,7 +27,9 @@ where
 	and sl.Name = 'English'
 	and tl.Name = 'English'
 	and sw.Text != tw.Text
-
+order by
+	sw.Text,
+	tw.Text
 
 --assumption
 /*

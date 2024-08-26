@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return new KbActionResponse
             {
                 RowCount = rowCount,
-                Metrics = Transaction.PT?.ToCollection(),
+                Metrics = Transaction.Instrumentation.ToCollection(),
                 Messages = Transaction.Messages,
                 Warnings = Transaction.CloneWarnings(),
                 Duration = (DateTime.UtcNow - Transaction.StartTime).TotalMilliseconds
@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             Commit();
 
             result.RowCount = 0;
-            result.Metrics = Transaction.PT?.ToCollection();
+            result.Metrics = Transaction.Instrumentation.ToCollection();
             result.Messages = Transaction.Messages;
             result.Warnings = Transaction.CloneWarnings();
             result.Duration = (DateTime.UtcNow - Transaction.StartTime).TotalMilliseconds;
@@ -74,7 +74,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             Commit();
 
             result.RowCount = rowCount;
-            result.Metrics = Transaction.PT?.ToCollection();
+            result.Metrics = Transaction.Instrumentation.ToCollection();
             result.Messages = Transaction.Messages;
             result.Warnings = Transaction.CloneWarnings();
             result.Duration = (DateTime.UtcNow - Transaction.StartTime).TotalMilliseconds;

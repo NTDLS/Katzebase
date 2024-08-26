@@ -60,7 +60,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 return _core.IO.GetPBuf<PhysicalDocumentPage>(
-                    transaction, physicalSchema.DocumentPageCatalogItemFilePath(pageNumber), lockIntention, false);
+                    transaction, physicalSchema.DocumentPageCatalogItemFilePath(pageNumber), lockIntention);
             }
             catch (Exception ex)
             {

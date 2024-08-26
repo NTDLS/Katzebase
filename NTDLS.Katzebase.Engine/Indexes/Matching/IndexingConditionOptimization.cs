@@ -1,4 +1,5 @@
 ﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Query;
@@ -23,11 +24,11 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// </summary>
         public Conditions Conditions { get; private set; }
 
-        private readonly Transaction _transaction;
+        public Transaction Transaction { get; private set; }
 
         public IndexingConditionOptimization(Transaction transaction, Conditions conditions)
         {
-            _transaction = transaction;
+            Transaction = transaction;
             Conditions = conditions.Clone();
         }
 
@@ -375,58 +376,106 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// It includes indexes where they can be applied.
         /// It also demonstrates how we process the recursive condition logic.
         /// </summary>
-        public string ExplainOptimization(int indentation = 0)
+        public string ExplainOptimization(EngineCore core, PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
+            string workingSchemaPrefix, KbInsensitiveDictionary<string>? keyValues = null, int indentation = 0)
         {
             var result = new StringBuilder();
 
-            if (Conditions.Root.ExpressionKeys.Count > 0)
+            foreach (var indexingConditionGroup in optimization.IndexingConditionGroup) //Loop through the OR groups
             {
-                //The root condition is just a pointer to a child condition, so get the "root" child condition.
-                var rootCondition = Conditions.SubConditionFromExpressionKey(Conditions.Root.Key);
-                ExplainSubCondition(ref result, rootCondition, indentation);
+                result.AppendLine("DO IT");
+
+                foreach (var lookup in indexingConditionGroup.Lookups) //Loop thorough the AND conditions.
+                {
+                    MatchSchemaDocumentsByConditionsClauseGroup(ref result, core, optimization.Transaction, lookup, physicalSchema, workingSchemaPrefix, keyValues);
+                }
             }
 
             return result.ToString();
         }
 
-        /// <summary>
-        /// This function makes a (somewhat) user readable expression tree, used for debugging and explanations.
-        /// It includes indexes where they can be applied.
-        /// It also demonstrates how we process the recursive condition logic.
-        /// Called by parent ExplainOptimization()
-        /// </summary>
-        private void ExplainSubCondition(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
+        private void MatchSchemaDocumentsByConditionsClauseGroup(ref StringBuilder result, EngineCore core, Transaction transaction,
+            IndexingConditionLookup lookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<string>? keyValues)
         {
-            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
+            try
             {
-                var subCondition = Conditions.SubConditionFromExpressionKey(expressionKey);
+                var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[0].Field.EnsureNotNull()];
 
-                //TODO: definitely not correct!! Just unbreaking the build.
-                var indexName = subCondition.IndexSelections.First().EnsureNotNull().Index.Name;
-
-                result.AppendLine(Pad(indentation + 1)
-                    + $"{Conditions.FriendlyPlaceholder(subCondition.Key)} is ({Conditions.FriendlyPlaceholder(subCondition.Expression)})"
-                    + (indexName != null ? $" [{indexName}]" : ""));
-
-                result.AppendLine(Pad(indentation + 1) + "(");
-
-                if (subCondition.Conditions.Count > 0)
+                foreach (var condition in conditionSet)
                 {
-                    foreach (var condition in subCondition.Conditions)
+                    if (condition.LogicalQualifier == LogicalQualifier.Equals)
                     {
-                        result.AppendLine(Pad(indentation + 2)
-                            + $"{Conditions.FriendlyPlaceholder(condition.ConditionKey)} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                        //For join operations, check the keyValues for the raw value to lookup.
+                        if (keyValues?.TryGetValue(condition.Right.Key, out string? keyValue) != true)
+                        {
+                            keyValue = condition.Right.Value;
+                        }
+                        else
+                        {
+                            //This is a join clause.
+                        }
+
+                        //Eliminated all but one index partitions.
+                        result.AppendLine($"Lookup index partition: {lookup.Index.ComputePartition(keyValue)}");
                     }
-                }
+                    else
+                    {
+                        //We have to search all index partitions.
+                        result.AppendLine($"Lookup index partitions: 1-{lookup.Index.Partitions}");
+                    }
 
-                if (subCondition.ExpressionKeys.Count > 0)
+                    MatchSchemaDocumentsByConditionsClauseThread(ref result, core, transaction, lookup, physicalSchema, workingSchemaPrefix, condition, keyValues);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        private void MatchSchemaDocumentsByConditionsClauseThread(ref StringBuilder result, EngineCore core, Transaction transaction, IndexingConditionLookup lookup,
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition, KbInsensitiveDictionary<string>? keyValues = null)
+        {
+            try
+            {
+                if (lookup.Index.Attributes.Count == 1)
                 {
-                    result.AppendLine(Pad(indentation + 2) + "(");
-                    ExplainSubCondition(ref result, subCondition, indentation + 2);
-                    result.AppendLine(Pad(indentation + 2) + ")");
+                    //Single index attribute lookup.
                 }
+                else
+                {
+                    //Further, recursively, process additional compound index attribute condition matches.
+                    MatchSchemaDocumentsByConditionsClauseRecursive(ref result, core, transaction,
+                        lookup, physicalSchema, workingSchemaPrefix, condition, 1, keyValues);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"Failed to match index by thread.", ex);
+                throw;
+            }
+        }
 
-                result.AppendLine(Pad(indentation + 1) + ")");
+        private static void MatchSchemaDocumentsByConditionsClauseRecursive(ref StringBuilder result,
+            EngineCore core, Transaction transaction, IndexingConditionLookup lookup,
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition, int attributeDepth, KbInsensitiveDictionary<string>? keyValues = null)
+        {
+            var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[attributeDepth].Field.EnsureNotNull()];
+
+            foreach (var singleCondition in conditionSet)
+            {
+                if (attributeDepth == lookup.AttributeConditionSets.Count - 1)
+                {
+                    //This is the bottom of the condition tree, as low as we can go in this index given the fields we have, so just distill the leaves.
+
+                }
+                else if (attributeDepth < lookup.AttributeConditionSets.Count - 1)
+                {
+                    //Further, recursively, process additional compound index attribute condition matches.
+                    MatchSchemaDocumentsByConditionsClauseRecursive(ref result, core, transaction, lookup,
+                        physicalSchema, workingSchemaPrefix, condition, attributeDepth + 1, keyValues);
+                }
             }
         }
 

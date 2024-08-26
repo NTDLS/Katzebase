@@ -15,13 +15,11 @@ namespace NTDLS.Katzebase.Engine.IO
         {
             public string DiskPath { get; private set; }
             public IOFormat Format { get; private set; }
-            public bool UseCompression { get; private set; }
 
-            public DeferredDiskIOObjectSnapshot(string diskPath, IOFormat format, bool useCompression)
+            public DeferredDiskIOObjectSnapshot(string diskPath, IOFormat format)
             {
                 DiskPath = diskPath.ToLowerInvariant();
                 Format = format;
-                UseCompression = useCompression;
             }
         }
 

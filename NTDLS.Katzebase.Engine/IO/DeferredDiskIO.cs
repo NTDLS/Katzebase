@@ -13,14 +13,12 @@ namespace NTDLS.Katzebase.Engine.IO
             public string DiskPath { get; private set; }
             public object Reference { get; set; }
             public IOFormat Format { get; private set; }
-            public bool UseCompression { get; private set; }
 
-            public DeferredDiskIOObject(string diskPath, object reference, IOFormat format, bool useCompression)
+            public DeferredDiskIOObject(string diskPath, object reference, IOFormat format)
             {
                 DiskPath = diskPath.ToLowerInvariant();
                 Reference = reference;
                 Format = format;
-                UseCompression = useCompression;
             }
         }
 
@@ -43,8 +41,7 @@ namespace NTDLS.Katzebase.Engine.IO
             {
                 foreach (var kvp in o)
                 {
-                    snapshot.Collection.Add(kvp.Key, new DeferredDiskIOObjectSnapshot(
-                        kvp.Value.DiskPath, kvp.Value.Format, kvp.Value.UseCompression));
+                    snapshot.Collection.Add(kvp.Key, new DeferredDiskIOObjectSnapshot(kvp.Value.DiskPath, kvp.Value.Format));
                 }
             });
 
@@ -69,11 +66,11 @@ namespace NTDLS.Katzebase.Engine.IO
                     {
                         if (obj.Value.Format == IOFormat.JSON)
                         {
-                            _core.IO.PutJsonNonTrackedButCached(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
+                            _core.IO.PutJsonNonTrackedButCached(obj.Value.DiskPath, obj.Value.Reference);
                         }
                         else if (obj.Value.Format == IOFormat.PBuf)
                         {
-                            _core.IO.PutPBufNonTrackedButCached(obj.Value.DiskPath, obj.Value.Reference, obj.Value.UseCompression);
+                            _core.IO.PutPBufNonTrackedButCached(obj.Value.DiskPath, obj.Value.Reference);
                         }
                         else
                         {
@@ -135,7 +132,7 @@ namespace NTDLS.Katzebase.Engine.IO
         /// <param name="key"></param>
         /// <param name="reference"></param>
         /// <returns></returns>
-        public void PutDeferredDiskIO(string key, string diskPath, object reference, IOFormat deferredFormat, bool useCompression)
+        public void PutDeferredDiskIO(string key, string diskPath, object reference, IOFormat deferredFormat)
         {
             key = key.ToLowerInvariant();
 
@@ -147,7 +144,7 @@ namespace NTDLS.Katzebase.Engine.IO
                 }
                 else
                 {
-                    o.Add(key, new DeferredDiskIOObject(diskPath, reference, deferredFormat, useCompression));
+                    o.Add(key, new DeferredDiskIOObject(diskPath, reference, deferredFormat));
                 }
             });
         }

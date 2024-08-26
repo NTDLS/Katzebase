@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         //          threads to access multiple files. So we know the transaction is still present in the engine collection, but other
         //          transactions may be changed.
         /// </summary>
-        private readonly OptimisticCriticalResource<KbInsensitiveDictionary<ObjectPendingLockIntention>> _pendingGrants;
+        private readonly OptimisticCriticalResource<Dictionary<Guid, ObjectPendingLockIntention>> _pendingGrants;
 
         internal LockManager(EngineCore core)
         {
@@ -119,91 +119,147 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             ObjectConcurrencyLock? concurrencyLock = null;
 
+            var pendingGrantKey = Guid.NewGuid();
+
             lock (_concurrentGrantLocks)
             {
-                /// Produces a lock object that is used to ensure that we do not operate on the same file at the same time from different threads.
+                // Produces a semaphore that is used to ensure that we do not simultaneously operate on any single file.
                 if (_concurrentGrantLocks.TryGetValue(intention.Key, out concurrencyLock))
                 {
+                    //There are other threads currently waiting for a lock on this file.
                     concurrencyLock.ReferenceCount++;
                 }
                 else
                 {
+                    //This is the first thread in line for a lock on this file.
                     concurrencyLock = new ObjectConcurrencyLock();
                     _concurrentGrantLocks.Add(intention.Key, concurrencyLock);
                 }
+
+                //Record that we are waiting on the grant. This is used for deadlock detection.
+                _pendingGrants.Write((o) => o.Add(pendingGrantKey, new(transaction, intention)));
             }
 
-            lock (concurrencyLock)
+            try
             {
-                try
+                //We will loop until we either get the lock or an exception occurs (most likely a deadlock or cancelled transaction).
+                while (true)
                 {
-                    if (transaction.GrantedLockCache.Read((obj) => obj.Contains(intention.Key)))
+                    //Lock the individual object semaphore, because we only allow an attempt for a lock on a single distinct file at a time.
+                    if (concurrencyLock.Semaphore.Wait(1))
                     {
-                        //This transaction owns the lock, but it was created with a previous call to Acquire().
-                        //  This means that the transaction has the key, but the caller will not be be provided
-                        //  with it since modification by a non-creator caller would be dangerous.
-                        //
-                        //Additionally, we will not issue a new SingleUseKey for the lock because that would be wasteful.
-                        return null;
-                    }
-
-                    var lockKey = AcquireInternal(transaction, intention);
-
-                    transaction.GrantedLockCache.Write((obj) => obj.Add(intention.Key));
-
-                    return lockKey;
-                }
-                finally
-                {
-                    lock (_concurrentGrantLocks)
-                    {
-                        _concurrentGrantLocks[intention.Key].ReferenceCount--;
-                        if (_concurrentGrantLocks[intention.Key].ReferenceCount == 0)
+                        try
                         {
-                            _concurrentGrantLocks.Remove(intention.Key);
+                            if (transaction.GrantedLockCache.Read((obj) => obj.Contains(intention.Key)))
+                            {
+                                //This transaction owns the lock, but it was created with a previous call to Acquire().
+                                //  This means that the transaction has the key, but the caller will not be be provided
+                                //  with it since modification by a non-creator caller would be dangerous.
+                                //
+                                //Additionally, we will not issue a new SingleUseKey for the lock because that would be wasteful.
+                                return null;
+                            }
+
+                            var lockKey = AttemptLock(transaction, intention);
+                            if (lockKey != null)
+                            {
+                                //We got a lock, record it and return the key to the caller.
+                                transaction.GrantedLockCache.Write((obj) => obj.Add(intention.Key));
+                                return lockKey;
+                            }
+                        }
+                        finally
+                        {
+                            //Allow other threads to now attempt a lock on this file.
+                            concurrencyLock.Semaphore.Release();
                         }
                     }
                 }
             }
+            finally
+            {
+                lock (_concurrentGrantLocks)
+                {
+                    //Decrement this threads lock on the file and remove it from the collection if we are the last one.
+                    _concurrentGrantLocks[intention.Key].ReferenceCount--;
+                    if (_concurrentGrantLocks[intention.Key].ReferenceCount == 0)
+                    {
+                        _concurrentGrantLocks.Remove(intention.Key);
+                    }
+
+                    //Let other transactions know that we are no longer waiting on this lock.
+                    _pendingGrants.Write((obj) => obj.Remove(pendingGrantKey));
+                }
+            }
         }
 
-        private ObjectLockKey AcquireInternal(Transaction transaction, ObjectLockIntention intention)
+        private ObjectLockKey? AttemptLock(Transaction transaction, ObjectLockIntention intention)
         {
             try
             {
-                _pendingGrants.Write((o) => o.Add(intention.Key, new(transaction, intention)));
+                transaction.EnsureActive();
 
-                while (true)
+                if (_core.Settings.LockWaitTimeoutSeconds > 0 //Infinite lock expiration.
+                    && (DateTime.UtcNow - intention.CreationTime).TotalSeconds > _core.Settings.LockWaitTimeoutSeconds)
                 {
-                    transaction.EnsureActive();
+                    var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
+                    _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
+                    _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                    transaction.Rollback();
+                    throw new KbTimeoutException($"Timeout exceeded while waiting on lock: {intention.ToString()}");
+                }
 
-                    if (_core.Settings.LockWaitTimeoutSeconds > 0
-                        && (DateTime.UtcNow - intention.CreationTime).TotalSeconds > _core.Settings.LockWaitTimeoutSeconds)
+                //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical
+                //  section "Locking.CriticalSectionLockManagement", we will only need:
+                return _collection.TryWriteAll([transaction.TransactionSemaphore], out bool isLockHeld, (obj) =>
+                {
+                    ObjectLockKey? lockKey = null;
+
+                    var lockedObjects = GetOverlappingLocks(intention); //Find any existing locks on the given lock intention.
+
+                    if (lockedObjects.Count == 0)
                     {
+                        //No locks on the object exist - so add one to the local and class collections.
+                        var lockedObject = new ObjectLock(_core, intention);
+                        obj.Add(lockedObject);
+                        lockedObjects.Add(lockedObject);
+
+                        lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+                        transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
+
                         var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
                         _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
                         _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
-                        transaction.Rollback();
-                        throw new KbTimeoutException($"Timeout exceeded while waiting on lock: {intention.ToString()}");
+
+                        return lockKey;
                     }
 
-                    //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical
-                    //  section "Locking.CriticalSectionLockManagement", we will only need:
-                    var acquiredLockKey = _collection.TryWriteAll([transaction.TransactionSemaphore], out bool isLockHeld, (obj) =>
+                    #region Stability.
+                    if (intention.Operation == LockOperation.Stability)
                     {
-                        ObjectLockKey? lockKey = null;
+                        //This operation is blocked by: Delete.
+                        var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
+                            .Where(o => (o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
 
-                        var lockedObjects = GetOverlappingLocks(intention); //Find any existing locks on the given lock intention.
-
-                        if (lockedObjects.Count == 0)
+                        if (blockers.Count == 0)
                         {
-                            //No locks on the object exist - so add one to the local and class collections.
-                            var lockedObject = new ObjectLock(_core, intention);
-                            obj.Add(lockedObject);
-                            lockedObjects.Add(lockedObject);
+                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
 
-                            lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-                            transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
+                            foreach (var lockedObject in lockedObjects)
+                            {
+                                lockedObject.Hits++;
+
+                                if (lockedObject.Keys.Read((obj) => obj)
+                                        .Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
+                                {
+                                    //Do we really need to hand out multiple keys to the same object
+                                    //  of the same type? I don't think we do. Just continue...
+                                    continue;
+                                }
+
+                                lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+                                transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
+                            }
 
                             var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
                             _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
@@ -211,234 +267,188 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                             return lockKey;
                         }
-
-                        #region Stability.
-                        if (intention.Operation == LockOperation.Stability)
+                        else
                         {
-                            //This operation is blocked by: Delete.
-                            var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                                .Where(o => (o.Operation == LockOperation.Delete) && o.ProcessId != transaction.ProcessId).ToList();
+                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                            transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
+                        }
+                    }
+                    #endregion
 
-                            if (blockers.Count == 0)
+                    #region Read.
+                    else if (intention.Operation == LockOperation.Read)
+                    {
+                        //This operation is blocked by: Read and Write.
+                        var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
+                            .Where(o => (o.Operation == LockOperation.Write || o.Operation == LockOperation.Delete)
+                            && o.ProcessId != transaction.ProcessId).ToList();
+
+                        if (blockers.Count == 0)
+                        {
+                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
+
+                            foreach (var lockedObject in lockedObjects)
                             {
-                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                                lockedObject.Hits++;
 
-                                foreach (var lockedObject in lockedObjects)
+                                if (lockedObject.Keys.Read((obj) => obj).Any(o
+                                    => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
                                 {
-                                    lockedObject.Hits++;
-
-                                    if (lockedObject.Keys.Read((obj) => obj)
-                                            .Any(o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
-                                    {
-                                        //Do we really need to hand out multiple keys to the same object
-                                        //  of the same type? I don't think we do. Just continue...
-                                        continue;
-                                    }
-
-                                    lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-                                    transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
+                                    //Do we really need to hand out multiple keys to the same
+                                    //  object of the same type? I don't think we do. Just continue...
+                                    continue;
                                 }
 
-                                var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                                _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                                _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                                lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+                                transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
+                            }
 
-                                return lockKey;
-                            }
-                            else
-                            {
-                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
-                                transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
-                            }
+                            var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
+                            _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
+                            _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+
+                            return lockKey;
                         }
-                        #endregion
-
-                        #region Read.
-                        else if (intention.Operation == LockOperation.Read)
+                        else
                         {
-                            //This operation is blocked by: Read and Write.
-                            var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                                .Where(o => (o.Operation == LockOperation.Write || o.Operation == LockOperation.Delete)
-                                && o.ProcessId != transaction.ProcessId).ToList();
+                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                            transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
+                        }
+                    }
+                    #endregion
 
-                            if (blockers.Count == 0)
+                    #region Write.
+                    else if (intention.Operation == LockOperation.Write)
+                    {
+                        //This operation is blocked by: Read, Write, Delete.
+                        var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
+                            .Where(o => o.Operation != LockOperation.Stability && o.ProcessId != transaction.ProcessId).ToList();
+
+                        if (blockers.Count == 0)
+                        {
+                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
+
+                            foreach (var lockedObject in lockedObjects)
                             {
-                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                                lockedObject.Hits++;
 
-                                foreach (var lockedObject in lockedObjects)
+                                if (lockedObject.Keys.Read((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId
+                                && o.Operation == intention.Operation)))
                                 {
-                                    lockedObject.Hits++;
-
-                                    if (lockedObject.Keys.Read((obj) => obj).Any(o
-                                        => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation))
-                                    {
-                                        //Do we really need to hand out multiple keys to the same
-                                        //  object of the same type? I don't think we do. Just continue...
-                                        continue;
-                                    }
-
-                                    lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-                                    transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
+                                    //Do we really need to hand out multiple keys to the same object of the same type?
+                                    //I don't think we do.
+                                    continue;
                                 }
 
-                                var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                                _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                                _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                                lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
+                                transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
+                            }
 
-                                return lockKey;
-                            }
-                            else
-                            {
-                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
-                                transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
-                            }
+                            var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
+                            _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
+                            _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+
+                            return lockKey;
                         }
-                        #endregion
-
-                        #region Write.
-                        else if (intention.Operation == LockOperation.Write)
+                        else
                         {
-                            //This operation is blocked by: Read, Write, Delete.
-                            var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                                .Where(o => o.Operation != LockOperation.Stability && o.ProcessId != transaction.ProcessId).ToList();
+                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                            transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
+                        }
+                    }
+                    #endregion
 
-                            if (blockers.Count == 0)
+                    #region Delete.
+                    else if (intention.Operation == LockOperation.Delete)
+                    {
+                        //This operation is blocked by: Everything
+                        var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
+                            .Where(o => o.ProcessId != transaction.ProcessId).ToList();
+
+                        if (blockers.Count == 0) //If there are no existing un-owned locks.
+                        {
+                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
+
+                            foreach (var lockedObject in lockedObjects)
                             {
-                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                                lockedObject.Hits++;
 
-                                foreach (var lockedObject in lockedObjects)
+                                if (lockedObject.Keys.Read((obj) => obj.Any(
+                                    o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
                                 {
-                                    lockedObject.Hits++;
-
-                                    if (lockedObject.Keys.Read((obj) => obj.Any(o => o.ProcessId == transaction.ProcessId
-                                    && o.Operation == intention.Operation)))
-                                    {
-                                        //Do we really need to hand out multiple keys to the same object of the same type?
-                                        //I don't think we do.
-                                        continue;
-                                    }
-
-                                    lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-                                    transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
+                                    //Do we really need to hand out multiple keys to the same object of the same type?
+                                    //I don't think we do.
+                                    continue;
                                 }
 
-                                var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                                _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                                _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                                lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
 
-                                return lockKey;
+                                transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
                             }
-                            else
-                            {
-                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
-                                transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
-                            }
+
+                            var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
+                            _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
+                            _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+
+                            return lockKey;
                         }
-                        #endregion
-
-                        #region Delete.
-                        else if (intention.Operation == LockOperation.Delete)
+                        else
                         {
-                            //This operation is blocked by: Everything
-                            var blockers = lockedObjects.SelectMany(o => o.Keys.Read((obj) => obj))
-                                .Where(o => o.ProcessId != transaction.ProcessId).ToList();
+                            transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                            transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
+                        }
+                    }
+                    #endregion
 
-                            if (blockers.Count == 0) //If there are no existing un-owned locks.
+                    #region Deadlock detection.
+
+                    transaction.BlockedByKeys.Read((obj) =>
+                    {
+                        if (obj.Count != 0)
+                        {
+                            _pendingGrants.Read((waitingLocks) =>
                             {
-                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
+                                var waitingTransactions = waitingLocks
+                                    .Where(o => o.Value.Transaction.IsDeadlocked == false)
+                                    .Select(o => o.Value.Transaction).ToList();
 
-                                foreach (var lockedObject in lockedObjects)
+                                //Get a list of transactions that are blocked by the current transaction.
+                                var blockedByMe = waitingTransactions.Where(
+                                    o => o.BlockedByKeys.ReadNullable((obj) => obj.Where(
+                                        k => k.ProcessId == transaction.ProcessId).Any())).ToList();
+
+                                foreach (var blocked in blockedByMe)
                                 {
-                                    lockedObject.Hits++;
+                                    //Check to see if the current transaction is waiting
+                                    //  on any of those blocked transaction (circular reference).
 
-                                    if (lockedObject.Keys.Read((obj) => obj.Any(
-                                        o => o.ProcessId == transaction.ProcessId && o.Operation == intention.Operation)))
+                                    if (obj.Any(o => o.ProcessId == blocked.ProcessId))
                                     {
-                                        //Do we really need to hand out multiple keys to the same object of the same type?
-                                        //I don't think we do.
-                                        continue;
+                                        var explanation = GetDeadlockExplanation(transaction, waitingLocks, intention, blockedByMe);
+
+                                        transaction.SetDeadlocked();
+
+                                        throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.", explanation.ToString());
                                     }
-
-                                    lockKey = lockedObject.IssueSingleUseKey(transaction, intention);
-
-                                    transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
                                 }
-
-                                var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                                _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                                _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
-
-                                return lockKey;
-                            }
-                            else
-                            {
-                                transaction.BlockedByKeys.Write((obj) => obj.Clear());
-                                transaction.BlockedByKeys.Write((obj) => obj.AddRange(blockers.Distinct()));
-                            }
+                            });
                         }
-                        #endregion
-
-                        #region Deadlock detection.
-
-                        transaction.BlockedByKeys.Read((obj) =>
-                        {
-                            if (obj.Count != 0)
-                            {
-                                _pendingGrants.Read((waitingLocks) =>
-                                {
-                                    var waitingTransactions = waitingLocks
-                                        .Where(o => o.Value.Transaction.IsDeadlocked == false)
-                                        .Select(o => o.Value.Transaction).ToList();
-
-                                    //Get a list of transactions that are blocked by the current transaction.
-                                    var blockedByMe = waitingTransactions.Where(
-                                        o => o.BlockedByKeys.ReadNullable((obj) => obj.Where(
-                                            k => k.ProcessId == transaction.ProcessId).Any())).ToList();
-
-                                    foreach (var blocked in blockedByMe)
-                                    {
-                                        //Check to see if the current transaction is waiting
-                                        //  on any of those blocked transaction (circular reference).
-
-                                        if (obj.Any(o => o.ProcessId == blocked.ProcessId))
-                                        {
-                                            var explanation = GetDeadlockExplanation(transaction, waitingLocks, intention, blockedByMe);
-
-                                            transaction.SetDeadlocked();
-
-                                            throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.", explanation.ToString());
-                                        }
-                                    }
-                                });
-                            }
-                        });
-
-                        #endregion
-
-                        return null;
                     });
 
-                    if (acquiredLockKey != null)
-                    {
-                        return acquiredLockKey;
-                    }
+                    #endregion
 
-                    Thread.Sleep(1);
-                }
+                    return null;
+                }); //If we got a lock, return its key.
             }
             catch (Exception ex)
             {
                 LogManager.Error($"Failed to acquire lock for process {transaction.ProcessId}.", ex);
                 throw;
             }
-            finally
-            {
-                _pendingGrants.Write((obj) => obj.Remove(intention.Key));
-            }
         }
 
         private string GetDeadlockExplanation(Transaction transaction,
-            Dictionary<string /*${TransactionId:FilePath}*/, ObjectPendingLockIntention> txWaitingForLocks,
+            Dictionary<Guid, ObjectPendingLockIntention> txWaitingForLocks,
             ObjectLockIntention intention, List<Transaction> blockedByMe)
         {
             var deadLockId = Guid.NewGuid().ToString();
@@ -501,7 +511,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 explanation.AppendLine("        Awaiting Locks {");
                 foreach (var waitingFor in txWaitingForLocks.Where(o => o.Value.Transaction == waiter))
                 {
-                    explanation.AppendLine($"            {waitingFor.Value.ToString()}");
+                    explanation.AppendLine($"            {waitingFor.Value.Intention}");
                 }
                 explanation.AppendLine("        }");
             }

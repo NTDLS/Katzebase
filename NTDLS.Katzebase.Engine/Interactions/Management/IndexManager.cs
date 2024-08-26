@@ -214,12 +214,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         /// <param name="keyValues">For JOIN operations, contains the values of the joining document.</param>
         /// <returns></returns>
-        internal Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClause(Transaction transaction,
+        internal Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClause(
                     PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, string workingSchemaPrefix, KbInsensitiveDictionary<string>? keyValues = null)
         {
             Dictionary<uint, DocumentPointer> accumulatedResults = new();
 
-            var ptIndexSearch = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexSearch, $"Schema: {workingSchemaPrefix}");
+            var ptIndexSearch = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.IndexSearch, $"Schema: {workingSchemaPrefix}");
 
             foreach (var indexingConditionGroup in optimization.IndexingConditionGroup) //Loop through the OR groups
             {
@@ -227,9 +227,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var lookup in indexingConditionGroup.Lookups) //Loop thorough the AND conditions.
                 {
-                    var partialResults = MatchSchemaDocumentsByConditionsClauseGroup(transaction, lookup, physicalSchema, workingSchemaPrefix, keyValues);
+                    var partialResults = MatchSchemaDocumentsByConditionsClauseGroup(optimization.Transaction, lookup, physicalSchema, workingSchemaPrefix, keyValues);
 
-                    var ptDocumentPointerIntersect = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
+                    var ptDocumentPointerIntersect = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                     groupResults = groupResults.Intersect(partialResults);
                     ptDocumentPointerIntersect?.StopAndAccumulate();
 
@@ -240,7 +240,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                 }
 
-                var ptDocumentPointerUnion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerUnion);
+                var ptDocumentPointerUnion = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerUnion);
                 accumulatedResults.UnionWith(groupResults); //Each group is an OR condition, so just union them.
                 ptDocumentPointerUnion?.StopAndAccumulate();
             }
@@ -297,7 +297,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         {
                             var parameter = new MatchSchemaDocumentsByConditionsOperation.Parameter(operation, indexPartition);
 
-                            var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
+                            var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
                             queue.Enqueue(parameter, MatchSchemaDocumentsByConditionsClauseThread/*, (QueueItemState<MatchSchemaDocumentsByConditionsOperation.Parameter> o) =>
                         {
                             LogManager.Information($"Indexing:CompletionTime: {o.CompletionTime?.TotalMilliseconds:n0}.");
@@ -305,11 +305,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             ptThreadQueue?.StopAndAccumulate();
                         }
 
-                        var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion, $"Index: {lookup.Index.Name}");
+                        var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {lookup.Index.Name}");
                         queue.WaitForCompletion();
                         ptThreadCompletion?.StopAndAccumulate();
 
-                        var ptDocumentPointerIntersect = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
+                        var ptDocumentPointerIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                         accumulatedResults = accumulatedResults.Intersect(operation.ThreadResults);
                         ptDocumentPointerIntersect?.StopAndAccumulate();
 
@@ -324,7 +324,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         //No need for additional threads, its just a single partition.
                         MatchSchemaDocumentsByConditionsClauseThread(new MatchSchemaDocumentsByConditionsOperation.Parameter(operation, indexPartitions.First()));
 
-                        var ptDocumentPointerIntersect = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
+                        var ptDocumentPointerIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                         accumulatedResults = accumulatedResults.Intersect(operation.ThreadResults);
                         ptDocumentPointerIntersect?.StopAndAccumulate();
 
@@ -367,7 +367,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         //The index only has one attribute, so we are at the base where the document pointers are.
                         //(workingPhysicalIndexLeaves.FirstOrDefault()?.Documents?.Count > 0) //We found documents, we are at the base of the index.
-                        var ptIndexDistillation = parameter.Operation.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
+                        var ptIndexDistillation = parameter.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.IndexDistillation);
                         threadResults = DistillIndexLeaves(workingPhysicalIndexLeaves);
                         ptIndexDistillation?.StopAndAccumulate();
 
@@ -381,7 +381,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (threadResults.Count > 0)
                 {
-                    var ptDocumentPointerUnion = parameter.Operation.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerUnion);
+                    var ptDocumentPointerUnion = parameter.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerUnion);
                     lock (parameter.Operation.ThreadResults)
                     {
                         parameter.Operation.ThreadResults.UnionWith(threadResults);
@@ -411,11 +411,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     //This is the bottom of the condition tree, as low as we can go in this index given the fields we have, so just distill the leaves.
 
-                    var ptIndexDistillation = parameter.Operation.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.IndexDistillation);
+                    var ptIndexDistillation = parameter.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.IndexDistillation);
                     var partialResults = DistillIndexLeaves(partitionResults);
                     ptIndexDistillation?.StopAndAccumulate();
 
-                    var ptDocumentPointerIntersect = parameter.Operation.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
+                    var ptDocumentPointerIntersect = parameter.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                     results = results.Intersect(partialResults);
                     ptDocumentPointerIntersect?.StopAndAccumulate();
 
@@ -430,7 +430,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     //Further, recursively, process additional compound index attribute condition matches.
                     var partialResults = MatchSchemaDocumentsByConditionsClauseRecursive(parameter, attributeDepth + 1, partitionResults);
 
-                    var ptDocumentPointerIntersect = parameter.Operation.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.DocumentPointerIntersect);
+                    var ptDocumentPointerIntersect = parameter.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                     results = results.Intersect(partialResults);
                     ptDocumentPointerIntersect?.StopAndAccumulate();
 
@@ -998,12 +998,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                         var instance = new RemoveDocumentsFromIndexThreadInstance(operation, indexPartition);
 
-                        var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
+                        var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
                         queue.Enqueue(instance, RemoveDocumentsFromIndexThreadWorker);
                         ptThreadQueue?.StopAndAccumulate();
                     }
 
-                    var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion, $"Index: {physicalIndex.Name}");
+                    var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {physicalIndex.Name}");
                     queue.WaitForCompletion();
                     ptThreadCompletion?.StopAndAccumulate();
                 }
@@ -1176,12 +1176,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var parameter = new RebuildIndexOperation.Parameter(operation, documentPointer);
 
-                    var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
+                    var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
                     queue.Enqueue(parameter, RebuildIndexThreadWorker);
                     ptThreadQueue?.StopAndAccumulate();
                 }
 
-                var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion, $"Index: {physicalIndex.Name}");
+                var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {physicalIndex.Name}");
                 queue.WaitForCompletion();
                 ptThreadCompletion?.StopAndAccumulate();
 

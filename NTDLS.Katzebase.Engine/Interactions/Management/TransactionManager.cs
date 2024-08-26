@@ -198,7 +198,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             IsUserCreated = isUserCreated
                         };
 
-                        ptAcquireTransaction = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.AcquireTransaction);
+                        ptAcquireTransaction = transaction.Instrumentation.CreateToken(PerformanceCounter.AcquireTransaction);
 
                         obj.Add(transaction);
                     }

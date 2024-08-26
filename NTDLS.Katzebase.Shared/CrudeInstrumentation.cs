@@ -97,9 +97,9 @@ namespace NTDLS.Katzebase.Shared
 #endif
 
 #if !EnableCrudeInstrumentation
-        public static T? WitnessNullable<T>(CrudeInstrumentationProc<T?> proc) => proc();
+        public static T? Witness<T>(CrudeInstrumentationNullableProc<T?> proc) => proc();
 #else
-        public static T? WitnessNullable<T>(CrudeInstrumentationProc<T?> proc, [CallerMemberName] string callingMethodName = "")
+        public static T? Witness<T>(CrudeInstrumentationNullableProc<T?> proc, [CallerMemberName] string callingMethodName = "")
         {
             var sw = Stopwatch.StartNew();
             T? result = proc();

@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Trace
     {
         public string Key { get; private set; }
         public PerformanceTrace Owner { get; private set; }
-        public PerformanceTraceCumulativeMetricType Type { get; private set; }
+        public PerformanceCounter Type { get; private set; }
         public DateTime BeginTime { get; private set; }
         public DateTime FinishTime { get; private set; }
 
@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Trace
         /// </summary>
         public double Duration { get; private set; }
 
-        public PerformanceTraceDurationTracker(PerformanceTrace owner, PerformanceTraceCumulativeMetricType type, string key)
+        public PerformanceTraceDurationTracker(PerformanceTrace owner, PerformanceCounter type, string key)
         {
             Key = key;
             Owner = owner;

@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 string healthCounterDiskPath = Path.Combine(core.Settings.LogDirectory, HealthStatsFile);
                 if (File.Exists(healthCounterDiskPath))
                 {
-                    var physicalCounters = core.IO.GetJsonNonTracked<KbInsensitiveDictionary<HealthCounter>>(healthCounterDiskPath, false);
+                    var physicalCounters = core.IO.GetJsonNonTracked<KbInsensitiveDictionary<HealthCounter>>(healthCounterDiskPath);
 
                     if (physicalCounters != null)
                     {
@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 Counters.Read(o =>
                 {
-                    _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.LogDirectory, HealthStatsFile), o, false);
+                    _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.LogDirectory, HealthStatsFile), o);
                 });
             }
             catch (Exception ex)

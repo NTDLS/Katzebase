@@ -51,7 +51,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     }
                     schemaIdentifier += "\r\n";
 
-                    var explanation = schemaIdentifier + topLevelSchemaMap.Optimization.ExplainOptimization();
+                    var explanation = schemaIdentifier + topLevelSchemaMap.Optimization.ExplainOptimization(
+                        core, topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, topLevelSchemaMap.Prefix, null);
+
                     transaction.AddMessage(explanation, KbMessageType.Explain);
                 }
 
@@ -64,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
                     documentPointers = new List<DocumentPointer>();
 
-                    var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(transaction,
+                    var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(
                         topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, topLevelSchemaMap.Prefix);
 
                     if (indexMatchedDocuments != null)
@@ -103,7 +105,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 var instance = new DocumentLookupOperation.Parameter(operation, documentPointer);
 
-                var ptThreadQueue = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadQueue);
+                var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
                 queue.Enqueue(instance, LookupThreadWorker/*, (QueueItemState<DocumentLookupOperation.Parameter> o) =>
                 {
 
@@ -121,7 +123,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 ptThreadQueue?.StopAndAccumulate();
             }
 
-            var ptThreadCompletion = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.ThreadCompletion);
+            var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
             queue.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
 
@@ -207,7 +209,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 }
 
                 //Sort the results:
-                var ptSorting = transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Sorting);
+                var ptSorting = transaction.Instrumentation.CreateToken(PerformanceCounter.Sorting);
                 operation.Results.Collection = operation.Results.Collection.OrderBy
                     (row => row.AuxiliaryFields, new ResultValueComparer(sortingColumns)).ToList();
 
@@ -435,6 +437,36 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             bool explain = instance.Operation.Transaction.Session.IsConnectionSettingSet(KbConnectionSetting.ExplainQuery);
 
+            #endregion
+
+            var joinKeyValues = new KbInsensitiveDictionary<string>();
+
+            if (currentSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
+            {
+                //All condition SubConditions have a selected index. Start building a list of possible document IDs.
+                foreach (var subCondition in currentSchemaMap.Optimization.Conditions.NonRootSubConditions)
+                {
+                    //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
+                    foreach (var condition in subCondition.Conditions)
+                    {
+                        var documentContent = joinScopedContentCache[condition.Right?.Prefix ?? ""];
+
+                        if (!documentContent.TryGetValue(condition.Right?.Value ?? "", out string? documentValue))
+                        {
+                            throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
+                        }
+                        joinKeyValues[condition.Right?.Key ?? ""] = documentValue?.ToString() ?? "";
+                    }
+                }
+
+                //We are going to create a limited document catalog from the indexes.
+
+                var limitedDocumentPointers = instance.Operation.Core.Indexes.MatchSchemaDocumentsByConditionsClause(
+                    currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix, joinKeyValues);
+
+                documentPointers = limitedDocumentPointers.Select(o => o.Value);
+            }
+
             if (explain && currentSchemaMap.Optimization != null)
             {
                 lock (instance.Operation.ExplainHash)
@@ -458,39 +490,11 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     }
                     schemaIdentifier += "\r\n";
 
-                    var explanation = schemaIdentifier + currentSchemaMap.Optimization.ExplainOptimization();
+                    var explanation = schemaIdentifier + currentSchemaMap.Optimization.ExplainOptimization(instance.Operation.Core,
+                        currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix, joinKeyValues);
+
                     instance.Operation.Transaction.AddMessage(explanation, KbMessageType.Explain);
                 }
-            }
-
-            #endregion
-
-            if (currentSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
-            {
-                var joinKeyValues = new KbInsensitiveDictionary<string>();
-
-                //All condition SubConditions have a selected index. Start building a list of possible document IDs.
-                foreach (var subCondition in currentSchemaMap.Optimization.Conditions.NonRootSubConditions)
-                {
-                    //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
-                    foreach (var condition in subCondition.Conditions)
-                    {
-                        var documentContent = joinScopedContentCache[condition.Right?.Prefix ?? ""];
-
-                        if (!documentContent.TryGetValue(condition.Right?.Value ?? "", out string? documentValue))
-                        {
-                            throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
-                        }
-                        joinKeyValues[condition.Right?.Key ?? ""] = documentValue?.ToString() ?? "";
-                    }
-                }
-
-                //We are going to create a limited document catalog from the indexes.
-
-                var limitedDocumentPointers = instance.Operation.Core.Indexes.MatchSchemaDocumentsByConditionsClause(instance.Operation.Transaction,
-                    currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix, joinKeyValues);
-
-                documentPointers = limitedDocumentPointers.Select(o => o.Value);
             }
 
             documentPointers ??= instance.Operation.Core.Documents.AcquireDocumentPointers(
@@ -525,7 +529,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 SetSchemaIntersectionConditionParameters(instance.Operation.Transaction,
                     ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
 
-                var ptEvaluate = instance.Operation.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
+                var ptEvaluate = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
                 ptEvaluate?.StopAndAccumulate();
 
@@ -782,7 +786,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             {
                 SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, instance.Operation.Query.Conditions, inputResult.AuxiliaryFields);
 
-                var ptEvaluate = instance.Operation.Transaction.PT?.CreateDurationTracker(PerformanceTraceCumulativeMetricType.Evaluate);
+                var ptEvaluate = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
                 ptEvaluate?.StopAndAccumulate();
 

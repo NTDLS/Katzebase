@@ -289,7 +289,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         var lookupOptimization = IndexingConditionOptimization.BuildTree(_core,
                             transactionReference.Transaction, physicalSchema, schema.Conditions, schema.Prefix);
 
-                        var explanation = schemaIdentifier + lookupOptimization.ExplainOptimization(1);
+                        var explanation = schemaIdentifier + lookupOptimization.ExplainOptimization(_core, physicalSchema, lookupOptimization, schema.Prefix);
 
                         transactionReference.Transaction.AddMessage(explanation, KbMessageType.Explain);
                     }
