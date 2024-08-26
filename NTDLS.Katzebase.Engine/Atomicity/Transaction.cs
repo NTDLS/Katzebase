@@ -2,11 +2,11 @@
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.Katzebase.Engine.Trace;
 using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Client.KbConstants;
@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         public DateTime StartTime { get; private set; }
         public bool IsDeadlocked { get; private set; }
-        public PerformanceTrace Instrumentation { get; private set; }
+        public InstrumentationTracker Instrumentation { get; private set; }
         public OptimisticSemaphore TransactionSemaphore { get; } = new();
 
         /// <summary>
@@ -254,7 +254,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptLock = Instrumentation?.CreateToken(PerformanceTrace.PerformanceCounter.Lock, $"File:{lockOperation}");
+                var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"File:{lockOperation}");
 
                 diskPath = diskPath.ToLowerInvariant();
 
@@ -284,7 +284,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptLock = Instrumentation?.CreateToken(PerformanceTrace.PerformanceCounter.Lock, $"Directory:{lockOperation}");
+                var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Directory:{lockOperation}");
 
                 diskPath = diskPath.ToLowerInvariant();
 
@@ -314,7 +314,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptLock = Instrumentation?.CreateToken(PerformanceTrace.PerformanceCounter.Lock, $"Directory:{lockOperation}");
+                var ptLock = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Lock, $"Directory:{lockOperation}");
 
                 diskPath = diskPath.ToLowerInvariant();
 
@@ -355,10 +355,11 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             _core = core;
             _transactionManager = transactionManager;
 
+            bool enableInstrumentation = false;
+
             GrantedLockCache = new(core.LockManagementSemaphore);
             BlockedByKeys = new(core.LockManagementSemaphore);
             HeldLockKeys = new(core.LockManagementSemaphore);
-            Instrumentation = new PerformanceTrace();
 
             StartTime = DateTime.UtcNow;
             ProcessId = processId;
@@ -371,7 +372,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             if (isRecovery == false)
             {
                 var session = core.Sessions.ByProcessId(processId);
-                Instrumentation.Enabled = session.GetConnectionSetting(SessionState.KbConnectionSetting.TraceWaitTimes) == 1;
+
+                enableInstrumentation = session.GetConnectionSetting(SessionState.KbConnectionSetting.TraceWaitTimes) == 1;
 
                 Directory.CreateDirectory(TransactionPath);
 
@@ -382,6 +384,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 _transactionLogHandle.EnsureNotNull();
             }
+
+            Instrumentation = new InstrumentationTracker(enableInstrumentation);
         }
 
         #region Action Recorders.
@@ -406,7 +410,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(PerformanceTrace.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
 
                 Atoms.Write((obj) =>
                 {
@@ -442,7 +446,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(PerformanceTrace.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
                 Atoms.Write((obj) =>
                 {
                     if (IsFileAlreadyRecorded(path))
@@ -476,7 +480,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(PerformanceTrace.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
 
                 DeferredIOs.Write((obj) => obj.RemoveItemsWithPrefix(diskPath));
 
@@ -518,7 +522,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(PerformanceTrace.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
 
                 DeferredIOs.Write((obj) => obj.Remove(filePath));
 
@@ -559,7 +563,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(PerformanceTrace.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
 
                 FilesReadForCache.WriteNullable((obj) => obj.Add(filePath));
 
@@ -580,7 +584,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             {
                 EnsureActive();
 
-                var ptRecording = Instrumentation?.CreateToken(PerformanceTrace.PerformanceCounter.Recording);
+                var ptRecording = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Recording);
 
                 Atoms.Write((obj) =>
                 {
@@ -632,7 +636,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 try
                 {
-                    var ptRollback = Instrumentation?.CreateToken(PerformanceTrace.PerformanceCounter.Rollback);
+                    var ptRollback = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Rollback);
                     try
                     {
                         Atoms.Write((obj) =>
@@ -711,7 +715,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                     }
 
                     ptRollback?.StopAndAccumulate();
-                    Instrumentation?.AddDiscreteMetric(PerformanceTrace.PerformanceTraceDiscreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
+                    Instrumentation?.AddDiscreteMetric(InstrumentationTracker.DiscretePerformanceCounter.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
                 }
                 catch (Exception ex)
                 {
@@ -745,7 +749,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                 try
                 {
-                    var ptCommit = Instrumentation?.CreateToken(PerformanceTrace.PerformanceCounter.Commit);
+                    var ptCommit = Instrumentation?.CreateToken(InstrumentationTracker.PerformanceCounter.Commit);
                     _referenceCount--;
 
                     if (_referenceCount == 0)
@@ -768,7 +772,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                             ReleaseLocks();
                         }
                         ptCommit?.StopAndAccumulate();
-                        Instrumentation?.AddDiscreteMetric(PerformanceTrace.PerformanceTraceDiscreteMetricType.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
+                        Instrumentation?.AddDiscreteMetric(InstrumentationTracker.DiscretePerformanceCounter.TransactionDuration, (DateTime.UtcNow - StartTime).TotalMilliseconds);
                         return true;
                     }
                     else if (_referenceCount < 0)

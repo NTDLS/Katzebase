@@ -15,8 +15,8 @@ using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using System.Text;
 
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
+using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

@@ -4,15 +4,15 @@ using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Indexes;
+using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Schemas;
-using NTDLS.Katzebase.Engine.Trace;
 using NTDLS.Katzebase.Shared;
 using System.Text;
+using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Schemas.PhysicalSchema;
-using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -292,7 +292,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         internal PhysicalSchema Acquire(Transaction transaction, string schemaName, LockOperation intendedOperation)
         {
-            PerformanceTraceDurationTracker? ptLockSchema = null;
+            InstrumentationDurationToken? ptLockSchema = null;
 
             try
             {
@@ -375,7 +375,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         internal VirtualSchema AcquireVirtual(Transaction transaction, string schemaName, LockOperation intendedOperation)
         {
-            PerformanceTraceDurationTracker? ptLockSchema = null;
+            InstrumentationDurationToken? ptLockSchema = null;
 
             try
             {

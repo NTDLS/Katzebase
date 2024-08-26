@@ -1,14 +1,14 @@
 ﻿using Newtonsoft.Json;
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.Katzebase.Engine.Trace;
 using NTDLS.Semaphore;
 using System.Diagnostics;
+using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using static NTDLS.Katzebase.Engine.Trace.PerformanceTrace;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -189,7 +189,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 return _collection.Write((obj) =>
                 {
-                    PerformanceTraceDurationTracker? ptAcquireTransaction = null;
+                    InstrumentationDurationToken? ptAcquireTransaction = null;
                     var transaction = GetByProcessId(session.ProcessId);
                     if (transaction == null)
                     {
