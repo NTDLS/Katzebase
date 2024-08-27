@@ -637,5 +637,64 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         }
 
         #endregion
+
+        #region Condition explanation.
+
+        /// <summary>
+        /// This function makes a (somewhat) user readable expression tree, used for debugging and explanations.
+        /// It also demonstrates how we process the recursive condition logic.
+        /// </summary>
+        public string Explain()
+        {
+            var result = new StringBuilder();
+
+            if (Root.ExpressionKeys.Count > 0)
+            {
+                //The root condition is just a pointer to a child condition, so get the "root" child condition.
+                var rootCondition = SubConditionFromExpressionKey(Root.Key);
+                ExplainSubCondition(ref result, rootCondition, 0);
+            }
+
+            return result.ToString();
+        }
+
+        /// <summary>
+        /// This function makes a (somewhat) user readable expression tree, used for debugging and explanations.
+        /// It includes indexes where they can be applied.
+        /// It also demonstrates how we process the recursive condition logic.
+        /// Called by parent ExplainOptimization()
+        /// </summary>
+        private void ExplainSubCondition(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
+        {
+            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
+            {
+                var subCondition = SubConditionFromExpressionKey(expressionKey);
+
+                result.AppendLine(Pad(indentation + 1)
+                    + $"{FriendlyPlaceholder(subCondition.Key)} is ({FriendlyPlaceholder(subCondition.Expression)})");
+
+                result.AppendLine(Pad(indentation + 1) + "(");
+
+                if (subCondition.Conditions.Count > 0)
+                {
+                    foreach (var condition in subCondition.Conditions)
+                    {
+                        result.AppendLine(Pad(indentation + 2)
+                            + $"{Conditions.FriendlyPlaceholder(condition.ConditionKey)} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                    }
+                }
+
+                if (subCondition.ExpressionKeys.Count > 0)
+                {
+                    result.AppendLine(Pad(indentation + 2) + "(");
+                    ExplainSubCondition(ref result, subCondition, indentation + 2);
+                    result.AppendLine(Pad(indentation + 2) + ")");
+                }
+
+                result.AppendLine(Pad(indentation + 1) + ")");
+            }
+        }
+
+        #endregion
     }
 }

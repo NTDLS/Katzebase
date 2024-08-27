@@ -382,34 +382,25 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         {
             var result = new StringBuilder();
 
+            string schemaIdentifier = $"Schema: '{physicalSchema.Name}'";
+            if (!string.IsNullOrEmpty(workingSchemaPrefix))
+            {
+                schemaIdentifier += $", alias: '{workingSchemaPrefix}'";
+            }
+            result.AppendLine(schemaIdentifier);
+
             if (optimization.IndexingConditionGroup.Count == 0)
             {
-
-                result.AppendLine(optimization.Conditions.Expression);
-
-                /*
-                //We need to expand the entire condition tree here.
-                var conditions = optimization.Conditions.AllFields.Where(o => o.Prefix == workingSchemaPrefix);
-
-                foreach (var condition in conditions)
-                {
-                    //if (condition.val)
-                    {
-                        result.AppendLine(Pad(0) + $"Full table scan of [{physicalSchema.Name}] for.");
-                    }
-                    //else
-                    {
-                        result.AppendLine(Pad(0) + $"Full table scan of [{physicalSchema.Name}] for.");
-                    }
-                }
-                */
+                result.AppendLine("Full schema scan: " + optimization.Conditions.Explain());
             }
-
-            foreach (var indexingConditionGroup in optimization.IndexingConditionGroup) //Loop through the OR groups
+            else
             {
-                foreach (var lookup in indexingConditionGroup.Lookups) //Loop thorough the AND conditions.
+                foreach (var indexingConditionGroup in optimization.IndexingConditionGroup) //Loop through the OR groups
                 {
-                    MatchSchemaDocumentsByConditionsClauseGroup(ref result, core, optimization, lookup, physicalSchema, workingSchemaPrefix);
+                    foreach (var lookup in indexingConditionGroup.Lookups) //Loop thorough the AND conditions.
+                    {
+                        MatchSchemaDocumentsByConditionsClauseGroup(ref result, core, optimization, lookup, physicalSchema, workingSchemaPrefix);
+                    }
                 }
             }
 
@@ -533,5 +524,6 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         }
 
         #endregion
+
     }
 }
