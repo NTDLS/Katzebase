@@ -203,8 +203,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     && (DateTime.UtcNow - intention.CreationTime).TotalSeconds > _core.Settings.LockWaitTimeoutSeconds)
                 {
                     var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                    _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                    _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                    _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
+                    _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
                     transaction.Rollback();
                     throw new KbTimeoutException($"Timeout exceeded while waiting on lock: {intention.ToString()}");
                 }
@@ -228,8 +228,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         transaction.HeldLockKeys.Write((obj) => obj.Add(lockKey));
 
                         var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                        _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                        _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                        _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
+                        _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
                         return lockKey;
                     }
@@ -262,8 +262,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             }
 
                             var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                            _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                            _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
+                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
                             return lockKey;
                         }
@@ -304,8 +304,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             }
 
                             var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                            _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                            _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
+                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
                             return lockKey;
                         }
@@ -345,8 +345,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             }
 
                             var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                            _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                            _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
+                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
                             return lockKey;
                         }
@@ -387,8 +387,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             }
 
                             var lockWaitTime = (DateTime.UtcNow - intention.CreationTime).TotalMilliseconds;
-                            _core.Health.Increment(HealthCounterType.LockWaitMs, lockWaitTime);
-                            _core.Health.Increment(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
+                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
+                            _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
 
                             return lockKey;
                         }

@@ -65,8 +65,10 @@ namespace NTDLS.Katzebase.Server
         {
             try
             {
-                LogManager.Information($"Stopping...");
+                LogManager.Information($"Stopping network engine.");
                 _messageServer.Stop();
+
+                LogManager.Information($"Stopping engine core.");
                 _core.Stop();
             }
             catch (Exception ex)

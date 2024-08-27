@@ -35,8 +35,8 @@
         public enum HealthCounterType
         {
             IOCacheReadHits,
-            IODeferredIOReads,
-            IODeferredIOWrites,
+            IODeferredReads,
+            IODeferredWrites,
             IOCacheReadMisses,
             IOCacheReadAdditions,
             IOCacheWriteAdditions,

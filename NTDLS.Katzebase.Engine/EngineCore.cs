@@ -91,10 +91,13 @@ namespace NTDLS.Katzebase.Engine
 
         public void Stop()
         {
-            LogManager.Information("Stopping server engine.");
-
+            LogManager.Information("Stopping thread pool.");
             ThreadPool.Stop();
+
+            LogManager.Information("Stopping cache manager.");
             Cache.Close();
+
+            LogManager.Information("Stopping health manager.");
             Health.Close();
         }
     }

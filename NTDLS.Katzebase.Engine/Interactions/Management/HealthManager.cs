@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 Counters.Read(o =>
                 {
-                    _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.LogDirectory, HealthStatsFile), o);
+                    _core.IO.PutJsonNonTrackedPretty(Path.Combine(_core.Settings.LogDirectory, HealthStatsFile), o);
                 });
             }
             catch (Exception ex)
@@ -82,15 +82,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         /// <summary>
-        /// Increment the specified counter by a defined amount.
+        /// Increment the specified counter by a defined amount, typically used for tings like duration.
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="value"></param>
-        public void Increment(HealthCounterType type, double value)
+        public void IncrementContinuous(HealthCounterType type, double perfValue)
         {
             try
             {
-                if (value == 0 || _core.Settings.HealthMonitoringEnabled == false)
+                if (perfValue == 0 || _core.Settings.HealthMonitoringEnabled == false)
                 {
                     return;
                 }
@@ -99,20 +97,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 Counters.Write(o =>
                 {
-                    if (o.ContainsKey(key))
+                    if (o.TryGetValue(key, out HealthCounter? value))
                     {
-                        var counterItem = o[key];
-                        counterItem.Value += value;
-                        counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                        var counterItem = value;
+                        counterItem.Value += perfValue;
+                        counterItem.Count++;
+                        counterItem.Timestamp = DateTime.UtcNow;
                     }
                     else
                     {
                         o.Add(key, new HealthCounter()
                         {
-                            Instance = key,
-                            Type = type,
-                            Value = value,
-                            WaitDateTimeUtc = DateTime.UtcNow
+                            Value = perfValue,
+                            Count = 1,
+                            Timestamp = DateTime.UtcNow
                         });
                     }
 
@@ -124,21 +122,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error("Failed to increment health counter.", ex);
+                LogManager.Error("Failed to increment continuous health counter.", ex);
                 throw;
             }
         }
 
         /// <summary>
-        /// Increment the specified counter by a defined amount.
+        /// Increment the specified counter by a defined amount, typically used for tings like duration.
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="value"></param>
-        public void Increment(HealthCounterType type, string instance, double value)
+        public void IncrementContinuous(HealthCounterType type, string instance, double perfValue)
         {
             try
             {
-                if (value == 0 || _core.Settings.HealthMonitoringEnabled == false || _core.Settings.HealthMonitoringInstanceLevelEnabled == false)
+                if (perfValue == 0 || _core.Settings.HealthMonitoringEnabled == false || _core.Settings.HealthMonitoringInstanceLevelEnabled == false)
                 {
                     return;
                 }
@@ -147,20 +143,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 Counters.Write(o =>
                 {
-                    if (o.ContainsKey(key))
+                    if (o.TryGetValue(key, out HealthCounter? value))
                     {
-                        var counterItem = o[key];
-                        counterItem.Value += value;
-                        counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                        var counterItem = value;
+                        counterItem.Value += perfValue;
+                        counterItem.Count++;
+                        counterItem.Timestamp = DateTime.UtcNow;
                     }
                     else
                     {
                         o.Add(key, new HealthCounter()
                         {
-                            Instance = key,
-                            Type = type,
-                            Value = value,
-                            WaitDateTimeUtc = DateTime.UtcNow
+                            Value = perfValue,
+                            Count = 1,
+                            Timestamp = DateTime.UtcNow
                         });
                     }
 
@@ -172,29 +168,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error("Failed to increment health counter.", ex);
+                LogManager.Error("Failed to increment continuous health counter.", ex);
                 throw;
             }
         }
 
         /// <summary>
-        /// Increment the specified counter by 1.
+        /// Increments a discrete metric by 1, this is typically used to track the counts or occurrences.
         /// </summary>
-        /// <param name="type"></param>
-        public void Increment(HealthCounterType type) => Increment(type, 1);
-
-        /// <summary>
-        /// Increment the specified counter by 1.
-        /// </summary>
-        /// <param name="type"></param>
-        public void Increment(HealthCounterType type, string instance) => Increment(type, instance, 1);
-
-        /// <summary>
-        /// Set the specified counter to the defined value.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="value"></param>
-        public void Set(HealthCounterType type, long value)
+        public void IncrementDiscrete(HealthCounterType type)
         {
             try
             {
@@ -203,28 +185,27 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     return;
                 }
 
-                string key = $"{type}";
+                string key = type.ToString();
 
                 Counters.Write(o =>
                 {
-                    if (o.ContainsKey(key))
+                    if (o.TryGetValue(key, out HealthCounter? value))
                     {
-                        var counterItem = o[key];
-                        counterItem.Value = value;
-                        counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                        var counterItem = value;
+                        counterItem.Value += 1;
+                        counterItem.Timestamp = DateTime.UtcNow;
                     }
                     else
                     {
                         o.Add(key, new HealthCounter()
                         {
-                            Instance = key,
-                            Type = type,
-                            Value = value,
-                            WaitDateTimeUtc = DateTime.UtcNow
+                            Value = 1,
+                            Count = 1,
+                            Timestamp = DateTime.UtcNow
                         });
                     }
 
-                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds > _core.Settings.HealthMonitoringCheckpointSeconds)
+                    if ((DateTime.UtcNow - lastCheckpoint).TotalSeconds >= _core.Settings.HealthMonitoringCheckpointSeconds)
                     {
                         Checkpoint();
                     }
@@ -232,23 +213,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error("Failed to set health counter.", ex);
+                LogManager.Error("Failed to increment discrete health counter.", ex);
                 throw;
             }
         }
 
         /// <summary>
-        /// Set the specified counter to the defined value.
+        /// Increments a discrete metric by 1, this is typically used to track the counts or occurrences.
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="value"></param>
-        public void Set(HealthCounterType type, string instance, double value)
+        public void IncrementDiscrete(HealthCounterType type, string instance)
         {
             try
             {
-                if (value == 0
-                    || _core.Settings.HealthMonitoringEnabled == false
-                    || _core.Settings.HealthMonitoringInstanceLevelEnabled == false)
+                if (_core.Settings.HealthMonitoringEnabled == false || _core.Settings.HealthMonitoringInstanceLevelEnabled == false)
                 {
                     return;
                 }
@@ -257,20 +234,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 Counters.Write(o =>
                 {
-                    if (o.ContainsKey(key))
+                    if (o.TryGetValue(key, out HealthCounter? value))
                     {
-                        var counterItem = o[key];
-                        counterItem.Value = value;
-                        counterItem.WaitDateTimeUtc = DateTime.UtcNow;
+                        var counterItem = value;
+                        counterItem.Value += 1;
+                        counterItem.Timestamp = DateTime.UtcNow;
                     }
                     else
                     {
                         o.Add(key, new HealthCounter()
                         {
-                            Instance = key,
-                            Type = type,
-                            Value = value,
-                            WaitDateTimeUtc = DateTime.UtcNow
+                            Value = 1,
+                            Count = 1,
+                            Timestamp = DateTime.UtcNow
                         });
                     }
 
@@ -282,7 +258,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             catch (Exception ex)
             {
-                LogManager.Error("Failed to set health counter.", ex);
+                LogManager.Error("Failed to increment discrete health counter.", ex);
                 throw;
             }
         }

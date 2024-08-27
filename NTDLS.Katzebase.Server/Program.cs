@@ -42,6 +42,7 @@ namespace NTDLS.Katzebase.Server
                     {
                         if (_semaphoreToRequestStop.Wait(500))
                         {
+                            LogManager.Information($"Stopping service.");
                             apiService.Stop();
                             break;
                         }

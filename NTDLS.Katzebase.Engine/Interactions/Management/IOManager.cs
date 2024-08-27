@@ -109,7 +109,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                         if (wasDeferred)
                         {
-                            _core.Health.Increment(HealthCounterType.IODeferredIOReads);
+                            _core.Health.IncrementDiscrete(HealthCounterType.IODeferredReads);
                             LogManager.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
                             return deferredReference;
                         }
@@ -130,14 +130,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (cacheHit && cachedObject != null)
                     {
-                        _core.Health.Increment(HealthCounterType.IOCacheReadHits);
+                        _core.Health.IncrementDiscrete(HealthCounterType.IOCacheReadHits);
                         LogManager.Trace($"IO:CacheHit:{transaction.ProcessId}->{filePath}");
 
                         return (T)cachedObject;
                     }
                 }
 
-                _core.Health.Increment(HealthCounterType.IOCacheReadMisses);
+                _core.Health.IncrementDiscrete(HealthCounterType.IOCacheReadMisses);
                 LogManager.Trace($"IO:Read:{transaction.ProcessId}->{filePath}");
 
                 T? deserializedObject;
@@ -197,7 +197,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
                         _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes));
 
-                    _core.Health.Increment(HealthCounterType.IOCacheReadAdditions);
+                    _core.Health.IncrementDiscrete(HealthCounterType.IOCacheReadAdditions);
                 }
 
                 return deserializedObject.EnsureNotNull();
@@ -226,8 +226,21 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (_core.Settings.CacheEnabled)
                 {
                     _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes);
-                    _core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
+                    _core.Health.IncrementDiscrete(HealthCounterType.IOCacheWriteAdditions);
                 }
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"Failed to put non-tracked json for file {filePath}.", ex);
+                throw;
+            }
+        }
+
+        internal void PutJsonNonTrackedPretty(string filePath, object deserializedObject)
+        {
+            try
+            {
+                File.WriteAllText(filePath, JsonConvert.SerializeObject(deserializedObject, Formatting.Indented));
             }
             catch (Exception ex)
             {
@@ -273,7 +286,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (_core.Settings.CacheEnabled)
                 {
                     _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes);
-                    _core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
+                    _core.Health.IncrementDiscrete(HealthCounterType.IOCacheWriteAdditions);
                 }
             }
             catch (Exception ex)
@@ -341,7 +354,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             obj.PutDeferredDiskIO(filePath, filePath, deserializedObject, format));
                     });
 
-                    _core.Health.Increment(HealthCounterType.IODeferredIOWrites);
+                    _core.Health.IncrementDiscrete(HealthCounterType.IODeferredWrites);
 
                     //We can skip caching because we write this to the deferred IO cache - which
                     //  is infinitely more deterministic than the memory cache auto-ejections.
@@ -398,7 +411,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     transaction.Instrumentation.Measure(PerformanceCounter.CacheWrite, () =>
                         _core.Cache.Upsert(filePath, deserializedObject, approximateSizeInBytes));
 
-                    _core.Health.Increment(HealthCounterType.IOCacheWriteAdditions);
+                    _core.Health.IncrementDiscrete(HealthCounterType.IOCacheWriteAdditions);
                 }
             }
             catch (Exception ex)

@@ -170,7 +170,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         {
             IsDeadlocked = true;
             Rollback();
-            _core.Health.Increment(HealthCounterType.DeadlockCount);
+            _core.Health.IncrementDiscrete(HealthCounterType.DeadlockCount);
         }
 
         private void ReleaseLocks()

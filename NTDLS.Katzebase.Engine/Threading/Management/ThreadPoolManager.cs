@@ -22,6 +22,7 @@ namespace NTDLS.Katzebase.Engine.Threading.Management
 
         public void Stop()
         {
+            Indexing.Stop();
             Lookup.Stop();
         }
     }

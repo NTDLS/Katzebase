@@ -1109,14 +1109,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     uint indexPartition = parameter.Operation.PhysicalIndex.ComputePartition(value);
 
+                    string pageDiskPath = parameter.Operation.PhysicalIndex.GetPartitionPagesFileName(
+                        parameter.Operation.PhysicalSchema, indexPartition);
+
+                    var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(
+                        parameter.Operation.Transaction, pageDiskPath, LockOperation.Write);
+
                     lock (parameter.Operation.SyncObjects[indexPartition])
                     {
-                        string pageDiskPath = parameter.Operation.PhysicalIndex.GetPartitionPagesFileName(
-                            parameter.Operation.PhysicalSchema, indexPartition);
-
-                        var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(
-                            parameter.Operation.Transaction, pageDiskPath, LockOperation.Write);
-
                         InsertDocumentIntoIndexPages(parameter.Operation.Transaction,
                             parameter.Operation.PhysicalIndex, physicalIndexPages, physicalDocument, parameter.DocumentPointer);
                     }
@@ -1158,6 +1158,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     var physicalIndexPages = new PhysicalIndexPages();
                     physicalIndexPageMap.Add(indexPartition, physicalIndexPages);
+
                     _core.IO.PutPBuf(transaction, physicalIndex.GetPartitionPagesFileName
                         (physicalSchema, indexPartition), physicalIndexPages);
                 }

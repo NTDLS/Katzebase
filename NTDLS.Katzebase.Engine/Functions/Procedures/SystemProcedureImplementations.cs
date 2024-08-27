@@ -208,7 +208,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                             var result = collection.AddNew();
 
                             result.AddField("Counter");
-                            result.AddField("Instance");
                             result.AddField("Value");
 
                             var counters = core.Health.CloneCounters();
@@ -218,8 +217,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                                 var values = new List<string?>
                                 {
                                     Text.SeperateCamelCase(counter.Key),
-                                    Text.SeperateCamelCase(counter.Value.Instance),
-                                    counter.Value.Value.ToString()
+                                    counter.Value.Value.ToString("n0")
                                 };
 
                                 result.AddRow(values);
