@@ -3,7 +3,7 @@ Create schema WordList
 Create schema WordList:Words with (PageSize = 100)
 */
 
-set TraceWaitTimes true
+--set TraceWaitTimes true
 
 select top 100
 	sw.Id as SourceWordId,
@@ -105,9 +105,9 @@ order by
 select
 	*
 from
-	WordList:Word
+	WordList:Word as W
 where
-	Text like '%George%'
+	W.Text like '%George%'
 */
 --exec showversion(null)
 

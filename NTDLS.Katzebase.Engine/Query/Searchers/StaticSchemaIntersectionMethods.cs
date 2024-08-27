@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     schemaIdentifier += "\r\n";
 
                     var explanation = schemaIdentifier + topLevelSchemaMap.Optimization.ExplainOptimization(
-                        core, topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, topLevelSchemaMap.Prefix, null);
+                        core, topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, topLevelSchemaMap.Prefix);
 
                     transaction.AddMessage(explanation, KbMessageType.Explain);
                 }
@@ -491,7 +491,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     schemaIdentifier += "\r\n";
 
                     var explanation = schemaIdentifier + currentSchemaMap.Optimization.ExplainOptimization(instance.Operation.Core,
-                        currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix, joinKeyValues);
+                        currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix);
 
                     instance.Operation.Transaction.AddMessage(explanation, KbMessageType.Explain);
                 }

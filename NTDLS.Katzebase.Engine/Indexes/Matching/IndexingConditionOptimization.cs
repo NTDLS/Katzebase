@@ -1,4 +1,5 @@
 ﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.Management;
@@ -6,6 +7,7 @@ using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Shared;
+using System.Linq;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -376,26 +378,46 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// It includes indexes where they can be applied.
         /// It also demonstrates how we process the recursive condition logic.
         /// </summary>
-        public string ExplainOptimization(EngineCore core, PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
-            string workingSchemaPrefix, KbInsensitiveDictionary<string>? keyValues = null, int indentation = 0)
+        public string ExplainOptimization(EngineCore core, PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, string workingSchemaPrefix)
         {
             var result = new StringBuilder();
 
+            if (optimization.IndexingConditionGroup.Count == 0)
+            {
+
+                result.AppendLine(optimization.Conditions.Expression);
+
+                /*
+                //We need to expand the entire condition tree here.
+                var conditions = optimization.Conditions.AllFields.Where(o => o.Prefix == workingSchemaPrefix);
+
+                foreach (var condition in conditions)
+                {
+                    //if (condition.val)
+                    {
+                        result.AppendLine(Pad(0) + $"Full table scan of [{physicalSchema.Name}] for.");
+                    }
+                    //else
+                    {
+                        result.AppendLine(Pad(0) + $"Full table scan of [{physicalSchema.Name}] for.");
+                    }
+                }
+                */
+            }
+
             foreach (var indexingConditionGroup in optimization.IndexingConditionGroup) //Loop through the OR groups
             {
-                result.AppendLine("DO IT");
-
                 foreach (var lookup in indexingConditionGroup.Lookups) //Loop thorough the AND conditions.
                 {
-                    MatchSchemaDocumentsByConditionsClauseGroup(ref result, core, optimization.Transaction, lookup, physicalSchema, workingSchemaPrefix, keyValues);
+                    MatchSchemaDocumentsByConditionsClauseGroup(ref result, core, optimization, lookup, physicalSchema, workingSchemaPrefix);
                 }
             }
 
             return result.ToString();
         }
 
-        private void MatchSchemaDocumentsByConditionsClauseGroup(ref StringBuilder result, EngineCore core, Transaction transaction,
-            IndexingConditionLookup lookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<string>? keyValues)
+        private void MatchSchemaDocumentsByConditionsClauseGroup(ref StringBuilder result, EngineCore core, IndexingConditionOptimization optimization,
+            IndexingConditionLookup lookup, PhysicalSchema physicalSchema, string workingSchemaPrefix)
         {
             try
             {
@@ -403,51 +425,60 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
                 foreach (var condition in conditionSet)
                 {
-                    if (condition.LogicalQualifier == LogicalQualifier.Equals)
-                    {
-                        //For join operations, check the keyValues for the raw value to lookup.
-                        if (keyValues?.TryGetValue(condition.Right.Key, out string? keyValue) != true)
-                        {
-                            keyValue = condition.Right.Value;
-                        }
-                        else
-                        {
-                            //This is a join clause.
-                        }
-
-                        //Eliminated all but one index partitions.
-                        result.AppendLine($"Lookup index partition: {lookup.Index.ComputePartition(keyValue)}");
-                    }
-                    else
-                    {
-                        //We have to search all index partitions.
-                        result.AppendLine($"Lookup index partitions: 1-{lookup.Index.Partitions}");
-                    }
-
-                    MatchSchemaDocumentsByConditionsClauseThread(ref result, core, transaction, lookup, physicalSchema, workingSchemaPrefix, condition, keyValues);
+                    MatchSchemaDocumentsByConditionsClauseThread(ref result, core, optimization, lookup, physicalSchema, workingSchemaPrefix, condition);
                 }
             }
             catch (Exception ex)
             {
-                LogManager.Error($"Failed to match index documents for process id {transaction.ProcessId}.", ex);
+                LogManager.Error($"Failed to match index documents for process id {optimization.Transaction.ProcessId}.", ex);
                 throw;
             }
         }
 
-        private void MatchSchemaDocumentsByConditionsClauseThread(ref StringBuilder result, EngineCore core, Transaction transaction, IndexingConditionLookup lookup,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition, KbInsensitiveDictionary<string>? keyValues = null)
+        private void MatchSchemaDocumentsByConditionsClauseThread(ref StringBuilder result, EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition)
         {
             try
             {
-                if (lookup.Index.Attributes.Count == 1)
+                var indexAttribute = lookup.Index.Attributes[0].Field;
+
+                if (condition.LogicalQualifier == LogicalQualifier.Equals)
                 {
-                    //Single index attribute lookup.
+                    if (condition.Right.IsConstant)
+                    {
+                        result.AppendLine(Pad(0) + $"Index seek of '{lookup.Index.Name}' on partition: {lookup.Index.ComputePartition(condition.Right.Value)}.");
+                    }
+                    else
+                    {
+                        result.AppendLine(Pad(0) + $"Index seek of '{lookup.Index.Name}' on partition: compile-time.");
+                    }
                 }
                 else
                 {
+                    if (condition.Right.IsConstant)
+                    {
+                        result.AppendLine(Pad(0) + $"Index scan of '{lookup.Index.Name}' on partitions: 1-{lookup.Index.Partitions}.");
+                    }
+                    else
+                    {
+                        result.AppendLine(Pad(0) + $"Index scan of '{lookup.Index.Name}' on partitions: 1-{lookup.Index.Partitions}.");
+                    }
+                }
+
+                if (condition.Right.IsConstant)
+                {
+                    result.AppendLine(Pad(1) + $"'{indexAttribute}' on '{condition.Left.Key}', constant value '{condition.Right.Value}'.");
+                }
+                else
+                {
+                    result.AppendLine(Pad(1) + $"'{indexAttribute}' on '{condition.Left.Key}', value of '{condition.Right.Key}'.");
+                }
+
+                if (lookup.Index.Attributes.Count > 1)
+                {
                     //Further, recursively, process additional compound index attribute condition matches.
-                    MatchSchemaDocumentsByConditionsClauseRecursive(ref result, core, transaction,
-                        lookup, physicalSchema, workingSchemaPrefix, condition, 1, keyValues);
+                    MatchSchemaDocumentsByConditionsClauseRecursive(ref result, core, optimization,
+                        lookup, physicalSchema, workingSchemaPrefix, condition, 1);
                 }
             }
             catch (Exception ex)
@@ -458,23 +489,45 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         }
 
         private static void MatchSchemaDocumentsByConditionsClauseRecursive(ref StringBuilder result,
-            EngineCore core, Transaction transaction, IndexingConditionLookup lookup,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition, int attributeDepth, KbInsensitiveDictionary<string>? keyValues = null)
+            EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition, int attributeDepth)
         {
             var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[attributeDepth].Field.EnsureNotNull()];
 
             foreach (var singleCondition in conditionSet)
             {
+                var indexAttribute = lookup.Index.Attributes[attributeDepth].Field;
+
                 if (attributeDepth == lookup.AttributeConditionSets.Count - 1)
                 {
-                    //This is the bottom of the condition tree, as low as we can go in this index given the fields we have, so just distill the leaves.
-
+                    if (singleCondition.LogicalQualifier == LogicalQualifier.Equals)
+                    {
+                        if (singleCondition.Right.IsConstant)
+                        {
+                            result.AppendLine(Pad(1+attributeDepth) + $"'{indexAttribute}' on '{singleCondition.Left.Key}', constant value '{singleCondition.Right.Value}'.");
+                        }
+                        else
+                        {
+                            result.AppendLine(Pad(1 + attributeDepth) + $"'{indexAttribute}' on '{singleCondition.Left.Key}', value of '{singleCondition.Right.Key}'.");
+                        }
+                    }
+                    else
+                    {
+                        if (singleCondition.Right.IsConstant)
+                        {
+                            result.AppendLine(Pad(1 + attributeDepth) + $"'{indexAttribute}' on '{singleCondition.Left.Key}', constant value '{singleCondition.Right.Value}'.");
+                        }
+                        else
+                        {
+                            result.AppendLine(Pad(1 + attributeDepth) + $"'{indexAttribute}' on '{singleCondition.Left.Key}', value of '{singleCondition.Right.Key}'.");
+                        }
+                    }
                 }
                 else if (attributeDepth < lookup.AttributeConditionSets.Count - 1)
                 {
                     //Further, recursively, process additional compound index attribute condition matches.
-                    MatchSchemaDocumentsByConditionsClauseRecursive(ref result, core, transaction, lookup,
-                        physicalSchema, workingSchemaPrefix, condition, attributeDepth + 1, keyValues);
+                    MatchSchemaDocumentsByConditionsClauseRecursive(ref result, core, optimization, lookup,
+                        physicalSchema, workingSchemaPrefix, condition, attributeDepth + 1);
                 }
             }
         }
