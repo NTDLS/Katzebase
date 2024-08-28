@@ -84,7 +84,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 if (exception.Message != null && exception.Message != string.Empty)
                 {
-                    message.AppendFormat("{0} {1}", level, exception.Message);
+                    message.Append(exception.Message);
                 }
 
                 if (exception.InnerException != null && level < 100)

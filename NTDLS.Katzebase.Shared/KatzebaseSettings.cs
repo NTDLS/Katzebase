@@ -44,7 +44,7 @@
         public uint DefaultIndexPartitions { get; set; }
 
         /// <summary>
-        /// The number of threads to allocate to the thread pool.
+        /// The number of threads to allocate to the indexing thread pool.
         /// </summary>
         public int IndexingThreadPoolSize { get; set; }
 
