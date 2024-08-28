@@ -6,7 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Company>NetworkDLS</Company>
     <Copyright>Copyright © 2024 NetworkDLS</Copyright>
-    <Version>0.14.0</Version>
+    <Version>0.15.0</Version>
     <Authors>NetworkDLS</Authors>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
     <OutputType>Exe</OutputType>

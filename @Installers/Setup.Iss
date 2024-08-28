@@ -1,7 +1,7 @@
 [Setup]
 ;-- Main Setup Information
  AppName                          = Katzebase Server
- AppVerName                       = Katzebase Server 0.14.0
+ AppVerName                       = Katzebase Server 0.15.0
  AppCopyright                     = Copyright © 2024 NetworkDLS.
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase\Server
  DefaultGroupName                 = NetworkDLS\Katzebase
@@ -13,11 +13,11 @@
  Compression                      = bZIP/9
  ChangesAssociations              = Yes
  OutputBaseFilename               = Katzebase.Server
- ArchitecturesInstallIn64BitMode  = x64
+ ArchitecturesInstallIn64BitMode  = x64compatible
  AppPublisher                     = NetworkDLS
  AppPublisherURL                  = http://www.NetworkDLS.com/
  AppUpdatesURL                    = http://www.NetworkDLS.com/
- AppVersion                       = 0.14.0
+ AppVersion                       = 0.15.0
 
 [Files]
  Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\runtimes\*.*";  DestDir: "{app}\runtimes";              Flags: IgnoreVersion recursesubdirs;
