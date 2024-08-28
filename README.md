@@ -3,14 +3,18 @@
 
 Katzebase is an ACID compliant document-based database written in C# using .NET 8 that runs on Windows or Linux. By default it runs as a service but the libraries can also be embedded. It supports what you'd expect from a typical relational-database-management-system except the "rows" are stored as sets of key-value pairs (called documents) and the schema is not fixed. The engine is wrapped by MVC controllers and allows access via APIs, a t-SQL like syntax, or by using the bundled management UI (which just calls the APIs).
 
-![image](https://github.com/NTDLS/Katzebase/assets/11428567/02899c13-1eab-4b86-8e3d-601efc2a419d)
-
 ## Documentation and Links
 - Check out the **full documentation** at [https://katzebase.com/](https://katzebase.com/)
 - **Server / Service** code and releases: https://github.com/NTDLS/NTDLS.Katzebase.Server
 - **Management UI** code and releases: https://github.com/NTDLS/NTDLS.Katzebase.Management
 - **Client Connectivity Libraries** code and releases: https://github.com/NTDLS/NTDLS.Katzebase.Client
 - **SQL Server Migration Tool** code and releases: https://github.com/NTDLS/NTDLS.Katzebase.SQLServerMigration
+
+
+![image](https://github.com/user-attachments/assets/6e6f337c-e30c-436c-94bd-182211e4054a)
+
+
+![image](https://github.com/user-attachments/assets/1c2b8245-cb23-49cb-b9c9-1decdbfed779)
 
 
 ## Features:
