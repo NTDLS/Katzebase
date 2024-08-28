@@ -571,7 +571,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return clone;
         }
 
-        #region Debug.
+        #region Explain (Order of Operations)
 
         public static string FriendlyPlaceholder(string val) => val.ToUpper()
             .Replace($"{ConditionKeyMarker}_".ToUpper(), "Cond")
@@ -584,7 +584,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// This function makes a (somewhat) user readable expression tree, used for debugging and explanations.
         /// It also demonstrates how we process the recursive condition logic.
         /// </summary>
-        public string ExplainConditionTree(int indentation = 0)
+        public string ExplainOperations(int indentation = 0)
         {
             var result = new StringBuilder();
 
@@ -592,7 +592,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             {
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
                 var rootCondition = SubConditionFromExpressionKey(Root.Key);
-                ExplainConditionTree(ref result, rootCondition, indentation);
+                ExplainSubOperations(ref result, rootCondition, indentation);
             }
 
             return result.ToString();
@@ -603,7 +603,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// It also demonstrates how we process the recursive condition logic.
         /// Called by parent ExplainConditionTree()
         /// </summary>
-        private void ExplainConditionTree(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
+        private void ExplainSubOperations(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
         {
             foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
@@ -628,7 +628,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 if (subCondition.ExpressionKeys.Count > 0)
                 {
                     result.AppendLine(Pad(indentation + 2) + "(");
-                    ExplainConditionTree(ref result, subCondition, indentation + 2);
+                    ExplainSubOperations(ref result, subCondition, indentation + 2);
                     result.AppendLine(Pad(indentation + 2) + ")");
                 }
 
@@ -638,13 +638,12 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         #endregion
 
-        #region Condition explanation.
+        #region Explain (Flat)
 
         /// <summary>
-        /// This function makes a (somewhat) user readable expression tree, used for debugging and explanations.
-        /// It also demonstrates how we process the recursive condition logic.
+        /// This function makes returns a string that represents how and where conditions are used to satisfy a query.
         /// </summary>
-        public string Explain()
+        public string ExplainFlat()
         {
             var result = new StringBuilder();
 
@@ -652,46 +651,30 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             {
                 //The root condition is just a pointer to a child condition, so get the "root" child condition.
                 var rootCondition = SubConditionFromExpressionKey(Root.Key);
-                ExplainSubCondition(ref result, rootCondition, 0);
+                ExplainFlatSubCondition(ref result, rootCondition, 0);
             }
 
             return result.ToString();
         }
 
-        /// <summary>
-        /// This function makes a (somewhat) user readable expression tree, used for debugging and explanations.
-        /// It includes indexes where they can be applied.
-        /// It also demonstrates how we process the recursive condition logic.
-        /// Called by parent ExplainOptimization()
-        /// </summary>
-        private void ExplainSubCondition(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
+        private void ExplainFlatSubCondition(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
         {
             foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
                 var subCondition = SubConditionFromExpressionKey(expressionKey);
 
-                result.AppendLine(Pad(indentation + 1)
-                    + $"{FriendlyPlaceholder(subCondition.Key)} is ({FriendlyPlaceholder(subCondition.Expression)})");
-
-                result.AppendLine(Pad(indentation + 1) + "(");
-
                 if (subCondition.Conditions.Count > 0)
                 {
                     foreach (var condition in subCondition.Conditions)
                     {
-                        result.AppendLine(Pad(indentation + 2)
-                            + $"{Conditions.FriendlyPlaceholder(condition.ConditionKey)} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                        result.AppendLine("• " + Pad(1 + indentation) + $"'{condition.Left}' {condition.LogicalQualifier} '{condition.Right}'.");
                     }
                 }
 
                 if (subCondition.ExpressionKeys.Count > 0)
                 {
-                    result.AppendLine(Pad(indentation + 2) + "(");
-                    ExplainSubCondition(ref result, subCondition, indentation + 2);
-                    result.AppendLine(Pad(indentation + 2) + ")");
+                    ExplainFlatSubCondition(ref result, subCondition, indentation + 1);
                 }
-
-                result.AppendLine(Pad(indentation + 1) + ")");
             }
         }
 

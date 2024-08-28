@@ -265,7 +265,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryExplain ExecuteExplain(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryExplain ExecuteExplainPlan(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
@@ -282,8 +282,34 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         var lookupOptimization = IndexingConditionOptimization.BuildTree(_core,
                             transactionReference.Transaction, physicalSchema, schema.Conditions, schema.Prefix);
 
-                        var explanation = lookupOptimization.ExplainOptimization(_core, physicalSchema, lookupOptimization, schema.Prefix);
+                        var explanation = lookupOptimization.ExplainPlan(_core, physicalSchema, lookupOptimization, schema.Prefix);
 
+                        transactionReference.Transaction.AddMessage(explanation, KbMessageType.Explain);
+                    }
+                }
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(result);
+            }
+            catch (Exception ex)
+            {
+                Management.LogManager.Error($"Failed to execute document explain for process id {session.ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        internal KbQueryExplain ExecuteExplainOperations(SessionState session, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                using var transactionReference = _core.Transactions.Acquire(session);
+
+                var result = new KbQueryExplain();
+
+                foreach (var schema in preparedQuery.Schemas)
+                {
+                    if (schema.Conditions != null)
+                    {
+                        var explanation = schema.Conditions.ExplainOperations();
                         transactionReference.Transaction.AddMessage(explanation, KbMessageType.Explain);
                     }
                 }

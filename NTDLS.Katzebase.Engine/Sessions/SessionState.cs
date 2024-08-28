@@ -6,8 +6,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
     {
         public enum KbConnectionSetting
         {
-            TraceWaitTimes,
-            ExplainQuery
+            TraceWaitTimes
         }
 
         /// <summary>

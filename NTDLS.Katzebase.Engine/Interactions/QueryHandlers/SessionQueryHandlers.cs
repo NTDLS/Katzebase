@@ -63,9 +63,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         case KbConnectionSetting.TraceWaitTimes:
                             session.UpsertConnectionSetting(connectionSetting, bool.Parse(variable.Value) ? 1 : 0);
                             break;
-                        case KbConnectionSetting.ExplainQuery:
-                            session.UpsertConnectionSetting(connectionSetting, bool.Parse(variable.Value) ? 1 : 0);
-                            break;
                         default:
                             throw new KbNotImplementedException();
                     }

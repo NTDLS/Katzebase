@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryQueryExplainQueriesReply ExecuteStatementExplains(RmContext context, KbQueryQueryExplainQueries param)
+        public KbQueryQueryExplainPlansReply ExecuteExplainPlans(RmContext context, KbQueryQueryExplainPlans param)
         {
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Management.LogManager.Debug(Thread.CurrentThread.Name);
 #endif
 
-            var results = new KbQueryQueryExplainQueriesReply();
+            var results = new KbQueryQueryExplainPlansReply();
 
             foreach (var statement in param.Statements)
             {
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
                 {
-                    var intermediateResult = _core.Query.ExplainQuery(session, preparedQuery);
+                    var intermediateResult = _core.Query.ExplainPlan(session, preparedQuery);
 
                     results.Add(intermediateResult);
                 }
@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             return results;
         }
 
-        public KbQueryQueryExplainQueryReply ExecuteStatementExplain(RmContext context, KbQueryQueryExplainQuery param)
+        public KbQueryQueryExplainPlanReply ExecuteExplainPlan(RmContext context, KbQueryQueryExplainPlan param)
         {
             var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
 #if DEBUG
@@ -60,13 +60,64 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             Management.LogManager.Debug(Thread.CurrentThread.Name);
 #endif
 
-            var results = new KbQueryQueryExplainQueryReply();
+            var results = new KbQueryQueryExplainPlanReply();
 
             session.SetCurrentQuery(param.Statement);
 
             foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
             {
-                var intermediateResult = _core.Query.ExplainQuery(session, preparedQuery);
+                var intermediateResult = _core.Query.ExplainPlan(session, preparedQuery);
+
+                results.Add(intermediateResult);
+            }
+
+            session.ClearCurrentQuery();
+
+            return results;
+        }
+
+        public KbQueryQueryExplainOperationsReply ExecuteExplainOperations(RmContext context, KbQueryQueryExplainOperations param)
+        {
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
+            Management.LogManager.Debug(Thread.CurrentThread.Name);
+#endif
+
+            var results = new KbQueryQueryExplainOperationsReply();
+
+            foreach (var statement in param.Statements)
+            {
+                session.SetCurrentQuery(statement);
+
+                foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement))
+                {
+                    var intermediateResult = _core.Query.ExplainOperations(session, preparedQuery);
+
+                    results.Add(intermediateResult);
+                }
+            }
+
+            session.ClearCurrentQuery();
+
+            return results;
+        }
+
+        public KbQueryQueryExplainOperationReply ExecuteExplainOperation(RmContext context, KbQueryQueryExplainOperation param)
+        {
+            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+#if DEBUG
+            Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
+            Management.LogManager.Debug(Thread.CurrentThread.Name);
+#endif
+
+            var results = new KbQueryQueryExplainOperationReply();
+
+            session.SetCurrentQuery(param.Statement);
+
+            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement))
+            {
+                var intermediateResult = _core.Query.ExplainOperations(session, preparedQuery);
 
                 results.Add(intermediateResult);
             }

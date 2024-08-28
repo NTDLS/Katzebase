@@ -15,7 +15,6 @@ using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using static NTDLS.Katzebase.Engine.Sessions.SessionState;
 
 namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
@@ -34,24 +33,10 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             IEnumerable<DocumentPointer>? documentPointers = null;
 
-            bool explain = transaction.Session.IsConnectionSettingSet(KbConnectionSetting.ExplainQuery);
-
             //TODO: Here we should evaluate whatever conditions we can to early eliminate the top level document scans.
             //If we don't have any conditions then we just need to return all rows from the schema.
             if (topLevelSchemaMap.Optimization != null)
             {
-                #region Explain.
-
-                if (explain)
-                {
-                    var explanation = topLevelSchemaMap.Optimization.ExplainOptimization(
-                        core, topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, topLevelSchemaMap.Prefix);
-
-                    transaction.AddMessage(explanation, KbMessageType.Explain);
-                }
-
-                #endregion
-
                 var limitedDocumentPointers = new List<DocumentPointer>();
 
                 if (topLevelSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
@@ -426,12 +411,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             #region Indexing to reduce the number of document pointers in "limitedDocumentPointers".
 
-            #region Explain.
-
-            bool explain = instance.Operation.Transaction.Session.IsConnectionSettingSet(KbConnectionSetting.ExplainQuery);
-
-            #endregion
-
             var joinKeyValues = new KbInsensitiveDictionary<string>();
 
             if (currentSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
@@ -458,29 +437,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix, joinKeyValues);
 
                 documentPointers = limitedDocumentPointers.Select(o => o.Value);
-            }
-
-            if (explain && currentSchemaMap.Optimization != null)
-            {
-                lock (instance.Operation.ExplainHash)
-                {
-                    if (instance.Operation.ExplainHash.Contains(currentSchemaMap.Optimization.Conditions.Hash ?? string.Empty))
-                    {
-                        explain = false;
-                    }
-                    else
-                    {
-                        instance.Operation.ExplainHash.Add(currentSchemaMap.Optimization.Conditions.Hash ?? string.Empty);
-                    }
-                }
-
-                if (explain)
-                {
-                    var explanation = currentSchemaMap.Optimization.ExplainOptimization(instance.Operation.Core,
-                        currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix);
-
-                    instance.Operation.Transaction.AddMessage(explanation, KbMessageType.Explain);
-                }
             }
 
             documentPointers ??= instance.Operation.Core.Documents.AcquireDocumentPointers(

@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             AggregateFunctionCollection.Initialize();
         }
 
-        internal KbQueryExplain ExplainQuery(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryExplain ExplainPlan(SessionState session, PreparedQuery preparedQuery)
         {
             try
             {
@@ -35,7 +35,33 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     || preparedQuery.QueryType == QueryType.Delete
                     || preparedQuery.QueryType == QueryType.Update)
                 {
-                    return _core.Documents.QueryHandlers.ExecuteExplain(session, preparedQuery);
+                    return _core.Documents.QueryHandlers.ExecuteExplainPlan(session, preparedQuery);
+                }
+                else if (preparedQuery.QueryType == QueryType.Set)
+                {
+                    return new KbQueryExplain();
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"Failed to explain query for process id {session.ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        internal KbQueryExplain ExplainOperations(SessionState session, PreparedQuery preparedQuery)
+        {
+            try
+            {
+                if (preparedQuery.QueryType == QueryType.Select
+                    || preparedQuery.QueryType == QueryType.Delete
+                    || preparedQuery.QueryType == QueryType.Update)
+                {
+                    return _core.Documents.QueryHandlers.ExecuteExplainOperations(session, preparedQuery);
                 }
                 else if (preparedQuery.QueryType == QueryType.Set)
                 {
