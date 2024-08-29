@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Shared
 
             //QuickWatch: NTDLS.Katzebase.Shared.CrudeInstrumentation.Metrics.Ordered
             public List<KeyValuePair<string, InstrumentationMetric>> Ordered
-                => Collection.OrderByDescending(o => o.Value.Milliseconds).ToList();
+                => Collection.OrderByDescending(static o => o.Value.Milliseconds).ToList();
         }
 
         public class InstrumentationMetric
@@ -37,8 +37,10 @@ namespace NTDLS.Katzebase.Shared
         }
 
 #if !EnableCrudeInstrumentation
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Witness(CrudeInstrumentationProc proc) => proc();
 #else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Witness(CrudeInstrumentationProc proc, [CallerMemberName] string callingMethodName = "")
         {
             var sw = Stopwatch.StartNew();
@@ -66,8 +68,10 @@ namespace NTDLS.Katzebase.Shared
 #endif
 
 #if !EnableCrudeInstrumentation
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Witness<T>(CrudeInstrumentationProc<T> proc) => proc();
 #else
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static T Witness<T>(CrudeInstrumentationProc<T> proc, [CallerMemberName] string callingMethodName = "")
         {
             var sw = Stopwatch.StartNew();

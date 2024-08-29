@@ -50,7 +50,7 @@ namespace Benchmark
             Console.WriteLine($"ExecuteBenchmark_Inserts: {schemaName}");
 
             var process = StartService();
-            using (var client = new KbClient(_serverHost, _serverPort))
+            using (var client = new KbClient(_serverHost, _serverPort, "username", "password"))
             {
                 client.Schema.DropIfExists(schemaName);
                 client.Schema.Create(schemaName);
@@ -112,7 +112,7 @@ namespace Benchmark
             foreach (var scriptFile in scriptFiles)
             {
                 var process = StartService();
-                using (var client = new KbClient(_serverHost, _serverPort))
+                using (var client = new KbClient(_serverHost, _serverPort, "username", "password"))
                 {
                     var queryText = File.ReadAllText(scriptFile);
 
@@ -139,7 +139,7 @@ namespace Benchmark
         private static void CreatePayloadData()
         {
             var process = StartService();
-            using (var client = new KbClient(_serverHost, _serverPort))
+            using (var client = new KbClient(_serverHost, _serverPort, "username", "password"))
             {
                 client.Schema.DropIfExists("Benchmarking");
                 client.Schema.Create("Benchmarking:Payload_1000");
@@ -198,7 +198,7 @@ namespace Benchmark
         private static void InsertPayloadData(string fileName, string schemaName, int maxCount)
         {
             var process = StartService();
-            using (var client = new KbClient(_serverHost, _serverPort))
+            using (var client = new KbClient(_serverHost, _serverPort, "username", "password"))
             {
                 client.Schema.DropIfExists(schemaName);
                 client.Schema.Create(schemaName);

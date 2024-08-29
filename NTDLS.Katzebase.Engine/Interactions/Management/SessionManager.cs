@@ -39,15 +39,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _collection.Read((obj) => obj.ToDictionary(o => o.Key, o => o.Value));
         }
 
-        internal SessionState UpsertConnectionId(Guid connectionId, string clientName = "")
+        internal SessionState CreateSession(Guid connectionId, string username, string clientName = "")
         {
-            return _collection.Write((obj) =>
+            return _collection.Write(((obj) =>
             {
                 try
                 {
-                    if (obj.TryGetValue(connectionId, out SessionState? value))
+                    if (obj.TryGetValue(connectionId, out SessionState? session))
                     {
-                        var session = value;
                         session.LastCheckInTime = DateTime.UtcNow;
                         return session;
                     }
@@ -55,21 +54,29 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         ulong processId = _nextProcessId++;
 
-                        var session = new SessionState(processId, connectionId)
-                        {
-                            ClientName = clientName
-                        };
-
+                        session = new SessionState(processId, connectionId, username, clientName);
                         obj.Add(connectionId, session);
                         return session;
                     }
-
                 }
                 catch (Exception ex)
                 {
                     LogManager.Error($"Failed to upsert session for session {connectionId}.", ex);
                     throw;
                 }
+            }));
+        }
+
+        internal SessionState GetSession(Guid connectionId)
+        {
+            return _collection.Read((obj) =>
+            {
+                if (obj.TryGetValue(connectionId, out SessionState? session))
+                {
+                    session.LastCheckInTime = DateTime.UtcNow;
+                    return session;
+                }
+                throw new Exception($"Failed to find session id {connectionId}.");
             });
         }
 

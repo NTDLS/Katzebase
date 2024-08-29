@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExplainPlansReply ExecuteExplainPlans(RmContext context, KbQueryQueryExplainPlans param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExplainPlanReply ExecuteExplainPlan(RmContext context, KbQueryQueryExplainPlan param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -78,7 +78,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExplainOperationsReply ExecuteExplainOperations(RmContext context, KbQueryQueryExplainOperations param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -105,7 +105,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExplainOperationReply ExecuteExplainOperation(RmContext context, KbQueryQueryExplainOperation param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -129,7 +129,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryProcedureExecuteReply ExecuteStatementProcedure(RmContext context, KbQueryProcedureExecute param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -144,7 +144,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExecuteQueryReply ExecuteStatementQuery(RmContext context, KbQueryQueryExecuteQuery param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -164,7 +164,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExecuteQueriesReply ExecuteStatementQueries(RmContext context, KbQueryQueryExecuteQueries param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -190,7 +190,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryQueryExecuteNonQueryReply ExecuteStatementNonQuery(RmContext context, KbQueryQueryExecuteNonQuery param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);

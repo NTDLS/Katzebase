@@ -7,7 +7,7 @@ namespace ImportSOUses
     {
         static void Main()
         {
-            using var client = new KbClient("127.0.0.1", 6858);
+            using var client = new KbClient("127.0.0.1", 6858, "username", "password");
             client.Schema.Create("SoUsers");
 
             client.Transaction.Begin();

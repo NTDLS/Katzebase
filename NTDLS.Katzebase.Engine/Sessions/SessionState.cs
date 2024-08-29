@@ -2,6 +2,9 @@
 
 namespace NTDLS.Katzebase.Engine.Sessions
 {
+    /// <summary>
+    /// This is the an instance of a single client connection.
+    /// </summary>
     public class SessionState
     {
         public enum KbConnectionSetting
@@ -42,7 +45,12 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// <summary>
         /// A user supplied client name to assist in identifying connection sources.
         /// </summary>
-        public string? ClientName { get; set; }
+        public string ClientName { get; set; }
+
+        /// <summary>
+        /// The name of the user logged in to the session.
+        /// </summary>
+        public string Username { get; set; }
 
         public KbNameValuePair<KbConnectionSetting, double> UpsertConnectionSetting(KbConnectionSetting name, double value)
         {
@@ -86,10 +94,12 @@ namespace NTDLS.Katzebase.Engine.Sessions
             return null;
         }
 
-        public SessionState(ulong processId, Guid connectionId)
+        public SessionState(ulong processId, Guid connectionId, string username, string clientName)
         {
             ProcessId = processId;
             ConnectionId = connectionId;
+            Username = username;
+            ClientName = clientName;
         }
 
         public void SetCurrentQuery(string statement)

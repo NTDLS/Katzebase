@@ -16,7 +16,7 @@ namespace NugetTest
                 new Thread(InsertUsingQueries),
             };
 
-            using (var client = new KbClient(_serverHost, _serverPort))
+            using (var client = new KbClient(_serverHost, _serverPort, "username", "password"))
             {
                 client.Schema.DropIfExists("ClientTest");
             }
@@ -33,7 +33,7 @@ namespace NugetTest
         {
             try
             {
-                using var client = new KbClient(_serverHost, _serverPort);
+                using var client = new KbClient(_serverHost, _serverPort, "username", "password");
 
                 string schemaName = "ClientTest:B";
                 int id = 0;
@@ -73,7 +73,7 @@ namespace NugetTest
         {
             try
             {
-                using var client = new KbClient(_serverHost, _serverPort);
+                using var client = new KbClient(_serverHost, _serverPort, "username", "password");
                 string schemaName = "ClientTest:A";
                 int id = 0;
 

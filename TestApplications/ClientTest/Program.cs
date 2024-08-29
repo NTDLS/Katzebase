@@ -30,7 +30,7 @@ namespace TestHarness
             }
             */
 
-            using (var client = new KbClient(_serverHost, _serverPort))
+            using (var client = new KbClient(_serverHost, _serverPort, "username", "password"))
             {
                 client.Schema.Drop("NetworkDLS");
             }
@@ -112,7 +112,7 @@ namespace TestHarness
 
         static void TestProcedures()
         {
-            using var client = new KbClient(_serverHost, _serverPort);
+            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
 
             var procedure = new KbProcedure("AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName");
             procedure.Parameters.Add("ProductColor", "Test-Color");
@@ -146,7 +146,7 @@ namespace TestHarness
 
         static void TestAllAPIs()
         {
-            using var client = new KbClient(_serverHost, _serverPort);
+            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
 
             client.Schema.Create("TestAllAPIs");
             client.Schema.Create("TestAllAPIs:SubSchema");
@@ -199,7 +199,7 @@ namespace TestHarness
 
         private static KbQueryResultCollection TestExecuteQuery(string queryText)
         {
-            using var client = new KbClient(_serverHost, _serverPort);
+            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
             return client.Query.ExecuteQuery(queryText);
         }
 
@@ -209,7 +209,7 @@ namespace TestHarness
 
         private static void TestIndexCreationProductInventory()
         {
-            using var client = new KbClient(_serverHost, _serverPort);
+            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
 
             string? schemaPath = "AdventureWorks2012:Production:ProductSubcategory";
 
@@ -235,7 +235,7 @@ namespace TestHarness
 
         private static void TestIndexCreationStateProvince()
         {
-            using var client = new KbClient(_serverHost, _serverPort);
+            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
             string? schemaPath = "AdventureWorks2012:Person:StateProvince";
@@ -264,7 +264,7 @@ namespace TestHarness
 
         private static void TestIndexCreationPerson()
         {
-            using var client = new KbClient(_serverHost, _serverPort);
+            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
             string? schemaPath = "AdventureWorks2012:Person:Person";
@@ -292,7 +292,7 @@ namespace TestHarness
         #region TestIndexDocumentDeletion.
         private static void TestIndexDocumentDeletion()
         {
-            using var client = new KbClient(_serverHost, _serverPort);
+            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
             string? schemaPath = "Students:Indexing";
@@ -382,7 +382,7 @@ namespace TestHarness
         #region TestAddDocumentsCreateIndex.
         private static void TestAddDocumentsCreateIndex()
         {
-            using var client = new KbClient(_serverHost, _serverPort);
+            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
 
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
             string? schemaPath = "Students:Indexing";
@@ -463,7 +463,7 @@ namespace TestHarness
         #region TestCreateIndexAddDocuments.
         private static void TestCreateIndexAddDocuments()
         {
-            using var client = new KbClient(_serverHost, _serverPort);
+            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
             string? schemaPath = "Students:Indexing";
@@ -547,7 +547,7 @@ namespace TestHarness
 
         static void StressTestThreadProc()
         {
-            using var client = new KbClient(_serverHost, _serverPort);
+            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
 
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
@@ -632,7 +632,7 @@ namespace TestHarness
 
         static void TestCreateAllAdventureWorks2012Indexes()
         {
-            using var client = new KbClient(_serverHost, _serverPort);
+            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
             client.Transaction.Begin();

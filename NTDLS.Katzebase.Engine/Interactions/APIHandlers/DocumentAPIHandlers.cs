@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryDocumentSampleReply DocumentSample(RmContext context, KbQueryDocumentSample param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -56,7 +56,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <returns></returns>
         public KbQueryDocumentListReply ListDocuments(RmContext context, KbQueryDocumentList param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -92,7 +92,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <exception cref="KbObjectNotFoundException"></exception>
         public KbQueryDocumentStoreReply StoreDocument(RmContext context, KbQueryDocumentStore param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -124,7 +124,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <exception cref="KbObjectNotFoundException"></exception>
         public KbQueryDocumentCatalogReply DocumentCatalog(RmContext context, KbQueryDocumentCatalog param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -151,7 +151,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// </summary>
         public KbQueryDocumentDeleteByIdReply DeleteDocumentById(RmContext context, KbQueryDocumentDeleteById param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);

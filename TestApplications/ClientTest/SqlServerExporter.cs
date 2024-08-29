@@ -115,7 +115,7 @@ namespace TestHarness
                 rowsPerTransaction = 100;
             }
 
-            using var client = new KbClient(katzebaseServerHost, katzebaseServerPort);
+            using var client = new KbClient(katzebaseServerHost, katzebaseServerPort, "username", "password");
 
             string kbSchema = $"{sqlServerDatabase}:{sqlServerTable.Replace("[", "").Replace("]", "").Replace("dbo.", "").Replace('.', ':')}";
 
@@ -224,7 +224,7 @@ namespace TestHarness
 
                 targetSchema = targetSchema.Replace("[TABLE_NAME]", sqlServerTable);
 
-                using var client = new KbClient(katzebaseServerHost, katzebaseServerPort);
+                using var client = new KbClient(katzebaseServerHost, katzebaseServerPort, "username", "password");
 
                 client.Schema.CreateRecursive(targetSchema);
 

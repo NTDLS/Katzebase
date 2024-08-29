@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryTransactionBeginReply Begin(RmContext context, KbQueryTransactionBegin param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryTransactionCommitReply Commit(RmContext context, KbQueryTransactionCommit param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQueryTransactionRollbackReply Rollback(RmContext context, KbQueryTransactionRollback param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);

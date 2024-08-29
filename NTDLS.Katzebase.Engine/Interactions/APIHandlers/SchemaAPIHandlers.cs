@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
         public KbQuerySchemaListReply ListSchemas(RmContext context, KbQuerySchemaList param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schemaPath"></param>
         public KbQuerySchemaCreateReply CreateSchema(RmContext context, KbQuerySchemaCreate param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -103,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schemaPath"></param>
         public KbQuerySchemaExistsReply DoesSchemaExist(RmContext context, KbQuerySchemaExists param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
@@ -144,7 +144,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schema"></param>
         public KbQuerySchemaDropReply DropSchema(RmContext context, KbQuerySchemaDrop param)
         {
-            var session = _core.Sessions.UpsertConnectionId(context.ConnectionId);
+            var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             Management.LogManager.Debug(Thread.CurrentThread.Name);
