@@ -355,11 +355,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     }
                     if (queryTokenizer.UserParameters.TryGetValue(left, out string? leftUserParameters))
                     {
-                        left = $"'{leftUserParameters?.ToLowerInvariant()}'";
+                        left = $"{leftUserParameters?.ToLowerInvariant()}";
                     }
                     if (queryTokenizer.UserParameters.TryGetValue(right, out string? rightUserParameters))
                     {
-                        right = $"'{rightUserParameters?.ToLowerInvariant()}'";
+                        right = $"{rightUserParameters?.ToLowerInvariant()}";
                     }
 
                     int endPosition = tokenizer.Position;

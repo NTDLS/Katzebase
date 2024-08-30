@@ -115,8 +115,10 @@ namespace TestHarness
             using var client = new KbClient(_serverHost, _serverPort, "admin", "");
 
             var procedure = new KbProcedure("AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName");
-            procedure.Parameters.Add("ProductColor", "Test-Color");
-            var result = client.Procedure.Execute(procedure);
+            var result = client.Procedure.Execute("AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName", new
+            {
+                ProductColor = "Test-Color"
+            });
 
             foreach (var resultSet in result.Collection)
             {

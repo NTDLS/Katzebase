@@ -1,7 +1,6 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
-using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
@@ -41,20 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <exception cref="KbMultipleRecordSetsException"></exception>
         internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
         {
-            KbInsensitiveDictionary<string?>? values = null;
-
-            if (userParameters != null)
-            {
-                values = new();
-                var type = userParameters.GetType();
-
-                foreach (var prop in type.GetProperties())
-                {
-                    values.Add('@' + prop.Name, prop.GetValue(userParameters)?.ToString());
-                }
-            }
-
-            var preparedQueries = StaticQueryParser.PrepareBatch(queryText, values);
+            var preparedQueries = StaticQueryParser.PrepareBatch(queryText, userParameters.ToUserParameters());
             if (preparedQueries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
@@ -156,11 +142,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var parameter in physicalProcedure.Parameters)
                 {
-                    if (procedure.Parameters.Collection.TryGetValue(parameter.Name.ToLowerInvariant(), out var value) == false)
+                    if (procedure.UserParameters?.TryGetValue(parameter.Name, out var value) == false)
+                    {
+                        statement.Append($"'{value}',");
+                    }
+                    else
                     {
                         throw new KbEngineException($"Parameter [{parameter.Name}] was not passed when calling procedure [{procedure.ProcedureName}] in schema [{procedure.SchemaName}]");
                     }
-                    statement.Append($"'{value}',");
                 }
                 statement.Length--; //Remove the trailing ','.
                 statement.Append(')');
