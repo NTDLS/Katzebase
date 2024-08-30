@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Payloads.RoundTrip;
 using NTDLS.Katzebase.Engine.Indexes;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.ReliableMessaging;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -22,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to instantiate index API handlers.", ex);
+                LogManager.Error($"Failed to instantiate index API handlers.", ex);
                 throw;
             }
         }
@@ -32,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -51,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
+                LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -61,7 +62,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -78,7 +79,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to list indexes for process {session.ProcessId}.", ex);
+                LogManager.Error($"Failed to list indexes for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -88,7 +89,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -99,7 +100,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
+                LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -109,7 +110,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -119,7 +120,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
+                LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -129,7 +130,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -139,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
+                LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -149,7 +150,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -159,7 +160,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
+                LogManager.Error($"Failed to create index for process {session.ProcessId}.", ex);
                 throw;
             }
         }

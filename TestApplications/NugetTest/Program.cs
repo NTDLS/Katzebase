@@ -85,14 +85,14 @@ namespace NugetTest
                     for (int i = 0; i < 100; i++)
                     {
                         Console.WriteLine($"InsertUsingQueries: {id}");
-                        client.Query.ExecuteQuery($"INSERT INTO {schemaName} (Id = {id++}, SegmentA = {i}, SegmentB = {s}, UUID = '{Guid.NewGuid()}')");
+                        client.Query.Fetch($"INSERT INTO {schemaName} (Id = {id++}, SegmentA = {i}, SegmentB = {s}, UUID = '{Guid.NewGuid()}')");
                     }
                 }
                 client.Transaction.Commit();
 
-                client.Query.ExecuteQuery($"CREATE UniqueKey IX_UUID (UUID) ON {schemaName}");
-                client.Query.ExecuteQuery($"CREATE UniqueKey IX_ID (Id) ON {schemaName}");
-                client.Query.ExecuteQuery($"CREATE INDEX IX_Segments (SegmentA, SegmentB) ON {schemaName}");
+                client.Query.Fetch($"CREATE UniqueKey IX_UUID (UUID) ON {schemaName}");
+                client.Query.Fetch($"CREATE UniqueKey IX_ID (Id) ON {schemaName}");
+                client.Query.Fetch($"CREATE INDEX IX_Segments (SegmentA, SegmentB) ON {schemaName}");
             }
             catch (Exception ex)
             {

@@ -123,3 +123,7 @@ TestApplications/ImportSOUses/obj/
 NTDLS.Katzebase.ObjectViewer/bin/
 
 NTDLS.Katzebase.ObjectViewer/obj/
+
+QueryTest/bin/
+
+QueryTest/obj/

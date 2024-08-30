@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         private readonly OptimisticCriticalResource<List<Transaction>> _collection = new();
 
         internal TransactionQueryHandlers QueryHandlers { get; private set; }
-        public TransactiontAPIHandlers APIHandlers { get; private set; }
+        public TransactionAPIHandlers APIHandlers { get; private set; }
 
         internal TransactionReference Acquire(SessionState session)
         {
@@ -58,7 +58,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 QueryHandlers = new TransactionQueryHandlers(core);
-                APIHandlers = new TransactiontAPIHandlers(core);
+                APIHandlers = new TransactionAPIHandlers(core);
             }
             catch (Exception ex)
             {

@@ -1,4 +1,6 @@
-﻿namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
+﻿using NTDLS.Katzebase.Engine.Interactions.Management;
+
+namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
     /// <summary>
     /// Public class methods for handling API requests related to configuration.
@@ -16,7 +18,7 @@
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to instantiate environment API handlers.", ex);
+                LogManager.Error($"Failed to instantiate environment API handlers.", ex);
                 throw;
             }
         }

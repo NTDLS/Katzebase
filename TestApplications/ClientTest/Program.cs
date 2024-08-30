@@ -30,7 +30,7 @@ namespace TestHarness
             }
             */
 
-            using (var client = new KbClient(_serverHost, _serverPort, "username", "password"))
+            using (var client = new KbClient(_serverHost, _serverPort, "admin", ""))
             {
                 client.Schema.Drop("NetworkDLS");
             }
@@ -83,20 +83,20 @@ namespace TestHarness
             //TestIndexCreationProductInventory();
 
             //using KatzebaseClient client = new KatzebaseClient("127.0.0.1", 6858);
-            //client.Query.ExecuteQuery("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299 AND productid = 366");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299");
-            //client.Query.ExecuteQuery("SELECT TOP 100 ProductID, LocationID, Missing, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)");
-            //client.Query.ExecuteQuery("SELECT TOP 10 a.ProductID FROM AdventureWorks2012:Production:ProductInventory as a");
+            //client.Query.Fetch("SELECT ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (	LocationId = 6	AND Shelf != 'R'	AND Quantity = 299)OR(	LocationId = 6	AND Shelf != 'M'	AND Quantity = 299	OR ProductId = 366	AND	(		BIN = 8 OR Bin = 11 AND	(		Fan = 8 OR Apex = 11 ) ) AND Cake = 14 ) AND(	BIN = 99 OR Bin = 12)");
+            //client.Query.Fetch("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'M' AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11)");
+            //client.Query.Fetch("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299 AND productid = 366");
+            //client.Query.Fetch("SELECT TOP 100 ProductID, LocationID, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE LocationId = 6 AND Shelf != 'M' AND quantity = 299");
+            //client.Query.Fetch("SELECT TOP 100 ProductID, LocationID, Missing, Shelf, Bin, Quantity, rowGuid, ModifiedDate FROM AdventureWorks2012:Production:ProductInventory WHERE (LocationId = 6 AND Shelf != 'R' AND Quantity = 299) OR ((LocationId = 6 AND Shelf != 'M') AND Quantity = 299 OR ProductId = 366) AND (BIN = 8 OR Bin = 11 OR Bin = 19)");
+            //client.Query.Fetch("SELECT TOP 10 a.ProductID FROM AdventureWorks2012:Production:ProductInventory as a");
 
             //var result = client.Document.Sample("AdventureWorks2012:Production:Product", 10);
 
             //TestIndexCreationProductInventory();
 
             //Console.WriteLine(client.Query.ExplainQuery(query)?.Explanation);
-            //client.Query.ExecuteQuery("SET TraceWaitTimes ON");
-            //client.Query.ExecuteQuery(query);
+            //client.Query.Fetch("SET TraceWaitTimes ON");
+            //client.Query.Fetch(query);
 
             //TestCreateAllAdventureWorks2012Indexes();
             //TestServerStress();
@@ -112,7 +112,7 @@ namespace TestHarness
 
         static void TestProcedures()
         {
-            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
+            using var client = new KbClient(_serverHost, _serverPort, "admin", "");
 
             var procedure = new KbProcedure("AdventureWorks2012:Production:Product:UpdateProductByColorAndGetItsName");
             procedure.Parameters.Add("ProductColor", "Test-Color");
@@ -146,19 +146,19 @@ namespace TestHarness
 
         static void TestAllAPIs()
         {
-            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
+            using var client = new KbClient(_serverHost, _serverPort, "admin", "");
 
             client.Schema.Create("TestAllAPIs");
             client.Schema.Create("TestAllAPIs:SubSchema");
             client.Schema.Exists("TestAllAPIs:SubSchema");
             client.Schema.Create("TestAllAPIs:SubSchema:Product");
 
-            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '10000', Name = 'API Test Product')");
-            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '20000', Name = 'API Test Product')");
-            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '30000', Name = 'API Test Product')");
-            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '40000', Name = 'API Test Product')");
-            client.Query.ExecuteQuery("select * from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
-            client.Query.ExecuteQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product' and ProductId != 10000");
+            client.Query.Fetch("insert into TestAllAPIs:SubSchema:Product(ProductId = '10000', Name = 'API Test Product')");
+            client.Query.Fetch("insert into TestAllAPIs:SubSchema:Product(ProductId = '20000', Name = 'API Test Product')");
+            client.Query.Fetch("insert into TestAllAPIs:SubSchema:Product(ProductId = '30000', Name = 'API Test Product')");
+            client.Query.Fetch("insert into TestAllAPIs:SubSchema:Product(ProductId = '40000', Name = 'API Test Product')");
+            client.Query.Fetch("select * from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
+            client.Query.Fetch("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product' and ProductId != 10000");
             client.Query.ExecuteNonQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
 
             client.Schema.Indexes.List("TestAllAPIs:SubSchema");
@@ -176,12 +176,12 @@ namespace TestHarness
             ixSubSchemaProductIdName.AddAttribute("Name");
             client.Schema.Indexes.Create("TestAllAPIs:SubSchema", ixSubSchemaProductIdName);
 
-            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '10000', Name = 'API Test Product')");
-            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '20000', Name = 'API Test Product')");
-            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '30000', Name = 'API Test Product')");
-            client.Query.ExecuteQuery("insert into TestAllAPIs:SubSchema:Product(ProductId = '40000', Name = 'API Test Product')");
-            client.Query.ExecuteQuery("select * from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
-            client.Query.ExecuteQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product' and ProductId != 10000");
+            client.Query.Fetch("insert into TestAllAPIs:SubSchema:Product(ProductId = '10000', Name = 'API Test Product')");
+            client.Query.Fetch("insert into TestAllAPIs:SubSchema:Product(ProductId = '20000', Name = 'API Test Product')");
+            client.Query.Fetch("insert into TestAllAPIs:SubSchema:Product(ProductId = '30000', Name = 'API Test Product')");
+            client.Query.Fetch("insert into TestAllAPIs:SubSchema:Product(ProductId = '40000', Name = 'API Test Product')");
+            client.Query.Fetch("select * from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
+            client.Query.Fetch("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product' and ProductId != 10000");
             client.Query.ExecuteNonQuery("delete from TestAllAPIs:SubSchema:Product where Name = 'API Test Product'");
 
             client.Schema.Indexes.Rebuild("TestAllAPIs:SubSchema", "IX_SubSchema_ProductId_Name");
@@ -199,8 +199,8 @@ namespace TestHarness
 
         private static KbQueryResultCollection TestExecuteQuery(string queryText)
         {
-            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
-            return client.Query.ExecuteQuery(queryText);
+            using var client = new KbClient(_serverHost, _serverPort, "admin", "");
+            return client.Query.Fetch(queryText);
         }
 
         #endregion
@@ -209,7 +209,7 @@ namespace TestHarness
 
         private static void TestIndexCreationProductInventory()
         {
-            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
+            using var client = new KbClient(_serverHost, _serverPort, "admin", "");
 
             string? schemaPath = "AdventureWorks2012:Production:ProductSubcategory";
 
@@ -235,7 +235,7 @@ namespace TestHarness
 
         private static void TestIndexCreationStateProvince()
         {
-            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
+            using var client = new KbClient(_serverHost, _serverPort, "admin", "");
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
             string? schemaPath = "AdventureWorks2012:Person:StateProvince";
@@ -264,7 +264,7 @@ namespace TestHarness
 
         private static void TestIndexCreationPerson()
         {
-            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
+            using var client = new KbClient(_serverHost, _serverPort, "admin", "");
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
             string? schemaPath = "AdventureWorks2012:Person:Person";
@@ -292,7 +292,7 @@ namespace TestHarness
         #region TestIndexDocumentDeletion.
         private static void TestIndexDocumentDeletion()
         {
-            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
+            using var client = new KbClient(_serverHost, _serverPort, "admin", "");
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
             string? schemaPath = "Students:Indexing";
@@ -382,7 +382,7 @@ namespace TestHarness
         #region TestAddDocumentsCreateIndex.
         private static void TestAddDocumentsCreateIndex()
         {
-            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
+            using var client = new KbClient(_serverHost, _serverPort, "admin", "");
 
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
             string? schemaPath = "Students:Indexing";
@@ -463,7 +463,7 @@ namespace TestHarness
         #region TestCreateIndexAddDocuments.
         private static void TestCreateIndexAddDocuments()
         {
-            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
+            using var client = new KbClient(_serverHost, _serverPort, "admin", "");
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
             string? schemaPath = "Students:Indexing";
@@ -547,7 +547,7 @@ namespace TestHarness
 
         static void StressTestThreadProc()
         {
-            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
+            using var client = new KbClient(_serverHost, _serverPort, "admin", "");
 
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
@@ -632,7 +632,7 @@ namespace TestHarness
 
         static void TestCreateAllAdventureWorks2012Indexes()
         {
-            using var client = new KbClient(_serverHost, _serverPort, "username", "password");
+            using var client = new KbClient(_serverHost, _serverPort, "admin", "");
             Console.WriteLine("Session Started: {0}", client.ServerConnectionId);
 
             client.Transaction.Begin();

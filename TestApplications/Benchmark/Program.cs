@@ -121,7 +121,7 @@ namespace Benchmark
                     {
                         Console.WriteLine($"ExecuteBenchmark_Scripts: {Path.GetFileNameWithoutExtension(scriptFile)}->{i}");
 
-                        var result = client.Query.ExecuteQuery(queryText);
+                        var result = client.Query.Fetch(queryText);
 
                         double thisTotalProcessorTime = process.TotalProcessorTime.TotalSeconds;
                         double deltaTotalProcessorTime = thisTotalProcessorTime - previousTotalProcessorTime;

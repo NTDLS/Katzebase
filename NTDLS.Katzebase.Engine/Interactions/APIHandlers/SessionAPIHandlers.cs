@@ -3,7 +3,7 @@ using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Query.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.ReliableMessaging;
-using static System.Formats.Asn1.AsnWriter;
+using NTDLS.Katzebase.Client;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
@@ -23,16 +23,22 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to instantiate session API handlers.", ex);
+                LogManager.Error($"Failed to instantiate session API handlers.", ex);
                 throw;
             }
+        }
+
+        class Account
+        {
+            public string? Username { get; set; }
+            public string? PasswordHash { get; set; }
         }
 
         public KbQueryServerStartSessionReply StartSession(RmContext context, KbQueryServerStartSession param)
         {
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
 
             try
@@ -49,39 +55,28 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), param.Username, param.ClientName);
 
                     using var transactionReference = _core.Transactions.Acquire(preLogin);
-                    var accounts = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, "Master:Account", -1);
+                    var accounts = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, "Master:Account", -1).MapTo<Account>();
                     transactionReference.Commit();
 
-                    int usernameIndex = accounts.IndexOf("username");
-                    int passwordHashIndex = accounts.IndexOf("passwordHash");
+                    var account = accounts.Where(o =>
+                        o.Username?.Equals(param.Username, StringComparison.CurrentCultureIgnoreCase) == true
+                        && o.PasswordHash?.Equals(param.PasswordHash, StringComparison.CurrentCultureIgnoreCase) == true).SingleOrDefault();
 
-                    //Loop through all of the users, we we find a match then check its password hash. Otherwise throw an exception.
-                    foreach (var row in accounts.Rows)
+                    if (account != null)
                     {
-                        if (accounts.RowValue(row, usernameIndex)?.Equals(param.Username, StringComparison.InvariantCultureIgnoreCase) == true)
+                        LogManager.Debug($"Logged in user [{param.Username}].");
+
+                        var session = _core.Sessions.CreateSession(context.ConnectionId, param.Username, param.ClientName);
+
+                        var result = new KbQueryServerStartSessionReply
                         {
-                            if (accounts.RowValue(row, passwordHashIndex)?.Equals(param.PasswordHash, StringComparison.InvariantCultureIgnoreCase) == true)
-                            {
-                                LogManager.Information($"Logged in user [{usernameIndex}].");
-
-                                //If and only if we find the correct username and password do we create the session.
-                                var session = _core.Sessions.CreateSession(context.ConnectionId, param.Username, param.ClientName);
-
-                                var result = new KbQueryServerStartSessionReply
-                                {
-                                    ProcessId = session.ProcessId,
-                                    ConnectionId = context.ConnectionId,
-                                    ServerTimeUTC = DateTime.UtcNow
-                                };
-
-                                return result;
-                            }
-                            LogManager.Information($"Invalid password for user [{param.Username}].");
-                            throw new Exception("Invalid username or password."); 
-                        }
+                            ProcessId = session.ProcessId,
+                            ConnectionId = context.ConnectionId,
+                            ServerTimeUTC = DateTime.UtcNow
+                        };
+                        return result;
                     }
 
-                    LogManager.Information($"Username not found [{param.Username}].");
                     throw new Exception("Invalid username or password.");
                 }
                 finally
@@ -90,12 +85,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     {
                         _core.Sessions.CloseByProcessId(preLogin.ProcessId);
                     }
-
                 }
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to start session for session id {context.ConnectionId}.", ex);
+                LogManager.Error($"Failed to start session for session id {context.ConnectionId}.", ex);
                 throw;
             }
         }
@@ -105,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -115,7 +109,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to close session for process id {session.ProcessId}.", ex);
+                LogManager.Error($"Failed to close session for process id {session.ProcessId}.", ex);
                 throw;
             }
         }
@@ -126,7 +120,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             try
             {
@@ -136,7 +130,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to close session for process id {session.ProcessId}.", ex);
+                LogManager.Error($"Failed to close session for process id {session.ProcessId}.", ex);
                 throw;
             }
         }

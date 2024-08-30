@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Payloads.RoundTrip;
+using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Query;
 using NTDLS.ReliableMessaging;
 
@@ -20,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
             catch (Exception ex)
             {
-                Management.LogManager.Error($"Failed to instantiate query API handlers.", ex);
+                LogManager.Error($"Failed to instantiate query API handlers.", ex);
                 throw;
             }
         }
@@ -30,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
 
             var results = new KbQueryQueryExplainPlansReply();
@@ -57,7 +58,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
 
             var results = new KbQueryQueryExplainPlanReply();
@@ -81,7 +82,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
 
             var results = new KbQueryQueryExplainOperationsReply();
@@ -108,7 +109,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
 
             var results = new KbQueryQueryExplainOperationReply();
@@ -132,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
 
             session.SetCurrentQuery(param.Procedure.ProcedureName);
@@ -147,7 +148,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             session.SetCurrentQuery(param.Statement);
 
@@ -167,7 +168,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             var results = new KbQueryQueryExecuteQueriesReply();
 
@@ -193,7 +194,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
-            Management.LogManager.Debug(Thread.CurrentThread.Name);
+            LogManager.Debug(Thread.CurrentThread.Name);
 #endif
             session.SetCurrentQuery(param.Statement);
 
