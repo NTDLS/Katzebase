@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Query;
+﻿using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 
 namespace NTDLS.Katzebase.Engine.Functions.Parameters
@@ -33,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                     foreach (var literal in tokenizer.UserParameters)
                     {
                         //TODO: Untested.
-                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, $"'{literal.Value}'");
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, InputSanitizer.SanitizeUserInput(literal.Value));
                     }
                 }
                 else if (param is FunctionExpression functionExpression)
@@ -49,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                     foreach (var literal in tokenizer.UserParameters)
                     {
                         //TODO: Untested.
-                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, $"'{literal.Value}'");
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, InputSanitizer.SanitizeUserInput(literal.Value));
                     }
 
                     RepopulateStringNumbersAndParameters(functionExpression.Parameters, tokenizer);

@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 
@@ -34,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                     }
                     foreach (var literal in tokenizer.UserParameters)
                     {
-                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, $"'{literal.Value}'");
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, InputSanitizer.SanitizeUserInput(literal.Value));
                     }
                 }
                 else if (param.Value is FunctionExpression functionExpression)
@@ -51,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                     foreach (var literal in tokenizer.UserParameters)
                     {
                         //TODO: Untested
-                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, $"'{literal.Value}'");
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, InputSanitizer.SanitizeUserInput(literal.Value));
                     }
 
                     RepopulateStringNumbersAndParameters(functionExpression.Parameters, tokenizer);
@@ -74,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                     foreach (var literal in tokenizer.UserParameters)
                     {
                         //TODO: Untested
-                        string value = $"'{literal.Value}'";
+                        string value = InputSanitizer.SanitizeUserInput(literal.Value);
                         functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, value);
                         functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, value);
                         functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, value);
@@ -106,7 +107,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                     foreach (var literal in tokenizer.UserParameters)
                     {
                         //TODO: Untested
-                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, $"'{literal.Value}'");
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, InputSanitizer.SanitizeUserInput(literal.Value));
                     }
                 }
                 else if (param is FunctionExpression functionExpression)
@@ -123,7 +124,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                     foreach (var literal in tokenizer.UserParameters)
                     {
                         //TODO: Untested
-                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, $"'{literal.Value}'");
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, InputSanitizer.SanitizeUserInput(literal.Value));
                     }
 
                     RepopulateStringNumbersAndParameters(functionExpression.Parameters, tokenizer);
@@ -146,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
                     foreach (var literal in tokenizer.UserParameters)
                     {
                         //TODO: Untested
-                        string value = $"'{literal.Value}'";
+                        string value = InputSanitizer.SanitizeUserInput(literal.Value);
                         functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, value);
                         functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, value);
                         functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, value);
