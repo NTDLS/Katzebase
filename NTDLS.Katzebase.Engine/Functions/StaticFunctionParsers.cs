@@ -802,8 +802,8 @@ namespace NTDLS.Katzebase.Engine.Functions
                         {
                             var str = param.ToString();
 
-                            //Is the parameter a number or a string?
-                            if (char.IsDigit(str[0]) || (str.StartsWith('$') && str.EndsWith('$')))
+                            //Is the parameter a userParameter, number or a string?
+                            if (str.StartsWith('@') || (str.StartsWith('%') && str.EndsWith('%')) || (str.StartsWith('$') && str.EndsWith('$')))
                             {
                                 isComplex = true;
                             }

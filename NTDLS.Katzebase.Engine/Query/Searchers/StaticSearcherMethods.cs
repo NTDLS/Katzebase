@@ -64,7 +64,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Returns a top list of all document fields from a schema.
         /// </summary>
-        internal static KbQueryDocumentListResult ListSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int topCount)
+        internal static KbQueryDocumentListResult ListSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int topCount = -1)
         {
             var result = new KbQueryDocumentListResult();
 

@@ -1,9 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Payloads.RoundTrip;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.Query.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.ReliableMessaging;
-using NTDLS.Katzebase.Client;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {
@@ -28,11 +26,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        class Account
-        {
-            public string? Username { get; set; }
-            public string? PasswordHash { get; set; }
-        }
+
 
         public KbQueryServerStartSessionReply StartSession(RmContext context, KbQueryServerStartSession param)
         {
@@ -55,12 +49,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), param.Username, param.ClientName);
 
                     using var transactionReference = _core.Transactions.Acquire(preLogin);
-                    var accounts = StaticSearcherMethods.ListSchemaDocuments(_core, transactionReference.Transaction, "Master:Account", -1).MapTo<Account>();
-                    transactionReference.Commit();
 
-                    var account = accounts.Where(o =>
-                        o.Username?.Equals(param.Username, StringComparison.CurrentCultureIgnoreCase) == true
-                        && o.PasswordHash?.Equals(param.PasswordHash, StringComparison.CurrentCultureIgnoreCase) == true).SingleOrDefault();
+                    var account = _core.Query.ExecuteQuery<Account>(preLogin,
+                        $"SELECT Username, PasswordHash FROM Master:Account WHERE Username = @Username AND PasswordHash = @PasswordHash",
+                        new
+                        {
+                            param.Username,
+                            param.PasswordHash
+                        }).FirstOrDefault();
+
+                    transactionReference.Commit();
 
                     if (account != null)
                     {

@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Functions;
 using NTDLS.Katzebase.Engine.Functions.Procedures;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
@@ -12,9 +13,9 @@ namespace NTDLS.Katzebase.Engine.Query
 {
     internal class StaticQueryParser
     {
-        static public List<PreparedQuery> PrepareBatch(string queryText)
+        static public List<PreparedQuery> PrepareBatch(string queryText, KbInsensitiveDictionary<string?>? userParameters = null)
         {
-            var tokenizer = new QueryTokenizer(queryText);
+            var tokenizer = new QueryTokenizer(queryText, userParameters);
 
             var queries = new List<PreparedQuery>();
 
@@ -481,8 +482,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
 
                 result.UpdateValues = StaticFunctionParsers.ParseUpdateFields(tokenizer);
-                result.UpdateValues.RefillLiterals(tokenizer.StringLiterals, true);
-                result.UpdateValues.RefillLiterals(tokenizer.NumericLiterals, false);
+                result.UpdateValues.RepopulateStringNumbersAndParameters(tokenizer);
 
                 token = tokenizer.GetNext();
                 if (token != string.Empty && !token.Is("where"))
@@ -532,7 +532,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: list of conditions.");
                     }
 
-                    result.Conditions = Conditions.Create(conditionText, tokenizer.StringLiterals, tokenizer.NumericLiterals);
+                    result.Conditions = Conditions.Create(conditionText, tokenizer);
                 }
             }
             #endregion
@@ -698,7 +698,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 else
                 {
                     result.SelectFields = StaticFunctionParsers.ParseQueryFields(tokenizer);
-                    result.SelectFields.RefillStringLiterals(tokenizer.StringLiterals);
+                    result.SelectFields.RepopulateStringNumbersAndParameters(tokenizer);
                 }
 
                 if (tokenizer.PeekNext().Is("into"))
@@ -810,7 +810,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
 
                     var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Position - joinConditionsStartPosition).Trim();
-                    var joinConditions = Conditions.Create(joinConditionsText, tokenizer.StringLiterals, tokenizer.NumericLiterals, subSchemaAlias);
+                    var joinConditions = Conditions.Create(joinConditionsText, tokenizer, subSchemaAlias);
 
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
@@ -856,7 +856,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + conditionText + "', expected: list of conditions.");
                     }
 
-                    result.Conditions = Conditions.Create(conditionText, tokenizer.StringLiterals, tokenizer.NumericLiterals);
+                    result.Conditions = Conditions.Create(conditionText, tokenizer);
                 }
 
                 if (tokenizer.PeekNext().Is("group"))
@@ -1071,7 +1071,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
 
                     var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Position - joinConditionsStartPosition).Trim();
-                    var joinConditions = Conditions.Create(joinConditionsText, tokenizer.StringLiterals, tokenizer.NumericLiterals, subSchemaAlias);
+                    var joinConditions = Conditions.Create(joinConditionsText, tokenizer, subSchemaAlias);
 
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
@@ -1121,7 +1121,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: list of conditions.");
                     }
 
-                    result.Conditions = Conditions.Create(conditionText, tokenizer.StringLiterals, tokenizer.NumericLiterals);
+                    result.Conditions = Conditions.Create(conditionText, tokenizer);
                 }
             }
             #endregion
@@ -1174,8 +1174,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 result.UpsertValues = StaticFunctionParsers.ParseInsertFields(tokenizer);
                 foreach (var upsertValue in result.UpsertValues)
                 {
-                    upsertValue.RefillLiterals(tokenizer.StringLiterals, true);
-                    upsertValue.RefillLiterals(tokenizer.NumericLiterals, false);
+                    upsertValue.RepopulateStringNumbersAndParameters(tokenizer);
                 }
             }
             #endregion

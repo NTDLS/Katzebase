@@ -1,5 +1,7 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
@@ -26,6 +28,64 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             ScalerFunctionCollection.Initialize();
             AggregateFunctionCollection.Initialize();
         }
+
+        #region Internal helpers.
+
+        /// <summary>
+        /// Executes a query and returns the mapped object. This function is designed to be used internally and expects that the "batch" only contains one query.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="session"></param>
+        /// <param name="queryText"></param>
+        /// <returns></returns>
+        /// <exception cref="KbMultipleRecordSetsException"></exception>
+        internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
+        {
+            KbInsensitiveDictionary<string?>? values = null;
+
+            if (userParameters != null)
+            {
+                values = new();
+                var type = userParameters.GetType();
+
+                foreach (var prop in type.GetProperties())
+                {
+                    values.Add('@' + prop.Name, prop.GetValue(userParameters)?.ToString());
+                }
+            }
+
+            var preparedQueries = StaticQueryParser.PrepareBatch(queryText, values);
+            if (preparedQueries.Count > 1)
+            {
+                throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
+            }
+            var results = _core.Query.ExecuteQuery(session, preparedQueries[0]);
+            if (preparedQueries.Count > 1)
+            {
+                throw new KbMultipleRecordSetsException();
+            }
+            return results.Collection[0].MapTo<T>();
+        }
+
+        /// <summary>
+        /// Executes a query. This function is designed to be used internally and expects that the "batch" only contains one query.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="session"></param>
+        /// <param name="queryText"></param>
+        /// <returns></returns>
+        /// <exception cref="KbMultipleRecordSetsException"></exception>
+        internal void ExecuteNonQuery(SessionState session, string queryText)
+        {
+            var preparedQueries = StaticQueryParser.PrepareBatch(queryText);
+            if (preparedQueries.Count > 1)
+            {
+                throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
+            }
+            _core.Query.ExecuteNonQuery(session, preparedQueries[0]);
+        }
+
+        #endregion
 
         internal KbQueryExplain ExplainPlan(SessionState session, PreparedQuery preparedQuery)
         {

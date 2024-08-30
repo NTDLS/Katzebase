@@ -20,15 +20,22 @@ namespace QueryTest
 
         static void Main()
         {
-            using var client = new KbClient(_serverHost, _serverPort, _username, KbClient.HashPassword(_password));
-
-            var words = client.Query.Fetch<Word>("SELECT TOP 100 * FROM WordList:Word");
-
-            foreach (var word in words)
+            try
             {
-                Console.WriteLine($"{word.Id},{word.Text},{word.LanguageId},{word.SourceId},{word.IsDirty}");
-            }
+                using var client = new KbClient(_serverHost, _serverPort, _username, KbClient.HashPassword(_password));
 
+                var words = client.Query.Fetch<Word>("SELECT TOP 100 * FROM WordList:Word");
+
+                foreach (var word in words)
+                {
+                    Console.WriteLine($"{word.Id},{word.Text},{word.LanguageId},{word.SourceId},{word.IsDirty}");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
             Console.WriteLine("Press [enter] to exit.");
             Console.ReadLine();
         }

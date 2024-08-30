@@ -1,6 +1,5 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using NTDLS.Katzebase.Shared;
@@ -60,14 +59,11 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public SubCondition SubConditionFromExpressionKey(string key)
             => SubConditions.First(o => o.Key == key);
 
-        public static Conditions Create(string conditionsText,
-            KbInsensitiveDictionary<string> stringLiterals,
-            KbInsensitiveDictionary<string> numericLiterals,
-            string leftHandAliasOfJoin = "")
+        public static Conditions Create(string conditionsText, QueryTokenizer tokenizer, string leftHandAliasOfJoin = "")
         {
             var conditions = new Conditions();
 
-            conditions.Parse(conditionsText.ToLowerInvariant(), stringLiterals, numericLiterals, leftHandAliasOfJoin);
+            conditions.Parse(conditionsText.ToLowerInvariant(), tokenizer, leftHandAliasOfJoin);
 
             return conditions;
         }
@@ -81,8 +77,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// <param name="stringLiterals">Collection of string literals that were stripped from the query text.</param>
         /// <param name="numericLiterals">Collection of numeric literals that were stripped from the query text.</param>
         /// <param name="leftHandAliasOfJoin">When parsing a JOIN, this is the schema that we are joining to.</param>
-        private void Parse(string givenConditionText, KbInsensitiveDictionary<string> stringLiterals,
-            KbInsensitiveDictionary<string> numericLiterals, string leftHandAliasOfJoin)
+        private void Parse(string givenConditionText, QueryTokenizer tokenizer, string leftHandAliasOfJoin)
         {
             //We parse by parentheses so wrap the condition in them if it is not already.
             if (givenConditionText.StartsWith('(') == false || givenConditionText.StartsWith(')') == false)
@@ -126,7 +121,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                             var key = NextTempKey();
                             orLiterals.Add(key, orConditionWithConnector);
 
-                            givenConditionText = ReplaceRange(givenConditionText, startPos, endPos - startPos + 1, key);
+                            givenConditionText = Text.ReplaceRange(givenConditionText, startPos, endPos - startPos + 1, key);
                         }
                         else
                         {
@@ -134,7 +129,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                             var key = NextTempKey();
                             orLiterals.Add(key, subConditionText);
 
-                            givenConditionText = ReplaceRange(givenConditionText, startPos, endPos - startPos + 1, key);
+                            givenConditionText = Text.ReplaceRange(givenConditionText, startPos, endPos - startPos + 1, key);
                         }
                     }
                 }
@@ -142,16 +137,6 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 {
                     break;
                 }
-            }
-
-            //TODO: Replace with NTDLS.Helpers.Text when nugets get updated.
-            static string ReplaceRange(string original, int startIndex, int length, string replacement)
-            {
-                // Remove the range of text to be replaced
-                string removed = original.Remove(startIndex, length);
-                // Insert the replacement string at the start index
-                string result = removed.Insert(startIndex, replacement);
-                return result;
             }
 
             //Swap back in all of the temporarily stored sub-expressions from the OR parsing.
@@ -198,9 +183,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                         var subCondition = new SubCondition(subExpressionKey, logicalConnector, parenTrimmedSubConditionText);
 
-                        AddSubCondition(stringLiterals, numericLiterals, subCondition, leftHandAliasOfJoin);
+                        AddSubCondition(tokenizer, subCondition, leftHandAliasOfJoin);
 
-                        givenConditionText = ReplaceRange(givenConditionText, startPos, endPos - startPos + 1, VariableToKey(subExpressionKey));
+                        givenConditionText = Text.ReplaceRange(givenConditionText, startPos, endPos - startPos + 1, VariableToKey(subExpressionKey));
                     }
                 }
                 else
@@ -289,8 +274,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return str;
         }
 
-        private void AddSubCondition(KbInsensitiveDictionary<string> stringLiterals,
-            KbInsensitiveDictionary<string> numericLiterals, SubCondition subCondition, string leftHandAliasOfJoin)
+        private void AddSubCondition(QueryTokenizer queryTokenizer, SubCondition subCondition, string leftHandAliasOfJoin)
         {
             var logicalConnector = LogicalConnector.None;
 
@@ -353,21 +337,29 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     //Righthand value:
                     string right = tokenizer.GetNext().ToLowerInvariant();
 
-                    if (stringLiterals.TryGetValue(left, out string? leftLiteral))
+                    if (queryTokenizer.StringLiterals.TryGetValue(left, out string? leftLiteral))
                     {
                         left = leftLiteral.ToLowerInvariant();
                     }
-                    if (stringLiterals.TryGetValue(right, out string? rightLiteral))
+                    if (queryTokenizer.StringLiterals.TryGetValue(right, out string? rightLiteral))
                     {
                         right = rightLiteral.ToLowerInvariant();
                     }
-                    if (numericLiterals.TryGetValue(left, out string? leftLiteralNumeric))
+                    if (queryTokenizer.NumericLiterals.TryGetValue(left, out string? leftLiteralNumeric))
                     {
                         left = leftLiteralNumeric.ToLowerInvariant();
                     }
-                    if (numericLiterals.TryGetValue(right, out string? rightLiteralNumeric))
+                    if (queryTokenizer.NumericLiterals.TryGetValue(right, out string? rightLiteralNumeric))
                     {
                         right = rightLiteralNumeric.ToLowerInvariant();
+                    }
+                    if (queryTokenizer.UserParameters.TryGetValue(left, out string? leftUserParameters))
+                    {
+                        left = $"'{leftUserParameters?.ToLowerInvariant()}'";
+                    }
+                    if (queryTokenizer.UserParameters.TryGetValue(right, out string? rightUserParameters))
+                    {
+                        right = $"'{rightUserParameters?.ToLowerInvariant()}'";
                     }
 
                     int endPosition = tokenizer.Position;
@@ -382,7 +374,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                         var rightRange = tokenizer.GetNext().ToLowerInvariant();
 
-                        if (numericLiterals.TryGetValue(rightRange, out string? rightRangeNumeric))
+                        if (queryTokenizer.NumericLiterals.TryGetValue(rightRange, out string? rightRangeNumeric))
                         {
                             rightRange = rightRangeNumeric.ToLowerInvariant();
                         }

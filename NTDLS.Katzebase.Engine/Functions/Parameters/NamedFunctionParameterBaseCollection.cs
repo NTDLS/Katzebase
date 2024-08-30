@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Query.Tokenizers;
 
 namespace NTDLS.Katzebase.Engine.Functions.Parameters
 {
@@ -11,39 +12,69 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
             base.Add(key, param);
         }
 
-        public void RefillLiterals(KbInsensitiveDictionary<string> literals, bool isString)
+        public void RepopulateStringNumbersAndParameters(QueryTokenizer tokenizer)
         {
-            RefillLiterals(this, literals, isString);
+            RepopulateStringNumbersAndParameters(this, tokenizer);
         }
 
-        private void RefillLiterals(KbInsensitiveDictionary<FunctionParameterBase> list, KbInsensitiveDictionary<string> literals, bool isString)
+        private void RepopulateStringNumbersAndParameters(KbInsensitiveDictionary<FunctionParameterBase> list, QueryTokenizer tokenizer)
         {
             foreach (var param in list)
             {
                 if (param.Value is FunctionConstantParameter functionConstantParameter)
                 {
-                    foreach (var literal in literals)
+                    foreach (var literal in tokenizer.StringLiterals)
                     {
-                        string value = isString ? literal.Value.Substring(1, literal.Value.Length - 2) : literal.Value;
-
+                        string value = literal.Value.Substring(1, literal.Value.Length - 2);
                         functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, value);
+                    }
+                    foreach (var literal in tokenizer.NumericLiterals)
+                    {
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, literal.Value);
+                    }
+                    foreach (var literal in tokenizer.UserParameters)
+                    {
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, $"'{literal.Value}'");
                     }
                 }
                 else if (param.Value is FunctionExpression functionExpression)
                 {
-                    foreach (var literal in literals)
+                    foreach (var literal in tokenizer.StringLiterals)
                     {
-                        string value = isString ? "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"" : literal.Value;
+                        string value = "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"";
                         functionExpression.Value = functionExpression.Value.Replace(literal.Key, value);
                     }
+                    foreach (var literal in tokenizer.NumericLiterals)
+                    {
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, literal.Value);
+                    }
+                    foreach (var literal in tokenizer.UserParameters)
+                    {
+                        //TODO: Untested
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, $"'{literal.Value}'");
+                    }
 
-                    RefillStringLiterals(functionExpression.Parameters, literals);
+                    RepopulateStringNumbersAndParameters(functionExpression.Parameters, tokenizer);
                 }
                 else if (param.Value is FunctionDocumentFieldParameter functionDocumentFieldParameter)
                 {
-                    foreach (var literal in literals)
+                    foreach (var literal in tokenizer.StringLiterals)
                     {
-                        string value = isString ? "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"" : literal.Value;
+                        string value = "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"";
+                        functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, value);
+                        functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, value);
+                        functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, value);
+                    }
+                    foreach (var literal in tokenizer.NumericLiterals)
+                    {
+                        functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, literal.Value);
+                        functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, literal.Value);
+                        functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, literal.Value);
+                    }
+                    foreach (var literal in tokenizer.UserParameters)
+                    {
+                        //TODO: Untested
+                        string value = $"'{literal.Value}'";
                         functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, value);
                         functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, value);
                         functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, value);
@@ -52,44 +83,79 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
 
                 if (param.Value is FunctionWithParams functionWithParams)
                 {
-                    RefillStringLiterals(functionWithParams.Parameters, literals);
+                    RepopulateStringNumbersAndParameters(functionWithParams.Parameters, tokenizer);
                 }
             }
         }
 
-        private void RefillStringLiterals(List<FunctionParameterBase> list, KbInsensitiveDictionary<string> literals)
+        private void RepopulateStringNumbersAndParameters(List<FunctionParameterBase> list, QueryTokenizer tokenizer)
         {
             foreach (var param in list)
             {
                 if (param is FunctionConstantParameter functionConstantParameter)
                 {
-                    foreach (var literal in literals)
+                    foreach (var literal in tokenizer.StringLiterals)
                     {
-                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
+                        string value = literal.Value.Substring(1, literal.Value.Length - 2);
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, value);
+                    }
+                    foreach (var literal in tokenizer.NumericLiterals)
+                    {
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, literal.Value);
+                    }
+                    foreach (var literal in tokenizer.UserParameters)
+                    {
+                        //TODO: Untested
+                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, $"'{literal.Value}'");
                     }
                 }
                 else if (param is FunctionExpression functionExpression)
                 {
-                    foreach (var literal in literals)
+                    foreach (var literal in tokenizer.StringLiterals)
                     {
-                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        string value = "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"";
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, value);
+                    }
+                    foreach (var literal in tokenizer.NumericLiterals)
+                    {
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, literal.Value);
+                    }
+                    foreach (var literal in tokenizer.UserParameters)
+                    {
+                        //TODO: Untested
+                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, $"'{literal.Value}'");
                     }
 
-                    RefillStringLiterals(functionExpression.Parameters, literals);
+                    RepopulateStringNumbersAndParameters(functionExpression.Parameters, tokenizer);
                 }
                 else if (param is FunctionDocumentFieldParameter functionDocumentFieldParameter)
                 {
-                    foreach (var literal in literals)
+                    foreach (var literal in tokenizer.StringLiterals)
                     {
-                        functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
-                        functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
-                        functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"");
+                        string value = "\"" + literal.Value.Substring(1, literal.Value.Length - 2) + "\"";
+                        functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, value);
+                        functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, value);
+                        functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, value);
+                    }
+                    foreach (var literal in tokenizer.NumericLiterals)
+                    {
+                        functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, literal.Value);
+                        functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, literal.Value);
+                        functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, literal.Value);
+                    }
+                    foreach (var literal in tokenizer.UserParameters)
+                    {
+                        //TODO: Untested
+                        string value = $"'{literal.Value}'";
+                        functionDocumentFieldParameter.Alias = functionDocumentFieldParameter.Alias.Replace(literal.Key, value);
+                        functionDocumentFieldParameter.Value.Field = functionDocumentFieldParameter.Value.Field.Replace(literal.Key, value);
+                        functionDocumentFieldParameter.Value.Alias = functionDocumentFieldParameter.Value.Alias.Replace(literal.Key, value);
                     }
                 }
 
                 if (param is FunctionWithParams functionWithParams)
                 {
-                    RefillStringLiterals(functionWithParams.Parameters, literals);
+                    RepopulateStringNumbersAndParameters(functionWithParams.Parameters, tokenizer);
                 }
             }
         }
