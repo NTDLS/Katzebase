@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using ParserV2.StandIn;
+using static ParserV2.Expression.ExpressionConstant;
 using static ParserV2.StandIn.Types;
 
 namespace ParserV2.Expression
@@ -30,9 +31,9 @@ namespace ParserV2.Expression
             return result;
         }
 
-        private static Expressions ParseExpression(string text, Tokenizer queryTokenizer)
+        private static IExpression ParseExpression(string text, Tokenizer queryTokenizer)
         {
-            var result = new Expressions();
+            //var result = new Expressions();
 
             Tokenizer tokenizer = new(text, queryTokenizer.TokenDelimiters); //These delimiters have not been through through at all!
 
@@ -40,22 +41,62 @@ namespace ParserV2.Expression
             {
                 var functionName = tokenizer.GetNext();
 
-                string functionBody = tokenizer.GetMatchingBraces('(', ')');
+                string functionScopeText = tokenizer.GetMatchingBraces('(', ')');
 
-                var parameters = functionBody.ScopeSensitiveSplit();
+                var parameterStrings = functionScopeText.ScopeSensitiveSplit();
 
-                foreach (var param in parameters)
+                foreach (var paramText in parameterStrings)
                 {
-                    if (IsNumericOperation(param))
+                    if (IsNumericOperation(paramText))
                     {
+                        if (DoesNumericRequireEvaluation(paramText))
+                        {
+                            var result = new ExpressionNumericEvaluation();
+                            return result;
+                        }
+                        else
+                        {
+                            var result = new ExpressionConstant("0", ExpressionConstantType.Numeric);
+                            return result;
+                        }
                     }
                     else
                     {
+                        if (DoesStringRequireEvaluation(paramText))
+                        {
+                            var result = new ExpressionStringEvaluation();
+                            return result;
+                        }
+                        else
+                        {
+                            var result = new ExpressionConstant("?????", ExpressionConstantType.String);
+                            return result;
+                        }
                     }
                 }
             }
 
-            return result;
+            throw new KbParserException($"Unable to parse expression: [{text}]");
+        }
+
+        /// <summary>
+        /// Determines if the numeric expression is a simple standalone number or if it requires some type of evaluation.
+        /// The evaluation requirement can be as simple as "10 + 10" or a nested set of function calls.
+        /// </summary>
+        /// <returns></returns>
+        private static bool DoesNumericRequireEvaluation(string text)
+        {
+            return true;
+        }
+
+        /// <summary>
+        /// Determines if the string expression is a simple standalone string or if it requires some type of evaluation.
+        /// The evaluation requirement can be as simple as ["Hello" + "World"] or a nested set of function calls.
+        /// </summary>
+        /// <returns></returns>
+        private static bool DoesStringRequireEvaluation(string text)
+        {
+            return true;
         }
 
         /// <summary>

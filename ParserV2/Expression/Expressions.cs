@@ -2,5 +2,6 @@
 {
     internal class Expressions
     {
+        public IExpression Collection { get; set; } = new();
     }
 }
