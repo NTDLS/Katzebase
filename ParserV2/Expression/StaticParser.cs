@@ -1,29 +1,26 @@
-﻿using NTDLS.Katzebase.Engine.Query.Tokenizers;
-using static NTDLS.Katzebase.Engine.Functions.StaticFunctionParsers;
-
-namespace NTDLS.Katzebase.Engine.QueryExpression
+﻿namespace ParserV2.Expression
 {
-    internal static class StaticExpressionParser
+    internal static class StaticParser
     {
 
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.
         /// </summary>
-        public static QueryExpressions ParseSelectFields(QueryTokenizer queryTokenizer)
+        public static Expressions ParseSelectFields(Tokenizer queryTokenizer)
         {
-            var result = new QueryExpressions();
+            var result = new Expressions();
 
-            if (queryTokenizer.Text.Contains("Language"))
+            if (queryTokenizer.InertContains("Language"))
             {
-                int stopAt = queryTokenizer.GetNextIndexOf([" from ", " into "]);
+                int stopAt = queryTokenizer.InertGetNextIndexOf([" from ", " into "]);
 
                 var fieldsText = queryTokenizer.SubString(stopAt);
 
-                var fields = TokenHelpers.SplitWhileObeyingScope(fieldsText);
+                var fields = fieldsText.ScopeSensitiveSplit();
 
                 foreach (var field in fields)
                 {
-                    ParseExpression(field, queryTokenizer);
+                    //ParseExpression(field, queryTokenizer);
                 }
 
             }
@@ -31,6 +28,7 @@ namespace NTDLS.Katzebase.Engine.QueryExpression
             return result;
         }
 
+        /*
         private static NewFunctionCall ParseExpression(string text, QueryTokenizer queryTokenizer)
         {
             var result = new NewFunctionCall();
@@ -58,6 +56,7 @@ namespace NTDLS.Katzebase.Engine.QueryExpression
 
             return result;
         }
+        */
 
     }
 }

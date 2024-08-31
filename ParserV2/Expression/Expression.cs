@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace NTDLS.Katzebase.Engine.QueryExpression
+namespace ParserV2.Expression
 {
-    internal class QueryExpressions
+    internal class Expression
     {
     }
 }
