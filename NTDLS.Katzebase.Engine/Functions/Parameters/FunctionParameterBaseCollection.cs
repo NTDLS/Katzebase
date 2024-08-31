@@ -11,53 +11,28 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
             base.Add(param);
         }
 
-        public void RepopulateStringNumbersAndParameters(QueryTokenizer tokenizer)
+        public void RepopulateLiterals(QueryTokenizer tokenizer)
         {
-            RepopulateStringNumbersAndParameters(this, tokenizer);
+            RepopulateLiterals(this, tokenizer);
         }
 
-        private void RepopulateStringNumbersAndParameters(List<FunctionParameterBase> list, QueryTokenizer tokenizer)
+        private void RepopulateLiterals(List<FunctionParameterBase> list, QueryTokenizer tokenizer)
         {
             foreach (var param in list)
             {
                 if (param is FunctionConstantParameter functionConstantParameter)
                 {
-                    foreach (var literal in tokenizer.StringLiterals)
-                    {
-                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, literal.Value.Substring(1, literal.Value.Length - 2));
-                    }
-                    foreach (var literal in tokenizer.NumericLiterals)
-                    {
-                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, literal.Value);
-                    }
-                    foreach (var literal in tokenizer.UserParameters)
-                    {
-                        //TODO: Untested.
-                        functionConstantParameter.RawValue = functionConstantParameter.RawValue.Replace(literal.Key, literal.Value);
-                    }
+                    functionConstantParameter.RawValue = tokenizer.GetLiteralValue(functionConstantParameter.RawValue);
                 }
                 else if (param is FunctionExpression functionExpression)
                 {
-                    foreach (var literal in tokenizer.StringLiterals)
-                    {
-                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, '\"' + literal.Value.Substring(1, literal.Value.Length - 2) + '\"');
-                    }
-                    foreach (var literal in tokenizer.NumericLiterals)
-                    {
-                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, literal.Value);
-                    }
-                    foreach (var literal in tokenizer.UserParameters)
-                    {
-                        //TODO: Untested.
-                        functionExpression.Value = functionExpression.Value.Replace(literal.Key, literal.Value);
-                    }
-
-                    RepopulateStringNumbersAndParameters(functionExpression.Parameters, tokenizer);
+                    functionExpression.Value = tokenizer.GetLiteralValue(functionExpression.Value);
+                    RepopulateLiterals(functionExpression.Parameters, tokenizer);
                 }
 
                 if (param is FunctionWithParams functionWithParams)
                 {
-                    RepopulateStringNumbersAndParameters(functionWithParams.Parameters, tokenizer);
+                    RepopulateLiterals(functionWithParams.Parameters, tokenizer);
                 }
             }
         }

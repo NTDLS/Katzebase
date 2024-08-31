@@ -24,11 +24,10 @@ namespace QueryTest
             {
                 using var client = new KbClient(_serverHost, _serverPort, _username, KbClient.HashPassword(_password));
 
-                var words = client.Query.Fetch<Word>("SELECT TOP 100 * FROM WordList:Word WHERE Text LIKE @Text",
-                    new
-                    {
-                        Text = "Fly%"
-                    });
+                //This should work:
+                //var words = client.Query.Fetch<Word>("SELECT TOP 100 * FROM WordList:Word WHERE Text LIKE @Text + '%'", new { Text = "Fly" });
+                //This should NOT work:
+                var words = client.Query.Fetch<Word>("SELECT TOP 100 * FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" });
 
                 foreach (var word in words)
                 {

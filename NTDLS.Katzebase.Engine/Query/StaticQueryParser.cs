@@ -482,7 +482,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
 
                 result.UpdateValues = StaticFunctionParsers.ParseUpdateFields(tokenizer);
-                result.UpdateValues.RepopulateStringNumbersAndParameters(tokenizer);
+                result.UpdateValues.RepopulateLiterals(tokenizer);
 
                 token = tokenizer.GetNext();
                 if (token != string.Empty && !token.Is("where"))
@@ -698,7 +698,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 else
                 {
                     result.SelectFields = StaticFunctionParsers.ParseQueryFields(tokenizer);
-                    result.SelectFields.RepopulateStringNumbersAndParameters(tokenizer);
+                    result.SelectFields.RepopulateLiterals(tokenizer);
                 }
 
                 if (tokenizer.PeekNext().Is("into"))
@@ -870,42 +870,6 @@ namespace NTDLS.Katzebase.Engine.Query
                     tokenizer.SkipNext();
 
                     result.GroupFields = StaticFunctionParsers.ParseGroupByFields(tokenizer);
-
-                    /*
-
-                    while (true)
-                    {
-                        int previousTokenPosition = query.Position;
-                        var fieldToken = query.GetNextToken();
-
-                        if (result.SortFields.Count > 0)
-                        {
-                            if (query.NextCharacter == ',')
-                            {
-                                query.SkipDelimiters();
-                                fieldToken = query.GetNextToken();
-                            }
-                            else if (!(query.Position < query.Length || query.PeekNextToken().Is("order") == false)) //We should have consumed the entire GROUP BY at this point.
-                            {
-                                throw new KbParserException("Invalid query. Found '" + fieldToken + "', expected: ','.");
-                            }
-                        }
-
-                        if (((new string[] { "order", "" }).Contains(fieldToken) && query.PeekNextToken().Is("by")) || fieldToken == string.Empty)
-                        {
-                            //Set query position to the beginning of the "ORDER BY"..
-                            query.SetPosition(previousTokenPosition);
-                            break;
-                        }
-
-                        result.GroupFields.Add(fieldToken);
-
-                        if (query.NextCharacter == ',')
-                        {
-                            query.SkipDelimiters();
-                        }
-                    }
-                    */
                 }
 
                 if (tokenizer.PeekNext().Is("order"))
@@ -1174,7 +1138,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 result.UpsertValues = StaticFunctionParsers.ParseInsertFields(tokenizer);
                 foreach (var upsertValue in result.UpsertValues)
                 {
-                    upsertValue.RepopulateStringNumbersAndParameters(tokenizer);
+                    upsertValue.RepopulateLiterals(tokenizer);
                 }
             }
             #endregion
@@ -1313,57 +1277,5 @@ namespace NTDLS.Katzebase.Engine.Query
 
             return result;
         }
-
-        /*
-        private static UpsertKeyValues ParseUpsertKeyValues(string conditionsText, ref int position)
-        {
-            UpsertKeyValues keyValuePairs = new UpsertKeyValues();
-            int beforeTokenPosition;
-
-            while (true)
-            {
-                string token;
-                beforeTokenPosition = position;
-                if ((token = Utilities.GetNextToken(conditionsText, ref position)) == string.Empty)
-                {
-                    if (keyValuePairs.Collection.Count > 0)
-                    {
-                        break; //Completed successfully.
-                    }
-                    throw new KbParserException("Invalid query. Unexpected end of query found.");
-                }
-
-                if (token.Is("where"))
-                {
-                    position = beforeTokenPosition;
-                    break; //Completed successfully.
-                }
-
-                var keyValue = new UpsertKeyValue();
-
-                if (!Utilities.IsValidIdentifier(token))
-                {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: identifier name.");
-                }
-                keyValue.Key = token;
-
-                token = Utilities.GetNextToken(conditionsText, ref position);
-                if (token != "=")
-                {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: '='.");
-                }
-
-                if ((token = Utilities.GetNextToken(conditionsText, ref position)) == string.Empty)
-                {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: condition value.");
-                }
-                keyValue.Value.Value = token;
-
-                keyValuePairs.Collection.Add(keyValue);
-            }
-
-            return keyValuePairs;
-        }
-        */
     }
 }

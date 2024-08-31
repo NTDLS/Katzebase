@@ -56,6 +56,35 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             LogicHash = Library.Helpers.GetSHA256Hash(_text);
         }
 
+        public string GetLiteralValue(string value, bool wrapInSingleQuotes = false)
+        {
+            if (StringLiterals.TryGetValue(value, out string? stringLiteral))
+            {
+                if (wrapInSingleQuotes)
+                {
+                    return $"{stringLiteral.ToLowerInvariant()}";
+                }
+                return stringLiteral.ToLowerInvariant();
+            }
+            else if (NumericLiterals.TryGetValue(value, out string? numericLiteral))
+            {
+                if (wrapInSingleQuotes)
+                {
+                    return $"{numericLiteral.ToLowerInvariant()}";
+                }
+                return numericLiteral.ToLowerInvariant();
+            }
+            else if (UserParameters.TryGetValue(value, out string? userParameter))
+            {
+                if (wrapInSingleQuotes)
+                {
+                    return $"{userParameter?.ToLowerInvariant()}";
+                }
+                return userParameter?.ToLowerInvariant() ?? string.Empty;
+            }
+            else return value.ToLowerInvariant();
+        }
+
         public void SwapFieldLiteral(ref string givenValue)
         {
             if (string.IsNullOrEmpty(givenValue) == false && StringLiterals.TryGetValue(givenValue, out string? value))

@@ -286,6 +286,10 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                 string token = tokenizer.GetNext().ToLowerInvariant();
 
+                if (token == "text")
+                {
+                }
+
                 if (token == string.Empty)
                 {
                     break; //Done.
@@ -323,7 +327,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 {
                     string conditionPlaceholder = NextConditionKey();
 
-                    string left = token;
+                    string left = queryTokenizer.GetLiteralValue(token);
 
                     //Logical Qualifier
                     token = tokenizer.GetNext().ToLowerInvariant();
@@ -335,32 +339,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     var logicalQualifier = ConditionTokenizer.ParseLogicalQualifier(token);
 
                     //Righthand value:
-                    string right = tokenizer.GetNext().ToLowerInvariant();
-
-                    if (queryTokenizer.StringLiterals.TryGetValue(left, out string? leftLiteral))
-                    {
-                        left = leftLiteral.ToLowerInvariant();
-                    }
-                    if (queryTokenizer.StringLiterals.TryGetValue(right, out string? rightLiteral))
-                    {
-                        right = rightLiteral.ToLowerInvariant();
-                    }
-                    if (queryTokenizer.NumericLiterals.TryGetValue(left, out string? leftLiteralNumeric))
-                    {
-                        left = leftLiteralNumeric.ToLowerInvariant();
-                    }
-                    if (queryTokenizer.NumericLiterals.TryGetValue(right, out string? rightLiteralNumeric))
-                    {
-                        right = rightLiteralNumeric.ToLowerInvariant();
-                    }
-                    if (queryTokenizer.UserParameters.TryGetValue(left, out string? leftUserParameters))
-                    {
-                        left = $"{leftUserParameters?.ToLowerInvariant()}";
-                    }
-                    if (queryTokenizer.UserParameters.TryGetValue(right, out string? rightUserParameters))
-                    {
-                        right = $"{rightUserParameters?.ToLowerInvariant()}";
-                    }
+                    string right = queryTokenizer.GetLiteralValue(tokenizer.GetNext());
 
                     int endPosition = tokenizer.Position;
 

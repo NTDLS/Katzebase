@@ -86,16 +86,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
                 queue.Enqueue(instance, LookupThreadWorker/*, (QueueItemState<DocumentLookupOperation.Parameter> o) =>
                 {
-
-                    if (documentPointer.ToString() == "0:20")
-                    {
-                        Console.WriteLine($"{documentPointer} = {o.CompletionTime?.TotalMilliseconds:n0}");
-                    }
-                    if (o.CompletionTime?.TotalMilliseconds > 10000)
-                    {
-                        //Console.WriteLine($"{documentPointer} = {o.CompletionTime?.TotalMilliseconds:n0}");
-                    }
-
                     //LogManager.Information($"Lookup:CompletionTime: {o.CompletionTime?.TotalMilliseconds:n0}.");
                 }*/);
                 ptThreadQueue?.StopAndAccumulate();
