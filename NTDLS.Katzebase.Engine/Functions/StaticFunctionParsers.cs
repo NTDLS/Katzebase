@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
+using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Query;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using NTDLS.Katzebase.Shared;
@@ -68,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             {
                 if (field.IsComplex)
                 {
-                    var functionCall = ParseFunctionCall(field.Text, tokenizer);
+                   var functionCall = ParseFunctionCall(field.Text, tokenizer);
                     functionCall.Alias = field.Alias;
                     result.Add(functionCall);
                 }
@@ -310,10 +311,21 @@ namespace NTDLS.Katzebase.Engine.Functions
 
         private static bool IsNextNonIdentifier(string text, int startPos, char c)
         {
-            return IsNextNonIdentifier(text, startPos, [c]);
+            return IsNextNonIdentifier(text, startPos, c, out _);
+
         }
 
         private static bool IsNextNonIdentifier(string text, int startPos, char[] c)
+        {
+            return IsNextNonIdentifier(text, startPos, c, out _);
+        }
+
+        private static bool IsNextNonIdentifier(string text, int startPos, char c, out int index)
+        {
+            return IsNextNonIdentifier(text, startPos, [c], out index);
+        }
+
+        private static bool IsNextNonIdentifier(string text, int startPos, char[] c, out int index)
         {
             for (int i = startPos; i < text.Length; i++)
             {
@@ -331,14 +343,17 @@ namespace NTDLS.Katzebase.Engine.Functions
                 }
                 else if (c.Contains(text[i]))
                 {
+                    index = i;
                     return true;
                 }
                 else
                 {
+                    index = -1;
                     return false;
                 }
             }
 
+            index = -1;
             return false;
         }
 
@@ -454,18 +469,84 @@ namespace NTDLS.Katzebase.Engine.Functions
             return expression;
         }
 
-        private static FunctionParameterBase ParseFunctionCall(string text, QueryTokenizer tokenizer, string expressionKey = "")
+        /// <summary>
+        /// Returns true if all variables, placeholders and functions return numeric values.
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        /// <exception cref="KbParserException"></exception>
+        private static bool IsNumericOperation(string text)
+        {
+            QueryTokenizer tokenizer = new(text);
+
+            while (true)
+            {
+                string token = tokenizer.GetNext(['(', '+']);
+                if (string.IsNullOrEmpty(token))
+                {
+                    break;
+                }
+
+                if (tokenizer.IsNextCharacter('+'))
+                {
+                    tokenizer.SkipNextCharacter();
+                }
+
+                if (token.StartsWith("$s_") && token.EndsWith('$'))
+                {
+                    //This is a string, so this is not a numeric operation.
+                    return false;
+                }
+
+                if (token.StartsWith("$n_") && token.EndsWith('$'))
+                {
+                    //This is a number placeholder, so we still have a valid numeric operation.
+                    continue;
+                }
+
+                if (ScalerFunctionCollection.TryGetFunction(token, out var function))
+                {
+                    if (function.ReturnType == KbScalerFunctionParameterType.Numeric)
+                    {
+                        //This function returns a number, so we still have a valid numeric operation.
+
+                        //Skip the function call.
+                        string functionBody = tokenizer.GetMatchingBraces('(', ')');
+                        continue;
+                    }
+                    else
+                    {
+                        //This function returns a non-number, so this is not a numeric operation.
+                        return false;
+                    }
+                }
+                else
+                {
+                    throw new KbParserException($"Invalid query. Found [{token}], expected: scaler function.");
+                }
+            }
+
+            return true;
+        }
+
+        public class NewFunctionCall
+        {
+        }
+
+
+
+        private static FunctionParameterBase ParseFunctionCall(string text, QueryTokenizer queryTokenizer, string expressionKey = "")
         {
             char firstChar = text[0];
 
             if (char.IsNumber(firstChar))
             {
                 //Parse math expression.
-                return ParseMathExpression(text, tokenizer);
+                return ParseMathExpression(text, queryTokenizer);
             }
             else if (char.IsLetter(firstChar) && IsNextNonIdentifier(text, 0, "+-/*!~^".ToCharArray()))
             {
-                return ParseMathExpression(text, tokenizer);
+                return ParseMathExpression(text, queryTokenizer);
             }
             else if (char.IsLetter(firstChar) && IsNextNonIdentifier(text, 0, '('))
             {
@@ -501,7 +582,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                     if (parenScopeFellToZero && _mathChars.Contains(c))
                     {
                         //We have finished parsing a full (...) scope for a function and now we are finding math. Reset and just parse math.
-                        return ParseMathExpression(text, tokenizer);
+                        return ParseMathExpression(text, queryTokenizer);
                     }
 
                     if (_mathChars.Contains(c) && !(c == '(' || c == ')'))
@@ -568,19 +649,19 @@ namespace NTDLS.Katzebase.Engine.Functions
                     {
                         if (param.IsOneOf(["true", "false"]))
                         {
-                            results.Parameters.Add(ParseMathExpression(param.Is("true") ? "1" : "0", tokenizer));
+                            results.Parameters.Add(ParseMathExpression(param.Is("true") ? "1" : "0", queryTokenizer));
                         }
                         else if (parseMath)
                         {
-                            results.Parameters.Add(ParseMathExpression(param, tokenizer));
+                            results.Parameters.Add(ParseMathExpression(param, queryTokenizer));
                         }
                         else if (isComplex)
                         {
-                            results.Parameters.Add(ParseFunctionCall(param, tokenizer));
+                            results.Parameters.Add(ParseFunctionCall(param, queryTokenizer));
                         }
                         else if (param.StartsWith("$") && param.EndsWith("$"))
                         {
-                            results.Parameters.Add(new FunctionConstantParameter(tokenizer.StringLiterals[param]));
+                            results.Parameters.Add(new FunctionConstantParameter(queryTokenizer.StringLiterals[param]));
                         }
                         else
                         {

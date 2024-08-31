@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Engine.Functions.Procedures;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
+using NTDLS.Katzebase.Engine.QueryExpression;
 using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -697,6 +698,8 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
                 else
                 {
+                    var ffff = StaticExpressionParser.ParseSelectFields(tokenizer);
+
                     result.SelectFields = StaticFunctionParsers.ParseQueryFields(tokenizer);
                     result.SelectFields.RepopulateLiterals(tokenizer);
                 }

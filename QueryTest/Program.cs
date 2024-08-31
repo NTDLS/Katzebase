@@ -13,6 +13,7 @@ namespace QueryTest
         {
             public int Id { get; set; }
             public string? Text { get; set; }
+            public string? Language { get; set; }
             public int LanguageId { get; set; }
             public int SourceId { get; set; }
             public bool IsDirty { get; set; }
@@ -29,7 +30,7 @@ namespace QueryTest
                 //This should NOT work:
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 'Text1' + 'Text2' FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 Concat('Text1', 'Text2') as Text FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
-                var words = client.Query.Fetch<Word>("SELECT TOP 100 10 + 10 as Text FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
+                var words = client.Query.Fetch<Word>("SELECT TOP 100  Concat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text, 10 * 10 as Id, Length('This is text') as LanguageId, 'English' as Language FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
 
                 foreach (var word in words)
                 {
