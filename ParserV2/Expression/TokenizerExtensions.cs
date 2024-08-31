@@ -55,6 +55,15 @@ namespace ParserV2.Expression
             return results;
         }
 
+        /// <summary>
+        /// Returns true if the text is a valid identifier character.
+        /// </summary>
+        public static bool IsIdentifier(this string text)
+            => text.All(IsIdentifier);
+
+        /// <summary>
+        /// Returns true if the character is a valid identifier character.
+        /// </summary>
         public static bool IsIdentifier(this char c)
         {
             return

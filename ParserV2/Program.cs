@@ -8,11 +8,13 @@ namespace ParserV2
     {
         static void Main(string[] args)
         {
-            string cleanQueryText = "SELECT TOP 100\r\n\tConcat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text,\r\n\t10 * 10 as Id,\r\n\tLength('This is text') as LanguageId,\r\n\t'English' as Language\r\nFROM\r\n\tWordList:Word WHERE Text LIKE @Text";
+            string cleanQueryText = "SELECT TOP 100\r\n\tschema.Field as Doc,\t 'Text' as Name, 10 + Length('some text') as MathFirst, Concat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text,\r\n\t10 * 10 as Id,\r\n\tLength('This is text') as LanguageId,\r\n\t'English' as Language\r\nFROM\r\n\tWordList:Word WHERE Text LIKE @Text";
 
             char[] standardTokenDelimiters = [',', '='];
 
             var tokenizer = new Tokenizer(cleanQueryText, standardTokenDelimiters);
+
+            tokenizer.Prepare();
 
             if (tokenizer.IsNextStartOfQuery(out var queryType) == false)
             {

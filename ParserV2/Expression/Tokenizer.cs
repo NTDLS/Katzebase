@@ -20,7 +20,7 @@ namespace ParserV2.Expression
          */
         #endregion
 
-        private readonly string _text;
+        private string _text;
         private int _caret = 0;
         private readonly char[] _standardTokenDelimiters;
 
@@ -30,7 +30,7 @@ namespace ParserV2.Expression
 
         public Tokenizer(string text, char[] standardTokenDelimiters)
         {
-            _text = CleanQueryText(text);
+            _text = text;
             _standardTokenDelimiters = standardTokenDelimiters;
         }
 
@@ -104,52 +104,52 @@ namespace ParserV2.Expression
         /// <summary>
         /// Removes all unnecessary whitespace, newlines, comments and replaces literals with tokens to prepare query for parsing.
         /// </summary>
-        public string CleanQueryText(string query)
+        public void Prepare()
         {
-            query = KbTextUtility.RemoveComments(query);
+            string text = KbTextUtility.RemoveComments(_text);
 
-            StringLiterals = SwapOutStringLiterals(ref query);
+            StringLiterals = SwapOutStringLiterals(ref text);
 
             //We replace numeric constants and we want to make sure we have 
             //  no numbers next to any conditional operators before we do so.
-            query = query.Replace("!=", "$$NotEqual$$");
-            query = query.Replace(">=", "$$GreaterOrEqual$$");
-            query = query.Replace("<=", "$$LesserOrEqual$$");
-            query = query.Replace("(", " ( ");
-            query = query.Replace(")", " ) ");
-            query = query.Replace(",", " , ");
-            query = query.Replace(">", " > ");
-            query = query.Replace("<", " < ");
-            query = query.Replace("=", " = ");
-            query = query.Replace("$$NotEqual$$", " != ");
-            query = query.Replace("$$GreaterOrEqual$$", " >= ");
-            query = query.Replace("$$LesserOrEqual$$", " <= ");
-            query = query.Replace("||", " || ");
-            query = query.Replace("&&", " && ");
+            text = text.Replace("!=", "$$NotEqual$$");
+            text = text.Replace(">=", "$$GreaterOrEqual$$");
+            text = text.Replace("<=", "$$LesserOrEqual$$");
+            text = text.Replace("(", " ( ");
+            text = text.Replace(")", " ) ");
+            text = text.Replace(",", " , ");
+            text = text.Replace(">", " > ");
+            text = text.Replace("<", " < ");
+            text = text.Replace("=", " = ");
+            text = text.Replace("$$NotEqual$$", " != ");
+            text = text.Replace("$$GreaterOrEqual$$", " >= ");
+            text = text.Replace("$$LesserOrEqual$$", " <= ");
+            text = text.Replace("||", " || ");
+            text = text.Replace("&&", " && ");
 
-            NumericLiterals = SwapOutNumericLiterals(ref query);
+            NumericLiterals = SwapOutNumericLiterals(ref text);
 
             int length;
             do
             {
-                length = query.Length;
-                query = query.Replace("\t", " ");
-                query = query.Replace("  ", " ");
+                length = text.Length;
+                text = text.Replace("\t", " ");
+                text = text.Replace("  ", " ");
             }
-            while (length != query.Length);
+            while (length != text.Length);
 
-            query = query.Trim();
+            text = text.Trim();
 
-            query = query.Replace("(", " ( ").Replace(")", " ) ");
+            text = text.Replace("(", " ( ").Replace(")", " ) ");
 
-            RemoveComments(ref query);
+            RemoveComments(ref text);
 
-            TrimAllLines(ref query);
-            RemoveEmptyLines(ref query);
-            RemoveNewlines(ref query);
-            RemoveDoubleWhitespace(ref query);
+            TrimAllLines(ref text);
+            RemoveEmptyLines(ref text);
+            RemoveNewlines(ref text);
+            RemoveDoubleWhitespace(ref text);
 
-            return query.Trim();
+            _text = text.Trim();
         }
 
         public static void RemoveComments(ref string query)
@@ -285,6 +285,14 @@ namespace ParserV2.Expression
         }
 
         #endregion
+
+        /// <summary>
+        /// Places the caret back to the beginning.
+        /// </summary>
+        public void Rewind()
+        {
+            _caret = 0;
+        }
 
         /// <summary>
         /// Gets the a substring from tokenizer from the internal caret position to the given absolute position.

@@ -1,6 +1,6 @@
 ﻿namespace ParserV2.Expression
 {
-    internal class ExpressionConstant : IExpression
+    internal class ExpressionConstant: IExpression
     {
         public enum ExpressionConstantType
         {
@@ -16,7 +16,7 @@
         {
             Value = value;
             ConstantType = constantType;
-
+          
         }
     }
 }
