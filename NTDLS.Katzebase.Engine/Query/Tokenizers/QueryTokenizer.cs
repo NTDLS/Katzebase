@@ -1,7 +1,6 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 

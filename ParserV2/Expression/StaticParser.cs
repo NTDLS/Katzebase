@@ -1,8 +1,11 @@
-﻿namespace ParserV2.Expression
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using ParserV2.StandIn;
+using static ParserV2.StandIn.Types;
+
+namespace ParserV2.Expression
 {
     internal static class StaticParser
     {
-
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.
         /// </summary>
@@ -10,38 +13,36 @@
         {
             var result = new Expressions();
 
-            if (queryTokenizer.InertContains("Language"))
+            //Get the position which represents the end of the select list.
+            int stopAt = queryTokenizer.InertGetNextIndexOf([" from ", " into "]);
+
+            //Get the text for all of the select expressions.
+            var fieldsText = queryTokenizer.SubString(stopAt);
+
+            //Split the select expressions on the comma, respecting any commas in function scopes.
+            var fields = fieldsText.ScopeSensitiveSplit();
+
+            foreach (var field in fields)
             {
-                int stopAt = queryTokenizer.InertGetNextIndexOf([" from ", " into "]);
-
-                var fieldsText = queryTokenizer.SubString(stopAt);
-
-                var fields = fieldsText.ScopeSensitiveSplit();
-
-                foreach (var field in fields)
-                {
-                    //ParseExpression(field, queryTokenizer);
-                }
-
+                ParseExpression(field, queryTokenizer);
             }
 
             return result;
         }
 
-        /*
-        private static NewFunctionCall ParseExpression(string text, QueryTokenizer queryTokenizer)
+        private static Expressions ParseExpression(string text, Tokenizer queryTokenizer)
         {
-            var result = new NewFunctionCall();
+            var result = new Expressions();
 
-            QueryTokenizer tokenizer = new(text);
+            Tokenizer tokenizer = new(text, queryTokenizer.TokenDelimiters); //These delimiters have not been through through at all!
 
-            if (tokenizer.IsNextCharacter(char.IsLetter) && IsNextNonIdentifier(text, 0, ['('], out var identIndex))
+            if (tokenizer.InertIsNextCharacter(char.IsLetter) && tokenizer.InertIsNextNonIdentifier(['(']))
             {
                 var functionName = tokenizer.GetNext();
 
                 string functionBody = tokenizer.GetMatchingBraces('(', ')');
 
-                var parameters = TokenHelpers.SplitWhileObeyingScope(functionBody);
+                var parameters = functionBody.ScopeSensitiveSplit();
 
                 foreach (var param in parameters)
                 {
@@ -56,7 +57,67 @@
 
             return result;
         }
-        */
+
+        /// <summary>
+        /// Returns true if all variables, placeholders and functions return numeric values.
+        /// </summary>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        /// <exception cref="KbParserException"></exception>
+        private static bool IsNumericOperation(string text)
+        {
+            Tokenizer tokenizer = new(text, [',', '=']); //These delimiters have not been through through at all!
+
+            while (true)
+            {
+                string token = tokenizer.GetNext(['(', '+']);
+                if (string.IsNullOrEmpty(token))
+                {
+                    break;
+                }
+
+                if (tokenizer.InertIsNextCharacter('+'))
+                {
+                    tokenizer.SkipNextCharacter();
+                }
+
+                if (token.StartsWith("$s_") && token.EndsWith('$'))
+                {
+                    //This is a string, so this is not a numeric operation.
+                    return false;
+                }
+
+                if (token.StartsWith("$n_") && token.EndsWith('$'))
+                {
+                    //This is a number placeholder, so we still have a valid numeric operation.
+                    continue;
+                }
+
+                if (ScalerFunctionCollection.TryGetFunction(token, out var function))
+                {
+                    if (function.ReturnType == KbScalerFunctionParameterType.Numeric)
+                    {
+                        //This function returns a number, so we still have a valid numeric operation.
+
+                        //Skip the function call.
+                        string functionBody = tokenizer.GetMatchingBraces('(', ')');
+                        continue;
+                    }
+                    else
+                    {
+                        //This function returns a non-number, so this is not a numeric operation.
+                        return false;
+                    }
+                }
+                else
+                {
+                    throw new KbParserException($"Invalid query. Found [{token}], expected: scaler function.");
+                }
+            }
+
+            return true;
+        }
+
 
     }
 }

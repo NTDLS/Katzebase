@@ -54,5 +54,14 @@ namespace ParserV2.Expression
 
             return results;
         }
+
+        public static bool IsIdentifier(this char c)
+        {
+            return
+                (char.IsWhiteSpace(c)
+                || char.IsLetterOrDigit(c) //Numbers or letters, could be a field name, schema name, function name, etc.
+                || c == ':' //Schema separators. [Schema1:Schema2].
+                || c == '.'); //Schema field-separators. [schemaPrefix.FieldName].
+        }
     }
 }

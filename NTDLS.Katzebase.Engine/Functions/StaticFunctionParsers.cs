@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             {
                 if (field.IsComplex)
                 {
-                   var functionCall = ParseFunctionCall(field.Text, tokenizer);
+                    var functionCall = ParseFunctionCall(field.Text, tokenizer);
                     functionCall.Alias = field.Alias;
                     result.Add(functionCall);
                 }

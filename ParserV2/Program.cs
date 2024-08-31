@@ -1,4 +1,6 @@
-﻿using ParserV2.Expression;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using ParserV2.Expression;
+using static ParserV2.StandIn.Types;
 
 namespace ParserV2
 {
@@ -6,10 +8,22 @@ namespace ParserV2
     {
         static void Main(string[] args)
         {
-            string cleanQueryText = "SELECT TOP 100  Concat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text, 10 * 10 as Id, Length('This is text') as LanguageId, 'English' as Language FROM WordList:Word WHERE Text LIKE @Text";
+            string cleanQueryText = "SELECT TOP 100\r\n\tConcat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text,\r\n\t10 * 10 as Id,\r\n\tLength('This is text') as LanguageId,\r\n\t'English' as Language\r\nFROM\r\n\tWordList:Word WHERE Text LIKE @Text";
 
+            char[] standardTokenDelimiters = [',', '='];
 
-            var tokenizer = new Tokenizer(cleanQueryText);
+            var tokenizer = new Tokenizer(cleanQueryText, standardTokenDelimiters);
+
+            if (tokenizer.IsNextStartOfQuery(out var queryType) == false)
+            {
+                string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
+                throw new KbParserException($"Invalid query. Found '{tokenizer.InertGetNext()}', expected: '{acceptableValues}'.");
+            }
+
+            if (tokenizer.TryIsNextToken("top"))
+            {
+                tokenizer.SkipNext();
+            }
 
             StaticParser.ParseSelectFields(tokenizer);
 

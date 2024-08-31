@@ -1,4 +1,10 @@
-﻿namespace ParserV2.Expression
+﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Types;
+using System.Text.RegularExpressions;
+using static ParserV2.StandIn.Types;
+
+namespace ParserV2.Expression
 {
     /// <summary>
     /// Used to walk various types of string and expressions.
@@ -7,20 +13,181 @@
     {
         #region Rules and Convention.
         /*
-         * Functions that DO NOT modify the internal tokenizer position should be prefixed with "Inert".
+         * Functions that DO NOT modify the internal caret should be prefixed with "Inert".
          * Functions that DO NOT throw exceptions should be prefixed with "Try".
          * Functions that are not prefixed with "Try" should throw exceptions if they do not find/seek what they are intended to do.
-         * Functions that DO NOT modify the internal tokenizer and DO NOT throw exceptions should be prefixed with "InertTry".
+         * Functions that DO NOT modify the internal caret and DO NOT throw exceptions should be prefixed with "InertTry".
          */
         #endregion
 
-        private readonly  string _text;
+        private readonly string _text;
         private int _caret = 0;
+        private readonly char[] _standardTokenDelimiters;
 
-        public Tokenizer(string text)
+        public char? NextCharacter => _caret < _text.Length ? _text[_caret] : null;
+        public bool IsEnd() => _caret >= _text.Length;
+        public char[] TokenDelimiters => _standardTokenDelimiters;
+
+        public Tokenizer(string text, char[] standardTokenDelimiters)
         {
-            _text = text;
+            _text = CleanQueryText(text);
+            _standardTokenDelimiters = standardTokenDelimiters;
         }
+
+        #region Swap in/out literals.
+
+        public KbInsensitiveDictionary<string> StringLiterals { get; private set; } = new();
+        public KbInsensitiveDictionary<string> NumericLiterals { get; private set; } = new();
+
+        /// <summary>
+        /// Replaces text literals with tokens to prepare the query for parsing.
+        /// </summary>
+        public static KbInsensitiveDictionary<string> SwapOutStringLiterals(ref string query)
+        {
+            var mappings = new KbInsensitiveDictionary<string>();
+            var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
+            int literalKey = 0;
+
+            while (true)
+            {
+                var match = regex.Match(query);
+
+                if (match.Success)
+                {
+                    string key = $"$s_{literalKey++}$";
+                    mappings.Add(key, match.ToString());
+
+                    query = NTDLS.Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return mappings;
+        }
+
+        /// <summary>
+        /// Replaces numeric literals with tokens to prepare the query for parsing.
+        /// </summary>
+        public static KbInsensitiveDictionary<string> SwapOutNumericLiterals(ref string query)
+        {
+            var mappings = new KbInsensitiveDictionary<string>();
+            var regex = new Regex(@"(?<=\s|^)(?:\d+\.?\d*|\.\d+)(?=\s|$)");
+            int literalKey = 0;
+
+            while (true)
+            {
+                var match = regex.Match(query);
+
+                if (match.Success)
+                {
+                    string key = $"$n_{literalKey++}$";
+                    mappings.Add(key, match.ToString());
+
+                    query = NTDLS.Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            return mappings;
+        }
+
+        #endregion
+
+        # region Clean query text.
+
+        /// <summary>
+        /// Removes all unnecessary whitespace, newlines, comments and replaces literals with tokens to prepare query for parsing.
+        /// </summary>
+        public string CleanQueryText(string query)
+        {
+            query = KbTextUtility.RemoveComments(query);
+
+            StringLiterals = SwapOutStringLiterals(ref query);
+
+            //We replace numeric constants and we want to make sure we have 
+            //  no numbers next to any conditional operators before we do so.
+            query = query.Replace("!=", "$$NotEqual$$");
+            query = query.Replace(">=", "$$GreaterOrEqual$$");
+            query = query.Replace("<=", "$$LesserOrEqual$$");
+            query = query.Replace("(", " ( ");
+            query = query.Replace(")", " ) ");
+            query = query.Replace(",", " , ");
+            query = query.Replace(">", " > ");
+            query = query.Replace("<", " < ");
+            query = query.Replace("=", " = ");
+            query = query.Replace("$$NotEqual$$", " != ");
+            query = query.Replace("$$GreaterOrEqual$$", " >= ");
+            query = query.Replace("$$LesserOrEqual$$", " <= ");
+            query = query.Replace("||", " || ");
+            query = query.Replace("&&", " && ");
+
+            NumericLiterals = SwapOutNumericLiterals(ref query);
+
+            int length;
+            do
+            {
+                length = query.Length;
+                query = query.Replace("\t", " ");
+                query = query.Replace("  ", " ");
+            }
+            while (length != query.Length);
+
+            query = query.Trim();
+
+            query = query.Replace("(", " ( ").Replace(")", " ) ");
+
+            RemoveComments(ref query);
+
+            TrimAllLines(ref query);
+            RemoveEmptyLines(ref query);
+            RemoveNewlines(ref query);
+            RemoveDoubleWhitespace(ref query);
+
+            return query.Trim();
+        }
+
+        public static void RemoveComments(ref string query)
+        {
+            query = "\r\n" + query + "\r\n";
+
+            var blockComments = @"/\*(.*?)\*/";
+            var lineComments = @"--(.*?)\r?\n";
+            var strings = @"""((\\[^\n]|[^""\n])*)""";
+            var verbatimStrings = @"@(""[^""]*"")+";
+
+            query = Regex.Replace(query,
+                blockComments + "|" + lineComments + "|" + strings + "|" + verbatimStrings,
+                me =>
+                {
+                    if (me.Value.StartsWith("/*") || me.Value.StartsWith("--"))
+                        return me.Value.StartsWith("--") ? Environment.NewLine : "";
+                    // Keep the literal strings
+                    return me.Value;
+                },
+                RegexOptions.Singleline);
+        }
+
+        public static void RemoveEmptyLines(ref string query)
+            => query = Regex.Replace(query, @"^\s+$[\r\n]*", "", RegexOptions.Multiline);
+
+        public static void TrimAllLines(ref string query)
+            => query = string.Join("\r\n", query.Split('\n').Select(o => o.Trim()));
+
+        public static void RemoveDoubleWhitespace(ref string query)
+            => query = Regex.Replace(query, @"\s+", " ");
+
+        public static void RemoveNewlines(ref string query)
+            => query = query.Replace("\r\n", " ");
+
+        #endregion
+
+        #region Contains.
 
         /// <summary>
         /// Returns true if the tokenizer text contains the given string.
@@ -42,6 +209,10 @@
             }
             return false;
         }
+
+        #endregion
+
+        #region GetNextIndexOf.
 
         /// <summary>
         /// Returns the position of the any of the given characters, seeks from the current internal position.
@@ -113,6 +284,8 @@
             throw new Exception($"Expected string not found [{string.Join("],[", givenString)}].");
         }
 
+        #endregion
+
         /// <summary>
         /// Gets the a substring from tokenizer from the internal caret position to the given absolute position.
         /// </summary>
@@ -123,5 +296,285 @@
             return result;
         }
 
+        /// <summary>
+        /// Moves the caret past any whitespace.
+        /// </summary>
+        public void SkipWhiteSpace()
+        {
+            while (_caret < _text.Length && char.IsWhiteSpace(_text[_caret]))
+            {
+                _caret++;
+            }
+        }
+
+        #region SkipNext.
+
+        /// <summary>
+        /// Skips the next token using the standard delimiters.
+        /// </summary>
+        public void SkipNext()
+            => GetNext(_standardTokenDelimiters);
+
+        /// <summary>
+        /// Skips the next token using the given delimiters.
+        /// </summary>
+        public void SkipNext(char[] delimiters)
+            => GetNext(delimiters);
+
+        #endregion
+
+        #region IsNextToken.
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the given delimiters.
+        /// </summary>
+        public bool TryIsNextToken(string[] givenTokens, char[] delimiters)
+        {
+            int restoreCaret = _caret;
+            var token = GetNext(delimiters);
+
+            foreach (var givenToken in givenTokens)
+            {
+                if (token.Equals(givenToken, StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return true;
+                }
+            }
+
+            _caret = restoreCaret;
+            return false;
+        }
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the standard delimiters.
+        /// </summary>
+        public bool TryIsNextToken(string[] givenTokens)
+            => TryIsNextToken(givenTokens, _standardTokenDelimiters);
+
+        /// <summary>
+        /// Returns true if the next token matches the given token, using the standard delimiters.
+        /// </summary>
+        public bool TryIsNextToken(string givenToken)
+            => TryIsNextToken([givenToken], _standardTokenDelimiters);
+
+        /// <summary>
+        /// Returns true if the next token matches the given token, using the given delimiters.
+        /// </summary>
+        public bool TryIsNextToken(string givenToken, char[] delimiters)
+            => TryIsNextToken([givenToken], delimiters);
+
+        #endregion
+
+        #region GetNext.
+
+        /// <summary>
+        /// Gets the next token using the standard delimiters.
+        /// </summary>
+        public string GetNext()
+            => GetNext(_standardTokenDelimiters);
+
+        /// <summary>
+        /// Gets the next token using the given delimiters.
+        /// </summary>
+        public string GetNext(char[] delimiters)
+        {
+            var token = string.Empty;
+
+            if (_caret == _text.Length)
+            {
+                return string.Empty;
+            }
+
+            for (; _caret < _text.Length; _caret++)
+            {
+                if (char.IsWhiteSpace(_text[_caret]) || delimiters.Contains(_text[_caret]) == true)
+                {
+                    break;
+                }
+
+                token += _text[_caret];
+            }
+
+            SkipWhiteSpace();
+
+            if (token.Length == 0)
+            {
+                throw new KbParserException("The tokenizer sequence is empty.");
+            }
+
+            return token.Trim();
+        }
+
+        /// <summary>
+        /// Returns the next token without moving the caret.
+        /// </summary>
+        public string InertGetNext()
+                => InertGetNext(_standardTokenDelimiters);
+
+        /// <summary>
+        /// Returns the next token without moving the caret.
+        /// </summary>
+        public string InertGetNext(char[] delimiters)
+        {
+            int restoreCaret = _caret;
+            var token = GetNext(delimiters);
+            _caret = restoreCaret;
+            return token;
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Returns true if the next token in the sequence is a valid token as would be expected as the start of a new query.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public bool IsNextStartOfQuery(out QueryType type)
+        {
+            var token = InertGetNext().ToLowerInvariant();
+
+            bool result = Enum.TryParse(token, true, out type) //Enum parse.
+                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
+                && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
+
+            SkipNext();
+
+            return result;
+        }
+
+        #region IsNextNonIdentifier.
+
+        /// <summary>
+        /// Returns true if the next character that is not a letter/digit/whitespace is in the given array.
+        /// </summary>
+        public bool InertIsNextNonIdentifier(char[] c)
+            => InertIsNextNonIdentifier(c, out _);
+
+        /// <summary>
+        /// Returns true if the next character that is not a letter/digit/whitespace is in the given array.
+        /// </summary>
+        public bool InertIsNextNonIdentifier(char[] c, out int index)
+        {
+            for (int i = _caret; i < _text.Length; i++)
+            {
+                if (_text[i].IsIdentifier())
+                {
+                    continue;
+                }
+                else if (c.Contains(_text[i]))
+                {
+                    index = i;
+                    return true;
+                }
+                else
+                {
+                    index = -1;
+                    return false;
+                }
+            }
+
+            index = -1;
+            return false;
+        }
+
+        #endregion
+
+        #region IsNextCharacter.
+
+        public delegate bool NextCharacterProc(char c);
+
+        /// <summary>
+        /// Returns the boolean value from the given delegate which is passed the next character in the sequence.
+        /// </summary>
+        public bool InertIsNextCharacter(NextCharacterProc proc)
+        {
+            var next = NextCharacter;
+            if (next == null)
+            {
+                throw new KbParserException("The tokenizer sequence is empty.");
+            }
+            return proc((char)next);
+        }
+
+        /// <summary>
+        /// Returns true if the next character matches the given value.
+        /// </summary>
+        public bool InertIsNextCharacter(char c)
+            => NextCharacter == c;
+
+        #endregion
+
+        #region GetMatchingBraces.
+
+        /// <summary>
+        /// Matches scope using open and close parentheses and returns the text between them.
+        /// </summary>
+        public string GetMatchingBraces()
+        {
+            return GetMatchingBraces('(', ')');
+        }
+
+        /// <summary>
+        /// Matches scope using the given open and close values and returns the text between them.
+        /// </summary>
+        public string GetMatchingBraces(char open, char close)
+        {
+            int scope = 0;
+
+            SkipWhiteSpace();
+
+            if (_text[_caret] != open)
+            {
+                throw new Exception($"Expected scope character not found [{open}].");
+            }
+
+            int startPosition = _caret + 1;
+
+            for (; _caret < _text.Length; _caret++)
+            {
+                if (_text[_caret] == open)
+                {
+                    scope++;
+                }
+                else if (_text[_caret] == close)
+                {
+                    scope--;
+                }
+
+                if (scope < 0)
+                {
+                    throw new Exception($"Expected scope [{open}] and [{close}] fell below zero.");
+                }
+
+                if (scope == 0)
+                {
+                    var result = _text.Substring(startPosition, _caret - startPosition).Trim();
+
+                    _caret++;
+                    SkipWhiteSpace();
+
+                    return result;
+                }
+            }
+
+            throw new Exception($"Expected matching scope not found [{open}] and [{close}], ended at scope [{scope}].");
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Skips the next character in the sequence.
+        /// </summary>
+        /// <exception cref="KbParserException"></exception>
+        public void SkipNextCharacter()
+        {
+            if (_caret >= _text.Length)
+            {
+                throw new KbParserException("The tokenizer sequence is empty.");
+            }
+
+            _caret++;
+            SkipWhiteSpace();
+        }
     }
 }
