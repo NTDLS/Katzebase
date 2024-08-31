@@ -37,7 +37,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImportSOUses", "TestApplica
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.ObjectViewer", "NTDLS.Katzebase.ObjectViewer\NTDLS.Katzebase.ObjectViewer.csproj", "{165EFF5B-0860-4A40-AAD9-F40854941EF6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QueryTest", "QueryTest\QueryTest.csproj", "{B66B61C5-4CCC-4F11-9573-E40797123DF8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QueryTest", "QueryTest\QueryTest.csproj", "{B66B61C5-4CCC-4F11-9573-E40797123DF8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
