@@ -2,10 +2,13 @@
 
 namespace ParserV2.Expression
 {
+    /// <summary>
+    /// Contains the name of a schema.field or just a field name if the schema was nto specified.
+    /// </summary>
     internal class ExpressionIdentifier : IExpression
     {
-        public string SchemaAlias { get; set; }
-        public string Name { get; set; }
+        public string SchemaAlias { get; private set; }
+        public string Name { get; private set; }
 
         public ExpressionIdentifier(string value)
         {

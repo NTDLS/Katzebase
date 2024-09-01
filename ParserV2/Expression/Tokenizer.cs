@@ -20,19 +20,73 @@ namespace ParserV2.Expression
          */
         #endregion
 
+        #region Private backend variables.
+
         private string _text;
         private int _caret = 0;
         private readonly char[] _standardTokenDelimiters;
 
+        #endregion
+
+        #region Public properties.
+
         public char? NextCharacter => _caret < _text.Length ? _text[_caret] : null;
         public bool IsEnd() => _caret >= _text.Length;
         public char[] TokenDelimiters => _standardTokenDelimiters;
+        public int CaretPosition => _caret;
+
+        #endregion
+
+        #region Constructors.
 
         public Tokenizer(string text, char[] standardTokenDelimiters)
         {
-            _text = text;
+            _text = new string(text.ToCharArray());
             _standardTokenDelimiters = standardTokenDelimiters;
+
+            ValidateParentheses();
         }
+
+        /// <summary>
+        /// Creates a tokenizer which uses only whitespace as a delimiter.
+        /// </summary>
+        /// <param name="text"></param>
+        public Tokenizer(string text)
+        {
+            _text = new string(text.ToCharArray());
+            _standardTokenDelimiters = Array.Empty<char>();
+            ValidateParentheses();
+        }
+
+        private void ValidateParentheses()
+        {
+            int parenOpen = 0;
+            int parenClose = 0;
+
+            for (int i = 0; i < _text.Length; i++)
+            {
+                if (_text[i] == '(')
+                {
+                    parenOpen++;
+                }
+                else if (_text[i] == ')')
+                {
+                    parenClose++;
+                }
+
+                if (parenClose > parenOpen)
+                {
+                    throw new KbParserException($"Parentheses mismatch in expression: [{_text}]");
+                }
+            }
+
+            if (parenClose != parenOpen)
+            {
+                throw new KbParserException($"Parentheses mismatch in expression: [{_text}]");
+            }
+        }
+
+        #endregion
 
         #region Swap in/out literals.
 
@@ -286,13 +340,7 @@ namespace ParserV2.Expression
 
         #endregion
 
-        /// <summary>
-        /// Places the caret back to the beginning.
-        /// </summary>
-        public void Rewind()
-        {
-            _caret = 0;
-        }
+        #region Substring.
 
         /// <summary>
         /// Gets the a substring from tokenizer from the internal caret position to the given absolute position.
@@ -305,15 +353,18 @@ namespace ParserV2.Expression
         }
 
         /// <summary>
-        /// Moves the caret past any whitespace.
+        /// Gets a substring from the tokenizer.
         /// </summary>
-        public void SkipWhiteSpace()
-        {
-            while (_caret < _text.Length && char.IsWhiteSpace(_text[_caret]))
-            {
-                _caret++;
-            }
-        }
+        public string InertSubString(int startPosition, int length)
+            => _text.Substring(startPosition, length);
+
+        /// <summary>
+        /// Gets a substring from the tokenizer.
+        /// </summary>
+        public string InertSubString(int startPosition)
+            => _text.Substring(startPosition);
+
+        #endregion
 
         #region SkipNext.
 
@@ -431,24 +482,6 @@ namespace ParserV2.Expression
         }
 
         #endregion
-
-        /// <summary>
-        /// Returns true if the next token in the sequence is a valid token as would be expected as the start of a new query.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public bool IsNextStartOfQuery(out QueryType type)
-        {
-            var token = InertGetNext().ToLowerInvariant();
-
-            bool result = Enum.TryParse(token, true, out type) //Enum parse.
-                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
-                && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
-
-            SkipNext();
-
-            return result;
-        }
 
         #region IsNextNonIdentifier.
 
@@ -571,6 +604,25 @@ namespace ParserV2.Expression
         #endregion
 
         /// <summary>
+        /// Places the caret back to the beginning.
+        /// </summary>
+        public void Rewind()
+        {
+            _caret = 0;
+        }
+
+        /// <summary>
+        /// Moves the caret past any whitespace.
+        /// </summary>
+        public void SkipWhiteSpace()
+        {
+            while (_caret < _text.Length && char.IsWhiteSpace(_text[_caret]))
+            {
+                _caret++;
+            }
+        }
+
+        /// <summary>
         /// Skips the next character in the sequence.
         /// </summary>
         /// <exception cref="KbParserException"></exception>
@@ -583,6 +635,24 @@ namespace ParserV2.Expression
 
             _caret++;
             SkipWhiteSpace();
+        }
+
+        /// <summary>
+        /// Returns true if the next token in the sequence is a valid token as would be expected as the start of a new query.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public bool IsNextStartOfQuery(out QueryType type)
+        {
+            var token = InertGetNext().ToLowerInvariant();
+
+            bool result = Enum.TryParse(token, true, out type) //Enum parse.
+                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
+                && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
+
+            SkipNext();
+
+            return result;
         }
     }
 }

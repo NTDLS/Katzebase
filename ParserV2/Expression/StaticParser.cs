@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using ParserV2.StandIn;
-using static ParserV2.Expression.ExpressionConstant;
+using System.Text;
 using static ParserV2.StandIn.Types;
 
 namespace ParserV2.Expression
@@ -46,9 +46,9 @@ namespace ParserV2.Expression
 
         private static IExpression ParseExpression(string givenExpressionText, Tokenizer queryTokenizer)
         {
-            #region This is a single value expression, the simple case.
+            #region This is a single value expression (document field, number or string), the simple case.
 
-            Tokenizer tokenizer = new(givenExpressionText, queryTokenizer.TokenDelimiters); //These delimiters have not been thought through at all!
+            Tokenizer tokenizer = new(givenExpressionText);
 
             string token = tokenizer.GetNext();
 
@@ -68,25 +68,11 @@ namespace ParserV2.Expression
                 }
                 else if (IsNumericExpression(token))
                 {
-                    if (DoesNumericRequireEvaluation(token))
-                    {
-                        throw new KbParserException($"Simple expression should not require evaluation: [{token}]");
-                    }
-                    else
-                    {
-                        return new ExpressionConstant(token, ExpressionConstantType.Numeric);
-                    }
+                    return new ExpressionNumericConstant(token);
                 }
                 else
                 {
-                    if (DoesStringRequireEvaluation(token))
-                    {
-                        throw new KbParserException($"Simple expression should not require evaluation: [{token}]");
-                    }
-                    else
-                    {
-                        return new ExpressionConstant(token, ExpressionConstantType.String);
-                    }
+                    return new ExpressionStringConstant(token);
                 }
             }
 
@@ -105,131 +91,116 @@ namespace ParserV2.Expression
 
             if (IsNumericExpression(givenExpressionText))
             {
-                if (DoesNumericRequireEvaluation(givenExpressionText))
-                {
-                    return RecursiveEvaluation(givenExpressionText);
-                }
-                else
-                {
-                    throw new KbParserException($"Complex expression should require evaluation: [{givenExpressionText}]");
-                }
+
+                IExpressionEvaluation expression = new ExpressionNumericEvaluation(givenExpressionText);
+                expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText);
+                return expression;
             }
             else
             {
-                if (DoesStringRequireEvaluation(givenExpressionText))
+                IExpressionEvaluation expression = new ExpressionStringEvaluation();
+                expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText);
+                return expression;
+            }
+
+            #endregion
+        }
+
+        private static string ParseEvaluationRecursive(ref IExpressionEvaluation rootExpressionEvaluation, string givenExpressionText)
+        {
+            //Console.WriteLine($"Recursive parameter parser: {givenExpressionText}");
+
+            Tokenizer tokenizer = new(givenExpressionText);
+
+            StringBuilder buffer = new();
+
+            int positionBeforeToken = 0;
+
+            while (!tokenizer.IsEnd())
+            {
+                positionBeforeToken = tokenizer.CaretPosition;
+
+                string token = tokenizer.GetNext();
+
+                if (token.StartsWith("$s_") && token.EndsWith('$')) //A string placeholder.
                 {
-                    return RecursiveEvaluation(givenExpressionText);
+                    buffer.Append(token);
+                }
+                else if (token.StartsWith("$n_") && token.EndsWith('$')) //A numeric placeholder.
+                {
+                    buffer.Append(token);
+                }
+                else if (ScalerFunctionCollection.TryGetFunction(token, out var function))
+                {
+                    string functionParameterExpressions = tokenizer.GetMatchingBraces('(', ')');
+                    string wholeFunctionExpression = tokenizer.InertSubString(positionBeforeToken, tokenizer.CaretPosition - positionBeforeToken);
+
+                    //The expression key is used to match the function calls to the token in the parent expression.
+                    var expressionKey = rootExpressionEvaluation.GetKeyExpressionKey();
+
+                    givenExpressionText = givenExpressionText.Replace(wholeFunctionExpression, expressionKey);
+
+                    var functionCallEvaluation = new FunctionCallEvaluation(function.Name, expressionKey);
+
+                    //expression.ReferencedFunctions = referencedFunctions; //TODO: save these.
+
+                    rootExpressionEvaluation.ReferencedFunctions.Add(new ReferencedFunction(expressionKey, function.Name, function.ReturnType));
+
+                    var expressionParameterTexts = functionParameterExpressions.ScopeSensitiveSplit();
+                    foreach (var functionParameter in expressionParameterTexts)
+                    {
+                        //Recursively process the function parameters.
+                        var resultingExpressionString = ParseEvaluationRecursive(ref rootExpressionEvaluation, functionParameter);
+
+                        IExpressionFunctionParameter? parameter = null;
+
+                        if (resultingExpressionString.StartsWith("$p_") && resultingExpressionString.EndsWith('$'))
+                        {
+                            //This is a function call result placeholder.
+                            parameter = new ExpressionFunctionParameterFunctionResult(resultingExpressionString);
+
+                            functionCallEvaluation.FunctionDependencies.Add(resultingExpressionString);
+                        }
+                        else if (IsNumericExpression(resultingExpressionString))
+                        {
+                            //This expression contains only numeric placeholders.
+                            parameter = new ExpressionFunctionParameterNumeric(resultingExpressionString);
+                        }
+                        else
+                        {
+                            //This expression contains non-numeric placeholders.
+                            parameter = new ExpressionFunctionParameterString(resultingExpressionString);
+                        }
+
+                        Console.WriteLine(resultingExpressionString);
+
+                        functionCallEvaluation.Parameters.Add(parameter);
+                    }
+
+                    rootExpressionEvaluation.FunctionCalls.Add(functionCallEvaluation);
+
+                    //TODO start a recursive call here with each parameter?
+
+                    //We need to parse the function and add a child node to the "expressionEvaluation".
+                    //We then replace the segment that we extracted from "expressionEvaluation" with the child's key.
+                }
+                else if (token.IsIdentifier())
+                {
+                    if (tokenizer.InertIsNextNonIdentifier(['(']))
+                    {
+                        //The character after this identifier is an open parenthesis, so this
+                        //  looks like a function call but the function is undefined.
+                        throw new KbParserException($"Function [{token}] is undefined.");
+                    }
                 }
                 else
                 {
-                    throw new KbParserException($"Complex expression should require evaluation: [{givenExpressionText}]");
+                    buffer.Append(token);
                 }
+
             }
 
-            #endregion
-        }
-
-        private static ExpressionEvaluation RecursiveEvaluation(string givenExpressionText)
-        {
-            Tokenizer tokenizer = new(givenExpressionText, [',', '=']); //These delimiters have not been thought through at all!
-
-            /*
-            while (!tokenizer.IsEnd())
-            {
-                token = tokenizer.GetNext();
-            }
-            tokenizer.Rewind();
-            */
-
-            #region Unused debug code.
-
-            /*
-            //Parse a function call: TODO: this doesn't work if the call is something like "10 + Length()"
-            if (tokenizer.InertIsNextCharacter(char.IsLetter) && tokenizer.InertIsNextNonIdentifier(['(']))
-            {
-                var functionName = tokenizer.GetNext();
-
-                string functionParameterExpressions = tokenizer.GetMatchingBraces('(', ')');
-                var expressionParameterTexts = functionParameterExpressions.ScopeSensitiveSplit();
-
-                foreach (var expressionParameterText in expressionParameterTexts)
-                {
-                    IExpression singleExpression;
-
-                    if (IsNumericExpression(givenExpressionText))
-                    {
-                        if (DoesNumericRequireEvaluation(expressionParameterText))
-                        {
-                            singleExpression = new ExpressionNumericEvaluation();
-                        }
-                        else
-                        {
-                            singleExpression = new ExpressionConstant(expressionParameterText, ExpressionConstantType.Numeric);
-                        }
-                    }
-                    else
-                    {
-                        if (DoesStringRequireEvaluation(expressionParameterText))
-                        {
-                            singleExpression = new ExpressionStringEvaluation();
-                        }
-                        else
-                        {
-                            singleExpression = new ExpressionConstant(expressionParameterText, ExpressionConstantType.String);
-                        }
-                    }
-
-
-                }
-            }
-            return new ExpressionConstant("dummy", ExpressionConstantType.String);
-            //throw new KbParserException($"Unable to parse expression: [{givenExpressionText}]");
-            */
-
-            #endregion
-
-            return new ExpressionEvaluation();
-        }
-
-
-        /// <summary>
-        /// Determines if the numeric expression is a simple standalone number or if it requires some type of evaluation.
-        /// The evaluation requirement can be as simple as "10 + 10" or a nested set of function calls.
-        /// </summary>
-        /// <returns></returns>
-        private static bool DoesNumericRequireEvaluation(string expressionText)
-        {
-            Tokenizer tokenizer = new(expressionText, [',', '=']); //These delimiters have not been thought through at all!
-            var token = tokenizer.GetNext();
-
-            if (!(token.StartsWith("$n_") && token.EndsWith('$')))
-            {
-                //If the token is not a number placeholder than we will need to evaluate the expression to determine its value.
-                return true;
-            }
-
-            //If more text remains after getting a single token, then we will need to evaluate the expression to determine its value.
-            return !tokenizer.IsEnd();
-        }
-
-        /// <summary>
-        /// Determines if the string expression is a simple standalone string or if it requires some type of evaluation.
-        /// The evaluation requirement can be as simple as ["Hello" + "World"] or a nested set of function calls.
-        /// </summary>
-        /// <returns></returns>
-        private static bool DoesStringRequireEvaluation(string expressionText)
-        {
-            Tokenizer tokenizer = new(expressionText, [',', '=']); //These delimiters have not been thought through at all!
-            var token = tokenizer.GetNext();
-
-            if (!(token.StartsWith("$s_") && token.EndsWith('$')))
-            {
-                //If the token is not a string placeholder than we will need to evaluate the expression to determine its value.
-                return true;
-            }
-
-            //If more text remains after getting a single token, then we will need to evaluate the expression to determine its value.
-            return !tokenizer.IsEnd();
+            return givenExpressionText;
         }
 
         /// <summary>
@@ -240,19 +211,20 @@ namespace ParserV2.Expression
         /// <exception cref="KbParserException"></exception>
         private static bool IsNumericExpression(string expressionText)
         {
-            Tokenizer tokenizer = new(expressionText, [',', '=']); //These delimiters have not been thought through at all!
+            Tokenizer tokenizer = new(expressionText);
 
-            while (true)
+            while (!tokenizer.IsEnd())
             {
-                string token = tokenizer.GetNext(['(', '+']);
+                if (tokenizer.InertIsNextCharacter(c => c.IsMathematicalOperator()))
+                {
+                    tokenizer.SkipNextCharacter();
+                    continue;
+                }
+
+                string token = tokenizer.GetNext();
                 if (string.IsNullOrEmpty(token))
                 {
                     break;
-                }
-
-                if (tokenizer.InertIsNextCharacter('+'))
-                {
-                    tokenizer.SkipNextCharacter();
                 }
 
                 if (token.StartsWith("$s_") && token.EndsWith('$'))
@@ -294,7 +266,5 @@ namespace ParserV2.Expression
 
             return true;
         }
-
-
     }
 }

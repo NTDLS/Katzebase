@@ -72,5 +72,15 @@ namespace ParserV2.Expression
                 || c == ':' //Schema separators. [Schema1:Schema2].
                 || c == '.'); //Schema field-separators. [schemaPrefix.FieldName].
         }
+
+
+        private static readonly char[] _mathematicalCharacters = { '~', '!', '^', '&', '*', '(', ')', '-', '+', '/', '=' };
+
+        /// <summary>
+        /// Returns true if the character is a valid mathematical character.
+        /// </summary>
+        public static bool IsMathematicalOperator(this char c)
+            => _mathematicalCharacters.Contains(c);
+
     }
 }

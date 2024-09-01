@@ -15,6 +15,7 @@ namespace ParserV2.StandIn
                     _prototypes =
                     [
                         new ScalerFunction("Concat", Types.KbScalerFunctionParameterType.String),
+                        new ScalerFunction("SHA1", Types.KbScalerFunctionParameterType.String),
                         new ScalerFunction("Length", Types.KbScalerFunctionParameterType.Numeric),
                     ];
                 }
