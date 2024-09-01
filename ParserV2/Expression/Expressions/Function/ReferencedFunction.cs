@@ -1,6 +1,6 @@
 ﻿using static ParserV2.StandIn.Types;
 
-namespace ParserV2.Expression
+namespace ParserV2.Expression.Expressions.Function
 {
     internal class ReferencedFunction
     {

@@ -8,10 +8,9 @@ namespace ParserV2
     {
         static void Main(string[] args)
         {
-            //string cleanQueryText = "SELECT TOP 100\r\n\tschema.Field as Doc,\t (11 * 11) + 7 as SomeMath,\r\n 'Text' as Name, 10 + Length('some text') as MathFirst, Concat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text,\r\n\t10 * 10 as Id,\r\n\tLength('This is text') as LanguageId,\r\n\t'English' as Language\r\nFROM\r\n\tWordList:Word WHERE Text LIKE @Text";
+            string cleanQueryText = "SELECT TOP 100\r\n\tschema.Field as Doc,\t (11 * 11) + 7 as SomeMath,\r\n 'Text' as Name, 10 + Length('some text') as MathFirst, Concat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text,\r\n\t10 * 10 as Id,\r\n\tLength('This is text') as LanguageId,\r\n\t'English' as Language\r\nFROM\r\n\tWordList:Word WHERE Text LIKE @Text";
             //string cleanQueryText = "SELECT TOP 100\r\n\t10 + Length(Concat('Other', SHA1('Text' + 'Text2'))) as Text\r\nFROM\r\n\tWordList:Word WHERE Text LIKE @Text";
-
-            string cleanQueryText = "SELECT TOP 100\r\n\tConcat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text\r\nFROM\r\n\tWordList:Word WHERE Text LIKE @Text";
+            //string cleanQueryText = "SELECT TOP 100\r\n\tConcat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text\r\nFROM\r\n\tWordList:Word WHERE Text LIKE @Text";
 
             char[] standardTokenDelimiters = [',', '='];
 
@@ -30,7 +29,7 @@ namespace ParserV2
                 tokenizer.SkipNext();
             }
 
-            var results = StaticParser.ParseSelectFields(tokenizer);
+            var results = StaticExpressionParser.ParseSelectFields(tokenizer);
         }
     }
 }

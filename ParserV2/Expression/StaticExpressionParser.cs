@@ -1,11 +1,15 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
+using ParserV2.Expression.Expressions;
+using ParserV2.Expression.Expressions.Fields;
+using ParserV2.Expression.Expressions.Fields.Evaluation;
+using ParserV2.Expression.Expressions.Function;
 using ParserV2.StandIn;
 using System.Text;
 using static ParserV2.StandIn.Types;
 
 namespace ParserV2.Expression
 {
-    internal static class StaticParser
+    internal static class StaticExpressionParser
     {
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.
@@ -91,23 +95,25 @@ namespace ParserV2.Expression
 
             if (IsNumericExpression(givenExpressionText))
             {
-
                 IExpressionEvaluation expression = new ExpressionNumericEvaluation(givenExpressionText);
-                expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText);
+                expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText, out _);
                 return expression;
             }
             else
             {
                 IExpressionEvaluation expression = new ExpressionStringEvaluation();
-                expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText);
+                expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText, out _);
                 return expression;
             }
 
             #endregion
         }
 
-        private static string ParseEvaluationRecursive(ref IExpressionEvaluation rootExpressionEvaluation, string givenExpressionText)
+        private static string ParseEvaluationRecursive(ref IExpressionEvaluation rootExpressionEvaluation,
+            string givenExpressionText, out List<ReferencedFunction> outReferencedFunctions)
         {
+            outReferencedFunctions = new();
+
             //Console.WriteLine($"Recursive parameter parser: {givenExpressionText}");
 
             Tokenizer tokenizer = new(givenExpressionText);
@@ -142,34 +148,39 @@ namespace ParserV2.Expression
 
                     var functionCallEvaluation = new FunctionCallEvaluation(function.Name, expressionKey);
 
-                    //expression.ReferencedFunctions = referencedFunctions; //TODO: save these.
-
-                    rootExpressionEvaluation.ReferencedFunctions.Add(new ReferencedFunction(expressionKey, function.Name, function.ReturnType));
+                    var referencedFunction = new ReferencedFunction(expressionKey, function.Name, function.ReturnType);
+                    rootExpressionEvaluation.ReferencedFunctions.Add(referencedFunction);
+                    outReferencedFunctions.Add(referencedFunction);
 
                     var expressionParameterTexts = functionParameterExpressions.ScopeSensitiveSplit();
                     foreach (var functionParameter in expressionParameterTexts)
                     {
+                        List<ReferencedFunction> referencedFunctions = new();
+
                         //Recursively process the function parameters.
-                        var resultingExpressionString = ParseEvaluationRecursive(ref rootExpressionEvaluation, functionParameter);
+                        var resultingExpressionString = ParseEvaluationRecursive(ref rootExpressionEvaluation, functionParameter, out referencedFunctions);
 
                         IExpressionFunctionParameter? parameter = null;
+
+                        functionCallEvaluation.ReferencedFunctions.AddRange(referencedFunctions);
 
                         if (resultingExpressionString.StartsWith("$p_") && resultingExpressionString.EndsWith('$'))
                         {
                             //This is a function call result placeholder.
                             parameter = new ExpressionFunctionParameterFunctionResult(resultingExpressionString);
-
-                            functionCallEvaluation.FunctionDependencies.Add(resultingExpressionString);
+                            parameter.ReferencedFunctions.AddRange(referencedFunctions);
                         }
-                        else if (IsNumericExpression(resultingExpressionString))
+                        else if (IsNumericExpression(resultingExpressionString, rootExpressionEvaluation))
                         {
                             //This expression contains only numeric placeholders.
                             parameter = new ExpressionFunctionParameterNumeric(resultingExpressionString);
+                            parameter.ReferencedFunctions.AddRange(referencedFunctions);
                         }
                         else
                         {
                             //This expression contains non-numeric placeholders.
                             parameter = new ExpressionFunctionParameterString(resultingExpressionString);
+                            parameter.ReferencedFunctions.AddRange(referencedFunctions);
                         }
 
                         Console.WriteLine(resultingExpressionString);
@@ -204,12 +215,12 @@ namespace ParserV2.Expression
         }
 
         /// <summary>
-        /// Returns true if all variables, placeholders and functions return numeric values.
+        /// /// Returns true if all variables, placeholders and functions return numeric values.
         /// </summary>
-        /// <param name="expressionText"></param>
+        /// <param name="expressionText">The text to be evaluated for numeric or string operations.</param>
+        /// <param name="rootExpressionEvaluation">Passed if available to determine the return type of any function references.</param>
         /// <returns></returns>
-        /// <exception cref="KbParserException"></exception>
-        private static bool IsNumericExpression(string expressionText)
+        private static bool IsNumericExpression(string expressionText, IExpressionEvaluation? rootExpressionEvaluation = null)
         {
             Tokenizer tokenizer = new(expressionText);
 
@@ -227,19 +238,34 @@ namespace ParserV2.Expression
                     break;
                 }
 
-                if (token.StartsWith("$s_") && token.EndsWith('$'))
+                if (token.StartsWith("$x_") && token.EndsWith('$'))
+                {
+                    //This is a function result placeholder.
+
+                    if (rootExpressionEvaluation == null)
+                    {
+                        throw new KbParserException($"Function reference found without root expression: [{token}].");
+                    }
+                    var referencedFunction = rootExpressionEvaluation.ReferencedFunctions.Single(f => f.Key == token);
+
+                    if (referencedFunction.ReturnType != KbScalerFunctionParameterType.Numeric)
+                    {
+                        //This function returns something other then numeric, so we are evaluating strings.
+                        return false;
+                    }
+                    continue;
+                }
+                else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
                     //This is a string, so this is not a numeric operation.
                     return false;
                 }
-
-                if (token.StartsWith("$n_") && token.EndsWith('$'))
+                else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {
                     //This is a number placeholder, so we still have a valid numeric operation.
                     continue;
                 }
-
-                if (ScalerFunctionCollection.TryGetFunction(token, out var function))
+                else if (ScalerFunctionCollection.TryGetFunction(token, out var function))
                 {
                     if (function.ReturnType == KbScalerFunctionParameterType.Numeric)
                     {

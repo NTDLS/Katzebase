@@ -603,13 +603,7 @@ namespace ParserV2.Expression
 
         #endregion
 
-        /// <summary>
-        /// Places the caret back to the beginning.
-        /// </summary>
-        public void Rewind()
-        {
-            _caret = 0;
-        }
+        #region Skip / Eat.
 
         /// <summary>
         /// Moves the caret past any whitespace.
@@ -635,6 +629,16 @@ namespace ParserV2.Expression
 
             _caret++;
             SkipWhiteSpace();
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Places the caret back to the beginning.
+        /// </summary>
+        public void Rewind()
+        {
+            _caret = 0;
         }
 
         /// <summary>

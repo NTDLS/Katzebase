@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 
-namespace ParserV2.Expression
+namespace ParserV2.Expression.Expressions.Fields
 {
     /// <summary>
     /// Contains the name of a schema.field or just a field name if the schema was nto specified.

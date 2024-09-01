@@ -1,4 +1,4 @@
-﻿namespace ParserV2.Expression
+﻿namespace ParserV2.Expression.Expressions
 {
     internal class ExpressionCollection
     {

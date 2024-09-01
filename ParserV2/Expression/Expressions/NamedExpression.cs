@@ -1,4 +1,6 @@
-﻿namespace ParserV2.Expression
+﻿using ParserV2.Expression.Expressions.Fields;
+
+namespace ParserV2.Expression.Expressions
 {
     /// <summary>
     /// Contains the highest level of expression, these are things like a select list or update list.

@@ -1,4 +1,6 @@
-﻿namespace ParserV2.Expression
+﻿using ParserV2.Expression.Expressions.Function;
+
+namespace ParserV2.Expression.Expressions.Fields.Evaluation
 {
     internal class FunctionCallEvaluation
     {
@@ -6,10 +8,13 @@
         public string ExpressionKey { get; set; }
 
         /// <summary>
-        /// Contains the keys of the parameters that must be satisfied by function calls.
+        /// List of functions that are referenced by this expression. Just their names, keys and types (no parameters).
         /// </summary>
-        public List<string> FunctionDependencies { get; set; } = new();
+        public List<ReferencedFunction> ReferencedFunctions { get; private set; } = new();
 
+        /// <summary>
+        /// Parameter list for the this function.
+        /// </summary>
         public List<IExpressionFunctionParameter> Parameters { get; set; } = new();
 
         public FunctionCallEvaluation(string functionName, string expressionKey)
