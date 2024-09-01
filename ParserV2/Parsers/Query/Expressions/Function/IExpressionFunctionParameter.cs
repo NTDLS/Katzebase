@@ -1,4 +1,4 @@
-﻿namespace ParserV2.Expression.Expressions.Function
+﻿namespace ParserV2.Parsers.Query.Expressions.Function
 {
     internal interface IExpressionFunctionParameter
     {

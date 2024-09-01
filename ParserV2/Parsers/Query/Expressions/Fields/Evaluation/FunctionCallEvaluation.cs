@@ -1,6 +1,6 @@
-﻿using ParserV2.Expression.Expressions.Function;
+﻿using ParserV2.Parsers.Query.Expressions.Function;
 
-namespace ParserV2.Expression.Expressions.Fields.Evaluation
+namespace ParserV2.Parsers.Query.Expressions.Fields.Evaluation
 {
     internal class FunctionCallEvaluation
     {

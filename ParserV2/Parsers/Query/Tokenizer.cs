@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Client.Types;
 using System.Text.RegularExpressions;
 using static ParserV2.StandIn.Types;
 
-namespace ParserV2.Expression
+namespace ParserV2.Parsers.Query
 {
     /// <summary>
     /// Used to walk various types of string and expressions.

@@ -1,4 +1,4 @@
-﻿namespace ParserV2.Expression.Expressions.Function
+﻿namespace ParserV2.Parsers.Query.Expressions.Function
 {
     /// <summary>
     /// This is a function parameter that contains the key of the other parameter which is the function that is required to be executed to satisfy this parameter.

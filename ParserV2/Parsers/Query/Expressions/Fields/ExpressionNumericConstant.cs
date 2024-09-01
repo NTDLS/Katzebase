@@ -1,4 +1,4 @@
-﻿namespace ParserV2.Expression.Expressions.Fields
+﻿namespace ParserV2.Parsers.Query.Expressions.Fields
 {
     /// <summary>
     /// Contains a numeric constant.

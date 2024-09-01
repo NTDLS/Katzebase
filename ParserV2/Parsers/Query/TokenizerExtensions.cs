@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace ParserV2.Expression
+namespace ParserV2.Parsers.Query
 {
     /// <summary>
     /// Used to walk various types of string and expressions.
@@ -11,7 +11,7 @@ namespace ParserV2.Expression
         /// Splits the given text on a comma delimiter while paying attention to the scope denoted by open and close parentheses..
         /// </summary>
         public static List<string> ScopeSensitiveSplit(this string text)
-            => ScopeSensitiveSplit(text, ',', '(', ')');
+            => text.ScopeSensitiveSplit(',', '(', ')');
 
         /// <summary>
         /// Splits the given text on the delimiter while paying attention to the scope denoted by the given open and close characters.
@@ -67,10 +67,10 @@ namespace ParserV2.Expression
         public static bool IsIdentifier(this char c)
         {
             return
-                (char.IsWhiteSpace(c)
+                char.IsWhiteSpace(c)
                 || char.IsLetterOrDigit(c) //Numbers or letters, could be a field name, schema name, function name, etc.
                 || c == ':' //Schema separators. [Schema1:Schema2].
-                || c == '.'); //Schema field-separators. [schemaPrefix.FieldName].
+                || c == '.'; //Schema field-separators. [schemaPrefix.FieldName].
         }
 
 

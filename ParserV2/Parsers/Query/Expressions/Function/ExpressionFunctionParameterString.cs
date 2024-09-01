@@ -1,4 +1,4 @@
-﻿namespace ParserV2.Expression.Expressions.Function
+﻿namespace ParserV2.Parsers.Query.Expressions.Function
 {
     /// <summary>
     /// This is function call parameter that contains either a single string or a string expression (such as 'this' + 'that').

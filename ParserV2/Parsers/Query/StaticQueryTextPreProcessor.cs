@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Client.Types;
 using System.Text.RegularExpressions;
 
-namespace ParserV2.Expression
+namespace ParserV2.Parsers.Query
 {
     internal class StaticQueryTextPreProcessor
     {

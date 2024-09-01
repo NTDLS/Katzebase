@@ -1,6 +1,6 @@
-﻿using ParserV2.Expression.Expressions.Function;
+﻿using ParserV2.Parsers.Query.Expressions.Function;
 
-namespace ParserV2.Expression.Expressions.Fields.Evaluation
+namespace ParserV2.Parsers.Query.Expressions.Fields.Evaluation
 {
     /// <summary>
     /// Contains a numeric evaluation expression. This could be as simple as [10 + 10] or could contain function calls which child nodes.

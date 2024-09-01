@@ -1,6 +1,6 @@
-﻿using ParserV2.Expression.Expressions.Fields;
+﻿using ParserV2.Parsers.Query.Expressions.Fields;
 
-namespace ParserV2.Expression.Expressions
+namespace ParserV2.Parsers.Query.Expressions
 {
     /// <summary>
     /// Contains the highest level of expression, these are things like a select list or update list.

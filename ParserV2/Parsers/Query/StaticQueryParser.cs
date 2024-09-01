@@ -1,15 +1,16 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using ParserV2.Expression.Expressions;
-using ParserV2.Expression.Expressions.Fields;
-using ParserV2.Expression.Expressions.Fields.Evaluation;
-using ParserV2.Expression.Expressions.Function;
+using ParserV2.Parsers.Expression.Expressions;
+using ParserV2.Parsers.Query.Expressions;
+using ParserV2.Parsers.Query.Expressions.Fields;
+using ParserV2.Parsers.Query.Expressions.Fields.Evaluation;
+using ParserV2.Parsers.Query.Expressions.Function;
 using ParserV2.StandIn;
 using System.Text;
 using static ParserV2.StandIn.Types;
 
-namespace ParserV2.Expression
+namespace ParserV2.Parsers.Query
 {
-    internal static class StaticExpressionParser
+    internal static class StaticQueryParser
     {
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.

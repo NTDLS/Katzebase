@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using ParserV2.Expression;
+using ParserV2.Parsers.Expression;
+using ParserV2.Parsers.Query;
 using static ParserV2.StandIn.Types;
 
 namespace ParserV2
@@ -27,7 +28,7 @@ namespace ParserV2
                     tokenizer.SkipNext();
                 }
 
-                var selectFields = StaticExpressionParser.ParseSelectFields(tokenizer);
+                var selectFields = StaticQueryParser.ParseSelectFields(tokenizer);
             }
             else if (queryType == QueryType.Select)
             {
