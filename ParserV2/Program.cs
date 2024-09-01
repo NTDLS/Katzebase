@@ -12,11 +12,7 @@ namespace ParserV2
             //string cleanQueryText = "SELECT TOP 100\r\n\t10 + Length(Concat('Other', SHA1('Text' + 'Text2'))) as Text\r\nFROM\r\n\tWordList:Word WHERE Text LIKE @Text";
             //string cleanQueryText = "SELECT TOP 100\r\n\tConcat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text\r\nFROM\r\n\tWordList:Word WHERE Text LIKE @Text";
 
-            char[] standardTokenDelimiters = [',', '='];
-
-            var tokenizer = new Tokenizer(cleanQueryText, standardTokenDelimiters);
-
-            tokenizer.Prepare();
+            var tokenizer = new Tokenizer(cleanQueryText, true);
 
             if (tokenizer.IsNextStartOfQuery(out var queryType) == false)
             {
@@ -24,12 +20,19 @@ namespace ParserV2
                 throw new KbParserException($"Invalid query. Found '{tokenizer.InertGetNext()}', expected: '{acceptableValues}'.");
             }
 
-            if (tokenizer.TryIsNextToken("top"))
+            if (queryType == QueryType.Select)
             {
-                tokenizer.SkipNext();
-            }
+                if (tokenizer.TryIsNextToken("top"))
+                {
+                    tokenizer.SkipNext();
+                }
 
-            var results = StaticExpressionParser.ParseSelectFields(tokenizer);
+                var selectFields = StaticExpressionParser.ParseSelectFields(tokenizer);
+            }
+            else if (queryType == QueryType.Select)
+            {
+                //var updateFields = StaticExpressionParser.ParseUpdateFields(tokenizer);
+            }
         }
     }
 }

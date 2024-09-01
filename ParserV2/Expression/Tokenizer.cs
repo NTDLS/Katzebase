@@ -39,23 +39,44 @@ namespace ParserV2.Expression
 
         #region Constructors.
 
-        public Tokenizer(string text, char[] standardTokenDelimiters)
+        /// <summary>
+        /// Creates a tokenizer which uses only whitespace as a delimiter.
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="standardTokenDelimiters">Delimiters to stop on when parsing tokens. If not specified, will only stop on whitespace.</param>
+        /// <param name="optimizeForTokenization">Whether the query text should be optimized for tokenization.
+        /// This only needs to be done once per query text. For example, if you create another Tokenizer
+        /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
+        public Tokenizer(string text, char[] standardTokenDelimiters, bool optimizeForTokenization = false)
         {
             _text = new string(text.ToCharArray());
             _standardTokenDelimiters = standardTokenDelimiters;
 
             ValidateParentheses();
+
+            if (optimizeForTokenization)
+            {
+                OptimizeForTokenization();
+            }
         }
 
         /// <summary>
         /// Creates a tokenizer which uses only whitespace as a delimiter.
         /// </summary>
-        /// <param name="text"></param>
-        public Tokenizer(string text)
+        /// <param name="text">Text to tokenize.</param>
+        /// <param name="optimizeForTokenization">Whether the query text should be optimized for tokenization.
+        /// This only needs to be done once per query text. For example, if you create another Tokenizer
+        /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
+        public Tokenizer(string text, bool optimizeForTokenization = false)
         {
             _text = new string(text.ToCharArray());
             _standardTokenDelimiters = Array.Empty<char>();
             ValidateParentheses();
+
+            if (optimizeForTokenization)
+            {
+                OptimizeForTokenization();
+            }
         }
 
         private void ValidateParentheses()
@@ -158,7 +179,7 @@ namespace ParserV2.Expression
         /// <summary>
         /// Removes all unnecessary whitespace, newlines, comments and replaces literals with tokens to prepare query for parsing.
         /// </summary>
-        public void Prepare()
+        private void OptimizeForTokenization()
         {
             string text = KbTextUtility.RemoveComments(_text);
 
