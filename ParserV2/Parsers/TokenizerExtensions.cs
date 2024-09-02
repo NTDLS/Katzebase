@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace ParserV2.Parsers.Query
+namespace ParserV2.Parsers
 {
     /// <summary>
     /// Used to walk various types of string and expressions.

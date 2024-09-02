@@ -1,14 +1,14 @@
-﻿namespace ParserV2.Parsers.Query.Expressions.Function
+﻿namespace ParserV2.Parsers.Query.Functions
 {
     /// <summary>
     /// This is a function parameter that contains the key of the other parameter which is the function that is required to be executed to satisfy this parameter.
     /// </summary>
-    internal class ExpressionFunctionParameterFunctionResult : IExpressionFunctionParameter
+    internal class ExpressionFunctionParameterFunction : IExpressionFunctionParameter
     {
         public string Expression { get; set; }
-        public List<ReferencedFunction> ReferencedFunctions { get; private set; } = new();
+        public List<FunctionReference> ReferencedFunctions { get; private set; } = new();
 
-        public ExpressionFunctionParameterFunctionResult(string value)
+        public ExpressionFunctionParameterFunction(string value)
         {
             Expression = value;
         }

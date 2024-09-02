@@ -1,13 +1,13 @@
-﻿namespace ParserV2.Parsers.Query.Expressions.Fields
+﻿namespace ParserV2.Parsers.Query.Fields
 {
     /// <summary>
     /// Contains a numeric constant.
     /// </summary>
-    internal class ExpressionNumericConstant : IExpression
+    internal class QueryFieldConstantNumeric : IQueryField
     {
         public string Value { get; set; }
 
-        public ExpressionNumericConstant(string value)
+        public QueryFieldConstantNumeric(string value)
         {
             Value = value;
         }

@@ -1,9 +1,8 @@
-﻿using ParserV2.Parsers.Query.Expressions.Fields;
-using ParserV2.Parsers.Query.Expressions.Function;
+﻿using ParserV2.Parsers.Query.Functions;
 
-namespace ParserV2.Parsers.Query.Expressions.Fields.Evaluation
+namespace ParserV2.Parsers.Query.Fields.Expressions
 {
-    internal interface IExpressionEvaluation : IExpression
+    internal interface IQueryFieldExpression : IQueryField
     {
         string Expression { get; set; }
         string GetKeyExpressionKey();
@@ -11,11 +10,11 @@ namespace ParserV2.Parsers.Query.Expressions.Fields.Evaluation
         /// <summary>
         /// Contains the function names and their parameters that are used to satisfy the expression,
         /// </summary>
-        List<FunctionCallEvaluation> FunctionCalls { get; }
+        List<QueryFieldExpressionFunction> FunctionCalls { get; }
 
         /// <summary>
         /// List of functions that are referenced by this expression. Just their names, keys and types (no parameters).
         /// </summary>
-        List<ReferencedFunction> ReferencedFunctions { get; }
+        List<FunctionReference> ReferencedFunctions { get; }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace ParserV2.Parsers.Query.Expressions.Function
+﻿namespace ParserV2.Parsers.Query.Functions
 {
     /// <summary>
     /// This is function call parameter that contains either a single string or a string expression (such as 'this' + 'that').
@@ -6,7 +6,7 @@
     internal class ExpressionFunctionParameterString : IExpressionFunctionParameter
     {
         public string Expression { get; set; }
-        public List<ReferencedFunction> ReferencedFunctions { get; private set; } = new();
+        public List<FunctionReference> ReferencedFunctions { get; private set; } = new();
 
         public ExpressionFunctionParameterString(string value)
         {

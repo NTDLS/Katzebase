@@ -1,11 +1,11 @@
-﻿using ParserV2.Parsers.Query.Expressions.Function;
+﻿using ParserV2.Parsers.Query.Functions;
 
-namespace ParserV2.Parsers.Query.Expressions.Fields.Evaluation
+namespace ParserV2.Parsers.Query.Fields.Expressions
 {
     /// <summary>
     /// Contains a string evaluation expression. This could be as simple as ["This" + "That"] or could contain function calls which child nodes.
     /// </summary>
-    internal class ExpressionStringEvaluation : IExpressionEvaluation
+    internal class QueryFieldExpressionString : IQueryFieldExpression
     {
         private int _nextExpressionKey = 0;
 
@@ -14,14 +14,14 @@ namespace ParserV2.Parsers.Query.Expressions.Fields.Evaluation
         /// <summary>
         /// Contains the function names and their parameters that are used to satisfy the expression,
         /// </summary>
-        public List<FunctionCallEvaluation> FunctionCalls { get; set; } = new();
+        public List<QueryFieldExpressionFunction> FunctionCalls { get; set; } = new();
 
         /// <summary>
         /// List of functions that are referenced by this expression. Just their names, keys and types (no parameters).
         /// </summary>
-        public List<ReferencedFunction> ReferencedFunctions { get; private set; } = new();
+        public List<FunctionReference> ReferencedFunctions { get; private set; } = new();
 
-        public ExpressionStringEvaluation()
+        public QueryFieldExpressionString()
         {
             //Expression = expression;
         }

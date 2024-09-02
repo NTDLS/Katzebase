@@ -1,14 +1,14 @@
 ﻿using static ParserV2.StandIn.Types;
 
-namespace ParserV2.Parsers.Query.Expressions.Function
+namespace ParserV2.Parsers.Query.Functions
 {
-    internal class ReferencedFunction
+    internal class FunctionReference
     {
         public string Key { get; set; }
         public string Name { get; set; }
         public KbScalerFunctionParameterType ReturnType { get; set; }
 
-        public ReferencedFunction(string key, string name, KbScalerFunctionParameterType returnType)
+        public FunctionReference(string key, string name, KbScalerFunctionParameterType returnType)
         {
             Key = key;
             Name = name;

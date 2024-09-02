@@ -1,9 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using ParserV2.Parsers.Expression.Expressions;
-using ParserV2.Parsers.Query.Expressions;
-using ParserV2.Parsers.Query.Expressions.Fields;
-using ParserV2.Parsers.Query.Expressions.Fields.Evaluation;
-using ParserV2.Parsers.Query.Expressions.Function;
+using ParserV2.Parsers.Query.Fields;
+using ParserV2.Parsers.Query.Fields.Expressions;
+using ParserV2.Parsers.Query.Functions;
 using ParserV2.StandIn;
 using System.Text;
 using static ParserV2.StandIn.Types;
@@ -15,9 +13,9 @@ namespace ParserV2.Parsers.Query
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.
         /// </summary>
-        public static ExpressionCollection ParseSelectFields(Tokenizer queryTokenizer)
+        public static QueryFieldCollection ParseSelectFields(Tokenizer queryTokenizer)
         {
-            var result = new ExpressionCollection();
+            var result = new QueryFieldCollection();
 
             //Get the position which represents the end of the select list.
             int stopAt = queryTokenizer.InertGetNextIndexOf([" from ", " into "]);
@@ -43,13 +41,13 @@ namespace ParserV2.Parsers.Query
 
                 var expression = ParseExpression(aliasRemovedFieldExpressionText, queryTokenizer);
 
-                result.Collection.Add(new NamedExpression(fieldExpressionAlias, expression));
+                result.Collection.Add(new QueryField(fieldExpressionAlias, expression));
             }
 
             return result;
         }
 
-        private static IExpression ParseExpression(string givenExpressionText, Tokenizer queryTokenizer)
+        private static IQueryField ParseExpression(string givenExpressionText, Tokenizer queryTokenizer)
         {
             #region This is a single value expression (document field, number or string), the simple case.
 
@@ -68,16 +66,16 @@ namespace ParserV2.Parsers.Query
                     }
 
                     //This is not a function (those require evaluation) so its a single identifier, likely a document field name.
-                    return new ExpressionIdentifier(token);
+                    return new QueryFieldDocumentIdentifier(token);
 
                 }
                 else if (IsNumericExpression(token))
                 {
-                    return new ExpressionNumericConstant(token);
+                    return new QueryFieldConstantNumeric(token);
                 }
                 else
                 {
-                    return new ExpressionStringConstant(token);
+                    return new QueryFieldConstantString(token);
                 }
             }
 
@@ -94,15 +92,17 @@ namespace ParserV2.Parsers.Query
                 throw new KbParserException($"Single expression should contain multiple values: [{givenExpressionText}]");
             }
 
+            //This expression is going to require evaluation, so figure out if its a number or a string.
+
             if (IsNumericExpression(givenExpressionText))
             {
-                IExpressionEvaluation expression = new ExpressionNumericEvaluation(givenExpressionText);
+                IQueryFieldExpression expression = new QueryFieldExpressionNumeric(givenExpressionText);
                 expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText, out _);
                 return expression;
             }
             else
             {
-                IExpressionEvaluation expression = new ExpressionStringEvaluation();
+                IQueryFieldExpression expression = new QueryFieldExpressionString();
                 expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText, out _);
                 return expression;
             }
@@ -110,22 +110,19 @@ namespace ParserV2.Parsers.Query
             #endregion
         }
 
-        private static string ParseEvaluationRecursive(ref IExpressionEvaluation rootExpressionEvaluation,
-            string givenExpressionText, out List<ReferencedFunction> outReferencedFunctions)
+        private static string ParseEvaluationRecursive(ref IQueryFieldExpression rootExpressionEvaluation,
+            string givenExpressionText, out List<FunctionReference> outReferencedFunctions)
         {
             outReferencedFunctions = new();
-
-            //Console.WriteLine($"Recursive parameter parser: {givenExpressionText}");
 
             Tokenizer tokenizer = new(givenExpressionText);
 
             StringBuilder buffer = new();
 
-            int positionBeforeToken = 0;
 
             while (!tokenizer.IsEnd())
             {
-                positionBeforeToken = tokenizer.CaretPosition;
+                int positionBeforeToken = tokenizer.CaretPosition;
 
                 string token = tokenizer.GetNext();
 
@@ -147,16 +144,16 @@ namespace ParserV2.Parsers.Query
 
                     givenExpressionText = givenExpressionText.Replace(wholeFunctionExpression, expressionKey);
 
-                    var functionCallEvaluation = new FunctionCallEvaluation(function.Name, expressionKey);
+                    var functionCallEvaluation = new QueryFieldExpressionFunction(function.Name, expressionKey, function.ReturnType);
 
-                    var referencedFunction = new ReferencedFunction(expressionKey, function.Name, function.ReturnType);
+                    var referencedFunction = new FunctionReference(expressionKey, function.Name, function.ReturnType);
                     rootExpressionEvaluation.ReferencedFunctions.Add(referencedFunction);
                     outReferencedFunctions.Add(referencedFunction);
 
                     var expressionParameterTexts = functionParameterExpressions.ScopeSensitiveSplit();
                     foreach (var functionParameter in expressionParameterTexts)
                     {
-                        List<ReferencedFunction> referencedFunctions = new();
+                        List<FunctionReference> referencedFunctions = new();
 
                         //Recursively process the function parameters.
                         var resultingExpressionString = ParseEvaluationRecursive(ref rootExpressionEvaluation, functionParameter, out referencedFunctions);
@@ -168,7 +165,7 @@ namespace ParserV2.Parsers.Query
                         if (resultingExpressionString.StartsWith("$p_") && resultingExpressionString.EndsWith('$'))
                         {
                             //This is a function call result placeholder.
-                            parameter = new ExpressionFunctionParameterFunctionResult(resultingExpressionString);
+                            parameter = new ExpressionFunctionParameterFunction(resultingExpressionString);
                             parameter.ReferencedFunctions.AddRange(referencedFunctions);
                         }
                         else if (IsNumericExpression(resultingExpressionString, rootExpressionEvaluation))
@@ -184,17 +181,10 @@ namespace ParserV2.Parsers.Query
                             parameter.ReferencedFunctions.AddRange(referencedFunctions);
                         }
 
-                        Console.WriteLine(resultingExpressionString);
-
                         functionCallEvaluation.Parameters.Add(parameter);
                     }
 
                     rootExpressionEvaluation.FunctionCalls.Add(functionCallEvaluation);
-
-                    //TODO start a recursive call here with each parameter?
-
-                    //We need to parse the function and add a child node to the "expressionEvaluation".
-                    //We then replace the segment that we extracted from "expressionEvaluation" with the child's key.
                 }
                 else if (token.IsIdentifier())
                 {
@@ -221,7 +211,7 @@ namespace ParserV2.Parsers.Query
         /// <param name="expressionText">The text to be evaluated for numeric or string operations.</param>
         /// <param name="rootExpressionEvaluation">Passed if available to determine the return type of any function references.</param>
         /// <returns></returns>
-        private static bool IsNumericExpression(string expressionText, IExpressionEvaluation? rootExpressionEvaluation = null)
+        private static bool IsNumericExpression(string expressionText, IQueryFieldExpression? rootExpressionEvaluation = null)
         {
             Tokenizer tokenizer = new(expressionText);
 
@@ -247,7 +237,9 @@ namespace ParserV2.Parsers.Query
                     {
                         throw new KbParserException($"Function reference found without root expression: [{token}].");
                     }
-                    var referencedFunction = rootExpressionEvaluation.ReferencedFunctions.Single(f => f.Key == token);
+                    
+                    //var referencedFunction = rootExpressionEvaluation.ReferencedFunctions.Single(f => f.Key == token);
+                    var referencedFunction = rootExpressionEvaluation.FunctionCalls.Single(f => f.ExpressionKey == token);
 
                     if (referencedFunction.ReturnType != KbScalerFunctionParameterType.Numeric)
                     {
@@ -293,5 +285,18 @@ namespace ParserV2.Parsers.Query
 
             return true;
         }
+
+        /// <summary>
+        /// Returns true if the next token in the sequence is a valid token as would be expected as the start of a new query.
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static bool IsNextStartOfQuery(string token, out QueryType type)
+        {
+            return Enum.TryParse(token.ToLowerInvariant(), true, out type) //Enum parse.
+                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
+                && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
+        }
+
     }
 }

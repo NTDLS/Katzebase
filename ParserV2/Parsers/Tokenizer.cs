@@ -4,19 +4,21 @@ using NTDLS.Katzebase.Client.Types;
 using System.Text.RegularExpressions;
 using static ParserV2.StandIn.Types;
 
-namespace ParserV2.Parsers.Query
+namespace ParserV2.Parsers
 {
     /// <summary>
     /// Used to walk various types of string and expressions.
     /// </summary>
     internal class Tokenizer
     {
+        private Stack<int> _breadCrumbs = new();
+
         #region Rules and Convention.
         /*
-         * Functions that DO NOT modify the internal caret should be prefixed with "Inert".
-         * Functions that DO NOT throw exceptions should be prefixed with "Try".
-         * Functions that are not prefixed with "Try" should throw exceptions if they do not find/seek what they are intended to do.
-         * Functions that DO NOT modify the internal caret and DO NOT throw exceptions should be prefixed with "InertTry".
+         * Public functions that DO NOT modify the internal caret should be prefixed with "Inert".
+         * Public functions that DO NOT throw exceptions should be prefixed with "Try".
+         * Public functions that are not prefixed with "Try" should throw exceptions if they do not find/seek what they are intended to do.
+         * Public functions that DO NOT modify the internal caret and DO NOT throw exceptions should be prefixed with "InertTry".
          */
         #endregion
 
@@ -117,7 +119,7 @@ namespace ParserV2.Parsers.Query
         /// <summary>
         /// Replaces text literals with tokens to prepare the query for parsing.
         /// </summary>
-        public static KbInsensitiveDictionary<string> SwapOutStringLiterals(ref string query)
+        private static KbInsensitiveDictionary<string> SwapOutStringLiterals(ref string query)
         {
             var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
@@ -146,7 +148,7 @@ namespace ParserV2.Parsers.Query
         /// <summary>
         /// Replaces numeric literals with tokens to prepare the query for parsing.
         /// </summary>
-        public static KbInsensitiveDictionary<string> SwapOutNumericLiterals(ref string query)
+        private static KbInsensitiveDictionary<string> SwapOutNumericLiterals(ref string query)
         {
             var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex(@"(?<=\s|^)(?:\d+\.?\d*|\.\d+)(?=\s|$)");
@@ -368,6 +370,8 @@ namespace ParserV2.Parsers.Query
         /// </summary>
         public string SubString(int absoluteEndPosition)
         {
+            RecordBreadcrumb();
+
             var result = _text.Substring(_caret, absoluteEndPosition - _caret);
             _caret = absoluteEndPosition;
             return result;
@@ -458,6 +462,8 @@ namespace ParserV2.Parsers.Query
         /// </summary>
         public string GetNext(char[] delimiters)
         {
+            RecordBreadcrumb();
+
             var token = string.Empty;
 
             if (_caret == _text.Length)
@@ -475,7 +481,7 @@ namespace ParserV2.Parsers.Query
                 token += _text[_caret];
             }
 
-            SkipWhiteSpace();
+            InternalSkipWhiteSpace();
 
             if (token.Length == 0)
             {
@@ -581,9 +587,11 @@ namespace ParserV2.Parsers.Query
         /// </summary>
         public string GetMatchingBraces(char open, char close)
         {
+            RecordBreadcrumb();
+
             int scope = 0;
 
-            SkipWhiteSpace();
+            InternalSkipWhiteSpace();
 
             if (_text[_caret] != open)
             {
@@ -613,7 +621,7 @@ namespace ParserV2.Parsers.Query
                     var result = _text.Substring(startPosition, _caret - startPosition).Trim();
 
                     _caret++;
-                    SkipWhiteSpace();
+                    InternalSkipWhiteSpace();
 
                     return result;
                 }
@@ -627,10 +635,23 @@ namespace ParserV2.Parsers.Query
         #region Skip / Eat.
 
         /// <summary>
+        /// Moves the caret past any whitespace, does not record breadcrumb.
+        /// </summary>
+        private void InternalSkipWhiteSpace()
+        {
+            while (_caret < _text.Length && char.IsWhiteSpace(_text[_caret]))
+            {
+                _caret++;
+            }
+        }
+
+        /// <summary>
         /// Moves the caret past any whitespace.
         /// </summary>
         public void SkipWhiteSpace()
         {
+            RecordBreadcrumb();
+
             while (_caret < _text.Length && char.IsWhiteSpace(_text[_caret]))
             {
                 _caret++;
@@ -643,16 +664,28 @@ namespace ParserV2.Parsers.Query
         /// <exception cref="KbParserException"></exception>
         public void SkipNextCharacter()
         {
+            RecordBreadcrumb();
+
             if (_caret >= _text.Length)
             {
                 throw new KbParserException("The tokenizer sequence is empty.");
             }
 
             _caret++;
-            SkipWhiteSpace();
+            InternalSkipWhiteSpace();
         }
 
         #endregion
+
+        #region Caret Operations.
+
+        private void RecordBreadcrumb()
+        {
+            if (_breadCrumbs.Count == 0 || _breadCrumbs.Peek() != _caret)
+            {
+                _breadCrumbs.Push(_caret);
+            }
+        }
 
         /// <summary>
         /// Places the caret back to the beginning.
@@ -660,24 +693,53 @@ namespace ParserV2.Parsers.Query
         public void Rewind()
         {
             _caret = 0;
+            _breadCrumbs.Clear();
         }
 
         /// <summary>
-        /// Returns true if the next token in the sequence is a valid token as would be expected as the start of a new query.
+        /// Returns the position of the caret before the previous tokenization operation.
         /// </summary>
-        /// <param name="type"></param>
         /// <returns></returns>
-        public bool IsNextStartOfQuery(out QueryType type)
+        public int PreviousCaret()
         {
-            var token = InertGetNext().ToLowerInvariant();
+            if (_breadCrumbs.Count == 0)
+            {
+                throw new KbParserException("Tokenization steps are out of range.");
+            }
 
-            bool result = Enum.TryParse(token, true, out type) //Enum parse.
-                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
-                && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
-
-            SkipNext();
-
-            return result;
+            return _breadCrumbs.Peek();
         }
+
+        /// <summary>
+        /// Sets the caret to where it was before the previous tokenization operation.
+        /// </summary>
+        /// <returns></returns>
+        public void StepBack()
+        {
+            if (_breadCrumbs.Count == 0)
+            {
+                throw new KbParserException("Tokenization steps are out of range.");
+            }
+            _caret = _breadCrumbs.Pop();
+            throw new KbParserException("Tokenization steps are out of range.");
+        }
+
+        /// <summary>
+        /// Sets the caret to where it was before the previous n-tokenization operations.
+        /// </summary>
+        /// <returns></returns>
+        public void StepBack(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (_breadCrumbs.Count == 0)
+                {
+                    throw new KbParserException("Tokenization steps are out of range.");
+                }
+                _caret = _breadCrumbs.Pop();
+            }
+        }
+
+        #endregion
     }
 }

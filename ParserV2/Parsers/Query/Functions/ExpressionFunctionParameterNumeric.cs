@@ -1,4 +1,4 @@
-﻿namespace ParserV2.Parsers.Query.Expressions.Function
+﻿namespace ParserV2.Parsers.Query.Functions
 {
     /// <summary>
     /// This is function call parameter that contains either a single numeric value or an expression consisting solely of numeric operations.
@@ -6,7 +6,7 @@
     internal class ExpressionFunctionParameterNumeric : IExpressionFunctionParameter
     {
         public string Expression { get; set; }
-        public List<ReferencedFunction> ReferencedFunctions { get; private set; } = new();
+        public List<FunctionReference> ReferencedFunctions { get; private set; } = new();
 
         public ExpressionFunctionParameterNumeric(string value)
         {
