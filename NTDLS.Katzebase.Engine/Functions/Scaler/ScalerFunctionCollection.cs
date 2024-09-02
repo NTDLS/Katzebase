@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Shared;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
@@ -29,6 +30,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     _protypes.Add(ScalerFunction.Parse(prototype));
                 }
             }
+        }
+
+        public static bool TryGetFunction(string name, [NotNullWhen(true)] out ScalerFunction? function)
+        {
+            function = Prototypes.FirstOrDefault(o => o.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+            return function != null;
         }
 
         public static ScalerFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string?> parameters)

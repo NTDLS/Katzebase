@@ -697,6 +697,8 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
                 else
                 {
+                    //var ffff = StaticExpressionParser.ParseSelectFields(tokenizer);
+
                     result.SelectFields = StaticFunctionParsers.ParseQueryFields(tokenizer);
                     result.SelectFields.RepopulateLiterals(tokenizer);
                 }

@@ -25,6 +25,17 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         public bool IsEnd() => _position >= _text.Length;
         public KbInsensitiveDictionary<string?> UserParameters { get; set; }
 
+        public delegate bool NextCharDel(char c);
+        public bool IsNextCharacter(NextCharDel del)
+        {
+            var next = NextCharacter;
+            if (next == null)
+            {
+                return false;
+            }
+            return del((char)next);
+        }
+
         /// <summary>
         /// After the constructor is called, this will contain the same hash
         ///     for the same query regardless of string or numeric constants.
@@ -130,6 +141,95 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             return _text.Substring(_position).Trim();
         }
 
+        public bool TryGetNextIndexOf(char[] characters, out int index)
+        {
+            int restorePosition = _position;
+
+            index = -1;
+
+            for (; _position < _text.Length; _position++)
+            {
+                if (characters.Contains(_text[_position]))
+                {
+                    index = _position;
+                    break;
+                }
+            }
+
+            _position = restorePosition;
+            return index != -1;
+        }
+
+        public int GetNextIndexOf(char[] characters)
+        {
+            int restorePosition = _position;
+
+            for (; _position < _text.Length; _position++)
+            {
+                if (characters.Contains(_text[_position]))
+                {
+                    int index = _position;
+                    _position = restorePosition;
+                    return index;
+                }
+            }
+
+            _position = restorePosition;
+
+            throw new Exception($"Expected character not found [{string.Join("],[", characters)}].");
+        }
+
+
+        public string GetMatchingBraces()
+        {
+            return GetMatchingBraces('(', ')');
+        }
+
+        public string GetMatchingBraces(char open, char close)
+        {
+            int scope = 0;
+
+            SkipWhiteSpace();
+
+            if (_text[_position] != open)
+            {
+                throw new Exception($"Expected character not found [{open}].");
+            }
+
+            int startPosition = _position + 1;
+
+            for (; _position < _text.Length; _position++)
+            {
+                if (_text[_position] == open)
+                {
+                    scope++;
+                }
+                else if (_text[_position] == close)
+                {
+                    scope--;
+                }
+
+                if (scope == 0)
+                {
+                    var result = _text.Substring(startPosition, _position - startPosition).Trim();
+
+                    _position++;
+                    SkipWhiteSpace();
+
+                    return result;
+                }
+            }
+
+            throw new Exception($"Expected matching braces not found [{open}] and [{close}], ended at scope [{scope}].");
+        }
+
+        public string SubString(int endPosition)
+        {
+            var result = _text.Substring(_position, endPosition - _position);
+            _position = endPosition;
+            return result;
+        }
+
         public string GetNext(char[] delimiters)
         {
             var token = string.Empty;
@@ -158,6 +258,27 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             return token;
         }
 
+        /// <summary>
+        /// Returns the index of the first found of the given string. Throws exception if not found and does not affect the token position.
+        /// </summary>
+        /// <param name="strings"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public int GetNextIndexOf(string[] strings)
+        {
+            foreach (var str in strings)
+            {
+                int index = _text.IndexOf(str, _position, StringComparison.InvariantCultureIgnoreCase);
+                if (index >= 0)
+                {
+                    return index;
+                }
+            }
+
+            throw new Exception($"Expected string not found [{string.Join("],[", strings)}].");
+        }
+
+
         public string GetNext()
         {
             return GetNext(DefaultTokenDelimiters);
@@ -176,6 +297,8 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             {
                 throw new KbParserException("Invalid query. Found [" + token + "], expected numeric row limit.");
             }
+
+            SkipWhiteSpace();
 
             return value;
         }
@@ -210,14 +333,42 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             return result;
         }
 
+        /// <summary>
+        /// Skips to the next standard delimiter. Throws an exception if one is not found.
+        /// </summary>
         public void SkipNext()
         {
             GetNext(DefaultTokenDelimiters);
         }
 
-        public void SkipNext(char[] delimiters)
+        /// <summary>
+        /// Skips to the next given character. Throws an exception if one is not found.
+        /// </summary>
+        public void SkipNext(char character)
         {
-            GetNext(delimiters);
+            SkipNext([character]);
+        }
+
+        /// <summary>
+        /// Skips to the next given character. Throws an exception if one is not found.
+        /// </summary>
+        public void SkipNext(char[] characters)
+        {
+            for (; _position < _text.Length; _position++)
+            {
+                if (char.IsWhiteSpace(_text[_position]))
+                {
+                    continue;
+                }
+
+                if (characters.Contains(_text[_position]))
+                {
+                    _position++;
+                    return;
+                }
+            }
+
+            throw new Exception($"Expected character not found [{string.Join("],[", characters)}].");
         }
 
         public void SkipToEnd()
@@ -289,13 +440,17 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         {
             query = KbTextUtility.RemoveComments(query);
 
-            stringLiterals = SwapOutlStringLiterals(ref query);
+            stringLiterals = SwapOutStringLiterals(ref query);
 
             //We replace numeric constants and we want to make sure we have 
             //  no numbers next to any conditional operators before we do so.
             query = query.Replace("!=", "$$NotEqual$$");
             query = query.Replace(">=", "$$GreaterOrEqual$$");
             query = query.Replace("<=", "$$LesserOrEqual$$");
+
+            query = query.Replace("(", " ( ");
+            query = query.Replace(")", " ) ");
+
             query = query.Replace(">", " > ");
             query = query.Replace("<", " < ");
             query = query.Replace("=", " = ");
@@ -335,7 +490,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         /// </summary>
         /// <param name="query"></param>
         /// <returns></returns>
-        public static KbInsensitiveDictionary<string> SwapOutlStringLiterals(ref string query)
+        public static KbInsensitiveDictionary<string> SwapOutStringLiterals(ref string query)
         {
             var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
@@ -347,7 +502,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
                 if (match.Success)
                 {
-                    string key = $"$S_{literalKey++}$";
+                    string key = $"$s_{literalKey++}$";
                     mappings.Add(key, match.ToString());
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
@@ -373,7 +528,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 
                 if (match.Success)
                 {
-                    string key = $"%N_{literalKey++}%";
+                    string key = $"$n_{literalKey++}$";
                     mappings.Add(key, match.ToString());
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
