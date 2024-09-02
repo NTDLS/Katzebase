@@ -3,6 +3,5 @@
     internal interface IExpressionFunctionParameter
     {
         string Expression { get; set; }
-        List<FunctionReference> ReferencedFunctions { get; }
     }
 }

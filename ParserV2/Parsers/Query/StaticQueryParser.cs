@@ -97,13 +97,13 @@ namespace ParserV2.Parsers.Query
             if (IsNumericExpression(givenExpressionText))
             {
                 IQueryFieldExpression expression = new QueryFieldExpressionNumeric(givenExpressionText);
-                expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText, out _);
+                expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText);
                 return expression;
             }
             else
             {
                 IQueryFieldExpression expression = new QueryFieldExpressionString();
-                expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText, out _);
+                expression.Expression = ParseEvaluationRecursive(ref expression, givenExpressionText);
                 return expression;
             }
 
@@ -111,10 +111,8 @@ namespace ParserV2.Parsers.Query
         }
 
         private static string ParseEvaluationRecursive(ref IQueryFieldExpression rootExpressionEvaluation,
-            string givenExpressionText, out List<FunctionReference> outReferencedFunctions)
+            string givenExpressionText)
         {
-            outReferencedFunctions = new();
-
             Tokenizer tokenizer = new(givenExpressionText);
 
             StringBuilder buffer = new();
@@ -146,45 +144,34 @@ namespace ParserV2.Parsers.Query
 
                     var functionCallEvaluation = new QueryFieldExpressionFunction(function.Name, expressionKey, function.ReturnType);
 
-                    var referencedFunction = new FunctionReference(expressionKey, function.Name, function.ReturnType);
-                    rootExpressionEvaluation.ReferencedFunctions.Add(referencedFunction);
-                    outReferencedFunctions.Add(referencedFunction);
-
                     var expressionParameterTexts = functionParameterExpressions.ScopeSensitiveSplit();
                     foreach (var functionParameter in expressionParameterTexts)
                     {
-                        List<FunctionReference> referencedFunctions = new();
-
                         //Recursively process the function parameters.
-                        var resultingExpressionString = ParseEvaluationRecursive(ref rootExpressionEvaluation, functionParameter, out referencedFunctions);
+                        var resultingExpressionString = ParseEvaluationRecursive(ref rootExpressionEvaluation, functionParameter);
 
                         IExpressionFunctionParameter? parameter = null;
-
-                        functionCallEvaluation.ReferencedFunctions.AddRange(referencedFunctions);
 
                         if (resultingExpressionString.StartsWith("$p_") && resultingExpressionString.EndsWith('$'))
                         {
                             //This is a function call result placeholder.
                             parameter = new ExpressionFunctionParameterFunction(resultingExpressionString);
-                            parameter.ReferencedFunctions.AddRange(referencedFunctions);
                         }
                         else if (IsNumericExpression(resultingExpressionString, rootExpressionEvaluation))
                         {
                             //This expression contains only numeric placeholders.
                             parameter = new ExpressionFunctionParameterNumeric(resultingExpressionString);
-                            parameter.ReferencedFunctions.AddRange(referencedFunctions);
                         }
                         else
                         {
                             //This expression contains non-numeric placeholders.
                             parameter = new ExpressionFunctionParameterString(resultingExpressionString);
-                            parameter.ReferencedFunctions.AddRange(referencedFunctions);
                         }
 
                         functionCallEvaluation.Parameters.Add(parameter);
                     }
 
-                    rootExpressionEvaluation.FunctionCalls.Add(functionCallEvaluation);
+                    rootExpressionEvaluation.FunctionDependencies.Add(functionCallEvaluation);
                 }
                 else if (token.IsIdentifier())
                 {
@@ -237,9 +224,8 @@ namespace ParserV2.Parsers.Query
                     {
                         throw new KbParserException($"Function reference found without root expression: [{token}].");
                     }
-                    
-                    //var referencedFunction = rootExpressionEvaluation.ReferencedFunctions.Single(f => f.Key == token);
-                    var referencedFunction = rootExpressionEvaluation.FunctionCalls.Single(f => f.ExpressionKey == token);
+
+                    var referencedFunction = rootExpressionEvaluation.FunctionDependencies.Single(f => f.ExpressionKey == token);
 
                     if (referencedFunction.ReturnType != KbScalerFunctionParameterType.Numeric)
                     {

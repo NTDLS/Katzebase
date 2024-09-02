@@ -6,7 +6,6 @@
     internal class ExpressionFunctionParameterNumeric : IExpressionFunctionParameter
     {
         public string Expression { get; set; }
-        public List<FunctionReference> ReferencedFunctions { get; private set; } = new();
 
         public ExpressionFunctionParameterNumeric(string value)
         {

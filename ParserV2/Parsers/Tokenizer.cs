@@ -2,7 +2,6 @@
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using System.Text.RegularExpressions;
-using static ParserV2.StandIn.Types;
 
 namespace ParserV2.Parsers
 {
