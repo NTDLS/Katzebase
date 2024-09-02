@@ -15,18 +15,22 @@ namespace NTDLS.Katzebase.Engine.Query
 {
     internal class StaticQueryParser
     {
-        static public List<PreparedQuery> PrepareBatch(string queryText, KbInsensitiveDictionary<string?>? userParameters = null)
+
+        static public QueryBatch PrepareBatch(string queryText, KbInsensitiveDictionary<string>? userParameters = null)
         {
             var tokenizer = new Tokenizer(queryText, true);
 
             tokenizer.SetUserParameters(userParameters);
 
-            var queries = new List<PreparedQuery>();
+            var queries = new QueryBatch(tokenizer.UserParameters, tokenizer.StringLiterals, tokenizer.NumericLiterals);
 
             while (tokenizer.IsEnd() == false)
             {
-                queries.Add(PrepareNextQuery(tokenizer));
+                var preparedQuery = PrepareNextQuery(tokenizer);
+                queries.Add(preparedQuery);
             }
+
+            //queries.CoalescedLiterals
 
             return queries;
         }
@@ -45,15 +49,278 @@ namespace NTDLS.Katzebase.Engine.Query
 
             result.QueryType = queryType;
 
+            #region Select ---------------------------------------------------------------------------------------------
+
             if (queryType == QueryType.Select)
             {
                 if (tokenizer.TryIsNextToken("top"))
                 {
                     tokenizer.SkipNext();
+
+                    result.RowLimit = tokenizer.GetNext<int>();
                 }
 
-                var selectFields = StaticParser.ParseSelectFields(tokenizer);               
+                if (tokenizer.TryIsNextToken("*"))
+                {
+                    //Select all fields from all schemas.
+                    tokenizer.SkipNext();
+
+                    result.DynamicSchemaFieldFilter ??= new();
+                }
+                if (tokenizer.TryNextTokenEndsWith(".*")) //schemaName.*
+                {
+                    //Select all fields from given schema.
+                    //TODO: Looks like do we not support "select *" from than one schema.
+
+                    token = tokenizer.GetNext();
+
+                    result.DynamicSchemaFieldFilter ??= new();
+                    var starSchemaAlias = token.Substring(0, token.Length - 2); //Trim off the trailing .*
+                    result.DynamicSchemaFieldFilter.Add(starSchemaAlias.ToLowerInvariant());
+                }
+                else
+                {
+                    result.SelectFields = StaticParser.ParseSelectFields(tokenizer);
+                }
+
+                if (tokenizer.TryIsNextToken("into"))
+                {
+                    var selectIntoSchema = tokenizer.GetNext();
+                    result.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, selectIntoSchema);
+
+                    result.QueryType = QueryType.SelectInto;
+                }
+
+                if (tokenizer.TryIsNextToken("from"))
+                {
+                    tokenizer.SkipNext();
+                }
+                else
+                {
+                    throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'from'.");
+                }
+
+                /*
+
+
+                                string sourceSchema = tokenizer.GetNext();
+                                string schemaAlias = string.Empty;
+                                if (!TokenHelpers.IsValidIdentifier(sourceSchema, ['#', ':']))
+                                {
+                                    throw new KbParserException("Invalid query. Found '" + sourceSchema + "', expected: schema name.");
+                                }
+
+                                if (tokenizer.PeekNext().Is("as"))
+                                {
+                                    tokenizer.SkipNext();
+                                    schemaAlias = tokenizer.GetNext();
+                                }
+
+                                result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+
+                                while (tokenizer.PeekNext().Is("inner"))
+                                {
+                                    tokenizer.SkipNext();
+                                    if (tokenizer.PeekNext().Is("join") == false)
+                                    {
+                                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'join'.");
+                                    }
+                                    tokenizer.SkipNext();
+
+                                    string subSchemaSchema = tokenizer.GetNext();
+                                    string subSchemaAlias = string.Empty;
+                                    if (!TokenHelpers.IsValidIdentifier(subSchemaSchema, ':'))
+                                    {
+                                        throw new KbParserException("Invalid query. Found '" + subSchemaSchema + "', expected: schema name.");
+                                    }
+
+                                    if (tokenizer.PeekNext().Is("as"))
+                                    {
+                                        tokenizer.SkipNext();
+                                        subSchemaAlias = tokenizer.GetNext();
+                                    }
+                                    else
+                                    {
+                                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'as' (schema alias).");
+                                    }
+
+                                    token = tokenizer.GetNext();
+                                    if (!token.Is("on"))
+                                    {
+                                        throw new KbParserException("Invalid query. Found '" + token + "', expected 'on'.");
+                                    }
+
+                                    int joinConditionsStartPosition = tokenizer.Position;
+
+                                    while (true)
+                                    {
+                                        if (tokenizer.PeekNext().IsOneOf(["where", "order", "inner", ""]))
+                                        {
+                                            break;
+                                        }
+
+                                        if (tokenizer.IsNextStartOfQuery())
+                                        {
+                                            //Found start of next query.
+                                            break;
+                                        }
+
+                                        if (tokenizer.PeekNext().IsOneOf(["and", "or"]))
+                                        {
+                                            tokenizer.SkipNext();
+                                        }
+
+                                        var joinLeftCondition = tokenizer.GetNext();
+                                        if (!TokenHelpers.IsValidIdentifier(joinLeftCondition, '.'))
+                                        {
+                                            throw new KbParserException("Invalid query. Found '" + joinLeftCondition + "', expected: left side of join expression.");
+                                        }
+
+                                        int logicalQualifierPos = tokenizer.Position;
+
+                                        token = ConditionTokenizer.GetNext(tokenizer.Text, ref logicalQualifierPos);
+                                        if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
+                                        {
+                                            throw new KbParserException("Invalid query. Found '" + token + "], expected logical qualifier.");
+                                        }
+
+                                        tokenizer.SetPosition(logicalQualifierPos);
+
+                                        var joinRightCondition = tokenizer.GetNext();
+                                        if (!TokenHelpers.IsValidIdentifier(joinRightCondition, '.'))
+                                        {
+                                            throw new KbParserException("Invalid query. Found '" + joinRightCondition + "', expected: right side of join expression.");
+                                        }
+                                    }
+
+                                    var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Position - joinConditionsStartPosition).Trim();
+                                    var joinConditions = Conditions.Create(joinConditionsText, tokenizer, subSchemaAlias);
+
+                                    result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
+                                }
+
+                                if (tokenizer.PeekNext().Is("where"))
+                                {
+                                    tokenizer.SkipNext();
+
+                                    var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Position);
+                                    int parenthesisScope = 0;
+
+                                    while (true)
+                                    {
+                                        int previousTokenPosition = conditionTokenizer.Position;
+                                        var conditionToken = conditionTokenizer.PeekNext();
+
+                                        if (conditionToken == "(") parenthesisScope++;
+                                        if (conditionToken == ")") parenthesisScope--;
+
+                                        if (parenthesisScope < 0 || int.TryParse(conditionToken, out _) == false && Enum.TryParse(conditionToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                                        {
+                                            //We found the beginning of a new statement, break here.
+                                            conditionTokenizer.SetPosition(previousTokenPosition);
+                                            tokenizer.SetPosition(previousTokenPosition);
+                                            break;
+                                        }
+
+                                        conditionTokenizer.SkipNext();
+
+                                        if (((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.PeekNext().Is("by"))
+                                            || conditionToken == string.Empty)
+                                        {
+                                            //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
+                                            conditionTokenizer.SetPosition(previousTokenPosition);
+                                            tokenizer.SetPosition(previousTokenPosition);
+                                            break;
+                                        }
+                                    }
+
+                                    string conditionText = tokenizer.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
+                                    if (conditionText == string.Empty)
+                                    {
+                                        throw new KbParserException("Invalid query. Found '" + conditionText + "', expected: list of conditions.");
+                                    }
+
+                                    result.Conditions = Conditions.Create(conditionText, tokenizer);
+                                }
+
+                                if (tokenizer.PeekNext().Is("group"))
+                                {
+                                    tokenizer.SkipNext();
+
+                                    if (tokenizer.PeekNext().Is("by") == false)
+                                    {
+                                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'by'.");
+                                    }
+                                    tokenizer.SkipNext();
+
+                                    result.GroupFields = StaticFunctionParsers.ParseGroupByFields(tokenizer);
+                                }
+
+                                if (tokenizer.PeekNext().Is("order"))
+                                {
+                                    tokenizer.SkipNext();
+
+                                    if (tokenizer.PeekNext().Is("by") == false)
+                                    {
+                                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'by'.");
+                                    }
+                                    tokenizer.SkipNext();
+
+                                    var fields = new List<string>();
+
+                                    while (true)
+                                    {
+                                        int previousTokenPosition = tokenizer.Position;
+                                        var fieldToken = tokenizer.PeekNext();
+
+                                        if (int.TryParse(fieldToken, out _) == false && Enum.TryParse(fieldToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                                        {
+                                            //We found the beginning of a new statement, break here.
+                                            break;
+                                        }
+
+                                        tokenizer.SkipNext();
+
+                                        if (result.SortFields.Count > 0)
+                                        {
+                                            if (tokenizer.NextCharacter == ',')
+                                            {
+                                                tokenizer.SkipDelimiters();
+                                                fieldToken = tokenizer.GetNext();
+                                            }
+                                            else if (tokenizer.Position < tokenizer.Length) //We should have consumed the entire query at this point.
+                                            {
+                                                throw new KbParserException("Invalid query. Found '" + fieldToken + "', expected: ','.");
+                                            }
+                                        }
+
+                                        if (fieldToken == string.Empty)
+                                        {
+                                            if (tokenizer.Position < tokenizer.Length)
+                                            {
+                                                throw new KbParserException("Invalid query. Found '" + tokenizer.Remainder() + "', expected: end of statement.");
+                                            }
+
+                                            tokenizer.SetPosition(previousTokenPosition);
+                                            break;
+                                        }
+
+                                        var sortDirection = KbSortDirection.Ascending;
+                                        if (tokenizer.PeekNext().IsOneOf(["asc", "desc"]))
+                                        {
+                                            if (tokenizer.GetNext().Is("desc"))
+                                            {
+                                                sortDirection = KbSortDirection.Descending;
+                                            }
+                                        }
+
+                                        result.SortFields.Add(fieldToken, sortDirection);
+                                    }
+                                    */
             }
+
+            #endregion
+
 
             //Parser insanity. Keep these region tags at 100 characters! :D
 

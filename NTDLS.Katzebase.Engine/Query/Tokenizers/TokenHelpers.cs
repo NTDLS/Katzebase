@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 {
+    //[Obsolete("This class is deprecated. Use Parsers.Tokenizer instead.")]
     public class TokenHelpers
     {
         static public bool IsValidIdentifier(string text)

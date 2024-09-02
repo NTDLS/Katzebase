@@ -122,7 +122,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             var subConditionResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query);
 
-            foreach (var field in query.SelectFields)
+            foreach (var field in query.old_SelectFields)
             {
                 result.Fields.Add(new KbQueryField(field.Alias));
             }

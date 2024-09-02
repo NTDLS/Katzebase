@@ -98,7 +98,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             #region Grouping.
 
             if (operation.Results.Collection.Count != 0 && (query.GroupFields.Count != 0
-                || query.SelectFields.OfType<FunctionWithParams>()
+                || query.old_SelectFields.OfType<FunctionWithParams>()
                 .Any(o => o.FunctionType == FunctionParameterTypes.FunctionType.Aggregate))
                )
             {
@@ -126,9 +126,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                     var groupValues = group.Key.Split('\t');
 
-                    for (int i = 0; i < query.SelectFields.Count; i++)
+                    for (int i = 0; i < query.old_SelectFields.Count; i++)
                     {
-                        var field = query.SelectFields[i];
+                        var field = query.old_SelectFields[i];
 
                         if (field is FunctionDocumentFieldParameter functionDocumentFieldParameter)
                         {
@@ -203,7 +203,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 //If this was a "select *", we may have discovered different "fields" in different 
                 //  documents. We need to make sure that all rows have the same number of values.
 
-                int maxFieldCount = query.SelectFields.Count;
+                int maxFieldCount = query.old_SelectFields.Count;
                 foreach (var row in operation.Results.Collection)
                 {
                     if (row.Values.Count < maxFieldCount)
@@ -247,7 +247,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //Execute functions
             if (instance.Operation.Query.DynamicSchemaFieldFilter != null) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
-                lock (instance.Operation.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
+                lock (instance.Operation.Query.old_SelectFields) //We only have to lock this is we are dynamically building the select list.
                 {
                     ExecuteFunctions(instance.Operation.Transaction, instance.Operation, resultingRows);
                 }
@@ -273,7 +273,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         static void ExecuteFunctions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRowCollection resultingRows)
         {
-            foreach (var methodField in operation.Query.SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
+            foreach (var methodField in operation.Query.old_SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
             {
                 foreach (var row in resultingRows.Collection)
                 {
@@ -289,7 +289,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 }
             }
 
-            foreach (var methodField in operation.Query.SelectFields.OfType<FunctionExpression>())
+            foreach (var methodField in operation.Query.old_SelectFields.OfType<FunctionExpression>())
             {
                 foreach (var row in resultingRows.Collection)
                 {
@@ -345,7 +345,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //  in any of the constant values. Additionally, this is the "template row" that will be cloned
             //  for rows produced by any one-to-many relationships.
             //
-            foreach (var field in instance.Operation.Query.SelectFields.OfType<FunctionConstantParameter>())
+            foreach (var field in instance.Operation.Query.old_SelectFields.OfType<FunctionConstantParameter>())
             {
                 resultingRow.InsertValue(field.Alias, field.Ordinal, field.FinalValue);
             }
@@ -569,7 +569,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         {
             if (instance.Operation.Query.DynamicSchemaFieldFilter != null) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
-                lock (instance.Operation.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
+                lock (instance.Operation.Query.old_SelectFields) //We only have to lock this is we are dynamically building the select list.
                 {
                     FillInSchemaResultDocumentValuesAtomic(instance, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
                 }
@@ -603,13 +603,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                     foreach (var field in fields)
                     {
-                        if (instance.Operation.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
+                        if (instance.Operation.Query.old_SelectFields.OfType<FunctionDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
                         {
                             var newField = new FunctionDocumentFieldParameter(field.Key)
                             {
                                 Alias = field.Alias
                             };
-                            instance.Operation.Query.SelectFields.Add(newField);
+                            instance.Operation.Query.old_SelectFields.Add(newField);
                         }
                     }
                 }
@@ -621,7 +621,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             if (schemaKey != string.Empty)
             {
                 //Grab all of the selected fields from the document.
-                foreach (var field in instance.Operation.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
+                foreach (var field in instance.Operation.Query.old_SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
                 {
                     if (documentContent.TryGetValue(field.Value.Field, out string? documentValue) == false)
                     {
@@ -632,7 +632,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 }
             }
 
-            foreach (var field in instance.Operation.Query.SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
+            foreach (var field in instance.Operation.Query.old_SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
             {
                 if (documentContent.TryGetValue(field.Value.Field, out string? documentValue) == false)
                 {
@@ -645,7 +645,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.{UIDMarker}", documentPointer.Key);
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var field in instance.Operation.Query.SelectFields.AllDocumentFields.Where(o => o.Prefix == schemaKey).Distinct())
+            foreach (var field in instance.Operation.Query.old_SelectFields.AllDocumentFields.Where(o => o.Prefix == schemaKey).Distinct())
             {
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {

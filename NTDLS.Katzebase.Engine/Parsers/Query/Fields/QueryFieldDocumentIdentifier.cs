@@ -7,22 +7,36 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
     /// </summary>
     public class QueryFieldDocumentIdentifier : IQueryField
     {
+        /// <summary>
+        /// The qualified name of the document field, e.g. schemaName.fieldName, or just the field name if no schema was specified.
+        /// </summary>
+        public string QualifiedField { get; private set; }
+
+        /// <summary>
+        /// The alias of the schema for this document field.
+        /// </summary>
         public string SchemaAlias { get; private set; }
-        public string Name { get; private set; }
+
+        /// <summary>
+        /// The name of the document field.
+        /// </summary>
+        public string FieldName { get; private set; }
 
         public QueryFieldDocumentIdentifier(string value)
         {
-            var values = value.Split('.');
+            QualifiedField = value.Trim();
+
+            var values = QualifiedField.Split('.');
             if (values.Length == 1)
             {
                 SchemaAlias = string.Empty;
-                Name = values[0];
+                FieldName = values[0];
                 return;
             }
             else if (values.Length == 2)
             {
                 SchemaAlias = values[0];
-                Name = values[1];
+                FieldName = values[1];
                 return;
             }
 
@@ -33,14 +47,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
         {
             if (obj is QueryFieldDocumentIdentifier other)
             {
-                return SchemaAlias == other.SchemaAlias && Name == other.Name;
+                return SchemaAlias == other.SchemaAlias && FieldName == other.FieldName;
             }
             return false;
         }
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(SchemaAlias, Name);
+            return HashCode.Combine(SchemaAlias, FieldName);
         }
     }
 }

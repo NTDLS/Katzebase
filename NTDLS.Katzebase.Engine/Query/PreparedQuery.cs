@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -10,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Query
     /// </summary>
     internal class PreparedQuery
     {
-        internal enum QueryAttribute
+        public enum QueryAttribute
         {
             IndexName,
             IsUnique,
@@ -66,7 +67,9 @@ namespace NTDLS.Katzebase.Engine.Query
 
         public PrefixedFields CreateFields { get; set; } = new();
 
-        public FunctionParameterBaseCollection SelectFields = new();
+        public QueryFieldCollection SelectFields = new();
+
+        public FunctionParameterBaseCollection old_SelectFields = new();
         public FunctionParameterBase ProcedureCall = new();
         public FunctionParameterBaseCollection GroupFields { get; set; } = new();
         public SortFields SortFields { get; set; } = new();

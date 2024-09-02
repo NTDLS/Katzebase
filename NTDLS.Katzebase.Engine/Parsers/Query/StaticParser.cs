@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                 {
                     if (queryField is QueryFieldDocumentIdentifier queryFieldDocumentIdentifier)
                     {
-                        fieldAlias = queryFieldDocumentIdentifier.Name;
+                        fieldAlias = queryFieldDocumentIdentifier.FieldName;
                     }
                     else
                     {
@@ -162,6 +162,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(scalerFunction.Name, expressionKey, basicDataType);
 
                     ParseFunctionCallRecursive(ref rootQueryFieldExpression, givenExpressionText, queryFieldExpressionFunction, ref documentIdentifiers, tokenizer, positionBeforeToken, expressionKey);
+
+                    buffer.Append(expressionKey);
                 }
                 else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
                 {
@@ -170,6 +172,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(aggregateFunction.Name, expressionKey, BasicDataType.Numeric);
 
                     ParseFunctionCallRecursive(ref rootQueryFieldExpression, givenExpressionText, queryFieldExpressionFunction, ref documentIdentifiers, tokenizer, positionBeforeToken, expressionKey);
+
+                    buffer.Append(expressionKey);
                 }
                 else if (token.IsIdentifier())
                 {
@@ -181,15 +185,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                         //  looks like a function call but the function is undefined.
                         throw new KbParserException($"Function [{token}] is undefined.");
                     }
+
+                    buffer.Append(token);
                 }
                 else
                 {
                     buffer.Append(token);
                 }
-
             }
 
-            return givenExpressionText;
+            return buffer.ToString();
+            //return givenExpressionText;
         }
 
         /// <summary>

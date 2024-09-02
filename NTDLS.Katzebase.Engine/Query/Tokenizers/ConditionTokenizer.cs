@@ -9,6 +9,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
     /// <param name="query"></param>
     /// <param name="position"></param>
     /// <returns></returns>
+    //[Obsolete("This class is deprecated. Use Parsers.Tokenizer instead.")]
     public class ConditionTokenizer
     {
         static readonly char[] DefaultTokenDelimiters = [','];

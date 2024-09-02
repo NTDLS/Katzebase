@@ -6,6 +6,7 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Query.Tokenizers
 {
+    //[Obsolete("This class is deprecated. Use Parsers.Tokenizer instead.")]
     public class QueryTokenizer
     {
         static readonly char[] DefaultTokenDelimiters = [',', '='];
@@ -23,7 +24,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         public List<string> Breadcrumbs { get; private set; } = new();
         public char? NextCharacter => _position < _text.Length ? _text[_position] : null;
         public bool IsEnd() => _position >= _text.Length;
-        public KbInsensitiveDictionary<string?> UserParameters { get; set; }
+        public KbInsensitiveDictionary<string> UserParameters { get; set; }
 
         public delegate bool NextCharDel(char c);
         public bool IsNextCharacter(NextCharDel del)
@@ -45,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
         private readonly KbInsensitiveDictionary<string> _stringLiterals;
         private readonly KbInsensitiveDictionary<string> _numericLiterals;
 
-        public QueryTokenizer(string text, KbInsensitiveDictionary<string?>? userParameters = null)
+        public QueryTokenizer(string text, KbInsensitiveDictionary<string>? userParameters = null)
         {
             UserParameters = userParameters ?? new();
 
@@ -55,7 +56,7 @@ namespace NTDLS.Katzebase.Engine.Query.Tokenizers
             LogicHash = Library.Helpers.GetSHA256Hash(_text);
         }
 
-        public QueryTokenizer(string text, int startPosition, KbInsensitiveDictionary<string?>? userParameters = null)
+        public QueryTokenizer(string text, int startPosition, KbInsensitiveDictionary<string>? userParameters = null)
         {
             UserParameters = userParameters ?? new();
 
