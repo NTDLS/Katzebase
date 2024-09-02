@@ -250,7 +250,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         private static bool IsSingleToken(string token)
         {
-            if (token.StartsWith('$') == token.EndsWith('$') && token.Length >= 5) //Example: $n_0$, $x_0$, $p_0$
+            if (token.StartsWith('$') == token.EndsWith('$') && token.Length >= 5) //Example: $n_0$, $x_0$
             {
                 if (char.IsLetter(token[1]) && token[2] == '_')
                 {

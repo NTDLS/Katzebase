@@ -5,6 +5,7 @@ namespace NTDLS.Katzebase.Engine.Query
     internal class QueryBatch : List<PreparedQuery>
     {
         public KbInsensitiveDictionary<string> UserParameters { get; set; } = new();
+
         public KbInsensitiveDictionary<string> StringLiterals { get; set; } = new();
         public KbInsensitiveDictionary<string> NumericLiterals { get; set; } = new();
 
@@ -18,10 +19,8 @@ namespace NTDLS.Katzebase.Engine.Query
                 {
                     _coalescedLiterals = new KbInsensitiveDictionary<string>();
 
-                    foreach (var item in UserParameters)
-                    {
-                        CoalescedLiterals.Add(item.Key, item.Value);
-                    }
+                    //We do not include UserParameters in this list because they are swapped
+                    //  out for numeric or string tokens by Tokenizer.InterpolateUserVariables.
 
                     foreach (var item in StringLiterals)
                     {

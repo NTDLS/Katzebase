@@ -25,9 +25,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
          * 
          * $n_0% = numeric
          * $s_0% = string
-         * $p_0% = parameter (user variable)
          * $x_0% = expression (result from a function call).
-         * 
          */
 
         #endregion
@@ -61,10 +59,11 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <param name="optimizeForTokenization">Whether the query text should be optimized for tokenization.
         /// This only needs to be done once per query text. For example, if you create another Tokenizer
         /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
-        public Tokenizer(string text, char[] standardTokenDelimiters, bool optimizeForTokenization = false)
+        public Tokenizer(string text, char[] standardTokenDelimiters, bool optimizeForTokenization = false, KbInsensitiveDictionary<string>? userParameters = null)
         {
             _text = new string(text.ToCharArray());
             _standardTokenDelimiters = standardTokenDelimiters;
+            UserParameters = userParameters ?? new();
 
             ValidateParentheses();
 
@@ -81,10 +80,12 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <param name="optimizeForTokenization">Whether the query text should be optimized for tokenization.
         /// This only needs to be done once per query text. For example, if you create another Tokenizer
         /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
-        public Tokenizer(string text, bool optimizeForTokenization = false)
+        public Tokenizer(string text, bool optimizeForTokenization = false, KbInsensitiveDictionary<string>? userParameters = null)
         {
             _text = new string(text.ToCharArray());
             _standardTokenDelimiters = Array.Empty<char>();
+            UserParameters = userParameters ?? new();
+
             ValidateParentheses();
 
             if (optimizeForTokenization)
@@ -125,11 +126,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
         #region Swap in/out literals.
 
-        public void SetUserParameters(KbInsensitiveDictionary<string>? userParameters)
-        {
-            UserParameters = userParameters ?? new();
-        }
-
         public KbInsensitiveDictionary<string> UserParameters { get; private set; } = new();
         public KbInsensitiveDictionary<string> StringLiterals { get; private set; } = new();
         public KbInsensitiveDictionary<string> NumericLiterals { get; private set; } = new();
@@ -137,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <summary>
         /// Replaces text literals with tokens to prepare the query for parsing.
         /// </summary>
-        private static KbInsensitiveDictionary<string> SwapOutStringLiterals(ref string query)
+        private KbInsensitiveDictionary<string> SwapOutStringLiterals(ref string query)
         {
             var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
@@ -152,7 +148,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
                     string key = $"$s_{literalKey++}$";
                     mappings.Add(key, match.ToString());
 
-                    query = NTDLS.Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                    query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
                 else
                 {
@@ -166,7 +162,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <summary>
         /// Replaces numeric literals with tokens to prepare the query for parsing.
         /// </summary>
-        private static KbInsensitiveDictionary<string> SwapOutNumericLiterals(ref string query)
+        private KbInsensitiveDictionary<string> SwapOutNumericLiterals(ref string query)
         {
             var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex(@"(?<=\s|^)(?:\d+\.?\d*|\.\d+)(?=\s|$)");
@@ -181,7 +177,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
                     string key = $"$n_{literalKey++}$";
                     mappings.Add(key, match.ToString());
 
-                    query = NTDLS.Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                    query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
                 else
                 {
@@ -195,7 +191,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <summary>
         /// Replaces numeric literals with tokens to prepare the query for parsing.
         /// </summary>
-        private static KbInsensitiveDictionary<string> SwapOutUserVariable(ref string query)
+        private KbInsensitiveDictionary<string> InterpolateUserVariables(ref string query)
         {
             var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex(@"(?<=\s|^)@\w+(?=\s|$)");  // Updated regex to match @ followed by alphanumeric characters
@@ -207,10 +203,19 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
                 if (match.Success)
                 {
-                    string key = $"$p_{literalKey++}$";
-                    mappings.Add(key, match.ToString());
+                    string key;
 
-                    query = NTDLS.Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                    if (double.TryParse(match.ToString(), out _))
+                    {
+                        key = $"$n_{literalKey++}$";
+                        mappings.Add(key, match.ToString());
+                    }
+                    else
+                    {
+                        key = $"$s_{literalKey++}$";
+                    }
+
+                    query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
                 else
                 {
@@ -252,7 +257,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
             text = text.Replace("&&", " && ");
 
             NumericLiterals = SwapOutNumericLiterals(ref text);
-            UserParameters = SwapOutUserVariable(ref text);
+            UserParameters = InterpolateUserVariables(ref text);
 
             int length;
             do

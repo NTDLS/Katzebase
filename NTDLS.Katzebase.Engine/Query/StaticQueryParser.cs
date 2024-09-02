@@ -16,9 +16,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
         static public QueryBatch PrepareBatch(string queryText, KbInsensitiveDictionary<string>? userParameters = null)
         {
-            var tokenizer = new Tokenizer(queryText, true);
-
-            tokenizer.SetUserParameters(userParameters);
+            var tokenizer = new Tokenizer(queryText, true, userParameters);
 
             var queryBatch = new QueryBatch(tokenizer.UserParameters, tokenizer.StringLiterals, tokenizer.NumericLiterals);
 
@@ -27,8 +25,6 @@ namespace NTDLS.Katzebase.Engine.Query
                 var preparedQuery = PrepareNextQuery(queryBatch, tokenizer);
                 queryBatch.Add(preparedQuery);
             }
-
-            //queries.CoalescedLiterals
 
             return queryBatch;
         }
@@ -51,10 +47,16 @@ namespace NTDLS.Katzebase.Engine.Query
 
             if (queryType == QueryType.Select)
             {
+                #region Parse "TOP n".
+
                 if (tokenizer.TryIsNextToken("top"))
                 {
                     result.RowLimit = tokenizer.GetNext<int>();
                 }
+
+                #endregion
+
+                #region Parse field list.
 
                 if (tokenizer.TryIsNextToken("*"))
                 {
@@ -77,6 +79,10 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.SelectFields = StaticParser.ParseSelectFields(tokenizer);
                 }
 
+                #endregion
+
+                #region Parse "into".
+
                 if (tokenizer.TryIsNextToken("into"))
                 {
                     var selectIntoSchema = tokenizer.GetNext();
@@ -84,6 +90,10 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     result.QueryType = QueryType.SelectInto;
                 }
+
+                #endregion
+
+                #region Parse primary schema.
 
                 if (!tokenizer.TryIsNextToken("from"))
                 {
@@ -103,6 +113,10 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
 
                 result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+
+                #endregion
+
+                #region Parse joins.
 
                 while (tokenizer.TryIsNextToken("inner"))
                 {
@@ -183,6 +197,10 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
 
+                #endregion
+
+                #region Parse "where" clause.
+
                 if (tokenizer.TryIsNextToken("where"))
                 {
                     //Look for tokens that would mean the end of the where clause
@@ -205,6 +223,10 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.Conditions = Conditions.Create(queryBatch, conditionText, tokenizer);
                 }
 
+                #endregion
+
+                #region Parse "group by".
+
                 if (tokenizer.TryIsNextToken("group"))
                 {
                     if (tokenizer.TryIsNextToken("by") == false)
@@ -215,6 +237,10 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     result.GroupFields = StaticFunctionParsers.ParseGroupByFields(tokenizer);
                 }
+
+                #endregion
+
+                #region Parse "order by".
 
                 if (tokenizer.TryIsNextToken("order"))
                 {
@@ -270,7 +296,10 @@ namespace NTDLS.Katzebase.Engine.Query
                         result.SortFields.Add(fieldToken, sortDirection);
                     }
                 }
+
+                #endregion
             }
+
             #endregion
 
             #region Reimplement.
