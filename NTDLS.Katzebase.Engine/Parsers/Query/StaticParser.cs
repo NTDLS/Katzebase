@@ -9,7 +9,7 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query
 {
-    public static class StaticQueryParser
+    public static class StaticParser
     {
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.
@@ -43,6 +43,19 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                 var aliasRemovedFieldText = (aliasIndex > 0 ? field.Substring(0, aliasIndex) : field).Trim();
 
                 var queryField = ParseField(aliasRemovedFieldText, queryTokenizer, ref documentIdentifiers);
+
+                //If the query didn't provide an alias, figure one out.
+                if (string.IsNullOrWhiteSpace(fieldAlias))
+                {
+                    if (queryField is QueryFieldDocumentIdentifier queryFieldDocumentIdentifier)
+                    {
+                        fieldAlias = queryFieldDocumentIdentifier.Name;
+                    }
+                    else
+                    {
+                        fieldAlias = queryFields.GetNextFieldAlias();
+                    }
+                }
 
                 queryFields.Add(new QueryField(fieldAlias, queryField));
             }

@@ -81,6 +81,5 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// </summary>
         public static bool IsMathematicalOperator(this char c)
             => _mathematicalCharacters.Contains(c);
-
     }
 }

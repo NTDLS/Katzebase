@@ -26,6 +26,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         private string _text;
         private int _caret = 0;
         private readonly char[] _standardTokenDelimiters;
+        private KbInsensitiveDictionary<string?>? _userParameters = null;
 
         #endregion
 
@@ -109,6 +110,11 @@ namespace NTDLS.Katzebase.Engine.Parsers
         }
 
         #endregion
+
+        public void SetUserParameters(KbInsensitiveDictionary<string?>? userParameters)
+        {
+            _userParameters = userParameters;
+        }
 
         #region Swap in/out literals.
 

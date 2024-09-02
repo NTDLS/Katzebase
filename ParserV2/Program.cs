@@ -26,7 +26,7 @@ namespace ParserV2
 
             var token = tokenizer.GetNext();
 
-            if (StaticQueryParser.IsNextStartOfQuery(token, out var queryType) == false)
+            if (StaticParser.IsNextStartOfQuery(token, out var queryType) == false)
             {
                 string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
                 throw new KbParserException($"Invalid query. Found '{tokenizer.InertGetNext()}', expected: '{acceptableValues}'.");
@@ -39,10 +39,10 @@ namespace ParserV2
                     tokenizer.SkipNext();
                 }
 
-                var selectFields = StaticQueryParser.ParseSelectFields(tokenizer);
+                var selectFields = StaticParser.ParseSelectFields(tokenizer);
                 return selectFields;
             }
-            else if (queryType == QueryType.Select)
+            else if (queryType == QueryType.Insert)
             {
                 //var updateFields = StaticQueryParser.ParseUpdateFields(tokenizer);
                 //return updateFields;
