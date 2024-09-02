@@ -3,6 +3,8 @@ using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Functions;
 using NTDLS.Katzebase.Engine.Functions.Procedures;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
+using NTDLS.Katzebase.Engine.Parsers;
+using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using NTDLS.Katzebase.Shared;
@@ -15,7 +17,9 @@ namespace NTDLS.Katzebase.Engine.Query
     {
         static public List<PreparedQuery> PrepareBatch(string queryText, KbInsensitiveDictionary<string?>? userParameters = null)
         {
-            var tokenizer = new QueryTokenizer(queryText, userParameters);
+            var tokenizer = new Tokenizer(queryText, true);
+
+            tokenizer.SetUserParameters(userParameters);
 
             var queries = new List<PreparedQuery>();
 
@@ -27,23 +31,35 @@ namespace NTDLS.Katzebase.Engine.Query
             return queries;
         }
 
-        static public PreparedQuery PrepareNextQuery(QueryTokenizer tokenizer)
+        static public PreparedQuery PrepareNextQuery(Tokenizer tokenizer)
         {
             var result = new PreparedQuery();
 
-            string token;
+            string token = tokenizer.GetNext();
 
-            if (tokenizer.IsNextStartOfQuery(out var queryType) == false)
+            if (StaticParser.IsNextStartOfQuery(token, out var queryType) == false)
             {
                 string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
-                throw new KbParserException($"Invalid query. Found '{tokenizer.PeekNext()}', expected: '{acceptableValues}'.");
+                throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
             }
-
-            tokenizer.SkipNext();
 
             result.QueryType = queryType;
 
+            if (queryType == QueryType.Select)
+            {
+                if (tokenizer.TryIsNextToken("top"))
+                {
+                    tokenizer.SkipNext();
+                }
+
+                var selectFields = StaticParser.ParseSelectFields(tokenizer);               
+            }
+
             //Parser insanity. Keep these region tags at 100 characters! :D
+
+            #region Reimplement.
+
+            /*
 
             #region Exec -----------------------------------------------------------------------------------------------
             if (queryType == QueryType.Exec)
@@ -697,6 +713,9 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
                 else
                 {
+                    var selectFields = StaticParser.ParseSelectFields(tokenizer);
+
+
                     result.SelectFields = StaticFunctionParsers.ParseQueryFields(tokenizer);
                     result.SelectFields.RepopulateLiterals(tokenizer);
                 }
@@ -1142,6 +1161,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
             }
             #endregion
+            */
 
             #region Cleanup and Validation.
 
@@ -1160,6 +1180,8 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
             }
             */
+
+            /*
 
             foreach (var field in result.GroupFields)
             {
@@ -1272,6 +1294,10 @@ namespace NTDLS.Katzebase.Engine.Query
                     throw new KbParserException("Queries with dynamic field-sets cannot also contain explicit fields.");
                 }
             }
+
+            */
+
+            #endregion
 
             #endregion
 
