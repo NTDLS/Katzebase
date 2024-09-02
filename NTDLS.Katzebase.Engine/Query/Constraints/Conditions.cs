@@ -1,6 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Interactions.Management;
+using NTDLS.Katzebase.Engine.Parsers;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using NTDLS.Katzebase.Shared;
 using System.Text;
@@ -22,6 +23,8 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         private int _lastConditionKey = 0;
 
         public string? Hash { get; private set; }
+
+        public QueryBatch QueryBatch { get; private set; }
 
         public List<SubCondition> SubConditions { get; private set; } = new();
 
@@ -51,6 +54,12 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public IEnumerable<SubCondition> NonRootSubConditions
             => SubConditions.Where(o => !o.IsRoot);
 
+
+        public Conditions(QueryBatch queryBatch)
+        {
+            QueryBatch = queryBatch;
+        }
+
         /// <summary>
         /// Gets a sub-condition with the given key.
         /// </summary>
@@ -59,9 +68,9 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public SubCondition SubConditionFromExpressionKey(string key)
             => SubConditions.First(o => o.Key == key);
 
-        public static Conditions Create(string conditionsText, QueryTokenizer tokenizer, string leftHandAliasOfJoin = "")
+        public static Conditions Create(QueryBatch queryBatch, string conditionsText, Tokenizer tokenizer, string leftHandAliasOfJoin = "")
         {
-            var conditions = new Conditions();
+            var conditions = new Conditions(queryBatch);
 
             conditions.Parse(conditionsText.ToLowerInvariant(), tokenizer, leftHandAliasOfJoin);
 
@@ -77,7 +86,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         /// <param name="stringLiterals">Collection of string literals that were stripped from the query text.</param>
         /// <param name="numericLiterals">Collection of numeric literals that were stripped from the query text.</param>
         /// <param name="leftHandAliasOfJoin">When parsing a JOIN, this is the schema that we are joining to.</param>
-        private void Parse(string givenConditionText, QueryTokenizer tokenizer, string leftHandAliasOfJoin)
+        private void Parse(string givenConditionText, Tokenizer tokenizer, string leftHandAliasOfJoin)
         {
             //We parse by parentheses so wrap the condition in them if it is not already.
             if (givenConditionText.StartsWith('(') == false || givenConditionText.StartsWith(')') == false)
@@ -274,7 +283,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return str;
         }
 
-        private void AddSubCondition(QueryTokenizer queryTokenizer, SubCondition subCondition, string leftHandAliasOfJoin)
+        private void AddSubCondition(Tokenizer Tokenizer, SubCondition subCondition, string leftHandAliasOfJoin)
         {
             var logicalConnector = LogicalConnector.None;
 
@@ -327,7 +336,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 {
                     string conditionPlaceholder = NextConditionKey();
 
-                    string left = queryTokenizer.GetLiteralValue(token);
+                    string left = QueryBatch.GetLiteralValue(token);
 
                     //Logical Qualifier
                     token = tokenizer.GetNext().ToLowerInvariant();
@@ -339,7 +348,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     var logicalQualifier = ConditionTokenizer.ParseLogicalQualifier(token);
 
                     //Righthand value:
-                    string right = queryTokenizer.GetLiteralValue(tokenizer.GetNext());
+                    string right = QueryBatch.GetLiteralValue(tokenizer.GetNext());
 
                     int endPosition = tokenizer.Position;
 
@@ -353,7 +362,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                         var rightRange = tokenizer.GetNext().ToLowerInvariant();
 
-                        if (queryTokenizer.NumericLiterals.TryGetValue(rightRange, out string? rightRangeNumeric))
+                        if (Tokenizer.NumericLiterals.TryGetValue(rightRange, out string? rightRangeNumeric))
                         {
                             rightRange = rightRangeNumeric.ToLowerInvariant();
                         }
@@ -510,7 +519,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
         public Conditions Clone()
         {
-            var clone = new Conditions()
+            var clone = new Conditions(QueryBatch)
             {
                 RootKey = RootKey,
                 Expression = Expression,

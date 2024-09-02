@@ -26,7 +26,7 @@ namespace ParserV2
 
             var token = tokenizer.GetNext();
 
-            if (StaticParser.IsNextStartOfQuery(token, out var queryType) == false)
+            if (StaticParser.IsStartOfQuery(token, out var queryType) == false)
             {
                 string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
                 throw new KbParserException($"Invalid query. Found '{tokenizer.InertGetNext()}', expected: '{acceptableValues}'.");

@@ -56,13 +56,13 @@ namespace NTDLS.Katzebase.Engine.Query
         ///     which schemas we pull fields from.
         /// </summary>
         public List<string>? DynamicSchemaFieldFilter { get; set; }
-
+        public QueryBatch QueryBatch { get; private set; }
         public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
         public List<QuerySchema> Schemas { get; private set; } = new();
         public int RowLimit { get; set; }
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }
-        public Conditions Conditions { get; set; } = new();
+        public Conditions Conditions { get; set; }
         //public PrefixedFields SelectFields { get; set; } = new();
 
         public PrefixedFields CreateFields { get; set; } = new();
@@ -86,6 +86,12 @@ namespace NTDLS.Katzebase.Engine.Query
         public NamedFunctionParameterBaseCollection UpdateValues { get; set; } = new();
 
         public List<KbNameValuePair<string, string>> VariableValues { get; set; } = new();
+
+        public PreparedQuery(QueryBatch queryBatch)
+        {
+            QueryBatch = queryBatch;
+            Conditions = new Conditions(queryBatch);
+        }
 
         public T Attribute<T>(QueryAttribute attribute, T defaultValue)
         {

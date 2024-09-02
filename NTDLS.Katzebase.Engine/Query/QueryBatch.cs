@@ -43,5 +43,14 @@ namespace NTDLS.Katzebase.Engine.Query
             StringLiterals = stringLiterals;
             NumericLiterals = numericLiterals;
         }
+
+        public string GetLiteralValue(string value)
+        {
+            if (CoalescedLiterals.TryGetValue(value, out string? stringLiteral))
+            {
+                return stringLiteral;
+            }
+            else return value;
+        }
     }
 }

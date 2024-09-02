@@ -13,6 +13,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         private Stack<int> _breadCrumbs = new();
 
         #region Rules and Convention.
+
         /*
          * Public functions that DO NOT modify the internal caret should be prefixed with "Inert".
          * Public functions that DO NOT throw exceptions should be prefixed with "Try".
@@ -44,7 +45,9 @@ namespace NTDLS.Katzebase.Engine.Parsers
         public char? NextCharacter => _caret < _text.Length ? _text[_caret] : null;
         public bool IsEnd() => _caret >= _text.Length;
         public char[] TokenDelimiters => _standardTokenDelimiters;
-        public int CaretPosition => _caret;
+        public int Caret => _caret;
+        public int Length => _text.Length;
+        public string Text => _text;
 
         #endregion
 
@@ -309,6 +312,33 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
         #endregion
 
+        #region IsNextcharacter
+
+        public bool IsNextCharacter(char character)
+        {
+            RecordBreadcrumb();
+            if (NextCharacter == character)
+            {
+                _caret++;
+                SkipWhiteSpace();
+                return true;
+            }
+            return false;
+        }
+
+        public bool InertIsNextCharacter(char character)
+        {
+            if (NextCharacter == character)
+            {
+                SkipWhiteSpace();
+                return true;
+            }
+            return false;
+        }
+
+        #endregion
+
+
         #region Contains.
 
         /// <summary>
@@ -341,8 +371,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// </summary>
         public bool InertTryGetNextIndexOf(char[] characters, out int position)
         {
-            int restorePosition = _caret;
-
             for (int i = _caret; i < _text.Length; i++)
             {
                 if (characters.Contains(_text[i]))
@@ -402,13 +430,26 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 return index;
             }
 
-
             throw new Exception($"Expected string not found [{string.Join("],[", givenString)}].");
         }
 
         #endregion
 
         #region Substring.
+
+        /// <summary>
+        /// Gets the remainder of the tokenizer text from the internal caret position to the given absolute position.
+        /// </summary>
+        public string SubString()
+        {
+            RecordBreadcrumb();
+
+            var result = _text.Substring(_caret);
+            _caret = _text.Length;
+
+            SkipWhiteSpace();
+            return result;
+        }
 
         /// <summary>
         /// Gets the a substring from tokenizer from the internal caret position to the given absolute position.
@@ -457,6 +498,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         #region IsNextToken.
 
         public delegate bool TryNextTokenComparerProc(string peekedToken, string givenToken);
+        public delegate bool TryNextTokenProc(string peekedToken);
 
         #region TryNextTokenEndsWith
 
@@ -588,6 +630,157 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
         #endregion
 
+        #region IsNextToken.
+
+        public delegate bool InertTryNextTokenComparerProc(string peekedToken, string givenToken);
+
+        #region InertTryNextTokenEndsWith
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the given delimiters.
+        /// </summary>
+        public bool InertTryNextTokenEndsWith(string[] givenTokens, char[] delimiters)
+            => InertTryCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters);
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the standard delimiters.
+        /// </summary>
+        public bool InertTryNextTokenEndsWith(string[] givenTokens)
+            => InertTryCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters);
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the given delimiters.
+        /// </summary>
+        public bool InertTryNextTokenEndsWith(string givenToken, char[] delimiters)
+            => InertTryCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters);
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the standard delimiters.
+        /// </summary>
+        public bool InertTryNextTokenEndsWith(string givenToken)
+            => InertTryCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters);
+
+        #endregion
+
+        #region InertTryNextTokenStartsWith
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the given delimiters.
+        /// </summary>
+        public bool InertTryNextTokenStartsWith(string[] givenTokens, char[] delimiters)
+            => InertTryCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters);
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the standard delimiters.
+        /// </summary>
+        public bool InertTryNextTokenStartsWith(string[] givenTokens)
+            => InertTryCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters);
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the given delimiters.
+        /// </summary>
+        public bool InertTryNextTokenStartsWith(string givenToken, char[] delimiters)
+            => InertTryCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters);
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the standard delimiters.
+        /// </summary>
+        public bool InertTryNextTokenStartsWith(string givenToken)
+            => InertTryCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters);
+
+        #endregion
+
+        #region InertTryNextTokenContains
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the given delimiters.
+        /// </summary>
+        public bool InertTryNextTokenContains(string[] givenTokens, char[] delimiters)
+            => InertTryCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters);
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the standard delimiters.
+        /// </summary>
+        public bool InertTryNextTokenContains(string[] givenTokens)
+            => InertTryCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters);
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the given delimiters.
+        /// </summary>
+        public bool InertTryNextTokenContains(string givenToken, char[] delimiters)
+            => InertTryCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters);
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the standard delimiters.
+        /// </summary>
+        public bool InertTryNextTokenContains(string givenToken)
+            => InertTryCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters);
+
+        #endregion
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the given delimiters.
+        /// </summary>
+        public bool InertTryCompareNextToken(TryNextTokenProc comparer, char[] delimiters)
+        {
+            var token = InertGetNext(delimiters);
+            return comparer(token);
+        }
+
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the standard delimiters.
+        /// </summary>
+        public bool InertTryCompareNextToken(TryNextTokenProc comparer)
+        {
+            var token = InertGetNext();
+            return comparer(token);
+        }
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the given delimiters.
+        /// </summary>
+        public bool InertTryCompareNextToken(TryNextTokenComparerProc comparer, string[] givenTokens, char[] delimiters)
+        {
+            var token = InertGetNext(delimiters);
+
+            foreach (var givenToken in givenTokens)
+            {
+                if (comparer(token, givenToken))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the given delimiters.
+        /// </summary>
+        public bool InertTryIsNextToken(string[] givenTokens, char[] delimiters)
+            => InertTryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters);
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the standard delimiters.
+        /// </summary>
+        public bool InertTryIsNextToken(string[] givenTokens)
+            => InertTryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters);
+
+        /// <summary>
+        /// Returns true if the next token matches the given token, using the standard delimiters.
+        /// </summary>
+        public bool InertTryIsNextToken(string givenToken)
+            => InertTryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters);
+
+        /// <summary>
+        /// Returns true if the next token matches the given token, using the given delimiters.
+        /// </summary>
+        public bool InertTryIsNextToken(string givenToken, char[] delimiters)
+            => InertTryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters);
+
+        #endregion
+
         #region GetNext.
 
         /// <summary>
@@ -639,11 +832,24 @@ namespace NTDLS.Katzebase.Engine.Parsers
             return token.Trim();
         }
 
+        #endregion
+
+        #region InertGetNext.
+
+        /// <summary>
+        /// Gets the next token using the standard delimiters.
+        /// </summary>
+        public T InertGetNext<T>()
+            => Helpers.Converters.ConvertTo<T>(InertGetNext(_standardTokenDelimiters));
+
+        public T InertGetNext<T>(char[] delimiters)
+            => Helpers.Converters.ConvertTo<T>(InertGetNext(delimiters));
+
         /// <summary>
         /// Returns the next token without moving the caret.
         /// </summary>
         public string InertGetNext()
-                => InertGetNext(_standardTokenDelimiters);
+            => InertGetNext(_standardTokenDelimiters);
 
         /// <summary>
         /// Returns the next token without moving the caret.
@@ -886,6 +1092,19 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 }
                 _caret = _breadCrumbs.Pop();
             }
+        }
+
+        public void SetCaret(int position)
+        {
+            if (position > _text.Length)
+            {
+                throw new KbParserException("Tokenization caret moved past end of text.");
+            }
+            else if (position < 0)
+            {
+                throw new KbParserException("Tokenization caret moved past beginning of text.");
+            }
+            _caret = position;
         }
 
         #endregion

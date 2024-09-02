@@ -22,26 +22,26 @@ namespace NTDLS.Katzebase.Engine.Query
 
             tokenizer.SetUserParameters(userParameters);
 
-            var queries = new QueryBatch(tokenizer.UserParameters, tokenizer.StringLiterals, tokenizer.NumericLiterals);
+            var queryBatch = new QueryBatch(tokenizer.UserParameters, tokenizer.StringLiterals, tokenizer.NumericLiterals);
 
             while (tokenizer.IsEnd() == false)
             {
-                var preparedQuery = PrepareNextQuery(tokenizer);
-                queries.Add(preparedQuery);
+                var preparedQuery = PrepareNextQuery(queryBatch, tokenizer);
+                queryBatch.Add(preparedQuery);
             }
 
             //queries.CoalescedLiterals
 
-            return queries;
+            return queryBatch;
         }
 
-        static public PreparedQuery PrepareNextQuery(Tokenizer tokenizer)
+        static public PreparedQuery PrepareNextQuery(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var result = new PreparedQuery();
+            var result = new PreparedQuery(queryBatch);
 
             string token = tokenizer.GetNext();
 
-            if (StaticParser.IsNextStartOfQuery(token, out var queryType) == false)
+            if (StaticParser.IsStartOfQuery(token, out var queryType) == false)
             {
                 string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
@@ -55,16 +55,12 @@ namespace NTDLS.Katzebase.Engine.Query
             {
                 if (tokenizer.TryIsNextToken("top"))
                 {
-                    tokenizer.SkipNext();
-
                     result.RowLimit = tokenizer.GetNext<int>();
                 }
 
                 if (tokenizer.TryIsNextToken("*"))
                 {
                     //Select all fields from all schemas.
-                    tokenizer.SkipNext();
-
                     result.DynamicSchemaFieldFilter ??= new();
                 }
                 if (tokenizer.TryNextTokenEndsWith(".*")) //schemaName.*
@@ -91,243 +87,223 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.QueryType = QueryType.SelectInto;
                 }
 
-                if (tokenizer.TryIsNextToken("from"))
-                {
-                    tokenizer.SkipNext();
-                }
-                else
+                if (!tokenizer.TryIsNextToken("from"))
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'from'.");
                 }
 
-                /*
+                string sourceSchema = tokenizer.GetNext();
+                string schemaAlias = string.Empty;
+                if (!TokenHelpers.IsValidIdentifier(sourceSchema, ['#', ':']))
+                {
+                    throw new KbParserException("Invalid query. Found '" + sourceSchema + "', expected: schema name.");
+                }
+
+                if (tokenizer.TryIsNextToken("as"))
+                {
+                    schemaAlias = tokenizer.GetNext();
+                }
+
+                result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+
+                while (tokenizer.TryIsNextToken("inner"))
+                {
+                    if (tokenizer.TryIsNextToken("join") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'join'.");
+                    }
+
+                    string subSchemaSchema = tokenizer.GetNext();
+                    string subSchemaAlias = string.Empty;
+                    if (!TokenHelpers.IsValidIdentifier(subSchemaSchema, ':'))
+                    {
+                        throw new KbParserException("Invalid query. Found '" + subSchemaSchema + "', expected: schema name.");
+                    }
+
+                    if (tokenizer.TryIsNextToken("as"))
+                    {
+                        subSchemaAlias = tokenizer.GetNext();
+                    }
+                    else
+                    {
+                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'as' (schema alias).");
+                    }
+
+                    token = tokenizer.GetNext();
+                    if (!token.Is("on"))
+                    {
+                        throw new KbParserException("Invalid query. Found '" + token + "', expected 'on'.");
+                    }
+
+                    int joinConditionsStartPosition = tokenizer.Caret;
+
+                    while (true)
+                    {
+                        if (tokenizer.InertTryIsNextToken(["where", "order", "inner", ""]))
+                        {
+                            break;
+                        }
+
+                        if (tokenizer.InertTryCompareNextToken((o) => StaticParser.IsStartOfQuery(o)))
+                        {
+                            //Found start of next query.
+                            break;
+                        }
+
+                        if (tokenizer.InertTryIsNextToken(["and", "or"]))
+                        {
+                            tokenizer.SkipNext();
+                        }
+
+                        var joinLeftCondition = tokenizer.GetNext();
+                        if (!TokenHelpers.IsValidIdentifier(joinLeftCondition, '.'))
+                        {
+                            throw new KbParserException("Invalid query. Found '" + joinLeftCondition + "', expected: left side of join expression.");
+                        }
+
+                        int logicalQualifierPos = tokenizer.Caret;
+
+                        token = ConditionTokenizer.GetNext(tokenizer.Text, ref logicalQualifierPos);
+                        if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
+                        {
+                            throw new KbParserException("Invalid query. Found '" + token + "], expected logical qualifier.");
+                        }
+
+                        tokenizer.SetCaret(logicalQualifierPos);
+
+                        var joinRightCondition = tokenizer.GetNext();
+                        if (!TokenHelpers.IsValidIdentifier(joinRightCondition, '.'))
+                        {
+                            throw new KbParserException("Invalid query. Found '" + joinRightCondition + "', expected: right side of join expression.");
+                        }
+                    }
+
+                    var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Caret - joinConditionsStartPosition).Trim();
+                    var joinConditions = Conditions.Create(queryBatch, joinConditionsText, tokenizer, subSchemaAlias);
+
+                    result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
+                }
 
 
-                                string sourceSchema = tokenizer.GetNext();
-                                string schemaAlias = string.Empty;
-                                if (!TokenHelpers.IsValidIdentifier(sourceSchema, ['#', ':']))
-                                {
-                                    throw new KbParserException("Invalid query. Found '" + sourceSchema + "', expected: schema name.");
-                                }
+                if (tokenizer.TryIsNextToken("where"))
+                {
+                    var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Caret);
+                    int parenthesisScope = 0;
 
-                                if (tokenizer.PeekNext().Is("as"))
-                                {
-                                    tokenizer.SkipNext();
-                                    schemaAlias = tokenizer.GetNext();
-                                }
+                    while (true)
+                    {
+                        int previousTokenPosition = conditionTokenizer.Position;
+                        var conditionToken = conditionTokenizer.PeekNext();
 
-                                result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+                        if (conditionToken == "(") parenthesisScope++;
+                        if (conditionToken == ")") parenthesisScope--;
 
-                                while (tokenizer.PeekNext().Is("inner"))
-                                {
-                                    tokenizer.SkipNext();
-                                    if (tokenizer.PeekNext().Is("join") == false)
-                                    {
-                                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'join'.");
-                                    }
-                                    tokenizer.SkipNext();
+                        if (parenthesisScope < 0 || int.TryParse(conditionToken, out _) == false && Enum.TryParse(conditionToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        {
+                            //We found the beginning of a new statement, break here.
+                            conditionTokenizer.SetPosition(previousTokenPosition);
+                            tokenizer.SetCaret(previousTokenPosition);
+                            break;
+                        }
 
-                                    string subSchemaSchema = tokenizer.GetNext();
-                                    string subSchemaAlias = string.Empty;
-                                    if (!TokenHelpers.IsValidIdentifier(subSchemaSchema, ':'))
-                                    {
-                                        throw new KbParserException("Invalid query. Found '" + subSchemaSchema + "', expected: schema name.");
-                                    }
+                        conditionTokenizer.SkipNext();
 
-                                    if (tokenizer.PeekNext().Is("as"))
-                                    {
-                                        tokenizer.SkipNext();
-                                        subSchemaAlias = tokenizer.GetNext();
-                                    }
-                                    else
-                                    {
-                                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'as' (schema alias).");
-                                    }
+                        if (((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.TryIsNextToken("by"))
+                            || conditionToken == string.Empty)
+                        {
+                            //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
+                            conditionTokenizer.SetPosition(previousTokenPosition);
+                            tokenizer.SetCaret(previousTokenPosition);
+                            break;
+                        }
+                    }
 
-                                    token = tokenizer.GetNext();
-                                    if (!token.Is("on"))
-                                    {
-                                        throw new KbParserException("Invalid query. Found '" + token + "', expected 'on'.");
-                                    }
+                    string conditionText = tokenizer.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
+                    if (conditionText == string.Empty)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + conditionText + "', expected: list of conditions.");
+                    }
 
-                                    int joinConditionsStartPosition = tokenizer.Position;
+                    result.Conditions = Conditions.Create(queryBatch, conditionText, tokenizer);
+                }
 
-                                    while (true)
-                                    {
-                                        if (tokenizer.PeekNext().IsOneOf(["where", "order", "inner", ""]))
-                                        {
-                                            break;
-                                        }
+                if (tokenizer.TryIsNextToken("group"))
+                {
+                    if (tokenizer.TryIsNextToken("by") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'by'.");
+                    }
+                    tokenizer.SkipNext();
 
-                                        if (tokenizer.IsNextStartOfQuery())
-                                        {
-                                            //Found start of next query.
-                                            break;
-                                        }
+                    result.GroupFields = StaticFunctionParsers.ParseGroupByFields(tokenizer);
+                }
 
-                                        if (tokenizer.PeekNext().IsOneOf(["and", "or"]))
-                                        {
-                                            tokenizer.SkipNext();
-                                        }
+                if (tokenizer.TryIsNextToken("order"))
+                {
+                    if (tokenizer.TryIsNextToken("by") == false)
+                    {
+                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'by'.");
+                    }
+                    tokenizer.SkipNext();
 
-                                        var joinLeftCondition = tokenizer.GetNext();
-                                        if (!TokenHelpers.IsValidIdentifier(joinLeftCondition, '.'))
-                                        {
-                                            throw new KbParserException("Invalid query. Found '" + joinLeftCondition + "', expected: left side of join expression.");
-                                        }
+                    var fields = new List<string>();
 
-                                        int logicalQualifierPos = tokenizer.Position;
+                    while (true)
+                    {
+                        int previousTokenPosition = tokenizer.Caret;
+                        var fieldToken = tokenizer.InertGetNext();
 
-                                        token = ConditionTokenizer.GetNext(tokenizer.Text, ref logicalQualifierPos);
-                                        if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
-                                        {
-                                            throw new KbParserException("Invalid query. Found '" + token + "], expected logical qualifier.");
-                                        }
+                        if (int.TryParse(fieldToken, out _) == false && Enum.TryParse(fieldToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        {
+                            //We found the beginning of a new statement, break here.
+                            break;
+                        }
 
-                                        tokenizer.SetPosition(logicalQualifierPos);
+                        tokenizer.SkipNext();
 
-                                        var joinRightCondition = tokenizer.GetNext();
-                                        if (!TokenHelpers.IsValidIdentifier(joinRightCondition, '.'))
-                                        {
-                                            throw new KbParserException("Invalid query. Found '" + joinRightCondition + "', expected: right side of join expression.");
-                                        }
-                                    }
+                        if (result.SortFields.Count > 0)
+                        {
+                            if (tokenizer.IsNextCharacter(','))
+                            {
+                                fieldToken = tokenizer.GetNext();
+                            }
+                            else if (tokenizer.Caret < tokenizer.Length) //We should have consumed the entire query at this point.
+                            {
+                                throw new KbParserException("Invalid query. Found '" + fieldToken + "', expected: ','.");
+                            }
+                        }
 
-                                    var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Position - joinConditionsStartPosition).Trim();
-                                    var joinConditions = Conditions.Create(joinConditionsText, tokenizer, subSchemaAlias);
+                        if (fieldToken == string.Empty)
+                        {
+                            if (tokenizer.Caret < tokenizer.Length)
+                            {
+                                throw new KbParserException("Invalid query. Found '" + tokenizer.SubString() + "', expected: end of statement.");
+                            }
 
-                                    result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
-                                }
+                            tokenizer.SetCaret(previousTokenPosition);
+                            break;
+                        }
 
-                                if (tokenizer.PeekNext().Is("where"))
-                                {
-                                    tokenizer.SkipNext();
+                        var sortDirection = KbSortDirection.Ascending;
+                        if (tokenizer.TryIsNextToken(["asc", "desc"]))
+                        {
+                            if (tokenizer.GetNext().Is("desc"))
+                            {
+                                sortDirection = KbSortDirection.Descending;
+                            }
+                        }
 
-                                    var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Position);
-                                    int parenthesisScope = 0;
-
-                                    while (true)
-                                    {
-                                        int previousTokenPosition = conditionTokenizer.Position;
-                                        var conditionToken = conditionTokenizer.PeekNext();
-
-                                        if (conditionToken == "(") parenthesisScope++;
-                                        if (conditionToken == ")") parenthesisScope--;
-
-                                        if (parenthesisScope < 0 || int.TryParse(conditionToken, out _) == false && Enum.TryParse(conditionToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
-                                        {
-                                            //We found the beginning of a new statement, break here.
-                                            conditionTokenizer.SetPosition(previousTokenPosition);
-                                            tokenizer.SetPosition(previousTokenPosition);
-                                            break;
-                                        }
-
-                                        conditionTokenizer.SkipNext();
-
-                                        if (((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.PeekNext().Is("by"))
-                                            || conditionToken == string.Empty)
-                                        {
-                                            //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
-                                            conditionTokenizer.SetPosition(previousTokenPosition);
-                                            tokenizer.SetPosition(previousTokenPosition);
-                                            break;
-                                        }
-                                    }
-
-                                    string conditionText = tokenizer.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
-                                    if (conditionText == string.Empty)
-                                    {
-                                        throw new KbParserException("Invalid query. Found '" + conditionText + "', expected: list of conditions.");
-                                    }
-
-                                    result.Conditions = Conditions.Create(conditionText, tokenizer);
-                                }
-
-                                if (tokenizer.PeekNext().Is("group"))
-                                {
-                                    tokenizer.SkipNext();
-
-                                    if (tokenizer.PeekNext().Is("by") == false)
-                                    {
-                                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'by'.");
-                                    }
-                                    tokenizer.SkipNext();
-
-                                    result.GroupFields = StaticFunctionParsers.ParseGroupByFields(tokenizer);
-                                }
-
-                                if (tokenizer.PeekNext().Is("order"))
-                                {
-                                    tokenizer.SkipNext();
-
-                                    if (tokenizer.PeekNext().Is("by") == false)
-                                    {
-                                        throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'by'.");
-                                    }
-                                    tokenizer.SkipNext();
-
-                                    var fields = new List<string>();
-
-                                    while (true)
-                                    {
-                                        int previousTokenPosition = tokenizer.Position;
-                                        var fieldToken = tokenizer.PeekNext();
-
-                                        if (int.TryParse(fieldToken, out _) == false && Enum.TryParse(fieldToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
-                                        {
-                                            //We found the beginning of a new statement, break here.
-                                            break;
-                                        }
-
-                                        tokenizer.SkipNext();
-
-                                        if (result.SortFields.Count > 0)
-                                        {
-                                            if (tokenizer.NextCharacter == ',')
-                                            {
-                                                tokenizer.SkipDelimiters();
-                                                fieldToken = tokenizer.GetNext();
-                                            }
-                                            else if (tokenizer.Position < tokenizer.Length) //We should have consumed the entire query at this point.
-                                            {
-                                                throw new KbParserException("Invalid query. Found '" + fieldToken + "', expected: ','.");
-                                            }
-                                        }
-
-                                        if (fieldToken == string.Empty)
-                                        {
-                                            if (tokenizer.Position < tokenizer.Length)
-                                            {
-                                                throw new KbParserException("Invalid query. Found '" + tokenizer.Remainder() + "', expected: end of statement.");
-                                            }
-
-                                            tokenizer.SetPosition(previousTokenPosition);
-                                            break;
-                                        }
-
-                                        var sortDirection = KbSortDirection.Ascending;
-                                        if (tokenizer.PeekNext().IsOneOf(["asc", "desc"]))
-                                        {
-                                            if (tokenizer.GetNext().Is("desc"))
-                                            {
-                                                sortDirection = KbSortDirection.Descending;
-                                            }
-                                        }
-
-                                        result.SortFields.Add(fieldToken, sortDirection);
-                                    }
-                                    */
+                        result.SortFields.Add(fieldToken, sortDirection);
+                    }
+                }
             }
-
             #endregion
-
-
-            //Parser insanity. Keep these region tags at 100 characters! :D
 
             #region Reimplement.
 
-            /*
+            //Parser insanity. Keep these region tags at 100 characters! :D
 
+            /*
             #region Exec -----------------------------------------------------------------------------------------------
             if (queryType == QueryType.Exec)
             {
@@ -338,8 +314,8 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Begin ----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Begin)
             {
-                if (tokenizer.PeekNext().Is("transaction") == false)
-                    if (tokenizer.PeekNext().Is("transaction") == false)
+                if (tokenizer.TryIsNextToken("transaction") == false)
+                    if (tokenizer.TryIsNextToken("transaction") == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: 'transaction'.");
                     }
@@ -356,7 +332,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Commit ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Commit)
             {
-                if (tokenizer.PeekNext().Is("transaction") == false)
+                if (tokenizer.TryIsNextToken("transaction") == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: 'transaction'.");
                 }
@@ -373,7 +349,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Rollback -------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Rollback)
             {
-                if (tokenizer.PeekNext().Is("transaction") == false)
+                if (tokenizer.TryIsNextToken("transaction") == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: 'transaction'.");
                 }
@@ -390,7 +366,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Alter ----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Alter)
             {
-                if (tokenizer.PeekNext().IsOneOf(["schema", "configuration"]) == false)
+                if (tokenizer.TryIsNextToken(["schema", "configuration"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected 'schema' or 'configuration'.");
                 }
@@ -404,31 +380,31 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 if (result.SubQueryType == SubQueryType.Configuration)
                 {
-                    if (tokenizer.PeekNext().Is("with"))
+                    if (tokenizer.TryIsNextToken("with"))
                     {
                         var options = new ExpectedWithOptions
-                        {
-                            { "BaseAddress", typeof(string) },
-                            { "DataRootPath", typeof(string) },
-                            { "TransactionDataPath", typeof(string) },
-                            { "LogDirectory", typeof(string) },
-                            { "FlushLog", typeof(bool) },
-                            { "DefaultDocumentPageSize", typeof(int) },
-                            { "UseCompression", typeof(bool) },
-                            { "HealthMonitoringEnabled", typeof(bool) },
-                            { "HealthMonitoringCheckpointSeconds", typeof(int) },
-                            { "HealthMonitoringInstanceLevelEnabled", typeof(bool) },
-                            { "HealthMonitoringInstanceLevelTimeToLiveSeconds", typeof(int) },
-                            { "MaxIdleConnectionSeconds", typeof(int) },
-                            { "DefaultIndexPartitions", typeof(int) },
-                            { "DeferredIOEnabled", typeof(bool) },
-                            { "WriteTraceData", typeof(bool) },
-                            { "CacheEnabled", typeof(bool) },
-                            { "CacheMaxMemory", typeof(int) },
-                            { "CacheScavengeInterval", typeof(int) },
-                            { "CachePartitions", typeof(int) },
-                            { "CacheSeconds", typeof(int) }
-                        };
+                            {
+                                { "BaseAddress", typeof(string) },
+                                { "DataRootPath", typeof(string) },
+                                { "TransactionDataPath", typeof(string) },
+                                { "LogDirectory", typeof(string) },
+                                { "FlushLog", typeof(bool) },
+                                { "DefaultDocumentPageSize", typeof(int) },
+                                { "UseCompression", typeof(bool) },
+                                { "HealthMonitoringEnabled", typeof(bool) },
+                                { "HealthMonitoringCheckpointSeconds", typeof(int) },
+                                { "HealthMonitoringInstanceLevelEnabled", typeof(bool) },
+                                { "HealthMonitoringInstanceLevelTimeToLiveSeconds", typeof(int) },
+                                { "MaxIdleConnectionSeconds", typeof(int) },
+                                { "DefaultIndexPartitions", typeof(int) },
+                                { "DeferredIOEnabled", typeof(bool) },
+                                { "WriteTraceData", typeof(bool) },
+                                { "CacheEnabled", typeof(bool) },
+                                { "CacheMaxMemory", typeof(int) },
+                                { "CacheScavengeInterval", typeof(int) },
+                                { "CachePartitions", typeof(int) },
+                                { "CacheSeconds", typeof(int) }
+                            };
                         StaticWithOptionsParser.ParseWithOptions(ref tokenizer, options, ref result);
                     }
                 }
@@ -443,12 +419,12 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
                     result.Schemas.Add(new QuerySchema(token));
 
-                    if (tokenizer.PeekNext().Is("with"))
+                    if (tokenizer.TryIsNextToken("with"))
                     {
                         var options = new ExpectedWithOptions
-                        {
-                            {"pagesize", typeof(uint) }
-                        };
+                            {
+                                {"pagesize", typeof(uint) }
+                            };
                         StaticWithOptionsParser.ParseWithOptions(ref tokenizer, options, ref result);
                     }
                 }
@@ -462,7 +438,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Create ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Create)
             {
-                if (tokenizer.PeekNext().IsOneOf(["schema", "index", "uniquekey", "procedure"]) == false)
+                if (tokenizer.TryIsNextToken(["schema", "index", "uniquekey", "procedure"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected 'schema', 'index', 'uniquekey' or 'procedure'.");
                 }
@@ -556,7 +532,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     var batches = new List<string>();
 
-                    int previousPosition = tokenizer.Position;
+                    int previousPosition = tokenizer.Caret;
 
                     while (tokenizer.IsEnd() == false)
                     {
@@ -568,7 +544,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         {
                             _ = PrepareNextQuery(tokenizer);
 
-                            string queryText = tokenizer.Text.Substring(previousPosition, tokenizer.Position - previousPosition).Trim();
+                            string queryText = tokenizer.Text.Substring(previousPosition, tokenizer.Caret - previousPosition).Trim();
 
                             foreach (var literalString in tokenizer.StringLiterals)
                             {
@@ -577,7 +553,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                             batches.Add(queryText);
 
-                            previousPosition = tokenizer.Position;
+                            previousPosition = tokenizer.Caret;
                             var nextToken = tokenizer.PeekNext();
                         }
                     }
@@ -590,12 +566,12 @@ namespace NTDLS.Katzebase.Engine.Query
                 {
                     result.Schemas.Add(new QuerySchema(token));
 
-                    if (tokenizer.PeekNext().Is("with"))
+                    if (tokenizer.TryIsNextToken("with"))
                     {
                         var options = new ExpectedWithOptions
-                        {
-                            {"pagesize", typeof(uint) }
-                        };
+                            {
+                                {"pagesize", typeof(uint) }
+                            };
                         StaticWithOptionsParser.ParseWithOptions(ref tokenizer, options, ref result);
                     }
                 }
@@ -645,12 +621,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     result.Schemas.Add(new QuerySchema(token));
 
-                    if (tokenizer.PeekNext().Is("with"))
+                    if (tokenizer.TryIsNextToken("with"))
                     {
                         var options = new ExpectedWithOptions
-                        {
-                            {"partitions", typeof(uint) }
-                        };
+                            {
+                                {"partitions", typeof(uint) }
+                            };
                         StaticWithOptionsParser.ParseWithOptions(ref tokenizer, options, ref result);
                     }
                 }
@@ -664,7 +640,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Drop -----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Drop)
             {
-                if (tokenizer.PeekNext().IsOneOf(["schema", "index", "uniquekey"]) == false)
+                if (tokenizer.TryIsNextToken(["schema", "index", "uniquekey"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: 'schema', 'index' or 'uniquekey'.");
                 }
@@ -704,7 +680,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Rebuild --------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Rebuild)
             {
-                if (tokenizer.PeekNext().IsOneOf(["index", "uniquekey"]) == false)
+                if (tokenizer.TryIsNextToken(["index", "uniquekey"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: 'index' or 'uniquekey'.");
                 }
@@ -736,12 +712,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 result.Schemas.Add(new QuerySchema(token));
 
-                if (tokenizer.PeekNext().Is("with"))
+                if (tokenizer.TryIsNextToken("with"))
                 {
                     var options = new ExpectedWithOptions
-                    {
-                        {"partitions", typeof(uint) }
-                    };
+                        {
+                            {"partitions", typeof(uint) }
+                        };
                     StaticWithOptionsParser.ParseWithOptions(ref tokenizer, options, ref result);
                 }
             }
@@ -775,7 +751,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 if (token.Is("where"))
                 {
-                    var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Position);
+                    var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Caret);
                     int parenthesisScope = 0;
 
                     while (true)
@@ -796,7 +772,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                         conditionTokenizer.SkipNext();
 
-                        if ((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.PeekNext().Is("by"))
+                        if ((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.TryIsNextToken("by"))
                         {
                             throw new KbParserException("Invalid query. Found '" + conditionToken + "', expected: end of statement.");
                         }
@@ -823,7 +799,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Analyze --------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Analyze)
             {
-                if (tokenizer.PeekNext().IsOneOf(["index", "schema"]) == false)
+                if (tokenizer.TryIsNextToken(["index", "schema"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: 'index' or 'schema'.");
                 }
@@ -868,12 +844,12 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.AddAttribute(PreparedQuery.QueryAttribute.Schema, token);
                     result.Schemas.Add(new QuerySchema(token));
 
-                    if (tokenizer.PeekNext().Is("with"))
+                    if (tokenizer.TryIsNextToken("with"))
                     {
                         var options = new ExpectedWithOptions
-                        {
-                            {"includephysicalpages", typeof(bool) }
-                        };
+                            {
+                                {"includephysicalpages", typeof(bool) }
+                            };
                         StaticWithOptionsParser.ParseWithOptions(ref tokenizer, options, ref result);
                     }
                 }
@@ -916,7 +892,7 @@ namespace NTDLS.Katzebase.Engine.Query
             #region List -----------------------------------------------------------------------------------------------
             else if (queryType == QueryType.List)
             {
-                if (tokenizer.PeekNext().IsOneOf(["documents", "schemas"]) == false)
+                if (tokenizer.TryIsNextToken(["documents", "schemas"]) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: 'documents' or 'schemas'.");
                 }
@@ -955,9 +931,8 @@ namespace NTDLS.Katzebase.Engine.Query
             #region Select ---------------------------------------------------------------------------------------------
             else if (queryType == QueryType.Select)
             {
-                if (tokenizer.PeekNext().Is("top"))
+                if (tokenizer.TryIsNextToken("top"))
                 {
-                    tokenizer.SkipNext();
                     result.RowLimit = tokenizer.GetNextAsInt();
                 }
 
@@ -987,20 +962,15 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.SelectFields.RepopulateLiterals(tokenizer);
                 }
 
-                if (tokenizer.PeekNext().Is("into"))
+                if (tokenizer.TryIsNextToken("into"))
                 {
-                    tokenizer.SkipNext();
                     var selectIntoSchema = tokenizer.GetNext();
                     result.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, selectIntoSchema);
 
                     result.QueryType = QueryType.SelectInto;
                 }
 
-                if (tokenizer.PeekNext().Is("from"))
-                {
-                    tokenizer.SkipNext();
-                }
-                else
+                if (tokenizer.TryIsNextToken("from") == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: 'from'.");
                 }
@@ -1012,18 +982,16 @@ namespace NTDLS.Katzebase.Engine.Query
                     throw new KbParserException("Invalid query. Found '" + sourceSchema + "', expected: schema name.");
                 }
 
-                if (tokenizer.PeekNext().Is("as"))
+                if (tokenizer.TryIsNextToken("as"))
                 {
-                    tokenizer.SkipNext();
                     schemaAlias = tokenizer.GetNext();
                 }
 
                 result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
 
-                while (tokenizer.PeekNext().Is("inner"))
+                while (tokenizer.TryIsNextToken("inner"))
                 {
-                    tokenizer.SkipNext();
-                    if (tokenizer.PeekNext().Is("join") == false)
+                    if (tokenizer.TryIsNextToken("join") == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'join'.");
                     }
@@ -1036,9 +1004,8 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + subSchemaSchema + "', expected: schema name.");
                     }
 
-                    if (tokenizer.PeekNext().Is("as"))
+                    if (tokenizer.TryIsNextToken("as"))
                     {
-                        tokenizer.SkipNext();
                         subSchemaAlias = tokenizer.GetNext();
                     }
                     else
@@ -1056,7 +1023,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     while (true)
                     {
-                        if (tokenizer.PeekNext().IsOneOf(["where", "order", "inner", ""]))
+                        if (tokenizer.TryIsNextToken(["where", "order", "inner", ""]))
                         {
                             break;
                         }
@@ -1067,7 +1034,7 @@ namespace NTDLS.Katzebase.Engine.Query
                             break;
                         }
 
-                        if (tokenizer.PeekNext().IsOneOf(["and", "or"]))
+                        if (tokenizer.TryIsNextToken(["and", "or"]))
                         {
                             tokenizer.SkipNext();
                         }
@@ -1101,10 +1068,8 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
 
-                if (tokenizer.PeekNext().Is("where"))
+                if (tokenizer.TryIsNextToken("where"))
                 {
-                    tokenizer.SkipNext();
-
                     var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Position);
                     int parenthesisScope = 0;
 
@@ -1126,7 +1091,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                         conditionTokenizer.SkipNext();
 
-                        if (((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.PeekNext().Is("by"))
+                        if (((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.TryIsNextToken("by"))
                             || conditionToken == string.Empty)
                         {
                             //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
@@ -1145,11 +1110,9 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.Conditions = Conditions.Create(conditionText, tokenizer);
                 }
 
-                if (tokenizer.PeekNext().Is("group"))
+                if (tokenizer.TryIsNextToken("group"))
                 {
-                    tokenizer.SkipNext();
-
-                    if (tokenizer.PeekNext().Is("by") == false)
+                    if (tokenizer.TryIsNextToken("by") == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'by'.");
                     }
@@ -1158,11 +1121,9 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.GroupFields = StaticFunctionParsers.ParseGroupByFields(tokenizer);
                 }
 
-                if (tokenizer.PeekNext().Is("order"))
+                if (tokenizer.TryIsNextToken("order"))
                 {
-                    tokenizer.SkipNext();
-
-                    if (tokenizer.PeekNext().Is("by") == false)
+                    if (tokenizer.TryIsNextToken("by") == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'by'.");
                     }
@@ -1208,7 +1169,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         }
 
                         var sortDirection = KbSortDirection.Ascending;
-                        if (tokenizer.PeekNext().IsOneOf(["asc", "desc"]))
+                        if (tokenizer.TryIsNextToken(["asc", "desc"]))
                         {
                             if (tokenizer.GetNext().Is("desc"))
                             {
@@ -1243,18 +1204,16 @@ namespace NTDLS.Katzebase.Engine.Query
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
-                if (tokenizer.PeekNext().Is("as"))
+                if (tokenizer.TryIsNextToken("as"))
                 {
-                    tokenizer.SkipNext();
                     schemaAlias = tokenizer.GetNext();
                 }
 
                 result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
 
-                while (tokenizer.PeekNext().Is("inner"))
+                while (tokenizer.TryIsNextToken("inner"))
                 {
-                    tokenizer.SkipNext();
-                    if (tokenizer.PeekNext().Is("join") == false)
+                    if (tokenizer.TryIsNextToken("join") == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: join.");
                     }
@@ -1267,9 +1226,8 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                     }
 
-                    if (tokenizer.PeekNext().Is("as"))
+                    if (tokenizer.TryIsNextToken("as"))
                     {
-                        tokenizer.SkipNext();
                         subSchemaAlias = tokenizer.GetNext();
                     }
                     else
@@ -1287,12 +1245,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     while (true)
                     {
-                        if (tokenizer.PeekNext().IsOneOf(["where", "inner", ""]))
+                        if (tokenizer.TryIsNextToken(["where", "inner", ""]))
                         {
                             break;
                         }
 
-                        if (tokenizer.PeekNext().IsOneOf(["and", "or"]))
+                        if (tokenizer.TryIsNextToken(["and", "or"]))
                         {
                             tokenizer.SkipNext();
                         }
@@ -1352,7 +1310,7 @@ namespace NTDLS.Katzebase.Engine.Query
                             tokenizer.SetPosition(previousTokenPosition);
                             break;
                         }
-                        else if ((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.PeekNext().Is("by"))
+                        else if ((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.TryIsNextToken("by"))
                         {
                             throw new KbParserException("Invalid query. Found '" + conditionToken + "', expected: end of statement.");
                         }
@@ -1428,11 +1386,11 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
             }
             #endregion
-            */
+
 
             #region Cleanup and Validation.
 
-            /*
+
             if (result.UpsertValues != null) //Fill in upsert string literals.
             {
                 foreach (var upsertRow in result.UpsertValues)
@@ -1446,9 +1404,6 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
                 }
             }
-            */
-
-            /*
 
             foreach (var field in result.GroupFields)
             {
@@ -1562,9 +1517,8 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
             }
 
-            */
-
             #endregion
+            */
 
             #endregion
 

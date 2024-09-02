@@ -142,7 +142,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
             while (!tokenizer.IsEnd())
             {
-                int positionBeforeToken = tokenizer.CaretPosition;
+                int positionBeforeToken = tokenizer.Caret;
 
                 string token = tokenizer.GetNext();
 
@@ -210,7 +210,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
             string functionCallParametersSegmentText = tokenizer.GetMatchingBraces('(', ')');
 
             //This contains the entire call signature. e.g. functionName(all, function, parameters).
-            string wholeFunctionCallText = tokenizer.InertSubString(positionBeforeToken, tokenizer.CaretPosition - positionBeforeToken);
+            string wholeFunctionCallText = tokenizer.InertSubString(positionBeforeToken, tokenizer.Caret - positionBeforeToken);
 
             //Replace the part of the expression for which we are going to handle with a function call, with the
             //  expressionKey so we can fill in the value later when we evaluate the expression and execute the function.
@@ -356,11 +356,20 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public static bool IsNextStartOfQuery(string token, out QueryType type)
+        public static bool IsStartOfQuery(string token, out QueryType type)
         {
             return Enum.TryParse(token.ToLowerInvariant(), true, out type) //Enum parse.
                 && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
                 && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
         }
+
+        public static bool IsStartOfQuery(string token)
+        {
+            QueryType type;
+            return Enum.TryParse(token.ToLowerInvariant(), true, out type) //Enum parse.
+                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
+                && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
+        }
+
     }
 }
