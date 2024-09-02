@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
-    internal enum KbScalerFunctionParameterType
+    public enum KbScalerFunctionParameterType
     {
         Undefined,
         String,

@@ -39,7 +39,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NTDLS.Katzebase.ObjectViewe
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QueryTest", "QueryTest\QueryTest.csproj", "{B66B61C5-4CCC-4F11-9573-E40797123DF8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParserV2", "ParserV2\ParserV2.csproj", "{9ECACD5B-6C45-45B7-B92B-92871FBB001D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ParserV2", "ParserV2\ParserV2.csproj", "{9ECACD5B-6C45-45B7-B92B-92871FBB001D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

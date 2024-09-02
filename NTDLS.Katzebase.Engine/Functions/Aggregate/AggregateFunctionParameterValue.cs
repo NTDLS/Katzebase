@@ -2,7 +2,7 @@
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
-    internal class AggregateFunctionParameterValue
+    public class AggregateFunctionParameterValue
     {
         public AggregateFunctionParameterPrototype Parameter { get; private set; }
         public AggregateGenericParameter? Value { get; private set; } = null;

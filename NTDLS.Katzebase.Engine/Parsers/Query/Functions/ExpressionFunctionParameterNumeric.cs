@@ -1,9 +1,9 @@
-﻿namespace ParserV2.Parsers.Query.Functions
+﻿namespace NTDLS.Katzebase.Engine.Parsers.Query.Functions
 {
     /// <summary>
     /// This is function call parameter that contains either a single numeric value or an expression consisting solely of numeric operations.
     /// </summary>
-    internal class ExpressionFunctionParameterNumeric : IExpressionFunctionParameter
+    public class ExpressionFunctionParameterNumeric : IExpressionFunctionParameter
     {
         public string Expression { get; set; }
 

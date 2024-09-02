@@ -1,11 +1,11 @@
 ﻿using System.Text;
 
-namespace ParserV2.Parsers
+namespace NTDLS.Katzebase.Engine.Parsers
 {
     /// <summary>
     /// Used to walk various types of string and expressions.
     /// </summary>
-    internal static class TokenizerExtensions
+    public static class TokenizerExtensions
     {
         /// <summary>
         /// Splits the given text on a comma delimiter while paying attention to the scope denoted by open and close parentheses..

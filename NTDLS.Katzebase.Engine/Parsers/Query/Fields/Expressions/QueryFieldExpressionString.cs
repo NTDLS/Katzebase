@@ -1,9 +1,9 @@
-﻿namespace ParserV2.Parsers.Query.Fields.Expressions
+﻿namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
 {
     /// <summary>
     /// Contains a string evaluation expression. This could be as simple as ["This" + "That"] or could contain function calls which child nodes.
     /// </summary>
-    internal class QueryFieldExpressionString : IQueryFieldExpression
+    public class QueryFieldExpressionString : IQueryFieldExpression
     {
         private int _nextExpressionKey = 0;
 
@@ -12,7 +12,7 @@
         /// <summary>
         /// Contains the function names and their parameters that are used to satisfy the expression,
         /// </summary>
-        public List<QueryFieldExpressionFunction> FunctionDependencies { get; set; } = new();
+        public List<IQueryFieldExpressionFunction> FunctionDependencies { get; set; } = new();
 
         public QueryFieldExpressionString()
         {

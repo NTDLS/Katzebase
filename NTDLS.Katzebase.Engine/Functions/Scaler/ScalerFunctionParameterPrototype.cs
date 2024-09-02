@@ -3,7 +3,7 @@
     /// <summary>
     /// A parsed function parameter prototype
     /// </summary>
-    internal class ScalerFunctionParameterPrototype
+    public class ScalerFunctionParameterPrototype
     {
         public KbScalerFunctionParameterType Type { get; private set; }
         public string Name { get; private set; }

@@ -1,9 +1,9 @@
-﻿namespace ParserV2.Parsers.Query.Fields
+﻿namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
 {
     /// <summary>
     /// Contains a numeric constant.
     /// </summary>
-    internal class QueryFieldConstantNumeric : IQueryField
+    public class QueryFieldConstantNumeric : IQueryField
     {
         public string Value { get; set; }
 

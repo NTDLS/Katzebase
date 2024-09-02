@@ -1,14 +1,15 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using ParserV2.Parsers.Query.Fields;
-using ParserV2.Parsers.Query.Fields.Expressions;
-using ParserV2.Parsers.Query.Functions;
-using ParserV2.StandIn;
+using NTDLS.Katzebase.Engine.Functions.Aggregate;
+using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
+using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
+using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
 using System.Text;
-using static ParserV2.StandIn.Types;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace ParserV2.Parsers.Query
+namespace NTDLS.Katzebase.Engine.Parsers.Query
 {
-    internal static class StaticQueryParser
+    public static class StaticQueryParser
     {
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.
@@ -66,7 +67,12 @@ namespace ParserV2.Parsers.Query
                     if (ScalerFunctionCollection.TryGetFunction(token, out var _))
                     {
                         //This is a function call, but it is the only token - that's not a valid function call.
-                        throw new KbParserException($"Function expects parentheses: [{token}]");
+                        throw new KbParserException($"Function scaler expects parentheses: [{token}]");
+                    }
+                    if (AggregateFunctionCollection.TryGetFunction(token, out var _))
+                    {
+                        //This is a function call, but it is the only token - that's not a valid function call.
+                        throw new KbParserException($"Function aggregate expects parentheses: [{token}]");
                     }
 
                     //This is not a function (those require evaluation) so its a single identifier, likely a document field name.
@@ -135,52 +141,22 @@ namespace ParserV2.Parsers.Query
                 {
                     buffer.Append(token);
                 }
-                else if (ScalerFunctionCollection.TryGetFunction(token, out var function))
+                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
                 {
-                    //This contains the text between the open and close parenthesis of a function call, but not the parenthesis themselves or the function name.
-                    string functionCallParametersSegmentText = tokenizer.GetMatchingBraces('(', ')');
-
-                    //This contains the entire call signature. e.g. functionName(all, function, parameters).
-                    string wholeFunctionCallText = tokenizer.InertSubString(positionBeforeToken, tokenizer.CaretPosition - positionBeforeToken);
-
                     //The expression key is used to match the function calls to the token in the parent expression.
                     var expressionKey = rootQueryFieldExpression.GetKeyExpressionKey();
+                    var basicDataType = scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric ? BasicDataType.Numeric : BasicDataType.String;
+                    var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(scalerFunction.Name, expressionKey, basicDataType);
 
-                    //Replace the part of the expression for which we are going to handle with a function call, with the
-                    //  expressionKey so we can fill in the value later when we evaluate the expression and execute the function.
-                    givenExpressionText = givenExpressionText.Replace(wholeFunctionCallText, expressionKey);
+                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, givenExpressionText, queryFieldExpressionFunction, ref documentIdentifiers, tokenizer, positionBeforeToken, expressionKey);
+                }
+                else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
+                {
+                    //The expression key is used to match the function calls to the token in the parent expression.
+                    var expressionKey = rootQueryFieldExpression.GetKeyExpressionKey();
+                    var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(aggregateFunction.Name, expressionKey, BasicDataType.Numeric);
 
-                    var queryFieldExpressionFunction = new QueryFieldExpressionFunction(function.Name, expressionKey, function.ReturnType);
-
-                    var functionCallParametersText = functionCallParametersSegmentText.ScopeSensitiveSplit();
-                    foreach (var functionCallParameterText in functionCallParametersText)
-                    {
-                        //Recursively process the function parameters.
-                        var resultingExpressionString = ParseEvaluationRecursive(ref rootQueryFieldExpression, functionCallParameterText, ref documentIdentifiers);
-
-                        IExpressionFunctionParameter? parameter = null;
-
-                        //TODO: ensure that this is a single token.
-                        if (resultingExpressionString.StartsWith("$x_") && resultingExpressionString.EndsWith('$') && IsSingleToken(resultingExpressionString))
-                        {
-                            //This is a function call result placeholder.
-                            parameter = new ExpressionFunctionParameterFunction(resultingExpressionString);
-                        }
-                        else if (IsNumericExpression(resultingExpressionString, rootQueryFieldExpression))
-                        {
-                            //This expression contains only numeric placeholders.
-                            parameter = new ExpressionFunctionParameterNumeric(resultingExpressionString);
-                        }
-                        else
-                        {
-                            //This expression contains non-numeric placeholders.
-                            parameter = new ExpressionFunctionParameterString(resultingExpressionString);
-                        }
-
-                        queryFieldExpressionFunction.Parameters.Add(parameter);
-                    }
-
-                    rootQueryFieldExpression.FunctionDependencies.Add(queryFieldExpressionFunction);
+                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, givenExpressionText, queryFieldExpressionFunction, ref documentIdentifiers, tokenizer, positionBeforeToken, expressionKey);
                 }
                 else if (token.IsIdentifier())
                 {
@@ -202,6 +178,56 @@ namespace ParserV2.Parsers.Query
 
             return givenExpressionText;
         }
+
+        /// <summary>
+        /// Parses a function call and its parameters.
+        /// Its unfortunate that this function needs so many parameters, the alternative is duplicating the code for scaler and aggregate functions.
+        /// </summary>
+        private static void ParseFunctionCallRecursive(ref IQueryFieldExpression rootQueryFieldExpression, string givenExpressionText,
+            IQueryFieldExpressionFunction queryFieldExpressionFunction, ref HashSet<QueryFieldDocumentIdentifier> documentIdentifiers,
+            Tokenizer tokenizer, int positionBeforeToken, string expressionKey)
+        {
+            //This contains the text between the open and close parenthesis of a function call, but not the parenthesis themselves or the function name.
+            string functionCallParametersSegmentText = tokenizer.GetMatchingBraces('(', ')');
+
+            //This contains the entire call signature. e.g. functionName(all, function, parameters).
+            string wholeFunctionCallText = tokenizer.InertSubString(positionBeforeToken, tokenizer.CaretPosition - positionBeforeToken);
+
+            //Replace the part of the expression for which we are going to handle with a function call, with the
+            //  expressionKey so we can fill in the value later when we evaluate the expression and execute the function.
+            givenExpressionText = givenExpressionText.Replace(wholeFunctionCallText, expressionKey);
+
+            var functionCallParametersText = functionCallParametersSegmentText.ScopeSensitiveSplit();
+            foreach (var functionCallParameterText in functionCallParametersText)
+            {
+                //Recursively process the function parameters.
+                var resultingExpressionString = ParseEvaluationRecursive(ref rootQueryFieldExpression, functionCallParameterText, ref documentIdentifiers);
+
+                IExpressionFunctionParameter? parameter = null;
+
+                //TODO: ensure that this is a single token.
+                if (resultingExpressionString.StartsWith("$x_") && resultingExpressionString.EndsWith('$') && IsSingleToken(resultingExpressionString))
+                {
+                    //This is a function call result placeholder.
+                    parameter = new ExpressionFunctionParameterFunction(resultingExpressionString);
+                }
+                else if (IsNumericExpression(resultingExpressionString, rootQueryFieldExpression))
+                {
+                    //This expression contains only numeric placeholders.
+                    parameter = new ExpressionFunctionParameterNumeric(resultingExpressionString);
+                }
+                else
+                {
+                    //This expression contains non-numeric placeholders.
+                    parameter = new ExpressionFunctionParameterString(resultingExpressionString);
+                }
+
+                queryFieldExpressionFunction.Parameters.Add(parameter);
+            }
+
+            rootQueryFieldExpression.FunctionDependencies.Add(queryFieldExpressionFunction);
+        }
+
 
         private static bool IsSingleToken(string token)
         {
@@ -253,7 +279,7 @@ namespace ParserV2.Parsers.Query
                     //Find the function call so we can check the function return type.
                     var referencedFunction = rootExpressionEvaluation.FunctionDependencies.Single(f => f.ExpressionKey == token);
 
-                    if (referencedFunction.ReturnType != KbScalerFunctionParameterType.Numeric)
+                    if (referencedFunction.ReturnType != BasicDataType.Numeric)
                     {
                         //This function returns something other then numeric, so we are evaluating strings.
                         return false;
@@ -270,9 +296,9 @@ namespace ParserV2.Parsers.Query
                     //This is a number placeholder, so we still have a valid numeric operation.
                     continue;
                 }
-                else if (ScalerFunctionCollection.TryGetFunction(token, out var function))
+                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
                 {
-                    if (function.ReturnType == KbScalerFunctionParameterType.Numeric)
+                    if (scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric)
                     {
                         //This function returns a number, so we still have a valid numeric operation.
 
@@ -285,6 +311,14 @@ namespace ParserV2.Parsers.Query
                         //This function returns a non-number, so this is not a numeric operation.
                         return false;
                     }
+                }
+                else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
+                {
+                    //This is an aggregate function that can only return a number, so we still have a valid numeric operation.
+
+                    //Skip the function call.
+                    string functionBody = tokenizer.GetMatchingBraces('(', ')');
+                    continue;
                 }
                 else
                 {

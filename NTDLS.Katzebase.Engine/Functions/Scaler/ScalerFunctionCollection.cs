@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
-    internal static class ScalerFunctionCollection
+    public static class ScalerFunctionCollection
     {
         private static List<ScalerFunction>? _protypes = null;
         public static List<ScalerFunction> Prototypes

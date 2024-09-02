@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
     /// <summary>
     /// Contains a parsed function prototype.
     /// </summary>
-    internal class ScalerFunction
+    public class ScalerFunction
     {
         public string Name { get; private set; }
         public KbScalerFunctionParameterType ReturnType { get; private set; }

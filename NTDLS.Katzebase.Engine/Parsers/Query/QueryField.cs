@@ -1,11 +1,11 @@
-﻿using ParserV2.Parsers.Query.Fields;
+﻿using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 
-namespace ParserV2.Parsers.Query
+namespace NTDLS.Katzebase.Engine.Parsers.Query
 {
     /// <summary>
     /// Contains the highest level of query fields, these are things like a select list or update list.
     /// </summary>
-    internal class QueryField
+    public class QueryField
     {
         /// <summary>
         /// Alias of the expression, such as "SELECT 10+10 as Salary", Alias would contain "Salary".

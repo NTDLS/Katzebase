@@ -3,7 +3,7 @@
     /// <summary>
     /// A parsed function parameter prototype
     /// </summary>
-    internal class AggregateFunctionParameterPrototype
+    public class AggregateFunctionParameterPrototype
     {
         public KbAggregateFunctionParameterType Type { get; private set; }
         public string Name { get; private set; }

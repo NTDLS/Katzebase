@@ -1,10 +1,11 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
 using NTDLS.Katzebase.Shared;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
-    internal static class AggregateFunctionCollection
+    public static class AggregateFunctionCollection
     {
         private static List<AggregateFunction>? _protypes = null;
 
@@ -31,6 +32,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     _protypes.Add(AggregateFunction.Parse(prototype));
                 }
             }
+        }
+
+        public static bool TryGetFunction(string name, [NotNullWhen(true)] out AggregateFunction? function)
+        {
+            function = Prototypes.FirstOrDefault(o => o.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+            return function != null;
         }
 
         public static AggregateFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<AggregateGenericParameter> parameters)

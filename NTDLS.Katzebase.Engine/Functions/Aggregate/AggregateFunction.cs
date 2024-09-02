@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
     /// <summary>
     /// Contains a parsed function prototype.
     /// </summary>
-    internal class AggregateFunction
+    public class AggregateFunction
     {
         public string Name { get; set; }
         public List<AggregateFunctionParameterPrototype> Parameters { get; private set; } = new();

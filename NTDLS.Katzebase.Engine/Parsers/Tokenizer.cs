@@ -3,12 +3,12 @@ using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using System.Text.RegularExpressions;
 
-namespace ParserV2.Parsers
+namespace NTDLS.Katzebase.Engine.Parsers
 {
     /// <summary>
     /// Used to walk various types of string and expressions.
     /// </summary>
-    internal class Tokenizer
+    public class Tokenizer
     {
         private Stack<int> _breadCrumbs = new();
 

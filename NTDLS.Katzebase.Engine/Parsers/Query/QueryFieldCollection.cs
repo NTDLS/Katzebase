@@ -1,11 +1,11 @@
-﻿using ParserV2.Parsers.Query.Fields;
+﻿using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 
-namespace ParserV2.Parsers.Query
+namespace NTDLS.Katzebase.Engine.Parsers.Query
 {
     /// <summary>
     /// Collection of query fields, which contains their names and values.
     /// </summary>
-    internal class QueryFieldCollection : List<QueryField>
+    public class QueryFieldCollection : List<QueryField>
     {
         /// <summary>
         /// A list of all distinct document identifiers from all fields.

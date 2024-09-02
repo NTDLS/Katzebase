@@ -5,7 +5,7 @@ using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
-    internal class AggregateFunctionParameterValueCollection
+    public class AggregateFunctionParameterValueCollection
     {
         public List<AggregateFunctionParameterValue> Values { get; private set; } = new();
 

@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
-    internal enum KbAggregateFunctionParameterType
+    public enum KbAggregateFunctionParameterType
     {
         Undefined,
         NumericArray,

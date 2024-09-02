@@ -12,4 +12,8 @@
     <PackageReference Include="NTDLS.Katzebase.Client" Version="1.6.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\NTDLS.Katzebase.Engine\NTDLS.Katzebase.Engine.csproj" />
+  </ItemGroup>
+
 </Project>
