@@ -26,6 +26,8 @@ namespace ParserV2.Parsers.Query
             //Split the select fields on the comma, respecting any commas in function scopes.
             var fields = fieldsSegment.ScopeSensitiveSplit();
 
+            HashSet<QueryFieldDocumentIdentifier> documentIdentifiers = new();
+
             foreach (var field in fields)
             {
                 string fieldAlias = string.Empty;
@@ -39,15 +41,17 @@ namespace ParserV2.Parsers.Query
 
                 var aliasRemovedFieldText = (aliasIndex > 0 ? field.Substring(0, aliasIndex) : field).Trim();
 
-                var queryField = ParseField(aliasRemovedFieldText, queryTokenizer);
+                var queryField = ParseField(aliasRemovedFieldText, queryTokenizer, ref documentIdentifiers);
 
                 queryFields.Add(new QueryField(fieldAlias, queryField));
             }
 
+            queryFields.DocumentIdentifiers = documentIdentifiers;
+
             return queryFields;
         }
 
-        private static IQueryField ParseField(string givenFieldText, Tokenizer queryTokenizer)
+        private static IQueryField ParseField(string givenFieldText, Tokenizer queryTokenizer, ref HashSet<QueryFieldDocumentIdentifier> documentIdentifiers)
         {
             #region This is a single value (document field, number or string), the simple case.
 
@@ -66,8 +70,9 @@ namespace ParserV2.Parsers.Query
                     }
 
                     //This is not a function (those require evaluation) so its a single identifier, likely a document field name.
-                    return new QueryFieldDocumentIdentifier(token);
-
+                    var queryFieldDocumentIdentifier = new QueryFieldDocumentIdentifier(token);
+                    documentIdentifiers.Add(queryFieldDocumentIdentifier);
+                    return queryFieldDocumentIdentifier;
                 }
                 else if (IsNumericExpression(token))
                 {
@@ -97,25 +102,24 @@ namespace ParserV2.Parsers.Query
             if (IsNumericExpression(givenFieldText))
             {
                 IQueryFieldExpression expression = new QueryFieldExpressionNumeric(givenFieldText);
-                expression.Expression = ParseEvaluationRecursive(ref expression, givenFieldText);
+                expression.Expression = ParseEvaluationRecursive(ref expression, givenFieldText, ref documentIdentifiers);
                 return expression;
             }
             else
             {
                 IQueryFieldExpression expression = new QueryFieldExpressionString();
-                expression.Expression = ParseEvaluationRecursive(ref expression, givenFieldText);
+                expression.Expression = ParseEvaluationRecursive(ref expression, givenFieldText, ref documentIdentifiers);
                 return expression;
             }
 
             #endregion
         }
 
-        private static string ParseEvaluationRecursive(ref IQueryFieldExpression rootQueryFieldExpression, string givenExpressionText)
+        private static string ParseEvaluationRecursive(ref IQueryFieldExpression rootQueryFieldExpression, string givenExpressionText, ref HashSet<QueryFieldDocumentIdentifier> documentIdentifiers)
         {
             Tokenizer tokenizer = new(givenExpressionText);
 
             StringBuilder buffer = new();
-
 
             while (!tokenizer.IsEnd())
             {
@@ -152,7 +156,7 @@ namespace ParserV2.Parsers.Query
                     foreach (var functionCallParameterText in functionCallParametersText)
                     {
                         //Recursively process the function parameters.
-                        var resultingExpressionString = ParseEvaluationRecursive(ref rootQueryFieldExpression, functionCallParameterText);
+                        var resultingExpressionString = ParseEvaluationRecursive(ref rootQueryFieldExpression, functionCallParameterText, ref documentIdentifiers);
 
                         IExpressionFunctionParameter? parameter = null;
 
@@ -180,6 +184,8 @@ namespace ParserV2.Parsers.Query
                 }
                 else if (token.IsIdentifier())
                 {
+                    documentIdentifiers.Add(new QueryFieldDocumentIdentifier(token));
+
                     if (tokenizer.InertIsNextNonIdentifier(['(']))
                     {
                         //The character after this identifier is an open parenthesis, so this

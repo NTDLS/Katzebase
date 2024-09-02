@@ -28,5 +28,19 @@ namespace ParserV2.Parsers.Query.Fields
 
             throw new KbParserException("Multipart identifier contains an invalid number of segment: [{value}]");
         }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is QueryFieldDocumentIdentifier other)
+            {
+                return SchemaAlias == other.SchemaAlias && Name == other.Name;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(SchemaAlias, Name);
+        }
     }
 }
