@@ -312,33 +312,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
         #endregion
 
-        #region IsNextcharacter
-
-        public bool IsNextCharacter(char character)
-        {
-            RecordBreadcrumb();
-            if (NextCharacter == character)
-            {
-                _caret++;
-                SkipWhiteSpace();
-                return true;
-            }
-            return false;
-        }
-
-        public bool InertIsNextCharacter(char character)
-        {
-            if (NextCharacter == character)
-            {
-                SkipWhiteSpace();
-                return true;
-            }
-            return false;
-        }
-
-        #endregion
-
-
         #region Contains.
 
         /// <summary>
@@ -367,36 +340,32 @@ namespace NTDLS.Katzebase.Engine.Parsers
         #region GetNextIndexOf.
 
         /// <summary>
-        /// Returns the position of the any of the given characters, seeks from the current internal position.
+        /// Returns the position of the any of the given characters, seeks from the current caret position.
         /// </summary>
-        public bool InertTryGetNextIndexOf(char[] characters, out int position)
+        public bool InertTryGetNextIndexOf(char[] characters, out int foundIndex)
         {
             for (int i = _caret; i < _text.Length; i++)
             {
                 if (characters.Contains(_text[i]))
                 {
-                    position = i;
+                    foundIndex = i;
                     return true;
                 }
             }
 
-            position = -1;
+            foundIndex = -1;
             return false;
         }
 
         /// <summary>
-        /// Returns the position of the any of the given characters, seeks from the current internal position.
+        /// Returns the position of the any of the given characters, seeks from the current caret position.
         /// Throws exception if the character is not found.
         /// </summary>
         public int InertGetNextIndexOf(char[] characters)
         {
-            for (int i = _caret; i < _text.Length; i++)
+            if (InertTryGetNextIndexOf(characters, out int foundIndex))
             {
-                if (characters.Contains(_text[i]))
-                {
-                    int index = _caret;
-                    return index;
-                }
+                return foundIndex;
             }
 
             throw new Exception($"Tokenizer character not found [{string.Join("],[", characters)}].");
@@ -405,15 +374,30 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <summary>
         /// Returns the index of the first found of the given strings. Throws exception if not found.
         /// </summary>
-        public int InertGetNextIndexOf(string[] givenStrings)
+        public bool InertTryGetNextIndexOf(string[] givenStrings, out int foundIndex)
         {
             foreach (var givenString in givenStrings)
             {
                 int index = _text.IndexOf(givenString, _caret, StringComparison.InvariantCultureIgnoreCase);
                 if (index >= 0)
                 {
-                    return index;
+                    foundIndex = index;
+                    return true;
                 }
+            }
+
+            foundIndex = -1;
+            return false;
+        }
+
+        /// <summary>
+        /// Returns the index of the first found of the given strings. Throws exception if not found.
+        /// </summary>
+        public int InertGetNextIndexOf(string[] givenStrings)
+        {
+            if (InertTryGetNextIndexOf(givenStrings, out int foundIndex))
+            {
+                return foundIndex;
             }
 
             throw new Exception($"Expected string not found [{string.Join("],[", givenStrings)}].");
@@ -422,15 +406,69 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <summary>
         /// Returns the index of the given string. Throws exception if not found.
         /// </summary>
-        public int InertGetNextIndexOf(string givenString)
+        public bool InertTryGetNextIndexOf(string givenString, out int foundIndex)
         {
             int index = _text.IndexOf(givenString, _caret, StringComparison.InvariantCultureIgnoreCase);
             if (index >= 0)
             {
-                return index;
+                foundIndex = index;
+                return true;
+            }
+            foundIndex = -1;
+            return false;
+        }
+
+        /// <summary>
+        /// Returns the index of the given string. Throws exception if not found.
+        /// </summary>
+        public int InertGetNextIndexOf(string givenString)
+        {
+            if (InertTryGetNextIndexOf(givenString, out int foundIndex))
+            {
+                return foundIndex;
             }
 
             throw new Exception($"Expected string not found [{string.Join("],[", givenString)}].");
+        }
+
+        public delegate bool InertGetNextIndexOfProc(string peekedToken);
+
+        /// <summary>
+        /// Returns the index of the first found of the given strings. Throws exception if not found.
+        /// </summary>
+        public int InertGetNextIndexOf(InertGetNextIndexOfProc proc)
+        {
+            if (InertTryGetNextIndexOf(proc, out int foundIndex))
+            {
+                return foundIndex;
+            }
+
+            throw new Exception($"Expected string not found {proc.GetType().Name}.");
+        }
+
+        /// <summary>
+        /// Returns true if the given strings is found.
+        /// </summary>
+        public bool InertTryGetNextIndexOf(InertGetNextIndexOfProc proc, out int foundIndex)
+        {
+            int restoreCaret = _caret;
+
+            while (IsEnd() == false)
+            {
+                var token = GetNext();
+
+                if (proc(token))
+                {
+                    foundIndex = _caret;
+                    _caret = restoreCaret;
+                    return true;
+                }
+            }
+
+            foundIndex = -1;
+            _caret = restoreCaret;
+
+            return false;
         }
 
         #endregion
@@ -447,21 +485,49 @@ namespace NTDLS.Katzebase.Engine.Parsers
             var result = _text.Substring(_caret);
             _caret = _text.Length;
 
-            SkipWhiteSpace();
+            InternalSkipWhiteSpace();
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the a substring from tokenizer from the internal caret position for a given length.
+        /// </summary>
+        public string SubString(int length)
+        {
+            RecordBreadcrumb();
+
+            var result = _text.Substring(_caret, length);
+            _caret += length;
+
+            InternalSkipWhiteSpace();
             return result;
         }
 
         /// <summary>
         /// Gets the a substring from tokenizer from the internal caret position to the given absolute position.
         /// </summary>
-        public string SubString(int absoluteEndPosition)
+        public string SubStringAbsolute(int absoluteEndPosition)
         {
             RecordBreadcrumb();
 
             var result = _text.Substring(_caret, absoluteEndPosition - _caret);
             _caret = absoluteEndPosition;
 
-            SkipWhiteSpace();
+            InternalSkipWhiteSpace();
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the a substring from tokenizer from the internal caret position to the given absolute position.
+        /// </summary>
+        public string SubString(int startPosition, int length)
+        {
+            RecordBreadcrumb();
+
+            var result = _text.Substring(startPosition, length);
+            _caret = startPosition + length;
+
+            InternalSkipWhiteSpace();
             return result;
         }
 
@@ -472,10 +538,16 @@ namespace NTDLS.Katzebase.Engine.Parsers
             => _text.Substring(startPosition, length);
 
         /// <summary>
-        /// Gets a substring from the tokenizer.
+        /// Gets the remainder of the text from the given position.
         /// </summary>
-        public string InertSubString(int startPosition)
+        public string InertRemainderFrom(int startPosition)
             => _text.Substring(startPosition);
+
+        /// <summary>
+        /// Gets the remainder of the text from current caret position.
+        /// </summary>
+        public string InertRemainder()
+            => _text.Substring(_caret);
 
         #endregion
 
@@ -789,6 +861,9 @@ namespace NTDLS.Katzebase.Engine.Parsers
         public T GetNext<T>()
             => Helpers.Converters.ConvertTo<T>(GetNext(_standardTokenDelimiters));
 
+        /// <summary>
+        /// Gets the next token using the given delimiters.
+        /// </summary>
         public T GetNext<T>(char[] delimiters)
             => Helpers.Converters.ConvertTo<T>(GetNext(delimiters));
 
@@ -842,6 +917,9 @@ namespace NTDLS.Katzebase.Engine.Parsers
         public T InertGetNext<T>()
             => Helpers.Converters.ConvertTo<T>(InertGetNext(_standardTokenDelimiters));
 
+        /// <summary>
+        /// Gets the next token using the given delimiters.
+        /// </summary>
         public T InertGetNext<T>(char[] delimiters)
             => Helpers.Converters.ConvertTo<T>(InertGetNext(delimiters));
 
@@ -852,7 +930,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
             => InertGetNext(_standardTokenDelimiters);
 
         /// <summary>
-        /// Returns the next token without moving the caret.
+        /// Returns the next token without moving the caret using the given delimiters.
         /// </summary>
         public string InertGetNext(char[] delimiters)
         {
@@ -921,8 +999,20 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <summary>
         /// Returns true if the next character matches the given value.
         /// </summary>
-        public bool InertIsNextCharacter(char c)
-            => NextCharacter == c;
+        public bool InertIsNextCharacter(char character)
+            => NextCharacter == character;
+
+        public bool IsNextCharacter(char character)
+        {
+            RecordBreadcrumb();
+            if (NextCharacter == character)
+            {
+                _caret++;
+                InternalSkipWhiteSpace();
+                return true;
+            }
+            return false;
+        }
 
         #endregion
 
@@ -987,6 +1077,47 @@ namespace NTDLS.Katzebase.Engine.Parsers
         #endregion
 
         #region Skip / Eat.
+
+        /// <summary>
+        /// Moves the caret forward while the character is in the given list, returns the count of skipped.
+        /// </summary>
+        public int SkipWhile(char[] characters)
+        {
+            int count = 0;
+            while (_caret < _text.Length && characters.Contains(_text[_caret]))
+            {
+                count++;
+                _caret++;
+            }
+            InternalSkipWhiteSpace();
+            return count;
+        }
+
+        /// <summary>
+        /// Moves the caret forward while the character matches the given value, returns the count of skipped.
+        /// </summary>
+        public int SkipWhile(char character)
+            => SkipWhile([character]);
+
+        /// <summary>
+        /// Moves the caret forward by one character (then whitespace) if the character is in the given list, returns true if match was found.
+        /// </summary>
+        public bool SkipIf(char[] characters)
+        {
+            if (_caret < _text.Length && characters.Contains(_text[_caret]))
+            {
+                _caret++;
+                InternalSkipWhiteSpace();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Moves the caret forward by one character (then whitespace) if the character matches the given value, returns true if match was found.
+        /// </summary>
+        public bool SkipIf(char character)
+            => SkipIf([character]);
 
         /// <summary>
         /// Moves the caret past any whitespace, does not record breadcrumb.

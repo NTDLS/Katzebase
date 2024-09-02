@@ -2,8 +2,8 @@
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Parsers;
 using NTDLS.Katzebase.Engine.Query;
-using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using NTDLS.Katzebase.Shared;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             public bool IsComplex { get; set; }
         }
 
-        internal static FunctionParameterBase ParseProcedureParameters(QueryTokenizer tokenizer)
+        internal static FunctionParameterBase ParseProcedureParameters(Tokenizer tokenizer)
         {
             var preParsed = PreParseFunctionCall(tokenizer);
             if (preParsed != null)
@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             return new FunctionParameterBase();
         }
 
-        internal static FunctionParameterBaseCollection ParseGroupByFields(QueryTokenizer tokenizer)
+        internal static FunctionParameterBaseCollection ParseGroupByFields(Tokenizer tokenizer)
         {
             var preParsed = PreParseGroupByFields(tokenizer);
 
@@ -59,7 +59,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             return result;
         }
 
-        internal static FunctionParameterBaseCollection ParseQueryFields(QueryTokenizer tokenizer)
+        internal static FunctionParameterBaseCollection ParseQueryFields(Tokenizer tokenizer)
         {
             var preParsed = PreParseQueryFields(tokenizer);
 
@@ -86,7 +86,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             return result;
         }
 
-        internal static List<NamedFunctionParameterBaseCollection> ParseInsertFields(QueryTokenizer tokenizer)
+        internal static List<NamedFunctionParameterBaseCollection> ParseInsertFields(Tokenizer tokenizer)
         {
             var result = new List<NamedFunctionParameterBaseCollection>();
 
@@ -162,7 +162,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             return result;
         }
 
-        private static KbInsensitiveDictionary<PreParsedField> PreParseInsertFields(QueryTokenizer query)
+        private static KbInsensitiveDictionary<PreParsedField> PreParseInsertFields(Tokenizer query)
         {
             var preparseFields = new KbInsensitiveDictionary<PreParsedField>();
 
@@ -191,7 +191,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                     query.SkipNextCharacter();
                 }
 
-                var token = query.PeekNext([',', '(', ')']);
+                var token = query.InertGetNext([',', '(', ')']);
 
                 if (token != string.Empty && _mathChars.Contains(token[0]) && !(token[0] == '(' || token[0] == ')'))
                 {
@@ -282,7 +282,7 @@ namespace NTDLS.Katzebase.Engine.Functions
         }
 
 
-        internal static NamedFunctionParameterBaseCollection ParseUpdateFields(QueryTokenizer tokenizer)
+        internal static NamedFunctionParameterBaseCollection ParseUpdateFields(Tokenizer tokenizer)
         {
             var preParsed = PreParseUpdateFields(tokenizer);
 
@@ -357,7 +357,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             return false;
         }
 
-        private static FunctionExpression ParseMathExpression(string text, QueryTokenizer tokenizer)
+        private static FunctionExpression ParseMathExpression(string text, Tokenizer tokenizer)
         {
             var expression = new FunctionExpression();
             string param = string.Empty;
@@ -477,7 +477,7 @@ namespace NTDLS.Katzebase.Engine.Functions
         /// <exception cref="KbParserException"></exception>
         private static bool IsNumericOperation(string text)
         {
-            QueryTokenizer tokenizer = new(text);
+            Tokenizer tokenizer = new(text);
 
             while (true)
             {
@@ -535,18 +535,18 @@ namespace NTDLS.Katzebase.Engine.Functions
 
 
 
-        private static FunctionParameterBase ParseFunctionCall(string text, QueryTokenizer queryTokenizer, string expressionKey = "")
+        private static FunctionParameterBase ParseFunctionCall(string text, Tokenizer Tokenizer, string expressionKey = "")
         {
             char firstChar = text[0];
 
             if (char.IsNumber(firstChar))
             {
                 //Parse math expression.
-                return ParseMathExpression(text, queryTokenizer);
+                return ParseMathExpression(text, Tokenizer);
             }
             else if (char.IsLetter(firstChar) && IsNextNonIdentifier(text, 0, "+-/*!~^".ToCharArray()))
             {
-                return ParseMathExpression(text, queryTokenizer);
+                return ParseMathExpression(text, Tokenizer);
             }
             else if (char.IsLetter(firstChar) && IsNextNonIdentifier(text, 0, '('))
             {
@@ -582,7 +582,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                     if (parenScopeFellToZero && _mathChars.Contains(c))
                     {
                         //We have finished parsing a full (...) scope for a function and now we are finding math. Reset and just parse math.
-                        return ParseMathExpression(text, queryTokenizer);
+                        return ParseMathExpression(text, Tokenizer);
                     }
 
                     if (_mathChars.Contains(c) && !(c == '(' || c == ')'))
@@ -649,19 +649,19 @@ namespace NTDLS.Katzebase.Engine.Functions
                     {
                         if (param.IsOneOf(["true", "false"]))
                         {
-                            results.Parameters.Add(ParseMathExpression(param.Is("true") ? "1" : "0", queryTokenizer));
+                            results.Parameters.Add(ParseMathExpression(param.Is("true") ? "1" : "0", Tokenizer));
                         }
                         else if (parseMath)
                         {
-                            results.Parameters.Add(ParseMathExpression(param, queryTokenizer));
+                            results.Parameters.Add(ParseMathExpression(param, Tokenizer));
                         }
                         else if (isComplex)
                         {
-                            results.Parameters.Add(ParseFunctionCall(param, queryTokenizer));
+                            results.Parameters.Add(ParseFunctionCall(param, Tokenizer));
                         }
                         else if (param.StartsWith("$") && param.EndsWith("$"))
                         {
-                            results.Parameters.Add(new FunctionConstantParameter(queryTokenizer.StringLiterals[param]));
+                            results.Parameters.Add(new FunctionConstantParameter(Tokenizer.StringLiterals[param]));
                         }
                         else
                         {
@@ -686,7 +686,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             }
         }
 
-        private static KbInsensitiveDictionary<PreParsedField> PreParseUpdateFields(QueryTokenizer query)
+        private static KbInsensitiveDictionary<PreParsedField> PreParseUpdateFields(Tokenizer query)
         {
             var preparseFields = new KbInsensitiveDictionary<PreParsedField>();
 
@@ -717,7 +717,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         query.SkipNextCharacter();
                     }
 
-                    var token = query.PeekNext([',', '(', ')']);
+                    var token = query.InertGetNext([',', '(', ')']);
 
                     if (token != string.Empty && _mathChars.Contains(token[0]) && !(token[0] == '(' || token[0] == ')'))
                     {
@@ -830,7 +830,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             }
         }
 
-        private static List<PreParsedField> PreParseQueryFields(QueryTokenizer query)
+        private static List<PreParsedField> PreParseQueryFields(Tokenizer query)
         {
             var preparseFields = new List<PreParsedField>();
 
@@ -844,7 +844,7 @@ namespace NTDLS.Katzebase.Engine.Functions
 
                 while (true)
                 {
-                    var token = query.PeekNext([',', '(', ')']);
+                    var token = query.InertGetNext([',', '(', ')']);
 
                     if (token != string.Empty && _mathChars.Contains(token[0]) && !(token[0] == '(' || token[0] == ')'))
                     {
@@ -950,7 +950,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             }
         }
 
-        private static List<PreParsedField> PreParseGroupByFields(QueryTokenizer query)
+        private static List<PreParsedField> PreParseGroupByFields(Tokenizer query)
         {
             var preparseFields = new List<PreParsedField>();
 
@@ -964,7 +964,7 @@ namespace NTDLS.Katzebase.Engine.Functions
 
                 while (true)
                 {
-                    var token = query.PeekNext([',', '(', ')']);
+                    var token = query.InertGetNext([',', '(', ')']);
 
                     if (token != string.Empty && _mathChars.Contains(token[0]) && !(token[0] == '(' || token[0] == ')'))
                     {
@@ -1062,7 +1062,7 @@ namespace NTDLS.Katzebase.Engine.Functions
             }
         }
 
-        private static PreParsedField PreParseFunctionCall(QueryTokenizer query)
+        private static PreParsedField PreParseFunctionCall(Tokenizer query)
         {
             while (true)
             {
@@ -1079,7 +1079,7 @@ namespace NTDLS.Katzebase.Engine.Functions
 
                 while (true)
                 {
-                    token = query.PeekNext([',', '(', ')']);
+                    token = query.InertGetNext([',', '(', ')']);
 
                     if (query.NextCharacter == '(')
                     {

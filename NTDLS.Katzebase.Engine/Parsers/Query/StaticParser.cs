@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
             int stopAt = queryTokenizer.InertGetNextIndexOf([" from ", " into "]);
 
             //Get the text for all of the select fields.
-            var fieldsSegment = queryTokenizer.SubString(stopAt);
+            var fieldsSegment = queryTokenizer.SubStringAbsolute(stopAt);
 
             //Split the select fields on the comma, respecting any commas in function scopes.
             var fields = fieldsSegment.ScopeSensitiveSplit();

@@ -1,8 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Functions;
-using NTDLS.Katzebase.Engine.Functions.Procedures;
-using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Parsers;
 using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Query.Constraints;
@@ -141,6 +139,7 @@ namespace NTDLS.Katzebase.Engine.Query
                     {
                         if (tokenizer.InertTryIsNextToken(["where", "order", "inner", ""]))
                         {
+                            //Found start of next part of query.
                             break;
                         }
 
@@ -184,41 +183,20 @@ namespace NTDLS.Katzebase.Engine.Query
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
                 }
 
-
                 if (tokenizer.TryIsNextToken("where"))
                 {
-                    var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Caret);
-                    int parenthesisScope = 0;
-
-                    while (true)
+                    //Look for tokens that would mean the end of the where clause
+                    if (tokenizer.InertTryGetNextIndexOf([" group ", " order "], out int endOfWhere) == false)
                     {
-                        int previousTokenPosition = conditionTokenizer.Position;
-                        var conditionToken = conditionTokenizer.PeekNext();
-
-                        if (conditionToken == "(") parenthesisScope++;
-                        if (conditionToken == ")") parenthesisScope--;
-
-                        if (parenthesisScope < 0 || int.TryParse(conditionToken, out _) == false && Enum.TryParse(conditionToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        //Maybe we end at the next query?
+                        if (tokenizer.InertTryGetNextIndexOf((o) => StaticParser.IsStartOfQuery(o), out endOfWhere) == false)
                         {
-                            //We found the beginning of a new statement, break here.
-                            conditionTokenizer.SetPosition(previousTokenPosition);
-                            tokenizer.SetCaret(previousTokenPosition);
-                            break;
-                        }
-
-                        conditionTokenizer.SkipNext();
-
-                        if (((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.TryIsNextToken("by"))
-                            || conditionToken == string.Empty)
-                        {
-                            //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
-                            conditionTokenizer.SetPosition(previousTokenPosition);
-                            tokenizer.SetCaret(previousTokenPosition);
-                            break;
+                            //Well, I suppose we will take the remainder of the query text.
+                            endOfWhere = tokenizer.Length;
                         }
                     }
 
-                    string conditionText = tokenizer.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
+                    string conditionText = tokenizer.SubStringAbsolute(endOfWhere).Trim();
                     if (conditionText == string.Empty)
                     {
                         throw new KbParserException("Invalid query. Found '" + conditionText + "', expected: list of conditions.");
@@ -250,16 +228,13 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     while (true)
                     {
-                        int previousTokenPosition = tokenizer.Caret;
-                        var fieldToken = tokenizer.InertGetNext();
-
-                        if (int.TryParse(fieldToken, out _) == false && Enum.TryParse(fieldToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
+                        if (tokenizer.InertTryCompareNextToken((o) => StaticParser.IsStartOfQuery(o)))
                         {
-                            //We found the beginning of a new statement, break here.
+                            //Found start of next query.
                             break;
                         }
 
-                        tokenizer.SkipNext();
+                        var fieldToken = tokenizer.GetNext();
 
                         if (result.SortFields.Count > 0)
                         {
@@ -280,7 +255,6 @@ namespace NTDLS.Katzebase.Engine.Query
                                 throw new KbParserException("Invalid query. Found '" + tokenizer.SubString() + "', expected: end of statement.");
                             }
 
-                            tokenizer.SetCaret(previousTokenPosition);
                             break;
                         }
 
@@ -756,7 +730,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     while (true)
                     {
-                        int previousTokenPosition = conditionTokenizer.Position;
+                        int previousTokenPosition = conditionTokenizer.Caret;
                         var conditionToken = conditionTokenizer.PeekNext();
 
                         if (conditionToken == "(") parenthesisScope++;
@@ -765,8 +739,8 @@ namespace NTDLS.Katzebase.Engine.Query
                         if (parenthesisScope < 0 || int.TryParse(conditionToken, out _) == false && Enum.TryParse(conditionToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
-                            conditionTokenizer.SetPosition(previousTokenPosition);
-                            tokenizer.SetPosition(previousTokenPosition);
+                            conditionTokenizer.SetCaret(previousTokenPosition);
+                            tokenizer.SetCaret(previousTokenPosition);
                             break;
                         }
 
@@ -779,13 +753,13 @@ namespace NTDLS.Katzebase.Engine.Query
                         else if (conditionToken == string.Empty)
                         {
                             //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
-                            conditionTokenizer.SetPosition(previousTokenPosition);
-                            tokenizer.SetPosition(previousTokenPosition);
+                            conditionTokenizer.SetCaret(previousTokenPosition);
+                            tokenizer.SetCaret(previousTokenPosition);
                             break;
                         }
                     }
 
-                    string conditionText = tokenizer.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
+                    string conditionText = tokenizer.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Caret - conditionTokenizer.StartPosition).Trim();
                     if (conditionText == string.Empty)
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: list of conditions.");
@@ -1019,7 +993,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + token + "', expected 'on'.");
                     }
 
-                    int joinConditionsStartPosition = tokenizer.Position;
+                    int joinConditionsStartPosition = tokenizer.Caret;
 
                     while (true)
                     {
@@ -1045,7 +1019,7 @@ namespace NTDLS.Katzebase.Engine.Query
                             throw new KbParserException("Invalid query. Found '" + joinLeftCondition + "', expected: left side of join expression.");
                         }
 
-                        int logicalQualifierPos = tokenizer.Position;
+                        int logicalQualifierPos = tokenizer.Caret;
 
                         token = ConditionTokenizer.GetNext(tokenizer.Text, ref logicalQualifierPos);
                         if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
@@ -1053,7 +1027,7 @@ namespace NTDLS.Katzebase.Engine.Query
                             throw new KbParserException("Invalid query. Found '" + token + "], expected logical qualifier.");
                         }
 
-                        tokenizer.SetPosition(logicalQualifierPos);
+                        tokenizer.SetCaret(logicalQualifierPos);
 
                         var joinRightCondition = tokenizer.GetNext();
                         if (!TokenHelpers.IsValidIdentifier(joinRightCondition, '.'))
@@ -1062,7 +1036,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         }
                     }
 
-                    var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Position - joinConditionsStartPosition).Trim();
+                    var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Caret - joinConditionsStartPosition).Trim();
                     var joinConditions = Conditions.Create(joinConditionsText, tokenizer, subSchemaAlias);
 
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
@@ -1070,12 +1044,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 if (tokenizer.TryIsNextToken("where"))
                 {
-                    var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Position);
+                    var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Caret);
                     int parenthesisScope = 0;
 
                     while (true)
                     {
-                        int previousTokenPosition = conditionTokenizer.Position;
+                        int previousTokenPosition = conditionTokenizer.Caret;
                         var conditionToken = conditionTokenizer.PeekNext();
 
                         if (conditionToken == "(") parenthesisScope++;
@@ -1084,8 +1058,8 @@ namespace NTDLS.Katzebase.Engine.Query
                         if (parenthesisScope < 0 || int.TryParse(conditionToken, out _) == false && Enum.TryParse(conditionToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
-                            conditionTokenizer.SetPosition(previousTokenPosition);
-                            tokenizer.SetPosition(previousTokenPosition);
+                            conditionTokenizer.SetCaret(previousTokenPosition);
+                            tokenizer.SetCaret(previousTokenPosition);
                             break;
                         }
 
@@ -1095,13 +1069,13 @@ namespace NTDLS.Katzebase.Engine.Query
                             || conditionToken == string.Empty)
                         {
                             //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
-                            conditionTokenizer.SetPosition(previousTokenPosition);
-                            tokenizer.SetPosition(previousTokenPosition);
+                            conditionTokenizer.SetCaret(previousTokenPosition);
+                            tokenizer.SetCaret(previousTokenPosition);
                             break;
                         }
                     }
 
-                    string conditionText = tokenizer.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
+                    string conditionText = tokenizer.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Caret - conditionTokenizer.StartPosition).Trim();
                     if (conditionText == string.Empty)
                     {
                         throw new KbParserException("Invalid query. Found '" + conditionText + "', expected: list of conditions.");
@@ -1133,7 +1107,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     while (true)
                     {
-                        int previousTokenPosition = tokenizer.Position;
+                        int previousTokenPosition = tokenizer.Caret;
                         var fieldToken = tokenizer.PeekNext();
 
                         if (int.TryParse(fieldToken, out _) == false && Enum.TryParse(fieldToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
@@ -1151,7 +1125,7 @@ namespace NTDLS.Katzebase.Engine.Query
                                 tokenizer.SkipDelimiters();
                                 fieldToken = tokenizer.GetNext();
                             }
-                            else if (tokenizer.Position < tokenizer.Length) //We should have consumed the entire query at this point.
+                            else if (tokenizer.Caret < tokenizer.Length) //We should have consumed the entire query at this point.
                             {
                                 throw new KbParserException("Invalid query. Found '" + fieldToken + "', expected: ','.");
                             }
@@ -1159,12 +1133,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
                         if (fieldToken == string.Empty)
                         {
-                            if (tokenizer.Position < tokenizer.Length)
+                            if (tokenizer.Caret < tokenizer.Length)
                             {
                                 throw new KbParserException("Invalid query. Found '" + tokenizer.Remainder() + "', expected: end of statement.");
                             }
 
-                            tokenizer.SetPosition(previousTokenPosition);
+                            tokenizer.SetCaret(previousTokenPosition);
                             break;
                         }
 
@@ -1241,7 +1215,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
                     }
 
-                    int joinConditionsStartPosition = tokenizer.Position;
+                    int joinConditionsStartPosition = tokenizer.Caret;
 
                     while (true)
                     {
@@ -1261,7 +1235,7 @@ namespace NTDLS.Katzebase.Engine.Query
                             throw new KbParserException("Invalid query. Found '" + joinLeftCondition + "', expected: left side of join expression.");
                         }
 
-                        int logicalQualifierPos = tokenizer.Position;
+                        int logicalQualifierPos = tokenizer.Caret;
 
                         token = ConditionTokenizer.GetNext(tokenizer.Text, ref logicalQualifierPos);
                         if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
@@ -1269,7 +1243,7 @@ namespace NTDLS.Katzebase.Engine.Query
                             throw new KbParserException("Invalid query. Found '" + token + "], logical qualifier.");
                         }
 
-                        tokenizer.SetPosition(logicalQualifierPos);
+                        tokenizer.SetCaret(logicalQualifierPos);
 
                         var joinRightCondition = tokenizer.GetNext();
                         if (!TokenHelpers.IsValidIdentifier(joinRightCondition, '.'))
@@ -1278,7 +1252,7 @@ namespace NTDLS.Katzebase.Engine.Query
                         }
                     }
 
-                    var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Position - joinConditionsStartPosition).Trim();
+                    var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Caret - joinConditionsStartPosition).Trim();
                     var joinConditions = Conditions.Create(joinConditionsText, tokenizer, subSchemaAlias);
 
                     result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
@@ -1292,12 +1266,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 if (token.Is("where"))
                 {
-                    var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Position);
+                    var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Caret);
                     int parenthesisScope = 0;
 
                     while (true)
                     {
-                        int previousTokenPosition = conditionTokenizer.Position;
+                        int previousTokenPosition = conditionTokenizer.Caret;
                         var conditionToken = conditionTokenizer.GetNext();
 
                         if (conditionToken == "(") parenthesisScope++;
@@ -1306,8 +1280,8 @@ namespace NTDLS.Katzebase.Engine.Query
                         if (parenthesisScope < 0 || int.TryParse(conditionToken, out _) == false && Enum.TryParse(conditionToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
                         {
                             //We found the beginning of a new statement, break here.
-                            conditionTokenizer.SetPosition(previousTokenPosition);
-                            tokenizer.SetPosition(previousTokenPosition);
+                            conditionTokenizer.SetCaret(previousTokenPosition);
+                            tokenizer.SetCaret(previousTokenPosition);
                             break;
                         }
                         else if ((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.TryIsNextToken("by"))
@@ -1317,13 +1291,13 @@ namespace NTDLS.Katzebase.Engine.Query
                         else if (conditionToken == string.Empty)
                         {
                             //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
-                            conditionTokenizer.SetPosition(previousTokenPosition);
-                            tokenizer.SetPosition(previousTokenPosition);
+                            conditionTokenizer.SetCaret(previousTokenPosition);
+                            tokenizer.SetCaret(previousTokenPosition);
                             break;
                         }
                     }
 
-                    string conditionText = tokenizer.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Position - conditionTokenizer.StartPosition).Trim();
+                    string conditionText = tokenizer.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Caret - conditionTokenizer.StartPosition).Trim();
                     if (conditionText == string.Empty)
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "', expected: list of conditions.");
