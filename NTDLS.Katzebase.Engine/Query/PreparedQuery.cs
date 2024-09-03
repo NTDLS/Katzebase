@@ -56,7 +56,7 @@ namespace NTDLS.Katzebase.Engine.Query
         ///     which schemas we pull fields from.
         /// </summary>
         public List<string>? DynamicSchemaFieldFilter { get; set; }
-        public QueryBatch QueryBatch { get; private set; }
+        public QueryBatch Batch { get; private set; }
         public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
         public List<QuerySchema> Schemas { get; private set; } = new();
         public int RowLimit { get; set; }
@@ -89,7 +89,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
         public PreparedQuery(QueryBatch queryBatch)
         {
-            QueryBatch = queryBatch;
+            Batch = queryBatch;
             Conditions = new Conditions(queryBatch);
         }
 

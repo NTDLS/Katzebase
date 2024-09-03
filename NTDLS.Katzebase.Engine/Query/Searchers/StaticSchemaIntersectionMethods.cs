@@ -369,7 +369,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 {
                     Alias = o.Alias,
                     Ordinal = o.Ordinal,
-                    Value = instance.Operation.Query.QueryBatch.GetLiteralValue(o.Expression.Value)
+                    Value = instance.Operation.Query.Batch.GetLiteralValue(o.Expression.Value)
                 });
 
             foreach (var field in constants)
