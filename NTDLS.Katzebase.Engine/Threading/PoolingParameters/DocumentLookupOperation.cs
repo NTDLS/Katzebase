@@ -7,7 +7,7 @@ using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
 {
     /// <summary>
-    /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.
+    /// Thread parameters for a lookup operations. Shared across all threads in a single operation.
     /// </summary>
     internal class DocumentLookupOperation
     {
@@ -34,8 +34,9 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// </summary>
         /// <param name="operation"></param>
         /// <param name="documentPointer"></param>
-        internal class Parameter(DocumentLookupOperation operation, DocumentPointer documentPointer)
+        internal class Instance(DocumentLookupOperation operation, DocumentPointer documentPointer)
         {
+            public Semaphore.OptimisticCriticalResource<Dictionary<string, NCalc.Expression>> ExpressionCache { get; set; } = new();
             public DocumentLookupOperation Operation { get; set; } = operation;
             public DocumentPointer DocumentPointer { get; set; } = documentPointer;
         }

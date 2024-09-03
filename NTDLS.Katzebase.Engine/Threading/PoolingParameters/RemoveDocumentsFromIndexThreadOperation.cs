@@ -6,7 +6,7 @@ using NTDLS.Katzebase.Engine.Schemas;
 namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
 {
     /// <summary>
-    /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.
+    /// Thread parameters for index row removal operations. Shared across all threads in a single operation.
     /// </summary>
     internal class RemoveDocumentsFromIndexThreadOperation
     {
@@ -22,6 +22,21 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
             PhysicalIndex = physicalIndex;
             PhysicalSchema = physicalSchema;
             DocumentPointers = documentPointers;
+        }
+
+        /// <summary>
+        /// Thread parameters for a index row removal operation. Used by a single thread.
+        /// </summary>
+        internal class Instance
+        {
+            internal RemoveDocumentsFromIndexThreadOperation Operation { get; set; }
+            internal int IndexPartition { get; set; }
+
+            internal Instance(RemoveDocumentsFromIndexThreadOperation operation, int indexPartition)
+            {
+                Operation = operation;
+                IndexPartition = indexPartition;
+            }
         }
     }
 }

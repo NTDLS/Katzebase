@@ -13,9 +13,10 @@ namespace NTDLS.Katzebase.Engine.Query
     internal class StaticExpressionProcessor
     {
         /// <summary>
-        /// Resolves all of the query expressions on a row level and fills in the values in the resultingRows.
+        /// Resolves all of the query expressions (string concatenation, math and all recursive
+        ///     function calls) on a row level and fills in the values in the resultingRows.
         /// </summary>
-        public static void CollapseRowExpressions(Transaction transaction, PreparedQuery query, SchemaIntersectionRowCollection resultingRows)
+        public static void CollapseRowExpressions(Transaction transaction, PreparedQuery query, ref SchemaIntersectionRowCollection resultingRows)
         {
             //Resolve all expressions and fill in the row fields.
             foreach (var expressionField in query.SelectFields.ExpressionFields)
@@ -58,7 +59,7 @@ namespace NTDLS.Katzebase.Engine.Query
             //Build a cachable numeric expression, interpolate the values and execute the expression.
 
             var tokenizer = new TokenizerSlim(expressionString, ['~', '!', '%', '^', '&', '*', '(', ')', '-', '/', '+']);
-            string evaluationExpression = new string(expressionString.ToCharArray());
+
             int variableNumber = 0;
 
             var expressionVariables = new Dictionary<string, double>();
@@ -69,23 +70,31 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 if (token.StartsWith("$x_") && token.EndsWith('$'))
                 {
+                    //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
+
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
                     var functionResult = CollapseScalerFunction(transaction, query, row, functions, subFunction);
 
                     string mathVariable = $"v{variableNumber++}";
                     expressionVariables.Add(mathVariable, double.Parse(functionResult));
-                    evaluationExpression = evaluationExpression.Replace(token, mathVariable);
+                    expressionString = expressionString.Replace(token, mathVariable);
                 }
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
-                    string mathVariable = $"v{variableNumber++}";
-                    evaluationExpression = evaluationExpression.Replace(token, mathVariable);
-                    expressionVariables.Add(mathVariable, double.Parse(query.Batch.GetLiteralValue(token)));
+                    //This is a string placeholder, get the literal value and complain about it.
+
+                    throw new KbEngineException($"Could not perform mathematical operation on [{query.Batch.GetLiteralValue(token)}]");
+
+                    //string mathVariable = $"v{variableNumber++}";
+                    //expressionString = expressionString.Replace(token, mathVariable);
+                    //expressionVariables.Add(mathVariable, double.Parse(query.Batch.GetLiteralValue(token)));
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {
+                    //This is a numeric placeholder, get the literal value and append it.
+
                     string mathVariable = $"v{variableNumber++}";
-                    evaluationExpression = evaluationExpression.Replace(token, mathVariable);
+                    expressionString = expressionString.Replace(token, mathVariable);
                     expressionVariables.Add(mathVariable, double.Parse(query.Batch.GetLiteralValue(token)));
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
@@ -94,14 +103,14 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
             }
 
-            var expressionHash = Library.Helpers.GetSHA1Hash(evaluationExpression);
+            var expressionHash = Library.Helpers.GetSHA1Hash(expressionString);
 
             NCalc.Expression? expression = null;
             query.ExpressionCache.UpgradableRead(r =>
             {
                 if (r.TryGetValue(expressionHash, out expression) == false)
                 {
-                    expression = new NCalc.Expression(evaluationExpression);
+                    expression = new NCalc.Expression(expressionString);
                     query.ExpressionCache.Write(w => w.Add(expressionHash, expression));
                 }
             });
@@ -155,16 +164,19 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
                 else if (token.StartsWith("$x_") && token.EndsWith('$'))
                 {
+                    //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
                     var functionResult = CollapseScalerFunction(transaction, query, row, functions, subFunction);
                     sb.Append(functionResult);
                 }
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
+                    //This is a string placeholder, get the literal value and append it.
                     sb.Append(query.Batch.GetLiteralValue(token));
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {
+                    //This is a numeric placeholder, get the literal value and append it.
                     sb.Append(query.Batch.GetLiteralValue(token));
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))

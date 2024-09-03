@@ -8,7 +8,7 @@ using NTDLS.Katzebase.Engine.Schemas;
 namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
 {
     /// <summary>
-    /// Thread parameters for a index operations. Shared across all threads in a single lookup operation.
+    /// Thread parameters for a lookup operations. Shared across all threads in a single operation.
     /// </summary>
     class MatchSchemaDocumentsByConditionsOperation
     {
@@ -32,12 +32,15 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
             KeyValues = keyValues;
         }
 
-        public class Parameter
+        /// <summary>
+        /// Thread parameters for a lookup operations. Used by a single thread.
+        /// </summary>
+        public class Instance
         {
             public MatchSchemaDocumentsByConditionsOperation Operation { get; set; }
             public uint IndexPartition { get; set; }
 
-            public Parameter(MatchSchemaDocumentsByConditionsOperation operation, uint indexPartition)
+            public Instance(MatchSchemaDocumentsByConditionsOperation operation, uint indexPartition)
             {
                 Operation = operation;
                 IndexPartition = indexPartition;
