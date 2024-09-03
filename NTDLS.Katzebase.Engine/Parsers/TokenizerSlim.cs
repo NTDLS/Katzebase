@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace NTDLS.Katzebase.Engine.Parsers
 {

@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
-using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
@@ -17,41 +16,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 "max:NumericArray/fieldName",
                 "avg:NumericArray/fieldName"
             };
-
-        internal static string? CollapseAllFunctionParameters(FunctionParameterBase param, IGrouping<string, SchemaIntersectionRow> group)
-        {
-            if (param is FunctionWithParams functionWithParams)
-            {
-                var subParams = new List<AggregateGenericParameter>();
-
-                foreach (var subParam in functionWithParams.Parameters)
-                {
-                    var specificParam = (FunctionDocumentFieldParameter)subParam;
-                    var values = group.SelectMany(o => o.AuxiliaryFields.Where(m => m.Key == specificParam.Value.Key)).Select(s => s.Value);
-                    subParams.Add(new AggregateDecimalArrayParameter() { Values = values.Select(o => decimal.Parse(o ?? "0")).ToList() });
-                }
-
-                return ExecuteFunction(functionWithParams.Function, subParams, group);
-            }
-            else if (param is FunctionConstantParameter functionConstantParameter)
-            {
-                return functionConstantParameter.RawValue;
-            }
-            /*
-            else if (param is FunctionDocumentFieldParameter functionDocumentFieldParameter)
-            {
-                var debug = group.Select(o => o.AuxiliaryFields.Where(m => m.Key == functionDocumentFieldParameter.Value.Key)).ToList();
-
-                var methodValue = group.Select(o => o.AuxiliaryFields.Where(m => m.Key == functionDocumentFieldParameter.Value.Key)).Single().Select(o => o.Value).Single();
-                return methodValue;
-            }
-            */
-            else
-            {
-                throw new KbNotImplementedException($"Aggregate function type {param.GetType} is not implemented.");
-            }
-
-        }
 
         private static string? ExecuteFunction(string functionName, List<AggregateGenericParameter> parameters, IGrouping<string, SchemaIntersectionRow> group)
         {

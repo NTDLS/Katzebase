@@ -1,5 +1,4 @@
 ﻿using NTDLS.Katzebase.Engine.Query;
-using NTDLS.Katzebase.Engine.Query.Tokenizers;
 
 namespace NTDLS.Katzebase.Engine.Functions.Parameters
 {
@@ -9,32 +8,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
         {
             param.Ordinal = Count;
             base.Add(param);
-        }
-
-        public void RepopulateLiterals(QueryTokenizer tokenizer)
-        {
-            RepopulateLiterals(this, tokenizer);
-        }
-
-        private void RepopulateLiterals(List<FunctionParameterBase> list, QueryTokenizer tokenizer)
-        {
-            foreach (var param in list)
-            {
-                if (param is FunctionConstantParameter functionConstantParameter)
-                {
-                    functionConstantParameter.RawValue = tokenizer.GetLiteralValue(functionConstantParameter.RawValue);
-                }
-                else if (param is FunctionExpression functionExpression)
-                {
-                    functionExpression.Value = tokenizer.GetLiteralValue(functionExpression.Value);
-                    RepopulateLiterals(functionExpression.Parameters, tokenizer);
-                }
-
-                if (param is FunctionWithParams functionWithParams)
-                {
-                    RepopulateLiterals(functionWithParams.Parameters, tokenizer);
-                }
-            }
         }
 
         private List<PrefixedField>? _allFields = null;

@@ -2,7 +2,6 @@
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using System.Globalization;
 using System.Text;
@@ -50,82 +49,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 "Left:string:string/text,numeric/length",
                 "IIF:string:boolean/condition,string/whenTrue,string/whenFalse",
             };
-
-        internal static string? CollapseAllFunctionParameters(Transaction transaction, FunctionParameterBase param, KbInsensitiveDictionary<string?> rowFields)
-        {
-            if (param is FunctionConstantParameter functionConstantParameter)
-            {
-                var value = functionConstantParameter.RawValue;
-                if (value.StartsWith('\'') && value.EndsWith('\''))
-                {
-                    return value.Substring(1, value.Length - 2);
-                }
-                return value;
-            }
-            else if (param is FunctionDocumentFieldParameter functionDocumentFieldParameter)
-            {
-                var result = rowFields.SingleOrDefault(o => o.Key == functionDocumentFieldParameter.Value.Key).Value
-                    ?? throw new KbFunctionException($"Field was not found when processing function: {functionDocumentFieldParameter.Value.Key}.");
-
-                return result;
-            }
-            else if (param is FunctionExpression functionExpression)
-            {
-                var expression = new NCalc.Expression(functionExpression.Value.Replace("{", "(").Replace("}", ")"));
-
-                foreach (var subParam in functionExpression.Parameters)
-                {
-                    if (subParam is FunctionWithParams)
-                    {
-                        string variable = ((FunctionNamedWithParams)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
-                        var value = CollapseAllFunctionParameters(transaction, subParam, rowFields);
-                        if (value != null)
-                        {
-                            expression.Parameters.Add(variable, decimal.Parse(value));
-                        }
-                        else
-                        {
-                            expression.Parameters.Add(variable, null);
-                        }
-                    }
-                    else if (subParam is FunctionDocumentFieldParameter)
-                    {
-                        string variable = ((FunctionDocumentFieldParameter)subParam).ExpressionKey.Replace("{", "").Replace("}", "");
-                        var value = rowFields.FirstOrDefault(o => o.Key == ((FunctionDocumentFieldParameter)subParam).Value.Key).Value;
-                        if (value != null)
-                        {
-                            expression.Parameters.Add(variable, decimal.Parse(value));
-                        }
-                        else
-                        {
-                            expression.Parameters.Add(variable, null);
-                        }
-                    }
-                    else
-                    {
-                        throw new KbNotImplementedException();
-                    }
-                }
-
-                return expression.Evaluate()?.ToString() ?? string.Empty;
-            }
-            else if (param is FunctionWithParams functionWithParams)
-            {
-                var subParams = new List<string?>();
-
-                foreach (var subParam in functionWithParams.Parameters)
-                {
-                    subParams.Add(CollapseAllFunctionParameters(transaction, subParam, rowFields));
-                }
-
-                return ExecuteFunction(transaction, functionWithParams.Function, subParams, rowFields);
-            }
-            else
-            {
-                //What is this?
-                throw new KbNotImplementedException();
-            }
-        }
 
         public static string? ExecuteFunction(Transaction transaction, string functionName, List<string> parameters, KbInsensitiveDictionary<string?> rowFields)
         {
