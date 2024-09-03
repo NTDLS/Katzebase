@@ -9,11 +9,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Exposed
     internal class ExposedExpression
     {
         public int Ordinal { get; set; }
+        public string FieldAlias { get; set; }
         public IQueryFieldExpression FieldExpression { get; set; }
 
-        public ExposedExpression(int ordinal, IQueryFieldExpression fieldExpression)
+        public ExposedExpression(int ordinal, string fieldAlias, IQueryFieldExpression fieldExpression)
         {
             Ordinal = ordinal;
+            FieldAlias = fieldAlias;
             FieldExpression = fieldExpression;
         }
     }

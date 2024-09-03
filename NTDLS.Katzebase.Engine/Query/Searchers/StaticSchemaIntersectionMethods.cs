@@ -289,24 +289,14 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         static void CollapseExpression(Transaction transaction, DocumentLookupOperation operation, ExposedExpression rootExpression, SchemaIntersectionRow row)
         {
 
-            row.InsertValue("Blah", rootExpression.Ordinal, "100");
-
-
+            row.InsertValue(rootExpression.FieldAlias, rootExpression.Ordinal, "100");
         }
 
         static void CollapseAllExpressions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRowCollection resultingRows)
         {
-            var fff = operation.Query.SelectFields.ExpressionFields;
-
             if (operation.Query.Hash != "957f4825bd09462c4ae2d7a57447cadb768d55783146c531427b6ea2002337ad")
             {
-                if (fff.Count == 0)
-                {
-                }
             }
-
-
-
 
             foreach (var expressionField in operation.Query.SelectFields.ExpressionFields)
             {
@@ -394,7 +384,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //  for rows produced by any one-to-many relationships.
             foreach (var field in instance.Operation.Query.SelectFields.ConstantFields)
             {
-                resultingRow.InsertValue(field.Alias, field.Ordinal, field.Value);
+                resultingRow.InsertValue(field.FieldAlias, field.Ordinal, field.Value);
             }
 
             if (instance.Operation.SchemaMap.Count > 1)

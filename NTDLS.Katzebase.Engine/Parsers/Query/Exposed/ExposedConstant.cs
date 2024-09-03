@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Exposed
     internal class ExposedConstant
     {
         public int Ordinal { get; private set; }
-        public string Alias { get; private set; }
+        public string FieldAlias { get; private set; }
         public string Value { get; private set; }
         public BasicDataType DataType { get; private set; }
 
@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Exposed
         {
             Ordinal = ordinal;
             DataType = dataType;
-            Alias = alias;
+            FieldAlias = alias;
             Value = value;
         }
     }

@@ -73,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             {
                                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Count() > 0)
                                 {
-                                    results.Add(new ExposedFunction(queryField.Ordinal, fieldExpression));
+                                    results.Add(new ExposedFunction(queryField.Ordinal, queryField.Alias, fieldExpression));
                                 }
                             }
                         }
@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             {
                                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Count() > 0)
                                 {
-                                    results.Add(new ExposedFunction(queryField.Ordinal, fieldExpression));
+                                    results.Add(new ExposedFunction(queryField.Ordinal, queryField.Alias, fieldExpression));
                                 }
                             }
                         }
@@ -291,7 +291,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             {
                                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Count() > 0)
                                 {
-                                    results.Add(new ExposedExpression(queryField.Ordinal, fieldExpression));
+                                    results.Add(new ExposedExpression(queryField.Ordinal, queryField.Alias, fieldExpression));
                                 }
                             }
                         }
