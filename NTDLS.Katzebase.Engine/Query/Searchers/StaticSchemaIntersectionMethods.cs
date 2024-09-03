@@ -294,8 +294,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             }
 
-            var TODOhereAreYourFunctions = operation.Query.SelectFields.FieldsWithFunctionCalls;
+            var todoHereAreYourFunctions = operation.Query.SelectFields.FieldsWithScalerFunctionCalls;
 
+            //old_SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler)
 
             foreach (var methodField in operation.Query.old_SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
             {

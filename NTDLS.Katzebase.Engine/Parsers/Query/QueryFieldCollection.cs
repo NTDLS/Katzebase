@@ -33,54 +33,107 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
             QueryBatch = queryBatch;
         }
 
-        #region Exposed collection: Functions.
+        #region Exposed collection: ScalerFunctions.
 
-        private List<ExposedFunction>? _exposedFunctions = null;
-        private readonly object _exposedFunctionsLock = new();
+        private List<ExposedFunction>? _exposedScalerFunctions = null;
+        private readonly object _exposedScalerFunctionsLock = new();
 
-        public void InvalidateFieldsWithFunctionCallsCache()
+        public void InvalidateFieldsWithScalerFunctionCallsCache()
         {
-            lock (_exposedFunctionsLock)
+            lock (_exposedScalerFunctionsLock)
             {
-                _exposedFunctions = null;
+                _exposedScalerFunctions = null;
             }
         }
 
         /// <summary>
         /// Returns a list of fields that have function call dependencies.
         /// </summary>
-        public List<ExposedFunction> FieldsWithFunctionCalls
+        public List<ExposedFunction> FieldsWithScalerFunctionCalls
         {
             get
             {
-                if (_exposedFunctions == null)
+                if (_exposedScalerFunctions == null)
                 {
-                    lock (_exposedFunctionsLock)
+                    lock (_exposedScalerFunctionsLock)
                     {
-                        if (_exposedFunctions != null)
+                        if (_exposedScalerFunctions != null)
                         {
                             //We check again here because other threads may have started waiting on the lock
-                            //  with the intention of hydrating _exposedFunctions themselves, we do this because
-                            //  we don't want to lock on reads once this _exposedFunctions is hydrated.
-                            return _exposedFunctions;
+                            //  with the intention of hydrating _exposedScalerFunctions themselves, we do this because
+                            //  we don't want to lock on reads once this _exposedScalerFunctions is hydrated.
+                            return _exposedScalerFunctions;
                         }
 
-                        _exposedFunctions = new List<ExposedFunction>();
+                        _exposedScalerFunctions = new List<ExposedFunction>();
 
                         foreach (var queryField in this)
                         {
                             if (queryField.Expression is IQueryFieldExpression fieldExpression)
                             {
-                                if (fieldExpression.FunctionDependencies.Count > 0)
+                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Count() > 0)
                                 {
-                                    _exposedFunctions.Add(new ExposedFunction(queryField.Ordinal, fieldExpression));
+                                    _exposedScalerFunctions.Add(new ExposedFunction(queryField.Ordinal, fieldExpression));
                                 }
                             }
                         }
                     }
                 }
 
-                return _exposedFunctions;
+                return _exposedScalerFunctions;
+            }
+        }
+
+        #endregion
+
+        #region Exposed collection: AggregateFunctions.
+
+        private List<ExposedFunction>? _exposedAggregateFunctions = null;
+        private readonly object _exposedAggregateFunctionsLock = new();
+
+        public void InvalidateFieldsWithAggregateFunctionCallsCache()
+        {
+            lock (_exposedAggregateFunctionsLock)
+            {
+                _exposedAggregateFunctions = null;
+            }
+        }
+
+        /// <summary>
+        /// Returns a list of fields that have function call dependencies.
+        /// </summary>
+        public List<ExposedFunction> FieldsWithAggregateFunctionCalls
+        {
+            get
+            {
+                if (_exposedAggregateFunctions == null)
+                {
+                    lock (_exposedAggregateFunctionsLock)
+                    {
+                        if (_exposedAggregateFunctions != null)
+                        {
+                            //We check again here because other threads may have started waiting on the lock
+                            //  with the intention of hydrating _exposedAggregateFunctions themselves, we do this because
+                            //  we don't want to lock on reads once this _exposedAggregateFunctions is hydrated.
+                            return _exposedAggregateFunctions;
+                        }
+
+                        _exposedAggregateFunctions = new List<ExposedFunction>();
+
+                        foreach (var queryField in this)
+                        {
+                            if (queryField.Expression is IQueryFieldExpression fieldExpression)
+                            {
+                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Count() > 0)
+                                {
+                                    _exposedAggregateFunctions.Add(new ExposedFunction(queryField.Ordinal, fieldExpression));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return _exposedAggregateFunctions;
             }
         }
 
