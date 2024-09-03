@@ -197,6 +197,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 if (parameter is ExpressionFunctionParameterString parameterString)
                 {
                     var collapsedParameter = CollapseScalerFunctionStringParameter(transaction, query, row, functions, parameterString.Expression);
+                    collapsedParameters.Add(collapsedParameter);
                 }
                 else if (parameter is ExpressionFunctionParameterNumeric parameterNumeric)
                 {
