@@ -9,6 +9,7 @@ using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
+using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
@@ -302,8 +303,44 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         }
 
         static void CollapseScalerFunctions(Transaction transaction,
-            DocumentLookupOperation operation, SchemaIntersectionRow row, List<IQueryFieldExpressionFunction> functions)
+            DocumentLookupOperation operation, SchemaIntersectionRow row,
+            List<IQueryFieldExpressionFunction> functions)
         {
+            foreach (var function in functions)
+            {
+                CollapseScalerFunction(transaction, operation, row, function);
+            }
+
+            var fff = operation.Query.Batch.Literals;
+        }
+
+        static void CollapseScalerFunction(Transaction transaction,
+            DocumentLookupOperation operation, SchemaIntersectionRow row,
+            IQueryFieldExpressionFunction function)
+        {
+            foreach (var parameter in function.Parameters)
+            {
+                CollapseScalerFunctionParameter(transaction, operation, row, function, parameter);
+            }
+
+            var fff = operation.Query.Batch.Literals;
+        }
+
+        static void CollapseScalerFunctionParameter(Transaction transaction,
+            DocumentLookupOperation operation, SchemaIntersectionRow row,
+            IQueryFieldExpressionFunction function, IExpressionFunctionParameter parameter)
+        {
+            if (parameter is ExpressionFunctionParameterString parameterString)
+            {
+            }
+            else if (parameter is ExpressionFunctionParameterNumeric parameterNumeric)
+            {
+            }
+            else
+            {
+                throw new KbEngineException($"Function parameter type is not implemented [{parameter.GetType().Name}].");
+            }
+
             var fff = operation.Query.Batch.Literals;
         }
 
