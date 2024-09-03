@@ -8,6 +8,7 @@ using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
+using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
@@ -286,10 +287,23 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
-        static void CollapseExpression(Transaction transaction, DocumentLookupOperation operation, ExposedExpression rootExpression, SchemaIntersectionRow row)
+        static void CollapseExpression(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRow row, ExposedExpression rootExpression)
         {
+            if (rootExpression.FieldExpression is QueryFieldExpressionNumeric expressionNumeric)
+            {
+                CollapseScalerFunctions(transaction, operation, row, expressionNumeric.FunctionDependencies);
+            }
+            else if (rootExpression.FieldExpression is QueryFieldExpressionString expressionString)
+            {
+                CollapseScalerFunctions(transaction, operation, row, expressionString.FunctionDependencies);
+            }
 
             row.InsertValue(rootExpression.FieldAlias, rootExpression.Ordinal, "100");
+        }
+
+        static void CollapseScalerFunctions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRow row, List<IQueryFieldExpressionFunction> functions)
+        {
+
         }
 
         static void CollapseAllExpressions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRowCollection resultingRows)
@@ -302,10 +316,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             {
                 foreach (var row in resultingRows.Collection)
                 {
-                    CollapseExpression(transaction, operation, expressionField, row);
+                    CollapseExpression(transaction, operation, row, expressionField);
                 }
             }
-
 
             /*
             foreach (var methodField in operation.Query.old_SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
