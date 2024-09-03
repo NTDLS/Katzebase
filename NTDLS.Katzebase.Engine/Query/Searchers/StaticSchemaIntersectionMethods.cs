@@ -295,11 +295,17 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         {
             if (rootExpression.FieldExpression is QueryFieldExpressionNumeric expressionNumeric)
             {
-                CollapseScalerFunctions(transaction, operation, row, expressionNumeric.FunctionDependencies);
+                var subFunction = expressionNumeric.FunctionDependencies.Single(o => o.ExpressionKey == expressionNumeric.Value);
+                var functionResult = CollapseScalerFunction(transaction, operation, row, expressionNumeric.FunctionDependencies, subFunction);
+
+                row.InsertValue(rootExpression.FieldAlias, rootExpression.Ordinal, functionResult);
             }
             else if (rootExpression.FieldExpression is QueryFieldExpressionString expressionString)
             {
-                CollapseScalerFunctions(transaction, operation, row, expressionString.FunctionDependencies);
+                var subFunction = expressionString.FunctionDependencies.Single(o => o.ExpressionKey == expressionString.Value);
+                var functionResult = CollapseScalerFunction(transaction, operation, row, expressionString.FunctionDependencies, subFunction);
+
+                row.InsertValue(rootExpression.FieldAlias, rootExpression.Ordinal, functionResult);
             }
             else
             {
@@ -307,24 +313,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
-        static void CollapseScalerFunctions(Transaction transaction,
-            DocumentLookupOperation operation, SchemaIntersectionRow row,
-            List<IQueryFieldExpressionFunction> functions)
-        {
-            foreach (var function in functions)
-            {
-               var scalerResult = CollapseScalerFunction(transaction, operation, row, functions, function);
-
-                //row.InsertValue(function., rootExpression.Ordinal, scalerResult);
-
-            }
-
-            var fff = operation.Query.Batch.Literals;
-        }
-
-        static string CollapseScalerFunction(Transaction transaction,
-            DocumentLookupOperation operation, SchemaIntersectionRow row,
-            List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
+        static string CollapseScalerFunction(Transaction transaction, DocumentLookupOperation operation,
+            SchemaIntersectionRow row, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
         {
             var collapsedParameters = new List<string>();
 
@@ -375,8 +365,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             List<IQueryFieldExpressionFunction> functions,
             IQueryFieldExpressionFunction function, ExpressionFunctionParameterString parameter)
         {
-            Console.WriteLine($"String: {parameter.Expression}");
-
             var tokenizer = new TokenizerSlim(parameter.Expression, ['+', '(', ')']);
             string token;
 

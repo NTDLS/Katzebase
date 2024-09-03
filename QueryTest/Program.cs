@@ -37,7 +37,7 @@ namespace QueryTest
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 Text, LanguageId, Id, SourceId, IsDirty FROM WordList:Word WHERE Text LIKE @Text + '%'", new { Text = "Fly" });
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 Length('Hello' + 'World') as Test1, length((Text + @MyText) + Sha1('ooo')) as Len, Text, LanguageId, Id, SourceId, IsDirty FROM WordList:Word WHERE Text LIKE 'Fly%'", new { MyText = "Smurf" });
 
-                var words = client.Query.Fetch<Word>("SELECT TOP 100 sha1('Hello' + 'World') as Test1 FROM WordList:Word WHERE Text LIKE 'Fly%'", new { MyText = "Smurf" });
+                var words = client.Query.Fetch<Word>("SELECT TOP 100 Length('Hello' + 'World') as Test1 FROM WordList:Word WHERE Text LIKE 'Fly%'", new { MyText = "Smurf" });
                 //This should NOT work:
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 'Text1' + 'Text2' FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 Concat('Text1', 'Text2') as Text FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
