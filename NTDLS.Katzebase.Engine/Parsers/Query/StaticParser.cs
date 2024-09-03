@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                     }
                 }
 
-                queryFields.Add(new QueryField(fieldAlias, queryField));
+                queryFields.Add(new QueryField(fieldAlias, queryFields.Count, queryField));
             }
 
             queryFields.DocumentIdentifiers = documentIdentifiers;
@@ -121,13 +121,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
             if (IsNumericExpression(givenFieldText))
             {
                 IQueryFieldExpression expression = new QueryFieldExpressionNumeric(givenFieldText);
-                expression.Expression = ParseEvaluationRecursive(ref expression, givenFieldText, ref documentIdentifiers);
+                expression.Value = ParseEvaluationRecursive(ref expression, givenFieldText, ref documentIdentifiers);
                 return expression;
             }
             else
             {
                 IQueryFieldExpression expression = new QueryFieldExpressionString();
-                expression.Expression = ParseEvaluationRecursive(ref expression, givenFieldText, ref documentIdentifiers);
+                expression.Value = ParseEvaluationRecursive(ref expression, givenFieldText, ref documentIdentifiers);
                 return expression;
             }
 

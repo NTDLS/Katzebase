@@ -22,12 +22,12 @@ namespace NTDLS.Katzebase.Engine.Query
             {
                 if (field.Expression is QueryFieldDocumentIdentifier fieldDocumentIdentifier)
                 {
-                    Console.WriteLine(fieldDocumentIdentifier.QualifiedField);
+                    Console.WriteLine(fieldDocumentIdentifier.Value);
 
                 }
                 else if (field.Expression is IQueryFieldExpression fieldExpression)
                 {
-                    Console.WriteLine(fieldExpression.Expression);
+                    Console.WriteLine(fieldExpression.Value);
                 }
                 else if (field.Expression is QueryFieldConstantNumeric fieldConstantNumeric)
                 {

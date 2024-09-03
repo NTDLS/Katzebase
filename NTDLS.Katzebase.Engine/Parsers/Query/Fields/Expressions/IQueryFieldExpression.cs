@@ -2,7 +2,6 @@
 {
     public interface IQueryFieldExpression : IQueryField
     {
-        string Expression { get; set; }
         string GetKeyExpressionKey();
 
         /// <summary>

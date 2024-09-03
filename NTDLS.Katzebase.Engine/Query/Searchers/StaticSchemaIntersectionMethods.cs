@@ -6,6 +6,8 @@ using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Parsers.Query;
+using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
@@ -95,7 +97,11 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             queue.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
 
+            #region TODO: reimplement grouping.
+
+            /*
             #region Grouping.
+
 
             if (operation.Results.Collection.Count != 0 && (query.GroupFields.Count != 0
                 || query.old_SelectFields.OfType<FunctionWithParams>()
@@ -158,7 +164,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
 
             #endregion
+            */
 
+            #endregion
+
+            #region TODO: reimplement sorting.
+
+            /*
             #region Sorting.
 
             //Get a list of all the fields we need to sort by.
@@ -183,6 +195,10 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 ptSorting?.StopAndAccumulate();
             }
+
+            #endregion
+
+            */
 
             #endregion
 
@@ -247,7 +263,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //Execute functions
             if (instance.Operation.Query.DynamicSchemaFieldFilter != null) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
-                lock (instance.Operation.Query.old_SelectFields) //We only have to lock this is we are dynamically building the select list.
+                lock (instance.Operation.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
                 {
                     ExecuteFunctions(instance.Operation.Transaction, instance.Operation, resultingRows);
                 }
@@ -345,9 +361,20 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //  in any of the constant values. Additionally, this is the "template row" that will be cloned
             //  for rows produced by any one-to-many relationships.
             //
-            foreach (var field in instance.Operation.Query.old_SelectFields.OfType<FunctionConstantParameter>())
+            //foreach (var field in instance.Operation.Query.old_SelectFields.OfType<FunctionConstantParameter>())
+
+            var constants = instance.Operation.Query.SelectFields
+                .Where(o => o.Expression is QueryFieldConstantString || o.Expression is QueryFieldConstantNumeric)
+                .Select(o => new
+                {
+                    Alias = o.Alias,
+                    Ordinal = o.Ordinal,
+                    Value = instance.Operation.Query.QueryBatch.GetLiteralValue(o.Expression.Value)
+                });
+
+            foreach (var field in constants)
             {
-                resultingRow.InsertValue(field.Alias, field.Ordinal, field.FinalValue);
+                resultingRow.InsertValue(field.Alias, field.Ordinal, field.Value);
             }
 
             if (instance.Operation.SchemaMap.Count > 1)

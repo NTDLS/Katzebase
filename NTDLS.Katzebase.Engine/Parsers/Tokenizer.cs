@@ -1,7 +1,9 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Parsers.Query;
 using System.Text.RegularExpressions;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers
 {
@@ -128,8 +130,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         #region Swap in/out literals.
 
         public KbInsensitiveDictionary<string> UserParameters { get; private set; } = new();
-        public KbInsensitiveDictionary<string> StringLiterals { get; private set; } = new();
-        public KbInsensitiveDictionary<string> NumericLiterals { get; private set; } = new();
+        public KbInsensitiveDictionary<QueryFieldLiteral> Literals { get; private set; } = new();
 
         /// <summary>
         /// Attempts to resolve a single string or numeric literal, otherwise returns the given value.
@@ -138,13 +139,9 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <returns></returns>
         public string ResolveLiteral(string token)
         {
-            if (StringLiterals.TryGetValue(token, out var literal))
+            if (Literals.TryGetValue(token, out var literal))
             {
-                return literal;
-            }
-            if (NumericLiterals.TryGetValue(token, out literal))
-            {
-                return literal;
+                return literal.Value;
             }
             return token;
         }
@@ -152,9 +149,8 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <summary>
         /// Replaces text literals with tokens to prepare the query for parsing.
         /// </summary>
-        private KbInsensitiveDictionary<string> SwapOutStringLiterals(ref string query)
+        private void SwapOutStringLiterals(ref string query)
         {
-            var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
 
             while (true)
@@ -164,7 +160,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 if (match.Success)
                 {
                     string key = $"$s_{_literalKey++}$";
-                    mappings.Add(key, match.ToString());
+                    Literals.Add(key, new(BasicDataType.String, match.ToString()));
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
@@ -173,16 +169,13 @@ namespace NTDLS.Katzebase.Engine.Parsers
                     break;
                 }
             }
-
-            return mappings;
         }
 
         /// <summary>
         /// Replaces numeric literals with tokens to prepare the query for parsing.
         /// </summary>
-        private KbInsensitiveDictionary<string> SwapOutNumericLiterals(ref string query)
+        private void SwapOutNumericLiterals(ref string query)
         {
-            var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex(@"(?<=\s|^)(?:\d+\.?\d*|\.\d+)(?=\s|$)");
 
             while (true)
@@ -192,7 +185,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 if (match.Success)
                 {
                     string key = $"$n_{_literalKey++}$";
-                    mappings.Add(key, match.ToString());
+                    Literals.Add(key, new(BasicDataType.Numeric, match.ToString()));
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
@@ -201,8 +194,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
                     break;
                 }
             }
-
-            return mappings;
         }
 
         /// <summary>
@@ -229,12 +220,12 @@ namespace NTDLS.Katzebase.Engine.Parsers
                     if (double.TryParse(match.ToString(), out _))
                     {
                         key = $"$n_{_literalKey++}$";
-                        NumericLiterals.Add(key, userParameterValue);
+                        Literals.Add(key, new QueryFieldLiteral(BasicDataType.Numeric, userParameterValue));
                     }
                     else
                     {
                         key = $"$s_{_literalKey++}$";
-                        StringLiterals.Add(key, userParameterValue);
+                        Literals.Add(key, new QueryFieldLiteral(BasicDataType.String, userParameterValue));
                     }
 
                     mappings.Add(key, userParameterValue);
@@ -264,7 +255,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
             //var maxNumericLiterals = NumericLiterals.Count > 0 ? NumericLiterals.Max(o => o.Key)?.Substring(2)?.TrimEnd(['$']) : "0";
             //var maxStringLiterals = StringLiterals.Count > 0 ? StringLiterals.Max(o => o.Key)?.Substring(2)?.TrimEnd(['$']) : "0";
 
-            StringLiterals = SwapOutStringLiterals(ref text);
+            SwapOutStringLiterals(ref text);
 
             //We replace numeric constants and we want to make sure we have 
             //  no numbers next to any conditional operators before we do so.
@@ -283,7 +274,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
             text = text.Replace("||", " || ");
             text = text.Replace("&&", " && ");
 
-            NumericLiterals = SwapOutNumericLiterals(ref text);
+            SwapOutNumericLiterals(ref text);
             UserParameters = InterpolateUserVariables(ref text);
 
             int length;

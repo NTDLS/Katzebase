@@ -661,7 +661,7 @@ namespace NTDLS.Katzebase.Engine.Functions
                         }
                         else if (param.StartsWith("$") && param.EndsWith("$"))
                         {
-                            results.Parameters.Add(new FunctionConstantParameter(Tokenizer.StringLiterals[param]));
+                            results.Parameters.Add(new FunctionConstantParameter(Tokenizer.Literals[param].Value));
                         }
                         else
                         {

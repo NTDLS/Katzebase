@@ -1,4 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Parsers.Query;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Query
 {
@@ -6,50 +8,34 @@ namespace NTDLS.Katzebase.Engine.Query
     {
         public KbInsensitiveDictionary<string> UserParameters { get; set; } = new();
 
-        public KbInsensitiveDictionary<string> StringLiterals { get; set; } = new();
-        public KbInsensitiveDictionary<string> NumericLiterals { get; set; } = new();
+        public KbInsensitiveDictionary<QueryFieldLiteral> Literals { get; set; } = new();
 
 
-        private KbInsensitiveDictionary<string>? _coalescedLiterals = null;
-        public KbInsensitiveDictionary<string> CoalescedLiterals
-        {
-            get
-            {
-                if (_coalescedLiterals == null)
-                {
-                    _coalescedLiterals = new KbInsensitiveDictionary<string>();
-
-                    //We do not include UserParameters in this list because they are swapped
-                    //  out for numeric or string tokens by Tokenizer.InterpolateUserVariables.
-
-                    foreach (var item in StringLiterals)
-                    {
-                        CoalescedLiterals.Add(item.Key, item.Value);
-                    }
-
-                    foreach (var item in NumericLiterals)
-                    {
-                        CoalescedLiterals.Add(item.Key, item.Value);
-                    }
-                }
-                return _coalescedLiterals;
-            }
-        }
-
-        public QueryBatch(KbInsensitiveDictionary<string> userParameters, KbInsensitiveDictionary<string> stringLiterals, KbInsensitiveDictionary<string> numericLiterals)
+        public QueryBatch(KbInsensitiveDictionary<string> userParameters, KbInsensitiveDictionary<QueryFieldLiteral> literals)
         {
             UserParameters = userParameters;
-            StringLiterals = stringLiterals;
-            NumericLiterals = numericLiterals;
+            Literals = literals;
         }
 
         public string GetLiteralValue(string value)
         {
-            if (CoalescedLiterals.TryGetValue(value, out string? stringLiteral))
+            if (Literals.TryGetValue(value, out var literal))
             {
-                return stringLiteral;
+                return literal.Value;
             }
             else return value;
+        }
+
+        public string GetLiteralValue(string value, out BasicDataType outDateType)
+        {
+            if (Literals.TryGetValue(value, out var literal))
+            {
+                outDateType = BasicDataType.String;
+                return literal.Value;
+            }
+
+            outDateType = BasicDataType.Undefined;
+            return value;
         }
     }
 }

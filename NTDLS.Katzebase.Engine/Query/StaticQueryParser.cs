@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Query
         {
             var tokenizer = new Tokenizer(queryText, true, userParameters);
 
-            var queryBatch = new QueryBatch(tokenizer.UserParameters, tokenizer.StringLiterals, tokenizer.NumericLiterals);
+            var queryBatch = new QueryBatch(tokenizer.UserParameters, tokenizer.Literals);
 
             while (tokenizer.IsEnd() == false)
             {

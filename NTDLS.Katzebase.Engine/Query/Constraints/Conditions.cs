@@ -351,12 +351,17 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                     var logicalQualifier = ConditionTokenizer.ParseLogicalQualifier(token);
 
                     //Righthand value:
-                    string right = QueryBatch.GetLiteralValue(tokenizer.GetNext());
+                    string right = QueryBatch.GetLiteralValue(tokenizer.GetNext(), out var rightOfRangeType);
 
                     int endPosition = tokenizer.Position;
 
                     if (logicalQualifier == LogicalQualifier.Between || logicalQualifier == LogicalQualifier.NotBetween)
                     {
+                        if (rightOfRangeType != BasicDataType.Numeric)
+                        {
+                            throw new KbParserException($"Invalid token, Found [{right}] expected numeric value.");
+                        }
+
                         string and = tokenizer.GetNext().ToLowerInvariant();
                         if (and.Is("and") == false)
                         {
@@ -365,9 +370,14 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
 
                         var rightRange = tokenizer.GetNext().ToLowerInvariant();
 
-                        if (Tokenizer.NumericLiterals.TryGetValue(rightRange, out string? rightRangeNumeric))
+                        if (Tokenizer.Literals.TryGetValue(rightRange, out var rightOfRange))
                         {
-                            rightRange = rightRangeNumeric.ToLowerInvariant();
+                            if (rightOfRange.DataType != BasicDataType.Numeric)
+                            {
+                                throw new KbParserException($"Invalid token, Found [{rightOfRange.Value}] expected numeric value.");
+                            }
+
+                            rightRange = rightOfRange.Value;
                         }
 
                         right = $"{right}:{rightRange}";

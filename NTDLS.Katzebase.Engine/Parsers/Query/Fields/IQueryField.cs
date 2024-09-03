@@ -2,5 +2,6 @@
 {
     public interface IQueryField
     {
+        string Value { get; set; }
     }
 }

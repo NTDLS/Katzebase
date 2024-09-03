@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
         /// <summary>
         /// The qualified name of the document field, e.g. schemaName.fieldName, or just the field name if no schema was specified.
         /// </summary>
-        public string QualifiedField { get; private set; }
+        public string Value { get; set; }
 
         /// <summary>
         /// The alias of the schema for this document field.
@@ -24,9 +24,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
 
         public QueryFieldDocumentIdentifier(string value)
         {
-            QualifiedField = value.Trim();
+            Value = value.Trim();
 
-            var values = QualifiedField.Split('.');
+            var values = Value.Split('.');
             if (values.Length == 1)
             {
                 SchemaAlias = string.Empty;

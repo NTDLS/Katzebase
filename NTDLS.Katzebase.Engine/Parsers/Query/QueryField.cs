@@ -12,14 +12,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// </summary>
         public string Alias { get; set; }
 
+        public int Ordinal { get; set; }
+
         /// <summary>
         /// Contains an instance that defines the value of the query field (could be a string, number, string or numeric expression, or a function call).
         /// </summary>
         public IQueryField Expression { get; set; }
 
-        public QueryField(string name, IQueryField expression)
+        public QueryField(string name, int ordinal, IQueryField expression)
         {
             Alias = name;
+            Ordinal = ordinal;
             Expression = expression;
         }
     }

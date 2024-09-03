@@ -7,16 +7,16 @@
     {
         private int _nextExpressionKey = 0;
 
-        public string Expression { get; set; }
+        public string Value { get; set; }
 
         /// <summary>
         /// Contains the function names and their parameters that are used to satisfy the expression,
         /// </summary>
         public List<IQueryFieldExpressionFunction> FunctionDependencies { get; private set; } = new();
 
-        public QueryFieldExpressionNumeric(string expression)
+        public QueryFieldExpressionNumeric(string value)
         {
-            Expression = expression;
+            Value = value;
         }
 
         public string GetKeyExpressionKey()
