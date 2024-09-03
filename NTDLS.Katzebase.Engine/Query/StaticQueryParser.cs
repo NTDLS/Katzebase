@@ -221,6 +221,9 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
 
                     result.Conditions = Conditions.Create(queryBatch, conditionText, tokenizer);
+
+                    //Associate the root query schema with the root conditions.
+                    result.Schemas.First().Conditions = result.Conditions;
                 }
 
                 #endregion
