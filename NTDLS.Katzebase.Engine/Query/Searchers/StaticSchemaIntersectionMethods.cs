@@ -295,10 +295,67 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         {
             if (rootExpression.FieldExpression is QueryFieldExpressionNumeric expressionNumeric)
             {
-                var subFunction = expressionNumeric.FunctionDependencies.Single(o => o.ExpressionKey == expressionNumeric.Value);
-                var functionResult = CollapseScalerFunction(transaction, operation, row, expressionNumeric.FunctionDependencies, subFunction);
+                //Build a cachable numeric expression, interpolate the values and execute the expression.
 
-                row.InsertValue(rootExpression.FieldAlias, rootExpression.Ordinal, functionResult);
+                var tokenizer = new TokenizerSlim(expressionNumeric.Value, ['~', '!', '%', '^', '&', '*', '(', ')', '-', '/', '+']);
+                string expressionString = new string(expressionNumeric.Value.ToCharArray());
+                int variableNumber = 0;
+
+                var expressionVariables = new Dictionary<string, double>();
+
+                while (tokenizer.IsEnd() == false)
+                {
+                    var token = tokenizer.GetNext();
+
+                    if (token.StartsWith("$x_") && token.EndsWith('$'))
+                    {
+                        var subFunction = expressionNumeric.FunctionDependencies.Single(o => o.ExpressionKey == token);
+                        var functionResult = CollapseScalerFunction(transaction, operation, row, expressionNumeric.FunctionDependencies, subFunction);
+
+                        string mathVariable = $"v{variableNumber++}";
+                        expressionVariables.Add(mathVariable, double.Parse(functionResult));
+                        expressionString = expressionString.Replace(token, mathVariable);
+                    }
+                    else if (token.StartsWith("$s_") && token.EndsWith('$'))
+                    {
+                        string mathVariable = $"v{variableNumber++}";
+                        expressionString = expressionString.Replace(token, mathVariable);
+                        expressionVariables.Add(mathVariable, double.Parse(operation.Query.Batch.GetLiteralValue(token)));
+                    }
+                    else if (token.StartsWith("$n_") && token.EndsWith('$'))
+                    {
+                        string mathVariable = $"v{variableNumber++}";
+                        expressionString = expressionString.Replace(token, mathVariable);
+                        expressionVariables.Add(mathVariable, double.Parse(operation.Query.Batch.GetLiteralValue(token)));
+                    }
+                    else if (token.StartsWith('$') && token.EndsWith('$'))
+                    {
+                        throw new KbEngineException($"Function parameter string sub-type is not implemented: [{token}].");
+                    }
+                }
+
+                var expressionHash = Library.Helpers.GetSHA1Hash(expressionString);
+
+                NCalc.Expression? expression = null;
+                operation.ExpressionCache.UpgradableRead(r =>
+                {
+                    if (r.TryGetValue(expressionHash, out expression) == false)
+                    {
+                        expression = new NCalc.Expression(expressionString);
+                        operation.ExpressionCache.Write(w => w.Add(expressionHash, expression));
+                    }
+                });
+
+                if (expression == null) throw new KbEngineException($"Expression cannot be null.");
+
+                foreach (var expressionVariable in expressionVariables)
+                {
+                    expression.Parameters[expressionVariable.Key] = expressionVariable.Value;
+                }
+
+                var matchResult = expression.Evaluate();
+
+                row.InsertValue(rootExpression.FieldAlias, rootExpression.Ordinal, $"{matchResult}");
             }
             else if (rootExpression.FieldExpression is QueryFieldExpressionString expressionString)
             {
@@ -434,14 +491,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
         static void CollapseAllExpressions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRowCollection resultingRows)
         {
-            if (operation.Query.Hash != "957f4825bd09462c4ae2d7a57447cadb768d55783146c531427b6ea2002337ad")
-            {
-            }
-
             foreach (var expressionField in operation.Query.SelectFields.ExpressionFields)
             {
                 foreach (var row in resultingRows.Collection)
                 {
+                    if (operation.Query.Hash != "957f4825bd09462c4ae2d7a57447cadb768d55783146c531427b6ea2002337ad")
+                    {
+                    }
+
+                    //CollapseScalerFunctionStringParameter(transaction, operation, row, row
+
                     CollapseExpression(transaction, operation, row, expressionField);
                 }
             }
