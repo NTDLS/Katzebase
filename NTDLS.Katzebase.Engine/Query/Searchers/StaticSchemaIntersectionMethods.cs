@@ -265,7 +265,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
 
-            StaticExpressionProcessor.CollapseAllExpressions(instance.Operation.Transaction, instance.Operation, resultingRows);
+            StaticExpressionProcessor.CollapseRowExpressions(instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), resultingRows);
 
             instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Release();
 
@@ -363,13 +363,13 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             NCalc.Expression? expression = null;
 
-            instance.Operation.ExpressionCache.UpgradableRead(r =>
+            instance.Operation.Query.ExpressionCache.UpgradableRead(r =>
             {
                 if (r.TryGetValue(conditionHash, out expression) == false)
                 {
                     expression = new NCalc.Expression(currentSchemaMap.Conditions.EnsureNotNull().Expression);
 
-                    instance.Operation.ExpressionCache.Write(w => w.Add(conditionHash, expression));
+                    instance.Operation.Query.ExpressionCache.Write(w => w.Add(conditionHash, expression));
                 }
             });
 
@@ -696,12 +696,12 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             var conditionHash = instance.Operation.Query.Conditions.Hash
                 ?? throw new KbEngineException($"Condition hash cannot be null.");
 
-            instance.Operation.ExpressionCache.UpgradableRead(r =>
+            instance.Operation.Query.ExpressionCache.UpgradableRead(r =>
             {
                 if (r.TryGetValue(conditionHash, out expression) == false)
                 {
                     expression = new NCalc.Expression(instance.Operation.Query.Conditions.Expression);
-                    instance.Operation.ExpressionCache.Write(w => w.Add(conditionHash, expression));
+                    instance.Operation.Query.ExpressionCache.Write(w => w.Add(conditionHash, expression));
                 }
             });
 

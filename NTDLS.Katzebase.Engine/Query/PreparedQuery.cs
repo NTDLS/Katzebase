@@ -73,6 +73,8 @@ namespace NTDLS.Katzebase.Engine.Query
         /// </summary>
         public string? Hash { get; set; }
 
+        public Semaphore.OptimisticCriticalResource<Dictionary<string, NCalc.Expression>> ExpressionCache { get; set; } = new();
+
         public QueryBatch Batch { get; private set; }
         public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
         public List<QuerySchema> Schemas { get; private set; } = new();

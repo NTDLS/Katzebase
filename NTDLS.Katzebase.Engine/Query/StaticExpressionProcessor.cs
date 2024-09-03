@@ -6,92 +6,122 @@ using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
-using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using System.Text;
 
 namespace NTDLS.Katzebase.Engine.Query
 {
     internal class StaticExpressionProcessor
     {
-        public static void CollapseAllExpressions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRowCollection resultingRows)
+        /// <summary>
+        /// Resolves all of the query expressions on a row level and fills in the values in the resultingRows.
+        /// </summary>
+        public static void CollapseRowExpressions(Transaction transaction, PreparedQuery query, SchemaIntersectionRowCollection resultingRows)
         {
             //Resolve all expressions and fill in the row fields.
-            foreach (var expressionField in operation.Query.SelectFields.ExpressionFields)
+            foreach (var expressionField in query.SelectFields.ExpressionFields)
             {
                 foreach (var row in resultingRows.Collection)
                 {
-                    CollapseExpression(transaction, operation, row, expressionField);
+                    var collapsedResult = CollapseExpression(transaction, query, row, expressionField);
+                    row.InsertValue(expressionField.FieldAlias, expressionField.Ordinal, collapsedResult);
                 }
             }
         }
 
-        static void CollapseExpression(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRow row, ExposedExpression rootExpression)
+        /// <summary>
+        /// Collapses a string or numeric expression into a single value. This includes doing string concatenation, math and all recursive function calls.
+        /// </summary>
+        public static string CollapseExpression(Transaction transaction, PreparedQuery query, SchemaIntersectionRow row, ExposedExpression expression)
         {
-            if (rootExpression.FieldExpression is QueryFieldExpressionNumeric expressionNumeric)
+            if (expression.FieldExpression is QueryFieldExpressionNumeric expressionNumeric)
             {
-                var expressionResult = CollapseScalerFunctionNumericParameter(transaction, operation, row, expressionNumeric.FunctionDependencies, expressionNumeric.Value);
-                row.InsertValue(rootExpression.FieldAlias, rootExpression.Ordinal, expressionResult);
+                return CollapseScalerFunctionNumericParameter(transaction, query, row, expressionNumeric.FunctionDependencies, expressionNumeric.Value);
             }
-            else if (rootExpression.FieldExpression is QueryFieldExpressionString expressionString)
+            else if (expression.FieldExpression is QueryFieldExpressionString expressionString)
             {
-                var expressionResult = CollapseScalerFunctionStringParameter(transaction, operation, row, expressionString.FunctionDependencies, expressionString.Value);
-                row.InsertValue(rootExpression.FieldAlias, rootExpression.Ordinal, expressionResult);
+                return CollapseScalerFunctionStringParameter(transaction, query, row, expressionString.FunctionDependencies, expressionString.Value);
             }
             else
             {
-                throw new KbEngineException($"Field expression type is not implemented: [{rootExpression.FieldExpression.GetType().Name}].");
-            }
-        }
-
-        static string CollapseScalerFunction(Transaction transaction, DocumentLookupOperation operation,
-            SchemaIntersectionRow row, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
-        {
-            var collapsedParameters = new List<string>();
-
-            foreach (var parameter in function.Parameters)
-            {
-                var collapsedParameter = CollapseScalerFunctionParameter(transaction, operation, row, functions, function, parameter);
-
-                collapsedParameters.Add(collapsedParameter);
-            }
-
-            //Execute function with the parameters from above ↑
-            var methodResult = ScalerFunctionImplementation.ExecuteFunction(transaction, function.FunctionName, collapsedParameters, row.AuxiliaryFields);
-
-            //TODO: think through the nullability here.
-            return methodResult ?? string.Empty;
-        }
-
-        static string CollapseScalerFunctionParameter(Transaction transaction,
-            DocumentLookupOperation operation, SchemaIntersectionRow row,
-            List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function,
-            IExpressionFunctionParameter parameter)
-        {
-            if (parameter is ExpressionFunctionParameterString parameterString)
-            {
-                return CollapseScalerFunctionStringParameter(transaction, operation, row, functions, parameterString.Expression);
-            }
-            else if (parameter is ExpressionFunctionParameterNumeric parameterNumeric)
-            {
-                return CollapseScalerFunctionNumericParameter(transaction, operation, row, functions, parameterNumeric.Expression);
-            }
-            else
-            {
-                throw new KbEngineException($"Function parameter type is not implemented [{parameter.GetType().Name}].");
+                throw new KbEngineException($"Field expression type is not implemented: [{expression.FieldExpression.GetType().Name}].");
             }
         }
 
         /// <summary>
-        /// Takes a string expression and appends all of the values, which is really the only operation we support for strings.
+        /// Takes a string expression string and performs math on all of the values, including those from all
+        ///     recursive function calls.
         /// </summary>
-        /// <param name="transaction"></param>
-        /// <param name="operation"></param>
-        /// <param name="row"></param>
-        /// <param name="function"></param>
-        /// <param name="parameter"></param>
-        /// <exception cref="KbEngineException"></exception>
+        static string CollapseScalerFunctionNumericParameter(Transaction transaction,
+            PreparedQuery query, SchemaIntersectionRow row,
+            List<IQueryFieldExpressionFunction> functions, string expressionString)
+        {
+            //Build a cachable numeric expression, interpolate the values and execute the expression.
+
+            var tokenizer = new TokenizerSlim(expressionString, ['~', '!', '%', '^', '&', '*', '(', ')', '-', '/', '+']);
+            string evaluationExpression = new string(expressionString.ToCharArray());
+            int variableNumber = 0;
+
+            var expressionVariables = new Dictionary<string, double>();
+
+            while (tokenizer.IsEnd() == false)
+            {
+                var token = tokenizer.GetNext();
+
+                if (token.StartsWith("$x_") && token.EndsWith('$'))
+                {
+                    var subFunction = functions.Single(o => o.ExpressionKey == token);
+                    var functionResult = CollapseScalerFunction(transaction, query, row, functions, subFunction);
+
+                    string mathVariable = $"v{variableNumber++}";
+                    expressionVariables.Add(mathVariable, double.Parse(functionResult));
+                    evaluationExpression = evaluationExpression.Replace(token, mathVariable);
+                }
+                else if (token.StartsWith("$s_") && token.EndsWith('$'))
+                {
+                    string mathVariable = $"v{variableNumber++}";
+                    evaluationExpression = evaluationExpression.Replace(token, mathVariable);
+                    expressionVariables.Add(mathVariable, double.Parse(query.Batch.GetLiteralValue(token)));
+                }
+                else if (token.StartsWith("$n_") && token.EndsWith('$'))
+                {
+                    string mathVariable = $"v{variableNumber++}";
+                    evaluationExpression = evaluationExpression.Replace(token, mathVariable);
+                    expressionVariables.Add(mathVariable, double.Parse(query.Batch.GetLiteralValue(token)));
+                }
+                else if (token.StartsWith('$') && token.EndsWith('$'))
+                {
+                    throw new KbEngineException($"Function parameter string sub-type is not implemented: [{token}].");
+                }
+            }
+
+            var expressionHash = Library.Helpers.GetSHA1Hash(evaluationExpression);
+
+            NCalc.Expression? expression = null;
+            query.ExpressionCache.UpgradableRead(r =>
+            {
+                if (r.TryGetValue(expressionHash, out expression) == false)
+                {
+                    expression = new NCalc.Expression(evaluationExpression);
+                    query.ExpressionCache.Write(w => w.Add(expressionHash, expression));
+                }
+            });
+
+            if (expression == null) throw new KbEngineException($"Expression cannot be null.");
+
+            foreach (var expressionVariable in expressionVariables)
+            {
+                expression.Parameters[expressionVariable.Key] = expressionVariable.Value;
+            }
+
+            return expression.Evaluate()?.ToString() ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Takes a string expression string and concatenates all of the values, including those from all
+        ///     recursive function calls. Concatenation which is really the only operation we support for strings.
+        /// </summary>
         static string CollapseScalerFunctionStringParameter(Transaction transaction,
-            DocumentLookupOperation operation, SchemaIntersectionRow row,
+            PreparedQuery query, SchemaIntersectionRow row,
             List<IQueryFieldExpressionFunction> functions, string expressionString)
         {
             var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
@@ -106,7 +136,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 if (token.StartsWith("$f_") && token.EndsWith('$'))
                 {
                     //Resolve the token to a field identifier.
-                    if (operation.Query.SelectFields.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
+                    if (query.SelectFields.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
                     {
                         //Resolve the field identifier to a value.
                         if (row.AuxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
@@ -126,16 +156,16 @@ namespace NTDLS.Katzebase.Engine.Query
                 else if (token.StartsWith("$x_") && token.EndsWith('$'))
                 {
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = CollapseScalerFunction(transaction, operation, row, functions, subFunction);
+                    var functionResult = CollapseScalerFunction(transaction, query, row, functions, subFunction);
                     sb.Append(functionResult);
                 }
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
-                    sb.Append(operation.Query.Batch.GetLiteralValue(token));
+                    sb.Append(query.Batch.GetLiteralValue(token));
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {
-                    sb.Append(operation.Query.Batch.GetLiteralValue(token));
+                    sb.Append(query.Batch.GetLiteralValue(token));
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
                 {
@@ -143,76 +173,44 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
                 else
                 {
-                    sb.Append(operation.Query.Batch.GetLiteralValue(token));
+                    sb.Append(query.Batch.GetLiteralValue(token));
                 }
             }
 
             return sb.ToString();
         }
 
-        static string CollapseScalerFunctionNumericParameter(Transaction transaction,
-            DocumentLookupOperation operation, SchemaIntersectionRow row,
-            List<IQueryFieldExpressionFunction> functions, string expressionString)
+        /// <summary>
+        /// Takes a function and recursively collapses all of the parameters, then recursively
+        ///     executes all dependency functions to collapse the function to a single value.
+        /// </summary>
+        static string CollapseScalerFunction(Transaction transaction, PreparedQuery query,
+            SchemaIntersectionRow row, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
         {
-            //Build a cachable numeric expression, interpolate the values and execute the expression.
+            var collapsedParameters = new List<string>();
 
-            var tokenizer = new TokenizerSlim(expressionString, ['~', '!', '%', '^', '&', '*', '(', ')', '-', '/', '+']);
-            string evaluationExpression = new string(expressionString.ToCharArray());
-            int variableNumber = 0;
-
-            var expressionVariables = new Dictionary<string, double>();
-
-            while (tokenizer.IsEnd() == false)
+            foreach (var parameter in function.Parameters)
             {
-                var token = tokenizer.GetNext();
-
-                if (token.StartsWith("$x_") && token.EndsWith('$'))
+                if (parameter is ExpressionFunctionParameterString parameterString)
                 {
-                    var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = CollapseScalerFunction(transaction, operation, row, functions, subFunction);
-
-                    string mathVariable = $"v{variableNumber++}";
-                    expressionVariables.Add(mathVariable, double.Parse(functionResult));
-                    evaluationExpression = evaluationExpression.Replace(token, mathVariable);
+                    var collapsedParameter = CollapseScalerFunctionStringParameter(transaction, query, row, functions, parameterString.Expression);
                 }
-                else if (token.StartsWith("$s_") && token.EndsWith('$'))
+                else if (parameter is ExpressionFunctionParameterNumeric parameterNumeric)
                 {
-                    string mathVariable = $"v{variableNumber++}";
-                    evaluationExpression = evaluationExpression.Replace(token, mathVariable);
-                    expressionVariables.Add(mathVariable, double.Parse(operation.Query.Batch.GetLiteralValue(token)));
+                    var collapsedParameter = CollapseScalerFunctionNumericParameter(transaction, query, row, functions, parameterNumeric.Expression);
+                    collapsedParameters.Add(collapsedParameter);
                 }
-                else if (token.StartsWith("$n_") && token.EndsWith('$'))
+                else
                 {
-                    string mathVariable = $"v{variableNumber++}";
-                    evaluationExpression = evaluationExpression.Replace(token, mathVariable);
-                    expressionVariables.Add(mathVariable, double.Parse(operation.Query.Batch.GetLiteralValue(token)));
-                }
-                else if (token.StartsWith('$') && token.EndsWith('$'))
-                {
-                    throw new KbEngineException($"Function parameter string sub-type is not implemented: [{token}].");
+                    throw new KbEngineException($"Function parameter type is not implemented [{parameter.GetType().Name}].");
                 }
             }
 
-            var expressionHash = Library.Helpers.GetSHA1Hash(evaluationExpression);
+            //Execute function with the parameters from above ↑
+            var methodResult = ScalerFunctionImplementation.ExecuteFunction(transaction, function.FunctionName, collapsedParameters, row.AuxiliaryFields);
 
-            NCalc.Expression? expression = null;
-            operation.ExpressionCache.UpgradableRead(r =>
-            {
-                if (r.TryGetValue(expressionHash, out expression) == false)
-                {
-                    expression = new NCalc.Expression(evaluationExpression);
-                    operation.ExpressionCache.Write(w => w.Add(expressionHash, expression));
-                }
-            });
-
-            if (expression == null) throw new KbEngineException($"Expression cannot be null.");
-
-            foreach (var expressionVariable in expressionVariables)
-            {
-                expression.Parameters[expressionVariable.Key] = expressionVariable.Value;
-            }
-
-            return expression.Evaluate()?.ToString() ?? string.Empty;
+            //TODO: think through the nullability here.
+            return methodResult ?? string.Empty;
         }
     }
 }
