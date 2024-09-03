@@ -50,12 +50,24 @@ namespace NTDLS.Katzebase.Engine.Query
             //----------Configuration (END)----------
         }
 
+        public List<string>? _dynamicSchemaFieldFilter;
+        public SemaphoreSlim? DynamicSchemaFieldSemaphore { get; private set; }
+
         /// <summary>
         /// When this is non-null, it will cause the searcher methods to pull fields from all schemas,
         ///     unless it also contains a list of schema aliases, in which case they will be used to filter
         ///     which schemas we pull fields from.
         /// </summary>
-        public List<string>? DynamicSchemaFieldFilter { get; set; }
+        public List<string>? DynamicSchemaFieldFilter
+        {
+            get => _dynamicSchemaFieldFilter;
+            set
+            {
+                DynamicSchemaFieldSemaphore ??= new(1);
+                _dynamicSchemaFieldFilter = value;
+            }
+        }
+
         public QueryBatch Batch { get; private set; }
         public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
         public List<QuerySchema> Schemas { get; private set; } = new();

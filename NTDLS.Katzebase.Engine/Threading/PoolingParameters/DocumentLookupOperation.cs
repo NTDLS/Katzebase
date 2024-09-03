@@ -19,6 +19,8 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         public Transaction Transaction { get; private set; }
         public PreparedQuery Query { get; private set; }
 
+        public Semaphore.OptimisticCriticalResource<Dictionary<string, NCalc.Expression>> ExpressionCache { get; set; } = new();
+
         public DocumentLookupOperation(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
         {
@@ -38,7 +40,6 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         {
             public DocumentLookupOperation Operation { get; set; } = operation;
             public DocumentPointer DocumentPointer { get; set; } = documentPointer;
-            public Dictionary<string, NCalc.Expression> ExpressionCache { get; set; } = new();
         }
     }
 }

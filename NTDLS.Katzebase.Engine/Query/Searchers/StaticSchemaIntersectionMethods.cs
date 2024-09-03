@@ -256,18 +256,11 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaDocumentPointers.Count == instance.Operation.SchemaMap.Count).ToList();
             }
 
-            //Execute functions
-            if (instance.Operation.Query.DynamicSchemaFieldFilter != null) //The script is a "SELECT *". This is not optimal, but neither is select *...
-            {
-                lock (instance.Operation.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
-                {
-                    ExecuteFunctions(instance.Operation.Transaction, instance.Operation, resultingRows);
-                }
-            }
-            else
-            {
-                ExecuteFunctions(instance.Operation.Transaction, instance.Operation, resultingRows);
-            }
+            instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
+
+            ExecuteFunctions(instance.Operation.Transaction, instance.Operation, resultingRows);
+
+            instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Release();
 
             lock (instance.Operation.Results)
             {
@@ -405,16 +398,19 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             var conditionHash = currentSchemaMap.Conditions.EnsureNotNull().Hash
                 ?? throw new KbEngineException($"Condition hash cannot be null.");
 
-            NCalc.Expression? expression;
+            NCalc.Expression? expression = null;
 
-            lock (instance.ExpressionCache)
+            instance.Operation.ExpressionCache.UpgradableRead(r =>
             {
-                if (instance.ExpressionCache.TryGetValue(conditionHash, out expression) == false)
+                if (r.TryGetValue(conditionHash, out expression) == false)
                 {
                     expression = new NCalc.Expression(currentSchemaMap.Conditions.EnsureNotNull().Expression);
-                    instance.ExpressionCache.Add(conditionHash, expression);
+
+                    instance.Operation.ExpressionCache.Write(w => w.Add(conditionHash, expression));
                 }
-            }
+            });
+
+            if (expression == null) throw new KbEngineException($"Expression cannot be null.");
 
             //Create a reference to the entire document catalog.
             IEnumerable<DocumentPointer>? documentPointers = null;
@@ -587,17 +583,11 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
         {
-            if (instance.Operation.Query.DynamicSchemaFieldFilter != null) //The script is a "SELECT *". This is not optimal, but neither is select *...
-            {
-                lock (instance.Operation.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
-                {
-                    FillInSchemaResultDocumentValuesAtomic(instance, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
-                }
-            }
-            else
-            {
-                FillInSchemaResultDocumentValuesAtomic(instance, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
-            }
+            instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
+
+            FillInSchemaResultDocumentValuesAtomic(instance, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
+
+            instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Release();
         }
 
         /// <summary>
@@ -751,7 +741,22 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             Transaction transaction, DocumentLookupOperation.Parameter instance, SchemaIntersectionRowCollection inputResults)
         {
             var outputResults = new List<SchemaIntersectionRow>();
-            var expression = new NCalc.Expression(instance.Operation.Query.Conditions.Expression);
+
+            NCalc.Expression? expression = null;
+
+            var conditionHash = instance.Operation.Query.Conditions.EnsureNotNull().Hash
+                ?? throw new KbEngineException($"Condition hash cannot be null.");
+
+            instance.Operation.ExpressionCache.UpgradableRead(r =>
+            {
+                if (r.TryGetValue(conditionHash, out expression) == false)
+                {
+                    expression = new NCalc.Expression(instance.Operation.Query.Conditions.Expression);
+                    instance.Operation.ExpressionCache.Write(w => w.Add(conditionHash, expression));
+                }
+            });
+
+            if (expression == null) throw new KbEngineException($"Expression cannot be null.");
 
             foreach (var inputResult in inputResults.Collection)
             {
