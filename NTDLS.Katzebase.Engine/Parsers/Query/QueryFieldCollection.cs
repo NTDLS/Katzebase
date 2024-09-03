@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Types;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
@@ -298,9 +299,16 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                         {
                             if (queryField.Expression is IQueryFieldExpression fieldExpression)
                             {
-                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Count() > 0)
+                                if (
+                                    fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Count() > 0
+                                    || fieldExpression is QueryFieldExpressionString
+                                    || fieldExpression is QueryFieldExpressionNumeric)
                                 {
                                     results.Add(new ExposedExpression(queryField.Ordinal, queryField.Alias, fieldExpression));
+                                }
+                                else
+                                {
+                                    throw new KbEngineException($"The expression type is not implemented: [{fieldExpression.GetType().Name}]");
                                 }
                             }
                         }
