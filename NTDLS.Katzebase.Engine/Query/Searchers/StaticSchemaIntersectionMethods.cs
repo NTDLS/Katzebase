@@ -3,15 +3,12 @@ using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
-using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
-using NTDLS.Katzebase.Engine.Query.Sorting;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
@@ -623,6 +620,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                         fields.Add(new PrefixedField(schemaKey, documentValue.Key, documentValue.Key));
                     }
 
+                    //Add the fields to the select list where they are not already present.
                     foreach (var field in fields)
                     {
                         if (instance.Operation.Query.old_SelectFields.OfType<FunctionDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
