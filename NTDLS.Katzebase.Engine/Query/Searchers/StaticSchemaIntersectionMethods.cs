@@ -15,6 +15,7 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
+using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -347,25 +348,73 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             var fff = operation.Query.Batch.Literals;
         }
 
+        /// <summary>
+        /// Takes a string expression and appends all of the values, which is really the only operation we support for strings.
+        /// </summary>
+        /// <param name="transaction"></param>
+        /// <param name="operation"></param>
+        /// <param name="row"></param>
+        /// <param name="function"></param>
+        /// <param name="parameter"></param>
+        /// <exception cref="KbEngineException"></exception>
         static void CollapseScalerFunctionStringParameter(Transaction transaction,
             DocumentLookupOperation operation, SchemaIntersectionRow row,
             IQueryFieldExpressionFunction function, ExpressionFunctionParameterString parameter)
         {
             Console.WriteLine($"String: {parameter.Expression}");
 
-            var tokenizer = new TokenizerSlim(parameter.Expression, ['+','(',')']);
-            //var tokenizer = new TokenizerSlim(parameter.Expression, ['+']);
+            var tokenizer = new TokenizerSlim(parameter.Expression, ['+', '(', ')']);
             string token;
+
+            var sb = new StringBuilder();
 
             while (tokenizer.IsEnd() == false)
             {
                 token = tokenizer.GetNext();
 
-                Console.WriteLine($"Token: {token}");
-
+                if (token.StartsWith("$f_") && token.EndsWith('$'))
+                {
+                    //Resolve the token to a field identifier.
+                    if (operation.Query.SelectFields.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
+                    {
+                        //Resolve the field identifier to a value.
+                        if (row.AuxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
+                        {
+                            sb.Append(textValue);
+                        }
+                        else
+                        {
+                            throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
+                        }
+                    }
+                    else
+                    {
+                        throw new KbEngineException($"Function parameter field is not defined: [{token}].");
+                    }
+                }
+                else if (token.StartsWith("$x_") && token.EndsWith('$'))
+                {
+                    //TODO: Collapse the expression.
+                }
+                else if (token.StartsWith("$s_") && token.EndsWith('$'))
+                {
+                    sb.Append(operation.Query.Batch.GetLiteralValue(token));
+                }
+                else if (token.StartsWith("$n_") && token.EndsWith('$'))
+                {
+                    sb.Append(operation.Query.Batch.GetLiteralValue(token));
+                }
+                else if (token.StartsWith('$') && token.EndsWith('$'))
+                {
+                    throw new KbEngineException($"Function parameter string sub-type is not implemented: [{token}].");
+                }
+                else
+                {
+                    sb.Append(operation.Query.Batch.GetLiteralValue(token));
+                }
             }
 
-            var fff = operation.Query.Batch.Literals;
+            Console.WriteLine($"Token(final): {sb}");
         }
 
         static void CollapseScalerFunctionNumericParameter(Transaction transaction,

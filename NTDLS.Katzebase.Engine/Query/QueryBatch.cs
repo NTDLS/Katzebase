@@ -10,7 +10,6 @@ namespace NTDLS.Katzebase.Engine.Query
 
         public KbInsensitiveDictionary<QueryFieldLiteral> Literals { get; set; } = new();
 
-
         public QueryBatch(KbInsensitiveDictionary<string> userParameters, KbInsensitiveDictionary<QueryFieldLiteral> literals)
         {
             UserParameters = userParameters;
