@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Engine.Parsers.Query.Functions
 {
-    public interface IExpressionFunctionParameter
+    internal interface IExpressionFunctionParameter
     {
         string Expression { get; set; }
     }

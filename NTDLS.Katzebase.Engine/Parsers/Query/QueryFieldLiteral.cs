@@ -2,7 +2,7 @@
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query
 {
-    public class QueryFieldLiteral
+    internal class QueryFieldLiteral
     {
         public string Value { get; set; }
         public BasicDataType DataType { get; set; }

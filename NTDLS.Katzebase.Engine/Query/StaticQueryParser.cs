@@ -22,7 +22,12 @@ namespace NTDLS.Katzebase.Engine.Query
 
             while (tokenizer.IsEnd() == false)
             {
+                int preParseTokenPosition = tokenizer.Caret;
                 var preparedQuery = PrepareNextQuery(queryBatch, tokenizer);
+
+                var singleQueryText = tokenizer.InertSubString(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
+                preparedQuery.Hash = Library.Helpers.ComputeSHA256(singleQueryText);
+
                 queryBatch.Add(preparedQuery);
             }
 
@@ -76,7 +81,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
                 else
                 {
-                    result.SelectFields = StaticParser.ParseSelectFields(tokenizer);
+                    result.SelectFields = StaticParser.ParseSelectFields(queryBatch, tokenizer);
                 }
 
                 #endregion

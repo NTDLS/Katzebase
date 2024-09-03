@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
     /// <summary>
     /// Contains the highest level of query fields, these are things like a select list or update list.
     /// </summary>
-    public class QueryField
+    internal class QueryField
     {
         /// <summary>
         /// Alias of the expression, such as "SELECT 10+10 as Salary", Alias would contain "Salary".

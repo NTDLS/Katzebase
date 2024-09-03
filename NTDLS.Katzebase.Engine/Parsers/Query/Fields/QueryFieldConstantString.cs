@@ -3,7 +3,7 @@
     /// <summary>
     /// Contains a string constant.
     /// </summary>
-    public class QueryFieldConstantString : IQueryField
+    internal class QueryFieldConstantString : IQueryField
     {
         public string Value { get; set; }
 

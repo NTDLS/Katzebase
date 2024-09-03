@@ -3,7 +3,7 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
 {
-    public class QueryFieldExpressionFunctionScaler : IQueryFieldExpressionFunction
+    internal class QueryFieldExpressionFunctionScaler : IQueryFieldExpressionFunction
     {
         public string FunctionName { get; set; }
         public string ExpressionKey { get; set; }

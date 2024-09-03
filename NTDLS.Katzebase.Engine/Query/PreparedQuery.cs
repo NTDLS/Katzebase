@@ -68,6 +68,11 @@ namespace NTDLS.Katzebase.Engine.Query
             }
         }
 
+        /// <summary>
+        /// Contains the hash of the whole query text with all constants and variables removed.
+        /// </summary>
+        public string? Hash { get; set; }
+
         public QueryBatch Batch { get; private set; }
         public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
         public List<QuerySchema> Schemas { get; private set; } = new();
@@ -75,13 +80,9 @@ namespace NTDLS.Katzebase.Engine.Query
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }
         public Conditions Conditions { get; set; }
-        //public PrefixedFields SelectFields { get; set; } = new();
-
         public PrefixedFields CreateFields { get; set; } = new();
-
-        public QueryFieldCollection SelectFields = new();
-
-        public FunctionParameterBaseCollection old_SelectFields = new();
+        public QueryFieldCollection SelectFields { get; set; }
+        public FunctionParameterBaseCollection old_SelectFields { get; set; } = new();
         public FunctionParameterBase ProcedureCall = new();
         public FunctionParameterBaseCollection GroupFields { get; set; } = new();
         public SortFields SortFields { get; set; } = new();
@@ -102,7 +103,8 @@ namespace NTDLS.Katzebase.Engine.Query
         public PreparedQuery(QueryBatch queryBatch)
         {
             Batch = queryBatch;
-            Conditions = new Conditions(queryBatch);
+            Conditions = new(queryBatch);
+            SelectFields = new(queryBatch);
         }
 
         public T Attribute<T>(QueryAttribute attribute, T defaultValue)

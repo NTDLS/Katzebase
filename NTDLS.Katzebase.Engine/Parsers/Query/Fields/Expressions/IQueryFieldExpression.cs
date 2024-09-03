@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
 {
-    public interface IQueryFieldExpression : IQueryField
+    internal interface IQueryFieldExpression : IQueryField
     {
         string GetKeyExpressionKey();
 

@@ -3,7 +3,7 @@
     /// <summary>
     /// Contains a string evaluation expression. This could be as simple as ["This" + "That"] or could contain function calls which child nodes.
     /// </summary>
-    public class QueryFieldExpressionString : IQueryFieldExpression
+    internal class QueryFieldExpressionString : IQueryFieldExpression
     {
         private int _nextExpressionKey = 0;
 

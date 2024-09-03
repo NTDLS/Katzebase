@@ -3,7 +3,7 @@
     /// <summary>
     /// Contains a numeric evaluation expression. This could be as simple as [10 + 10] or could contain function calls which child nodes.
     /// </summary>
-    public class QueryFieldExpressionNumeric : IQueryFieldExpression
+    internal class QueryFieldExpressionNumeric : IQueryFieldExpression
     {
         private int _nextExpressionKey = 0;
 

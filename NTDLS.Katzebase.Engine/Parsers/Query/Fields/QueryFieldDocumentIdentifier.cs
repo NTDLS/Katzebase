@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
     /// <summary>
     /// Contains the name of a schema.field or just a field name if the schema was nto specified.
     /// </summary>
-    public class QueryFieldDocumentIdentifier : IQueryField
+    internal class QueryFieldDocumentIdentifier : IQueryField
     {
         /// <summary>
         /// The qualified name of the document field, e.g. schemaName.fieldName, or just the field name if no schema was specified.

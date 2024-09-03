@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
@@ -28,6 +29,10 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         internal static DocumentLookupResults GetDocumentsByConditions(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix = null)
         {
+            if (query.Hash != "957f4825bd09462c4ae2d7a57447cadb768d55783146c531427b6ea2002337ad")
+            {
+            }
+
             var topLevelSchemaMap = schemaMap.First().Value;
 
             IEnumerable<DocumentPointer>? documentPointers = null;
@@ -232,6 +237,10 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             results.AddRange(operation.Results);
 
+            if (query.Hash != "957f4825bd09462c4ae2d7a57447cadb768d55783146c531427b6ea2002337ad")
+            {
+            }
+
             return results;
         }
 
@@ -276,8 +285,18 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
+
+
         static void ExecuteFunctions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRowCollection resultingRows)
         {
+            if (operation.Query.Hash != "957f4825bd09462c4ae2d7a57447cadb768d55783146c531427b6ea2002337ad")
+            {
+
+            }
+
+            var TODOhereAreYourFunctions = operation.Query.SelectFields.FieldsWithFunctionCalls;
+
+
             foreach (var methodField in operation.Query.old_SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
             {
                 foreach (var row in resultingRows.Collection)
@@ -349,16 +368,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //Since FillInSchemaResultDocumentValues() will produce a single row, this is where we can fill
             //  in any of the constant values. Additionally, this is the "template row" that will be cloned
             //  for rows produced by any one-to-many relationships.
-            var constants = instance.Operation.Query.SelectFields
-                .Where(o => o.Expression is QueryFieldConstantString || o.Expression is QueryFieldConstantNumeric)
-                .Select(o => new
-                {
-                    Alias = o.Alias,
-                    Ordinal = o.Ordinal,
-                    Value = instance.Operation.Query.Batch.GetLiteralValue(o.Expression.Value)
-                });
-
-            foreach (var field in constants)
+            foreach (var field in instance.Operation.Query.SelectFields.ConstantFields)
             {
                 resultingRow.InsertValue(field.Alias, field.Ordinal, field.Value);
             }
@@ -610,16 +620,20 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                         fields.Add(new PrefixedField(schemaKey, documentValue.Key, documentValue.Key));
                     }
 
+                    instance.Operation.Query.SelectFields.InvalidateDocumentIdentifierFieldsCache();
+
                     //Add the fields to the select list where they are not already present.
                     foreach (var field in fields)
                     {
-                        if (instance.Operation.Query.old_SelectFields.OfType<FunctionDocumentFieldParameter>().Any(o => o.Value.Key == field.Key) == false)
+                        var currentFieldList = instance.Operation.Query.SelectFields.Select(o => o.Expression)
+                            .OfType<QueryFieldDocumentIdentifier>().ToList();
+
+                        bool isFieldAlreadyInCollection = (currentFieldList.Where(o => o.Value == field.Key).ToList().Count != 0);
+
+                        if (isFieldAlreadyInCollection == false)
                         {
-                            var newField = new FunctionDocumentFieldParameter(field.Key)
-                            {
-                                Alias = field.Alias
-                            };
-                            instance.Operation.Query.old_SelectFields.Add(newField);
+                            var additionalField = new QueryField(field.Key, currentFieldList.Count(), new QueryFieldDocumentIdentifier(field.Key));
+                            instance.Operation.Query.SelectFields.Add(additionalField);
                         }
                     }
                 }
@@ -631,59 +645,41 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             if (schemaKey != string.Empty)
             {
                 //Grab all of the selected fields from the document for this schema.
-                var thisSchemaFields = instance.Operation.Query.SelectFields
-                    .Where(o => o.Expression is QueryFieldDocumentIdentifier && o.Expression.SchemaAlias == schemaKey)
-                    .Select(o => new
-                    {
-                        Alias = o.Alias,
-                        Ordinal = o.Ordinal,
-                        Value = instance.Operation.Query.Batch.GetLiteralValue(o.Expression.Value)
-                    });
-
-                foreach (var field in thisSchemaFields)
+                foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifierFields.Where(o => o.SchemaAlias == schemaKey))
                 {
-                    if (documentContent.TryGetValue(field.Value, out string? documentValue) == false)
+                    if (documentContent.TryGetValue(field.Name, out string? documentValue) == false)
                     {
                         instance.Operation.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
-                            $"'{field.Value}' will be treated as null.");
+                            $"'{field.Name}' will be treated as null.");
                     }
-                    schemaResultRow.InsertValue(field.Value, field.Ordinal, documentValue);
+                    schemaResultRow.InsertValue(field.Name, field.Ordinal, documentValue);
                 }
             }
 
             //Grab all of the selected fields from the document for the empty schema.
-            var emptySchemaFields = instance.Operation.Query.SelectFields
-                .Where(o => o.Expression is QueryFieldDocumentIdentifier && o.Expression.SchemaAlias == string.Empty)
-                .Select(o => new
-                {
-                    Alias = o.Alias,
-                    Ordinal = o.Ordinal,
-                    Value = instance.Operation.Query.Batch.GetLiteralValue(o.Expression.Value)
-                });
-
-            foreach (var field in emptySchemaFields)
+            foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifierFields.Where(o => o.SchemaAlias == string.Empty))
             {
-                if (documentContent.TryGetValue(field.Value, out string? documentValue) == false)
+                if (documentContent.TryGetValue(field.Name, out string? documentValue) == false)
                 {
                     instance.Operation.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
-                        $"'{field.Value}' will be treated as null.");
+                        $"'{field.Name}' will be treated as null.");
                 }
-                schemaResultRow.InsertValue(field.Value, field.Ordinal, documentValue);
+                schemaResultRow.InsertValue(field.Name, field.Ordinal, documentValue);
             }
 
             schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.{UIDMarker}", documentPointer.Key);
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var field in instance.Operation.Query.old_SelectFields.AllDocumentFields.Where(o => o.Prefix == schemaKey).Distinct())
+            foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifiers.Where(o => o.SchemaAlias == schemaKey).Distinct())
             {
-                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.FieldName) == false)
                 {
-                    if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
+                    if (documentContent.TryGetValue(field.FieldName, out string? documentValue) == false)
                     {
                         instance.Operation.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound,
-                            $"'{field.Key}' will be treated as null.");
+                            $"'{field.FieldName}' will be treated as null.");
                     }
-                    schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
+                    schemaResultRow.AuxiliaryFields.Add(field.FieldName, documentValue);
                 }
             }
 
@@ -744,7 +740,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             NCalc.Expression? expression = null;
 
-            var conditionHash = instance.Operation.Query.Conditions.EnsureNotNull().Hash
+            var conditionHash = instance.Operation.Query.Conditions.Hash
                 ?? throw new KbEngineException($"Condition hash cannot be null.");
 
             instance.Operation.ExpressionCache.UpgradableRead(r =>

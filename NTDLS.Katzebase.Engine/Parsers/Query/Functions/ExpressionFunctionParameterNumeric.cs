@@ -3,7 +3,7 @@
     /// <summary>
     /// This is function call parameter that contains either a single numeric value or an expression consisting solely of numeric operations.
     /// </summary>
-    public class ExpressionFunctionParameterNumeric : IExpressionFunctionParameter
+    internal class ExpressionFunctionParameterNumeric : IExpressionFunctionParameter
     {
         public string Expression { get; set; }
 

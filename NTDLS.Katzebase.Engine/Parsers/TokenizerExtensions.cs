@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
     /// <summary>
     /// Used to walk various types of string and expressions.
     /// </summary>
-    public static class TokenizerExtensions
+    internal static class TokenizerExtensions
     {
         /// <summary>
         /// Splits the given text on a comma delimiter while paying attention to the scope denoted by open and close parentheses..

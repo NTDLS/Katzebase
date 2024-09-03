@@ -4,19 +4,20 @@ using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
+using NTDLS.Katzebase.Engine.Query;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query
 {
-    public static class StaticParser
+    internal static class StaticParser
     {
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.
         /// </summary>
-        public static QueryFieldCollection ParseSelectFields(Tokenizer queryTokenizer)
+        public static QueryFieldCollection ParseSelectFields(QueryBatch queryBatch, Tokenizer queryTokenizer)
         {
-            var queryFields = new QueryFieldCollection();
+            var queryFields = new QueryFieldCollection(queryBatch);
 
             //Get the position which represents the end of the select list.
             int stopAt = queryTokenizer.InertGetNextIndexOf([" from ", " into "]);

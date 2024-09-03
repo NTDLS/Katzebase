@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
     /// <summary>
     /// Used to walk various types of string and expressions.
     /// </summary>
-    public class Tokenizer
+    internal class Tokenizer
     {
         #region Rules and Convention.
 
@@ -32,9 +32,9 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
         #region Private backend variables.
 
+        private string? _hash = null;
         private Stack<int> _breadCrumbs = new();
         private int _literalKey = 0;
-
         private string _text;
         private int _caret = 0;
         private readonly char[] _standardTokenDelimiters;
@@ -49,6 +49,18 @@ namespace NTDLS.Katzebase.Engine.Parsers
         public int Caret => _caret;
         public int Length => _text.Length;
         public string Text => _text;
+
+        /// <summary>
+        /// The hash of the text.
+        /// </summary>
+        public string Hash
+        {
+            get
+            {
+                _hash ??= Library.Helpers.ComputeSHA256(_text);
+                return _hash;
+            }
+        }
 
         #endregion
 
