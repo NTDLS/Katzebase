@@ -105,17 +105,8 @@ namespace NTDLS.Katzebase.Engine.Query
 
             var expressionHash = Library.Helpers.GetSHA1Hash(expressionString);
 
-            NCalc.Expression? expression = null;
-            query.ExpressionCache.UpgradableRead(r =>
-            {
-                if (r.TryGetValue(expressionHash, out expression) == false)
-                {
-                    expression = new NCalc.Expression(expressionString);
-                    query.ExpressionCache.Write(w => w.Add(expressionHash, expression));
-                }
-            });
-
-            if (expression == null) throw new KbEngineException($"Expression cannot be null.");
+            //Perhaps we can pass in a cache object?
+            var expression = new NCalc.Expression(expressionString);
 
             foreach (var expressionVariable in expressionVariables)
             {
