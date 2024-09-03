@@ -24,7 +24,7 @@
             Value = value;
         }
 
-        public string GetKeyExpressionKey()
+        public string GetNextExpressionKey()
             => $"$x_{_nextExpressionKey++}$";
     }
 }

@@ -2,7 +2,7 @@
 {
     internal interface IQueryFieldExpression : IQueryField
     {
-        string GetKeyExpressionKey();
+        string GetNextExpressionKey();
 
         /// <summary>
         /// Contains the function names and their parameters that are used to satisfy the expression,

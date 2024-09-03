@@ -1,10 +1,12 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
 using NTDLS.Katzebase.Engine.Query;
+using System;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -28,8 +30,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
             //Split the select fields on the comma, respecting any commas in function scopes.
             var fields = fieldsSegment.ScopeSensitiveSplit();
 
-            HashSet<QueryFieldDocumentIdentifier> documentIdentifiers = new();
-
             foreach (var field in fields)
             {
                 string fieldAlias = string.Empty;
@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
                 var aliasRemovedFieldText = (aliasIndex > 0 ? field.Substring(0, aliasIndex) : field).Trim();
 
-                var queryField = ParseField(aliasRemovedFieldText, queryTokenizer, ref documentIdentifiers);
+                var queryField = ParseField(aliasRemovedFieldText, queryTokenizer, ref queryFields);
 
                 //If the query didn't provide an alias, figure one out.
                 if (string.IsNullOrWhiteSpace(fieldAlias))
@@ -61,12 +61,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                 queryFields.Add(new QueryField(fieldAlias, queryFields.Count, queryField));
             }
 
-            queryFields.DocumentIdentifiers = documentIdentifiers;
-
             return queryFields;
         }
 
-        private static IQueryField ParseField(string givenFieldText, Tokenizer queryTokenizer, ref HashSet<QueryFieldDocumentIdentifier> documentIdentifiers)
+        private static IQueryField ParseField(string givenFieldText,
+            Tokenizer queryTokenizer, ref QueryFieldCollection queryFields)
         {
             #region This is a single value (document field, number or string), the simple case.
 
@@ -89,9 +88,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                         throw new KbParserException($"Function aggregate expects parentheses: [{token}]");
                     }
 
-                    //This is not a function (those require evaluation) so its a single identifier, likely a document field name.
                     var queryFieldDocumentIdentifier = new QueryFieldDocumentIdentifier(token);
-                    documentIdentifiers.Add(queryFieldDocumentIdentifier);
+                    var fieldKey = queryFields.GetNextDocumentFieldKey();
+                    queryFields.DocumentIdentifiers.Add(fieldKey, queryFieldDocumentIdentifier);
+
                     return queryFieldDocumentIdentifier;
                 }
                 else if (IsNumericExpression(token))
@@ -118,24 +118,24 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
             }
 
             //This field is going to require evaluation, so figure out if its a number or a string.
-
             if (IsNumericExpression(givenFieldText))
             {
                 IQueryFieldExpression expression = new QueryFieldExpressionNumeric(givenFieldText);
-                expression.Value = ParseEvaluationRecursive(ref expression, givenFieldText, ref documentIdentifiers);
+                expression.Value = ParseEvaluationRecursive(ref expression, givenFieldText, ref queryFields);
                 return expression;
             }
             else
             {
                 IQueryFieldExpression expression = new QueryFieldExpressionString();
-                expression.Value = ParseEvaluationRecursive(ref expression, givenFieldText, ref documentIdentifiers);
+                expression.Value = ParseEvaluationRecursive(ref expression, givenFieldText, ref queryFields);
                 return expression;
             }
 
             #endregion
         }
 
-        private static string ParseEvaluationRecursive(ref IQueryFieldExpression rootQueryFieldExpression, string givenExpressionText, ref HashSet<QueryFieldDocumentIdentifier> documentIdentifiers)
+        private static string ParseEvaluationRecursive(ref IQueryFieldExpression rootQueryFieldExpression,
+            string givenExpressionText, ref QueryFieldCollection queryFields)
         {
             Tokenizer tokenizer = new(givenExpressionText);
 
@@ -158,28 +158,26 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                 else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
                 {
                     //The expression key is used to match the function calls to the token in the parent expression.
-                    var expressionKey = rootQueryFieldExpression.GetKeyExpressionKey();
+                    var expressionKey = rootQueryFieldExpression.GetNextExpressionKey();
                     var basicDataType = scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric ? BasicDataType.Numeric : BasicDataType.String;
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(scalerFunction.Name, expressionKey, basicDataType);
 
-                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, givenExpressionText, queryFieldExpressionFunction, ref documentIdentifiers, tokenizer, positionBeforeToken, expressionKey);
+                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, givenExpressionText, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken, expressionKey);
 
                     buffer.Append(expressionKey);
                 }
                 else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
                 {
                     //The expression key is used to match the function calls to the token in the parent expression.
-                    var expressionKey = rootQueryFieldExpression.GetKeyExpressionKey();
+                    var expressionKey = rootQueryFieldExpression.GetNextExpressionKey();
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(aggregateFunction.Name, expressionKey, BasicDataType.Numeric);
 
-                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, givenExpressionText, queryFieldExpressionFunction, ref documentIdentifiers, tokenizer, positionBeforeToken, expressionKey);
+                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, givenExpressionText, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken, expressionKey);
 
                     buffer.Append(expressionKey);
                 }
                 else if (token.IsIdentifier())
                 {
-                    documentIdentifiers.Add(new QueryFieldDocumentIdentifier(token));
-
                     if (tokenizer.InertIsNextNonIdentifier(['(']))
                     {
                         //The character after this identifier is an open parenthesis, so this
@@ -187,7 +185,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                         throw new KbParserException($"Function [{token}] is undefined.");
                     }
 
-                    buffer.Append(token);
+                    var fieldKey = queryFields.GetNextDocumentFieldKey();
+                    queryFields.DocumentIdentifiers.Add(fieldKey, new QueryFieldDocumentIdentifier(token));
+                    buffer.Append(fieldKey);
                 }
                 else
                 {
@@ -204,7 +204,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// Its unfortunate that this function needs so many parameters, the alternative is duplicating the code for scaler and aggregate functions.
         /// </summary>
         private static void ParseFunctionCallRecursive(ref IQueryFieldExpression rootQueryFieldExpression, string givenExpressionText,
-            IQueryFieldExpressionFunction queryFieldExpressionFunction, ref HashSet<QueryFieldDocumentIdentifier> documentIdentifiers,
+            IQueryFieldExpressionFunction queryFieldExpressionFunction, ref QueryFieldCollection queryFields,
             Tokenizer tokenizer, int positionBeforeToken, string expressionKey)
         {
             //This contains the text between the open and close parenthesis of a function call, but not the parenthesis themselves or the function name.
@@ -221,7 +221,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
             foreach (var functionCallParameterText in functionCallParametersText)
             {
                 //Recursively process the function parameters.
-                var resultingExpressionString = ParseEvaluationRecursive(ref rootQueryFieldExpression, functionCallParameterText, ref documentIdentifiers);
+                var resultingExpressionString = ParseEvaluationRecursive(ref rootQueryFieldExpression, functionCallParameterText, ref queryFields);
 
                 IExpressionFunctionParameter? parameter = null;
 

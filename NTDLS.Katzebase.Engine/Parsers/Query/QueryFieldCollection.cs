@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
+﻿using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Query;
@@ -12,6 +13,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
     internal class QueryFieldCollection : List<QueryField>
     {
         private int nextFieldAlias = 0;
+        private int _nextDocumentFieldKey = 0;
 
         public QueryBatch QueryBatch { get; private set; }
 
@@ -19,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// A list of all distinct document identifiers from all fields, even nested expressions.
         /// We go out of our way to create this list because it helps optimize the query execution.
         /// </summary>
-        public HashSet<QueryFieldDocumentIdentifier> DocumentIdentifiers { get; set; } = new();
+        public KbInsensitiveDictionary<QueryFieldDocumentIdentifier> DocumentIdentifiers { get; set; } = new();
 
         /// <summary>
         /// Gets a field alias for a field for which the query did not supply an alias.
@@ -27,6 +29,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <returns></returns>
         public string GetNextFieldAlias()
             => $"Expression{nextFieldAlias++}";
+
+        /// <summary>
+        /// Get a document field placeholder.
+        /// </summary>
+        /// <returns></returns>
+        public string GetNextDocumentFieldKey()
+            => $"$f_{_nextDocumentFieldKey++}$";
 
         public QueryFieldCollection(QueryBatch queryBatch)
         {

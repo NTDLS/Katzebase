@@ -23,9 +23,10 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
         /* Token Placeholders:
          * 
-         * $n_0% = numeric
-         * $s_0% = string
+         * $n_0% = numeric.
+         * $s_0% = string.
          * $x_0% = expression (result from a function call).
+         * $f_0% = document field placeholder.
          */
 
         #endregion
@@ -172,7 +173,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 if (match.Success)
                 {
                     string key = $"$s_{_literalKey++}$";
-                    Literals.Add(key, new(BasicDataType.String, match.ToString()));
+                    Literals.Add(key, new(BasicDataType.String, match.ToString()[1..^1]));
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
@@ -237,7 +238,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
                     else
                     {
                         key = $"$s_{_literalKey++}$";
-                        Literals.Add(key, new QueryFieldLiteral(BasicDataType.String, userParameterValue));
+                        Literals.Add(key, new QueryFieldLiteral(BasicDataType.String, userParameterValue[1..^1]));
                     }
 
                     mappings.Add(key, userParameterValue);

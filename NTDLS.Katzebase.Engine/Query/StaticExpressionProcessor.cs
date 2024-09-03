@@ -11,12 +11,11 @@ namespace NTDLS.Katzebase.Engine.Query
         {
             /* Token Placeholders:
              * 
-             * $n_0% = numeric
-             * $s_0% = string
-             * $p_0% = parameter (user variable)
+             * $n_0% = numeric.
+             * $s_0% = string.
              * $x_0% = expression (result from a function call).
-             * 
-            */
+             * $f_0% = document field placeholder.
+             */
 
             foreach (var field in fieldCollection)
             {

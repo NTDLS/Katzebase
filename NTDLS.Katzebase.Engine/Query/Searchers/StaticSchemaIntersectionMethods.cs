@@ -301,9 +301,10 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             row.InsertValue(rootExpression.FieldAlias, rootExpression.Ordinal, "100");
         }
 
-        static void CollapseScalerFunctions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRow row, List<IQueryFieldExpressionFunction> functions)
+        static void CollapseScalerFunctions(Transaction transaction,
+            DocumentLookupOperation operation, SchemaIntersectionRow row, List<IQueryFieldExpressionFunction> functions)
         {
-
+            var fff = operation.Query.Batch.Literals;
         }
 
         static void CollapseAllExpressions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRowCollection resultingRows)
@@ -697,16 +698,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.{UIDMarker}", documentPointer.Key);
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifiers.Where(o => o.SchemaAlias == schemaKey).Distinct())
+            foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey).Distinct())
             {
-                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.FieldName) == false)
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Value.FieldName) == false)
                 {
-                    if (documentContent.TryGetValue(field.FieldName, out string? documentValue) == false)
+                    if (documentContent.TryGetValue(field.Value.FieldName, out string? documentValue) == false)
                     {
                         instance.Operation.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound,
-                            $"'{field.FieldName}' will be treated as null.");
+                            $"'{field.Value.FieldName}' will be treated as null.");
                     }
-                    schemaResultRow.AuxiliaryFields.Add(field.FieldName, documentValue);
+                    schemaResultRow.AuxiliaryFields.Add(field.Value.FieldName, documentValue);
                 }
             }
 
