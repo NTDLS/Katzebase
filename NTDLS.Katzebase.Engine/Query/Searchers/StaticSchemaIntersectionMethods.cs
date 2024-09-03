@@ -6,6 +6,7 @@ using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Parsers.Query;
+using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
@@ -267,7 +268,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
 
-            ExecuteFunctions(instance.Operation.Transaction, instance.Operation, resultingRows);
+            CollapseAllExpressions(instance.Operation.Transaction, instance.Operation, resultingRows);
 
             instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Release();
 
@@ -285,19 +286,38 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
         }
 
-
-
-        static void ExecuteFunctions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRowCollection resultingRows)
+        static void CollapseExpression(Transaction transaction, DocumentLookupOperation operation, ExposedExpression rootExpression, SchemaIntersectionRow row)
         {
+
+            row.InsertValue("Blah", rootExpression.Ordinal, "100");
+
+
+        }
+
+        static void CollapseAllExpressions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRowCollection resultingRows)
+        {
+            var fff = operation.Query.SelectFields.ExpressionFields;
+
             if (operation.Query.Hash != "957f4825bd09462c4ae2d7a57447cadb768d55783146c531427b6ea2002337ad")
             {
-
+                if (fff.Count == 0)
+                {
+                }
             }
 
-            var todoHereAreYourFunctions = operation.Query.SelectFields.FieldsWithScalerFunctionCalls;
 
-            //old_SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler)
 
+
+            foreach (var expressionField in operation.Query.SelectFields.ExpressionFields)
+            {
+                foreach (var row in resultingRows.Collection)
+                {
+                    CollapseExpression(transaction, operation, expressionField, row);
+                }
+            }
+
+
+            /*
             foreach (var methodField in operation.Query.old_SelectFields.OfType<FunctionWithParams>().Where(o => o.FunctionType == FunctionParameterTypes.FunctionType.Scaler))
             {
                 foreach (var row in resultingRows.Collection)
@@ -313,7 +333,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     }
                 }
             }
+            */
 
+            /*
             foreach (var methodField in operation.Query.old_SelectFields.OfType<FunctionExpression>())
             {
                 foreach (var row in resultingRows.Collection)
@@ -329,6 +351,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     }
                 }
             }
+            */
         }
 
         #endregion

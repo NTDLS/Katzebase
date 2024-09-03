@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _exposedScalerFunctions;
                         }
 
-                        _exposedScalerFunctions = new List<ExposedFunction>();
+                        var results = new List<ExposedFunction>();
 
                         foreach (var queryField in this)
                         {
@@ -73,10 +73,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             {
                                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Count() > 0)
                                 {
-                                    _exposedScalerFunctions.Add(new ExposedFunction(queryField.Ordinal, fieldExpression));
+                                    results.Add(new ExposedFunction(queryField.Ordinal, fieldExpression));
                                 }
                             }
                         }
+
+                        _exposedScalerFunctions = results;
                     }
                 }
 
@@ -118,7 +120,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _exposedAggregateFunctions;
                         }
 
-                        _exposedAggregateFunctions = new List<ExposedFunction>();
+                        var results = new List<ExposedFunction>();
 
                         foreach (var queryField in this)
                         {
@@ -126,10 +128,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             {
                                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Count() > 0)
                                 {
-                                    _exposedAggregateFunctions.Add(new ExposedFunction(queryField.Ordinal, fieldExpression));
+                                    results.Add(new ExposedFunction(queryField.Ordinal, fieldExpression));
                                 }
                             }
                         }
+
+                        _exposedAggregateFunctions = results;
                     }
                 }
 
@@ -171,19 +175,21 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _exposedConstants;
                         }
 
-                        _exposedConstants = new List<ExposedConstant>();
+                        var results = new List<ExposedConstant>();
 
                         foreach (var queryField in this)
                         {
                             if (queryField.Expression is QueryFieldConstantNumeric constantNumeric)
                             {
-                                _exposedConstants.Add(new ExposedConstant(queryField.Ordinal, BasicDataType.Numeric, queryField.Alias, constantNumeric.Value));
+                                results.Add(new ExposedConstant(queryField.Ordinal, BasicDataType.Numeric, queryField.Alias, constantNumeric.Value));
                             }
                             else if (queryField.Expression is QueryFieldConstantString constantString)
                             {
-                                _exposedConstants.Add(new ExposedConstant(queryField.Ordinal, BasicDataType.String, queryField.Alias, constantString.Value));
+                                results.Add(new ExposedConstant(queryField.Ordinal, BasicDataType.String, queryField.Alias, constantString.Value));
                             }
                         }
+
+                        _exposedConstants = results;
                     }
                 }
 
@@ -225,20 +231,76 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _exposedDocumentIdentifiers;
                         }
 
-                        _exposedDocumentIdentifiers = new List<ExposedDocumentIdentifier>();
+                        var results = new List<ExposedDocumentIdentifier>();
 
                         foreach (var queryField in this)
                         {
                             if (queryField.Expression is QueryFieldDocumentIdentifier documentIdentifier)
                             {
-                                _exposedDocumentIdentifiers.Add(
-                                    new ExposedDocumentIdentifier(queryField.Ordinal, queryField.Alias, documentIdentifier.SchemaAlias, documentIdentifier.Value));
+                                results.Add(new ExposedDocumentIdentifier(queryField.Ordinal, queryField.Alias, documentIdentifier.SchemaAlias, documentIdentifier.Value));
                             }
                         }
+
+                        _exposedDocumentIdentifiers = results;
                     }
                 }
 
                 return _exposedDocumentIdentifiers;
+            }
+        }
+
+        #endregion
+
+        #region Exposed collection: Expressions.
+
+        private List<ExposedExpression>? _exposedExpressions = null;
+        private readonly object _exposedExpressionsLock = new();
+
+        public void InvalidateExpressionFieldsCache()
+        {
+            lock (_exposedExpressionsLock)
+            {
+                _exposedExpressions = null;
+            }
+        }
+
+        /// <summary>
+        /// Returns a list of fields that have function call dependencies.
+        /// </summary>
+        public List<ExposedExpression> ExpressionFields
+        {
+            get
+            {
+                if (_exposedExpressions == null)
+                {
+                    lock (_exposedExpressionsLock)
+                    {
+                        if (_exposedExpressions != null)
+                        {
+                            //We check again here because other threads may have started waiting on the lock
+                            //  with the intention of hydrating _exposedExpressions themselves, we do this because
+                            //  we don't want to lock on reads once this _exposedExpressions is hydrated.
+                            return _exposedExpressions;
+                        }
+
+                        var results = new List<ExposedExpression>();
+
+                        foreach (var queryField in this)
+                        {
+                            if (queryField.Expression is IQueryFieldExpression fieldExpression)
+                            {
+                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Count() > 0)
+                                {
+                                    results.Add(new ExposedExpression(queryField.Ordinal, fieldExpression));
+                                }
+                            }
+                        }
+
+                        _exposedExpressions = results;
+                    }
+                }
+
+                return _exposedExpressions;
             }
         }
 
