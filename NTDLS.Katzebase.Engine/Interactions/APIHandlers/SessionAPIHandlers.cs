@@ -26,8 +26,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-
-
         public KbQueryServerStartSessionReply StartSession(RmContext context, KbQueryServerStartSession param)
         {
 #if DEBUG

@@ -3,5 +3,6 @@
     public interface IQueryField
     {
         string Value { get; set; }
+        string SchemaAlias { get; }
     }
 }

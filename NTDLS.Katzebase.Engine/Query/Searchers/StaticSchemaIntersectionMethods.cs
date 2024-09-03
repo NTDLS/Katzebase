@@ -102,7 +102,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             /*
             #region Grouping.
 
-
             if (operation.Results.Collection.Count != 0 && (query.GroupFields.Count != 0
                 || query.old_SelectFields.OfType<FunctionWithParams>()
                 .Any(o => o.FunctionType == FunctionParameterTypes.FunctionType.Aggregate))
@@ -219,7 +218,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 //If this was a "select *", we may have discovered different "fields" in different 
                 //  documents. We need to make sure that all rows have the same number of values.
 
-                int maxFieldCount = query.old_SelectFields.Count;
+                int maxFieldCount = query.SelectFields.Count;
                 foreach (var row in operation.Results.Collection)
                 {
                     if (row.Values.Count < maxFieldCount)
@@ -360,9 +359,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //Since FillInSchemaResultDocumentValues() will produce a single row, this is where we can fill
             //  in any of the constant values. Additionally, this is the "template row" that will be cloned
             //  for rows produced by any one-to-many relationships.
-            //
-            //foreach (var field in instance.Operation.Query.old_SelectFields.OfType<FunctionConstantParameter>())
-
             var constants = instance.Operation.Query.SelectFields
                 .Where(o => o.Expression is QueryFieldConstantString || o.Expression is QueryFieldConstantNumeric)
                 .Select(o => new
@@ -596,7 +592,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         {
             if (instance.Operation.Query.DynamicSchemaFieldFilter != null) //The script is a "SELECT *". This is not optimal, but neither is select *...
             {
-                lock (instance.Operation.Query.old_SelectFields) //We only have to lock this is we are dynamically building the select list.
+                lock (instance.Operation.Query.SelectFields) //We only have to lock this is we are dynamically building the select list.
                 {
                     FillInSchemaResultDocumentValuesAtomic(instance, schemaKey, documentPointer, ref schemaResultRow, threadScopedContentCache);
                 }
@@ -610,7 +606,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <summary>
         /// Gets the values of all selected fields from document.
         /// </summary>
-        /// 
         private static void FillInSchemaResultDocumentValuesAtomic(DocumentLookupOperation.Parameter instance, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
@@ -647,26 +642,45 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             if (schemaKey != string.Empty)
             {
-                //Grab all of the selected fields from the document.
-                foreach (var field in instance.Operation.Query.old_SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == schemaKey))
+                //Grab all of the selected fields from the document for this schema.
+                var thisSchemaFields = instance.Operation.Query.SelectFields
+                    .Where(o => o.Expression is QueryFieldDocumentIdentifier && o.Expression.SchemaAlias == schemaKey)
+                    .Select(o => new
+                    {
+                        Alias = o.Alias,
+                        Ordinal = o.Ordinal,
+                        Value = instance.Operation.Query.Batch.GetLiteralValue(o.Expression.Value)
+                    });
+
+                foreach (var field in thisSchemaFields)
                 {
-                    if (documentContent.TryGetValue(field.Value.Field, out string? documentValue) == false)
+                    if (documentContent.TryGetValue(field.Value, out string? documentValue) == false)
                     {
                         instance.Operation.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
-                            $"'{field.Value.Field}' will be treated as null.");
+                            $"'{field.Value}' will be treated as null.");
                     }
-                    schemaResultRow.InsertValue(field.Value.Field, field.Ordinal, documentValue);
+                    schemaResultRow.InsertValue(field.Value, field.Ordinal, documentValue);
                 }
             }
 
-            foreach (var field in instance.Operation.Query.old_SelectFields.OfType<FunctionDocumentFieldParameter>().Where(o => o.Value.Prefix == string.Empty))
+            //Grab all of the selected fields from the document for the empty schema.
+            var emptySchemaFields = instance.Operation.Query.SelectFields
+                .Where(o => o.Expression is QueryFieldDocumentIdentifier && o.Expression.SchemaAlias == string.Empty)
+                .Select(o => new
+                {
+                    Alias = o.Alias,
+                    Ordinal = o.Ordinal,
+                    Value = instance.Operation.Query.Batch.GetLiteralValue(o.Expression.Value)
+                });
+
+            foreach (var field in emptySchemaFields)
             {
-                if (documentContent.TryGetValue(field.Value.Field, out string? documentValue) == false)
+                if (documentContent.TryGetValue(field.Value, out string? documentValue) == false)
                 {
                     instance.Operation.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
-                        $"'{field.Value.Field}' will be treated as null.");
+                        $"'{field.Value}' will be treated as null.");
                 }
-                schemaResultRow.InsertValue(field.Value.Field, field.Ordinal, documentValue);
+                schemaResultRow.InsertValue(field.Value, field.Ordinal, documentValue);
             }
 
             schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.{UIDMarker}", documentPointer.Key);

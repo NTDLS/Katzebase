@@ -27,10 +27,12 @@ namespace QueryTest
 
                 //This should work:
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 * FROM WordList:Word WHERE Text LIKE @Text + '%'", new { Text = "Fly" });
+                //var words = client.Query.Fetch<Word>("SELECT TOP 100 Text, LanguageId, Id, SourceId, IsDirty FROM WordList:Word WHERE Text LIKE @Text + '%'", new { Text = "Fly" });
+                var words = client.Query.Fetch<Word>("SELECT TOP 100 Text, LanguageId, Id, SourceId, IsDirty FROM WordList:Word WHERE Text LIKE 'Fly%'");
                 //This should NOT work:
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 'Text1' + 'Text2' FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 Concat('Text1', 'Text2') as Text FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
-                var words = client.Query.Fetch<Word>("SELECT TOP 100  Concat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text, 10 * 10 as Id, Length('This is text') as LanguageId, 'English' as Language FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
+                //var words = client.Query.Fetch<Word>("SELECT TOP 100  Concat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text, 10 * 10 as Id, Length('This is text') as LanguageId, 'English' as Language FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
 
                 foreach (var word in words)
                 {
