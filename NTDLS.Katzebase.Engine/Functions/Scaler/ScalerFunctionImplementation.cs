@@ -127,8 +127,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             }
         }
 
-
-        private static string? ExecuteFunction(Transaction transaction, string functionName, List<string?> parameters, KbInsensitiveDictionary<string?> rowFields)
+        public static string? ExecuteFunction(Transaction transaction, string functionName, List<string> parameters, KbInsensitiveDictionary<string?> rowFields)
         {
             var proc = ScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 

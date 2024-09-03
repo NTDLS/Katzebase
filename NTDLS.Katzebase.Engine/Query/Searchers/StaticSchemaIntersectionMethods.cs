@@ -15,6 +15,7 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
+using System.Collections.Generic;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
@@ -300,8 +301,10 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             {
                 CollapseScalerFunctions(transaction, operation, row, expressionString.FunctionDependencies);
             }
-
-            row.InsertValue(rootExpression.FieldAlias, rootExpression.Ordinal, "100");
+            else
+            {
+                throw new KbEngineException($"Field expression type is not implemented: [{rootExpression.FieldExpression.GetType().Name}].");
+            }
         }
 
         static void CollapseScalerFunctions(Transaction transaction,
@@ -310,42 +313,52 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         {
             foreach (var function in functions)
             {
-                CollapseScalerFunction(transaction, operation, row, function);
+               var scalerResult = CollapseScalerFunction(transaction, operation, row, functions, function);
+
+                //row.InsertValue(function., rootExpression.Ordinal, scalerResult);
+
             }
 
             var fff = operation.Query.Batch.Literals;
         }
 
-        static void CollapseScalerFunction(Transaction transaction,
+        static string CollapseScalerFunction(Transaction transaction,
             DocumentLookupOperation operation, SchemaIntersectionRow row,
-            IQueryFieldExpressionFunction function)
+            List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
         {
+            var collapsedParameters = new List<string>();
+
             foreach (var parameter in function.Parameters)
             {
-                CollapseScalerFunctionParameter(transaction, operation, row, function, parameter);
+                var collapsedParameter = CollapseScalerFunctionParameter(transaction, operation, row, functions, function, parameter);
+
+                collapsedParameters.Add(collapsedParameter);
             }
 
-            var fff = operation.Query.Batch.Literals;
+            //Execute function with the parameters from above ↑
+            var methodResult = ScalerFunctionImplementation.ExecuteFunction(transaction, function.FunctionName, collapsedParameters, row.AuxiliaryFields);
+
+            //TODO: think through the nullability here.
+            return methodResult ?? string.Empty;
         }
 
-        static void CollapseScalerFunctionParameter(Transaction transaction,
+        static string CollapseScalerFunctionParameter(Transaction transaction,
             DocumentLookupOperation operation, SchemaIntersectionRow row,
-            IQueryFieldExpressionFunction function, IExpressionFunctionParameter parameter)
+            List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function,
+            IExpressionFunctionParameter parameter)
         {
             if (parameter is ExpressionFunctionParameterString parameterString)
             {
-                CollapseScalerFunctionStringParameter(transaction, operation, row, function, parameterString);
+                return CollapseScalerFunctionStringParameter(transaction, operation, row, functions, function, parameterString);
             }
             else if (parameter is ExpressionFunctionParameterNumeric parameterNumeric)
             {
-                CollapseScalerFunctionNumericParameter(transaction, operation, row, function, parameterNumeric);
+                return CollapseScalerFunctionNumericParameter(transaction, operation, row, functions, function, parameterNumeric);
             }
             else
             {
                 throw new KbEngineException($"Function parameter type is not implemented [{parameter.GetType().Name}].");
             }
-
-            var fff = operation.Query.Batch.Literals;
         }
 
         /// <summary>
@@ -357,8 +370,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         /// <param name="function"></param>
         /// <param name="parameter"></param>
         /// <exception cref="KbEngineException"></exception>
-        static void CollapseScalerFunctionStringParameter(Transaction transaction,
+        static string CollapseScalerFunctionStringParameter(Transaction transaction,
             DocumentLookupOperation operation, SchemaIntersectionRow row,
+            List<IQueryFieldExpressionFunction> functions,
             IQueryFieldExpressionFunction function, ExpressionFunctionParameterString parameter)
         {
             Console.WriteLine($"String: {parameter.Expression}");
@@ -394,7 +408,9 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 }
                 else if (token.StartsWith("$x_") && token.EndsWith('$'))
                 {
-                    //TODO: Collapse the expression.
+                    var subFunction = functions.Single(o => o.ExpressionKey == token);
+                    var functionResult = CollapseScalerFunction(transaction, operation, row, functions, subFunction);
+                    sb.Append(functionResult);
                 }
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
@@ -414,16 +430,18 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 }
             }
 
-            Console.WriteLine($"Token(final): {sb}");
+            return sb.ToString();
         }
-
-        static void CollapseScalerFunctionNumericParameter(Transaction transaction,
+        static string CollapseScalerFunctionNumericParameter(Transaction transaction,
             DocumentLookupOperation operation, SchemaIntersectionRow row,
+            List<IQueryFieldExpressionFunction> functions,
             IQueryFieldExpressionFunction function, ExpressionFunctionParameterNumeric parameter)
         {
             Console.WriteLine($"Numeric: {parameter.Expression}");
 
             var fff = operation.Query.Batch.Literals;
+
+            return "0";
         }
 
         static void CollapseAllExpressions(Transaction transaction, DocumentLookupOperation operation, SchemaIntersectionRowCollection resultingRows)

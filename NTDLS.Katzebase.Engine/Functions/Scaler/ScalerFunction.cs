@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             return new ScalerFunction(functionName, returnType, parameters);
         }
 
-        internal ScalerFunctionParameterValueCollection ApplyParameters(List<string?> values)
+        internal ScalerFunctionParameterValueCollection ApplyParameters(List<string> values)
         {
             int requiredParameterCount = Parameters.Count(o => o.Type.ToString().ContainsInsensitive("optional") == false);
 
