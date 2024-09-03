@@ -951,6 +951,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
             {
                 if (char.IsWhiteSpace(_text[_caret]) || delimiters.Contains(_text[_caret]) == true)
                 {
+                    _caret++; //skip the delimiter.
                     break;
                 }
 
@@ -958,11 +959,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
             }
 
             InternalSkipWhiteSpace();
-
-            if (token.Length == 0)
-            {
-                throw new KbParserException("The tokenizer sequence is empty.");
-            }
 
             return token.Trim();
         }

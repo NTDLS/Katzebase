@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Parsers;
 using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
@@ -332,14 +333,46 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         {
             if (parameter is ExpressionFunctionParameterString parameterString)
             {
+                CollapseScalerFunctionStringParameter(transaction, operation, row, function, parameterString);
             }
             else if (parameter is ExpressionFunctionParameterNumeric parameterNumeric)
             {
+                CollapseScalerFunctionNumericParameter(transaction, operation, row, function, parameterNumeric);
             }
             else
             {
                 throw new KbEngineException($"Function parameter type is not implemented [{parameter.GetType().Name}].");
             }
+
+            var fff = operation.Query.Batch.Literals;
+        }
+
+        static void CollapseScalerFunctionStringParameter(Transaction transaction,
+            DocumentLookupOperation operation, SchemaIntersectionRow row,
+            IQueryFieldExpressionFunction function, ExpressionFunctionParameterString parameter)
+        {
+            Console.WriteLine($"String: {parameter.Expression}");
+
+            var tokenizer = new TokenizerSlim(parameter.Expression, ['+','(',')']);
+            //var tokenizer = new TokenizerSlim(parameter.Expression, ['+']);
+            string token;
+
+            while (tokenizer.IsEnd() == false)
+            {
+                token = tokenizer.GetNext();
+
+                Console.WriteLine($"Token: {token}");
+
+            }
+
+            var fff = operation.Query.Batch.Literals;
+        }
+
+        static void CollapseScalerFunctionNumericParameter(Transaction transaction,
+            DocumentLookupOperation operation, SchemaIntersectionRow row,
+            IQueryFieldExpressionFunction function, ExpressionFunctionParameterNumeric parameter)
+        {
+            Console.WriteLine($"Numeric: {parameter.Expression}");
 
             var fff = operation.Query.Batch.Literals;
         }
