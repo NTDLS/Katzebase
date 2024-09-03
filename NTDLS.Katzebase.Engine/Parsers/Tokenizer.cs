@@ -10,8 +10,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
     /// </summary>
     public class Tokenizer
     {
-        private Stack<int> _breadCrumbs = new();
-
         #region Rules and Convention.
 
         /*
@@ -31,6 +29,9 @@ namespace NTDLS.Katzebase.Engine.Parsers
         #endregion
 
         #region Private backend variables.
+
+        private Stack<int> _breadCrumbs = new();
+        private int _literalKey = 0;
 
         private string _text;
         private int _caret = 0;
@@ -131,13 +132,30 @@ namespace NTDLS.Katzebase.Engine.Parsers
         public KbInsensitiveDictionary<string> NumericLiterals { get; private set; } = new();
 
         /// <summary>
+        /// Attempts to resolve a single string or numeric literal, otherwise returns the given value.
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public string ResolveLiteral(string token)
+        {
+            if (StringLiterals.TryGetValue(token, out var literal))
+            {
+                return literal;
+            }
+            if (NumericLiterals.TryGetValue(token, out literal))
+            {
+                return literal;
+            }
+            return token;
+        }
+
+        /// <summary>
         /// Replaces text literals with tokens to prepare the query for parsing.
         /// </summary>
         private KbInsensitiveDictionary<string> SwapOutStringLiterals(ref string query)
         {
             var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
-            int literalKey = 0;
 
             while (true)
             {
@@ -145,7 +163,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
                 if (match.Success)
                 {
-                    string key = $"$s_{literalKey++}$";
+                    string key = $"$s_{_literalKey++}$";
                     mappings.Add(key, match.ToString());
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
@@ -166,7 +184,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
         {
             var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex(@"(?<=\s|^)(?:\d+\.?\d*|\.\d+)(?=\s|$)");
-            int literalKey = 0;
 
             while (true)
             {
@@ -174,7 +191,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
                 if (match.Success)
                 {
-                    string key = $"$n_{literalKey++}$";
+                    string key = $"$n_{_literalKey++}$";
                     mappings.Add(key, match.ToString());
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
@@ -195,7 +212,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
         {
             var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex(@"(?<=\s|^)@\w+(?=\s|$)");  // Updated regex to match @ followed by alphanumeric characters
-            int literalKey = 0;
 
             while (true)
             {
@@ -205,15 +221,23 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 {
                     string key;
 
+                    if (!UserParameters.TryGetValue(match.ToString(), out var userParameterValue))
+                    {
+                        throw new KbParserException($"Variable [{match}] is not defined.");
+                    }
+
                     if (double.TryParse(match.ToString(), out _))
                     {
-                        key = $"$n_{literalKey++}$";
-                        mappings.Add(key, match.ToString());
+                        key = $"$n_{_literalKey++}$";
+                        NumericLiterals.Add(key, userParameterValue);
                     }
                     else
                     {
-                        key = $"$s_{literalKey++}$";
+                        key = $"$s_{_literalKey++}$";
+                        StringLiterals.Add(key, userParameterValue);
                     }
+
+                    mappings.Add(key, userParameterValue);
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
@@ -236,6 +260,9 @@ namespace NTDLS.Katzebase.Engine.Parsers
         private void OptimizeForTokenization()
         {
             string text = KbTextUtility.RemoveComments(_text);
+
+            //var maxNumericLiterals = NumericLiterals.Count > 0 ? NumericLiterals.Max(o => o.Key)?.Substring(2)?.TrimEnd(['$']) : "0";
+            //var maxStringLiterals = StringLiterals.Count > 0 ? StringLiterals.Max(o => o.Key)?.Substring(2)?.TrimEnd(['$']) : "0";
 
             StringLiterals = SwapOutStringLiterals(ref text);
 
@@ -867,6 +894,18 @@ namespace NTDLS.Katzebase.Engine.Parsers
             => Helpers.Converters.ConvertTo<T>(GetNext(_standardTokenDelimiters));
 
         /// <summary>
+        /// Gets the next token, resolving it using the Numeric or String literals, using the given delimiters.
+        /// </summary>
+        public T GetNextEvaluated<T>(char[] delimiters)
+            => Helpers.Converters.ConvertTo<T>(GetNextEvaluated());
+
+        /// <summary>
+        /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters.
+        /// </summary>
+        public T GetNextEvaluated<T>()
+            => Helpers.Converters.ConvertTo<T>(GetNextEvaluated(_standardTokenDelimiters));
+
+        /// <summary>
         /// Gets the next token using the given delimiters.
         /// </summary>
         public T GetNext<T>(char[] delimiters)
@@ -877,6 +916,18 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// </summary>
         public string GetNext()
             => GetNext(_standardTokenDelimiters);
+
+        /// <summary>
+        /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters.
+        /// </summary>
+        public string GetNextEvaluated()
+            => ResolveLiteral(GetNext(_standardTokenDelimiters));
+
+        /// <summary>
+        /// Gets the next token, resolving it using the Numeric or String literals, using the given delimiters.
+        /// </summary>
+        public string GetNextEvaluated(char[] delimiters)
+            => ResolveLiteral(GetNext(delimiters));
 
         /// <summary>
         /// Gets the next token using the given delimiters.

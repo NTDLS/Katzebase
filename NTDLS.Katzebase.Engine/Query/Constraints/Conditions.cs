@@ -54,7 +54,6 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public IEnumerable<SubCondition> NonRootSubConditions
             => SubConditions.Where(o => !o.IsRoot);
 
-
         public Conditions(QueryBatch queryBatch)
         {
             QueryBatch = queryBatch;
@@ -68,6 +67,14 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         public SubCondition SubConditionFromExpressionKey(string key)
             => SubConditions.First(o => o.Key == key);
 
+        /// <summary>
+        /// Creates a new instance of conditions containing the parsed sub-conditions.
+        /// </summary>
+        /// <param name="queryBatch"></param>
+        /// <param name="conditionsText"></param>
+        /// <param name="tokenizer"></param>
+        /// <param name="leftHandAliasOfJoin">When parsing a JOIN, this is the schema that we are joining to.</param>
+        /// <returns></returns>
         public static Conditions Create(QueryBatch queryBatch, string conditionsText, Tokenizer tokenizer, string leftHandAliasOfJoin = "")
         {
             var conditions = new Conditions(queryBatch);
@@ -294,10 +301,6 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
                 int startPosition = tokenizer.Position;
 
                 string token = tokenizer.GetNext().ToLowerInvariant();
-
-                if (token == "text")
-                {
-                }
 
                 if (token == string.Empty)
                 {

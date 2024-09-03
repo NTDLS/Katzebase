@@ -51,7 +51,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
                 if (tokenizer.TryIsNextToken("top"))
                 {
-                    result.RowLimit = tokenizer.GetNext<int>();
+                    result.RowLimit = tokenizer.GetNextEvaluated<int>();
                 }
 
                 #endregion
