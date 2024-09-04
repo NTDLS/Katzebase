@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Query.Constraints;
+using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using System.Globalization;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;

@@ -4,23 +4,28 @@ using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
-using NTDLS.Katzebase.Engine.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
+namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticSelectFieldParser
+    /// <summary>
+    /// Used to parse complex field lists that contain expressions and are aliases, such as SELECT and GROUP BY fields.
+    /// Yes, group by fields do not need aliases, but I opted to not duplicate code.
+    /// </summary>
+    internal static class StaticParserFieldList
     {
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.
         /// </summary>
-        public static QueryFieldCollection ParseSelectFields(QueryBatch queryBatch, Tokenizer queryTokenizer)
+        public static QueryFieldCollection Parse(QueryBatch queryBatch, Tokenizer queryTokenizer, string[] stopAtTokens)
         {
             var queryFields = new QueryFieldCollection(queryBatch);
 
             //Get the position which represents the end of the select list.
-            int stopAt = queryTokenizer.GetNextIndexOf([" from ", " into "]);
+            int stopAt = queryTokenizer.GetNextIndexOf(stopAtTokens);
 
             //Get the text for all of the select fields.
             var fieldsSegment = queryTokenizer.EatSubStringAbsolute(stopAt);
@@ -64,13 +69,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
         private static IQueryField ParseField(string givenFieldText, ref QueryFieldCollection queryFields)
         {
-            #region This is a single value (document field, number or string), the simple case.
-
             Tokenizer tokenizer = new(givenFieldText);
 
             string token = tokenizer.EatGetNext();
 
-            if (tokenizer.Exausted())
+            if (tokenizer.Exausted()) //This is a single value (document field, number or string), the simple case.
             {
                 if (token.IsIdentifier())
                 {
@@ -101,10 +104,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
                 }
             }
 
-            #endregion
-
-            #region Fields that require expression evaluation.
-
+            //Fields that require expression evaluation.
             var validateNumberOfParameters = givenFieldText.ScopeSensitiveSplit();
             if (validateNumberOfParameters.Count > 1)
             {
@@ -127,8 +127,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
                 expression.Value = ParseEvaluationRecursive(ref expression, givenFieldText, ref queryFields);
                 return expression;
             }
-
-            #endregion
         }
 
         private static string ParseEvaluationRecursive(ref IQueryFieldExpression rootQueryFieldExpression,
@@ -248,7 +246,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
             }
 
             return false;
-
         }
 
         /// <summary>

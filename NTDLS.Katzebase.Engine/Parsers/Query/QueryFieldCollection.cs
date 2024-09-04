@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
-using NTDLS.Katzebase.Engine.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
 

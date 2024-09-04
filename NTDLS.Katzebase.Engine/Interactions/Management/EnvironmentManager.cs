@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Shared;
 using System.Text.Json;
-using static NTDLS.Katzebase.Engine.Query.SupportingTypes.PreparedQuery;
+using static NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes.PreparedQuery;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

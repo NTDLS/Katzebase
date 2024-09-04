@@ -1,12 +1,13 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Query.Constraints;
-using NTDLS.Katzebase.Engine.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
+using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Generic
+namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticJoinParser
+    internal static class StaticParserJoin
     {
         public static List<QuerySchema> Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
@@ -33,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Generic
                 }
                 else
                 {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'as' (schema alias).");
+                    throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'as' (schema alias).");
                 }
 
 
@@ -52,7 +53,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Generic
                         break;
                     }
 
-                    if (tokenizer.TryCompareNextToken((o) => Generic.ParserHelpers.IsStartOfQuery(o)))
+                    if (tokenizer.TryCompareNextToken((o) => StaticParserUtility.IsStartOfQuery(o)))
                     {
                         //Found start of next query.
                         break;
@@ -69,15 +70,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Generic
                         throw new KbParserException("Invalid query. Found '" + joinLeftCondition + "', expected: left side of join expression.");
                     }
 
-                    int logicalQualifierPos = tokenizer.Caret;
-
-                    token = ConditionTokenizer.GetNext(tokenizer.Text, ref logicalQualifierPos);
-                    if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
+                    token = tokenizer.EatGetNext();
+                    if (StaticConditionHelpers.ParseLogicalQualifier(token) == LogicalQualifier.None)
                     {
                         throw new KbParserException("Invalid query. Found '" + token + "], expected logical qualifier.");
                     }
-
-                    tokenizer.SetCaret(logicalQualifierPos);
 
                     var joinRightCondition = tokenizer.EatGetNext();
                     if (!TokenHelpers.IsValidIdentifier(joinRightCondition, '.'))

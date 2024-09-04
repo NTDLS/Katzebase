@@ -1,8 +1,8 @@
 ﻿using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Generic
+namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class ParserHelpers
+    internal static class StaticParserUtility
     {
         /// <summary>
         /// Returns true if the next token in the sequence is a valid token as would be expected as the start of a new query.

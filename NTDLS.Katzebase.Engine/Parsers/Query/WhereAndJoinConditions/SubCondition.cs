@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Engine.Indexes.Matching;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Query.Constraints
+namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 {
     internal class SubCondition
     {

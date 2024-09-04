@@ -1,6 +1,6 @@
-﻿using NTDLS.Katzebase.Engine.Query.Constraints;
+﻿using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 
-namespace NTDLS.Katzebase.Engine.Query.SupportingTypes
+namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 {
     internal class QuerySchema
     {

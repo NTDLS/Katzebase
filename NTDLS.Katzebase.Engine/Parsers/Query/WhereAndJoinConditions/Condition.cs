@@ -1,12 +1,12 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Shared;
 using System.Runtime.CompilerServices;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Query.Constraints
+namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 {
     internal class Condition
     {
@@ -67,6 +67,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
         {
             (Right, Left) = (Left, Right);
         }
+
         public Condition Clone()
         {
             var clone = new Condition(ConditionKey, LogicalConnector, LogicalQualifier)

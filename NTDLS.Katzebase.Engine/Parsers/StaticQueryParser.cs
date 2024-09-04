@@ -1,15 +1,21 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Engine.Parsers;
-using NTDLS.Katzebase.Engine.Parsers.Query.Class.Select;
-using NTDLS.Katzebase.Engine.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.Parsers.Query.Class;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Query
+namespace NTDLS.Katzebase.Engine.Parsers
 {
-    internal class StaticQueryBatchPrepare
+    internal class StaticQueryParser
     {
-        static public QueryBatch PrepareBatch(string queryText, KbInsensitiveDictionary<string>? userParameters = null)
+        /// <summary>
+        /// Parse the query batch (a single query text containing multiple queries).
+        /// </summary>
+        /// <param name="queryText"></param>
+        /// <param name="userParameters"></param>
+        /// <returns></returns>
+        static public QueryBatch ParseBatch(string queryText, KbInsensitiveDictionary<string>? userParameters = null)
         {
             var tokenizer = new Tokenizer(queryText, true, userParameters);
 
@@ -18,7 +24,7 @@ namespace NTDLS.Katzebase.Engine.Query
             while (!tokenizer.Exausted())
             {
                 int preParseTokenPosition = tokenizer.Caret;
-                var preparedQuery = PrepareNextQuery(queryBatch, tokenizer);
+                var preparedQuery = ParseQuery(queryBatch, tokenizer);
 
                 var singleQueryText = tokenizer.SubString(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
                 preparedQuery.Hash = Library.Helpers.ComputeSHA256(singleQueryText);
@@ -29,12 +35,15 @@ namespace NTDLS.Katzebase.Engine.Query
             return queryBatch;
         }
 
-        static public PreparedQuery PrepareNextQuery(QueryBatch queryBatch, Tokenizer tokenizer)
+        /// <summary>
+        /// Parse the single.
+        /// </summary>
+        static public PreparedQuery ParseQuery(QueryBatch queryBatch, Tokenizer tokenizer)
         {
 
             string token = tokenizer.GetNext();
 
-            if (Parsers.Query.Class.Generic.ParserHelpers.IsStartOfQuery(token, out var queryType) == false)
+            if (StaticParserUtility.IsStartOfQuery(token, out var queryType) == false)
             {
                 string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
@@ -42,7 +51,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
             if (queryType == QueryType.Select)
             {
-                return StaticSelectParser.Parse(queryBatch, tokenizer);
+                return StaticParserSelect.Parse(queryBatch, tokenizer);
             }
 
             throw new KbParserException($"The query type is not implemented: [{token}].");

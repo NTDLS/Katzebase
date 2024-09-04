@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Engine.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 
 namespace NTDLS.Katzebase.Engine.Functions.Parameters

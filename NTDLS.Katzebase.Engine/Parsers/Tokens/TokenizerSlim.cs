@@ -1,6 +1,6 @@
 ﻿using System.Runtime.CompilerServices;
 
-namespace NTDLS.Katzebase.Engine.Parsers
+namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
     /// <summary>
     /// Lightweight version of Tokenizer, used to walk various types of string and expressions.

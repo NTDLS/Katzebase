@@ -8,7 +8,7 @@ using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Library;
-using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Parsers;
 using System.Diagnostics;
 using System.Text;
 
@@ -802,7 +802,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                         var batchStartTime = DateTime.UtcNow;
 
                         var batchResults = new KbQueryResultCollection();
-                        foreach (var preparedQuery in StaticQueryBatchPrepare.PrepareBatch(batchText))
+                        foreach (var preparedQuery in StaticQueryParser.ParseBatch(batchText))
                         {
                             batchResults.Add(core.Query.ExecuteQuery(session, preparedQuery));
                         }

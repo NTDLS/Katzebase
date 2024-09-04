@@ -5,7 +5,7 @@ using NTDLS.Katzebase.Engine.Parsers.Query;
 using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Parsers
+namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
     /// <summary>
     /// Used to walk various types of string and expressions.
@@ -1553,6 +1553,25 @@ namespace NTDLS.Katzebase.Engine.Parsers
         #endregion
 
         #region Caret Operations.
+
+        public void SetText(string text, int caret)
+        {
+            _text = text;
+            _caret = caret;
+            if (_caret >= _text.Length)
+            {
+                throw new KbParserException("Caret position is greater than text length.");
+            }
+        }
+
+        public void SetText(string text)
+        {
+            _text = text;
+            if (_caret >= _text.Length)
+            {
+                throw new KbParserException("Caret position is greater than text length.");
+            }
+        }
 
         private void RecordBreadcrumb()
         {

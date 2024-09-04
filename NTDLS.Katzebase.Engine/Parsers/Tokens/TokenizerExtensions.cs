@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-namespace NTDLS.Katzebase.Engine.Parsers
+namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
     /// <summary>
     /// Used to walk various types of string and expressions.

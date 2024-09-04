@@ -1,4 +1,4 @@
-﻿namespace NTDLS.Katzebase.Engine.Query.SupportingTypes
+﻿namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 {
     public class PrefixedFields : List<PrefixedField>
     {

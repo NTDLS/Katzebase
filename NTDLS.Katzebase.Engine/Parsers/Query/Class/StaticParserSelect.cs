@@ -1,20 +1,20 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Parsers.Query.Class.Generic;
-using NTDLS.Katzebase.Engine.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
+namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticSelectParser
+    internal static class StaticParserSelect
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             string token = tokenizer.EatGetNext();
 
-            if (Generic.ParserHelpers.IsStartOfQuery(token, out var queryType) == false)
+            if (StaticParserUtility.IsStartOfQuery(token, out var queryType) == false)
             {
                 string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
@@ -51,7 +51,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
             }
             else
             {
-                result.SelectFields = StaticSelectFieldParser.ParseSelectFields(queryBatch, tokenizer);
+                result.SelectFields = StaticParserFieldList.Parse(queryBatch, tokenizer, [" from ", " into "]);
             }
 
             #endregion
@@ -95,7 +95,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             while (tokenizer.TryIsNextToken("inner"))
             {
-                var joinedSchemas = StaticJoinParser.Parse(queryBatch, tokenizer);
+                var joinedSchemas = StaticParserJoin.Parse(queryBatch, tokenizer);
                 result.Schemas.AddRange(joinedSchemas);
             }
 
@@ -105,7 +105,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             if (tokenizer.TryEatIsNextToken("where"))
             {
-                result.Conditions = StaticWhereParser.Parse(queryBatch, tokenizer);
+                result.Conditions = StaticParserWhere.Parse(queryBatch, tokenizer);
 
                 //Associate the root query schema with the root conditions.
                 result.Schemas.First().Conditions = result.Conditions;
@@ -122,7 +122,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
                     throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
                 }
 
-                StaticGroupByParser.Parse(queryBatch, tokenizer);
+                StaticParserGroupBy.Parse(queryBatch, tokenizer);
 
                 //TODO: Reimplement group by parser
                 //result.GroupFields = StaticFunctionParsers.ParseGroupByFields(tokenizer);
@@ -143,7 +143,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
                 while (!tokenizer.Exausted())
                 {
-                    if (tokenizer.TryCompareNextToken((o) => Generic.ParserHelpers.IsStartOfQuery(o)))
+                    if (tokenizer.TryCompareNextToken((o) => StaticParserUtility.IsStartOfQuery(o)))
                     {
                         //Found start of next query.
                         break;

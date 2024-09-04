@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.Query.Constraints;
+﻿using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {

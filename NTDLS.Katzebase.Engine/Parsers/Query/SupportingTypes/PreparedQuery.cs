@@ -1,10 +1,9 @@
 ﻿using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Library;
-using NTDLS.Katzebase.Engine.Parsers.Query;
-using NTDLS.Katzebase.Engine.Query.Constraints;
+using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Query.SupportingTypes
+namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 {
     /// <summary>
     /// Contains a parsed query via StaticQueryParser.PrepareQuery();
