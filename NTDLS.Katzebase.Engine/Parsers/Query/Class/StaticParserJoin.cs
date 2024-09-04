@@ -2,7 +2,6 @@
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
-using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
@@ -23,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 string subSchemaSchema = tokenizer.EatGetNext();
                 string subSchemaAlias = string.Empty;
-                if (!TokenHelpers.IsValidIdentifier(subSchemaSchema, ':'))
+                if (!TokenizerHelpers.IsValidIdentifier(subSchemaSchema, ':'))
                 {
                     throw new KbParserException("Invalid query. Found '" + subSchemaSchema + "', expected: schema name.");
                 }
@@ -65,7 +64,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
 
                     var joinLeftCondition = tokenizer.EatGetNext();
-                    if (!TokenHelpers.IsValidIdentifier(joinLeftCondition, '.'))
+                    if (!TokenizerHelpers.IsValidIdentifier(joinLeftCondition, '.'))
                     {
                         throw new KbParserException("Invalid query. Found '" + joinLeftCondition + "', expected: left side of join expression.");
                     }
@@ -77,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
 
                     var joinRightCondition = tokenizer.EatGetNext();
-                    if (!TokenHelpers.IsValidIdentifier(joinRightCondition, '.'))
+                    if (!TokenizerHelpers.IsValidIdentifier(joinRightCondition, '.'))
                     {
                         throw new KbParserException("Invalid query. Found '" + joinRightCondition + "', expected: right side of join expression.");
                     }

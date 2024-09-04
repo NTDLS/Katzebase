@@ -1,37 +1,33 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Engine.Query.Tokenizers;
-using NTDLS.Katzebase.Shared;
+using NTDLS.Katzebase.Engine.Parsers.Tokens;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
 {
     internal static class StaticParserWithOptions
     {
-        internal static List<WithOption> Parse(
-            ref QueryTokenizer query, ExpectedWithOptions expectedOptions, ref PreparedQuery preparedQuery)
+        internal static List<WithOption> Parse(Tokenizer tokenizer, ExpectedWithOptions expectedOptions, ref PreparedQuery preparedQuery)
         {
             var results = new List<WithOption>();
 
-            if (query.PeekNext().Is("with"))
+            if (tokenizer.TryEatIsNextToken("with"))
             {
-                query.SkipNext();
-
-                if (query.IsNextCharacter('(') == false)
+                if (tokenizer.IsNextCharacter('(') == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '('.");
+                    throw new KbParserException("Invalid query. Found '" + tokenizer.NextCharacter + "', expected: '('.");
                 }
-                query.SkipNextCharacter();
+                tokenizer.EatNextCharacter();
 
-                while (true)
+                while (!tokenizer.IsExausted())
                 {
-                    string name = query.GetNext().ToLowerInvariant();
-                    if (query.IsNextCharacter('=') == false)
+                    string name = tokenizer.GetNext().ToLowerInvariant();
+                    if (tokenizer.IsNextCharacter('=') == false)
                     {
-                        throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: '='.");
+                        throw new KbParserException("Invalid query. Found '" + tokenizer.NextCharacter + "', expected: '='.");
                     }
-                    query.SkipNextCharacter();
+                    tokenizer.EatNextCharacter();
 
-                    string tokenValue = query.GetNext().ToLowerInvariant();
+                    string tokenValue = tokenizer.GetNext().ToLowerInvariant();
 
                     if (expectedOptions.ContainsKey(name) == false)
                     {
@@ -39,9 +35,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
                         throw new KbParserException($"Invalid query. Found '{name}', expected {expectedValues}.");
                     }
 
-                    if (query.StringLiterals.TryGetValue(tokenValue, out string? value))
+                    if (tokenizer.Literals.TryGetValue(tokenValue, out var literal))
                     {
-                        tokenValue = value;
+                        tokenValue = literal.Value;
                         tokenValue = tokenValue.Substring(1, tokenValue.Length - 2);
                     }
 
@@ -49,21 +45,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
 
                     results.Add(new WithOption(name, convertedValue, convertedValue.GetType()));
 
-                    if (query.IsNextCharacter(','))
-                    {
-                        query.SkipNextCharacter();
-                    }
-                    else
+                    if (tokenizer.TryEatIsNextCharacter(',') == false)
                     {
                         break;
                     }
                 }
 
-                if (query.IsNextCharacter(')') == false)
+                if (tokenizer.IsNextCharacter(')') == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + query.CurrentChar() + "', expected: ')'.");
+                    throw new KbParserException("Invalid query. Found '" + tokenizer.NextCharacter + "', expected: ')'.");
                 }
-                query.SkipNextCharacter();
+                tokenizer.EatNextCharacter();
             }
 
             foreach (var option in results)

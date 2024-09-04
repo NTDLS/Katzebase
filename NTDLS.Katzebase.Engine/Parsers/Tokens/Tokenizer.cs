@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         #region Public properties.
 
         public char? NextCharacter => _caret < _text.Length ? _text[_caret] : null;
-        public bool Exausted() => _caret >= _text.Length;
+        public bool IsExausted() => _caret >= _text.Length;
         public char[] TokenDelimiters => _standardTokenDelimiters;
         public int Caret => _caret;
         public int Length => _text.Length;
@@ -488,7 +488,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         {
             int restoreCaret = _caret;
 
-            while (Exausted() == false)
+            while (IsExausted() == false)
             {
                 var token = EatGetNext();
 
@@ -1376,7 +1376,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         public bool IsNextCharacter(char character)
             => NextCharacter == character;
 
-        public bool EatIsNextCharacter(char character)
+        public bool TryEatIsNextCharacter(char character)
         {
             RecordBreadcrumb();
             if (NextCharacter == character)

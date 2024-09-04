@@ -73,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             string token = tokenizer.EatGetNext();
 
-            if (tokenizer.Exausted()) //This is a single value (document field, number or string), the simple case.
+            if (tokenizer.IsExausted()) //This is a single value (document field, number or string), the simple case.
             {
                 if (token.IsIdentifier())
                 {
@@ -136,7 +136,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             StringBuilder buffer = new();
 
-            while (!tokenizer.Exausted())
+            while (!tokenizer.IsExausted())
             {
                 int positionBeforeToken = tokenizer.Caret;
 
@@ -258,7 +258,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         {
             Tokenizer tokenizer = new(expressionText);
 
-            while (!tokenizer.Exausted())
+            while (!tokenizer.IsExausted())
             {
                 if (tokenizer.IsNextCharacter(c => c.IsMathematicalOperator()))
                 {

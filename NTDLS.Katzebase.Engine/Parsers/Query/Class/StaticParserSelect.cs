@@ -1,7 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
-using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -77,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             string sourceSchema = tokenizer.EatGetNext();
             string schemaAlias = string.Empty;
-            if (!TokenHelpers.IsValidIdentifier(sourceSchema, ['#', ':']))
+            if (!TokenizerHelpers.IsValidIdentifier(sourceSchema, ['#', ':']))
             {
                 throw new KbParserException("Invalid query. Found '" + sourceSchema + "', expected: schema name.");
             }
@@ -141,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 var fields = new List<string>();
 
-                while (!tokenizer.Exausted())
+                while (!tokenizer.IsExausted())
                 {
                     if (tokenizer.TryCompareNextToken((o) => StaticParserUtility.IsStartOfQuery(o)))
                     {
