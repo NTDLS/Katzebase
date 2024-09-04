@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Engine.Parsers.Query;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Query
+namespace NTDLS.Katzebase.Engine.Query.SupportingTypes
 {
     internal class QueryBatch : List<PreparedQuery>
     {

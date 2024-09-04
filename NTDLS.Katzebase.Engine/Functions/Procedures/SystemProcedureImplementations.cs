@@ -802,7 +802,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                         var batchStartTime = DateTime.UtcNow;
 
                         var batchResults = new KbQueryResultCollection();
-                        foreach (var preparedQuery in StaticQueryParser.PrepareBatch(batchText))
+                        foreach (var preparedQuery in StaticQueryBatchPrepare.PrepareBatch(batchText))
                         {
                             batchResults.Add(core.Query.ExecuteQuery(session, preparedQuery));
                         }

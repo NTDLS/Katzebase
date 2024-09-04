@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Sessions;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -40,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <exception cref="KbMultipleRecordSetsException"></exception>
         internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
         {
-            var preparedQueries = StaticQueryParser.PrepareBatch(queryText, userParameters.ToUserParameters());
+            var preparedQueries = StaticQueryBatchPrepare.PrepareBatch(queryText, userParameters.ToUserParameters());
             if (preparedQueries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
@@ -63,7 +64,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <exception cref="KbMultipleRecordSetsException"></exception>
         internal void ExecuteNonQuery(SessionState session, string queryText)
         {
-            var preparedQueries = StaticQueryParser.PrepareBatch(queryText);
+            var preparedQueries = StaticQueryBatchPrepare.PrepareBatch(queryText);
             if (preparedQueries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
@@ -155,7 +156,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 statement.Append(')');
             }
 
-            var batch = StaticQueryParser.PrepareBatch(statement.ToString());
+            var batch = StaticQueryBatchPrepare.PrepareBatch(statement.ToString());
             if (batch.Count > 1)
             {
                 throw new KbEngineException("Expected only one procedure call per batch.");

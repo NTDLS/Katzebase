@@ -4,13 +4,13 @@ using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
-using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Query.SupportingTypes;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Parsers.Query
+namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 {
-    internal static class StaticParser
+    internal static class StaticSelectFieldParser
     {
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.
@@ -167,7 +167,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                 {
                     //The expression key is used to match the function calls to the token in the parent expression.
                     var expressionKey = rootQueryFieldExpression.GetNextExpressionKey();
-                    var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(aggregateFunction.Name, expressionKey, BasicDataType.Numeric);
+                    var queryFieldExpressionFunction = new QueryFieldExpressionFunctionAggregate(aggregateFunction.Name, expressionKey, BasicDataType.Numeric);
 
                     ParseFunctionCallRecursive(ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);
 
@@ -336,25 +336,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// Returns true if the next token in the sequence is a valid token as would be expected as the start of a new query.
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        public static bool IsStartOfQuery(string token, out QueryType type)
-        {
-            return Enum.TryParse(token.ToLowerInvariant(), true, out type) //Enum parse.
-                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
-                && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
-        }
-
-        public static bool IsStartOfQuery(string token)
-        {
-            return Enum.TryParse(token.ToLowerInvariant(), true, out QueryType type) //Enum parse.
-                && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
-                && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
         }
     }
 }

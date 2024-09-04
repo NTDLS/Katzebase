@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Query.SupportingTypes;
 using NTDLS.Katzebase.Shared;
 using System.Runtime.CompilerServices;
 using static NTDLS.Katzebase.Client.KbConstants;

@@ -1,29 +1,32 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Parsers;
 using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
+using NTDLS.Katzebase.Engine.Query.SupportingTypes;
 using System.Text;
+using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
 
 namespace NTDLS.Katzebase.Engine.Query
 {
-    internal class StaticExpressionProcessor
+    internal class StaticScalerExpressionProcessor
     {
         /// <summary>
         /// Resolves all of the query expressions (string concatenation, math and all recursive
         ///     function calls) on a row level and fills in the values in the resultingRows.
         /// </summary>
-        public static void CollapseRowExpressions(Transaction transaction, PreparedQuery query, ref SchemaIntersectionRowCollection resultingRows)
+        public static void CollapseScalerRowExpressions(Transaction transaction, PreparedQuery query, ref SchemaIntersectionRowCollection resultingRows)
         {
             //Resolve all expressions and fill in the row fields.
-            foreach (var expressionField in query.SelectFields.ExpressionFields)
+            foreach (var expressionField in query.SelectFields.ExpressionFields.Where(o => o.CollapseType == CollapseType.Scaler))
             {
                 foreach (var row in resultingRows.Collection)
                 {
-                    var collapsedResult = CollapseExpression(transaction, query, row, expressionField);
+                    var collapsedResult = CollapseScalerExpression(transaction, query, row, expressionField);
                     row.InsertValue(expressionField.FieldAlias, expressionField.Ordinal, collapsedResult);
                 }
             }
@@ -32,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Query
         /// <summary>
         /// Collapses a string or numeric expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
-        public static string CollapseExpression(Transaction transaction, PreparedQuery query, SchemaIntersectionRow row, ExposedExpression expression)
+        public static string CollapseScalerExpression(Transaction transaction, PreparedQuery query, SchemaIntersectionRow row, ExposedExpression expression)
         {
             if (expression.FieldExpression is QueryFieldExpressionNumeric expressionNumeric)
             {
@@ -73,6 +76,14 @@ namespace NTDLS.Katzebase.Engine.Query
                     //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
 
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
+
+                    if (ScalerFunctionCollection.TryGetFunction(subFunction.FunctionName, out var scalerFunction))
+                    {
+                    }
+                    if (AggregateFunctionCollection.TryGetFunction(subFunction.FunctionName, out var aggregateFunction))
+                    {
+                    }
+
                     var functionResult = CollapseScalerFunction(transaction, query, row, functions, subFunction);
 
                     string mathVariable = $"v{variableNumber++}";
@@ -84,10 +95,6 @@ namespace NTDLS.Katzebase.Engine.Query
                     //This is a string placeholder, get the literal value and complain about it.
 
                     throw new KbEngineException($"Could not perform mathematical operation on [{query.Batch.GetLiteralValue(token)}]");
-
-                    //string mathVariable = $"v{variableNumber++}";
-                    //expressionString = expressionString.Replace(token, mathVariable);
-                    //expressionVariables.Add(mathVariable, double.Parse(query.Batch.GetLiteralValue(token)));
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {

@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 session.SetCurrentQuery(statement);
 
-                foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement, param.UserParameters))
+                foreach (var preparedQuery in StaticQueryBatchPrepare.PrepareBatch(statement, param.UserParameters))
                 {
                     var intermediateResult = _core.Query.ExplainPlan(session, preparedQuery);
 
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
             session.SetCurrentQuery(param.Statement);
 
-            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement, param.UserParameters))
+            foreach (var preparedQuery in StaticQueryBatchPrepare.PrepareBatch(param.Statement, param.UserParameters))
             {
                 var intermediateResult = _core.Query.ExplainPlan(session, preparedQuery);
 
@@ -91,7 +91,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 session.SetCurrentQuery(statement);
 
-                foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement, param.UserParameters))
+                foreach (var preparedQuery in StaticQueryBatchPrepare.PrepareBatch(statement, param.UserParameters))
                 {
                     var intermediateResult = _core.Query.ExplainOperations(session, preparedQuery);
 
@@ -116,7 +116,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
             session.SetCurrentQuery(param.Statement);
 
-            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement, param.UserParameters))
+            foreach (var preparedQuery in StaticQueryBatchPrepare.PrepareBatch(param.Statement, param.UserParameters))
             {
                 var intermediateResult = _core.Query.ExplainOperations(session, preparedQuery);
 
@@ -153,7 +153,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             session.SetCurrentQuery(param.Statement);
 
             var results = new KbQueryQueryExecuteQueryReply();
-            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement, param.UserParameters))
+            foreach (var preparedQuery in StaticQueryBatchPrepare.PrepareBatch(param.Statement, param.UserParameters))
             {
                 results.Add(_core.Query.ExecuteQuery(session, preparedQuery));
             }
@@ -176,7 +176,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             {
                 session.SetCurrentQuery(statement);
 
-                foreach (var preparedQuery in StaticQueryParser.PrepareBatch(statement, param.UserParameters))
+                foreach (var preparedQuery in StaticQueryBatchPrepare.PrepareBatch(statement, param.UserParameters))
                 {
                     var intermediateResult = _core.Query.ExecuteQuery(session, preparedQuery);
 
@@ -200,7 +200,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             session.SetCurrentQuery(param.Statement);
 
             var results = new KbQueryQueryExecuteNonQueryReply();
-            foreach (var preparedQuery in StaticQueryParser.PrepareBatch(param.Statement, param.UserParameters))
+            foreach (var preparedQuery in StaticQueryBatchPrepare.PrepareBatch(param.Statement, param.UserParameters))
             {
                 results.Add(_core.Query.ExecuteNonQuery(session, preparedQuery));
             }

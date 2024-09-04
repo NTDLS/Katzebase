@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Query;
-using NTDLS.Katzebase.Engine.Query.Constraints;
+﻿using NTDLS.Katzebase.Engine.Query.Constraints;
+using NTDLS.Katzebase.Engine.Query.SupportingTypes;
 
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {

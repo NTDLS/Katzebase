@@ -1,10 +1,10 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Client.Types;
+﻿using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
-using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Query.SupportingTypes;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query
 {
@@ -299,17 +299,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                         {
                             if (queryField.Expression is IQueryFieldExpression fieldExpression)
                             {
-                                if (
-                                    fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Any()
-                                    || fieldExpression is QueryFieldExpressionString
-                                    || fieldExpression is QueryFieldExpressionNumeric)
+                                var collapseType = CollapseType.Scaler;
+
+                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any())
                                 {
-                                    results.Add(new ExposedExpression(queryField.Ordinal, queryField.Alias, fieldExpression));
+                                    collapseType = CollapseType.Aggregate;
                                 }
-                                else
-                                {
-                                    throw new KbEngineException($"The expression type is not implemented: [{fieldExpression.GetType().Name}]");
-                                }
+
+                                results.Add(new ExposedExpression(queryField.Ordinal, queryField.Alias, fieldExpression, collapseType));
                             }
                         }
 

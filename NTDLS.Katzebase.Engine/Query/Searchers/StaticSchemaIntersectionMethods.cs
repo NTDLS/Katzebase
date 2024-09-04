@@ -9,6 +9,7 @@ using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
+using NTDLS.Katzebase.Engine.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
@@ -250,7 +251,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
 
-            StaticExpressionProcessor.CollapseRowExpressions(instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), ref resultingRows);
+            StaticScalerExpressionProcessor.CollapseScalerRowExpressions(instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), ref resultingRows);
 
             instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Release();
 
