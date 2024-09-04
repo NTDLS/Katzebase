@@ -81,8 +81,7 @@ namespace NTDLS.Katzebase.Engine.Query
         public Conditions Conditions { get; set; }
         public PrefixedFields CreateFields { get; set; } = new();
         public QueryFieldCollection SelectFields { get; set; }
-        public FunctionParameterBaseCollection old_SelectFields { get; set; } = new();
-        public FunctionParameterBase ProcedureCall = new();
+        public FunctionParameterBase ProcedureCall { get; set; } = new();
         public FunctionParameterBaseCollection GroupFields { get; set; } = new();
         public SortFields SortFields { get; set; } = new();
 

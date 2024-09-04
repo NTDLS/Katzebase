@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Engine.Functions;
 using NTDLS.Katzebase.Engine.Parsers;
 using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Query.Constraints;
@@ -242,7 +241,8 @@ namespace NTDLS.Katzebase.Engine.Query
                     }
                     tokenizer.SkipNext();
 
-                    result.GroupFields = StaticFunctionParsers.ParseGroupByFields(tokenizer);
+                    //TODO: Reimplement group by parser
+                    //result.GroupFields = StaticFunctionParsers.ParseGroupByFields(tokenizer);
                 }
 
                 #endregion

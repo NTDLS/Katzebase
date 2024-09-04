@@ -579,7 +579,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                         if (isFieldAlreadyInCollection == false)
                         {
-                            var additionalField = new QueryField(field.Key, currentFieldList.Count(), new QueryFieldDocumentIdentifier(field.Key));
+                            var additionalField = new QueryField(field.Key, currentFieldList.Count, new QueryFieldDocumentIdentifier(field.Key));
                             instance.Operation.Query.SelectFields.Add(additionalField);
                         }
                     }

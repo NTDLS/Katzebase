@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
                 var aliasRemovedFieldText = (aliasIndex > 0 ? field.Substring(0, aliasIndex) : field).Trim();
 
-                var queryField = ParseField(aliasRemovedFieldText, queryTokenizer, ref queryFields);
+                var queryField = ParseField(aliasRemovedFieldText, ref queryFields);
 
                 //If the query didn't provide an alias, figure one out.
                 if (string.IsNullOrWhiteSpace(fieldAlias))
@@ -62,8 +62,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
             return queryFields;
         }
 
-        private static IQueryField ParseField(string givenFieldText,
-            Tokenizer queryTokenizer, ref QueryFieldCollection queryFields)
+        private static IQueryField ParseField(string givenFieldText, ref QueryFieldCollection queryFields)
         {
             #region This is a single value (document field, number or string), the simple case.
 
@@ -160,7 +159,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                     var basicDataType = scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric ? BasicDataType.Numeric : BasicDataType.String;
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(scalerFunction.Name, expressionKey, basicDataType);
 
-                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, givenExpressionText, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken, expressionKey);
+                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);
 
                     buffer.Append(expressionKey);
                 }
@@ -170,7 +169,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                     var expressionKey = rootQueryFieldExpression.GetNextExpressionKey();
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(aggregateFunction.Name, expressionKey, BasicDataType.Numeric);
 
-                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, givenExpressionText, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken, expressionKey);
+                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);
 
                     buffer.Append(expressionKey);
                 }
@@ -198,22 +197,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         }
 
         /// <summary>
-        /// Parses a function call and its parameters.
-        /// Its unfortunate that this function needs so many parameters, the alternative is duplicating the code for scaler and aggregate functions.
+        /// Parses a function call and its parameters, add them to the passed queryFieldExpressionFunction.
         /// </summary>
-        private static void ParseFunctionCallRecursive(ref IQueryFieldExpression rootQueryFieldExpression, string givenExpressionText,
+        private static void ParseFunctionCallRecursive(ref IQueryFieldExpression rootQueryFieldExpression,
             IQueryFieldExpressionFunction queryFieldExpressionFunction, ref QueryFieldCollection queryFields,
-            Tokenizer tokenizer, int positionBeforeToken, string expressionKey)
+            Tokenizer tokenizer, int positionBeforeToken)
         {
             //This contains the text between the open and close parenthesis of a function call, but not the parenthesis themselves or the function name.
             string functionCallParametersSegmentText = tokenizer.GetMatchingBraces('(', ')');
-
-            //This contains the entire call signature. e.g. functionName(all, function, parameters).
-            string wholeFunctionCallText = tokenizer.InertSubString(positionBeforeToken, tokenizer.Caret - positionBeforeToken);
-
-            //Replace the part of the expression for which we are going to handle with a function call, with the
-            //  expressionKey so we can fill in the value later when we evaluate the expression and execute the function.
-            givenExpressionText = givenExpressionText.Replace(wholeFunctionCallText, expressionKey);
 
             var functionCallParametersText = functionCallParametersSegmentText.ScopeSensitiveSplit();
             foreach (var functionCallParameterText in functionCallParametersText)
@@ -245,7 +236,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
             rootQueryFieldExpression.FunctionDependencies.Add(queryFieldExpressionFunction);
         }
-
 
         private static bool IsSingleToken(string token)
         {
@@ -340,8 +330,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                 }
                 else
                 {
-                    //throw new KbParserException($"Invalid query. Found [{token}], expected: scaler function.");
-
                     //This is likely a document field.
                     return false;
                 }
@@ -364,11 +352,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         public static bool IsStartOfQuery(string token)
         {
-            QueryType type;
-            return Enum.TryParse(token.ToLowerInvariant(), true, out type) //Enum parse.
+            return Enum.TryParse(token.ToLowerInvariant(), true, out QueryType type) //Enum parse.
                 && Enum.IsDefined(typeof(QueryType), type) //Is enum value über lenient.
                 && int.TryParse(token, out _) == false; //Is not number, because enum parsing is "too" flexible.
         }
-
     }
 }

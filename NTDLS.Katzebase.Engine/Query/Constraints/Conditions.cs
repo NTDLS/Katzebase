@@ -248,7 +248,7 @@ namespace NTDLS.Katzebase.Engine.Query.Constraints
             return $"{ConditionKeyMarker}_{_lastConditionKey++}";
         }
 
-        private string ReplaceFirst(string text, string search, string replace)
+        private static string ReplaceFirst(string text, string search, string replace)
         {
             int pos = text.IndexOf(search);
             if (pos < 0)

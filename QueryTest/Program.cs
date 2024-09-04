@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Primitives;
-using NTDLS.Katzebase.Client;
-using System.Security.Cryptography.X509Certificates;
+﻿using NTDLS.Katzebase.Client;
 
 namespace QueryTest
 {

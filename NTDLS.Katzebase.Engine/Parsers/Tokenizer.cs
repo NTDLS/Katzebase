@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         #region Private backend variables.
 
         private string? _hash = null;
-        private Stack<int> _breadCrumbs = new();
+        private readonly Stack<int> _breadCrumbs = new();
         private int _literalKey = 0;
         private string _text;
         private int _caret = 0;
@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         public Tokenizer(string text, bool optimizeForTokenization = false, KbInsensitiveDictionary<string>? userParameters = null)
         {
             _text = new string(text.ToCharArray());
-            _standardTokenDelimiters = ['\r','\n', ' '];
+            _standardTokenDelimiters = ['\r', '\n', ' '];
             UserParameters = userParameters ?? new();
 
             ValidateParentheses();
@@ -746,7 +746,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// Returns true if the next token matches the given token, using the given delimiters.
         /// </summary>
         public bool TryIsNextToken(string givenToken, char[] delimiters)
-            => TryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters);
+            => TryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters);
 
         #endregion
 
@@ -897,7 +897,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// Returns true if the next token matches the given token, using the given delimiters.
         /// </summary>
         public bool InertTryIsNextToken(string givenToken, char[] delimiters)
-            => InertTryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters);
+            => InertTryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters);
 
         #endregion
 
@@ -919,7 +919,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// Gets the next token, resolving it using the Numeric or String literals, using the given delimiters.
         /// </summary>
         public T GetNextEvaluated<T>(char[] delimiters)
-            => Helpers.Converters.ConvertTo<T>(GetNextEvaluated());
+            => Helpers.Converters.ConvertTo<T>(GetNextEvaluated(delimiters));
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters.
@@ -1111,12 +1111,8 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// </summary>
         public bool InertIsNextCharacter(NextCharacterProc proc)
         {
-            var next = NextCharacter;
-            if (next == null)
-            {
-                throw new KbParserException("The tokenizer sequence is empty.");
-            }
-            return proc((char)next);
+            var next = NextCharacter ?? throw new KbParserException("The tokenizer sequence is empty.");
+            return proc(next);
         }
 
         /// <summary>

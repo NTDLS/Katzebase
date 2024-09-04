@@ -49,7 +49,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
             }
         }
 
-        private void GetAllFieldsRecursive(ref List<PrefixedField> result, List<FunctionParameterBase> list)
+        private static void GetAllFieldsRecursive(ref List<PrefixedField> result, List<FunctionParameterBase> list)
         {
             foreach (var param in list)
             {

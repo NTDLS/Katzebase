@@ -81,7 +81,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                         {
                             if (queryField.Expression is IQueryFieldExpression fieldExpression)
                             {
-                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Count() > 0)
+                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Any())
                                 {
                                     results.Add(new ExposedFunction(queryField.Ordinal, queryField.Alias, fieldExpression));
                                 }
@@ -136,7 +136,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                         {
                             if (queryField.Expression is IQueryFieldExpression fieldExpression)
                             {
-                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Count() > 0)
+                                if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any())
                                 {
                                     results.Add(new ExposedFunction(queryField.Ordinal, queryField.Alias, fieldExpression));
                                 }
@@ -300,7 +300,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             if (queryField.Expression is IQueryFieldExpression fieldExpression)
                             {
                                 if (
-                                    fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Count() > 0
+                                    fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Any()
                                     || fieldExpression is QueryFieldExpressionString
                                     || fieldExpression is QueryFieldExpressionNumeric)
                                 {
