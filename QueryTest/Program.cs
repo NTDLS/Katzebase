@@ -35,13 +35,21 @@ namespace QueryTest
             public string? Test { get; set; }
         }
 
+        class GroupTest
+        {
+            public int LanguageId { get; set; }
+            public int NumberOf { get; set; }
+        }
+
         static void Main()
         {
             try
             {
                 using var client = new KbClient(_serverHost, _serverPort, _username, KbClient.HashPassword(_password));
 
-                var queryText = "select top 100\r\n\tsw.Id as SourceWordId,\r\n\t'yo' + 'to' + 10 as Test,\r\n\tToProper(sw.Text) as SourceWord,\r\n\tsl.Name as SourceLanguage,\r\n\ttw.Id as TargetWordId,\t\r\n\tToProper(tw.Text) as TargetWord,\r\n\ttl.Name as TargetLanguage\r\nfrom\r\n\tWordList:Word as sw\r\ninner join WordList:Language as sl\r\n\ton sl.Id = sw.LanguageId\r\ninner join WordList:Synonym as S\r\n\ton S.SourceWordId = sw.Id\r\ninner join WordList:Word as tw\r\n\ton tw.Id = S.TargetWordId\r\ninner join WordList:Language as tl\r\n\ton tl.Id = TW.LanguageId\r\nwhere\r\n\tsw.Text LIKE 'Ta%'\r\n\tand sw.Text LIKE '%le'\r\n\tand sl.Name = 'English'\r\n\tand tl.Name = 'English'\r\n\tand sw.Text != tw.Text\r\norder by\r\n\tsw.Text,\r\n\ttw.Text";
+                var queryText = "SELECT\r\n\tLanguageId,\r\n\tCount(0) as NumberOf\r\nFROM\r\n\tWordList:Word\r\nWHERE\r\n\tText LIKE 'Tab%'\r\nGROUP BY\r\n\tLanguageId";
+
+                //var queryText = "select top 100\r\n\tsw.Id as SourceWordId,\r\n\t'yo' + 'to' + 10 as Test,\r\n\tToProper(sw.Text) as SourceWord,\r\n\tsl.Name as SourceLanguage,\r\n\ttw.Id as TargetWordId,\t\r\n\tToProper(tw.Text) as TargetWord,\r\n\ttl.Name as TargetLanguage\r\nfrom\r\n\tWordList:Word as sw\r\ninner join WordList:Language as sl\r\n\ton sl.Id = sw.LanguageId\r\ninner join WordList:Synonym as S\r\n\ton S.SourceWordId = sw.Id\r\ninner join WordList:Word as tw\r\n\ton tw.Id = S.TargetWordId\r\ninner join WordList:Language as tl\r\n\ton tl.Id = TW.LanguageId\r\nwhere\r\n\tsw.Text LIKE 'Ta%'\r\n\tand sw.Text LIKE '%le'\r\n\tand sl.Name = 'English'\r\n\tand tl.Name = 'English'\r\n\tand sw.Text != tw.Text\r\norder by\r\n\tsw.Text,\r\n\ttw.Text";
 
                 //This should work:
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 * FROM WordList:Word WHERE Text LIKE @Text + '%'", new { Text = "Fly" });
@@ -54,10 +62,11 @@ namespace QueryTest
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 Concat('Text1', 'Text2') as Text FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100  Concat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text, 10 * 10 as Id, Length('This is text') as LanguageId, 'English' as Language FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
 
-                var results = client.Query.Fetch<BigQuery>(queryText);
+                var results = client.Query.Fetch<GroupTest>(queryText);
                 foreach (var result in results)
                 {
-                    Console.WriteLine($"[{result.Test}],[{result.SourceWordId}],[{result.SourceWord}],[{result.SourceLanguage}],{result.TargetWordId},{result.TargetWord},{result.TargetLanguage}");
+                    Console.WriteLine($"[{result.LanguageId}],[{result.NumberOf}]");
+                    //Console.WriteLine($"[{result.Test}],[{result.SourceWordId}],[{result.SourceWord}],[{result.SourceLanguage}],{result.TargetWordId},{result.TargetWord},{result.TargetLanguage}");
                     //Console.WriteLine($"{word.Len},{word.Id},{word.Text},{word.LanguageId},{word.SourceId},{word.IsDirty}");
                 }
 

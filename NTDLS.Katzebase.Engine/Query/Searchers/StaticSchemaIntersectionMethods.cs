@@ -94,30 +94,27 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             #region TODO: reimplement grouping.
 
-            /*
             #region Grouping.
 
-            if (operation.Results.Collection.Count != 0 && (query.GroupFields.Count != 0
-                || query.old_SelectFields.OfType<FunctionWithParams>()
-                .Any(o => o.FunctionType == FunctionParameterTypes.FunctionType.Aggregate))
-               )
+            if (operation.Results.Collection.Count != 0 && (query.GroupFields.Count != 0 || query.SelectFields.FieldsWithAggregateFunctionCalls.Count != 0))
             {
                 IEnumerable<IGrouping<string, SchemaIntersectionRow>>? groupedValues;
 
                 if (query.GroupFields.Any())
                 {
                     //Here we are going to build a grouping_key using the concatenated select fields.
-                    groupedValues = operation.Results.Collection.GroupBy(arr =>
-                        string.Join('\t', query.GroupFields.OfType<FunctionDocumentFieldParameter>()
-                        .Select(groupFieldParam => arr.AuxiliaryFields[groupFieldParam.Value.Key])));
+                    //groupedValues = operation.Results.Collection.GroupBy(arr =>
+                    //    string.Join('\t', query.GroupFields.OfType<FunctionDocumentFieldParameter>()
+                    //    .Select(groupFieldParam => arr.AuxiliaryFields[groupFieldParam.Value.Key])));
                 }
                 else
                 {
-                    //We do not have a group by, but we do have aggregate functions. Group by an empty string.
-                    groupedValues = operation.Results.Collection.GroupBy(arr =>
-                        string.Join('\t', query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => string.Empty)));
+                    //We do not have a group by, but we do have aggregate functions. Group by all fields that are not being passed to aggregate functions.
+                    //groupedValues = operation.Results.Collection.GroupBy(arr =>
+                    //    string.Join('\t', query.GroupFields.OfType<FunctionDocumentFieldParameter>().Select(groupFieldParam => string.Empty)));
                 }
 
+                /*
                 var groupedResults = new SchemaIntersectionRowCollection();
 
                 foreach (var group in groupedValues)
@@ -155,15 +152,12 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 }
 
                 operation.Results = groupedResults;
+                */
             }
 
             #endregion
-            */
 
             #endregion
-
-            #region TODO: reimplement sorting.
-
 
             #region Sorting.
 
@@ -189,9 +183,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 ptSorting?.StopAndAccumulate();
             }
-
-            #endregion
-
 
             #endregion
 
