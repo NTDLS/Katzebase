@@ -20,15 +20,28 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.
         /// </summary>
-        public static QueryFieldCollection Parse(QueryBatch queryBatch, Tokenizer queryTokenizer, string[] stopAtTokens)
+        /// <param name="stopAtTokens">Array of tokens for which the parsing will stop if encountered.</param>
+        /// <param name="allowEntireConsumption">If true, in the event that stopAtTokens are not found, the entire remaining text will be consumed.</param>
+        /// <returns></returns>
+        public static QueryFieldCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer, string[] stopAtTokens, bool allowEntireConsumption)
         {
             var queryFields = new QueryFieldCollection(queryBatch);
 
             //Get the position which represents the end of the select list.
-            int stopAt = queryTokenizer.GetNextIndexOf(stopAtTokens);
+            if (tokenizer.TryGetNextIndexOf(stopAtTokens, out int stopAt) == false)
+            {
+                if (allowEntireConsumption)
+                {
+                    stopAt = tokenizer.Length;
+                }
+                else
+                {
+                    throw new Exception($"Expected string not found [{string.Join("],[", stopAtTokens)}].");
+                }
+            }
 
             //Get the text for all of the select fields.
-            var fieldsSegment = queryTokenizer.EatSubStringAbsolute(stopAt);
+            var fieldsSegment = tokenizer.EatSubStringAbsolute(stopAt);
 
             //Split the select fields on the comma, respecting any commas in function scopes.
             var fields = fieldsSegment.ScopeSensitiveSplit();

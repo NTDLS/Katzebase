@@ -81,7 +81,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         public PrefixedFields CreateFields { get; set; } = new();
         public QueryFieldCollection SelectFields { get; set; }
         public FunctionParameterBase ProcedureCall { get; set; } = new();
-        public FunctionParameterBaseCollection GroupFields { get; set; } = new();
+        public QueryFieldCollection GroupFields { get; set; }
         public SortFields SortFields { get; set; } = new();
 
         /// <summary>
@@ -103,6 +103,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
             Batch = queryBatch;
             Conditions = new(queryBatch);
             SelectFields = new(queryBatch);
+            GroupFields = new(queryBatch);
         }
 
         public T Attribute<T>(QueryAttribute attribute, T defaultValue)

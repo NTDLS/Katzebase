@@ -221,10 +221,12 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             results.AddRange(operation.Results);
 
-            if (query.Hash != "957f4825bd09462c4ae2d7a57447cadb768d55783146c531427b6ea2002337ad")
+#if DEBUG
+            if (transaction.Session.IsPreLogin == false) //Debugging for non-login sessions.
             {
-            }
 
+            }
+#endif
             return results;
         }
 
@@ -611,6 +613,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
             foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey).Distinct())
             {
+                //TODO: AuxiliaryFields were intended to be used for satisfying functions,
+                //  grouping and sorting, it seems as though the new parser just fills in everything.
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Value.FieldName) == false)
                 {
                     if (documentContent.TryGetValue(field.Value.FieldName, out string? documentValue) == false)
@@ -623,16 +627,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             }
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var field in instance.Operation.Query.GroupFields.AllDocumentFields.Where(o => o.Prefix == schemaKey).Distinct())
+            foreach (var field in instance.Operation.Query.GroupFields.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey).Distinct())
             {
-                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Value.FieldName) == false)
                 {
-                    if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
+                    if (documentContent.TryGetValue(field.Value.FieldName, out string? documentValue) == false)
                     {
                         instance.Operation.Transaction.AddWarning(KbTransactionWarning.GroupFieldNotFound,
-                            $"'{field.Key}' will be treated as null.");
+                            $"'{field.Value.FieldName}' will be treated as null.");
                     }
-                    schemaResultRow.AuxiliaryFields.Add(field.Key, documentValue);
+                    schemaResultRow.AuxiliaryFields.Add(field.Value.FieldName, documentValue);
                 }
             }
 

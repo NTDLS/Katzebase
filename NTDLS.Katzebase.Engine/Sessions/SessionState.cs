@@ -52,6 +52,11 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// </summary>
         public string Username { get; set; }
 
+        /// <summary>
+        /// Whether this session is a pre-login session. These are used by the engine to access data (like user accounts) to facilitate the login process.
+        /// </summary>
+        public bool IsPreLogin { get; set; }
+
         public KbNameValuePair<KbConnectionSetting, double> UpsertConnectionSetting(KbConnectionSetting name, double value)
         {
             var result = Variables.FirstOrDefault(o => o.Name == name);
@@ -94,12 +99,13 @@ namespace NTDLS.Katzebase.Engine.Sessions
             return null;
         }
 
-        public SessionState(ulong processId, Guid connectionId, string username, string clientName)
+        public SessionState(ulong processId, Guid connectionId, string username, string clientName, bool isPreLogin)
         {
             ProcessId = processId;
             ConnectionId = connectionId;
             Username = username;
             ClientName = clientName;
+            IsPreLogin = isPreLogin;
         }
 
         public void SetCurrentQuery(string statement)

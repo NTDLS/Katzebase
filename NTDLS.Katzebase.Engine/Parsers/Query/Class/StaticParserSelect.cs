@@ -21,16 +21,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             var result = new PreparedQuery(queryBatch, queryType);
 
-            #region Parse "TOP n".
+            //Parse "TOP n".
 
             if (tokenizer.TryEatIsNextToken("top"))
             {
                 result.RowLimit = tokenizer.EatGetNextEvaluated<int>();
             }
 
-            #endregion
-
-            #region Parse field list.
+            //Parse field list.
 
             if (tokenizer.TryEatIsNextToken("*"))
             {
@@ -50,13 +48,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
             else
             {
-                result.SelectFields = StaticParserFieldList.Parse(queryBatch, tokenizer, [" from ", " into "]);
+                result.SelectFields = StaticParserFieldList.Parse(queryBatch, tokenizer, [" from ", " into "], false);
             }
 
-            #endregion
-
-            #region Parse "into".
-
+            //Parse "into".
             if (tokenizer.TryEatIsNextToken("into"))
             {
                 var selectIntoSchema = tokenizer.EatGetNext();
@@ -65,10 +60,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 result.QueryType = QueryType.SelectInto;
             }
 
-            #endregion
-
-            #region Parse primary schema.
-
+            //Parse primary schema.
             if (!tokenizer.TryEatIsNextToken("from"))
             {
                 throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'from'.");
@@ -88,20 +80,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
 
-            #endregion
-
-            #region Parse joins.
-
+            //Parse joins.
             while (tokenizer.TryIsNextToken("inner"))
             {
                 var joinedSchemas = StaticParserJoin.Parse(queryBatch, tokenizer);
                 result.Schemas.AddRange(joinedSchemas);
             }
 
-            #endregion
-
-            #region Parse "where" clause.
-
+            //Parse "where" clause.
             if (tokenizer.TryEatIsNextToken("where"))
             {
                 result.Conditions = StaticParserWhere.Parse(queryBatch, tokenizer);
@@ -110,10 +96,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 result.Schemas.First().Conditions = result.Conditions;
             }
 
-            #endregion
-
-            #region Parse "group by".
-
+            //Parse "group by".
             if (tokenizer.TryEatIsNextToken("group"))
             {
                 if (tokenizer.TryEatIsNextToken("by") == false)
@@ -121,16 +104,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
                 }
 
-                StaticParserGroupBy.Parse(queryBatch, tokenizer);
-
-                //TODO: Reimplement group by parser
-                //result.GroupFields = StaticFunctionParsers.ParseGroupByFields(tokenizer);
+                result.GroupFields = StaticParserGroupBy.Parse(queryBatch, tokenizer);
             }
 
-            #endregion
-
-            #region Parse "order by".
-
+            //Parse "order by".
             if (tokenizer.TryEatIsNextToken("order"))
             {
                 if (tokenizer.TryEatIsNextToken("by") == false)
@@ -144,12 +121,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     if (tokenizer.TryCompareNextToken((o) => StaticParserUtility.IsStartOfQuery(o)))
                     {
-                        //Found start of next query.
-                        break;
+                        break; //Found start of next query.
                     }
 
                     var fieldToken = tokenizer.EatGetNext([',']);
-
                     if (fieldToken == string.Empty)
                     {
                         continue;
@@ -178,22 +153,16 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
 
                     var sortDirection = KbSortDirection.Ascending;
-                    if (tokenizer.TryEatIsNextToken(["asc", "desc"]))
+                    if (tokenizer.TryEatIsNextToken(["asc", "desc"], out token))
                     {
-                        if (tokenizer.EatGetNext().Is("desc"))
-                        {
-                            sortDirection = KbSortDirection.Descending;
-                        }
+                        sortDirection = token.Is("desc") ? KbSortDirection.Descending : KbSortDirection.Ascending;
                     }
 
                     result.SortFields.Add(fieldToken, sortDirection);
                 }
             }
 
-            #endregion
-
             return result;
         }
-
     }
 }
