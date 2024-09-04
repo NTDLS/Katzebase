@@ -34,6 +34,7 @@ namespace QueryTest
             public int TargetWordId { get; set; }
             public string? TargetWord { get; set; }
             public string? TargetLanguage { get; set; }
+            public string? Test { get; set; }
         }
 
         static void Main()
@@ -42,7 +43,7 @@ namespace QueryTest
             {
                 using var client = new KbClient(_serverHost, _serverPort, _username, KbClient.HashPassword(_password));
 
-                var queryText = "select top 100\r\n\tsw.Id as SourceWordId,\r\n\tToProper(sw.Text) as SourceWord,\r\n\tsl.Name as SourceLanguage,\r\n\ttw.Id as TargetWordId,\t\r\n\tToProper(tw.Text) as TargetWord,\r\n\ttl.Name as TargetLanguage\r\nfrom\r\n\tWordList:Word as sw\r\ninner join WordList:Language as sl\r\n\ton sl.Id = sw.LanguageId\r\ninner join WordList:Synonym as S\r\n\ton S.SourceWordId = sw.Id\r\ninner join WordList:Word as tw\r\n\ton tw.Id = S.TargetWordId\r\ninner join WordList:Language as tl\r\n\ton tl.Id = TW.LanguageId\r\nwhere\r\n\tsw.Text LIKE 'Ta%'\r\n\tand sw.Text LIKE '%le'\r\n\tand sl.Name = 'English'\r\n\tand tl.Name = 'English'\r\n\tand sw.Text != tw.Text\r\norder by\r\n\tsw.Text,\r\n\ttw.Text";
+                var queryText = "select top 100\r\n\tsw.Id as SourceWordId,\r\n\t'yo' + 'to' + 10 as Test,\r\n\tToProper(sw.Text) as SourceWord,\r\n\tsl.Name as SourceLanguage,\r\n\ttw.Id as TargetWordId,\t\r\n\tToProper(tw.Text) as TargetWord,\r\n\ttl.Name as TargetLanguage\r\nfrom\r\n\tWordList:Word as sw\r\ninner join WordList:Language as sl\r\n\ton sl.Id = sw.LanguageId\r\ninner join WordList:Synonym as S\r\n\ton S.SourceWordId = sw.Id\r\ninner join WordList:Word as tw\r\n\ton tw.Id = S.TargetWordId\r\ninner join WordList:Language as tl\r\n\ton tl.Id = TW.LanguageId\r\nwhere\r\n\tsw.Text LIKE 'Ta%'\r\n\tand sw.Text LIKE '%le'\r\n\tand sl.Name = 'English'\r\n\tand tl.Name = 'English'\r\n\tand sw.Text != tw.Text\r\norder by\r\n\tsw.Text,\r\n\ttw.Text";
 
                 //This should work:
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 * FROM WordList:Word WHERE Text LIKE @Text + '%'", new { Text = "Fly" });
@@ -58,7 +59,7 @@ namespace QueryTest
                 var results = client.Query.Fetch<BigQuery>(queryText);
                 foreach (var result in results)
                 {
-                    Console.WriteLine($"[{result.SourceWordId}],[{result.SourceWord}],[{result.SourceLanguage}],{result.TargetWordId},{result.TargetWord},{result.TargetLanguage}");
+                    Console.WriteLine($"[{result.Test}],[{result.SourceWordId}],[{result.SourceWord}],[{result.SourceLanguage}],{result.TargetWordId},{result.TargetWord},{result.TargetLanguage}");
                     //Console.WriteLine($"{word.Len},{word.Id},{word.Text},{word.LanguageId},{word.SourceId},{word.IsDirty}");
                 }
 

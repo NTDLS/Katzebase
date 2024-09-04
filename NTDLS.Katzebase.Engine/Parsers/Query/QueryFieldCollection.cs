@@ -247,7 +247,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                         {
                             if (queryField.Expression is QueryFieldDocumentIdentifier documentIdentifier)
                             {
-                                results.Add(new ExposedDocumentIdentifier(queryField.Ordinal, queryField.Alias, documentIdentifier.SchemaAlias, documentIdentifier.Value));
+                                results.Add(new ExposedDocumentIdentifier(queryField.Ordinal, queryField.Alias, documentIdentifier.SchemaAlias, documentIdentifier.FieldName));
                             }
                         }
 

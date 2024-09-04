@@ -323,7 +323,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             //  for rows produced by any one-to-many relationships.
             foreach (var field in instance.Operation.Query.SelectFields.ConstantFields)
             {
-                resultingRow.InsertValue(field.FieldAlias, field.Ordinal, field.Value);
+                resultingRow.InsertValue(field.FieldAlias, field.Ordinal, instance.Operation.Query.Batch.GetLiteralValue(field.Value));
             }
 
             if (instance.Operation.SchemaMap.Count > 1)
