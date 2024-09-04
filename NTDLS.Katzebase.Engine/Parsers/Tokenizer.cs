@@ -982,6 +982,12 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <summary>
         /// Gets the next token using the given delimiters.
         /// </summary>
+        public string GetNext(char[] delimiters)
+            => GetNext(delimiters, out _);
+
+        /// <summary>
+        /// Gets the next token using the given delimiters, returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.
+        /// </summary>
         public string GetNext(char[] delimiters, out char outStoppedOnDelimiter)
         {
             RecordBreadcrumb();
