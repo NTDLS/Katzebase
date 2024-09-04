@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             string token = tokenizer.EatGetNext();
 
-            if (tokenizer.IsEnd())
+            if (tokenizer.Exausted())
             {
                 if (token.IsIdentifier())
                 {
@@ -138,7 +138,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             StringBuilder buffer = new();
 
-            while (!tokenizer.IsEnd())
+            while (!tokenizer.Exausted())
             {
                 int positionBeforeToken = tokenizer.Caret;
 
@@ -261,7 +261,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
         {
             Tokenizer tokenizer = new(expressionText);
 
-            while (!tokenizer.IsEnd())
+            while (!tokenizer.Exausted())
             {
                 if (tokenizer.IsNextCharacter(c => c.IsMathematicalOperator()))
                 {

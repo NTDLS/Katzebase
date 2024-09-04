@@ -2,7 +2,7 @@
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Generic
 {
-    internal static class Helpers
+    internal static class ParserHelpers
     {
         /// <summary>
         /// Returns true if the next token in the sequence is a valid token as would be expected as the start of a new query.

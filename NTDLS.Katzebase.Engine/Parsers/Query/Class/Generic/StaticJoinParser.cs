@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Generic
                         break;
                     }
 
-                    if (tokenizer.TryCompareNextToken((o) => Generic.Helpers.IsStartOfQuery(o)))
+                    if (tokenizer.TryCompareNextToken((o) => Generic.ParserHelpers.IsStartOfQuery(o)))
                     {
                         //Found start of next query.
                         break;

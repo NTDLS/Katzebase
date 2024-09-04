@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
             var queryBatch = new QueryBatch(tokenizer.UserParameters, tokenizer.Literals);
 
-            while (tokenizer.IsEnd() == false)
+            while (!tokenizer.Exausted())
             {
                 int preParseTokenPosition = tokenizer.Caret;
                 var preparedQuery = PrepareNextQuery(queryBatch, tokenizer);
@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
             string token = tokenizer.GetNext();
 
-            if (Parsers.Query.Class.Generic.Helpers.IsStartOfQuery(token, out var queryType) == false)
+            if (Parsers.Query.Class.Generic.ParserHelpers.IsStartOfQuery(token, out var queryType) == false)
             {
                 string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");

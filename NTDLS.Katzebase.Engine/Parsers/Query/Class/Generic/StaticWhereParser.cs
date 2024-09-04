@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Generic
             if (tokenizer.TryGetNextIndexOf([" group ", " order "], out int endOfWhere) == false)
             {
                 //Maybe we end at the next query?
-                if (tokenizer.TryGetNextIndexOf((o) => Generic.Helpers.IsStartOfQuery(o), out endOfWhere) == false)
+                if (tokenizer.TryGetNextIndexOf((o) => ParserHelpers.IsStartOfQuery(o), out endOfWhere) == false)
                 {
                     //Well, I suppose we will take the remainder of the query text.
                     endOfWhere = tokenizer.Length;

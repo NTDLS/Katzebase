@@ -14,7 +14,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
         {
             string token = tokenizer.EatGetNext();
 
-            if (Generic.Helpers.IsStartOfQuery(token, out var queryType) == false)
+            if (Generic.ParserHelpers.IsStartOfQuery(token, out var queryType) == false)
             {
                 string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
@@ -121,7 +121,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
                 }
-                tokenizer.EatNextToken();
 
                 StaticGroupByParser.Parse(queryBatch, tokenizer);
 
@@ -142,9 +141,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
                 var fields = new List<string>();
 
-                while (tokenizer.IsEnd() == false)
+                while (!tokenizer.Exausted())
                 {
-                    if (tokenizer.TryCompareNextToken((o) => Generic.Helpers.IsStartOfQuery(o)))
+                    if (tokenizer.TryCompareNextToken((o) => Generic.ParserHelpers.IsStartOfQuery(o)))
                     {
                         //Found start of next query.
                         break;
