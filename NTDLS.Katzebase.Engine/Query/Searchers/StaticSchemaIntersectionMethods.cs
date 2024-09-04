@@ -8,6 +8,7 @@ using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
+using NTDLS.Katzebase.Engine.Query.Sorting;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
@@ -27,10 +28,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
         internal static DocumentLookupResults GetDocumentsByConditions(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix = null)
         {
-            if (query.Hash != "957f4825bd09462c4ae2d7a57447cadb768d55783146c531427b6ea2002337ad")
-            {
-            }
-
             var topLevelSchemaMap = schemaMap.First().Value;
 
             IEnumerable<DocumentPointer>? documentPointers = null;
@@ -66,8 +63,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             var operation = new DocumentLookupOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
 
             //LogManager.Debug($"Starting document scan with {documentPointers.Count()} documents.");
-
-            //documentPointers = documentPointers.Where(o => o.ToString() == "0:20");
 
             foreach (var documentPointer in documentPointers)
             {
@@ -169,7 +164,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             #region TODO: reimplement sorting.
 
-            /*
+
             #region Sorting.
 
             //Get a list of all the fields we need to sort by.
@@ -197,7 +192,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             #endregion
 
-            */
 
             #endregion
 

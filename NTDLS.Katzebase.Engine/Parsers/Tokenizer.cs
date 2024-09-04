@@ -593,13 +593,25 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// Skips the next token using the standard delimiters.
         /// </summary>
         public void SkipNext()
-            => GetNext(_standardTokenDelimiters);
+            => GetNext(_standardTokenDelimiters, out _);
 
         /// <summary>
         /// Skips the next token using the given delimiters.
         /// </summary>
         public void SkipNext(char[] delimiters)
-            => GetNext(delimiters);
+            => GetNext(delimiters, out _);
+
+        /// <summary>
+        /// Skips the next token using the standard delimiters, returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter..
+        /// </summary>
+        public void SkipNext(out char outStoppedOnDelimiter)
+            => GetNext(_standardTokenDelimiters, out outStoppedOnDelimiter);
+
+        /// <summary>
+        /// Skips the next token using the given delimiters, returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter..
+        /// </summary>
+        public void SkipNext(char[] delimiters, out char outStoppedOnDelimiter)
+            => GetNext(delimiters, out outStoppedOnDelimiter);
 
         #endregion
 
@@ -698,7 +710,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         public bool TryCompareNextToken(TryNextTokenComparerProc comparer, string[] givenTokens, char[] delimiters)
         {
             int restoreCaret = _caret;
-            var token = GetNext(delimiters);
+            var token = GetNext(delimiters, out _);
 
             foreach (var givenToken in givenTokens)
             {
@@ -895,7 +907,13 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// Gets the next token using the standard delimiters.
         /// </summary>
         public T GetNext<T>()
-            => Helpers.Converters.ConvertTo<T>(GetNext(_standardTokenDelimiters));
+            => Helpers.Converters.ConvertTo<T>(GetNext(_standardTokenDelimiters, out _));
+
+        /// <summary>
+        /// Gets the next token using the standard delimiters, returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter..
+        /// </summary>
+        public T GetNext<T>(out char outStoppedOnDelimiter)
+            => Helpers.Converters.ConvertTo<T>(GetNext(_standardTokenDelimiters, out outStoppedOnDelimiter));
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the given delimiters.
@@ -913,32 +931,62 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// Gets the next token using the given delimiters.
         /// </summary>
         public T GetNext<T>(char[] delimiters)
-            => Helpers.Converters.ConvertTo<T>(GetNext(delimiters));
+            => Helpers.Converters.ConvertTo<T>(GetNext(delimiters, out _));
 
         /// <summary>
         /// Gets the next token using the standard delimiters.
         /// </summary>
         public string GetNext()
-            => GetNext(_standardTokenDelimiters);
+            => GetNext(_standardTokenDelimiters, out _);
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters.
         /// </summary>
         public string GetNextEvaluated()
-            => ResolveLiteral(GetNext(_standardTokenDelimiters));
+            => ResolveLiteral(GetNext(_standardTokenDelimiters, out _));
 
         /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the given delimiters.
         /// </summary>
         public string GetNextEvaluated(char[] delimiters)
-            => ResolveLiteral(GetNext(delimiters));
+            => ResolveLiteral(GetNext(delimiters, out _));
+
+        /// <summary>
+        /// Gets the next token using the given delimiters,
+        /// returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.
+        /// </summary>
+        public T GetNext<T>(char[] delimiters, out char outStoppedOnDelimiter)
+            => Helpers.Converters.ConvertTo<T>(GetNext(delimiters, out outStoppedOnDelimiter));
+
+        /// <summary>
+        /// Gets the next token using the standard delimiters,
+        /// returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.
+        /// </summary>
+        public string GetNext(out char outStoppedOnDelimiter)
+            => GetNext(_standardTokenDelimiters, out outStoppedOnDelimiter);
+
+        /// <summary>
+        /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters,
+        ///     returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.
+        /// </summary>
+        public string GetNextEvaluated(out char outStoppedOnDelimiter)
+            => ResolveLiteral(GetNext(_standardTokenDelimiters, out outStoppedOnDelimiter));
+
+        /// <summary>
+        /// Gets the next token, resolving it using the Numeric or String literals, using the given delimiters,
+        ///     returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.
+        /// </summary>
+        public string GetNextEvaluated(char[] delimiters, out char outStoppedOnDelimiter)
+            => ResolveLiteral(GetNext(delimiters, out outStoppedOnDelimiter));
 
         /// <summary>
         /// Gets the next token using the given delimiters.
         /// </summary>
-        public string GetNext(char[] delimiters)
+        public string GetNext(char[] delimiters, out char outStoppedOnDelimiter)
         {
             RecordBreadcrumb();
+
+            outStoppedOnDelimiter = '\0';
 
             var token = string.Empty;
 
@@ -951,6 +999,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
             {
                 if (char.IsWhiteSpace(_text[_caret]) || delimiters.Contains(_text[_caret]) == true)
                 {
+                    outStoppedOnDelimiter = _text[_caret];
                     _caret++; //skip the delimiter.
                     break;
                 }
@@ -991,7 +1040,19 @@ namespace NTDLS.Katzebase.Engine.Parsers
         public string InertGetNext(char[] delimiters)
         {
             int restoreCaret = _caret;
-            var token = GetNext(delimiters);
+            var token = GetNext(delimiters, out _);
+            _caret = restoreCaret;
+            return token;
+        }
+
+        /// <summary>
+        /// Returns the next token without moving the caret using the given delimiters,
+        ///     returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter..
+        /// </summary>
+        public string InertGetNext(char[] delimiters, out char outStoppedOnDelimiter)
+        {
+            int restoreCaret = _caret;
+            var token = GetNext(delimiters, out outStoppedOnDelimiter);
             _caret = restoreCaret;
             return token;
         }

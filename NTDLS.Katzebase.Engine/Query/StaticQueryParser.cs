@@ -13,7 +13,6 @@ namespace NTDLS.Katzebase.Engine.Query
 {
     internal class StaticQueryParser
     {
-
         static public QueryBatch PrepareBatch(string queryText, KbInsensitiveDictionary<string>? userParameters = null)
         {
             var tokenizer = new Tokenizer(queryText, true, userParameters);
