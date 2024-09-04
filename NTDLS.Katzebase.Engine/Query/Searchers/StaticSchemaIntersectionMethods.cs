@@ -21,6 +21,7 @@ using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
+using static NTDLS.Katzebase.Engine.Query.StaticAggregateExpressionProcessor;
 
 namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
@@ -114,7 +115,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 var groupKey = new StringBuilder();
 
-                KbInsensitiveDictionary<List<SchemaIntersectionRow>> groupingValues = new();
+                Placeholder_GroupedRows groupedRows = new();
 
                 foreach (var row in operation.Results.Collection)
                 {
@@ -127,15 +128,37 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                     string key = groupKey.ToString();
 
-                    if (groupingValues.TryGetValue(key, out var list))
+                    if (groupedRows.TryGetValue(key, out var grouping))
                     {
-                        list.Add(row);
+                        foreach (var auxValue in row.AuxiliaryFields)
+                        {
+                            if (grouping.TryGetValue(auxValue.Key, out var valueList))
+                            {
+                                valueList.Add(auxValue.Value ?? string.Empty);
+                            }
+                            else
+                            {
+                                grouping[auxValue.Key] = new List<string> { auxValue.Value ?? string.Empty };
+                            }
+                        }
                     }
                     else
                     {
-                        groupingValues[key] = [row];
+                        KbInsensitiveDictionary<List<string>> aggregateParameters = new();
+
+                        foreach (var auxValue in row.AuxiliaryFields)
+                        {
+                            aggregateParameters.Add(auxValue.Key, [auxValue.Value ?? string.Empty]);
+                        }
+
+                        groupedRows.Add(key, aggregateParameters);
+                        groupedRows[key] = aggregateParameters;
                     }
                 }
+
+                StaticAggregateExpressionProcessor.CollapseAggregateResultExpressions(transaction, query, groupedRows);
+
+                Console.WriteLine();
 
                 //TODO: This is in the ballpark
                 /*

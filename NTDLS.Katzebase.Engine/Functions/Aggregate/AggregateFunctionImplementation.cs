@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             };
 
         public static string? ExecuteFunction(string functionName,
-            List<AggregateGenericParameter> parameters, KbInsensitiveDictionary<List<SchemaIntersectionRow>> groupingValues)
+            List<AggregateGenericParameter> parameters, KbInsensitiveDictionary<List<string>> groupedValues)
         {
             var proc = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
