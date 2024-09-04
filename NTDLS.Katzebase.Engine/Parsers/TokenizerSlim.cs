@@ -3,7 +3,7 @@
 namespace NTDLS.Katzebase.Engine.Parsers
 {
     /// <summary>
-    /// Used to walk various types of string and expressions.
+    /// Lightweight version of Tokenizer, used to walk various types of string and expressions.
     /// </summary>
     internal class TokenizerSlim
     {
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         public TokenizerSlim(string text)
         {
             _text = text;
-            _standardTokenDelimiters = Array.Empty<char>();
+            _standardTokenDelimiters = ['\r', '\n', ' '];
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
             for (; _caret < _text.Length; _caret++)
             {
-                if (char.IsWhiteSpace(_text[_caret]) || delimiters.Contains(_text[_caret]) == true)
+                if (delimiters.Contains(_text[_caret]) == true)
                 {
                     _caret++; //skip the delimiter.
                     break;
@@ -88,7 +88,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
             for (; _caret < _text.Length; _caret++)
             {
-                if (char.IsWhiteSpace(_text[_caret]) || _standardTokenDelimiters.Contains(_text[_caret]) == true)
+                if (_standardTokenDelimiters.Contains(_text[_caret]) == true)
                 {
                     _caret++; //skip the delimiter.
                     break;

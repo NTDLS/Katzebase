@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         public Tokenizer(string text, bool optimizeForTokenization = false, KbInsensitiveDictionary<string>? userParameters = null)
         {
             _text = new string(text.ToCharArray());
-            _standardTokenDelimiters = Array.Empty<char>();
+            _standardTokenDelimiters = ['\r','\n', ' '];
             UserParameters = userParameters ?? new();
 
             ValidateParentheses();
@@ -1003,7 +1003,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
             for (; _caret < _text.Length; _caret++)
             {
-                if (char.IsWhiteSpace(_text[_caret]) || delimiters.Contains(_text[_caret]) == true)
+                if (delimiters.Contains(_text[_caret]) == true)
                 {
                     outStoppedOnDelimiter = _text[_caret];
                     _caret++; //skip the delimiter.

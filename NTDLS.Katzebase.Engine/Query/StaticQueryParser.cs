@@ -255,11 +255,10 @@ namespace NTDLS.Katzebase.Engine.Query
                     {
                         throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'by'.");
                     }
-                    tokenizer.SkipNext();
 
                     var fields = new List<string>();
 
-                    while (true)
+                    while (tokenizer.IsEnd() == false)
                     {
                         if (tokenizer.InertTryCompareNextToken((o) => StaticParser.IsStartOfQuery(o)))
                         {
@@ -267,7 +266,12 @@ namespace NTDLS.Katzebase.Engine.Query
                             break;
                         }
 
-                        var fieldToken = tokenizer.GetNext();
+                        var fieldToken = tokenizer.GetNext([',']);
+
+                        if (fieldToken == string.Empty)
+                        {
+                            continue;
+                        }
 
                         if (result.SortFields.Count > 0)
                         {
