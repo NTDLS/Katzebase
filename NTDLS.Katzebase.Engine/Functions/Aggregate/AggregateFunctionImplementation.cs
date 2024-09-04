@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 
@@ -17,7 +18,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 "avg:NumericArray/fieldName"
             };
 
-        private static string? ExecuteFunction(string functionName, List<AggregateGenericParameter> parameters, IGrouping<string, SchemaIntersectionRow> group)
+        public static string? ExecuteFunction(string functionName,
+            List<AggregateGenericParameter> parameters, KbInsensitiveDictionary<List<SchemaIntersectionRow>> groupingValues)
         {
             var proc = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 

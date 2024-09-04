@@ -3,7 +3,10 @@ using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Functions.Aggregate;
+using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
 using NTDLS.Katzebase.Engine.Parsers.Query;
+using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
@@ -11,10 +14,13 @@ using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
+using System.Collections.Generic;
+using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
 
 namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
@@ -93,13 +99,90 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             queue.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
 
-            #region TODO: reimplement grouping.
-
             #region Grouping.
 
             if (operation.Results.Collection.Count != 0 && (query.GroupFields.Count != 0 || query.SelectFields.FieldsWithAggregateFunctionCalls.Count != 0))
             {
-                IEnumerable<IGrouping<string, SchemaIntersectionRow>>? groupedValues;
+#if DEBUG
+                if (transaction.Session.IsPreLogin == false) //Debugging for non-login sessions.
+                {
+
+                }
+#endif
+
+                KbInsensitiveDictionary<string?> auxiliaryFields = new();
+
+                var groupKey = new StringBuilder();
+
+                KbInsensitiveDictionary<List<SchemaIntersectionRow>> groupingValues = new();
+
+                foreach (var row in operation.Results.Collection)
+                {
+                    groupKey.Clear();
+                    foreach (var expressionField in query.GroupFields)
+                    {
+                        var watchMe = StaticScalerExpressionProcessor.CollapseScalerQueryField(transaction, query, row.AuxiliaryFields, expressionField);
+                        groupKey.Append(watchMe);
+                    }
+
+                    string key = groupKey.ToString();
+
+                    if (groupingValues.TryGetValue(key, out var list))
+                    {
+                        list.Add(row);
+                    }
+                    else
+                    {
+                        groupingValues[key] = [row];
+                    }
+                }
+
+                //TODO: This is in the ballpark
+                /*
+                KbInsensitiveDictionary<string?> auxiliaryFields = new();
+
+                var groupKey = new StringBuilder();
+
+                KbInsensitiveDictionary<List<SchemaIntersectionRow>> groupingValues = new();
+
+                foreach (var row in operation.Results.Collection)
+                {
+                    groupKey.Clear();
+                    foreach (var expressionField in query.GroupFields)
+                    {
+                        var watchMe = StaticScalerExpressionProcessor.CollapseScalerQueryField(transaction, query, row.AuxiliaryFields, expressionField);
+                        groupKey.Append(watchMe);
+                    }
+
+                    string key = groupKey.ToString();
+
+                    if (groupingValues.TryGetValue(key, out var list))
+                    {
+                        list.Add(row);
+                    }
+                    else
+                    {
+                        groupingValues[key] = [row];
+                    }
+                }
+                StaticAggregateExpressionProcessor.CollapseAggregateResultExpressions(transaction, query, groupingValues);
+                */
+
+                /*
+                foreach (var expressionField in query.SelectFields.FieldsWithAggregateFunctionCalls)
+                {
+                    foreach (var group in groupingValues)
+                    {
+                        AggregateFunctionImplementation.ExecuteFunction("", new(), groupingValues);
+
+
+                        //var collapsedResult = CollapseScalerExpression(transaction, query, row.AuxiliaryFields, expressionField);
+                        //row.InsertValue(expressionField.FieldAlias, expressionField.Ordinal, collapsedResult);
+                    }
+                }
+                */
+
+                //AggregateFunctionImplementation.ExecuteFunction(string functionName, List < AggregateGenericParameter > parameters, IGrouping<string, SchemaIntersectionRow> group
 
                 if (query.GroupFields.Any())
                 {
@@ -155,8 +238,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                 operation.Results = groupedResults;
                 */
             }
-
-            #endregion
 
             #endregion
 
@@ -221,12 +302,6 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             results.AddRange(operation.Results);
 
-#if DEBUG
-            if (transaction.Session.IsPreLogin == false) //Debugging for non-login sessions.
-            {
-
-            }
-#endif
             return results;
         }
 
