@@ -20,10 +20,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
             var queryFields = new QueryFieldCollection(queryBatch);
 
             //Get the position which represents the end of the select list.
-            int stopAt = queryTokenizer.InertGetNextIndexOf([" from ", " into "]);
+            int stopAt = queryTokenizer.GetNextIndexOf([" from ", " into "]);
 
             //Get the text for all of the select fields.
-            var fieldsSegment = queryTokenizer.SubStringAbsolute(stopAt);
+            var fieldsSegment = queryTokenizer.EatSubStringAbsolute(stopAt);
 
             //Split the select fields on the comma, respecting any commas in function scopes.
             var fields = fieldsSegment.ScopeSensitiveSplit();
@@ -68,7 +68,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             Tokenizer tokenizer = new(givenFieldText);
 
-            string token = tokenizer.GetNext();
+            string token = tokenizer.EatGetNext();
 
             if (tokenizer.IsEnd())
             {
@@ -142,7 +142,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
             {
                 int positionBeforeToken = tokenizer.Caret;
 
-                string token = tokenizer.GetNext();
+                string token = tokenizer.EatGetNext();
 
                 if (token.StartsWith("$s_") && token.EndsWith('$')) //A string placeholder.
                 {
@@ -175,7 +175,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
                 }
                 else if (token.IsIdentifier())
                 {
-                    if (tokenizer.InertIsNextNonIdentifier(['(']))
+                    if (tokenizer.IsNextNonIdentifier(['(']))
                     {
                         //The character after this identifier is an open parenthesis, so this
                         //  looks like a function call but the function is undefined.
@@ -204,7 +204,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
             Tokenizer tokenizer, int positionBeforeToken)
         {
             //This contains the text between the open and close parenthesis of a function call, but not the parenthesis themselves or the function name.
-            string functionCallParametersSegmentText = tokenizer.GetMatchingBraces('(', ')');
+            string functionCallParametersSegmentText = tokenizer.EatGetMatchingBraces('(', ')');
 
             var functionCallParametersText = functionCallParametersSegmentText.ScopeSensitiveSplit();
             foreach (var functionCallParameterText in functionCallParametersText)
@@ -263,13 +263,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             while (!tokenizer.IsEnd())
             {
-                if (tokenizer.InertIsNextCharacter(c => c.IsMathematicalOperator()))
+                if (tokenizer.IsNextCharacter(c => c.IsMathematicalOperator()))
                 {
-                    tokenizer.SkipNextCharacter();
+                    tokenizer.EatNextCharacter();
                     continue;
                 }
 
-                string token = tokenizer.GetNext();
+                string token = tokenizer.EatGetNext();
                 if (string.IsNullOrEmpty(token))
                 {
                     break;
@@ -311,7 +311,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
                         //This function returns a number, so we still have a valid numeric operation.
 
                         //Skip the function call.
-                        string functionBody = tokenizer.GetMatchingBraces('(', ')');
+                        string functionBody = tokenizer.EatGetMatchingBraces('(', ')');
                         continue;
                     }
                     else
@@ -325,7 +325,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
                     //This is an aggregate function that can only return a number, so we still have a valid numeric operation.
 
                     //Skip the function call.
-                    string functionBody = tokenizer.GetMatchingBraces('(', ')');
+                    string functionBody = tokenizer.EatGetMatchingBraces('(', ')');
                     continue;
                 }
                 else

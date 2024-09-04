@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// Gets the next token using the given delimiters.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string GetNext(char[] delimiters)
+        public string EatGetNext(char[] delimiters)
         {
             var token = string.Empty;
 
@@ -68,7 +68,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 token += _text[_caret];
             }
 
-            SkipWhiteSpace();
+            EatWhiteSpace();
 
             return token.Trim();
         }
@@ -77,7 +77,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// Gets the next token using the standard delimiters.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string GetNext()
+        public string EatGetNext()
         {
             var token = string.Empty;
 
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 token += _text[_caret];
             }
 
-            SkipWhiteSpace();
+            EatWhiteSpace();
 
             return token.Trim();
         }
@@ -106,7 +106,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// Moves the caret past any whitespace, does not record breadcrumb.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void SkipWhiteSpace()
+        private void EatWhiteSpace()
         {
             while (_caret < _text.Length && char.IsWhiteSpace(_text[_caret]))
             {

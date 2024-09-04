@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class.Generic;
-using NTDLS.Katzebase.Engine.Query.Constraints;
 using NTDLS.Katzebase.Engine.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Query.Tokenizers;
 using NTDLS.Katzebase.Shared;
@@ -13,9 +12,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            string token = tokenizer.GetNext();
+            string token = tokenizer.EatGetNext();
 
-            if (StaticQueryParser.IsStartOfQuery(token, out var queryType) == false)
+            if (Generic.Helpers.IsStartOfQuery(token, out var queryType) == false)
             {
                 string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
@@ -25,26 +24,26 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             #region Parse "TOP n".
 
-            if (tokenizer.TryIsNextToken("top"))
+            if (tokenizer.TryEatIsNextToken("top"))
             {
-                result.RowLimit = tokenizer.GetNextEvaluated<int>();
+                result.RowLimit = tokenizer.EatGetNextEvaluated<int>();
             }
 
             #endregion
 
             #region Parse field list.
 
-            if (tokenizer.TryIsNextToken("*"))
+            if (tokenizer.TryEatIsNextToken("*"))
             {
                 //Select all fields from all schemas.
                 result.DynamicSchemaFieldFilter ??= new();
             }
-            if (tokenizer.TryNextTokenEndsWith(".*")) //schemaName.*
+            if (tokenizer.TryEatNextTokenEndsWith(".*")) //schemaName.*
             {
                 //Select all fields from given schema.
                 //TODO: Looks like do we not support "select *" from than one schema.
 
-                token = tokenizer.GetNext();
+                token = tokenizer.EatGetNext();
 
                 result.DynamicSchemaFieldFilter ??= new();
                 var starSchemaAlias = token.Substring(0, token.Length - 2); //Trim off the trailing .*
@@ -59,9 +58,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             #region Parse "into".
 
-            if (tokenizer.TryIsNextToken("into"))
+            if (tokenizer.TryEatIsNextToken("into"))
             {
-                var selectIntoSchema = tokenizer.GetNext();
+                var selectIntoSchema = tokenizer.EatGetNext();
                 result.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, selectIntoSchema);
 
                 result.QueryType = QueryType.SelectInto;
@@ -71,21 +70,21 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             #region Parse primary schema.
 
-            if (!tokenizer.TryIsNextToken("from"))
+            if (!tokenizer.TryEatIsNextToken("from"))
             {
-                throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'from'.");
+                throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'from'.");
             }
 
-            string sourceSchema = tokenizer.GetNext();
+            string sourceSchema = tokenizer.EatGetNext();
             string schemaAlias = string.Empty;
             if (!TokenHelpers.IsValidIdentifier(sourceSchema, ['#', ':']))
             {
                 throw new KbParserException("Invalid query. Found '" + sourceSchema + "', expected: schema name.");
             }
 
-            if (tokenizer.TryIsNextToken("as"))
+            if (tokenizer.TryEatIsNextToken("as"))
             {
-                schemaAlias = tokenizer.GetNext();
+                schemaAlias = tokenizer.EatGetNext();
             }
 
             result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
@@ -96,107 +95,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             while (tokenizer.TryIsNextToken("inner"))
             {
-                if (tokenizer.TryIsNextToken("join") == false)
-                {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'join'.");
-                }
-
-                string subSchemaSchema = tokenizer.GetNext();
-                string subSchemaAlias = string.Empty;
-                if (!TokenHelpers.IsValidIdentifier(subSchemaSchema, ':'))
-                {
-                    throw new KbParserException("Invalid query. Found '" + subSchemaSchema + "', expected: schema name.");
-                }
-
-                if (tokenizer.TryIsNextToken("as"))
-                {
-                    subSchemaAlias = tokenizer.GetNext();
-                }
-                else
-                {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'as' (schema alias).");
-                }
-
-                token = tokenizer.GetNext();
-                if (!token.Is("on"))
-                {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected 'on'.");
-                }
-
-                int joinConditionsStartPosition = tokenizer.Caret;
-
-                while (true)
-                {
-                    if (tokenizer.InertTryIsNextToken(["where", "order", "inner", ""]))
-                    {
-                        //Found start of next part of query.
-                        break;
-                    }
-
-                    if (tokenizer.InertTryCompareNextToken((o) => StaticQueryParser.IsStartOfQuery(o)))
-                    {
-                        //Found start of next query.
-                        break;
-                    }
-
-                    if (tokenizer.InertTryIsNextToken(["and", "or"]))
-                    {
-                        tokenizer.SkipNext();
-                    }
-
-                    var joinLeftCondition = tokenizer.GetNext();
-                    if (!TokenHelpers.IsValidIdentifier(joinLeftCondition, '.'))
-                    {
-                        throw new KbParserException("Invalid query. Found '" + joinLeftCondition + "', expected: left side of join expression.");
-                    }
-
-                    int logicalQualifierPos = tokenizer.Caret;
-
-                    token = ConditionTokenizer.GetNext(tokenizer.Text, ref logicalQualifierPos);
-                    if (ConditionTokenizer.ParseLogicalQualifier(token) == LogicalQualifier.None)
-                    {
-                        throw new KbParserException("Invalid query. Found '" + token + "], expected logical qualifier.");
-                    }
-
-                    tokenizer.SetCaret(logicalQualifierPos);
-
-                    var joinRightCondition = tokenizer.GetNext();
-                    if (!TokenHelpers.IsValidIdentifier(joinRightCondition, '.'))
-                    {
-                        throw new KbParserException("Invalid query. Found '" + joinRightCondition + "', expected: right side of join expression.");
-                    }
-                }
-
-                var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Caret - joinConditionsStartPosition).Trim();
-                var joinConditions = Conditions.Create(queryBatch, joinConditionsText, tokenizer, subSchemaAlias);
-
-                result.Schemas.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
+                var joinedSchemas = StaticJoinParser.Parse(queryBatch, tokenizer);
+                result.Schemas.AddRange(joinedSchemas);
             }
 
             #endregion
 
             #region Parse "where" clause.
 
-            if (tokenizer.TryIsNextToken("where"))
+            if (tokenizer.TryEatIsNextToken("where"))
             {
-                //Look for tokens that would mean the end of the where clause
-                if (tokenizer.InertTryGetNextIndexOf([" group ", " order "], out int endOfWhere) == false)
-                {
-                    //Maybe we end at the next query?
-                    if (tokenizer.InertTryGetNextIndexOf((o) => StaticQueryParser.IsStartOfQuery(o), out endOfWhere) == false)
-                    {
-                        //Well, I suppose we will take the remainder of the query text.
-                        endOfWhere = tokenizer.Length;
-                    }
-                }
-
-                string conditionText = tokenizer.SubStringAbsolute(endOfWhere).Trim();
-                if (conditionText == string.Empty)
-                {
-                    throw new KbParserException("Invalid query. Found '" + conditionText + "', expected: list of conditions.");
-                }
-
-                result.Conditions = Conditions.Create(queryBatch, conditionText, tokenizer);
+                result.Conditions = StaticWhereParser.Parse(queryBatch, tokenizer);
 
                 //Associate the root query schema with the root conditions.
                 result.Schemas.First().Conditions = result.Conditions;
@@ -206,13 +115,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             #region Parse "group by".
 
-            if (tokenizer.TryIsNextToken("group"))
+            if (tokenizer.TryEatIsNextToken("group"))
             {
-                if (tokenizer.TryIsNextToken("by") == false)
+                if (tokenizer.TryEatIsNextToken("by") == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'by'.");
+                    throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
                 }
-                tokenizer.SkipNext();
+                tokenizer.EatNextToken();
+
+                StaticGroupByParser.Parse(queryBatch, tokenizer);
 
                 //TODO: Reimplement group by parser
                 //result.GroupFields = StaticFunctionParsers.ParseGroupByFields(tokenizer);
@@ -222,24 +133,24 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
 
             #region Parse "order by".
 
-            if (tokenizer.TryIsNextToken("order"))
+            if (tokenizer.TryEatIsNextToken("order"))
             {
-                if (tokenizer.TryIsNextToken("by") == false)
+                if (tokenizer.TryEatIsNextToken("by") == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.GetNext() + "', expected: 'by'.");
+                    throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
                 }
 
                 var fields = new List<string>();
 
                 while (tokenizer.IsEnd() == false)
                 {
-                    if (tokenizer.InertTryCompareNextToken((o) => StaticQueryParser.IsStartOfQuery(o)))
+                    if (tokenizer.TryCompareNextToken((o) => Generic.Helpers.IsStartOfQuery(o)))
                     {
                         //Found start of next query.
                         break;
                     }
 
-                    var fieldToken = tokenizer.GetNext([',']);
+                    var fieldToken = tokenizer.EatGetNext([',']);
 
                     if (fieldToken == string.Empty)
                     {
@@ -250,7 +161,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
                     {
                         if (tokenizer.IsNextCharacter(','))
                         {
-                            fieldToken = tokenizer.GetNext();
+                            fieldToken = tokenizer.EatGetNext();
                         }
                         else if (tokenizer.Caret < tokenizer.Length) //We should have consumed the entire query at this point.
                         {
@@ -262,16 +173,16 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Select
                     {
                         if (tokenizer.Caret < tokenizer.Length)
                         {
-                            throw new KbParserException("Invalid query. Found '" + tokenizer.SubString() + "', expected: end of statement.");
+                            throw new KbParserException("Invalid query. Found '" + tokenizer.EatRemainder() + "', expected: end of statement.");
                         }
 
                         break;
                     }
 
                     var sortDirection = KbSortDirection.Ascending;
-                    if (tokenizer.TryIsNextToken(["asc", "desc"]))
+                    if (tokenizer.TryEatIsNextToken(["asc", "desc"]))
                     {
-                        if (tokenizer.GetNext().Is("desc"))
+                        if (tokenizer.EatGetNext().Is("desc"))
                         {
                             sortDirection = KbSortDirection.Descending;
                         }

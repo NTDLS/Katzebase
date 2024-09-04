@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
             while (tokenizer.IsEnd() == false)
             {
-                var token = tokenizer.GetNext();
+                var token = tokenizer.EatGetNext();
 
                 if (token.StartsWith("$x_") && token.EndsWith('$'))
                 {
@@ -138,7 +138,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
             while (tokenizer.IsEnd() == false)
             {
-                token = tokenizer.GetNext();
+                token = tokenizer.EatGetNext();
 
                 if (token.StartsWith("$f_") && token.EndsWith('$'))
                 {

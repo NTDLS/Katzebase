@@ -1,7 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Parsers;
-using NTDLS.Katzebase.Engine.Parsers.Query.Class.Generic;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class.Select;
 using NTDLS.Katzebase.Engine.Query.SupportingTypes;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -21,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Query
                 int preParseTokenPosition = tokenizer.Caret;
                 var preparedQuery = PrepareNextQuery(queryBatch, tokenizer);
 
-                var singleQueryText = tokenizer.InertSubString(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
+                var singleQueryText = tokenizer.SubString(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
                 preparedQuery.Hash = Library.Helpers.ComputeSHA256(singleQueryText);
 
                 queryBatch.Add(preparedQuery);
@@ -33,9 +32,9 @@ namespace NTDLS.Katzebase.Engine.Query
         static public PreparedQuery PrepareNextQuery(QueryBatch queryBatch, Tokenizer tokenizer)
         {
 
-            string token = tokenizer.InertGetNext();
+            string token = tokenizer.GetNext();
 
-            if (StaticQueryParser.IsStartOfQuery(token, out var queryType) == false)
+            if (Parsers.Query.Class.Generic.Helpers.IsStartOfQuery(token, out var queryType) == false)
             {
                 string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
