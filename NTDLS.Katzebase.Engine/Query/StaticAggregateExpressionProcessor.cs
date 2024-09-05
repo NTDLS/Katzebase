@@ -3,14 +3,11 @@ using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
-using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
-using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
-using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
 
@@ -18,22 +15,20 @@ namespace NTDLS.Katzebase.Engine.Query
 {
     internal class StaticAggregateExpressionProcessor
     {
-        public class Placeholder_GroupedRows: KbInsensitiveDictionary<KbInsensitiveDictionary<List<string>>>
-        {
-        }
-
         /// <summary>
         /// Resolves all of the query expressions (string concatenation, math and all recursive
         ///     function calls) on a row level and fills in the values in the resultingRows.
         /// </summary>
         public static void CollapseAggregateResultExpressions(Transaction transaction,
-            PreparedQuery query, Placeholder_GroupedRows groupedRows)
+            PreparedQuery query, KbInsensitiveDictionary<KbInsensitiveDictionary<List<string>>> groupedRows)
         {
             //Resolve all expressions and fill in the row fields.
             foreach (var expressionField in query.SelectFields.ExpressionFields.Where(o => o.CollapseType == CollapseType.Aggregate))
             {
                 foreach (var row in groupedRows)
                 {
+                    //var fff = query.Batch.GetLiteralValue(expressionField.)
+
                     var collapsedResult = CollapseAggregateExpression(transaction, query, row.Value, expressionField);
 
                     //row.InsertValue(expressionField.FieldAlias, expressionField.Ordinal, collapsedResult);
@@ -213,7 +208,8 @@ namespace NTDLS.Katzebase.Engine.Query
             {
                 if (parameter is ExpressionFunctionParameterString parameterString)
                 {
-                    var collapsedParameter = CollapseAggregateFunctionStringParameter(transaction, query, groupedValues, functions, parameterString.Expression);
+                    //Trying math here instead of text...
+                    var collapsedParameter = CollapseAggregateFunctionNumericParameter(transaction, query, groupedValues, functions, parameterString.Expression);
                     collapsedParameters.Add(collapsedParameter);
                 }
                 else if (parameter is ExpressionFunctionParameterNumeric parameterNumeric)

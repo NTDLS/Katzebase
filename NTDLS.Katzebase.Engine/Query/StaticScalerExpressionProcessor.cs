@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
@@ -103,7 +104,30 @@ namespace NTDLS.Katzebase.Engine.Query
             {
                 var token = tokenizer.EatGetNext();
 
-                if (token.StartsWith("$x_") && token.EndsWith('$'))
+                if (token.StartsWith("$f_") && token.EndsWith('$'))
+                {
+                    //Resolve the token to a field identifier.
+                    if (query.SelectFields.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
+                    {
+                        //Resolve the field identifier to a value.
+                        if (auxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
+                        {
+                            textValue.EnsureNotNull();
+                            string mathVariable = $"v{variableNumber++}";
+                            expressionString = expressionString.Replace(token, mathVariable);
+                            expressionVariables.Add(mathVariable, double.Parse(query.Batch.GetLiteralValue(textValue)));
+                        }
+                        else
+                        {
+                            throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
+                        }
+                    }
+                    else
+                    {
+                        throw new KbEngineException($"Function parameter field is not defined: [{token}].");
+                    }
+                }
+                else if (token.StartsWith("$x_") && token.EndsWith('$'))
                 {
                     //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);

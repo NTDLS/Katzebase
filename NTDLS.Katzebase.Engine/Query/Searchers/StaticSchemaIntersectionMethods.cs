@@ -3,10 +3,7 @@ using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Functions.Aggregate;
-using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
 using NTDLS.Katzebase.Engine.Parsers.Query;
-using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
@@ -14,14 +11,11 @@ using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
-using System.Collections.Generic;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
-using static NTDLS.Katzebase.Engine.Query.StaticAggregateExpressionProcessor;
 
 namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
@@ -115,7 +109,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
                 var groupKey = new StringBuilder();
 
-                Placeholder_GroupedRows groupedRows = new();
+                KbInsensitiveDictionary<KbInsensitiveDictionary<List<string>>> groupedRows = new();
 
                 foreach (var row in operation.Results.Collection)
                 {

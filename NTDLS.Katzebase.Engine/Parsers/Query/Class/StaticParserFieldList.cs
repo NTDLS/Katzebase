@@ -340,8 +340,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
                 else
                 {
-                    //This is likely a document field.
-                    return false;
+                    //This is likely a document field, we'll assume its a number
+                    //return false;
                 }
             }
 
