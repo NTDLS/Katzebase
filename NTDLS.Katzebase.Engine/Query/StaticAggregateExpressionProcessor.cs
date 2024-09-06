@@ -207,13 +207,19 @@ namespace NTDLS.Katzebase.Engine.Query
         {
             var collapsedParameters = new List<string>();
 
+            foreach (var parameter in function.Parameters.Skip(1)) //Skip the first parameter, it is always the lite of aggregation values.
+            {
+                collapsedParameters.Add(StaticScalerExpressionProcessor.CollapseScalerExpressionFunctionParameter(
+                    transaction, query, auxiliaryFields, functions, parameter));
+            }
+
             //The sole parameter for aggregate functions is pre-computed by the query execution engine, just get the values.
             if (aggregationValues.TryGetValue(function.ExpressionKey, out var aggregationValueList) != true)
             {
                 throw new KbEngineException($"The aggregate function [{function.FunctionName}] resolved expression key was not found: [{function.ExpressionKey}].");
             }
 
-            return AggregateFunctionImplementation.ExecuteFunction(function.FunctionName, aggregationValueList);
+            return AggregateFunctionImplementation.ExecuteFunction(function.FunctionName, collapsedParameters, aggregationValueList);
         }
     }
 }

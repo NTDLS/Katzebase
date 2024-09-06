@@ -15,8 +15,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 "avg:NumericArray/fieldName"
             };
 
-        public static string ExecuteFunction(string functionName, List<string> groupedValues)
+        public static string ExecuteFunction(string functionName, List<string> parameters, List<string> groupedValues)
         {
+            var proc = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
+
             switch (functionName.ToLowerInvariant())
             {
                 case "sum":

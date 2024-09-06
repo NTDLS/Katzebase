@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Shared;
 using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
@@ -36,6 +37,23 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             function = Prototypes.FirstOrDefault(o => o.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
             return function != null;
+        }
+
+        public static AggregateFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string> parameters)
+        {
+            if (_protypes == null)
+            {
+                throw new KbFatalException("Function prototypes were not initialized.");
+            }
+
+            var function = _protypes.FirstOrDefault(o => o.Name.Is(functionName));
+
+            if (function == null)
+            {
+                throw new KbFunctionException($"Undefined function: {functionName}.");
+            }
+
+            return function.ApplyParameters(parameters);
         }
     }
 }
