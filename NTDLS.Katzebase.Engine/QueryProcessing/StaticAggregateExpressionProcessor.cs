@@ -20,15 +20,16 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         public static string CollapseAggregateQueryField(Transaction transaction,
             PreparedQuery query, KbInsensitiveDictionary<List<string>> aggregationValues,
             KbInsensitiveDictionary<string?> auxiliaryFields, //TODO: we need to add this to the group ro so we can pass it in.
+            KbInsensitiveDictionary<List<string>> supplementalParameterCollection,
             QueryField queryField)
         {
             if (queryField.Expression is QueryFieldExpressionNumeric expressionNumeric)
             {
-                return CollapseAggregateFunctionNumericParameter(transaction, query, aggregationValues, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value);
+                return CollapseAggregateFunctionNumericParameter(transaction, query, aggregationValues, auxiliaryFields, expressionNumeric.FunctionDependencies, supplementalParameterCollection, expressionNumeric.Value);
             }
             else if (queryField.Expression is QueryFieldExpressionString expressionString)
             {
-                return CollapseAggregateFunctionStringParameter(transaction, query, aggregationValues, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value);
+                return CollapseAggregateFunctionStringParameter(transaction, query, aggregationValues, auxiliaryFields, expressionString.FunctionDependencies, supplementalParameterCollection, expressionString.Value);
             }
             else if (queryField.Expression is QueryFieldDocumentIdentifier documentIdentifier)
             {
@@ -50,7 +51,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// </summary>
         static string CollapseAggregateFunctionNumericParameter(Transaction transaction, PreparedQuery query,
             KbInsensitiveDictionary<List<string>> aggregationValues, KbInsensitiveDictionary<string?> auxiliaryFields,
-            List<IQueryFieldExpressionFunction> functions, string expressionString)
+            List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<List<string>> supplementalParameterCollection, string expressionString)
         {
             //Build a cachable numeric expression, interpolate the values and execute the expression.
 
@@ -72,6 +73,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                         //Resolve the field identifier to a value.
                         if (auxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
                         {
+                            if (expressionVariables.Count == 0 && tokenizer.Exausted())
+                            {
+                                //If this is the only token we have then we aren't even going to do math.
+                                //This is because this is more efficient and also because this might be a
+                                //string value from a document field that we assumed was numeric because the
+                                //expression contains no "string operations" such as literal text.
+                                return textValue ?? string.Empty;
+                            }
+
                             textValue.EnsureNotNull();
                             string mathVariable = $"v{variableNumber++}";
                             expressionString = expressionString.Replace(token, mathVariable);
@@ -91,7 +101,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 {
                     //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = CollapseAggregateFunction(transaction, query, aggregationValues, auxiliaryFields, functions, subFunction);
+                    var functionResult = CollapseAggregateFunction(transaction, query, aggregationValues, auxiliaryFields, functions, supplementalParameterCollection, subFunction);
 
                     string mathVariable = $"v{variableNumber++}";
                     expressionVariables.Add(mathVariable, double.Parse(functionResult));
@@ -136,7 +146,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// </summary>
         static string CollapseAggregateFunctionStringParameter(Transaction transaction, PreparedQuery query,
             KbInsensitiveDictionary<List<string>> aggregationValues, KbInsensitiveDictionary<string?> auxiliaryFields,
-            List<IQueryFieldExpressionFunction> functions, string expressionString)
+            List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<List<string>> supplementalParameterCollection, string expressionString)
         {
             var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
             string token;
@@ -171,7 +181,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 {
                     //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = CollapseAggregateFunction(transaction, query, aggregationValues, auxiliaryFields, functions, subFunction);
+                    var functionResult = CollapseAggregateFunction(transaction, query, aggregationValues, auxiliaryFields, functions, supplementalParameterCollection, subFunction);
                     sb.Append(functionResult);
                 }
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
@@ -203,23 +213,23 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// </summary>
         static string CollapseAggregateFunction(Transaction transaction, PreparedQuery query,
             KbInsensitiveDictionary<List<string>> aggregationValues, KbInsensitiveDictionary<string?> auxiliaryFields,
-            List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
+            List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<List<string>> supplementalParameterCollection, IQueryFieldExpressionFunction function)
         {
-            var collapsedParameters = new List<string>();
-
-            foreach (var parameter in function.Parameters.Skip(1)) //Skip the first parameter, it is always the lite of aggregation values.
-            {
-                collapsedParameters.Add(StaticScalerExpressionProcessor.CollapseScalerExpressionFunctionParameter(
-                    transaction, query, auxiliaryFields, functions, parameter));
-            }
-
             //The sole parameter for aggregate functions is pre-computed by the query execution engine, just get the values.
             if (aggregationValues.TryGetValue(function.ExpressionKey, out var aggregationValueList) != true)
             {
                 throw new KbEngineException($"The aggregate function [{function.FunctionName}] resolved expression key was not found: [{function.ExpressionKey}].");
             }
 
-            return AggregateFunctionImplementation.ExecuteFunction(function.FunctionName, collapsedParameters, aggregationValueList);
+            if (supplementalParameterCollection.TryGetValue(function.ExpressionKey, out var supplementalParameters) == false)
+            {
+                supplementalParameters = new();
+            }
+            else
+            {
+            }
+
+            return AggregateFunctionImplementation.ExecuteFunction(function.FunctionName, aggregationValueList, supplementalParameters);
         }
     }
 }

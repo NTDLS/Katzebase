@@ -122,7 +122,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         var auxiliaryFields = new KbInsensitiveDictionary<string?>(); //TODO: we need to add this to the group ro so we can pass it in.
 
-                        var aggregateExpressionResult = StaticAggregateExpressionProcessor.CollapseAggregateQueryField(transaction, query, groupRow.Value.AggregationValues, auxiliaryFields, aggregateFunctionField);
+                        var aggregateExpressionResult = StaticAggregateExpressionProcessor.CollapseAggregateQueryField(transaction,
+                            query, groupRow.Value.AggregationValues, auxiliaryFields, groupRow.Value.SupplementalParameters, aggregateFunctionField);
 
                         resultRow.InsertValue(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
@@ -246,7 +247,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                     lock (instance.Operation.GroupRows)
                     {
-                        //What we are doing here is getting the first and only parameter for the aggregation functions and
+                        //What we are doing here is getting the first parameter for the aggregation functions and
                         //  collapsing that parameters expression. We then maintain a list of those aggregation functions
                         //  ExpressionKeys along with the list of group values that will need to be passed to the function
                         //  once we finally execute it.
@@ -264,13 +265,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             }
                         }
 
-                        //Group already exists, add this row.
                         foreach (var aggregationFunction in instance.Operation.Query.SelectFields.AggregationFunctions)
                         {
-                            var soleFunctionParameter = aggregationFunction.Parameters.Single();
+                            var aggregationArrayParam = aggregationFunction.Parameters.First();
 
                             var collapsedAggregationParameterValue = StaticScalerExpressionProcessor.CollapseScalerExpressionFunctionParameter(
-                                instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, new(), soleFunctionParameter);
+                                instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, new(), aggregationArrayParam);
 
                             if (groupRowCollection.AggregationValues.TryGetValue(aggregationFunction.ExpressionKey, out var valueList))
                             {
@@ -278,6 +278,25 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             }
                             else
                             {
+                                //This is the first value we are adding to this group, so also grab the supplemental aggregation function parameters just this one time per expression key.
+
+                                //Skip past the required AggregationArray parameter and collapse any supplemental aggregation function parameters.
+                                //Supplemental parameters for aggregate functions would be something like "boolean countDistinct" on the count() function.
+                                foreach (var supplementalParam in aggregationFunction.Parameters.Skip(1))
+                                {
+                                    var collapsedSupplementalParamValue = StaticScalerExpressionProcessor.CollapseScalerExpressionFunctionParameter(
+                                        instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, new(), supplementalParam);
+
+                                    if (groupRowCollection.SupplementalParameters.TryGetValue(aggregationFunction.ExpressionKey, out var supplementalParameterValues))
+                                    {
+                                        supplementalParameterValues.Add(collapsedSupplementalParamValue);
+                                    }
+                                    else
+                                    {
+                                        groupRowCollection.SupplementalParameters.Add(aggregationFunction.ExpressionKey, [collapsedSupplementalParamValue]);
+                                    }
+                                }
+
                                 groupRowCollection.AggregationValues.Add(aggregationFunction.ExpressionKey, [collapsedAggregationParameterValue]);
                             }
                         }

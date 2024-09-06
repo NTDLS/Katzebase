@@ -15,9 +15,9 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <param name="queryText"></param>
         /// <param name="userParameters"></param>
         /// <returns></returns>
-        static public QueryBatch ParseBatch(string queryText, KbInsensitiveDictionary<string>? userParameters = null)
+        static public QueryBatch ParseBatch(EngineCore core, string queryText, KbInsensitiveDictionary<string>? userParameters = null)
         {
-            var tokenizer = new Tokenizer(queryText, true, userParameters);
+            var tokenizer = new Tokenizer(queryText, true, userParameters, core.Query.TokenizerConstants);
 
             var queryBatch = new QueryBatch(tokenizer.UserParameters, tokenizer.Literals);
 

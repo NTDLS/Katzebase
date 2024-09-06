@@ -43,6 +43,14 @@ namespace QueryTest
             public string? Spanish { get; set; }
         }
 
+        class DistinctTest
+        {
+            public string? Latin { get; set; }
+            public int RowCount { get; set; }
+            public int GermanWordCount { get; set; }
+            public int SpanishWordCount { get; set; }
+        }
+
         static void Main()
         {
             try
@@ -51,7 +59,10 @@ namespace QueryTest
 
                 //var queryText = "SELECT\r\n\tLanguageId,\r\n\tSum(Id + 10) as NumberOf1,Min(Id - 10) as NumberOf2\r\nFROM\r\n\tWordList:Word\r\nWHERE\r\n\tText LIKE 'Tab%'\r\nGROUP BY\r\n\tLanguageId";
 
-                var queryText = "select Spanish, count(Id + 7) + min(Id) as NumberOf1, Latin, Count(Id) as NumberOf2 from WordList:FlatTranslate where English like 'bed%' group by Spanish, Latin";
+                //var queryText = "select Spanish, count(Id + 7, true) + min(Id) as NumberOf1, Latin, Count(Id) as NumberOf2 from WordList:FlatTranslate where English like 'bed%' group by Spanish, Latin";
+
+                var queryText = "SELECT\r\n\tLatin,\r\n\tCount(0) as RowCount,\r\n\tCount(German, true) as GermanWordCount,\r\n\tCount(Spanish, true) as SpanishWordCount\r\nFROM\r\n\tWordList:FlatTranslate\r\nWHERE\r\n\tEnglish LIKE 'Car%'\r\nGROUP BY\r\n\tLatin\r\n";
+
 
                 //var queryText = "SELECT\r\n\tLanguageId,\r\n\tId - 651947 as NumberOf\r\nFROM\r\n\tWordList:Word\r\nWHERE\r\n\tText LIKE 'Tab%'";
 
@@ -68,11 +79,11 @@ namespace QueryTest
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 Concat('Text1', 'Text2') as Text FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100  Concat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text, 10 * 10 as Id, Length('This is text') as LanguageId, 'English' as Language FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
 
-                var results = client.Query.Fetch<GroupTest>(queryText);
+                var results = client.Query.Fetch<DistinctTest>(queryText);
                 //var results = client.Query.Fetch<BigQuery>(queryText);
                 foreach (var result in results)
                 {
-                    Console.WriteLine($"[{result.Spanish}],[{result.Latin}],[{result.NumberOf1}],[{result.NumberOf2}]");
+                    Console.WriteLine($"[{result.Latin}],[{result.GermanWordCount}],[{result.SpanishWordCount}],[{result.RowCount}]");
                     //Console.WriteLine($"[{result.Test}],[{result.SourceWordId}],[{result.SourceWord}],[{result.SourceLanguage}],{result.TargetWordId},{result.TargetWord},{result.TargetLanguage}");
                     //Console.WriteLine($"{word.Len},{word.Id},{word.Text},{word.LanguageId},{word.SourceId},{word.IsDirty}");
                 }

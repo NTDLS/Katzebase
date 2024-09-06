@@ -17,35 +17,35 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 "Numeric Avg (AggregationArray values)"
             };
 
-        public static string ExecuteFunction(string functionName, List<string> parameters, List<string> groupedValues)
+        public static string ExecuteFunction(string functionName, List<string> aggregationValues, List<string> supplementalParameters)
         {
-            var proc = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
+            var proc = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, supplementalParameters);
 
             switch (functionName.ToLowerInvariant())
             {
                 case "sum":
                     {
-                        return groupedValues.Sum(o => double.Parse(o)).ToString();
+                        return aggregationValues.Sum(o => double.Parse(o)).ToString();
                     }
                 case "min":
                     {
-                        return groupedValues.Min(o => double.Parse(o)).ToString();
+                        return aggregationValues.Min(o => double.Parse(o)).ToString();
                     }
                 case "max":
                     {
-                        return groupedValues.Max(o => double.Parse(o)).ToString();
+                        return aggregationValues.Max(o => double.Parse(o)).ToString();
                     }
                 case "avg":
                     {
-                        return groupedValues.Average(o => double.Parse(o)).ToString();
+                        return aggregationValues.Average(o => double.Parse(o)).ToString();
                     }
                 case "count":
                     {
                         if (proc.Get<bool>("countDistinct"))
                         {
-                            return groupedValues.Distinct().Count().ToString();
+                            return aggregationValues.Distinct().Count().ToString();
                         }
-                        return groupedValues.Count().ToString();
+                        return aggregationValues.Count().ToString();
                     }
             }
 

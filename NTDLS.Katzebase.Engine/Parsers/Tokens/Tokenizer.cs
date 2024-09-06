@@ -49,6 +49,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         public int Caret => _caret;
         public int Length => _text.Length;
         public string Text => _text;
+        public KbInsensitiveDictionary<TokenizerConstant> PredefinedConstants { get; set; }
 
         /// <summary>
         /// The hash of the text.
@@ -66,6 +67,18 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         #region Constructors.
 
+        public class TokenizerConstant
+        {
+            public string Value { get; set; }
+            public BasicDataType DataType { get; set; }
+
+            public TokenizerConstant(string value, BasicDataType dataType)
+            {
+                Value = value;
+                DataType = dataType;
+            }
+        }
+
         /// <summary>
         /// Creates a tokenizer which uses only whitespace as a delimiter.
         /// </summary>
@@ -74,11 +87,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// <param name="optimizeForTokenization">Whether the query text should be optimized for tokenization.
         /// This only needs to be done once per query text. For example, if you create another Tokenizer
         /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
-        public Tokenizer(string text, char[] standardTokenDelimiters, bool optimizeForTokenization = false, KbInsensitiveDictionary<string>? userParameters = null)
+        public Tokenizer(string text, char[] standardTokenDelimiters, bool optimizeForTokenization = false,
+            KbInsensitiveDictionary<string>? userParameters = null, KbInsensitiveDictionary<TokenizerConstant>? predefinedConstants = null)
         {
             _text = new string(text.ToCharArray());
             _standardTokenDelimiters = standardTokenDelimiters;
             UserParameters = userParameters ?? new();
+            PredefinedConstants = predefinedConstants ?? new();
 
             ValidateParentheses();
 
@@ -95,11 +110,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// <param name="optimizeForTokenization">Whether the query text should be optimized for tokenization.
         /// This only needs to be done once per query text. For example, if you create another Tokenizer
         /// with a subset of this Tokenizer, then the new instance does not need to be optimized</param>
-        public Tokenizer(string text, bool optimizeForTokenization = false, KbInsensitiveDictionary<string>? userParameters = null)
+        public Tokenizer(string text, bool optimizeForTokenization = false,
+            KbInsensitiveDictionary<string>? userParameters = null, KbInsensitiveDictionary<TokenizerConstant>? predefinedConstants = null)
         {
             _text = new string(text.ToCharArray());
             _standardTokenDelimiters = ['\r', '\n', ' '];
             UserParameters = userParameters ?? new();
+            PredefinedConstants = predefinedConstants ?? new();
 
             ValidateParentheses();
 
@@ -163,8 +180,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// </summary>
         private void SwapOutStringLiterals(ref string query)
         {
+            //Literal strings.
             var regex = new Regex("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\"|\\'([^\\'\\\\]*(\\\\.[^\\'\\\\]*)*)\\'");
-
             while (true)
             {
                 var match = regex.Match(query);
@@ -181,6 +198,49 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                     break;
                 }
             }
+
+            if (PredefinedConstants.Count > 0)
+            {
+                var triedConstants = new Dictionary<string, string>();
+                int nextTriedConstant = 0;
+
+                //Predefined string constants.
+                regex = new Regex(@"(?<=\s|^)[A-Za-z_][A-Za-z0-9_]*(?=\s|$)");
+                while (true)
+                {
+                    var match = regex.Match(query);
+
+                    if (match.Success)
+                    {
+                        if (PredefinedConstants.TryGetValue(match.ToString(), out var constant))
+                        {
+                            if (constant.DataType == BasicDataType.String)
+                            {
+                                string key = $"$s_{_literalKey++}$";
+                                Literals.Add(key, new(BasicDataType.String, constant.Value));
+                                query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                            }
+                        }
+                        else
+                        {
+                            //Keep track of "constants" that we do not have definitions for, we will need replace these.
+                            string key = $"$temp_const_{nextTriedConstant++}$";
+                            query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                            triedConstants.Add(key, match.ToString());
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                //Replace the "constants" that were not defined.
+                foreach (var triedConstant in triedConstants)
+                {
+                    query = query.Replace(triedConstant.Key, triedConstant.Value);
+                }
+            }
         }
 
         /// <summary>
@@ -188,8 +248,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// </summary>
         private void SwapOutNumericLiterals(ref string query)
         {
+            //Literal numeric:
             var regex = new Regex(@"(?<=\s|^)(?:\d+\.?\d*|\.\d+)(?=\s|$)");
-
             while (true)
             {
                 var match = regex.Match(query);
@@ -198,7 +258,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                 {
                     string key = $"$n_{_literalKey++}$";
                     Literals.Add(key, new(BasicDataType.Numeric, match.ToString()));
-
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
                 else
@@ -206,12 +265,55 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                     break;
                 }
             }
+
+            if (PredefinedConstants.Count > 0)
+            {
+                var triedConstants = new Dictionary<string, string>();
+                int nextTriedConstant = 0;
+
+                //Predefined numeric constants.
+                regex = new Regex(@"(?<=\s|^)[A-Za-z_][A-Za-z0-9_]*(?=\s|$)");
+                while (true)
+                {
+                    var match = regex.Match(query);
+
+                    if (match.Success)
+                    {
+                        if (PredefinedConstants.TryGetValue(match.ToString(), out var constant))
+                        {
+                            if (constant.DataType == BasicDataType.Numeric)
+                            {
+                                string key = $"$n_{_literalKey++}$";
+                                Literals.Add(key, new(BasicDataType.Numeric, constant.Value));
+                                query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                            }
+                        }
+                        else
+                        {
+                            //Keep track of "constants" that we do not have definitions for, we will need replace these.
+                            string key = $"$temp_const_{nextTriedConstant++}$";
+                            query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                            triedConstants.Add(key, match.ToString());
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                //Replace the "constants" that were not defined.
+                foreach (var triedConstant in triedConstants)
+                {
+                    query = query.Replace(triedConstant.Key, triedConstant.Value);
+                }
+            }
         }
 
         /// <summary>
         /// Replaces numeric literals with tokens to prepare the query for parsing.
         /// </summary>
-        private KbInsensitiveDictionary<string> InterpolateUserVariables(ref string query)
+        private KbInsensitiveDictionary<string> SwapOutUserVariables(ref string query)
         {
             var mappings = new KbInsensitiveDictionary<string>();
             var regex = new Regex(@"(?<=\s|^)@\w+(?=\s|$)");  // Updated regex to match @ followed by alphanumeric characters
@@ -287,7 +389,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             text = text.Replace("&&", " && ");
 
             SwapOutNumericLiterals(ref text);
-            UserParameters = InterpolateUserVariables(ref text);
+            UserParameters = SwapOutUserVariables(ref text);
 
             int length;
             do

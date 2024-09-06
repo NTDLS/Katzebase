@@ -131,6 +131,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                         //Resolve the field identifier to a value.
                         if (auxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
                         {
+                            if (expressionVariables.Count == 0 && tokenizer.Exausted())
+                            {
+                                //If this is the only token we have then we aren't even going to do math.
+                                //This is because this is more efficient and also because this might be a
+                                //string value from a document field that we assumed was numeric because the
+                                //expression contains no "string operations" such as literal text.
+                                return textValue ?? string.Empty;
+                            }
+
                             textValue.EnsureNotNull();
                             string mathVariable = $"v{variableNumber++}";
                             expressionString = expressionString.Replace(token, mathVariable);

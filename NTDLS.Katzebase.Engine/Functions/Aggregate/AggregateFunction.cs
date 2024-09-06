@@ -139,7 +139,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     break;
                 }
 
-                if (Parameters.Count > protoParamIndex)
+                if (protoParamIndex > values.Count)
                 {
                     if (Parameters[protoParamIndex].HasDefault)
                     {
@@ -152,7 +152,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 }
                 else
                 {
-                    result.Values.Add(new AggregateFunctionParameterValue(Parameters[protoParamIndex], values[protoParamIndex]));
+                    result.Values.Add(new AggregateFunctionParameterValue(Parameters[protoParamIndex], values[protoParamIndex - 1]));
                 }
 
                 satisfiedParameterCount++;

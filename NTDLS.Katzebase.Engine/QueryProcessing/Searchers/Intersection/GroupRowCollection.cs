@@ -2,6 +2,9 @@
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
+    /// <summary>
+    /// Contains the template row for grouping operations (GroupRow)
+    /// </summary>
     internal class GroupRowCollection
     {
         /// <summary>
@@ -14,5 +17,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
         /// The key is the ExpressionKey of the aggregation function these values are for.
         /// </summary>
         public KbInsensitiveDictionary<List<string>> AggregationValues { get; set; } = new();
+
+        /// <summary>
+        /// List of aggregate function parameters after the default first "AggregationValues" parameter.
+        /// The key is the ExpressionKey of the aggregation function these values are for.
+        /// </summary>
+        public KbInsensitiveDictionary<List<string>> SupplementalParameters { get; set; } = new();
     }
 }
