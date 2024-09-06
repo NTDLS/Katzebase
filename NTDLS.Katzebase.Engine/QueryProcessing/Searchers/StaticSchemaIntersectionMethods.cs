@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 //We can't stop when we hit the row limit if we are sorting or grouping.
                 if (query.RowLimit != 0 && query.SortFields.Any() == false
-                     && query.GroupFields.Any() == false && operation.ResultRows.Collection.Count >= query.RowLimit)
+                     && query.GroupFields.Any() == false && operation.ResultingRows.Count >= query.RowLimit)
                 {
                     break;
                 }
@@ -96,9 +96,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             #region Grouping (aggregate function execution and row building).
 
-            if (operation.ResultRows.Collection.Count != 0 && (query.GroupFields.Count != 0 || query.SelectFields.FieldsWithAggregateFunctionCalls.Count != 0))
+            if (operation.ResultingRows.Count != 0 && (query.GroupFields.Count != 0 || query.SelectFields.FieldsWithAggregateFunctionCalls.Count != 0))
             {
-                operation.ResultRows.Collection.Clear(); //Clear the results, we are going to use the operation.GroupRows instead.
+                operation.ResultingRows.Clear(); //Clear the results, we are going to use the operation.GroupRows instead.
 
                 var fieldsWithAggregateFunctionCalls = query.SelectFields.FieldsWithAggregateFunctionCalls;
 
@@ -115,7 +115,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         groupRow.Value.GroupRow.InsertValue(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
 
-                    operation.ResultRows.Add(groupRow.Value.GroupRow);
+                    operation.ResultingRows.Add(groupRow.Value.GroupRow);
                 }
             }
 
@@ -124,9 +124,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             #region Sorting.
 
             //Get a list of all the fields we need to sort by.
-            if (query.SortFields.Any() && operation.ResultRows.Collection.Count != 0)
+            if (query.SortFields.Any() && operation.ResultingRows.Count != 0)
             {
-                var modelAuxiliaryFields = operation.ResultRows.Collection.First().AuxiliaryFields;
+                var modelAuxiliaryFields = operation.ResultingRows.First().AuxiliaryFields;
 
                 var sortingColumns = new List<(string fieldName, KbSortDirection sortDirection)>();
                 foreach (var sortField in query.SortFields.OfType<SortField>())
@@ -140,18 +140,16 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 //Sort the results:
                 var ptSorting = transaction.Instrumentation.CreateToken(PerformanceCounter.Sorting);
-                operation.ResultRows.Collection = operation.ResultRows.Collection.OrderBy
-                    (row => row.AuxiliaryFields, new ResultValueComparer(sortingColumns)).ToList();
-
+                operation.ResultingRows.Sort((x, y) => SchemaIntersectionRowComparer.Compare(sortingColumns, x, y));
                 ptSorting?.StopAndAccumulate();
             }
 
             #endregion
 
             //Enforce row limits.
-            if (query.RowLimit > 0)
+            if (query.RowLimit > 0 && operation.ResultingRows.Count > query.RowLimit)
             {
-                operation.ResultRows.Collection = operation.ResultRows.Collection.Take(query.RowLimit).ToList();
+                operation.ResultingRows.RemoveRange(query.RowLimit, operation.ResultingRows.Count - 10);
             }
 
             if (gatherDocumentPointersForSchemaPrefix != null)
@@ -160,13 +158,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 operation.DocumentPointers = operation.DocumentPointers.Distinct(new DocumentPageEqualityComparer()).ToList();
             }
 
-            if (query.DynamicSchemaFieldFilter != null && operation.ResultRows.Collection.Count > 0)
+            if (query.DynamicSchemaFieldFilter != null && operation.ResultingRows.Count > 0)
             {
                 //If this was a "select *", we may have discovered different "fields" in different 
                 //  documents. We need to make sure that all rows have the same number of values.
 
                 int maxFieldCount = query.SelectFields.Count;
-                foreach (var row in operation.ResultRows.Collection)
+                foreach (var row in operation.ResultingRows)
                 {
                     if (row.Count < maxFieldCount)
                     {
@@ -180,10 +178,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             results.DocumentPointers.AddRange(operation.DocumentPointers);
 
-            results.AddRange(operation.ResultRows);
+            results.AddRange(operation.ResultingRows);
 
             return results;
         }
+
 
         #region Threading: DocumentLookupThreadInstance.
 
@@ -199,11 +198,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             //TODO: This could probably be used to implement OUTER JOINS.
             if (instance.Operation.GatherDocumentPointersForSchemaPrefix == null)
             {
-                resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaKeys.Count == instance.Operation.SchemaMap.Count).ToList();
+                resultingRows.RemoveAll(o => o.SchemaKeys.Count != instance.Operation.SchemaMap.Count);
             }
             else
             {
-                resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaDocumentPointers.Count == instance.Operation.SchemaMap.Count).ToList();
+                resultingRows.RemoveAll(o => o.SchemaDocumentPointers.Count != instance.Operation.SchemaMap.Count);
             }
 
             if (instance.Operation.Query.GroupFields.Any() == false)
@@ -219,7 +218,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 var groupKey = new StringBuilder();
 
-                foreach (var row in resultingRows.Collection)
+                foreach (var row in resultingRows)
                 {
                     foreach (var groupField in instance.Operation.Query.GroupFields)
                     {
@@ -287,16 +286,16 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 #endregion
             }
 
-            lock (instance.Operation.ResultRows)
+            lock (instance.Operation.ResultingRows)
             {
                 //Accumulate the results up to the parent.
                 if (instance.Operation.GatherDocumentPointersForSchemaPrefix == null)
                 {
-                    instance.Operation.ResultRows.AddRange(resultingRows);
+                    instance.Operation.ResultingRows.AddRange(resultingRows);
                 }
                 else
                 {
-                    instance.Operation.DocumentPointers.AddRange(resultingRows.Collection.Select(o => o.SchemaDocumentPointers[instance.Operation.GatherDocumentPointersForSchemaPrefix]));
+                    instance.Operation.DocumentPointers.AddRange(resultingRows.Select(o => o.SchemaDocumentPointers[instance.Operation.GatherDocumentPointersForSchemaPrefix]));
                 }
             }
         }
@@ -349,8 +348,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             if (instance.Operation.Query.Conditions.AllFields.Count != 0)
             {
-                //Filter the rows by the global conditions.
-                resultingRows.Collection = ApplyQueryGlobalConditions(instance.Operation.Transaction, instance, resultingRows);
+                //Remove rows that do not match the the global query conditions (ones in the where clause).
+                resultingRows.FilterByGlobalQueryConditions(instance.Operation.Transaction, instance);
             }
         }
 
@@ -700,11 +699,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
-        private static List<SchemaIntersectionRow> ApplyQueryGlobalConditions(
-            Transaction transaction, DocumentLookupOperation.Instance instance, SchemaIntersectionRowCollection inputResults)
+        private static void FilterByGlobalQueryConditions(this SchemaIntersectionRowCollection inputResults, Transaction transaction, DocumentLookupOperation.Instance instance)
         {
-            var outputResults = new List<SchemaIntersectionRow>();
-
             NCalc.Expression? expression = null;
 
             var conditionHash = instance.Operation.Query.Conditions.Hash
@@ -721,7 +717,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             if (expression == null) throw new KbEngineException($"Expression cannot be null.");
 
-            foreach (var inputResult in inputResults.Collection)
+            var rowsToRemove = new List<SchemaIntersectionRow>();
+
+
+            foreach (var inputResult in inputResults)
             {
                 SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, instance.Operation.Query.Conditions, inputResult.AuxiliaryFields);
 
@@ -729,13 +728,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 bool evaluation = (bool)expression.Evaluate();
                 ptEvaluate?.StopAndAccumulate();
 
-                if (evaluation)
+                if (!evaluation)
                 {
-                    outputResults.Add(inputResult);
+                    rowsToRemove.Add(inputResult);
                 }
             }
 
-            return outputResults;
+            inputResults.RemoveAll(o => rowsToRemove.Contains(o));
         }
 
         /// <summary>

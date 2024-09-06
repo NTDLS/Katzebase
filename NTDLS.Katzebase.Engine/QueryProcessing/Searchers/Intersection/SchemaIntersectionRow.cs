@@ -4,17 +4,14 @@ using NTDLS.Katzebase.Engine.Documents;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
-    internal class SchemaIntersectionRow: List<string?>
+    internal class SchemaIntersectionRow : List<string?>
     {
         public KbInsensitiveDictionary<DocumentPointer> SchemaDocumentPointers { get; private set; } = new();
-
-        //public  Values { get; set; } = new();
 
         /// <summary>
         /// The schemas that were used to make up this row.
         /// </summary>
         public HashSet<string> SchemaKeys { get; set; } = new();
-
 
         /// <summary>
         /// Auxiliary fields are values that may be used for method calls, sorting, grouping, etc.

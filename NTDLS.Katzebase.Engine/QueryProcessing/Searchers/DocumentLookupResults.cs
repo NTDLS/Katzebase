@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
         public void AddRange(SchemaIntersectionRowCollection rowCollection)
         {
-            Collection.AddRange(rowCollection.Collection.Select(o => new DocumentLookupResult(o)));
+            Collection.AddRange(rowCollection.Select(o => new DocumentLookupResult(o)));
         }
     }
 }

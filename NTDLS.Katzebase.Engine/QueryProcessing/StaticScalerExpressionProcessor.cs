@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             //Resolve all expressions and fill in the row fields.
             foreach (var expressionField in query.SelectFields.ExpressionFields.Where(o => o.CollapseType == CollapseType.Scaler))
             {
-                foreach (var row in resultingRows.Collection)
+                foreach (var row in resultingRows)
                 {
                     var collapsedResult = CollapseScalerExpression(transaction, query, row.AuxiliaryFields, expressionField);
                     row.InsertValue(expressionField.FieldAlias, expressionField.Ordinal, collapsedResult);
