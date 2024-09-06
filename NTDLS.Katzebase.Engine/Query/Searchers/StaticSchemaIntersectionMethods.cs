@@ -1,4 +1,5 @@
-﻿using NTDLS.Helpers;
+﻿using Newtonsoft.Json.Linq;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
@@ -16,6 +17,7 @@ using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
 
 namespace NTDLS.Katzebase.Engine.Query.Searchers
 {
@@ -96,14 +98,16 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             #region Grouping.
 
+#if DEBUG
+            if (transaction.Session.IsPreLogin == false) //Debugging for non-login sessions.
+            {
+
+            }
+#endif
+
             if (operation.Results.Collection.Count != 0 && (query.GroupFields.Count != 0 || query.SelectFields.FieldsWithAggregateFunctionCalls.Count != 0))
             {
-#if DEBUG
-                if (transaction.Session.IsPreLogin == false) //Debugging for non-login sessions.
-                {
-
-                }
-#endif
+                /*
 
                 KbInsensitiveDictionary<string?> auxiliaryFields = new();
 
@@ -117,7 +121,7 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                     foreach (var expressionField in query.GroupFields)
                     {
                         var watchMe = StaticScalerExpressionProcessor.CollapseScalerQueryField(transaction, query, row.AuxiliaryFields, expressionField);
-                        groupKey.Append(watchMe);
+                        groupKey.Append(watchMe + "|||");
                     }
 
                     string key = groupKey.ToString();
@@ -149,10 +153,44 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                         groupedRows[key] = aggregateParameters;
                     }
                 }
+                */
+                /*
+                var testGroup = groupedRows.Where(o => o.Key.Contains("dormitorio")).First();
 
-                StaticAggregateExpressionProcessor.CollapseAggregateResultExpressions(transaction, query, groupedRows);
 
+                var fieldValuesByOrdinal = StaticAggregateExpressionProcessor.CollapseAggregateResultExpressions(transaction, query, groupedRows);
+
+                var groupedResults = new SchemaIntersectionRowCollection();
+
+                //spanish: "dormitorio", Latin: "camera da letto", count: 2, sum: 14475
+
+                foreach (var fff in groupedRows)
+                {
+
+                }
+
+
+                foreach (var fieldValueByOrdinal in fieldValuesByOrdinal)
+                {
+                    //var rowResults = new SchemaIntersectionRow();
+
+                    foreach (var bbbb in fieldValueByOrdinal.Value)
+                    {
+                        //rowResults.InsertValue("", fieldValueByOrdinal.Key, bbbb);
+                    }
+
+                    //groupedResults.Add(rowResults);
+                }
+
+
+
+                //groupedResults.
+                //groupedResults.Add(rowResults);
+
+
+                operation.Results = groupedResults;
                 Console.WriteLine();
+                */
 
                 //TODO: This is in the ballpark
                 /*
@@ -332,22 +370,89 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
 
             IntersectAllSchemas(instance, instance.DocumentPointer, ref resultingRows);
 
-            //Limit the results by the rows that have the correct number of schema matches.
-            //TODO: This could probably be used to implement OUTER JOINS.
-            if (instance.Operation.GatherDocumentPointersForSchemaPrefix == null)
+            if (instance.Operation.Query?.GroupFields.Any() == true)
             {
-                resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaKeys.Count == instance.Operation.SchemaMap.Count).ToList();
+                //Limit the results by the rows that have the correct number of schema matches.
+                //TODO: This could probably be used to implement OUTER JOINS.
+                if (instance.Operation.GatherDocumentPointersForSchemaPrefix == null)
+                {
+                    resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaKeys.Count == instance.Operation.SchemaMap.Count).ToList();
+                }
+                else
+                {
+                    resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaDocumentPointers.Count == instance.Operation.SchemaMap.Count).ToList();
+                }
+
+                //We ARE NOT grouping, so collapse all field expressions as scaler expressions.
+                instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
+                StaticScalerExpressionProcessor.CollapseScalerRowExpressions(instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), ref resultingRows);
+                instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Release();
             }
             else
             {
-                resultingRows.Collection = resultingRows.Collection.Where(o => o.SchemaDocumentPointers.Count == instance.Operation.SchemaMap.Count).ToList();
+                var groupKey = new StringBuilder();
+
+                foreach (var row in resultingRows.Collection)
+                {
+                    foreach (var groupField in instance.Operation.Query.GroupFields)
+                    {
+                        var collapsedGroupField = StaticScalerExpressionProcessor.CollapseScalerQueryField(instance.Operation.Transaction,
+                            instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, groupField);
+
+                        groupKey.Append($"[{collapsedGroupField}]");
+                    }
+
+                    instance.Operation.Query.EnsureNotNull();
+
+                    lock (instance.Operation.GroupRows)
+                    {
+                        //What we are doing here is getting the first and only parameter for the aggregation functions and collapsing that parameters expression.
+                        // We then maintain a list of those aggregation functions ExpressionKeys along with the list of group values that will need to be passed
+                        //  to the function once we finally execute it.
+                        if (instance.Operation.GroupRows.TryGetValue(groupKey.ToString(), out var existingGroupRow))
+                        {
+                            //Group already exists, add this row.
+                            foreach (var aggregationFunction in instance.Operation.Query.SelectFields.AggregationFunctions)
+                            {
+                                var soleFunctionParameter = aggregationFunction.Parameters.Single();
+
+                                var collapsedAggregationParameterValue = StaticScalerExpressionProcessor.CollapseScalerExpressionFunctionParameter(
+                                    instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, new(), soleFunctionParameter);
+
+                                existingGroupRow.AggregationValues.Add(aggregationFunction.ExpressionKey, [collapsedAggregationParameterValue]);
+                            }
+                        }
+                        else
+                        {
+                            var groupRow = new GroupRow(); //Group does not yet exist, create it.
+                            foreach (var aggregationFunction in instance.Operation.Query.SelectFields.AggregationFunctions)
+                            {
+                                var soleFunctionParameter = aggregationFunction.Parameters.Single();
+
+                                var collapsedAggregationParameterValue = StaticScalerExpressionProcessor.CollapseScalerExpressionFunctionParameter(
+                                    instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, new(), soleFunctionParameter);
+
+                                groupRow.AggregationValues.Add(aggregationFunction.ExpressionKey, [collapsedAggregationParameterValue]);
+                            }
+
+                            //This is where we need to collapse the non aggregated field expressions. We only do this
+                            //  when we CREATE the GroupRow because these values should be distinct since we are grouping.
+                            //TODO: We should check these fields/expression to make sure that they are either constant or being referenced by the group clause.
+
+                            foreach (var expressionField in instance.Operation.Query.SelectFields.ExpressionFields.Where(o => o.CollapseType == CollapseType.Scaler))
+                            {
+                                var collapsedRowFieldExpression = StaticScalerExpressionProcessor.CollapseScalerExpression(
+                                    instance.Operation.Transaction, instance.Operation.Query, row.AuxiliaryFields, expressionField);
+
+                                groupRow.GroupingFieldValues.Add(expressionField.Ordinal, collapsedRowFieldExpression);
+                            }
+
+                            instance.Operation.GroupRows.Add(groupKey.ToString(), groupRow);
+                        }
+
+                    }
+                }
             }
-
-            instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
-
-            StaticScalerExpressionProcessor.CollapseScalerRowExpressions(instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), ref resultingRows);
-
-            instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Release();
 
             lock (instance.Operation.Results)
             {

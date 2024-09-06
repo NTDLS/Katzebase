@@ -18,37 +18,31 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 "avg:NumericArray/fieldName"
             };
 
-        public static string? ExecuteFunction(string functionName,
-            List<AggregateGenericParameter> parameters, KbInsensitiveDictionary<List<string>> groupedValues)
+        public static string? ExecuteFunction(string functionName, double[] parameters, KbInsensitiveDictionary<List<string>> groupedValues)
         {
-            var proc = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
+
 
             switch (functionName.ToLowerInvariant())
             {
                 case "sum":
                     {
-                        var arrayOfValues = proc.Get<AggregateDecimalArrayParameter>("fieldName");
-                        return arrayOfValues.Values.Sum(o => o).ToString();
+                        return parameters.Sum(o => o).ToString();
                     }
                 case "min":
                     {
-                        var arrayOfValues = proc.Get<AggregateDecimalArrayParameter>("fieldName");
-                        return arrayOfValues.Values.Min(o => o).ToString();
+                        return parameters.Min(o => o).ToString();
                     }
                 case "max":
                     {
-                        var arrayOfValues = proc.Get<AggregateDecimalArrayParameter>("fieldName");
-                        return arrayOfValues.Values.Max(o => o).ToString();
+                        return parameters.Max(o => o).ToString();
                     }
                 case "avg":
                     {
-                        var arrayOfValues = proc.Get<AggregateDecimalArrayParameter>("fieldName");
-                        return arrayOfValues.Values.Average(o => o).ToString();
+                        return parameters.Average(o => o).ToString();
                     }
                 case "count":
                     {
-                        var arrayOfValues = proc.Get<AggregateDecimalArrayParameter>("fieldName");
-                        return arrayOfValues.Values.Count.ToString();
+                        return parameters.Count().ToString();
                     }
             }
 

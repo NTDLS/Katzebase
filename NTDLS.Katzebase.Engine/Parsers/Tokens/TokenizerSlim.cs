@@ -103,6 +103,70 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         }
 
         /// <summary>
+        /// Gets the next token using the given delimiters.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string EatGetNext(char[] delimiters, out char outStoppedAtDelimiter)
+        {
+            var token = string.Empty;
+
+            outStoppedAtDelimiter = '\0';
+
+            if (_caret == _text.Length)
+            {
+                return string.Empty;
+            }
+
+            for (; _caret < _text.Length; _caret++)
+            {
+                if (delimiters.Contains(_text[_caret]) == true)
+                {
+                    outStoppedAtDelimiter = _text[_caret];
+                    _caret++; //skip the delimiter.
+                    break;
+                }
+
+                token += _text[_caret];
+            }
+
+            EatWhiteSpace();
+
+            return token.Trim();
+        }
+
+        /// <summary>
+        /// Gets the next token using the standard delimiters.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string EatGetNext(out char outStoppedAtDelimiter)
+        {
+            var token = string.Empty;
+
+            outStoppedAtDelimiter = '\0';
+
+            if (_caret == _text.Length)
+            {
+                return string.Empty;
+            }
+
+            for (; _caret < _text.Length; _caret++)
+            {
+                if (_standardTokenDelimiters.Contains(_text[_caret]) == true)
+                {
+                    outStoppedAtDelimiter = _text[_caret];
+                    _caret++; //skip the delimiter.
+                    break;
+                }
+
+                token += _text[_caret];
+            }
+
+            EatWhiteSpace();
+
+            return token.Trim();
+        }
+
+        /// <summary>
         /// Moves the caret past any whitespace, does not record breadcrumb.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

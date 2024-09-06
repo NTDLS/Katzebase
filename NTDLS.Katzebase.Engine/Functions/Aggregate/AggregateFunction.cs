@@ -52,22 +52,5 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 
             return new AggregateFunction(functionName, parameters);
         }
-
-        internal AggregateFunctionParameterValueCollection ApplyParameters(List<AggregateGenericParameter> values)
-        {
-            if (values.Count != Parameters.Count)
-            {
-                throw new KbFunctionException($"Incorrect number of parameter passed to [{Name}].");
-            }
-
-            var result = new AggregateFunctionParameterValueCollection();
-
-            for (int i = 0; i < Parameters.Count; i++)
-            {
-                result.Values.Add(new AggregateFunctionParameterValue(Parameters[i], values[i]));
-            }
-
-            return result;
-        }
     }
 }

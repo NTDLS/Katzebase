@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
+using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
@@ -19,21 +20,28 @@ namespace NTDLS.Katzebase.Engine.Query
         /// Resolves all of the query expressions (string concatenation, math and all recursive
         ///     function calls) on a row level and fills in the values in the resultingRows.
         /// </summary>
-        public static void CollapseAggregateResultExpressions(Transaction transaction,
+        public static Dictionary<int, List<string>> CollapseAggregateResultExpressions(Transaction transaction,
             PreparedQuery query, KbInsensitiveDictionary<KbInsensitiveDictionary<List<string>>> groupedRows)
         {
+            var results = new Dictionary<int, List<string>>();
+
             //Resolve all expressions and fill in the row fields.
             foreach (var expressionField in query.SelectFields.ExpressionFields.Where(o => o.CollapseType == CollapseType.Aggregate))
             {
+                var resultingRow = new List<string>();
+
                 foreach (var row in groupedRows)
                 {
-                    //var fff = query.Batch.GetLiteralValue(expressionField.)
-
                     var collapsedResult = CollapseAggregateExpression(transaction, query, row.Value, expressionField);
+                    resultingRow.Add(collapsedResult);
 
                     //row.InsertValue(expressionField.FieldAlias, expressionField.Ordinal, collapsedResult);
                 }
+
+                results.Add(expressionField.Ordinal, resultingRow);
             }
+
+            return results;
         }
 
         /// <summary>
@@ -44,11 +52,13 @@ namespace NTDLS.Katzebase.Engine.Query
         {
             if (expression.FieldExpression is QueryFieldExpressionNumeric expressionNumeric)
             {
-                return CollapseAggregateFunctionNumericParameter(transaction, query, groupedValues, expressionNumeric.FunctionDependencies, expressionNumeric.Value);
+                return CollapseAggregateFunctionNumericParameter(transaction, query,
+                    groupedValues, expressionNumeric.FunctionDependencies, expressionNumeric.Value).First().ToString();
             }
             else if (expression.FieldExpression is QueryFieldExpressionString expressionString)
             {
-                return CollapseAggregateFunctionStringParameter(transaction, query, groupedValues, expressionString.FunctionDependencies, expressionString.Value);
+                return CollapseAggregateFunctionStringParameter(transaction, query, groupedValues,
+                    expressionString.FunctionDependencies, expressionString.Value);
             }
             else
             {
@@ -60,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.Query
         /// Takes a string expression string and performs math on all of the values, including those from all
         ///     recursive function calls.
         /// </summary>
-        static string CollapseAggregateFunctionNumericParameter(Transaction transaction,
+        static double[] CollapseAggregateFunctionNumericParameter(Transaction transaction,
             PreparedQuery query, KbInsensitiveDictionary<List<string>> groupedValues,
             List<IQueryFieldExpressionFunction> functions, string expressionString)
         {
@@ -70,13 +80,53 @@ namespace NTDLS.Katzebase.Engine.Query
 
             int variableNumber = 0;
 
-            var expressionVariables = new Dictionary<string, double>();
+            var expressionVariables = new List<string>();
+
+            int groupRowCount = groupedValues.First().Value.Count;
+
+            var groupRows = new List<double>[groupRowCount];
+            for (int i = 0; i < groupRowCount; i++)
+            {
+                groupRows[i] = new List<double>();
+            }
 
             while (!tokenizer.Exausted())
             {
-                var token = tokenizer.EatGetNext();
+                var token = tokenizer.EatGetNext(out char delimiter);
 
-                if (token.StartsWith("$x_") && token.EndsWith('$'))
+                if (token.StartsWith("$f_") && token.EndsWith('$'))
+                {
+                    //Resolve the token to a field identifier.
+                    if (query.SelectFields.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
+                    {
+                        //Resolve the field identifier to a value.
+                        if (groupedValues.TryGetValue(fieldIdentifier.Value, out var textValues))
+                        {
+                            string mathVariable = $"v{variableNumber++}";
+                            expressionString = expressionString.Replace(token, mathVariable);
+                            expressionVariables.Add(mathVariable);
+
+                            if (textValues.Count != groupRowCount)
+                            {
+                                throw new KbEngineException($"Incorrect number of aggregate values returned from expression: [{fieldIdentifier.Value}].");
+                            }
+
+                            for (int i = 0; i < groupRowCount; i++)
+                            {
+                                groupRows[i].Add(double.Parse(query.Batch.GetLiteralValue(textValues[i])));
+                            }
+                        }
+                        else
+                        {
+                            throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
+                        }
+                    }
+                    else
+                    {
+                        throw new KbEngineException($"Function parameter field is not defined: [{token}].");
+                    }
+                }
+                else if (token.StartsWith("$x_") && token.EndsWith('$'))
                 {
                     //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
 
@@ -91,9 +141,14 @@ namespace NTDLS.Katzebase.Engine.Query
 
                     var functionResult = CollapseAggregateFunction(transaction, query, groupedValues, functions, subFunction);
 
+                    for (int i = 0; i < groupRowCount; i++)
+                    {
+                        groupRows[i].Add(double.Parse(functionResult));
+                    }
+
                     string mathVariable = $"v{variableNumber++}";
-                    expressionVariables.Add(mathVariable, double.Parse(functionResult));
                     expressionString = expressionString.Replace(token, mathVariable);
+                    expressionVariables.Add(mathVariable);
                 }
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
@@ -105,27 +160,52 @@ namespace NTDLS.Katzebase.Engine.Query
                 {
                     //This is a numeric placeholder, get the literal value and append it.
 
+                    var literalValue = double.Parse(query.Batch.GetLiteralValue(token));
+
+                    for (int i = 0; i < groupRowCount; i++)
+                    {
+                        groupRows[i].Add(literalValue);
+                    }
+
                     string mathVariable = $"v{variableNumber++}";
                     expressionString = expressionString.Replace(token, mathVariable);
-                    expressionVariables.Add(mathVariable, double.Parse(query.Batch.GetLiteralValue(token)));
+                    expressionVariables.Add(mathVariable);
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
                 {
                     throw new KbEngineException($"Function parameter string sub-type is not implemented: [{token}].");
                 }
+
+                if (delimiter != '\0')
+                {
+                    for (int i = 0; i < groupRowCount; i++)
+                    {
+                        //stringResults[i] += delimiter;
+                    }
+                }
             }
 
-            var expressionHash = Library.Helpers.GetSHA1Hash(expressionString);
+            //var expressionHash = Library.Helpers.GetSHA1Hash(expressionString);
 
-            //Perhaps we can pass in a cache object?
+            var finalResults = new double[groupRowCount];
+
             var expression = new NCalc.Expression(expressionString);
 
-            foreach (var expressionVariable in expressionVariables)
+            int rowIndex = 0;
+
+            foreach (var groupRow in groupRows) 
             {
-                expression.Parameters[expressionVariable.Key] = expressionVariable.Value;
+                int variableIndex = 0;
+                foreach (var ffff in groupRow)
+                {
+                    expression.Parameters[expressionVariables[variableIndex++]] = ffff;
+                }
+
+                finalResults[rowIndex] = (double)expression.Evaluate();
+                rowIndex++;
             }
 
-            return expression.Evaluate()?.ToString() ?? string.Empty;
+            return finalResults;
         }
 
         /// <summary>
@@ -202,7 +282,7 @@ namespace NTDLS.Katzebase.Engine.Query
         static string CollapseAggregateFunction(Transaction transaction, PreparedQuery query,
             KbInsensitiveDictionary<List<string>> groupedValues, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
         {
-            var collapsedParameters = new List<string>();
+            var collapsedParameters = new List<double[]>();
 
             foreach (var parameter in function.Parameters)
             {
@@ -223,15 +303,10 @@ namespace NTDLS.Katzebase.Engine.Query
                 }
             }
 
-            //TODO: What do we do with [collapsedParameters] at this point? Do we simplify it and remove all parameters from aggregate functions?
-
             //Execute function with the parameters from above ↑
-            var methodResult = AggregateFunctionImplementation.ExecuteFunction(function.FunctionName, new(), groupedValues);
+            var methodResult = AggregateFunctionImplementation.ExecuteFunction(function.FunctionName, collapsedParameters.First(), groupedValues);
 
-            //TODO: think through the nullability here.
-            //return methodResult ?? string.Empty;
-
-            return string.Empty; //TODO: Implement function call.
+            return methodResult.ToString();
         }
     }
 }

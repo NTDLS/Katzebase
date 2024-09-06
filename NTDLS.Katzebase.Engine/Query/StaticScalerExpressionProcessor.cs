@@ -12,6 +12,8 @@ using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
+using System.Collections.Generic;
+using System.Reflection.Metadata;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
 
@@ -81,6 +83,54 @@ namespace NTDLS.Katzebase.Engine.Query
             else
             {
                 throw new KbEngineException($"Field expression type is not implemented: [{queryField.Expression.GetType().Name}].");
+            }
+        }
+
+        /// <summary>
+        /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
+        /// </summary>
+        public static string CollapseScalerQueryFieldExpression(Transaction transaction,
+            PreparedQuery query, KbInsensitiveDictionary<string?> auxiliaryFields, IQueryFieldExpression queryField)
+        {
+            if (queryField is QueryFieldExpressionNumeric expressionNumeric)
+            {
+                return CollapseScalerFunctionNumericParameter(transaction, query, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value);
+            }
+            else if (queryField is QueryFieldExpressionString expressionString)
+            {
+                return CollapseScalerFunctionStringParameter(transaction, query, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value);
+            }
+            else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
+            {
+                if (auxiliaryFields.TryGetValue(documentIdentifier.Value, out var auxiliaryValue))
+                {
+                    return auxiliaryValue ?? string.Empty; //TODO: Should auxiliaryFields really allow NULL values?
+                }
+                throw new KbEngineException($"Auxiliary fields not found: [{documentIdentifier.Value}].");
+            }
+            else
+            {
+                throw new KbEngineException($"Field expression type is not implemented: [{queryField.GetType().Name}].");
+            }
+        }
+
+        /// <summary>
+        /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
+        /// </summary>
+        public static string CollapseScalerExpressionFunctionParameter(Transaction transaction,
+            PreparedQuery query, KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functionDependencies, IExpressionFunctionParameter parameter)
+        {
+            if (parameter is ExpressionFunctionParameterString parameterString)
+            {
+                return CollapseScalerFunctionStringParameter(transaction, query, auxiliaryFields, functionDependencies, parameterString.Expression);
+            }
+            else if (parameter is ExpressionFunctionParameterNumeric parameterNumeric)
+            {
+                return CollapseScalerFunctionNumericParameter(transaction, query, auxiliaryFields, functionDependencies, parameterNumeric.Expression);
+            }
+            else
+            {
+                throw new KbEngineException($"Function parameter type is not implemented [{parameter.GetType().Name}].");
             }
         }
 
@@ -248,20 +298,7 @@ namespace NTDLS.Katzebase.Engine.Query
 
             foreach (var parameter in function.Parameters)
             {
-                if (parameter is ExpressionFunctionParameterString parameterString)
-                {
-                    var collapsedParameter = CollapseScalerFunctionStringParameter(transaction, query, auxiliaryFields, functions, parameterString.Expression);
-                    collapsedParameters.Add(collapsedParameter);
-                }
-                else if (parameter is ExpressionFunctionParameterNumeric parameterNumeric)
-                {
-                    var collapsedParameter = CollapseScalerFunctionNumericParameter(transaction, query, auxiliaryFields, functions, parameterNumeric.Expression);
-                    collapsedParameters.Add(collapsedParameter);
-                }
-                else
-                {
-                    throw new KbEngineException($"Function parameter type is not implemented [{parameter.GetType().Name}].");
-                }
+                collapsedParameters.Add(CollapseScalerExpressionFunctionParameter(transaction, query, auxiliaryFields, functions, parameter));
             }
 
             //Execute function with the parameters from above ↑

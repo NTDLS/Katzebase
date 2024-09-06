@@ -166,7 +166,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
                 {
                     //The expression key is used to match the function calls to the token in the parent expression.
-                    var expressionKey = rootQueryFieldExpression.GetNextExpressionKey();
+                    var expressionKey = queryFields.GetNextExpressionKey();
                     var basicDataType = scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric ? BasicDataType.Numeric : BasicDataType.String;
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(scalerFunction.Name, expressionKey, basicDataType);
 
@@ -177,7 +177,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
                 {
                     //The expression key is used to match the function calls to the token in the parent expression.
-                    var expressionKey = rootQueryFieldExpression.GetNextExpressionKey();
+                    var expressionKey = queryFields.GetNextExpressionKey();
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionAggregate(aggregateFunction.Name, expressionKey, BasicDataType.Numeric);
 
                     ParseFunctionCallRecursive(ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);

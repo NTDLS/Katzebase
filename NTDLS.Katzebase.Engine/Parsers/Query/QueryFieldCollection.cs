@@ -13,9 +13,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
     /// </summary>
     internal class QueryFieldCollection : List<QueryField>
     {
-        private int nextFieldAlias = 0;
-        private int _nextDocumentFieldKey = 0;
-
         public QueryBatch QueryBatch { get; private set; }
 
         /// <summary>
@@ -30,6 +27,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <returns></returns>
         public string GetNextFieldAlias()
             => $"Expression{nextFieldAlias++}";
+        private int nextFieldAlias = 0;
+
+        public string GetNextExpressionKey()
+            => $"$x_{_nextExpressionKey++}$";
+        private int _nextExpressionKey = 0;
 
         /// <summary>
         /// Get a document field placeholder.
@@ -37,13 +39,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <returns></returns>
         public string GetNextDocumentFieldKey()
             => $"$f_{_nextDocumentFieldKey++}$";
+        private int _nextDocumentFieldKey = 0;
 
         public QueryFieldCollection(QueryBatch queryBatch)
         {
             QueryBatch = queryBatch;
         }
 
-        #region Exposed collection: ScalerFunctions.
+        #region Exposed collection: FieldsWithScalerFunctionCalls.
 
         private List<ExposedFunction>? _exposedScalerFunctions = null;
         private readonly object _exposedScalerFunctionsLock = new();
@@ -98,7 +101,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #endregion
 
-        #region Exposed collection: AggregateFunctions.
+        #region Exposed collection: FieldsWithAggregateFunctionCalls.
 
         private List<ExposedFunction>? _exposedAggregateFunctions = null;
         private readonly object _exposedAggregateFunctionsLock = new();
@@ -153,7 +156,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #endregion
 
-        #region Exposed collection: Constants.
+        #region Exposed collection: ConstantFields.
 
         private List<ExposedConstant>? _exposedConstants = null;
         private readonly object _exposedConstantsLock = new();
@@ -209,7 +212,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #endregion
 
-        #region Exposed collection: DocumentIdentifiers.
+        #region Exposed collection: DocumentIdentifierFields.
 
         private List<ExposedDocumentIdentifier>? _exposedDocumentIdentifiers = null;
         private readonly object _exposedDocumentIdentifiersLock = new();
@@ -261,7 +264,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #endregion
 
-        #region Exposed collection: Expressions.
+        #region Exposed collection: ExpressionFields.
 
         private List<ExposedExpression>? _exposedExpressions = null;
         private readonly object _exposedExpressionsLock = new();
@@ -315,6 +318,61 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                 }
 
                 return _exposedExpressions;
+            }
+        }
+
+        #endregion
+
+        #region Collection: AggregationFunctions.
+
+        private List<QueryFieldExpressionFunctionAggregate>? _aggregationFunctions = null;
+        private readonly object _aggregationFunctionsLock = new();
+
+        public void InvalidateAggregationFunctionsCache()
+        {
+            lock (_aggregationFunctionsLock)
+            {
+                _aggregationFunctions = null;
+            }
+        }
+
+        /// <summary>
+        /// Returns a list of fields that have function call dependencies.
+        /// </summary>
+        public List<QueryFieldExpressionFunctionAggregate> AggregationFunctions
+        {
+            get
+            {
+                if (_aggregationFunctions == null)
+                {
+                    lock (_aggregationFunctionsLock)
+                    {
+                        if (_aggregationFunctions != null)
+                        {
+                            //We check again here because other threads may have started waiting on the lock
+                            //  with the intention of hydrating _aggregationFunctions themselves, we do this because
+                            //  we don't want to lock on reads once this _aggregationFunctions is hydrated.
+                            return _aggregationFunctions;
+                        }
+
+                        var results = new List<QueryFieldExpressionFunctionAggregate>();
+
+                        foreach (var queryField in this)
+                        {
+                            if (queryField.Expression is IQueryFieldExpression fieldExpression)
+                            {
+                                foreach(var function in fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>())
+                                {
+                                    results.Add(function);
+                                }
+                            }
+                        }
+
+                        _aggregationFunctions = results;
+                    }
+                }
+
+                return _aggregationFunctions;
             }
         }
 

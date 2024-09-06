@@ -5,7 +5,6 @@
     /// </summary>
     internal class QueryFieldExpressionNumeric : IQueryFieldExpression
     {
-        private int _nextExpressionKey = 0;
 
         public string Value { get; set; }
 
@@ -23,8 +22,5 @@
         {
             Value = value;
         }
-
-        public string GetNextExpressionKey()
-            => $"$x_{_nextExpressionKey++}$";
     }
 }

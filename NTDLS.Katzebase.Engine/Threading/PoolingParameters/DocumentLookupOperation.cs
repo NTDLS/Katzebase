@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
@@ -6,11 +7,18 @@ using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 
 namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
 {
+
     /// <summary>
     /// Thread parameters for a lookup operations. Shared across all threads in a single operation.
     /// </summary>
     internal class DocumentLookupOperation
     {
+        /// <summary>
+        /// Contains the list of field values for the grouping fields, and the need-to-be aggregated values for fields
+        /// that are needed to collapse aggregation functions. The key is the concatenated values from the grouping fields.
+        /// </summary>
+        public Dictionary<string, GroupRow> GroupRows { get; set; } = new();
+
         public string? GatherDocumentPointersForSchemaPrefix { get; set; } = null;
         public SchemaIntersectionRowCollection Results { get; set; } = new();
         public List<DocumentPointer> DocumentPointers { get; set; } = new();
