@@ -1,6 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Types;
-
-namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
+﻿namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
     /// <summary>
     /// Contains the values that are needed to be stored at the group level, but per aggregate function expression key.
@@ -20,16 +18,5 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
         /// The key is the ExpressionKey of the aggregation function these values are for.
         /// </summary>
         public List<string> SupplementalParameters { get; set; } = new();
-
-        /// <summary>
-        /// Auxiliary fields are values that may be used for method calls, sorting, grouping, etc.
-        ///     where the fields value may not necessarily be returned directly in the results.
-        /// </summary>
-        public KbInsensitiveDictionary<string?> AuxiliaryFields { get; set; }
-
-        public GroupAggregateFunctionParameter(KbInsensitiveDictionary<string?>? auxiliaryFields)
-        {
-            AuxiliaryFields = auxiliaryFields ?? new();
-        }
     }
 }

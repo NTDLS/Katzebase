@@ -94,18 +94,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             queue.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
 
-            #region Grouping.
-
-#if DEBUG
-            if (transaction.Session.IsPreLogin == false) //Debugging for non-login sessions.
-            {
-
-            }
-#endif
+            #region Grouping (aggregate function execution and row building).
 
             if (operation.Results.Collection.Count != 0 && (query.GroupFields.Count != 0 || query.SelectFields.FieldsWithAggregateFunctionCalls.Count != 0))
             {
-                var resultRows = new SchemaIntersectionRowCollection();
+                operation.Results.Collection.Clear();
 
                 var FieldsWithAggregateFunctionCalls = query.SelectFields.FieldsWithAggregateFunctionCalls;
 
@@ -118,19 +111,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                     foreach (var aggregateFunctionField in FieldsWithAggregateFunctionCalls)
                     {
-                        var groupedValues = new KbInsensitiveDictionary<List<string>>();
-
                         var aggregateExpressionResult = StaticAggregateExpressionProcessor.CollapseAggregateQueryField(
                             transaction, query, groupRow.Value.GroupAggregateFunctionParameters, aggregateFunctionField);
 
                         resultRow.InsertValue(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
 
-
-                    resultRows.Add(resultRow);
+                    operation.Results.Add(resultRow);
                 }
-
-                operation.Results = resultRows;
             }
 
             #endregion
@@ -229,6 +217,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
             else
             {
+                #region Grouping.
+
                 var groupKey = new StringBuilder();
 
                 foreach (var row in resultingRows.Collection)
@@ -267,13 +257,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         {
                             var aggregationArrayParam = aggregationFunction.Function.Parameters.First();
 
+                            //All aggregation parameters are collapsed here at query processing time.
                             var collapsedAggregationParameterValue = StaticScalerExpressionProcessor.CollapseScalerExpressionFunctionParameter(
                                 instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, aggregationFunction.FunctionDependencies, aggregationArrayParam);
 
                             if (groupRowCollection.GroupAggregateFunctionParameters.TryGetValue(aggregationFunction.Function.ExpressionKey, out var groupAggregateFunctionParameter) == false)
                             {
                                 //Create a new group detail.
-                                groupAggregateFunctionParameter = new(row.AuxiliaryFields);
+                                groupAggregateFunctionParameter = new();
 
                                 //Skip past the required AggregationArray parameter and collapse any supplemental aggregation function parameters.
                                 //Supplemental parameters for aggregate functions would be something like "boolean countDistinct" for the count() function.
@@ -294,6 +285,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         }
                     }
                 }
+
+                #endregion
             }
 
             lock (instance.Operation.Results)
@@ -332,10 +325,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             };
 
             var resultingRow = new SchemaIntersectionRow();
-            lock (resultingRows)
-            {
-                resultingRows.Add(resultingRow);
-            }
+            resultingRows.Add(resultingRow);
 
             if (instance.Operation.GatherDocumentPointersForSchemaPrefix != null)
             {
@@ -483,10 +473,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         //  with and and all other joins.
 
                         resultingRow = rowTemplate.Clone();
-                        lock (resultingRows)
-                        {
-                            resultingRows.Add(resultingRow);
-                        }
+                        resultingRows.Add(resultingRow);
                     }
 
                     if (instance.Operation.GatherDocumentPointersForSchemaPrefix != null)

@@ -7,7 +7,6 @@ using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
-using System.Text;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing
 {
@@ -40,104 +39,24 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         static string CollapseAggregateFunctionNumericParameter(Transaction transaction, PreparedQuery query,
             List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters, string expressionString)
         {
-            //Build a cachable numeric expression, interpolate the values and execute the expression.
-
             var tokenizer = new TokenizerSlim(expressionString, ['~', '!', '%', '^', '&', '*', '(', ')', '-', '/', '+']);
 
-            int variableNumber = 0;
-
-            var expressionVariables = new Dictionary<string, string>();
-
-            while (!tokenizer.Exausted())
+            var token = tokenizer.EatGetNext();
+            if (!tokenizer.Exausted())
             {
-                var token = tokenizer.EatGetNext();
-
-                if (token.StartsWith("$f_") && token.EndsWith('$'))
-                {
-                    //Resolve the token to a field identifier.
-                    if (query.SelectFields.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
-                    {
-                        /*
-                        //Resolve the field identifier to a value.
-                        if (aggregateFunctionParameters.AuxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
-                        {
-                            if (expressionVariables.Count == 0 && tokenizer.Exausted())
-                            {
-                                //If this is the only token we have then we aren't even going to do math.
-                                //This is because this is more efficient and also because this might be a
-                                //string value from a document field that we assumed was numeric because the
-                                //expression contains no "string operations" such as literal text.
-                                return textValue ?? string.Empty;
-                            }
-
-                            textValue.EnsureNotNull();
-                            string mathVariable = $"v{variableNumber++}";
-                            expressionString = expressionString.Replace(token, mathVariable);
-                            expressionVariables.Add(mathVariable, double.Parse(query.Batch.GetLiteralValue(textValue)));
-                        }
-                        else
-                        {
-                            throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
-                        }
-                        */
-                    }
-                    else
-                    {
-                        throw new KbEngineException($"Function parameter field is not defined: [{token}].");
-                    }
-                }
-                else if (token.StartsWith("$x_") && token.EndsWith('$'))
-                {
-                    //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
-                    var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = CollapseAggregateFunction(transaction, query, functions, aggregateFunctionParameters, subFunction);
-
-                    string mathVariable = $"v{variableNumber++}";
-                    expressionVariables.Add(mathVariable, functionResult);
-                    expressionString = expressionString.Replace(token, mathVariable);
-                }
-                else if (token.StartsWith("$s_") && token.EndsWith('$'))
-                {
-                    //This is a string placeholder, get the literal value and complain about it.
-
-                    throw new KbEngineException($"Could not perform mathematical operation on [{query.Batch.GetLiteralValue(token)}]");
-                }
-                else if (token.StartsWith("$n_") && token.EndsWith('$'))
-                {
-                    //This is a numeric placeholder, get the literal value and append it.
-
-                    string mathVariable = $"v{variableNumber++}";
-                    expressionString = expressionString.Replace(token, mathVariable);
-                    expressionVariables.Add(mathVariable, query.Batch.GetLiteralValue(token));
-                }
-                else if (token.StartsWith('$') && token.EndsWith('$'))
-                {
-                    throw new KbEngineException($"Function parameter string sub-type is not implemented: [{token}].");
-                }
+                throw new KbEngineException($"The aggregate function expression was not collapsed as expected..");
             }
 
-            if (expressionVariables.Count == 1)
+            if (token.StartsWith("$x_") && token.EndsWith('$'))
             {
-                //If this is the only token we have then we aren't even going to do math.
-                //This is because this is more efficient and also because this might be a
-                //string value from a document field that we assumed was numeric because the
-                //expression contains no "string operations" such as literal text.
-
-                //We do "best effort" math.
-                return expressionVariables.First().Value;
+                //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
+                var subFunction = functions.Single(o => o.ExpressionKey == token);
+                return CollapseAggregateFunction(transaction, query, functions, aggregateFunctionParameters, subFunction);
             }
 
-            var expressionHash = Library.Helpers.GetSHA1Hash(expressionString);
-
-            //Perhaps we can pass in a cache object?
-            var expression = new NCalc.Expression(expressionString);
-
-            foreach (var expressionVariable in expressionVariables)
-            {
-                expression.Parameters[expressionVariable.Key] = double.Parse(expressionVariable.Value);
-            }
-
-            return expression.Evaluate()?.ToString() ?? string.Empty;
+            //All aggregation parameters are collapsed as scaler expressions at query processing time.
+            //There should never be anything to do here.
+            throw new KbNotImplementedException();
         }
 
         /// <summary>
@@ -148,65 +67,23 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters, string expressionString)
         {
             var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
-            string token;
 
-            var sb = new StringBuilder();
-
-            while (!tokenizer.Exausted())
+            string token = tokenizer.EatGetNext();
+            if (!tokenizer.Exausted())
             {
-                token = tokenizer.EatGetNext();
-
-                if (token.StartsWith("$f_") && token.EndsWith('$'))
-                {
-                    //Resolve the token to a field identifier.
-                    if (query.SelectFields.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
-                    {
-                        throw new NotImplementedException();
-                        /*
-                        //Resolve the field identifier to a value.
-                        if (aggregateFunctionParameters.AuxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
-                        {
-                            sb.Append(textValue);
-                        }
-                        else
-                        {
-                            throw new KbEngineException($"Function parameter auxiliary field is not defined: [{token}].");
-                        }
-                        */
-                    }
-                    else
-                    {
-                        throw new KbEngineException($"Function parameter field is not defined: [{token}].");
-                    }
-                }
-                else if (token.StartsWith("$x_") && token.EndsWith('$'))
-                {
-                    //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
-                    var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = CollapseAggregateFunction(transaction, query, functions, aggregateFunctionParameters, subFunction);
-                    sb.Append(functionResult);
-                }
-                else if (token.StartsWith("$s_") && token.EndsWith('$'))
-                {
-                    //This is a string placeholder, get the literal value and append it.
-                    sb.Append(query.Batch.GetLiteralValue(token));
-                }
-                else if (token.StartsWith("$n_") && token.EndsWith('$'))
-                {
-                    //This is a numeric placeholder, get the literal value and append it.
-                    sb.Append(query.Batch.GetLiteralValue(token));
-                }
-                else if (token.StartsWith('$') && token.EndsWith('$'))
-                {
-                    throw new KbEngineException($"Function parameter string sub-type is not implemented: [{token}].");
-                }
-                else
-                {
-                    sb.Append(query.Batch.GetLiteralValue(token));
-                }
+                throw new KbEngineException($"The aggregate function expression was not collapsed as expected..");
             }
 
-            return sb.ToString();
+            if (token.StartsWith("$x_") && token.EndsWith('$'))
+            {
+                //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
+                var subFunction = functions.Single(o => o.ExpressionKey == token);
+                return CollapseAggregateFunction(transaction, query, functions, aggregateFunctionParameters, subFunction);
+            }
+
+            //All aggregation parameters are collapsed as scaler expressions at query processing time.
+            //There should never be anything to do here.
+            throw new KbNotImplementedException();
         }
 
         /// <summary>

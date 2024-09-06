@@ -332,11 +332,19 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
                 else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
                 {
-                    //This is an aggregate function that can only return a number, so we still have a valid numeric operation.
+                    if (aggregateFunction.ReturnType == KbAggregateFunctionParameterType.Numeric)
+                    {
+                        //This function returns a number, so we still have a valid numeric operation.
 
-                    //Skip the function call.
-                    string functionBody = tokenizer.EatGetMatchingScope('(', ')');
-                    continue;
+                        //Skip the function call.
+                        string functionBody = tokenizer.EatGetMatchingScope('(', ')');
+                        continue;
+                    }
+                    else
+                    {
+                        //This function returns a non-number, so this is not a numeric operation.
+                        return false;
+                    }
                 }
                 else
                 {

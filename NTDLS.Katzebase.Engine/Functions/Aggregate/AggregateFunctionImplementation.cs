@@ -60,7 +60,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                                 var inputBytes = Encoding.UTF8.GetBytes(str);
                                 sha1.TransformBlock(inputBytes, 0, inputBytes.Length, null, 0);
                             }
-                           
+
                             sha1.TransformFinalBlock(Array.Empty<byte>(), 0, 0); // Finalize the hash
 
                             var sb = new StringBuilder();
