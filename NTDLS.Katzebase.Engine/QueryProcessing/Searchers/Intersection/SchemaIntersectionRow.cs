@@ -4,11 +4,11 @@ using NTDLS.Katzebase.Engine.Documents;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
-    internal class SchemaIntersectionRow
+    internal class SchemaIntersectionRow: List<string?>
     {
         public KbInsensitiveDictionary<DocumentPointer> SchemaDocumentPointers { get; private set; } = new();
 
-        public List<string?> Values { get; set; } = new();
+        //public  Values { get; set; } = new();
 
         /// <summary>
         /// The schemas that were used to make up this row.
@@ -24,20 +24,20 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 
         public void InsertValue(string fieldNameForException, int ordinal, string? value)
         {
-            if (Values.Count <= ordinal)
+            if (Count <= ordinal)
             {
-                int difference = ordinal + 1 - Values.Count;
+                int difference = ordinal + 1 - Count;
                 if (difference > 0)
                 {
-                    Values.AddRange(new string[difference]);
+                    AddRange(new string[difference]);
                 }
             }
-            if (Values[ordinal] != null)
+            if (this[ordinal] != null)
             {
                 throw new KbEngineException($"Ambiguous field [{fieldNameForException}].");
             }
 
-            Values[ordinal] = value;
+            this[ordinal] = value;
         }
 
         public void AddSchemaDocumentPointer(string schemaPrefix, DocumentPointer documentPointer)
@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
                 SchemaKeys = new HashSet<string>(SchemaKeys)
             };
 
-            newRow.Values.AddRange(Values);
+            newRow.AddRange(this);
 
             newRow.AuxiliaryFields = AuxiliaryFields.Clone();
             newRow.SchemaDocumentPointers = SchemaDocumentPointers.Clone();

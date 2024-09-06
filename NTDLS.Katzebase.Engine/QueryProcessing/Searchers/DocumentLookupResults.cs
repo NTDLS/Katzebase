@@ -23,12 +23,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
         public void AddRange(List<SchemaIntersectionRow> rows)
         {
-            Collection.AddRange(rows.Select(o => new DocumentLookupResult(o.Values)));
+            Collection.AddRange(rows.Select(o => new DocumentLookupResult(o)));
         }
 
         public void AddRange(SchemaIntersectionRowCollection rowCollection)
         {
-            Collection.AddRange(rowCollection.Collection.Select(o => new DocumentLookupResult(o.Values)));
+            Collection.AddRange(rowCollection.Collection.Select(o => new DocumentLookupResult(o)));
         }
     }
 }

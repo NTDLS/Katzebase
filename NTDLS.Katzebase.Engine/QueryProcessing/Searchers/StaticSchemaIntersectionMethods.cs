@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 //We can't stop when we hit the row limit if we are sorting or grouping.
                 if (query.RowLimit != 0 && query.SortFields.Any() == false
-                     && query.GroupFields.Any() == false && operation.Results.Collection.Count >= query.RowLimit)
+                     && query.GroupFields.Any() == false && operation.ResultRows.Collection.Count >= query.RowLimit)
                 {
                     break;
                 }
@@ -96,28 +96,26 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             #region Grouping (aggregate function execution and row building).
 
-            if (operation.Results.Collection.Count != 0 && (query.GroupFields.Count != 0 || query.SelectFields.FieldsWithAggregateFunctionCalls.Count != 0))
+            if (operation.ResultRows.Collection.Count != 0 && (query.GroupFields.Count != 0 || query.SelectFields.FieldsWithAggregateFunctionCalls.Count != 0))
             {
-                operation.Results.Collection.Clear();
+                operation.ResultRows.Collection.Clear(); //Clear the results, we are going to use the operation.GroupRows instead.
 
-                var FieldsWithAggregateFunctionCalls = query.SelectFields.FieldsWithAggregateFunctionCalls;
+                var fieldsWithAggregateFunctionCalls = query.SelectFields.FieldsWithAggregateFunctionCalls;
+
+                //The operation.GroupRows contains the resulting row template, with all fields in the correct position,
+                //  all that is left to do is execute the aggregation functions and fill in the appropriate fields.
 
                 foreach (var groupRow in operation.GroupRows)
                 {
-                    var resultRow = new SchemaIntersectionRow
-                    {
-                        Values = groupRow.Value.GroupRow,
-                    };
-
-                    foreach (var aggregateFunctionField in FieldsWithAggregateFunctionCalls)
+                    foreach (var aggregateFunctionField in fieldsWithAggregateFunctionCalls)
                     {
                         var aggregateExpressionResult = StaticAggregateExpressionProcessor.CollapseAggregateQueryField(
                             transaction, query, groupRow.Value.GroupAggregateFunctionParameters, aggregateFunctionField);
 
-                        resultRow.InsertValue(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
+                        groupRow.Value.GroupRow.InsertValue(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
 
-                    operation.Results.Add(resultRow);
+                    operation.ResultRows.Add(groupRow.Value.GroupRow);
                 }
             }
 
@@ -126,9 +124,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             #region Sorting.
 
             //Get a list of all the fields we need to sort by.
-            if (query.SortFields.Any() && operation.Results.Collection.Count != 0)
+            if (query.SortFields.Any() && operation.ResultRows.Collection.Count != 0)
             {
-                var modelAuxiliaryFields = operation.Results.Collection.First().AuxiliaryFields;
+                var modelAuxiliaryFields = operation.ResultRows.Collection.First().AuxiliaryFields;
 
                 var sortingColumns = new List<(string fieldName, KbSortDirection sortDirection)>();
                 foreach (var sortField in query.SortFields.OfType<SortField>())
@@ -142,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 //Sort the results:
                 var ptSorting = transaction.Instrumentation.CreateToken(PerformanceCounter.Sorting);
-                operation.Results.Collection = operation.Results.Collection.OrderBy
+                operation.ResultRows.Collection = operation.ResultRows.Collection.OrderBy
                     (row => row.AuxiliaryFields, new ResultValueComparer(sortingColumns)).ToList();
 
                 ptSorting?.StopAndAccumulate();
@@ -153,7 +151,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             //Enforce row limits.
             if (query.RowLimit > 0)
             {
-                operation.Results.Collection = operation.Results.Collection.Take(query.RowLimit).ToList();
+                operation.ResultRows.Collection = operation.ResultRows.Collection.Take(query.RowLimit).ToList();
             }
 
             if (gatherDocumentPointersForSchemaPrefix != null)
@@ -162,18 +160,18 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 operation.DocumentPointers = operation.DocumentPointers.Distinct(new DocumentPageEqualityComparer()).ToList();
             }
 
-            if (query.DynamicSchemaFieldFilter != null && operation.Results.Collection.Count > 0)
+            if (query.DynamicSchemaFieldFilter != null && operation.ResultRows.Collection.Count > 0)
             {
                 //If this was a "select *", we may have discovered different "fields" in different 
                 //  documents. We need to make sure that all rows have the same number of values.
 
                 int maxFieldCount = query.SelectFields.Count;
-                foreach (var row in operation.Results.Collection)
+                foreach (var row in operation.ResultRows.Collection)
                 {
-                    if (row.Values.Count < maxFieldCount)
+                    if (row.Count < maxFieldCount)
                     {
-                        int difference = maxFieldCount - row.Values.Count;
-                        row.Values.AddRange(new string[difference]);
+                        int difference = maxFieldCount - row.Count;
+                        row.AddRange(new string[difference]);
                     }
                 }
             }
@@ -182,7 +180,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             results.DocumentPointers.AddRange(operation.DocumentPointers);
 
-            results.AddRange(operation.Results);
+            results.AddRange(operation.ResultRows);
 
             return results;
         }
@@ -247,9 +245,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             //This is where we need to collapse the non aggregated field expressions. We only do this
                             //  when we CREATE the GroupRow because these values should be distinct since we are grouping.
                             //TODO: We should check these fields/expression to make sure that they are either constant or being referenced by the group clause.
-                            for (int i = 0; i < row.Values.Count; i++)
+                            for (int i = 0; i < row.Count; i++)
                             {
-                                groupRowCollection.GroupRow.Add(row.Values[i]);
+                                groupRowCollection.GroupRow.Add(row[i]);
                             }
                         }
 
@@ -289,12 +287,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 #endregion
             }
 
-            lock (instance.Operation.Results)
+            lock (instance.Operation.ResultRows)
             {
                 //Accumulate the results up to the parent.
                 if (instance.Operation.GatherDocumentPointersForSchemaPrefix == null)
                 {
-                    instance.Operation.Results.AddRange(resultingRows);
+                    instance.Operation.ResultRows.AddRange(resultingRows);
                 }
                 else
                 {
