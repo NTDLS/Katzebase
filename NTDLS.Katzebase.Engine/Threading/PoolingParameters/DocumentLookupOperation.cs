@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Engine.Atomicity;
+﻿using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;

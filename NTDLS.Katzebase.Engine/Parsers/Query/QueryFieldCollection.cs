@@ -361,7 +361,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                         {
                             if (queryField.Expression is IQueryFieldExpression fieldExpression)
                             {
-                                foreach(var function in fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>())
+                                foreach (var function in fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>())
                                 {
                                     results.Add(function);
                                 }
