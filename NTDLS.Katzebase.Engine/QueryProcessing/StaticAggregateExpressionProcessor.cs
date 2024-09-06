@@ -10,7 +10,7 @@ using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using System.Text;
 
-namespace NTDLS.Katzebase.Engine.Query
+namespace NTDLS.Katzebase.Engine.QueryProcessing
 {
     internal class StaticAggregateExpressionProcessor
     {

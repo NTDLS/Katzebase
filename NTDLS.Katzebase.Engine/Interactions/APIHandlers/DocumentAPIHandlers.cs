@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Payloads.RoundTrip;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.Query.Searchers;
+using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.ReliableMessaging;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 

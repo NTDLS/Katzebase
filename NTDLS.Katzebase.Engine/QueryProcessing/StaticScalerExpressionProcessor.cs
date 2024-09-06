@@ -10,11 +10,11 @@ using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
-using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
+using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
 
-namespace NTDLS.Katzebase.Engine.Query
+namespace NTDLS.Katzebase.Engine.QueryProcessing
 {
     internal class StaticScalerExpressionProcessor
     {

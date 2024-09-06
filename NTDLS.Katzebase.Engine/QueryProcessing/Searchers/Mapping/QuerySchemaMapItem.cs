@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Engine.Schemas;
 
-namespace NTDLS.Katzebase.Engine.Query.Searchers.Mapping
+namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
 {
     /// <summary>
     /// This class maps the schema and documents to a query supplied schema alias.
