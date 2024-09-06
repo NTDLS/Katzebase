@@ -6,12 +6,14 @@ using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
+using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Engine.Query.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.Query.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.Query.Sorting;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
+using System.Collections.Generic;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
@@ -109,6 +111,8 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
             {
                 var resultRows = new SchemaIntersectionRowCollection();
 
+                var FieldsWithAggregateFunctionCalls = query.SelectFields.FieldsWithAggregateFunctionCalls;
+
                 foreach (var groupRow in operation.GroupRows)
                 {
                     var resultRow = new SchemaIntersectionRow
@@ -116,8 +120,18 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                         Values = groupRow.Value.GroupRow,
                     };
 
-                    resultRows.Add(resultRow);
 
+                    foreach (var aggregateFunctionField in FieldsWithAggregateFunctionCalls)
+                    {
+                        var groupedValues = new KbInsensitiveDictionary<List<string>>();
+
+                        var auxiliaryFields = new KbInsensitiveDictionary<string?>(); //TODO: we need to add this to the group ro so we can pass it in.
+
+                        var ffff = StaticAggregateExpressionProcessor.CollapseAggregateQueryField(transaction, query, groupRow.Value.AggregationValues, auxiliaryFields, aggregateFunctionField);
+                    }
+
+
+                    resultRows.Add(resultRow);
                 }
 
                 operation.Results = resultRows;

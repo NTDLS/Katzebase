@@ -103,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #region Exposed collection: FieldsWithAggregateFunctionCalls.
 
-        private List<ExposedFunction>? _exposedAggregateFunctions = null;
+        private List<QueryField>? _exposedAggregateFunctions = null;
         private readonly object _exposedAggregateFunctionsLock = new();
 
         public void InvalidateFieldsWithAggregateFunctionCallsCache()
@@ -117,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <summary>
         /// Returns a list of fields that have function call dependencies.
         /// </summary>
-        public List<ExposedFunction> FieldsWithAggregateFunctionCalls
+        public List<QueryField> FieldsWithAggregateFunctionCalls
         {
             get
             {
@@ -133,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _exposedAggregateFunctions;
                         }
 
-                        var results = new List<ExposedFunction>();
+                        var results = new List<QueryField>();
 
                         foreach (var queryField in this)
                         {
@@ -141,7 +141,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             {
                                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any())
                                 {
-                                    results.Add(new ExposedFunction(queryField.Ordinal, queryField.Alias, fieldExpression));
+                                    results.Add(queryField);
                                 }
                             }
                         }
