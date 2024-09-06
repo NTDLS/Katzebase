@@ -1,5 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
@@ -15,7 +17,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 "Numeric Sum (AggregationArray values)",
                 "Numeric Min (AggregationArray values)",
                 "Numeric Max (AggregationArray values)",
-                "Numeric Avg (AggregationArray values)"
+                "Numeric Avg (AggregationArray values)",
+                "String Sha1Agg (AggregationArray values)"
             };
 
         public static string ExecuteFunction(string functionName, GroupAggregateFunctionParameter parameters)
@@ -47,6 +50,28 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                             return parameters.AggregationValues.Distinct().Count().ToString();
                         }
                         return parameters.AggregationValues.Count().ToString();
+                    }
+                case "sha1agg":
+                    {
+                        using (var sha1 = SHA1.Create())
+                        {
+                            foreach (var str in parameters.AggregationValues.OrderBy(o => o))
+                            {
+                                var inputBytes = Encoding.UTF8.GetBytes(str);
+                                sha1.TransformBlock(inputBytes, 0, inputBytes.Length, null, 0);
+                            }
+                           
+                            sha1.TransformFinalBlock(Array.Empty<byte>(), 0, 0); // Finalize the hash
+
+                            var sb = new StringBuilder();
+                            var bytes = sha1.Hash ?? Array.Empty<byte>();
+                            foreach (var b in bytes)
+                            {
+                                sb.Append(b.ToString("x2"));
+                            }
+
+                            return sb.ToString();
+                        }
                     }
             }
 

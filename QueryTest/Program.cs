@@ -61,9 +61,9 @@ namespace QueryTest
 
                 //var queryText = "select Spanish, count(Id + 7, true) + min(Id) as NumberOf1, Latin, Count(Id) as NumberOf2 from WordList:FlatTranslate where English like 'bed%' group by Spanish, Latin";
 
-                //var queryText = "SELECT\r\n\tLatin,\r\n\tCount(sha1('hgfhghgfhhg'), true) as RowCount,\r\n\tCount(German, true) as GermanWordCount,\r\n\tCount(Spanish, true) as SpanishWordCount\r\nFROM\r\n\tWordList:FlatTranslate\r\nWHERE\r\n\tEnglish LIKE 'Car%'\r\nGROUP BY\r\n\tLatin\r\n";
+                //var queryText = "SELECT\r\n\tLatin,\r\n\tCount(sha1(Guid()), true) as RowCount as RowCount,\r\n\tCount(German + 'hh', true) as GermanWordCount,\r\n\tCount(Spanish, true) as SpanishWordCount\r\nFROM\r\n\tWordList:FlatTranslate\r\nWHERE\r\n\tEnglish LIKE 'Car%'\r\nGROUP BY\r\n\tLatin\r\n";
 
-                var queryText = "SELECT\r\n\tLatin,\r\n\tCount(sha1(Guid()), true) as RowCount\r\nFROM\r\n\tWordList:FlatTranslate\r\nWHERE\r\n\tEnglish LIKE 'Car%'\r\nGROUP BY\r\n\tLatin\r\n";
+                var queryText = "SELECT\r\n\t\r\nSha1Agg('fff' + German) as Latin, Count(German + 'hh', true) as RowCount,\r\nLatin as sss\r\nFROM\r\n\tWordList:FlatTranslate\r\nWHERE\r\n\tEnglish LIKE 'Car%'\r\nGROUP BY\r\n\tLatin\r\n";
 
 
                 //var queryText = "SELECT\r\n\tLanguageId,\r\n\tId - 651947 as NumberOf\r\nFROM\r\n\tWordList:Word\r\nWHERE\r\n\tText LIKE 'Tab%'";
@@ -85,12 +85,9 @@ namespace QueryTest
                 //var results = client.Query.Fetch<BigQuery>(queryText);
                 foreach (var result in results)
                 {
-                    if (result.Latin == "cartone")
-                    {
-                        Console.WriteLine($"[{result.Latin}],[{result.GermanWordCount}],[{result.SpanishWordCount}],[{result.RowCount}]");
-                        //Console.WriteLine($"[{result.Test}],[{result.SourceWordId}],[{result.SourceWord}],[{result.SourceLanguage}],{result.TargetWordId},{result.TargetWord},{result.TargetLanguage}");
-                        //Console.WriteLine($"{word.Len},{word.Id},{word.Text},{word.LanguageId},{word.SourceId},{word.IsDirty}");
-                    }
+                    Console.WriteLine($"[{result.Latin}],[{result.GermanWordCount}],[{result.SpanishWordCount}],[{result.RowCount}]");
+                    //Console.WriteLine($"[{result.Test}],[{result.SourceWordId}],[{result.SourceWord}],[{result.SourceLanguage}],{result.TargetWordId},{result.TargetWord},{result.TargetLanguage}");
+                    //Console.WriteLine($"{word.Len},{word.Id},{word.Text},{word.LanguageId},{word.SourceId},{word.IsDirty}");
                 }
 
             }

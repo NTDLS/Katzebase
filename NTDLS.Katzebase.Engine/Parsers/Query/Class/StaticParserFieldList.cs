@@ -269,7 +269,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// <returns></returns>
         private static bool IsNumericExpression(string expressionText, IQueryFieldExpression? rootExpressionEvaluation = null)
         {
-            Tokenizer tokenizer = new(expressionText);
+            Tokenizer tokenizer = new(expressionText, [' ', '+']);
 
             while (!tokenizer.IsExhausted())
             {

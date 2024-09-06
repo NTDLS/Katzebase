@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
@@ -186,6 +187,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 //This is because this is more efficient and also because this might be a
                 //string value from a document field that we assumed was numeric because the
                 //expression contains no "string operations" such as literal text.
+
+                //We do "best effort" math.
                 return expressionVariables.First().Value;
             }
 
@@ -279,6 +282,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             foreach (var parameter in function.Parameters)
             {
                 collapsedParameters.Add(CollapseScalerExpressionFunctionParameter(transaction, query, auxiliaryFields, functions, parameter));
+            }
+
+            if (AggregateFunctionCollection.TryGetFunction(function.FunctionName, out _))
+            {
+                throw new KbEngineException($"Cannot perform scaler operation on aggregate result of: [{function.FunctionName}].");
             }
 
             //Execute function with the parameters from above ↑

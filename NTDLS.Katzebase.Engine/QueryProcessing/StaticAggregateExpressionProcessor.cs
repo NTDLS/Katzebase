@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
 
             int variableNumber = 0;
 
-            var expressionVariables = new Dictionary<string, double>();
+            var expressionVariables = new Dictionary<string, string>();
 
             while (!tokenizer.Exausted())
             {
@@ -93,7 +93,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                     var functionResult = CollapseAggregateFunction(transaction, query, functions, aggregateFunctionParameters, subFunction);
 
                     string mathVariable = $"v{variableNumber++}";
-                    expressionVariables.Add(mathVariable, double.Parse(functionResult));
+                    expressionVariables.Add(mathVariable, functionResult);
                     expressionString = expressionString.Replace(token, mathVariable);
                 }
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
@@ -108,12 +108,23 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
 
                     string mathVariable = $"v{variableNumber++}";
                     expressionString = expressionString.Replace(token, mathVariable);
-                    expressionVariables.Add(mathVariable, double.Parse(query.Batch.GetLiteralValue(token)));
+                    expressionVariables.Add(mathVariable, query.Batch.GetLiteralValue(token));
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
                 {
                     throw new KbEngineException($"Function parameter string sub-type is not implemented: [{token}].");
                 }
+            }
+
+            if (expressionVariables.Count == 1)
+            {
+                //If this is the only token we have then we aren't even going to do math.
+                //This is because this is more efficient and also because this might be a
+                //string value from a document field that we assumed was numeric because the
+                //expression contains no "string operations" such as literal text.
+
+                //We do "best effort" math.
+                return expressionVariables.First().Value;
             }
 
             var expressionHash = Library.Helpers.GetSHA1Hash(expressionString);
@@ -123,7 +134,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
 
             foreach (var expressionVariable in expressionVariables)
             {
-                expression.Parameters[expressionVariable.Key] = expressionVariable.Value;
+                expression.Parameters[expressionVariable.Key] = double.Parse(expressionVariable.Value);
             }
 
             return expression.Evaluate()?.ToString() ?? string.Empty;
