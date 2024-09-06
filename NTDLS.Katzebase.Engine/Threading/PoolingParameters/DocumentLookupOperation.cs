@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// Contains the list of field values for the grouping fields, and the need-to-be aggregated values for fields
         /// that are needed to collapse aggregation functions. The key is the concatenated values from the grouping fields.
         /// </summary>
-        public Dictionary<string, GroupRow> GroupRows { get; set; } = new();
+        public Dictionary<string, GroupRowCollection> GroupRows { get; set; } = new();
 
         public string? GatherDocumentPointersForSchemaPrefix { get; set; } = null;
         public SchemaIntersectionRowCollection Results { get; set; } = new();

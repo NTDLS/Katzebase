@@ -40,6 +40,8 @@ namespace QueryTest
             public int LanguageId { get; set; }
             public int NumberOf1 { get; set; }
             public int NumberOf2 { get; set; }
+            public string? Latin { get; set; }
+            public string? Spanish { get; set; }
         }
 
         static void Main()
@@ -50,7 +52,7 @@ namespace QueryTest
 
                 //var queryText = "SELECT\r\n\tLanguageId,\r\n\tSum(Id + 10) as NumberOf1,Min(Id - 10) as NumberOf2\r\nFROM\r\n\tWordList:Word\r\nWHERE\r\n\tText LIKE 'Tab%'\r\nGROUP BY\r\n\tLanguageId";
 
-                var queryText = "select Spanish, Latin, count(Id + 7) + min(Id) as NumberOf1, Max(Id) as NumberOf2 from WordList:FlatTranslate where English like 'bed%' group by Spanish, Latin";
+                var queryText = "select Spanish, count(Id + 7) + min(Id) as NumberOf1, Latin, Max(Id) as NumberOf2 from WordList:FlatTranslate where English like 'bed%' group by Spanish, Latin";
 
                 //var queryText = "SELECT\r\n\tLanguageId,\r\n\tId - 651947 as NumberOf\r\nFROM\r\n\tWordList:Word\r\nWHERE\r\n\tText LIKE 'Tab%'";
 
@@ -71,7 +73,7 @@ namespace QueryTest
                 //var results = client.Query.Fetch<BigQuery>(queryText);
                 foreach (var result in results)
                 {
-                    Console.WriteLine($"[{result.LanguageId}],[{result.NumberOf1}],[{result.NumberOf2}]");
+                    Console.WriteLine($"[{result.Spanish}],[{result.Latin}],[{result.LanguageId}],[{result.NumberOf1}],[{result.NumberOf2}]");
                     //Console.WriteLine($"[{result.Test}],[{result.SourceWordId}],[{result.SourceWord}],[{result.SourceLanguage}],{result.TargetWordId},{result.TargetWord},{result.TargetLanguage}");
                     //Console.WriteLine($"{word.Len},{word.Id},{word.Text},{word.LanguageId},{word.SourceId},{word.IsDirty}");
                 }

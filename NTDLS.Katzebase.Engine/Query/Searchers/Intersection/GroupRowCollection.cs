@@ -7,12 +7,12 @@ using System.Threading.Tasks;
 
 namespace NTDLS.Katzebase.Engine.Query.Searchers.Intersection
 {
-    internal class GroupRow
+    internal class GroupRowCollection
     {
         /// <summary>
-        /// Contains the list of scaler values for each group, the key to the dictionary is the ordinal of the scaler expression field.
+        /// Contains the template row for the group.
         /// </summary>
-        public Dictionary<int, string> GroupingFieldValues { get; set; } = new();
+        public List<string?> GroupRow { get; set; } = new();
 
         /// <summary>
         /// Contains the list of values that we will need to collapse aggregation functions.
