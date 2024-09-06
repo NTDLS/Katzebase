@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Shared;
+using NTDLS.Katzebase.Engine.Parsers.Tokens;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
@@ -12,18 +12,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
         public KbScalerFunctionParameterType ReturnType { get; private set; }
         public List<ScalerFunctionParameterPrototype> Parameters { get; private set; } = new();
 
-        public ScalerFunction(string name, string returnTypeName, List<ScalerFunctionParameterPrototype> parameters)
-        {
-            Name = name;
-
-            if (Enum.TryParse(returnTypeName, true, out KbScalerFunctionParameterType returnType) == false)
-            {
-                throw new KbGenericException($"Unknown return type type {returnTypeName}");
-            }
-
-            ReturnType = returnType;
-            Parameters.AddRange(parameters);
-        }
 
         public ScalerFunction(string name, KbScalerFunctionParameterType returnType, List<ScalerFunctionParameterPrototype> parameters)
         {
@@ -34,38 +22,99 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
         public static ScalerFunction Parse(string prototype)
         {
-            int indexOfNameEnd = prototype.IndexOf(':');
-            string functionName = prototype.Substring(0, indexOfNameEnd);
+            var tokenizer = new Tokenizer(prototype, true);
 
-            int indexOfReturnTypeEnd = prototype.IndexOf(':', indexOfNameEnd + 1);
-            string returnType = prototype.Substring(indexOfNameEnd + 1, (indexOfReturnTypeEnd - indexOfNameEnd) - 1);
+            string token = tokenizer.EatGetNext();
 
-            var parameterStrings = prototype.Substring(indexOfReturnTypeEnd + 1).Split(',', StringSplitOptions.RemoveEmptyEntries);
-            List<ScalerFunctionParameterPrototype> parameters = new();
-
-            foreach (var param in parameterStrings)
+            if (Enum.TryParse(token, true, out KbScalerFunctionParameterType returnType) == false)
             {
-                var typeAndName = param.Split("/");
-                if (Enum.TryParse(typeAndName[0], true, out KbScalerFunctionParameterType paramType) == false)
+                throw new KbEngineException($"Unknown scaler function return type: [{token}].");
+            }
+
+            if (tokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var functionName) == false)
+            {
+                throw new KbEngineException($"Invalid scaler function name: [{functionName}].");
+            }
+
+            bool foundOptionalParameter = false;
+            bool infiniteParameterFound = false;
+
+            var parameters = new List<ScalerFunctionParameterPrototype>();
+            var parametersStrings = tokenizer.EatGetMatchingScope().ScopeSensitiveSplit();
+
+            foreach (var parametersString in parametersStrings)
+            {
+                var paramTokenizer = new Tokenizer(parametersString);
+
+                token = paramTokenizer.EatGetNext();
+                if (Enum.TryParse(token, true, out KbScalerFunctionParameterType paramType) == false)
                 {
-                    throw new KbGenericException($"Unknown parameter type {typeAndName[0]}");
+                    throw new KbEngineException($"Unknown scaler function [{functionName}] parameter type: [{token}].");
                 }
 
-                var nameAndDefault = typeAndName[1].Trim().Split('=');
+                if (paramType == KbScalerFunctionParameterType.NumericInfinite || paramType == KbScalerFunctionParameterType.StringInfinite)
+                {
+                    if (infiniteParameterFound)
+                    {
+                        throw new KbEngineException($"Invalid scaler function [{functionName}] prototype. Function cannot contain more than one infinite parameter.");
+                    }
 
-                if (nameAndDefault.Count() == 1)
-                {
-                    parameters.Add(new ScalerFunctionParameterPrototype(paramType, nameAndDefault[0]));
+                    if (foundOptionalParameter)
+                    {
+                        throw new KbEngineException($"Invalid scaler function [{functionName}] prototype. Function cannot contain both infinite parameters and optional parameters.");
+                    }
+
+                    infiniteParameterFound = true;
                 }
-                else if (nameAndDefault.Length == 2)
+
+                if (paramTokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var parameterName) == false)
                 {
-                    parameters.Add(new ScalerFunctionParameterPrototype(paramType, nameAndDefault[0],
-                        nameAndDefault[1].Is("null") ? null : nameAndDefault[1]));
+                    throw new KbEngineException($"Invalid scaler function [{functionName}] parameter name: [{parameterName}].");
+                }
+
+                if (!paramTokenizer.IsExhausted()) //Parse optional parameter default value.
+                {
+                    if (infiniteParameterFound)
+                    {
+                        throw new KbEngineException($"Invalid scaler function [{functionName}] prototype. Function cannot contain both infinite parameters and optional parameters.");
+                    }
+
+                    if (paramTokenizer.TryEatIsNextCharacter('=') == false)
+                    {
+                        throw new KbEngineException($"Invalid scaler function [{functionName}] prototype when parsing optional parameter [{parameterName}]. Expected '=', found: [{paramTokenizer.NextCharacter}].");
+                    }
+
+                    token = paramTokenizer.EatGetNext();
+
+                    var optionalParameterDefaultValue = tokenizer.ResolveLiteral(token);
+
+                    parameters.Add(new ScalerFunctionParameterPrototype(paramType, parameterName, optionalParameterDefaultValue));
+
+                    foundOptionalParameter = true;
                 }
                 else
                 {
-                    throw new KbGenericException($"Wrong number of default parameters supplied to prototype for {typeAndName[0]}");
+                    if (foundOptionalParameter)
+                    {
+                        //If we have already found an optional parameter, then all remaining parameters must be optional
+                        throw new KbEngineException($"Invalid scaler function [{functionName}] parameter [{parameterName}] must define a default.");
+                    }
+
+                    parameters.Add(new ScalerFunctionParameterPrototype(paramType, parameterName));
                 }
+
+                if (paramType == KbScalerFunctionParameterType.StringInfinite)
+                {
+                    if (!tokenizer.IsExhausted())
+                    {
+                        throw new KbEngineException($"Failed to parse scaler function [{functionName}] prototype, infinite parameter [{parameterName}] must be the last parameter.");
+                    }
+                }
+            }
+
+            if (!tokenizer.IsExhausted())
+            {
+                throw new KbEngineException($"Failed to parse scaler function [{functionName}] prototype, expected end-of-line: [{tokenizer.Remainder}].");
             }
 
             return new ScalerFunction(functionName, returnType, parameters);
@@ -73,11 +122,55 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
         internal ScalerFunctionParameterValueCollection ApplyParameters(List<string> values)
         {
+            var result = new ScalerFunctionParameterValueCollection();
+
+            int satisfiedParameterCount = 0;
+
+            for (int protoParamIndex = 0; protoParamIndex < Parameters.Count; protoParamIndex++)
+            {
+                if (Parameters[protoParamIndex].Type == KbScalerFunctionParameterType.StringInfinite)
+                {
+                    //This is an infinite parameter, and since these are intended to be defined as the last
+                    //parameter in the prototype, it eats the remainder of the passed parameters.
+                    for (int passedParamIndex = protoParamIndex; passedParamIndex < values.Count; passedParamIndex++)
+                    {
+                        result.Values.Add(new ScalerFunctionParameterValue(Parameters[protoParamIndex], values[passedParamIndex]));
+                    }
+                    break;
+                }
+
+                if (Parameters.Count > protoParamIndex)
+                {
+                    if (Parameters[protoParamIndex].HasDefault)
+                    {
+                        result.Values.Add(new ScalerFunctionParameterValue(Parameters[protoParamIndex], Parameters[protoParamIndex].DefaultValue));
+                    }
+                    else
+                    {
+                        throw new KbFunctionException($"Function [{Name}] parameter [{Parameters[protoParamIndex].Name}] passed is not optional.");
+                    }
+                }
+                else
+                {
+                    result.Values.Add(new ScalerFunctionParameterValue(Parameters[protoParamIndex], values[protoParamIndex]));
+                }
+
+                satisfiedParameterCount++;
+            }
+
+            if (satisfiedParameterCount != Parameters.Count)
+            {
+                throw new KbFunctionException($"Incorrect number of parameters passed to [{Name}].");
+            }
+
+            return result;
+
+            /*
             int requiredParameterCount = Parameters.Count(o => o.Type.ToString().ContainsInsensitive("optional") == false);
 
             if (Parameters.Count < requiredParameterCount)
             {
-                if (Parameters.Count > 0 && Parameters[0].Type == KbScalerFunctionParameterType.Infinite_String)
+                if (Parameters.Count > 0 && Parameters[0].Type == KbScalerFunctionParameterType.StringInfinite)
                 {
                     //The first parameter is infinite, we don't even check anything else.
                 }
@@ -89,7 +182,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
             var result = new ScalerFunctionParameterValueCollection();
 
-            if (Parameters.Count > 0 && Parameters[0].Type == KbScalerFunctionParameterType.Infinite_String)
+            if (Parameters.Count > 0 && Parameters[0].Type == KbScalerFunctionParameterType.StringInfinite)
             {
                 for (int i = 0; i < Parameters.Count; i++)
                 {
@@ -112,6 +205,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             }
 
             return result;
+            */
         }
     }
 }

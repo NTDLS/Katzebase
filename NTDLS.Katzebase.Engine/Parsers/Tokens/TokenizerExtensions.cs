@@ -56,23 +56,36 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         }
 
         /// <summary>
-        /// Returns true if the text is a valid identifier character.
+        /// Returns true if the text is a valid identifier string, such as a schema name, field name etc.
         /// </summary>
-        public static bool IsIdentifier(this string text)
-            => text.All(IsIdentifier);
+        public static bool IsQueryIdentifier(this string text)
+            => string.IsNullOrWhiteSpace(text) == false && text.All(IsQueryIdentifier);
 
         /// <summary>
-        /// Returns true if the character is a valid identifier character.
+        /// Returns true if the text is a valid identifier character, such as a schema name, field name etc.
         /// </summary>
-        public static bool IsIdentifier(this char c)
-        {
-            return
-                char.IsWhiteSpace(c)
+        public static bool IsQueryIdentifier(this char c)
+                => char.IsWhiteSpace(c)
                 || char.IsLetterOrDigit(c) //Numbers or letters, could be a field name, schema name, function name, etc.
+                || c == '_'
                 || c == ':' //Schema separators. [Schema1:Schema2].
                 || c == '.'; //Schema field-separators. [schemaPrefix.FieldName].
-        }
 
+        /// <summary>
+        /// Returns true if the text is a valid identifier string.
+        /// </summary>
+        public static bool IsIdentifier(this string text)
+            => string.IsNullOrWhiteSpace(text) == false && text.All(IsIdentifier);
+
+        /// <summary>
+        /// Returns true if the text is a valid identifier character.
+        /// </summary>
+        public static bool IsIdentifier(this char c)
+            => char.IsWhiteSpace(c)
+                || char.IsLetterOrDigit(c) //Numbers or letters, could be a field name, schema name, function name, etc.
+                || c == '_'
+                || c == ':' //Schema separators. [Schema1:Schema2].
+                || c == '.'; //Schema field-separators. [schemaPrefix.FieldName].
 
         private static readonly char[] _mathematicalCharacters = { '~', '!', '^', '&', '*', '(', ')', '-', '+', '/', '=' };
 

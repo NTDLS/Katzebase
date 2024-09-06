@@ -117,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 var fields = new List<string>();
 
-                while (!tokenizer.IsExausted())
+                while (!tokenizer.IsExhausted())
                 {
                     if (tokenizer.TryCompareNextToken((o) => StaticParserUtility.IsStartOfQuery(o)))
                     {

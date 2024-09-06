@@ -8,11 +8,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
     internal class AggregateFunctionImplementation
     {
         internal static string[] PrototypeStrings = {
-                "count:NumericArray/fieldName",
-                "sum:NumericArray/fieldName",
-                "min:NumericArray/fieldName",
-                "max:NumericArray/fieldName",
-                "avg:NumericArray/fieldName"
+                //Prototype Format: "returnDataType functionName (parameterDataType parameterName, parameterDataType parameterName = defaultValue)"
+                //Parameters that have a default specified are considered optional, they should come after non-optional parameters.
+                "Numeric Count (AggregationArray values, boolean countDistinct = false)",
+                "Numeric Sum (AggregationArray values)",
+                "Numeric Min (AggregationArray values)",
+                "Numeric Max (AggregationArray values)",
+                "Numeric Avg (AggregationArray values)"
             };
 
         public static string ExecuteFunction(string functionName, List<string> parameters, List<string> groupedValues)
@@ -39,6 +41,10 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     }
                 case "count":
                     {
+                        if (proc.Get<bool>("countDistinct"))
+                        {
+                            return groupedValues.Distinct().Count().ToString();
+                        }
                         return groupedValues.Count().ToString();
                     }
             }

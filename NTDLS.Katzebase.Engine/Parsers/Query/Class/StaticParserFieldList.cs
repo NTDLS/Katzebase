@@ -86,9 +86,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             string token = tokenizer.EatGetNext();
 
-            if (tokenizer.IsExausted()) //This is a single value (document field, number or string), the simple case.
+            if (tokenizer.IsExhausted()) //This is a single value (document field, number or string), the simple case.
             {
-                if (token.IsIdentifier())
+                if (token.IsQueryIdentifier())
                 {
                     if (ScalerFunctionCollection.TryGetFunction(token, out var _))
                     {
@@ -149,7 +149,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             StringBuilder buffer = new();
 
-            while (!tokenizer.IsExausted())
+            while (!tokenizer.IsExhausted())
             {
                 int positionBeforeToken = tokenizer.Caret;
 
@@ -184,7 +184,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                     buffer.Append(expressionKey);
                 }
-                else if (token.IsIdentifier())
+                else if (token.IsQueryIdentifier())
                 {
                     if (tokenizer.IsNextNonIdentifier(['(']))
                     {
@@ -215,7 +215,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             Tokenizer tokenizer, int positionBeforeToken)
         {
             //This contains the text between the open and close parenthesis of a function call, but not the parenthesis themselves or the function name.
-            string functionCallParametersSegmentText = tokenizer.EatGetMatchingBraces('(', ')');
+            string functionCallParametersSegmentText = tokenizer.EatGetMatchingScope('(', ')');
 
             var functionCallParametersText = functionCallParametersSegmentText.ScopeSensitiveSplit();
             foreach (var functionCallParameterText in functionCallParametersText)
@@ -271,7 +271,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         {
             Tokenizer tokenizer = new(expressionText);
 
-            while (!tokenizer.IsExausted())
+            while (!tokenizer.IsExhausted())
             {
                 if (tokenizer.IsNextCharacter(c => c.IsMathematicalOperator()))
                 {
@@ -321,7 +321,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                         //This function returns a number, so we still have a valid numeric operation.
 
                         //Skip the function call.
-                        string functionBody = tokenizer.EatGetMatchingBraces('(', ')');
+                        string functionBody = tokenizer.EatGetMatchingScope('(', ')');
                         continue;
                     }
                     else
@@ -335,7 +335,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     //This is an aggregate function that can only return a number, so we still have a valid numeric operation.
 
                     //Skip the function call.
-                    string functionBody = tokenizer.EatGetMatchingBraces('(', ')');
+                    string functionBody = tokenizer.EatGetMatchingScope('(', ')');
                     continue;
                 }
                 else

@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
             var queryBatch = new QueryBatch(tokenizer.UserParameters, tokenizer.Literals);
 
-            while (!tokenizer.IsExausted())
+            while (!tokenizer.IsExhausted())
             {
                 int preParseTokenPosition = tokenizer.Caret;
                 var preparedQuery = ParseQuery(queryBatch, tokenizer);

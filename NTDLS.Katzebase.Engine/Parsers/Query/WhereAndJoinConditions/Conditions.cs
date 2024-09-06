@@ -296,7 +296,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
             var tokenizer = new Tokenizer(subCondition.Expression);
 
-            while (!tokenizer.IsExausted())
+            while (!tokenizer.IsExhausted())
             {
                 int startPosition = tokenizer.Caret;
 

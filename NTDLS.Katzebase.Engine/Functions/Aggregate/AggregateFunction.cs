@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Shared;
+using NTDLS.Katzebase.Engine.Parsers.Tokens;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
@@ -9,61 +9,158 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
     public class AggregateFunction
     {
         public string Name { get; set; }
+        public KbAggregateFunctionParameterType ReturnType { get; private set; }
+
         public List<AggregateFunctionParameterPrototype> Parameters { get; private set; } = new();
 
-        public AggregateFunction(string name, List<AggregateFunctionParameterPrototype> parameters)
+        public AggregateFunction(string name, KbAggregateFunctionParameterType returnType, List<AggregateFunctionParameterPrototype> parameters)
         {
             Name = name;
+            ReturnType = returnType;
             Parameters.AddRange(parameters);
         }
 
         public static AggregateFunction Parse(string prototype)
         {
-            int indexOfNameEnd = prototype.IndexOf(':');
-            string functionName = prototype.Substring(0, indexOfNameEnd);
-            var parameterStrings = prototype.Substring(indexOfNameEnd + 1).Split(',', StringSplitOptions.RemoveEmptyEntries);
-            var parameters = new List<AggregateFunctionParameterPrototype>();
+            var tokenizer = new Tokenizer(prototype, true);
 
-            foreach (var param in parameterStrings)
+            string token = tokenizer.EatGetNext();
+
+            if (Enum.TryParse(token, true, out KbAggregateFunctionParameterType returnType) == false)
             {
-                var typeAndName = param.Split("/");
-                if (Enum.TryParse(typeAndName[0], true, out KbAggregateFunctionParameterType paramType) == false)
+                throw new KbEngineException($"Unknown aggregate function return type: [{token}].");
+            }
+
+            if (tokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var functionName) == false)
+            {
+                throw new KbEngineException($"Invalid aggregate function name: [{functionName}].");
+            }
+
+            bool foundOptionalParameter = false;
+            bool infiniteParameterFound = false;
+
+            var parameters = new List<AggregateFunctionParameterPrototype>();
+            var parametersStrings = tokenizer.EatGetMatchingScope().ScopeSensitiveSplit();
+
+            foreach (var parametersString in parametersStrings)
+            {
+                var paramTokenizer = new Tokenizer(parametersString);
+
+                token = paramTokenizer.EatGetNext();
+                if (Enum.TryParse(token, true, out KbAggregateFunctionParameterType paramType) == false)
                 {
-                    throw new KbGenericException($"Unknown parameter type {typeAndName[0]}");
+                    throw new KbEngineException($"Unknown aggregate function [{functionName}] parameter type: [{token}].");
                 }
 
-                var nameAndDefault = typeAndName[1].Trim().Split('=');
+                if (paramType == KbAggregateFunctionParameterType.NumericInfinite || paramType == KbAggregateFunctionParameterType.StringInfinite)
+                {
+                    if (infiniteParameterFound)
+                    {
+                        throw new KbEngineException($"Invalid aggregate function [{functionName}] prototype. Function cannot contain more than one infinite parameter.");
+                    }
 
-                if (nameAndDefault.Length == 1)
-                {
-                    parameters.Add(new AggregateFunctionParameterPrototype(paramType, nameAndDefault[0]));
+                    if (foundOptionalParameter)
+                    {
+                        throw new KbEngineException($"Invalid aggregate function [{functionName}] prototype. Function cannot contain both infinite parameters and optional parameters.");
+                    }
+
+                    infiniteParameterFound = true;
                 }
-                else if (nameAndDefault.Length == 2)
+
+                if (paramTokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var parameterName) == false)
                 {
-                    parameters.Add(new AggregateFunctionParameterPrototype(paramType, nameAndDefault[0],
-                        nameAndDefault[1].Is("null") ? null : nameAndDefault[1]));
+                    throw new KbEngineException($"Invalid aggregate function [{functionName}] parameter name: [{parameterName}].");
+                }
+
+                if (!paramTokenizer.IsExhausted()) //Parse optional parameter default value.
+                {
+                    if (infiniteParameterFound)
+                    {
+                        throw new KbEngineException($"Invalid aggregate function [{functionName}] prototype. Function cannot contain both infinite parameters and optional parameters.");
+                    }
+
+                    if (paramTokenizer.TryEatIsNextCharacter('=') == false)
+                    {
+                        throw new KbEngineException($"Invalid aggregate function [{functionName}] prototype when parsing optional parameter [{parameterName}]. Expected '=', found: [{paramTokenizer.NextCharacter}].");
+                    }
+
+                    token = paramTokenizer.EatGetNext();
+
+                    var optionalParameterDefaultValue = tokenizer.ResolveLiteral(token);
+
+                    parameters.Add(new AggregateFunctionParameterPrototype(paramType, parameterName, optionalParameterDefaultValue));
+
+                    foundOptionalParameter = true;
                 }
                 else
                 {
-                    throw new KbGenericException($"Wrong number of default parameters supplied to prototype for {typeAndName[0]}");
+                    if (foundOptionalParameter)
+                    {
+                        //If we have already found an optional parameter, then all remaining parameters must be optional
+                        throw new KbEngineException($"Invalid aggregate function [{functionName}] parameter [{parameterName}] must define a default.");
+                    }
+
+                    parameters.Add(new AggregateFunctionParameterPrototype(paramType, parameterName));
+                }
+
+                if (paramType == KbAggregateFunctionParameterType.StringInfinite)
+                {
+                    if (!tokenizer.IsExhausted())
+                    {
+                        throw new KbEngineException($"Failed to parse aggregate function [{functionName}] prototype, infinite parameter [{parameterName}] must be the last parameter.");
+                    }
                 }
             }
 
-            return new AggregateFunction(functionName, parameters);
+            if (!tokenizer.IsExhausted())
+            {
+                throw new KbEngineException($"Failed to parse aggregate function [{functionName}] prototype, expected end-of-line: [{tokenizer.Remainder}].");
+            }
+
+            return new AggregateFunction(functionName, returnType, parameters);
         }
 
         internal AggregateFunctionParameterValueCollection ApplyParameters(List<string> values)
         {
-            if (values.Count + 1 != Parameters.Count) //Compensate for the aggregate value list which is not really passed by parameter.
-            {
-                throw new KbFunctionException($"Incorrect number of parameter passed to [{Name}].");
-            }
-
             var result = new AggregateFunctionParameterValueCollection();
 
-            for (int i = 1; i < Parameters.Count; i++) //Compensate for the aggregate value list which is not really passed by parameter.
+            int satisfiedParameterCount = 1; //Compensate for the aggregate value list which is not really passed by parameter.
+
+            for (int protoParamIndex = 1; protoParamIndex < Parameters.Count; protoParamIndex++) //Compensate for the aggregate value list which is not really passed by parameter.
             {
-                result.Values.Add(new AggregateFunctionParameterValue(Parameters[i], values[i]));
+                if (Parameters[protoParamIndex].Type == KbAggregateFunctionParameterType.StringInfinite)
+                {
+                    //This is an infinite parameter, and since these are intended to be defined as the last
+                    //parameter in the prototype, it eats the remainder of the passed parameters.
+                    for (int passedParamIndex = protoParamIndex; passedParamIndex < values.Count; passedParamIndex++)
+                    {
+                        result.Values.Add(new AggregateFunctionParameterValue(Parameters[protoParamIndex], values[passedParamIndex]));
+                    }
+                    break;
+                }
+
+                if (Parameters.Count > protoParamIndex)
+                {
+                    if (Parameters[protoParamIndex].HasDefault)
+                    {
+                        result.Values.Add(new AggregateFunctionParameterValue(Parameters[protoParamIndex], Parameters[protoParamIndex].DefaultValue));
+                    }
+                    else
+                    {
+                        throw new KbFunctionException($"Function [{Name}] parameter [{Parameters[protoParamIndex].Name}] passed is not optional.");
+                    }
+                }
+                else
+                {
+                    result.Values.Add(new AggregateFunctionParameterValue(Parameters[protoParamIndex], values[protoParamIndex]));
+                }
+
+                satisfiedParameterCount++;
+            }
+
+            if (satisfiedParameterCount != Parameters.Count)
+            {
+                throw new KbFunctionException($"Incorrect number of parameters passed to [{Name}].");
             }
 
             return result;

@@ -6,7 +6,7 @@
         String,
         Boolean,
         Numeric,
-        Infinite_String,
-        optional_string
+        StringInfinite,
+        NumericInfinite
     }
 }

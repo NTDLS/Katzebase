@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
                 }
                 tokenizer.EatNextCharacter();
 
-                while (!tokenizer.IsExausted())
+                while (!tokenizer.IsExhausted())
                 {
                     string name = tokenizer.GetNext().ToLowerInvariant();
                     if (tokenizer.IsNextCharacter('=') == false)

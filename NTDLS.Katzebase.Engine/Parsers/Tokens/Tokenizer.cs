@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         #region Public properties.
 
         public char? NextCharacter => _caret < _text.Length ? _text[_caret] : null;
-        public bool IsExausted() => _caret >= _text.Length;
+        public bool IsExhausted() => _caret >= _text.Length;
         public char[] TokenDelimiters => _standardTokenDelimiters;
         public int Caret => _caret;
         public int Length => _text.Length;
@@ -488,7 +488,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         {
             int restoreCaret = _caret;
 
-            while (IsExausted() == false)
+            while (IsExhausted() == false)
             {
                 var token = EatGetNext();
 
@@ -616,6 +616,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         #region IsNextToken.
 
+        public delegate bool TryNextTokenValidationProc(string peekedToken);
+
         public delegate bool TryNextTokenComparerProc(string peekedToken, string givenToken);
         public delegate bool TryNextTokenProc(string peekedToken);
 
@@ -651,7 +653,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token ends with any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenEndsWith(string[] givenTokens, char[] delimiters, out string outFoundToken)
@@ -659,7 +661,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token ends with any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenEndsWith(string[] givenTokens, out string outFoundToken)
@@ -667,7 +669,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token ends with any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenEndsWith(string givenToken, char[] delimiters, out string outFoundToken)
@@ -675,7 +677,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token ends with any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenEndsWith(string givenToken, out string outFoundToken)
@@ -715,7 +717,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token begins with any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenStartsWith(string[] givenTokens, char[] delimiters, out string outFoundToken)
@@ -723,7 +725,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token begins with any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenStartsWith(string[] givenTokens, out string outFoundToken)
@@ -731,7 +733,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token begins with any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenStartsWith(string givenToken, char[] delimiters, out string outFoundToken)
@@ -739,7 +741,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token begins with any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenStartsWith(string givenToken, out string outFoundToken)
@@ -779,7 +781,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token contains any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenContains(string[] givenTokens, char[] delimiters, out string outFoundToken)
@@ -787,7 +789,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token contains any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenContains(string[] givenTokens, out string outFoundToken)
@@ -795,7 +797,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token contains any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenContains(string givenToken, char[] delimiters, out string outFoundToken)
@@ -803,7 +805,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token contains any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatNextTokenContains(string givenToken, out string outFoundToken)
@@ -811,9 +813,77 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         #endregion
 
+
+        /// <summary>
+        /// Returns true if the given validator function returns true for the next token, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatValidateNextToken(TryNextTokenValidationProc validator)
+            => TryEatValidateNextToken(validator, _standardTokenDelimiters, out _);
+
+        /// <summary>
+        /// Returns true if the given validator function returns true for the next token, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatValidateNextToken(TryNextTokenValidationProc validator, char[] delimiters)
+            => TryEatValidateNextToken(validator, delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the given validator function returns true for the next token, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatValidateNextToken(TryNextTokenValidationProc validator, out string outFoundToken)
+            => TryEatValidateNextToken(validator, _standardTokenDelimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the given validator function returns true for the next token, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatValidateNextToken(TryNextTokenValidationProc validator, char[] delimiters, out string outFoundToken)
+        {
+            int restoreCaret = _caret;
+            outFoundToken = EatGetNext(delimiters, out _);
+
+            if (validator(outFoundToken))
+            {
+                return true;
+            }
+
+            _caret = restoreCaret;
+            return false;
+        }
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatCompareNextToken(TryNextTokenComparerProc comparer, string[] givenTokens)
+            => TryEatCompareNextToken(comparer, givenTokens, _standardTokenDelimiters, out _);
+
         /// <summary>
         /// Returns true if the next token is in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatCompareNextToken(TryNextTokenComparerProc comparer, string[] givenTokens, char[] delimiters)
+            => TryEatCompareNextToken(comparer, givenTokens, delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatCompareNextToken(TryNextTokenComparerProc comparer, string[] givenTokens, out string outFoundToken)
+            => TryEatCompareNextToken(comparer, givenTokens, _standardTokenDelimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatCompareNextToken(TryNextTokenComparerProc comparer, string[] givenTokens, char[] delimiters, out string outFoundToken)
@@ -863,7 +933,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token is in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatIsNextToken(string[] givenTokens, char[] delimiters, out string outFoundToken)
@@ -871,7 +941,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token is in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatIsNextToken(string[] givenTokens, out string outFoundToken)
@@ -879,7 +949,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token matches the given token, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatIsNextToken(string givenToken, out string outFoundToken)
@@ -887,7 +957,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token matches the given token, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// Moves the caret past the token only if its matched.
         /// </summary>
         public bool TryEatIsNextToken(string givenToken, char[] delimiters, out string outFoundToken)
@@ -925,28 +995,28 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token ends with any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenEndsWith(string[] givenTokens, char[] delimiters, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token ends with any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenEndsWith(string[] givenTokens, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token ends with any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenEndsWith(string givenToken, char[] delimiters, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token ends with any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenEndsWith(string givenToken, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out outFoundToken);
@@ -981,28 +1051,28 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token begins with any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenStartsWith(string[] givenTokens, char[] delimiters, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token begins with any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenStartsWith(string[] givenTokens, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token begins with any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenStartsWith(string givenToken, char[] delimiters, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token begins with any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenStartsWith(string givenToken, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out outFoundToken);
@@ -1037,28 +1107,28 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token contains any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenContains(string[] givenTokens, char[] delimiters, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token contains any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenContains(string[] givenTokens, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token contains any in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenContains(string givenToken, char[] delimiters, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token contains any in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryNextTokenContains(string givenToken, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out outFoundToken);
@@ -1085,7 +1155,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token is in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryCompareNextToken(TryNextTokenComparerProc comparer, string[] givenTokens, char[] delimiters, out string outFoundToken)
         {
@@ -1128,28 +1198,28 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         /// <summary>
         /// Returns true if the next token is in the given array, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryIsNextToken(string[] givenTokens, char[] delimiters, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token is in the given array, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryIsNextToken(string[] givenTokens, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token matches the given token, using the standard delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryIsNextToken(string givenToken, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out outFoundToken);
 
         /// <summary>
         /// Returns true if the next token matches the given token, using the given delimiters.
-        /// Regardless of whether a match was made, the token which was parsed ir returned via outFoundToken.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
         /// </summary>
         public bool TryIsNextToken(string givenToken, char[] delimiters, out string outFoundToken)
             => TryCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken);
@@ -1335,7 +1405,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         {
             for (int i = _caret; i < _text.Length; i++)
             {
-                if (_text[i].IsIdentifier())
+                if (_text[i].IsQueryIdentifier())
                 {
                     continue;
                 }
@@ -1390,36 +1460,36 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         #endregion
 
-        #region GetMatchingBraces.
+        #region GetMatchingScope.
 
         /// <summary>
         /// Matches scope using open and close parentheses and skips the entire scope.
         /// </summary>
-        public void EatMatchingBraces()
+        public void EatMatchingScope()
         {
-            EatGetMatchingBraces('(', ')');
+            EatGetMatchingScope('(', ')');
         }
 
         /// <summary>
         /// Matches scope using the given open and close values and skips the entire scope.
         /// </summary>
-        public void EatMatchingBraces(char open, char close)
+        public void EatMatchingScope(char open, char close)
         {
-            EatGetMatchingBraces(open, close);
+            EatGetMatchingScope(open, close);
         }
 
         /// <summary>
         /// Matches scope using open and close parentheses and returns the text between them.
         /// </summary>
-        public string EatGetMatchingBraces()
+        public string EatGetMatchingScope()
         {
-            return EatGetMatchingBraces('(', ')');
+            return EatGetMatchingScope('(', ')');
         }
 
         /// <summary>
         /// Matches scope using the given open and close values and returns the text between them.
         /// </summary>
-        public string EatGetMatchingBraces(char open, char close)
+        public string EatGetMatchingScope(char open, char close)
         {
             RecordBreadcrumb();
 
