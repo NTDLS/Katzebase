@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
@@ -17,35 +18,35 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 "Numeric Avg (AggregationArray values)"
             };
 
-        public static string ExecuteFunction(string functionName, List<string> aggregationValues, List<string> supplementalParameters)
+        public static string ExecuteFunction(string functionName, GroupAggregateFunctionParameter parameters)
         {
-            var proc = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, supplementalParameters);
+            var proc = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters.SupplementalParameters);
 
             switch (functionName.ToLowerInvariant())
             {
                 case "sum":
                     {
-                        return aggregationValues.Sum(o => double.Parse(o)).ToString();
+                        return parameters.AggregationValues.Sum(o => double.Parse(o)).ToString();
                     }
                 case "min":
                     {
-                        return aggregationValues.Min(o => double.Parse(o)).ToString();
+                        return parameters.AggregationValues.Min(o => double.Parse(o)).ToString();
                     }
                 case "max":
                     {
-                        return aggregationValues.Max(o => double.Parse(o)).ToString();
+                        return parameters.AggregationValues.Max(o => double.Parse(o)).ToString();
                     }
                 case "avg":
                     {
-                        return aggregationValues.Average(o => double.Parse(o)).ToString();
+                        return parameters.AggregationValues.Average(o => double.Parse(o)).ToString();
                     }
                 case "count":
                     {
                         if (proc.Get<bool>("countDistinct"))
                         {
-                            return aggregationValues.Distinct().Count().ToString();
+                            return parameters.AggregationValues.Distinct().Count().ToString();
                         }
-                        return aggregationValues.Count().ToString();
+                        return parameters.AggregationValues.Count().ToString();
                     }
             }
 

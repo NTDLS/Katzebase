@@ -14,7 +14,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
         /// </summary>
         public List<IExpressionFunctionParameter> Parameters { get; set; } = new();
 
-
         public QueryFieldExpressionFunctionAggregate(string functionName, string expressionKey, BasicDataType returnType)
         {
             FunctionName = functionName;

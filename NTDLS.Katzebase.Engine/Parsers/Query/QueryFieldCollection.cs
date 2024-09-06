@@ -325,7 +325,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #region Collection: AggregationFunctions.
 
-        private List<QueryFieldExpressionFunctionAggregate>? _aggregationFunctions = null;
+        private List<ExposedAggregateFunction>? _aggregationFunctions = null;
         private readonly object _aggregationFunctionsLock = new();
 
         public void InvalidateAggregationFunctionsCache()
@@ -339,7 +339,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <summary>
         /// Returns a list of fields that have function call dependencies.
         /// </summary>
-        public List<QueryFieldExpressionFunctionAggregate> AggregationFunctions
+        public List<ExposedAggregateFunction> AggregationFunctions
         {
             get
             {
@@ -355,7 +355,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _aggregationFunctions;
                         }
 
-                        var results = new List<QueryFieldExpressionFunctionAggregate>();
+                        var results = new List<ExposedAggregateFunction>();
 
                         foreach (var queryField in this)
                         {
@@ -363,7 +363,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             {
                                 foreach (var function in fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>())
                                 {
-                                    results.Add(function);
+                                    results.Add(new ExposedAggregateFunction(function, fieldExpression.FunctionDependencies));
                                 }
                             }
                         }

@@ -120,10 +120,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     {
                         var groupedValues = new KbInsensitiveDictionary<List<string>>();
 
-                        var auxiliaryFields = new KbInsensitiveDictionary<string?>(); //TODO: we need to add this to the group ro so we can pass it in.
-
-                        var aggregateExpressionResult = StaticAggregateExpressionProcessor.CollapseAggregateQueryField(transaction,
-                            query, groupRow.Value.AggregationValues, auxiliaryFields, groupRow.Value.SupplementalParameters, aggregateFunctionField);
+                        var aggregateExpressionResult = StaticAggregateExpressionProcessor.CollapseAggregateQueryField(
+                            transaction, query, groupRow.Value.GroupAggregateFunctionParameters, aggregateFunctionField);
 
                         resultRow.InsertValue(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
@@ -267,38 +265,32 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         foreach (var aggregationFunction in instance.Operation.Query.SelectFields.AggregationFunctions)
                         {
-                            var aggregationArrayParam = aggregationFunction.Parameters.First();
+                            var aggregationArrayParam = aggregationFunction.Function.Parameters.First();
 
                             var collapsedAggregationParameterValue = StaticScalerExpressionProcessor.CollapseScalerExpressionFunctionParameter(
-                                instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, new(), aggregationArrayParam);
+                                instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, aggregationFunction.FunctionDependencies, aggregationArrayParam);
 
-                            if (groupRowCollection.AggregationValues.TryGetValue(aggregationFunction.ExpressionKey, out var valueList))
+                            if (groupRowCollection.GroupAggregateFunctionParameters.TryGetValue(aggregationFunction.Function.ExpressionKey, out var groupAggregateFunctionParameter) == false)
                             {
-                                valueList.Add(collapsedAggregationParameterValue);
-                            }
-                            else
-                            {
-                                //This is the first value we are adding to this group, so also grab the supplemental aggregation function parameters just this one time per expression key.
+                                //Create a new group detail.
+                                groupAggregateFunctionParameter = new(row.AuxiliaryFields);
 
                                 //Skip past the required AggregationArray parameter and collapse any supplemental aggregation function parameters.
-                                //Supplemental parameters for aggregate functions would be something like "boolean countDistinct" on the count() function.
-                                foreach (var supplementalParam in aggregationFunction.Parameters.Skip(1))
+                                //Supplemental parameters for aggregate functions would be something like "boolean countDistinct" for the count() function.
+                                //We only do this when we create the GroupDetail because like the GroupRow, there is only one of these per group, per 
+                                foreach (var supplementalParam in aggregationFunction.Function.Parameters.Skip(1))
                                 {
                                     var collapsedSupplementalParamValue = StaticScalerExpressionProcessor.CollapseScalerExpressionFunctionParameter(
                                         instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, new(), supplementalParam);
 
-                                    if (groupRowCollection.SupplementalParameters.TryGetValue(aggregationFunction.ExpressionKey, out var supplementalParameterValues))
-                                    {
-                                        supplementalParameterValues.Add(collapsedSupplementalParamValue);
-                                    }
-                                    else
-                                    {
-                                        groupRowCollection.SupplementalParameters.Add(aggregationFunction.ExpressionKey, [collapsedSupplementalParamValue]);
-                                    }
+                                    groupAggregateFunctionParameter.SupplementalParameters.Add(collapsedSupplementalParamValue);
                                 }
 
-                                groupRowCollection.AggregationValues.Add(aggregationFunction.ExpressionKey, [collapsedAggregationParameterValue]);
+                                groupRowCollection.GroupAggregateFunctionParameters.Add(aggregationFunction.Function.ExpressionKey, groupAggregateFunctionParameter);
                             }
+
+                            //Keep track of the values that need to be aggregated, these will be passed as the first parameter to the aggregate function.
+                            groupAggregateFunctionParameter.AggregationValues.Add(collapsedAggregationParameterValue);
                         }
                     }
                 }

@@ -139,7 +139,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     break;
                 }
 
-                if (Parameters.Count > protoParamIndex)
+                if (protoParamIndex > values.Count)
                 {
                     if (Parameters[protoParamIndex].HasDefault)
                     {
