@@ -120,14 +120,15 @@ namespace NTDLS.Katzebase.Engine.Query.Searchers
                         Values = groupRow.Value.GroupRow,
                     };
 
-
                     foreach (var aggregateFunctionField in FieldsWithAggregateFunctionCalls)
                     {
                         var groupedValues = new KbInsensitiveDictionary<List<string>>();
 
                         var auxiliaryFields = new KbInsensitiveDictionary<string?>(); //TODO: we need to add this to the group ro so we can pass it in.
 
-                        var ffff = StaticAggregateExpressionProcessor.CollapseAggregateQueryField(transaction, query, groupRow.Value.AggregationValues, auxiliaryFields, aggregateFunctionField);
+                        var aggregateExpressionResult = StaticAggregateExpressionProcessor.CollapseAggregateQueryField(transaction, query, groupRow.Value.AggregationValues, auxiliaryFields, aggregateFunctionField);
+
+                        resultRow.InsertValue(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
 
 

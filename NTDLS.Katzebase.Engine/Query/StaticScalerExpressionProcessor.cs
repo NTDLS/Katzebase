@@ -89,34 +89,6 @@ namespace NTDLS.Katzebase.Engine.Query
         /// <summary>
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
-        public static string CollapseScalerQueryFieldExpression(Transaction transaction,
-            PreparedQuery query, KbInsensitiveDictionary<string?> auxiliaryFields, IQueryFieldExpression queryField)
-        {
-            if (queryField is QueryFieldExpressionNumeric expressionNumeric)
-            {
-                return CollapseScalerFunctionNumericParameter(transaction, query, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value);
-            }
-            else if (queryField is QueryFieldExpressionString expressionString)
-            {
-                return CollapseScalerFunctionStringParameter(transaction, query, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value);
-            }
-            else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
-            {
-                if (auxiliaryFields.TryGetValue(documentIdentifier.Value, out var auxiliaryValue))
-                {
-                    return auxiliaryValue ?? string.Empty; //TODO: Should auxiliaryFields really allow NULL values?
-                }
-                throw new KbEngineException($"Auxiliary fields not found: [{documentIdentifier.Value}].");
-            }
-            else
-            {
-                throw new KbEngineException($"Field expression type is not implemented: [{queryField.GetType().Name}].");
-            }
-        }
-
-        /// <summary>
-        /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
-        /// </summary>
         public static string CollapseScalerExpressionFunctionParameter(Transaction transaction,
             PreparedQuery query, KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functionDependencies, IExpressionFunctionParameter parameter)
         {

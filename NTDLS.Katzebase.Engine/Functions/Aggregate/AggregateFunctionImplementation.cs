@@ -18,31 +18,29 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 "avg:NumericArray/fieldName"
             };
 
-        public static string? ExecuteFunction(string functionName, double[] parameters, KbInsensitiveDictionary<List<string>> groupedValues)
+        public static string ExecuteFunction(string functionName, List<string> groupedValues)
         {
-
-
             switch (functionName.ToLowerInvariant())
             {
                 case "sum":
                     {
-                        return parameters.Sum(o => o).ToString();
+                        return groupedValues.Sum(o => double.Parse(o)).ToString();
                     }
                 case "min":
                     {
-                        return parameters.Min(o => o).ToString();
+                        return groupedValues.Min(o => double.Parse(o)).ToString();
                     }
                 case "max":
                     {
-                        return parameters.Max(o => o).ToString();
+                        return groupedValues.Max(o => double.Parse(o)).ToString();
                     }
                 case "avg":
                     {
-                        return parameters.Average(o => o).ToString();
+                        return groupedValues.Average(o => double.Parse(o)).ToString();
                     }
                 case "count":
                     {
-                        return parameters.Count().ToString();
+                        return groupedValues.Count().ToString();
                     }
             }
 
