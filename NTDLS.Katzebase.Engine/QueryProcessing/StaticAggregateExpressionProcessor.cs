@@ -10,13 +10,13 @@ using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing
 {
-    internal class StaticAggregateExpressionProcessor
+    internal static class StaticAggregateExpressionProcessor
     {
         /// <summary>
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
-        public static string CollapseAggregateQueryField(Transaction transaction,
-            PreparedQuery query, KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters, QueryField queryField)
+        public static string CollapseAggregateQueryField(this QueryField queryField, Transaction transaction,
+            PreparedQuery query, KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters)
         {
             if (queryField.Expression is QueryFieldExpressionNumeric expressionNumeric)
             {
@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Takes a string expression string and performs math on all of the values, including those from all
         ///     recursive function calls.
         /// </summary>
-        static string CollapseAggregateFunctionNumericParameter(Transaction transaction, PreparedQuery query,
+        private static string CollapseAggregateFunctionNumericParameter(Transaction transaction, PreparedQuery query,
             List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters, string expressionString)
         {
             var tokenizer = new TokenizerSlim(expressionString, ['~', '!', '%', '^', '&', '*', '(', ')', '-', '/', '+']);
@@ -63,7 +63,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Takes a string expression string and concatenates all of the values, including those from all
         ///     recursive function calls. Concatenation which is really the only operation we support for strings.
         /// </summary>
-        static string CollapseAggregateFunctionStringParameter(Transaction transaction, PreparedQuery query,
+        private static string CollapseAggregateFunctionStringParameter(Transaction transaction, PreparedQuery query,
             List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters, string expressionString)
         {
             var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
@@ -90,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Takes a function and recursively collapses all of the parameters, then recursively
         ///     executes all dependency functions to collapse the function to a single value.
         /// </summary>
-        static string CollapseAggregateFunction(Transaction transaction, PreparedQuery query, List<IQueryFieldExpressionFunction> functions,
+        private static string CollapseAggregateFunction(Transaction transaction, PreparedQuery query, List<IQueryFieldExpressionFunction> functions,
             KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters, IQueryFieldExpressionFunction function)
         {
             //The sole parameter for aggregate functions is pre-computed by the query execution engine, just get the values.

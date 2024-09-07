@@ -5,30 +5,16 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {
     internal class DocumentLookupResults
     {
-        public List<DocumentLookupResult> Collection { get; private set; } = new();
+        public List<List<string?>> RowValues { get; private set; } = new();
 
         /// <summary>
         /// This is only used when we just want to return a list of document pointers and no fields.
         /// </summary>
         public List<DocumentPointer> DocumentPointers { get; private set; } = new();
 
-        public DocumentLookupResults()
-        {
-        }
-
-        public void Add(DocumentLookupResult result)
-        {
-            Collection.Add(result);
-        }
-
-        public void AddRange(List<SchemaIntersectionRow> rows)
-        {
-            Collection.AddRange(rows.Select(o => new DocumentLookupResult(o)));
-        }
-
         public void AddRange(SchemaIntersectionRowCollection rowCollection)
         {
-            Collection.AddRange(rowCollection.Select(o => new DocumentLookupResult(o)));
+            RowValues = rowCollection.Select(o => o.ToList()).ToList();
         }
     }
 }

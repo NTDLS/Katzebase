@@ -114,6 +114,20 @@ namespace NTDLS.Katzebase.Engine.Library
             return builder.ToString();
         }
 
+        public static string GetSHA512Hash(string input)
+        {
+            byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+            byte[] hashBytes = SHA512.HashData(inputBytes);
+
+            var builder = new StringBuilder();
+            for (int i = 0; i < hashBytes.Length; i++)
+            {
+                builder.Append(hashBytes[i].ToString("x2"));
+            }
+
+            return builder.ToString();
+        }
+
         public static bool IsDirectoryEmpty(string path)
         {
             if (Directory.Exists(path))

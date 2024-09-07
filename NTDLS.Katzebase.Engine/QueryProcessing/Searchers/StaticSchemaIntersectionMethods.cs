@@ -109,8 +109,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     foreach (var aggregateFunctionField in fieldsWithAggregateFunctionCalls)
                     {
-                        var aggregateExpressionResult = StaticAggregateExpressionProcessor.CollapseAggregateQueryField(
-                            transaction, query, groupRow.Value.GroupAggregateFunctionParameters, aggregateFunctionField);
+                        var aggregateExpressionResult = aggregateFunctionField.CollapseAggregateQueryField(
+                            transaction, query, groupRow.Value.GroupAggregateFunctionParameters);
 
                         groupRow.Value.GroupRow.InsertValue(aggregateFunctionField.Alias, aggregateFunctionField.Ordinal, aggregateExpressionResult);
                     }
@@ -209,7 +209,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 //We ARE NOT grouping, so collapse all field expressions as scaler expressions.
                 instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
-                StaticScalerExpressionProcessor.CollapseScalerRowExpressions(instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), ref resultingRows);
+                resultingRows.CollapseScalerRowExpressions(instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull());
                 instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Release();
             }
             else
@@ -222,8 +222,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     foreach (var groupField in instance.Operation.Query.GroupFields)
                     {
-                        var collapsedGroupField = StaticScalerExpressionProcessor.CollapseScalerQueryField(instance.Operation.Transaction,
-                            instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, groupField);
+                        var collapsedGroupField = groupField.CollapseScalerQueryField(instance.Operation.Transaction,
+                            instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields);
 
                         groupKey.Append($"[{collapsedGroupField.ToLowerInvariant()}]");
                     }
@@ -255,8 +255,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             var aggregationArrayParam = aggregationFunction.Function.Parameters.First();
 
                             //All aggregation parameters are collapsed here at query processing time.
-                            var collapsedAggregationParameterValue = StaticScalerExpressionProcessor.CollapseScalerExpressionFunctionParameter(
-                                instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, aggregationFunction.FunctionDependencies, aggregationArrayParam);
+                            var collapsedAggregationParameterValue = aggregationArrayParam.CollapseScalerExpressionFunctionParameter(instance.Operation.Transaction,
+                                instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, aggregationFunction.FunctionDependencies);
 
                             if (groupRowCollection.GroupAggregateFunctionParameters.TryGetValue(aggregationFunction.Function.ExpressionKey, out var groupAggregateFunctionParameter) == false)
                             {
@@ -268,8 +268,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 //We only do this when we create the GroupDetail because like the GroupRow, there is only one of these per group, per 
                                 foreach (var supplementalParam in aggregationFunction.Function.Parameters.Skip(1))
                                 {
-                                    var collapsedSupplementalParamValue = StaticScalerExpressionProcessor.CollapseScalerExpressionFunctionParameter(
-                                        instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, new(), supplementalParam);
+                                    var collapsedSupplementalParamValue = supplementalParam.CollapseScalerExpressionFunctionParameter(
+                                        instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, new());
 
                                     groupAggregateFunctionParameter.SupplementalParameters.Add(collapsedSupplementalParamValue);
                                 }
@@ -699,7 +699,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
-        private static void FilterByGlobalQueryConditions(this SchemaIntersectionRowCollection inputResults, Transaction transaction, DocumentLookupOperation.Instance instance)
+        private static void FilterByGlobalQueryConditions(this SchemaIntersectionRowCollection rows, Transaction transaction, DocumentLookupOperation.Instance instance)
         {
             NCalc.Expression? expression = null;
 
@@ -720,7 +720,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             var rowsToRemove = new List<SchemaIntersectionRow>();
 
 
-            foreach (var inputResult in inputResults)
+            foreach (var inputResult in rows)
             {
                 SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, instance.Operation.Query.Conditions, inputResult.AuxiliaryFields);
 
@@ -734,7 +734,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 }
             }
 
-            inputResults.RemoveAll(o => rowsToRemove.Contains(o));
+            rows.RemoveAll(o => rowsToRemove.Contains(o));
         }
 
         /// <summary>

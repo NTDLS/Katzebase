@@ -128,9 +128,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 result.Fields.Add(new KbQueryField(field.Alias));
             }
 
-            foreach (var subConditionResult in subConditionResults.Collection)
+            foreach (var subConditionResult in subConditionResults.RowValues)
             {
-                result.Rows.Add(new KbQueryRow(subConditionResult.Values));
+                result.Rows.Add(new KbQueryRow(subConditionResult));
             }
 
             return result;

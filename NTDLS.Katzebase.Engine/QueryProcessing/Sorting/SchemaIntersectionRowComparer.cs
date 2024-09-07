@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Sorting
         {
             foreach (var (fieldName, sortDirection) in sortingColumns)
             {
-                int result = string.Compare(x?.AuxiliaryFields[fieldName], y.AuxiliaryFields?[fieldName], StringComparison.OrdinalIgnoreCase);
+                int result = string.Compare(x?.AuxiliaryFields[fieldName], y?.AuxiliaryFields?[fieldName], StringComparison.OrdinalIgnoreCase);
 
                 if (result != 0)
                 {

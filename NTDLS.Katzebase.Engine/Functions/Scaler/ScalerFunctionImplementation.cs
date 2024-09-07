@@ -43,7 +43,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 "String Left (String text, Numeric length)",
                 "String Right (String text, Numeric length)",
                 "String Sha1 (String text)",
-                "String Sha256  (String text)",
+                "String Sha256 (String text)",
+                "String Sha512 (String text)",
                 "String SubString (String text, Numeric startIndex, Numeric length)",
                 "String ToLower (String text)",
                 "String ToProper (String text)",
@@ -116,6 +117,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     return Library.Helpers.GetSHA1Hash(proc.Get<string>("text"));
                 case "sha256":
                     return Library.Helpers.GetSHA256Hash(proc.Get<string>("text"));
+                case "sha512":
+                    return Library.Helpers.GetSHA512Hash(proc.Get<string>("text"));
                 case "indexof":
                     return proc.Get<string>("textToSearch").IndexOf(proc.Get<string>("textToFind")).ToString();
                 case "lastindexof":
