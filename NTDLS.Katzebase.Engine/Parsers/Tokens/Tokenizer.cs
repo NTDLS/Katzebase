@@ -1707,9 +1707,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// Skips the next character in the sequence.
         /// </summary>
         /// <exception cref="KbParserException"></exception>
-        public void EatNextCharacter()
+        public char EatNextCharacter()
         {
             RecordBreadcrumb();
+
+            int index = _caret;
 
             if (_caret >= _text.Length)
             {
@@ -1718,6 +1720,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
             _caret++;
             InternalEatWhiteSpace();
+
+            return _text[index];
         }
 
         #endregion

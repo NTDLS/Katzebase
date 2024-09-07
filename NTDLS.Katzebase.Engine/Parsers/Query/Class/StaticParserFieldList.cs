@@ -51,15 +51,23 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 string fieldAlias = string.Empty;
 
                 //Parse the field alias.
-                int aliasIndex = field.IndexOf(" as ", StringComparison.InvariantCultureIgnoreCase);
+                int aliasIndex = field.LastIndexOf(" as ", StringComparison.InvariantCultureIgnoreCase);
                 if (aliasIndex > 0)
                 {
-                    fieldAlias = field.Substring(aliasIndex + 4).Trim();
+                    //Get the next token after the "as".
+                    var fieldAliasTokenizer = new TokenizerSlim(field.Substring(aliasIndex + 4).Trim());
+                    fieldAlias = fieldAliasTokenizer.EatGetNext();
+
+                    //Make sure that the single token was the entire alias, otherwise we have a syntax error.
+                    if (!fieldAliasTokenizer.Exausted())
+                    {
+                        throw new Exception($"Expected end of alias, found [{fieldAliasTokenizer.Remainder()}].");
+                    }
                 }
 
                 var aliasRemovedFieldText = (aliasIndex > 0 ? field.Substring(0, aliasIndex) : field).Trim();
 
-                var queryField = ParseField(aliasRemovedFieldText, ref queryFields);
+                var queryField = ParseField(tokenizer, aliasRemovedFieldText, ref queryFields);
 
                 //If the query didn't provide an alias, figure one out.
                 if (string.IsNullOrWhiteSpace(fieldAlias))
@@ -80,7 +88,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             return queryFields;
         }
 
-        private static IQueryField ParseField(string givenFieldText, ref QueryFieldCollection queryFields)
+        private static IQueryField ParseField(Tokenizer parentTokenizer, string givenFieldText, ref QueryFieldCollection queryFields)
         {
             Tokenizer tokenizer = new(givenFieldText);
 
@@ -131,29 +139,36 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             if (IsNumericExpression(givenFieldText))
             {
                 IQueryFieldExpression expression = new QueryFieldExpressionNumeric(givenFieldText);
-                expression.Value = ParseEvaluationRecursive(ref expression, givenFieldText, ref queryFields);
+                expression.Value = ParseEvaluationRecursive(parentTokenizer, ref expression, givenFieldText, ref queryFields);
                 return expression;
             }
             else
             {
                 IQueryFieldExpression expression = new QueryFieldExpressionString();
-                expression.Value = ParseEvaluationRecursive(ref expression, givenFieldText, ref queryFields);
+                expression.Value = ParseEvaluationRecursive(parentTokenizer, ref expression, givenFieldText, ref queryFields);
                 return expression;
             }
         }
 
-        private static string ParseEvaluationRecursive(ref IQueryFieldExpression rootQueryFieldExpression,
+        private static string ParseEvaluationRecursive(Tokenizer parentTokenizer, ref IQueryFieldExpression rootQueryFieldExpression,
             string givenExpressionText, ref QueryFieldCollection queryFields)
         {
             Tokenizer tokenizer = new(givenExpressionText);
 
             StringBuilder buffer = new();
 
+            char[] connectingCharacters = ['~', '!', '%', '^', '&', '*', '-', '+', '/'];
+
             while (!tokenizer.IsExhausted())
             {
                 int positionBeforeToken = tokenizer.Caret;
 
                 string token = tokenizer.EatGetNext();
+
+                if (tokenizer.NextCharacter != null && !connectingCharacters.Contains((tokenizer.NextCharacter ?? ' ')))
+                {
+                    throw new KbParserException($"Connection token is missing after [{parentTokenizer.ResolveLiteral(token)}].");
+                }
 
                 if (token.StartsWith("$s_") && token.EndsWith('$')) //A string placeholder.
                 {
@@ -170,7 +185,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     var basicDataType = scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric ? KbBasicDataType.Numeric : KbBasicDataType.String;
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(scalerFunction.Name, expressionKey, basicDataType);
 
-                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);
+                    ParseFunctionCallRecursive(parentTokenizer, ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);
 
                     buffer.Append(expressionKey);
                 }
@@ -180,7 +195,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     var expressionKey = queryFields.GetNextExpressionKey();
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionAggregate(aggregateFunction.Name, expressionKey, KbBasicDataType.Numeric);
 
-                    ParseFunctionCallRecursive(ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);
+                    ParseFunctionCallRecursive(parentTokenizer, ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);
 
                     buffer.Append(expressionKey);
                 }
@@ -201,6 +216,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     buffer.Append(token);
                 }
+
+                if (connectingCharacters.Contains((tokenizer.NextCharacter ?? ' ')))
+                {
+                    buffer.Append(tokenizer.EatNextCharacter());
+                }
             }
 
             return buffer.ToString();
@@ -210,7 +230,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// <summary>
         /// Parses a function call and its parameters, add them to the passed queryFieldExpressionFunction.
         /// </summary>
-        private static void ParseFunctionCallRecursive(ref IQueryFieldExpression rootQueryFieldExpression,
+        private static void ParseFunctionCallRecursive(Tokenizer parentTokenizer, ref IQueryFieldExpression rootQueryFieldExpression,
             IQueryFieldExpressionFunction queryFieldExpressionFunction, ref QueryFieldCollection queryFields,
             Tokenizer tokenizer, int positionBeforeToken)
         {
@@ -221,7 +241,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             foreach (var functionCallParameterText in functionCallParametersText)
             {
                 //Recursively process the function parameters.
-                var resultingExpressionString = ParseEvaluationRecursive(ref rootQueryFieldExpression, functionCallParameterText, ref queryFields);
+                var resultingExpressionString = ParseEvaluationRecursive(parentTokenizer, ref rootQueryFieldExpression, functionCallParameterText, ref queryFields);
 
                 IExpressionFunctionParameter? parameter = null;
 

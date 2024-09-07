@@ -11,9 +11,9 @@ DECLARE @Var3 = 16.5
 
 
 SELECT
-	@Var1 as v1,
-	@Var2 as v2,
-	@Var3 as v3,
+	@Var1 as v1
+	@Var2 as v2
+	@Var3 as v3
 	LanguageId,
 	Id - 651947 as NumberOf
 FROM

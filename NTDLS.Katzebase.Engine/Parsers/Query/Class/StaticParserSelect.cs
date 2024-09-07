@@ -20,14 +20,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             var result = new PreparedQuery(queryBatch, queryType);
 
             //Parse "TOP n".
-
             if (tokenizer.TryEatIsNextToken("top"))
             {
                 result.RowLimit = tokenizer.EatGetNextEvaluated<int>();
             }
 
             //Parse field list.
-
             if (tokenizer.TryEatIsNextToken("*"))
             {
                 //Select all fields from all schemas.
