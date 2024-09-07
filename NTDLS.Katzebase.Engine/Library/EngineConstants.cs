@@ -118,12 +118,5 @@
             LessThanOrEqual,
             GreaterThanOrEqual
         }
-
-        public enum BasicDataType
-        {
-            Undefined,
-            String,
-            Numeric
-        }
     }
 }

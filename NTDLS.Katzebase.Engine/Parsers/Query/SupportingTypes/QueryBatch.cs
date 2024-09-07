@@ -1,21 +1,18 @@
 ﻿using NTDLS.Katzebase.Client.Types;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 {
     internal class QueryBatch : List<PreparedQuery>
     {
-        public KbInsensitiveDictionary<string> UserParameters { get; set; } = new();
-
         public KbInsensitiveDictionary<QueryFieldLiteral> Literals { get; set; } = new();
 
-        public QueryBatch(KbInsensitiveDictionary<string> userParameters, KbInsensitiveDictionary<QueryFieldLiteral> literals)
+        public QueryBatch(KbInsensitiveDictionary<QueryFieldLiteral> literals)
         {
-            UserParameters = userParameters;
             Literals = literals;
         }
 
-        public string GetLiteralValue(string value)
+        public string? GetLiteralValue(string value)
         {
             if (Literals.TryGetValue(value, out var literal))
             {
@@ -24,15 +21,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
             else return value;
         }
 
-        public string GetLiteralValue(string value, out BasicDataType outDataType)
+        public string? GetLiteralValue(string value, out KbBasicDataType outDataType)
         {
             if (Literals.TryGetValue(value, out var literal))
             {
-                outDataType = BasicDataType.String;
+                outDataType = KbBasicDataType.String;
                 return literal.Value;
             }
 
-            outDataType = BasicDataType.Undefined;
+            outDataType = KbBasicDataType.Undefined;
             return value;
         }
     }

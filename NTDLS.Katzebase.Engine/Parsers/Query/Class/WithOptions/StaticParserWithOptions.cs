@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
                     }
                     tokenizer.EatNextCharacter();
 
-                    string tokenValue = tokenizer.GetNext().ToLowerInvariant();
+                    string? tokenValue = tokenizer.GetNext().ToLowerInvariant();
 
                     if (expectedOptions.ContainsKey(name) == false)
                     {
@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
                     if (tokenizer.Literals.TryGetValue(tokenValue, out var literal))
                     {
                         tokenValue = literal.Value;
-                        tokenValue = tokenValue.Substring(1, tokenValue.Length - 2);
+                        tokenValue = tokenValue == null ? null : tokenValue.Substring(1, tokenValue.Length - 2);
                     }
 
                     var convertedValue = expectedOptions.ValidateAndConvert(name, tokenValue);

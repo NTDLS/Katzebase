@@ -7,7 +7,7 @@ using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using System.Text;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
@@ -167,7 +167,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     //The expression key is used to match the function calls to the token in the parent expression.
                     var expressionKey = queryFields.GetNextExpressionKey();
-                    var basicDataType = scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric ? BasicDataType.Numeric : BasicDataType.String;
+                    var basicDataType = scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric ? KbBasicDataType.Numeric : KbBasicDataType.String;
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionScaler(scalerFunction.Name, expressionKey, basicDataType);
 
                     ParseFunctionCallRecursive(ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);
@@ -178,7 +178,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     //The expression key is used to match the function calls to the token in the parent expression.
                     var expressionKey = queryFields.GetNextExpressionKey();
-                    var queryFieldExpressionFunction = new QueryFieldExpressionFunctionAggregate(aggregateFunction.Name, expressionKey, BasicDataType.Numeric);
+                    var queryFieldExpressionFunction = new QueryFieldExpressionFunctionAggregate(aggregateFunction.Name, expressionKey, KbBasicDataType.Numeric);
 
                     ParseFunctionCallRecursive(ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);
 
@@ -297,7 +297,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     //Find the function call so we can check the function return type.
                     var referencedFunction = rootExpressionEvaluation.FunctionDependencies.Single(f => f.ExpressionKey == token);
 
-                    if (referencedFunction.ReturnType != BasicDataType.Numeric)
+                    if (referencedFunction.ReturnType != KbBasicDataType.Numeric)
                     {
                         //This function returns something other then numeric, so we are evaluating strings.
                         return false;

@@ -261,7 +261,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         var collapsedGroupField = groupField.CollapseScalerQueryField(instance.Operation.Transaction,
                             instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields);
 
-                        groupKey.Append($"[{collapsedGroupField.ToLowerInvariant()}]");
+                        groupKey.Append($"[{collapsedGroupField?.ToLowerInvariant()}]");
                     }
 
                     instance.Operation.Query.EnsureNotNull();
@@ -314,7 +314,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             }
 
                             //Keep track of the values that need to be aggregated, these will be passed as the first parameter to the aggregate function.
-                            groupAggregateFunctionParameter.AggregationValues.Add(collapsedAggregationParameterValue);
+                            if (collapsedAggregationParameterValue != null)
+                            {
+                                groupAggregateFunctionParameter.AggregationValues.Add(collapsedAggregationParameterValue);
+                            }
+                            else
+                            {
+                                instance.Operation.Transaction.AddWarning(KbTransactionWarning.AggregateDisqualifiedByNullValue);
+                            }
                         }
                     }
                 }

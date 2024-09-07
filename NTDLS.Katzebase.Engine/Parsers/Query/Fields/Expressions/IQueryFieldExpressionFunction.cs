@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
 {
@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
     {
         string FunctionName { get; }
         string ExpressionKey { get; }
-        BasicDataType ReturnType { get; }
+        KbBasicDataType ReturnType { get; }
 
         /// <summary>
         /// Parameter list for the this function.

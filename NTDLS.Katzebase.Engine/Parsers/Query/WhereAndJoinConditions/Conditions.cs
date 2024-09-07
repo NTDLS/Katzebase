@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using NTDLS.Katzebase.Shared;
 using System.Text;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
@@ -339,7 +340,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                 {
                     string conditionPlaceholder = NextConditionKey();
 
-                    string left = QueryBatch.GetLiteralValue(token, out var leftDataType);
+                    string? left = QueryBatch.GetLiteralValue(token, out var leftDataType);
 
                     //Logical Qualifier
                     token = tokenizer.EatGetNext().ToLowerInvariant();
@@ -351,13 +352,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                     var logicalQualifier = StaticConditionHelpers.ParseLogicalQualifier(token);
 
                     //Righthand value:
-                    string right = QueryBatch.GetLiteralValue(tokenizer.EatGetNext(), out var rightDataType);
+                    string? right = QueryBatch.GetLiteralValue(tokenizer.EatGetNext(), out var rightDataType);
 
                     int endPosition = tokenizer.Caret;
 
                     if (logicalQualifier == LogicalQualifier.Between || logicalQualifier == LogicalQualifier.NotBetween)
                     {
-                        if (rightDataType != BasicDataType.Numeric)
+                        if (rightDataType != KbBasicDataType.Numeric)
                         {
                             throw new KbParserException($"Invalid token, Found [{right}] expected numeric value.");
                         }
@@ -372,7 +373,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
                         if (Tokenizer.Literals.TryGetValue(rightRange, out var rightOfRange))
                         {
-                            if (rightOfRange.DataType != BasicDataType.Numeric)
+                            if (rightOfRange.DataType != KbBasicDataType.Numeric)
                             {
                                 throw new KbParserException($"Invalid token, Found [{rightOfRange.Value}] expected numeric value.");
                             }
@@ -388,7 +389,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                     var condition = new Condition(conditionPlaceholder, logicalConnector,
                         new SmartValue(left, leftDataType), logicalQualifier, new SmartValue(right, rightDataType));
 
-                    if (right.StartsWith($"{leftHandAliasOfJoin}."))
+                    if (right?.StartsWith($"{leftHandAliasOfJoin}.") == true)
                     {
                         //For joins, keep the left and right values on the side that I prefer.
                         LogManager.Trace($"Conditions.AddSubCondition: Inverting schema join condition.");

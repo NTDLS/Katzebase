@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             return function != null;
         }
 
-        public static ScalerFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string> parameters)
+        public static ScalerFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string?> parameters)
         {
             if (_protypes == null)
             {

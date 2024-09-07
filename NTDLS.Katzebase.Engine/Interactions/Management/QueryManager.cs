@@ -9,8 +9,8 @@ using NTDLS.Katzebase.Engine.Parsers;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Sessions;
 using System.Text;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-using static NTDLS.Katzebase.Engine.Parsers.Tokens.Tokenizer;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Tokens that will be replaced by literal values by the tokenizer.
         /// </summary>
-        internal KbInsensitiveDictionary<TokenizerConstant> TokenizerConstants { get; private set; } = new();
+        internal KbInsensitiveDictionary<KbConstant> KbGlobalConstants { get; private set; } = new();
 
         internal QueryManager(EngineCore core)
         {
@@ -33,8 +33,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             APIHandlers = new QueryAPIHandlers(core);
 
             //Define all query literal constants here, these will be filled in my the tokenizer. Do not use quotes for strings.
-            TokenizerConstants.Add("true", new("1", BasicDataType.Numeric));
-            TokenizerConstants.Add("false", new("0", BasicDataType.Numeric));
+            KbGlobalConstants.Add("true", new("1", KbBasicDataType.Numeric));
+            KbGlobalConstants.Add("false", new("0", KbBasicDataType.Numeric));
+            KbGlobalConstants.Add("null", new(null, KbBasicDataType.Undefined));
 
             ScalerFunctionCollection.Initialize();
             AggregateFunctionCollection.Initialize();
@@ -52,7 +53,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <exception cref="KbMultipleRecordSetsException"></exception>
         internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
         {
-            var preparedQueries = StaticQueryParser.ParseBatch(_core, queryText, userParameters.ToUserParameters());
+            var preparedQueries = StaticQueryParser.ParseBatch(_core, queryText, userParameters.ToUserParametersInsensitiveDictionary());
             if (preparedQueries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");

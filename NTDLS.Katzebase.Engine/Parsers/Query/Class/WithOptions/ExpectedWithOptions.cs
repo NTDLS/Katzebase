@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
         {
         }
 
-        public object ValidateAndConvert(string name, string value)
+        public object ValidateAndConvert(string name, string? value)
         {
             if (TryGetValue(name, out var resultType))
             {

@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             return function != null;
         }
 
-        public static AggregateFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string> parameters)
+        public static AggregateFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string?> parameters)
         {
             if (_protypes == null)
             {

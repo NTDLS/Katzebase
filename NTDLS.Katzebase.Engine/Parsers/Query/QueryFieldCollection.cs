@@ -3,7 +3,7 @@ using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query
@@ -194,11 +194,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                         {
                             if (queryField.Expression is QueryFieldConstantNumeric constantNumeric)
                             {
-                                results.Add(new ExposedConstant(queryField.Ordinal, BasicDataType.Numeric, queryField.Alias, constantNumeric.Value));
+                                results.Add(new ExposedConstant(queryField.Ordinal, KbBasicDataType.Numeric, queryField.Alias, constantNumeric.Value));
                             }
                             else if (queryField.Expression is QueryFieldConstantString constantString)
                             {
-                                results.Add(new ExposedConstant(queryField.Ordinal, BasicDataType.String, queryField.Alias, constantString.Value));
+                                results.Add(new ExposedConstant(queryField.Ordinal, KbBasicDataType.String, queryField.Alias, constantString.Value));
                             }
                         }
 

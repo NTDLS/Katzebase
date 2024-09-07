@@ -17,6 +17,6 @@
         /// List of aggregate function parameters after the default first "AggregationValues" parameter.
         /// The key is the ExpressionKey of the aggregation function these values are for.
         /// </summary>
-        public List<string> SupplementalParameters { get; set; } = new();
+        public List<string?> SupplementalParameters { get; set; } = new();
     }
 }

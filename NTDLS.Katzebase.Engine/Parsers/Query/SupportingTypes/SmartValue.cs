@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 {
@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
     {
         private string? _value = null;
 
-        public BasicDataType DataType { get; private set; }
+        public KbBasicDataType DataType { get; private set; }
 
         /// <summary>
         /// This value is a constant string.
@@ -29,10 +29,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         public string Key
             => string.IsNullOrEmpty(Prefix) ? _value ?? "" : $"{Prefix}.{_value}";
 
-        private SmartValue(BasicDataType basicDataType)
+        private SmartValue(KbBasicDataType basicDataType)
             => DataType = basicDataType;
 
-        public SmartValue(string value, BasicDataType basicDataType)
+        public SmartValue(string? value, KbBasicDataType basicDataType)
             => SetValue(value, basicDataType);
 
         public override string ToString()
@@ -49,12 +49,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
             };
         }
 
-        public void SetValue(string value, BasicDataType basicDataType)
+        public void SetValue(string? value, KbBasicDataType basicDataType)
         {
-            if (basicDataType != BasicDataType.Undefined)
+            if (basicDataType != KbBasicDataType.Undefined)
             {
                 IsConstant = true;
-                _value = value.ToLowerInvariant();
+                _value = value?.ToLowerInvariant();
                 IsSet = true;
                 DataType = basicDataType;
             }

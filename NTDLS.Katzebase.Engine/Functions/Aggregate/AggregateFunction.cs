@@ -120,7 +120,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             return new AggregateFunction(functionName, returnType, parameters);
         }
 
-        internal AggregateFunctionParameterValueCollection ApplyParameters(List<string> values)
+        internal AggregateFunctionParameterValueCollection ApplyParameters(List<string?> values)
         {
             var result = new AggregateFunctionParameterValueCollection();
 

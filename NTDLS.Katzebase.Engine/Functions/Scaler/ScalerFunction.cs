@@ -120,7 +120,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             return new ScalerFunction(functionName, returnType, parameters);
         }
 
-        internal ScalerFunctionParameterValueCollection ApplyParameters(List<string> values)
+        internal ScalerFunctionParameterValueCollection ApplyParameters(List<string?> values)
         {
             var result = new ScalerFunctionParameterValueCollection();
 
@@ -164,48 +164,6 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             }
 
             return result;
-
-            /*
-            int requiredParameterCount = Parameters.Count(o => o.Type.ToString().ContainsInsensitive("optional") == false);
-
-            if (Parameters.Count < requiredParameterCount)
-            {
-                if (Parameters.Count > 0 && Parameters[0].Type == KbScalerFunctionParameterType.StringInfinite)
-                {
-                    //The first parameter is infinite, we don't even check anything else.
-                }
-                else
-                {
-                    throw new KbFunctionException($"Incorrect number of parameter passed to {Name}.");
-                }
-            }
-
-            var result = new ScalerFunctionParameterValueCollection();
-
-            if (Parameters.Count > 0 && Parameters[0].Type == KbScalerFunctionParameterType.StringInfinite)
-            {
-                for (int i = 0; i < Parameters.Count; i++)
-                {
-                    result.Values.Add(new ScalerFunctionParameterValue(Parameters[0], values[i]));
-                }
-            }
-            else
-            {
-                for (int i = 0; i < Parameters.Count; i++)
-                {
-                    if (i >= values.Count)
-                    {
-                        result.Values.Add(new ScalerFunctionParameterValue(Parameters[i]));
-                    }
-                    else
-                    {
-                        result.Values.Add(new ScalerFunctionParameterValue(Parameters[i], values[i]));
-                    }
-                }
-            }
-
-            return result;
-            */
         }
     }
 }
