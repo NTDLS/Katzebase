@@ -11,8 +11,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
     internal class Condition
     {
         public string ConditionKey { get; private set; }
-        public SmartValue Left { get; private set; } = new();
-        public SmartValue Right { get; private set; } = new();
+        public SmartValue Left { get; private set; }
+        public SmartValue Right { get; private set; }
 
         /// <summary>
         /// Used by ConditionOptimization.BuildTree() do determine when an index has already been matched to this condition.
@@ -23,25 +23,18 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// Logical connector: AND or OR
         /// </summary>
         public LogicalConnector LogicalConnector { get; private set; } = LogicalConnector.None;
+
         /// <summary>
         /// Logical qualifier: Equals, greater than, not equal, etc.
         /// </summary>
         public LogicalQualifier LogicalQualifier { get; private set; } = LogicalQualifier.None;
 
         public Condition(string conditionKey, LogicalConnector logicalConnector,
-            string left, LogicalQualifier logicalQualifier, string right)
+            SmartValue left, LogicalQualifier logicalQualifier, SmartValue right)
         {
             ConditionKey = conditionKey;
-            Left.Value = left;
-            Right.Value = right;
-            LogicalConnector = logicalConnector;
-            LogicalQualifier = logicalQualifier;
-        }
-
-        public Condition(string conditionKey,
-            LogicalConnector logicalConnector, LogicalQualifier logicalQualifier)
-        {
-            ConditionKey = conditionKey;
+            Left = left;
+            Right = right;
             LogicalConnector = logicalConnector;
             LogicalQualifier = logicalQualifier;
         }
@@ -69,15 +62,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         public Condition Clone()
-        {
-            var clone = new Condition(ConditionKey, LogicalConnector, LogicalQualifier)
-            {
-                Left = Left.Clone(),
-                Right = Right.Clone()
-            };
-
-            return clone;
-        }
+            => new Condition(ConditionKey, LogicalConnector, Left.Clone(), LogicalQualifier, Right.Clone());
 
         public bool IsMatch(Transaction transaction, string? passedValue)
         {

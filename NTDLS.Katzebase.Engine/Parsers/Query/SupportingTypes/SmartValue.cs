@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 {
@@ -6,22 +7,20 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
     {
         private string? _value = null;
 
+        public BasicDataType DataType { get; private set; }
+
         /// <summary>
         /// This value is a constant string.
         /// </summary>
-        public bool IsString { get; private set; }
-        /// <summary>
-        /// This value is a constant (string or numeric). If false, then this value is a field name.
-        /// </summary>
         public bool IsConstant { get; private set; }
-        /// <summary>
-        /// This value is numeric and does not contain string characters.
-        /// </summary>
-        public bool IsNumeric { get; private set; }
+
         /// <summary>
         /// This value has been set.
         /// </summary>
         public bool IsSet { get; private set; }
+
+        public string? Value => _value;
+
         public string Prefix { get; private set; } = string.Empty;
 
         /// <summary>
@@ -30,65 +29,50 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         public string Key
             => string.IsNullOrEmpty(Prefix) ? _value ?? "" : $"{Prefix}.{_value}";
 
-        public SmartValue()
-        {
-        }
+        private SmartValue(BasicDataType basicDataType)
+            => DataType = basicDataType;
 
-        public SmartValue(string value)
-        {
-            Value = value;
-        }
+        public SmartValue(string value, BasicDataType basicDataType)
+            => SetValue(value, basicDataType);
+
+        public override string ToString()
+            => _value?.ToString() ?? string.Empty;
 
         public SmartValue Clone()
         {
-            return new SmartValue()
+            return new SmartValue(DataType)
             {
                 IsConstant = IsConstant,
-                IsNumeric = IsNumeric,
-                IsString = IsString,
                 Prefix = Prefix,
                 IsSet = IsSet,
                 _value = _value
             };
         }
 
-        public override string ToString()
+        public void SetValue(string value, BasicDataType basicDataType)
         {
-            return _value?.ToString() ?? string.Empty;
-        }
-
-        public string? Value
-        {
-            get { return _value; }
-            set
+            if (basicDataType != BasicDataType.Undefined)
             {
-                IsConstant = false;
-                IsNumeric = false;
-                IsString = false;
-
+                IsConstant = true;
+                _value = value.ToLowerInvariant();
+                IsSet = true;
+                DataType = basicDataType;
+            }
+            else
+            {
                 _value = value?.ToLowerInvariant();
-
-                if (_value == "null")
-                {
-                    IsConstant = true;
-                    _value = null;
-                }
 
                 if (_value != null)
                 {
-                    if (_value.StartsWith('\'') && _value.EndsWith('\''))
+                    if (double.TryParse(_value, out _))
                     {
-                        //Handle escape sequences:
-                        _value = _value.Replace("\\'", "\'");
-
-                        _value = value?.Substring(1, _value.Length - 2);
-                        IsString = true;
-                        IsConstant = true;
+                        throw new KbParserException("Invalid query. Found [" + _value + "], expected identifier.");
                     }
                     else
                     {
                         if (_value.Contains('.') && double.TryParse(_value, out _) == false)
                         {
+                            //schema.field
                             var parts = _value.Split('.');
                             if (parts.Length != 2)
                             {
@@ -98,28 +82,27 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
                             Prefix = parts[0];
                             _value = parts[1];
                         }
-                    }
-
-                    if (_value != null && double.TryParse(_value, out _))
-                    {
-                        IsConstant = true;
-                        IsNumeric = true;
-                    }
-                    else if (_value != null && _value.Contains(':'))
-                    {
-                        //Check to see if this is a "between" expression "number:number" e.g. 5:10
-                        var parts = _value.Split(':');
-                        if (parts.Length == 2)
+                        else if (_value != null && _value.Contains(':'))
                         {
-                            if (double.TryParse(parts[0], out _) && double.TryParse(parts[1], out _))
+                            //Check to see if this is a "between" expression "number:number" e.g. 5:10
+                            var parts = _value.Split(':');
+                            if (parts.Length == 2)
                             {
-                                IsConstant = true;
+                                if (double.TryParse(parts[0], out _) && double.TryParse(parts[1], out _))
+                                {
+                                    IsConstant = true;
+                                }
                             }
                         }
+                        else
+                        {
+                            _value = value;
+                        }
                     }
-                }
 
-                IsSet = true;
+                    IsSet = true;
+                    DataType = basicDataType;
+                }
             }
         }
     }

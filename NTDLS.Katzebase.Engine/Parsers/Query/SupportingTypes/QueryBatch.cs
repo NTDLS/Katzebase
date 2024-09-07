@@ -24,15 +24,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
             else return value;
         }
 
-        public string GetLiteralValue(string value, out BasicDataType outDateType)
+        public string GetLiteralValue(string value, out BasicDataType outDataType)
         {
             if (Literals.TryGetValue(value, out var literal))
             {
-                outDateType = BasicDataType.String;
+                outDataType = BasicDataType.String;
                 return literal.Value;
             }
 
-            outDateType = BasicDataType.Undefined;
+            outDataType = BasicDataType.Undefined;
             return value;
         }
     }
