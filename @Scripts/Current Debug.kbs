@@ -16,7 +16,15 @@ FROM
 	WordList:Word
 WHERE
 	Text LIKE 'Tab%'
-
+	
+SELECT
+	LanguageId,
+	Text,
+	Id
+FROM
+	WordList:Word
+WHERE
+	Text LIKE 'Tab%'
 	
 
 /*

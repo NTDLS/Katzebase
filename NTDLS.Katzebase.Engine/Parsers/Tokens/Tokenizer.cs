@@ -592,11 +592,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
             while (IsExhausted() == false)
             {
+                int previousCaret = _caret;
                 var token = EatGetNext();
 
                 if (proc(token))
                 {
-                    foundIndex = _caret;
+                    foundIndex = previousCaret;
                     _caret = restoreCaret;
                     return true;
                 }

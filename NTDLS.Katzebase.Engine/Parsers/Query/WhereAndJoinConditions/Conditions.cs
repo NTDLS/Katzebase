@@ -385,7 +385,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                         endPosition = tokenizer.Caret;
                     }
 
-                    var condition = new Condition(conditionPlaceholder, logicalConnector, new SmartValue(left, leftDataType), logicalQualifier, new SmartValue(right, rightDataType));
+                    var condition = new Condition(conditionPlaceholder, logicalConnector,
+                        new SmartValue(left, leftDataType), logicalQualifier, new SmartValue(right, rightDataType));
 
                     if (right.StartsWith($"{leftHandAliasOfJoin}."))
                     {
