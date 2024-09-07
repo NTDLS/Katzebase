@@ -34,8 +34,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             IEnumerable<DocumentPointer>? documentPointers = null;
 
-            //TODO: Here we should evaluate whatever conditions we can to early eliminate the top level document scans.
-            //If we don't have any conditions then we just need to return all rows from the schema.
+            #region Optimization.
+
             if (topLevelSchemaMap.Optimization != null)
             {
                 var limitedDocumentPointers = new List<DocumentPointer>();
@@ -57,14 +57,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 }
             }
 
+            #endregion
+
+            #region Threaded Schema Intersections.
+
             //If we do not have any documents, then get the whole schema.
             documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, topLevelSchemaMap.PhysicalSchema, LockOperation.Read);
 
             var queue = core.ThreadPool.Lookup.CreateChildQueue<DocumentLookupOperation.Instance>(core.Settings.LookupOperationThreadPoolQueueDepth);
-
             var operation = new DocumentLookupOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
-
-            //LogManager.Debug($"Starting document scan with {documentPointers.Count()} documents.");
 
             foreach (var documentPointer in documentPointers)
             {
@@ -93,6 +94,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion);
             queue.WaitForCompletion();
             ptThreadCompletion?.StopAndAccumulate();
+
+            #endregion
 
             #region Grouping (aggregate function execution and row building).
 
@@ -146,7 +149,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             #endregion
 
-            //Enforce row limits.
+            #region Enforce row limits.
+
             if (query.RowLimit > 0 && operation.ResultingRows.Count > query.RowLimit)
             {
                 if (query.RowOffset == 0)
@@ -181,6 +185,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     operation.ResultingRows.RemoveRange(0, query.RowOffset);
                 }
             }
+
+            #endregion
 
             if (gatherDocumentPointersForSchemaPrefix != null)
             {
