@@ -1,8 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
-using NTDLS.Katzebase.Shared;
-using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
@@ -103,7 +101,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
                 }
-
                 result.GroupFields = StaticParserGroupBy.Parse(queryBatch, tokenizer);
             }
 
@@ -114,52 +111,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
                 }
+                result.SortFields = StaticParserOrderBy.Parse(queryBatch, tokenizer);
+            }
 
-                var fields = new List<string>();
-
-                while (!tokenizer.IsExhausted())
-                {
-                    if (tokenizer.TryCompareNextToken((o) => StaticParserUtility.IsStartOfQuery(o)))
-                    {
-                        break; //Found start of next query.
-                    }
-
-                    var fieldToken = tokenizer.EatGetNext([',']);
-                    if (fieldToken == string.Empty)
-                    {
-                        continue;
-                    }
-
-                    if (result.SortFields.Count > 0)
-                    {
-                        if (tokenizer.IsNextCharacter(','))
-                        {
-                            fieldToken = tokenizer.EatGetNext();
-                        }
-                        else if (tokenizer.Caret < tokenizer.Length) //We should have consumed the entire query at this point.
-                        {
-                            throw new KbParserException("Invalid query. Found '" + fieldToken + "', expected: ','.");
-                        }
-                    }
-
-                    if (fieldToken == string.Empty)
-                    {
-                        if (tokenizer.Caret < tokenizer.Length)
-                        {
-                            throw new KbParserException("Invalid query. Found '" + tokenizer.EatRemainder() + "', expected: end of statement.");
-                        }
-
-                        break;
-                    }
-
-                    var sortDirection = KbSortDirection.Ascending;
-                    if (tokenizer.TryEatIsNextToken(["asc", "desc"], out token))
-                    {
-                        sortDirection = token.Is("desc") ? KbSortDirection.Descending : KbSortDirection.Ascending;
-                    }
-
-                    result.SortFields.Add(fieldToken, sortDirection);
-                }
+            //Parse "limit" clause.
+            if (tokenizer.TryEatIsNextToken("offset"))
+            {
+                result.RowOffset = tokenizer.EatGetNextEvaluated<int>();
             }
 
             return result;

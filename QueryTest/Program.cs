@@ -61,7 +61,7 @@ namespace QueryTest
 
                 //var queryText = "select Spanish, count(Id + 7, true) + min(Id) as NumberOf1, Latin, Count(Id) as NumberOf2 from WordList:FlatTranslate where English like 'bed%' group by Spanish, Latin";
 
-                var queryText = "SELECT\r\n\tSha1Agg('fff' + German) as Latin1, \r\n Latin,\r\n\tCount('hh' + sha1(Guid()) + 'j4', true) as RowCount as RowCount,\r\n\tCount(German + 'hh', true) as GermanWordCount,\r\n\tCount(Spanish, true) as SpanishWordCount\r\nFROM\r\n\tWordList:FlatTranslate\r\nWHERE\r\n\tEnglish LIKE 'Car%'\r\nGROUP BY\r\n\tLatin\r\n";
+                var queryText = "SELECT\r\n\tSha1Agg('fff' + German) as Latin1, \r\n Latin,\r\n\tCount('hh' + sha1(Guid()) + 'j4', true) as RowCount,\r\n\tCount(German + 'hh', true) as GermanWordCount,\r\n\tCount(Spanish, true) as SpanishWordCount\r\nFROM\r\n\tWordList:FlatTranslate\r\nWHERE\r\n\tEnglish LIKE 'Car%'\r\nGROUP BY\r\n\tLatin\r\n";
 
                 //var queryText = "SELECT\r\n\t\r\nSha1Agg('fff' + German) as Latin, Count(German + 'hh', true) as RowCount,\r\nLatin as sss\r\nFROM\r\n\tWordList:FlatTranslate\r\nWHERE\r\n\tEnglish LIKE 'Car%'\r\nGROUP BY\r\n\tLatin\r\n";
 

@@ -149,7 +149,37 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             //Enforce row limits.
             if (query.RowLimit > 0 && operation.ResultingRows.Count > query.RowLimit)
             {
-                operation.ResultingRows.RemoveRange(query.RowLimit, operation.ResultingRows.Count - 10);
+                if (query.RowOffset == 0)
+                {
+                    operation.ResultingRows.RemoveRange(query.RowLimit, operation.ResultingRows.Count - 10);
+                }
+                else
+                {
+                    if (query.RowOffset > operation.ResultingRows.Count)
+                    {
+                        operation.ResultingRows.Clear();
+                    }
+                    else
+                    {
+                        operation.ResultingRows.RemoveRange(0, query.RowOffset);
+
+                        if (operation.ResultingRows.Count > query.RowLimit)
+                        {
+                            operation.ResultingRows.RemoveRange(query.RowLimit, operation.ResultingRows.Count - 10);
+                        }
+                    }
+                }
+            }
+            else if (query.RowOffset > 0)
+            {
+                if (query.RowOffset > operation.ResultingRows.Count)
+                {
+                    operation.ResultingRows.Clear();
+                }
+                else
+                {
+                    operation.ResultingRows.RemoveRange(0, query.RowOffset);
+                }
             }
 
             if (gatherDocumentPointersForSchemaPrefix != null)

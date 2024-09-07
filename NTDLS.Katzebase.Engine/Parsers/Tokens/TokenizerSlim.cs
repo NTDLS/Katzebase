@@ -177,5 +177,360 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                 _caret++;
             }
         }
+
+        #region IsNextToken.
+
+        public delegate bool TryNextTokenValidationProc(string peekedToken);
+
+        public delegate bool TryNextTokenComparerProc(string peekedToken, string givenToken);
+        public delegate bool TryNextTokenProc(string peekedToken);
+
+        #region TryEatNextTokenEndsWith
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the given delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenEndsWith(string[] givenTokens, char[] delimiters)
+            => TryEatCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the standard delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenEndsWith(string[] givenTokens)
+            => TryEatCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the given delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenEndsWith(string givenToken, char[] delimiters)
+            => TryEatCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the standard delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenEndsWith(string givenToken)
+            => TryEatCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenEndsWith(string[] givenTokens, char[] delimiters, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenEndsWith(string[] givenTokens, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenEndsWith(string givenToken, char[] delimiters, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token ends with any in the given array, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenEndsWith(string givenToken, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.EndsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out outFoundToken);
+
+        #endregion
+
+        #region TryEatNextTokenStartsWith
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the given delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenStartsWith(string[] givenTokens, char[] delimiters)
+            => TryEatCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the standard delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenStartsWith(string[] givenTokens)
+            => TryEatCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the given delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenStartsWith(string givenToken, char[] delimiters)
+            => TryEatCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the standard delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenStartsWith(string givenToken)
+            => TryEatCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenStartsWith(string[] givenTokens, char[] delimiters, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenStartsWith(string[] givenTokens, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenStartsWith(string givenToken, char[] delimiters, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token begins with any in the given array, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenStartsWith(string givenToken, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.StartsWith(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out outFoundToken);
+
+        #endregion
+
+        #region TryEatNextTokenContains
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the given delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenContains(string[] givenTokens, char[] delimiters)
+            => TryEatCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the standard delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenContains(string[] givenTokens)
+            => TryEatCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the given delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenContains(string givenToken, char[] delimiters)
+            => TryEatCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the standard delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenContains(string givenToken)
+            => TryEatCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenContains(string[] givenTokens, char[] delimiters, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenContains(string[] givenTokens, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenContains(string givenToken, char[] delimiters, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token contains any in the given array, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatNextTokenContains(string givenToken, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.Contains(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out outFoundToken);
+
+        #endregion
+
+        #region TryEatValidateNextToken
+
+        /// <summary>
+        /// Returns true if the given validator function returns true for the next token, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatValidateNextToken(TryNextTokenValidationProc validator)
+            => TryEatValidateNextToken(validator, _standardTokenDelimiters, out _);
+
+        /// <summary>
+        /// Returns true if the given validator function returns true for the next token, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatValidateNextToken(TryNextTokenValidationProc validator, char[] delimiters)
+            => TryEatValidateNextToken(validator, delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the given validator function returns true for the next token, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatValidateNextToken(TryNextTokenValidationProc validator, out string outFoundToken)
+            => TryEatValidateNextToken(validator, _standardTokenDelimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the given validator function returns true for the next token, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatValidateNextToken(TryNextTokenValidationProc validator, char[] delimiters, out string outFoundToken)
+        {
+            int restoreCaret = _caret;
+            outFoundToken = EatGetNext(delimiters, out _);
+
+            if (validator(outFoundToken))
+            {
+                return true;
+            }
+
+            _caret = restoreCaret;
+            return false;
+        }
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatCompareNextToken(TryNextTokenComparerProc comparer, string[] givenTokens)
+            => TryEatCompareNextToken(comparer, givenTokens, _standardTokenDelimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatCompareNextToken(TryNextTokenComparerProc comparer, string[] givenTokens, char[] delimiters)
+            => TryEatCompareNextToken(comparer, givenTokens, delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatCompareNextToken(TryNextTokenComparerProc comparer, string[] givenTokens, out string outFoundToken)
+            => TryEatCompareNextToken(comparer, givenTokens, _standardTokenDelimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatCompareNextToken(TryNextTokenComparerProc comparer, string[] givenTokens, char[] delimiters, out string outFoundToken)
+        {
+            int restoreCaret = _caret;
+            outFoundToken = EatGetNext(delimiters, out _);
+
+            foreach (var givenToken in givenTokens)
+            {
+                if (comparer(outFoundToken, givenToken))
+                {
+                    return true;
+                }
+            }
+
+            _caret = restoreCaret;
+            return false;
+        }
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the given delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatIsNextToken(string[] givenTokens, char[] delimiters)
+            => TryEatCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the standard delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatIsNextToken(string[] givenTokens)
+            => TryEatCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token matches the given token, using the standard delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatIsNextToken(string givenToken)
+            => TryEatCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token matches the given token, using the given delimiters.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatIsNextToken(string givenToken, char[] delimiters)
+            => TryEatCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out _);
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatIsNextToken(string[] givenTokens, char[] delimiters, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token is in the given array, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatIsNextToken(string[] givenTokens, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token matches the given token, using the standard delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatIsNextToken(string givenToken, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out outFoundToken);
+
+        /// <summary>
+        /// Returns true if the next token matches the given token, using the given delimiters.
+        /// Regardless of whether a match was made, the token which was parsed it returned via outFoundToken.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public bool TryEatIsNextToken(string givenToken, char[] delimiters, out string outFoundToken)
+            => TryEatCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken);
+
+        #endregion
+
+        #endregion
+
     }
 }

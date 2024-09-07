@@ -916,6 +916,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         #endregion
 
+        #region TryEatValidateNextToken
 
         /// <summary>
         /// Returns true if the given validator function returns true for the next token, using the standard delimiters.
@@ -1065,6 +1066,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// </summary>
         public bool TryEatIsNextToken(string givenToken, char[] delimiters, out string outFoundToken)
             => TryEatCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken);
+
+        #endregion
 
         #endregion
 

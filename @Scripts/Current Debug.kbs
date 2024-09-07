@@ -8,6 +8,22 @@ Create schema WordList:Words with (PageSize = 100)
 --This should explode since it is missing the closing single-quote.
 --SELECT LanguageId, Id FROM WordList:Word WHERE Text LIKE 'Tab%
 
+SELECT TOP 10
+	LanguageId,
+	Text,
+	Id
+FROM
+	WordList:Word
+WHERE
+	Text LIKE 'Tab%'
+ORDER BY
+	Text,
+	Id
+OFFSET
+	100
+	
+	
+/*
 SELECT
 	LanguageId,
 	Text,
@@ -16,16 +32,7 @@ FROM
 	WordList:Word
 WHERE
 	Text LIKE 'Tab%'
-	
-SELECT
-	LanguageId,
-	Text,
-	Id
-FROM
-	WordList:Word
-WHERE
-	Text LIKE 'Tab%'
-	
+*/	
 
 /*
 select top 100

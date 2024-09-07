@@ -75,6 +75,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
         public List<QuerySchema> Schemas { get; private set; } = new();
         public int RowLimit { get; set; }
+        public int RowOffset { get; set; }
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }
         public Conditions Conditions { get; set; }
