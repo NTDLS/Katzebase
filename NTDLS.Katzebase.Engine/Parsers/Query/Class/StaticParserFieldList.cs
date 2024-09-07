@@ -157,15 +157,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             StringBuilder buffer = new();
 
-            char[] connectingCharacters = ['~', '!', '%', '^', '&', '*', '-', '+', '/'];
-
             while (!tokenizer.IsExhausted())
             {
                 int positionBeforeToken = tokenizer.Caret;
 
                 string token = tokenizer.EatGetNext();
 
-                if (tokenizer.NextCharacter != null && !connectingCharacters.Contains((tokenizer.NextCharacter ?? ' ')))
+                //Verify that the next character (if any) is a "connector".
+                if (tokenizer.NextCharacter != null && !tokenizer.IsNextCharacter(o => o.IsTokenConnectorCharacter()))
                 {
                     throw new KbParserException($"Connection token is missing after [{parentTokenizer.ResolveLiteral(token)}].");
                 }
@@ -217,7 +216,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     buffer.Append(token);
                 }
 
-                if (connectingCharacters.Contains((tokenizer.NextCharacter ?? ' ')))
+                if (!tokenizer.IsExhausted() && tokenizer.IsNextCharacter(o => o.IsTokenConnectorCharacter()))
                 {
                     buffer.Append(tokenizer.EatNextCharacter());
                 }

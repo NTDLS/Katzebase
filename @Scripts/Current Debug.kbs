@@ -6,14 +6,14 @@ Create schema WordList:Words with (PageSize = 100)
 --set TraceWaitTimes true
 
 DECLARE @Var1 = 'Test'
-    DECLARE @Var2 = 10
+DECLARE @Var2 = 10
 DECLARE @Var3 = 16.5
 
 
 SELECT
-	@Var1 as v1
-	@Var2 as v2
-	@Var3 as v3
+	@Var1 as v1,
+	@Var2 as v2,
+	@Var3 as v3,
 	LanguageId,
 	Id - 651947 as NumberOf
 FROM

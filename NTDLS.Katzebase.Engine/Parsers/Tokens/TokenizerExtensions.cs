@@ -87,12 +87,21 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                 || c == ':' //Schema separators. [Schema1:Schema2].
                 || c == '.'; //Schema field-separators. [schemaPrefix.FieldName].
 
-        private static readonly char[] _mathematicalCharacters = { '~', '!', '^', '&', '*', '(', ')', '-', '+', '/', '=' };
+        public static readonly char[] MathematicalCharacters = { '~', '!', '%', '^', '&', '|', '*', '(', ')', '-', '+', '/', '=' };
 
         /// <summary>
         /// Returns true if the character is a valid mathematical character.
         /// </summary>
         public static bool IsMathematicalOperator(this char c)
-            => _mathematicalCharacters.Contains(c);
+            => MathematicalCharacters.Contains(c);
+
+        public static readonly char[] TokenConnectorCharacters = { '%', '^', '&', '|', '*', '-', '+', '/' };
+
+        /// <summary>
+        /// Returns true if the character is a valid mathematical character.
+        /// </summary>
+        public static bool IsTokenConnectorCharacter(this char c)
+            => TokenConnectorCharacters.Contains(c);
+
     }
 }
