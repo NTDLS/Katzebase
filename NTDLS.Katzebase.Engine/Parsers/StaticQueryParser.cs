@@ -18,8 +18,9 @@ namespace NTDLS.Katzebase.Engine.Parsers
         static public QueryBatch ParseBatch(EngineCore core, string queryText, KbInsensitiveDictionary<KbConstant>? userParameters = null)
         {
             var tokenizerConstants = core.Query.KbGlobalConstants.Clone();
-            if (userParameters != null) //Add the user parameters to the tokenizerConstants
+            if (userParameters != null)
             {
+                //If we have user parameters, add them to a clone of the global tokenizer constants.
                 foreach (var param in userParameters)
                 {
                     tokenizerConstants.Add(param.Key, param.Value);
