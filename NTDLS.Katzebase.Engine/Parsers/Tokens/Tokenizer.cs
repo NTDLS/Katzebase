@@ -95,11 +95,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             UserParameters = userParameters ?? new();
             PredefinedConstants = predefinedConstants ?? new();
 
-            ValidateParentheses();
+            PreValidate();
 
             if (optimizeForTokenization)
             {
                 OptimizeForTokenization();
+                PostValidate();
             }
         }
 
@@ -118,11 +119,32 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             UserParameters = userParameters ?? new();
             PredefinedConstants = predefinedConstants ?? new();
 
-            ValidateParentheses();
+            PreValidate();
 
             if (optimizeForTokenization)
             {
                 OptimizeForTokenization();
+                PostValidate();
+            }
+        }
+
+        private void PreValidate()
+        {
+            ValidateParentheses();
+        }
+
+        private void PostValidate()
+        {
+            int index = _text.IndexOf('\'');
+            if (index > 0)
+            {
+                throw new KbParserException($"Invalid syntax at ['] at position: [{index:n0}]");
+            }
+
+            index = _text.IndexOf('\"');
+            if (index > 0)
+            {
+                throw new KbParserException($"Invalid syntax at [\"] at position: [{index:n0}]");
             }
         }
 

@@ -40,7 +40,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// </summary>
         static public PreparedQuery ParseQuery(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-
             string token = tokenizer.GetNext();
 
             if (StaticParserUtility.IsStartOfQuery(token, out var queryType) == false)
