@@ -1,4 +1,5 @@
-﻿using System.Runtime.CompilerServices;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using System.Runtime.CompilerServices;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
@@ -42,6 +43,27 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         {
             _text = text;
             _standardTokenDelimiters = ['\r', '\n', ' '];
+        }
+
+        /// <summary>
+        /// Gets the remainder of the text from current caret position.
+        /// </summary>
+        public string Remainder()
+            => _text.Substring(_caret);
+
+        /// <summary>
+        /// Skips the next character in the sequence.
+        /// </summary>
+        /// <exception cref="KbParserException"></exception>
+        public void EatNextCharacter()
+        {
+            if (_caret >= _text.Length)
+            {
+                throw new KbParserException("The tokenizer sequence is empty.");
+            }
+
+            _caret++;
+            EatWhiteSpace();
         }
 
         /// <summary>

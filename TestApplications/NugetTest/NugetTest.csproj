@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.7.5" />
+    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.7.6" />
   </ItemGroup>
 
 </Project>

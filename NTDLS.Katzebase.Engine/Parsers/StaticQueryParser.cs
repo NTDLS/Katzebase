@@ -3,6 +3,7 @@ using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers
@@ -18,17 +19,17 @@ namespace NTDLS.Katzebase.Engine.Parsers
         static public QueryBatch ParseBatch(EngineCore core, string queryText, KbInsensitiveDictionary<KbConstant>? userParameters = null)
         {
             var tokenizerConstants = core.Query.KbGlobalConstants.Clone();
-            if (userParameters != null)
+
+            userParameters ??= new();
+            //If we have user parameters, add them to a clone of the global tokenizer constants.
+            foreach (var param in userParameters)
             {
-                //If we have user parameters, add them to a clone of the global tokenizer constants.
-                foreach (var param in userParameters)
-                {
-                    tokenizerConstants.Add(param.Key, param.Value);
-                }
+                tokenizerConstants.Add(param.Key, param.Value);
             }
 
-            var tokenizer = new Tokenizer(queryText, true, tokenizerConstants);
+            queryText = PreParseQueryVariableDeclarations(queryText, ref tokenizerConstants);
 
+            var tokenizer = new Tokenizer(queryText, true, tokenizerConstants);
             var queryBatch = new QueryBatch(tokenizer.Literals);
 
             while (!tokenizer.IsExhausted())
@@ -1287,7 +1288,66 @@ namespace NTDLS.Katzebase.Engine.Parsers
             */
 
             #endregion
-
         }
+
+        /// <summary>
+        /// Parse the variable declaration in the query and remove them from the query text.
+        /// </summary>
+        static string PreParseQueryVariableDeclarations(string queryText, ref KbInsensitiveDictionary<KbConstant> tokenizerConstants)
+        {
+            var lines = queryText.Split("\n", StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim());
+            lines = lines.Where(o => o.StartsWith("declare", StringComparison.InvariantCultureIgnoreCase));
+
+            foreach (var line in lines)
+            {
+                var lineTokenizer = new TokenizerSlim(line);
+
+                if (!lineTokenizer.TryEatIsNextToken("declare", out var token))
+                {
+                    throw new KbParserException($"Invalid query. Found '{token}', expected: 'declare'.");
+                }
+
+                if (lineTokenizer.NextCharacter != '@')
+                {
+                    throw new KbParserException($"Invalid query. Found '{lineTokenizer.NextCharacter}', expected: '@'.");
+                }
+                lineTokenizer.EatNextCharacter();
+
+                if (lineTokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var variableName) == false)
+                {
+                    throw new KbParserException($"Invalid query. Found '{token}', expected: 'declare'.");
+                }
+
+                if (lineTokenizer.NextCharacter != '=')
+                {
+                    throw new KbParserException($"Invalid query. Found '{lineTokenizer.NextCharacter}', expected: '='.");
+                }
+                lineTokenizer.EatNextCharacter();
+
+                var variableValue = lineTokenizer.Remainder().Trim();
+
+                KbBasicDataType variableType;
+                if (variableValue.StartsWith('\'') && variableValue.EndsWith('\''))
+                {
+                    variableType = KbBasicDataType.String;
+                    variableValue = variableValue.Substring(1, variableValue.Length - 2);
+                }
+                else
+                {
+                    variableType = KbBasicDataType.Numeric;
+                    if (variableValue != null && double.TryParse(variableValue?.ToString(), out _) == false)
+                    {
+                        throw new Exception($"Non-string value of [{variableName}] cannot be converted to numeric.");
+                    }
+                }
+
+                tokenizerConstants.Add($"@{variableName}", new KbConstant(variableValue, variableType));
+
+                queryText = queryText.Replace(line, "");
+            }
+
+            return queryText.Trim();
+        }
+
     }
 }
