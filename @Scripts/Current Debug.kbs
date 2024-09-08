@@ -1,3 +1,29 @@
+select
+	sw.Id,
+	sw.Text,
+	sw.LanguageId
+from
+	WordList::Word as sw --(15 rows affected)
+where
+	sw.Text LIKE 'As%'
+	and sw.Text LIKE '%to'
+	and sw.Text like '%in%'
+	--and sw.LanguageId between 3 and 5
+	and sw.LanguageId >= 3
+	and sw.LanguageId <= 5
+	and sw.Id > 1000
+	OR sw.Text like 'Ca%'
+	and sw.Text like '%al'
+	and sw.Text like '%na%'
+	and sw.LanguageId = 4
+	OR sw.Text like 'Ca%'
+	and sw.Text like '%al'
+	and sw.Text like '%na%'
+	and sw.LanguageId = 5
+order by
+	sw.Text
+
+
 /*
 Create schema WordList
 Create schema WordList:Words with (PageSize = 100)
@@ -5,10 +31,10 @@ Create schema WordList:Words with (PageSize = 100)
 
 --set TraceWaitTimes true
 
+/*
 DECLARE @Var1 = 'Test'
 DECLARE @Var2 = 10
 DECLARE @Var3 = 16.5
-
 
 SELECT
 	@Var1 as v1,
@@ -20,7 +46,8 @@ FROM
 	WordList:Word
 WHERE
 	Text LIKE 'Tab%'
-	
+*/
+
 /*
 SELECT TOP 10
 	LanguageId,

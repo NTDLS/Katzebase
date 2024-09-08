@@ -1,4 +1,5 @@
-﻿using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 {
@@ -18,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                 "not like" => LogicalQualifier.NotLike,
                 "between" => LogicalQualifier.Between,
                 "not between" => LogicalQualifier.NotBetween,
-                _ => LogicalQualifier.None,
+                _ => throw new KbParserException($"Unexpected logical qualifier found: [{text}]."),
             };
         }
 
@@ -34,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                 LogicalQualifier.GreaterThan => ">",
                 LogicalQualifier.Like => "~",
                 LogicalQualifier.NotLike => "!~",
-                _ => "",
+                _ => throw new KbParserException($"Unexpected logical qualifier found [{logicalQualifier}].")
             };
         }
 

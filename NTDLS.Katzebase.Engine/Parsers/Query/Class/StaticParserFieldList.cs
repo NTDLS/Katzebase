@@ -164,7 +164,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 string token = tokenizer.EatGetNext();
 
                 //Verify that the next character (if any) is a "connector".
-                if (tokenizer.NextCharacter != null && !tokenizer.IsNextCharacter(o => o.IsTokenConnectorCharacter()))
+                if (tokenizer.NextCharacter != null && !tokenizer.TryIsNextCharacter(o => o.IsTokenConnectorCharacter()))
                 {
                     throw new KbParserException($"Connection token is missing after [{parentTokenizer.ResolveLiteral(token)}].");
                 }
@@ -216,7 +216,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     buffer.Append(token);
                 }
 
-                if (!tokenizer.IsExhausted() && tokenizer.IsNextCharacter(o => o.IsTokenConnectorCharacter()))
+                if (!tokenizer.IsExhausted() && tokenizer.TryIsNextCharacter(o => o.IsTokenConnectorCharacter()))
                 {
                     buffer.Append(tokenizer.EatNextCharacter());
                 }
@@ -292,7 +292,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             while (!tokenizer.IsExhausted())
             {
-                if (tokenizer.IsNextCharacter(c => c.IsMathematicalOperator()))
+                if (tokenizer.TryIsNextCharacter(c => c.IsMathematicalOperator()))
                 {
                     tokenizer.EatNextCharacter();
                     continue;

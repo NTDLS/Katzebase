@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException("Invalid query. Found '" + conditionText + "', expected: list of conditions.");
             }
 
-            StaticConditionsParser.Parse(queryBatch, conditionText, tokenizer);
+            StaticConditionsParser.Parse(queryBatch, tokenizer, conditionText);
 
             return Conditions.Create(queryBatch, conditionText, tokenizer);
         }

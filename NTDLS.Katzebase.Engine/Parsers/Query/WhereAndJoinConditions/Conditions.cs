@@ -73,14 +73,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// </summary>
         /// <param name="queryBatch"></param>
         /// <param name="conditionsText"></param>
-        /// <param name="tokenizer"></param>
+        /// <param name="parentTokenizer"></param>
         /// <param name="leftHandAliasOfJoin">When parsing a JOIN, this is the schema that we are joining to.</param>
         /// <returns></returns>
-        public static Conditions Create(QueryBatch queryBatch, string conditionsText, Tokenizer tokenizer, string leftHandAliasOfJoin = "")
+        public static Conditions Create(QueryBatch queryBatch, string conditionsText, Tokenizer parentTokenizer, string leftHandAliasOfJoin = "")
         {
             var conditions = new Conditions(queryBatch);
 
-            conditions.Parse(conditionsText.ToLowerInvariant(), tokenizer, leftHandAliasOfJoin);
+            conditions.Parse(conditionsText.ToLowerInvariant(), parentTokenizer, leftHandAliasOfJoin);
 
             return conditions;
         }
@@ -94,7 +94,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// <param name="stringLiterals">Collection of string literals that were stripped from the query text.</param>
         /// <param name="numericLiterals">Collection of numeric literals that were stripped from the query text.</param>
         /// <param name="leftHandAliasOfJoin">When parsing a JOIN, this is the schema that we are joining to.</param>
-        private void Parse(string givenConditionText, Tokenizer tokenizer, string leftHandAliasOfJoin)
+        private void Parse(string givenConditionText, Tokenizer parentTokenizer, string leftHandAliasOfJoin)
         {
             //We parse by parentheses so wrap the condition in them if it is not already.
             if (givenConditionText.StartsWith('(') == false || givenConditionText.StartsWith(')') == false)
@@ -200,7 +200,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
                         var subCondition = new SubCondition(subExpressionKey, logicalConnector, parenTrimmedSubConditionText);
 
-                        AddSubCondition(tokenizer, subCondition, leftHandAliasOfJoin);
+                        AddSubCondition(parentTokenizer, subCondition, leftHandAliasOfJoin);
 
                         givenConditionText = Text.ReplaceRange(givenConditionText, startPos, endPos - startPos + 1, VariableToKey(subExpressionKey));
                     }
@@ -291,7 +291,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             return str;
         }
 
-        private void AddSubCondition(Tokenizer Tokenizer, SubCondition subCondition, string leftHandAliasOfJoin)
+        private void AddSubCondition(Tokenizer parentTokenizer, SubCondition subCondition, string leftHandAliasOfJoin)
         {
             var logicalConnector = LogicalConnector.None;
 
@@ -371,7 +371,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
                         var rightRange = tokenizer.EatGetNext().ToLowerInvariant();
 
-                        if (Tokenizer.Literals.TryGetValue(rightRange, out var rightOfRange))
+                        if (parentTokenizer.Literals.TryGetValue(rightRange, out var rightOfRange))
                         {
                             if (rightOfRange.DataType != KbBasicDataType.Numeric)
                             {

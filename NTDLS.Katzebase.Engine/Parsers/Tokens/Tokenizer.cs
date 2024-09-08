@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Parsers.Query;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Client.KbConstants;
 
@@ -1534,7 +1535,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// <summary>
         /// Returns the boolean value from the given delegate which is passed the next character in the sequence.
         /// </summary>
-        public bool IsNextCharacter(NextCharacterProc proc)
+        public bool TryIsNextCharacter(NextCharacterProc proc)
         {
             var next = NextCharacter ?? throw new KbParserException("The tokenizer sequence is empty.");
             return proc(next);
@@ -1543,7 +1544,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// <summary>
         /// Returns true if the next character matches the given value.
         /// </summary>
-        public bool IsNextCharacter(char character)
+        public bool TryIsNextCharacter(char character)
             => NextCharacter == character;
 
         public bool TryEatIsNextCharacter(char character)
@@ -1565,26 +1566,20 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// <summary>
         /// Matches scope using open and close parentheses and skips the entire scope.
         /// </summary>
-        public void EatMatchingScope()
-        {
-            EatGetMatchingScope('(', ')');
-        }
+        public string EatMatchingScope()
+            => EatGetMatchingScope('(', ')');
 
         /// <summary>
         /// Matches scope using the given open and close values and skips the entire scope.
         /// </summary>
-        public void EatMatchingScope(char open, char close)
-        {
-            EatGetMatchingScope(open, close);
-        }
+        public string EatMatchingScope(char open, char close)
+            => EatGetMatchingScope(open, close);
 
         /// <summary>
         /// Matches scope using open and close parentheses and returns the text between them.
         /// </summary>
         public string EatGetMatchingScope()
-        {
-            return EatGetMatchingScope('(', ')');
-        }
+            => EatGetMatchingScope('(', ')');
 
         /// <summary>
         /// Matches scope using the given open and close values and returns the text between them.
@@ -1820,6 +1815,56 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             }
             _caret = position;
         }
+
+        #endregion
+
+        #region TryEatIsNextEnumToken.
+
+        /// <summary>
+        /// Returns true if the next token is a member of the given enum.
+        /// Moves the caret past the token only if its matched.
+        /// </summary>
+        public T EatIsNextEnumToken<T>(char[] delimiters, out string outFoundToken) where T : Enum
+        {
+            int restoreCaret = _caret;
+            outFoundToken = EatGetNext(delimiters, out _);
+
+            if (Enum.TryParse(typeof(T), outFoundToken, true, out object? parsedValue))
+            {
+                if (Enum.IsDefined(typeof(T), parsedValue) && int.TryParse(outFoundToken, out _) == false)
+                {
+                    return (T)parsedValue;
+                }
+            }
+
+            _caret = restoreCaret;
+
+            throw new KbParserException($"Invalid token, found [{outFoundToken}] expected [{string.Join("],[", Enum.GetNames(typeof(T)))}]");
+        }
+
+        public T EatIsNextEnumToken<T>(out string outFoundToken) where T : Enum
+            => EatIsNextEnumToken<T>(_standardTokenDelimiters, out outFoundToken);
+
+        public T EatIsNextEnumToken<T>() where T : Enum
+            => EatIsNextEnumToken<T>(_standardTokenDelimiters, out _);
+
+        public bool TryEatIsNextEnumToken<T>(char[] delimiters, out string outFoundToken, [NotNullWhen(true)] out T? value) where T : Enum
+        {
+            outFoundToken = string.Empty;
+            try
+            {
+                value = EatIsNextEnumToken<T>(delimiters, out outFoundToken);
+                return true;
+            }
+            catch
+            {
+                value = default;
+                return false;
+            }
+        }
+
+        public bool TryEatIsNextEnumToken<T>([NotNullWhen(true)] out T? value) where T : Enum
+            => TryEatIsNextEnumToken(_standardTokenDelimiters, out _, out value);
 
         #endregion
     }

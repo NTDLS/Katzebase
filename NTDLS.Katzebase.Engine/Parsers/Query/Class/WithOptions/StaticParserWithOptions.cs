@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
 
             if (tokenizer.TryEatIsNextToken("with"))
             {
-                if (tokenizer.IsNextCharacter('(') == false)
+                if (tokenizer.TryIsNextCharacter('(') == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.NextCharacter + "', expected: '('.");
                 }
@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
                 while (!tokenizer.IsExhausted())
                 {
                     string name = tokenizer.GetNext().ToLowerInvariant();
-                    if (tokenizer.IsNextCharacter('=') == false)
+                    if (tokenizer.TryIsNextCharacter('=') == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + tokenizer.NextCharacter + "', expected: '='.");
                     }
@@ -51,7 +51,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
                     }
                 }
 
-                if (tokenizer.IsNextCharacter(')') == false)
+                if (tokenizer.TryIsNextCharacter(')') == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.NextCharacter + "', expected: ')'.");
                 }
