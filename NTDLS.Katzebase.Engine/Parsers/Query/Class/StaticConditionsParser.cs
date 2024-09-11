@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
     {
         /// <summary>
         /// Contains the collection of ConditionGroup, each group is comprised of AND expressions,
-        /// and there is a seperate ConditionGroup for each OR expression.
+        /// and there is a seperate ConditionGroup for each OR expression and for each expression in parentheses.
         /// </summary>
         public class ConditionCollection : List<ConditionGroup>
         {
@@ -17,25 +17,44 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             /// For conditions on joins, this is the alias of the schema that these conditions are for.
             /// </summary>
             public string? SchemaAlias { get; set; }
+            public string FinalExpression { get; set; }
 
-            public ConditionCollection(string? schemaAlias = null)
+            private int _nextExpressionVariable = 0;
+
+            public string NextExpressionVariable()
+                => $"v{_nextExpressionVariable++}";
+
+            public ConditionCollection(string finalExpression, string? schemaAlias = null)
             {
-                this.SchemaAlias = schemaAlias;
+                FinalExpression = finalExpression;
+                SchemaAlias = schemaAlias;
             }
         }
 
         public class ConditionGroup : List<Condition>
         {
+            public LogicalConnector LogicalConnector { get; set; }
+
+            public ConditionGroup(LogicalConnector logicalConnector)
+            {
+                LogicalConnector = logicalConnector;
+            }
         }
 
         public class Condition
         {
+            public string ExpressionVariable { get; set; }
+
             public string? LeftValue { get; set; }
             public LogicalQualifier Qualifier { get; set; }
             public string? RightValue { get; set; }
 
-            public Condition(string? leftValue, LogicalQualifier qualifier, string? rightValue)
+            public List<ConditionGroup> Children { get; set; } = new();
+
+
+            public Condition(string expressionVariable, string? leftValue, LogicalQualifier qualifier, string? rightValue)
             {
+                ExpressionVariable = expressionVariable;
                 LeftValue = leftValue;
                 Qualifier = qualifier;
                 RightValue = rightValue;
@@ -50,15 +69,21 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// </summary>
         public static void Parse(QueryBatch queryBatch, Tokenizer parentTokenizer, string conditionsText, string leftHandAliasOfJoin = "")
         {
-            var tokenizer = new Tokenizer(conditionsText);
 
-            var conditionCollection = new ConditionCollection(leftHandAliasOfJoin);
+            var conditionCollection = new ConditionCollection(conditionsText, leftHandAliasOfJoin);
+
+            conditionCollection.FinalExpression = conditionCollection.FinalExpression
+                .Replace(" OR ", " || ", StringComparison.InvariantCultureIgnoreCase)
+                .Replace(" AND ", " && ", StringComparison.InvariantCultureIgnoreCase);
+
 
             if (conditionsText.Contains("LanguageId"))
             {
             }
 
-            ParseRecursive(queryBatch, parentTokenizer, conditionCollection, conditionsText);
+            ParseRecursive(queryBatch, parentTokenizer, conditionCollection, conditionCollection, conditionsText, LogicalConnector.None);
+
+            conditionCollection.FinalExpression = conditionCollection.FinalExpression.Replace("  ", " ").Trim();
 
             if (conditionsText.Contains("LanguageId"))
             {
@@ -66,35 +91,65 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         }
 
         private static void ParseRecursive(QueryBatch queryBatch, Tokenizer parentTokenizer,
-            ConditionCollection conditionCollection, string conditionsText)
+            ConditionCollection conditionCollection, List<ConditionGroup> parentConditionGroup, string conditionsText, LogicalConnector givenLogicalConnector)
         {
             var tokenizer = new Tokenizer(conditionsText);
 
-            var conditionGroup = new ConditionGroup();
-            conditionCollection.Add(conditionGroup);
+            var lastLogicalConnector = LogicalConnector.None;
+
+            ConditionGroup? conditionGroup = null;
+            Condition? lastCondition = null;
 
             while (!tokenizer.IsExhausted())
             {
                 if (tokenizer.TryIsNextCharacter('('))
                 {
                     string subConditionsText = tokenizer.EatMatchingScope();
-                    ParseRecursive(queryBatch, parentTokenizer, conditionCollection, subConditionsText);
+                    ParseRecursive(queryBatch, parentTokenizer, conditionCollection, lastCondition?.Children ?? parentConditionGroup, subConditionsText, lastLogicalConnector);
+
+                    if (!tokenizer.IsExhausted())
+                    {
+                        if (tokenizer.EatIsNextEnumToken<LogicalConnector>() == LogicalConnector.Or)
+                        {
+                            conditionGroup = new ConditionGroup(LogicalConnector.Or);
+                            parentConditionGroup.Add(conditionGroup);
+                        }
+                    }
+
+                    continue;
                 }
 
-                string leftToken = tokenizer.EatGetNext();
-                var logicalQualifier = StaticConditionHelpers.ParseLogicalQualifier(tokenizer.EatGetNext());
-                string rightToken = tokenizer.EatGetNext();
+                int startOfSubExpression = tokenizer.Caret;
 
-                conditionGroup.Add(new Condition(leftToken, logicalQualifier, rightToken));
+                var leftToken = tokenizer.EatGetNext();
+                var logicalQualifier = StaticConditionHelpers.ParseLogicalQualifier(tokenizer.EatGetNext());
+                var rightToken = tokenizer.EatGetNext();
+
+                var subExpressionText = tokenizer.SubString(startOfSubExpression, tokenizer.Caret - startOfSubExpression);
+
+                var expressionVariable = conditionCollection.NextExpressionVariable();
+
+                conditionCollection.FinalExpression = conditionCollection.FinalExpression.Replace(subExpressionText, $" {expressionVariable} ");
+
+                lastCondition = new Condition(expressionVariable, leftToken, logicalQualifier, rightToken);
+
+                if (conditionGroup == null)
+                {
+                    //We late initialize here because the first thing we encounter might be a parenthesis
+                    //instead of a condition and we don't want to have added an empty condition group.
+                    conditionGroup = new ConditionGroup(givenLogicalConnector);
+                    parentConditionGroup.Add(conditionGroup);
+                }
+
+                conditionGroup.Add(lastCondition);
 
                 if (!tokenizer.IsExhausted())
                 {
-                    var logicalConnector = tokenizer.EatIsNextEnumToken<LogicalConnector>();
-
-                    if (logicalConnector == LogicalConnector.Or)
+                    lastLogicalConnector = tokenizer.EatIsNextEnumToken<LogicalConnector>();
+                    if (lastLogicalConnector == LogicalConnector.Or)
                     {
-                        conditionCollection.Add(conditionGroup);
-                        conditionGroup = new ConditionGroup();
+                        conditionGroup = new ConditionGroup(LogicalConnector.Or);
+                        parentConditionGroup.Add(conditionGroup);
                     }
                 }
             }

@@ -1,4 +1,4 @@
-select
+select top 0
 	sw.Id,
 	sw.Text,
 	sw.LanguageId
@@ -9,8 +9,10 @@ where
 	and sw.Text LIKE '%to'
 	and sw.Text like '%in%'
 	--and sw.LanguageId between 3 and 5
-	and sw.LanguageId >= 3
-	and sw.LanguageId <= 5
+	and (
+		sw.LanguageId >= 3
+		OR sw.LanguageId <= 5
+	)
 	and sw.Id > 1000
 	OR sw.Text like 'Ca%'
 	and sw.Text like '%al'
