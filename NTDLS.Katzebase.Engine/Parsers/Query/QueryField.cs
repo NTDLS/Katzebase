@@ -19,9 +19,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// </summary>
         public IQueryField Expression { get; set; }
 
-        public QueryField(string name, int ordinal, IQueryField expression)
+        public QueryField(string alias, int ordinal, IQueryField expression)
         {
-            Alias = name;
+            Alias = alias;
             Ordinal = ordinal;
             Expression = expression;
         }

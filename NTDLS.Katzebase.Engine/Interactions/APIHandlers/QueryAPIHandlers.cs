@@ -178,9 +178,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 foreach (var preparedQuery in StaticQueryParser.ParseBatch(_core, statement, param.UserParameters))
                 {
-                    var intermediateResult = _core.Query.ExecuteQuery(session, preparedQuery);
-
-                    results.Add(intermediateResult);
+                    //TODO: uncomment after implementing new condition parser.
+                    //var intermediateResult = _core.Query.ExecuteQuery(session, preparedQuery);
+                    //results.Add(intermediateResult);
                 }
             }
 

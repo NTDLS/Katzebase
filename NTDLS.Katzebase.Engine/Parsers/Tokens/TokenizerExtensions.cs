@@ -10,8 +10,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// <summary>
         /// Splits the given text on a comma delimiter while paying attention to the scope denoted by open and close parentheses..
         /// </summary>
-        public static List<string> ScopeSensitiveSplit(this string text)
-            => text.ScopeSensitiveSplit(',', '(', ')');
+        public static List<string> ScopeSensitiveSplit(this string text, char splitOn)
+            => text.ScopeSensitiveSplit(splitOn, '(', ')');
 
         /// <summary>
         /// Splits the given text on the delimiter while paying attention to the scope denoted by the given open and close characters.

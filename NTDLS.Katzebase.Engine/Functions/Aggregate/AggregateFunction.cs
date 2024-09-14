@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             bool infiniteParameterFound = false;
 
             var parameters = new List<AggregateFunctionParameterPrototype>();
-            var parametersStrings = tokenizer.EatGetMatchingScope().ScopeSensitiveSplit();
+            var parametersStrings = tokenizer.EatGetMatchingScope().ScopeSensitiveSplit(',');
 
             foreach (var parametersString in parametersStrings)
             {

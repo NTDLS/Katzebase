@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException("Invalid query. Found '" + orderByText + "', expected: list of conditions.");
             }
 
-            var fieldsTexts = orderByText.ScopeSensitiveSplit();
+            var fieldsTexts = orderByText.ScopeSensitiveSplit(',');
 
             foreach (var field in fieldsTexts)
             {

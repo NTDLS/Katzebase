@@ -2,12 +2,12 @@
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query
 {
-    internal class QueryFieldLiteral
+    internal class ConditionFieldLiteral
     {
         public string? Value { get; set; }
         public KbBasicDataType DataType { get; set; }
 
-        public QueryFieldLiteral(KbBasicDataType dataType, string? value)
+        public ConditionFieldLiteral(KbBasicDataType dataType, string? value)
         {
             DataType = dataType;
             Value = value;

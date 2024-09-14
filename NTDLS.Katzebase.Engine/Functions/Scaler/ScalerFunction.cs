@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             bool infiniteParameterFound = false;
 
             var parameters = new List<ScalerFunctionParameterPrototype>();
-            var parametersStrings = tokenizer.EatGetMatchingScope().ScopeSensitiveSplit();
+            var parametersStrings = tokenizer.EatGetMatchingScope().ScopeSensitiveSplit(',');
 
             foreach (var parametersString in parametersStrings)
             {

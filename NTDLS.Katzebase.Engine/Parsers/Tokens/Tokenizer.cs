@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         public string Text => _text;
         public string Hash => _hash ??= Library.Helpers.ComputeSHA256(_text);
         public KbInsensitiveDictionary<KbConstant> PredefinedConstants { get; set; }
-        public KbInsensitiveDictionary<QueryFieldLiteral> Literals { get; private set; } = new();
+        public KbInsensitiveDictionary<ConditionFieldLiteral> Literals { get; private set; } = new();
 
         #region Constructors.
 

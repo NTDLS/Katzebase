@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             var fieldsSegment = tokenizer.EatSubStringAbsolute(stopAt);
 
             //Split the select fields on the comma, respecting any commas in function scopes.
-            var fields = fieldsSegment.ScopeSensitiveSplit();
+            var fields = fieldsSegment.ScopeSensitiveSplit(',');
 
             foreach (var field in fields)
             {
@@ -126,7 +126,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
 
             //Fields that require expression evaluation.
-            var validateNumberOfParameters = givenFieldText.ScopeSensitiveSplit();
+            var validateNumberOfParameters = givenFieldText.ScopeSensitiveSplit(',');
             if (validateNumberOfParameters.Count > 1)
             {
                 //We are testing to make sure that there are no commas that fall outside of function scopes.
@@ -162,12 +162,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 int positionBeforeToken = tokenizer.Caret;
 
                 string token = tokenizer.EatGetNext();
-
-                //Verify that the next character (if any) is a "connector".
-                if (tokenizer.NextCharacter != null && !tokenizer.TryIsNextCharacter(o => o.IsTokenConnectorCharacter()))
-                {
-                    throw new KbParserException($"Connection token is missing after [{parentTokenizer.ResolveLiteral(token)}].");
-                }
 
                 if (token.StartsWith("$s_") && token.EndsWith('$')) //A string placeholder.
                 {
@@ -216,9 +210,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     buffer.Append(token);
                 }
 
-                if (!tokenizer.IsExhausted() && tokenizer.TryIsNextCharacter(o => o.IsTokenConnectorCharacter()))
+                if (!tokenizer.IsExhausted())
                 {
-                    buffer.Append(tokenizer.EatNextCharacter());
+                    //Verify that the next character (if any) is a "connector".
+                    if (tokenizer.NextCharacter != null && !tokenizer.TryIsNextCharacter(o => o.IsTokenConnectorCharacter()))
+                    {
+                        throw new KbParserException($"Connection token is missing after [{parentTokenizer.ResolveLiteral(token)}].");
+                    }
+                    else
+                    {
+                        buffer.Append(tokenizer.EatNextCharacter());
+                    }
                 }
             }
 
@@ -236,7 +238,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             //This contains the text between the open and close parenthesis of a function call, but not the parenthesis themselves or the function name.
             string functionCallParametersSegmentText = tokenizer.EatGetMatchingScope('(', ')');
 
-            var functionCallParametersText = functionCallParametersSegmentText.ScopeSensitiveSplit();
+            var functionCallParametersText = functionCallParametersSegmentText.ScopeSensitiveSplit(',');
             foreach (var functionCallParameterText in functionCallParametersText)
             {
                 //Recursively process the function parameters.

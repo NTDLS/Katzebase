@@ -5,9 +5,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 {
     internal class QueryBatch : List<PreparedQuery>
     {
-        public KbInsensitiveDictionary<QueryFieldLiteral> Literals { get; set; } = new();
+        public KbInsensitiveDictionary<ConditionFieldLiteral> Literals { get; set; } = new();
 
-        public QueryBatch(KbInsensitiveDictionary<QueryFieldLiteral> literals)
+        public QueryBatch(KbInsensitiveDictionary<ConditionFieldLiteral> literals)
         {
             Literals = literals;
         }

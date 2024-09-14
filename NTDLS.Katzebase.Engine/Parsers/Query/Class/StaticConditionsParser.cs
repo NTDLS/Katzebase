@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+﻿using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -47,12 +48,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             public string? LeftValue { get; set; }
             public LogicalQualifier Qualifier { get; set; }
-            public string? RightValue { get; set; }
+            public QueryField RightValue { get; set; }
 
             public List<ConditionGroup> Children { get; set; } = new();
 
 
-            public Condition(string expressionVariable, string? leftValue, LogicalQualifier qualifier, string? rightValue)
+            public Condition(string expressionVariable, string? leftValue, LogicalQualifier qualifier, QueryField rightValue)
             {
                 ExpressionVariable = expressionVariable;
                 LeftValue = leftValue;
@@ -121,6 +122,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 int startOfSubExpression = tokenizer.Caret;
 
+                var leftAndRight = ParseRightAndLeft(queryBatch, parentTokenizer, tokenizer);
+
                 var leftToken = tokenizer.EatGetNext();
                 var logicalQualifier = StaticConditionHelpers.ParseLogicalQualifier(tokenizer.EatGetNext());
                 var rightToken = tokenizer.EatGetNext();
@@ -131,7 +134,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 conditionCollection.FinalExpression = conditionCollection.FinalExpression.Replace(subExpressionText, $" {expressionVariable} ");
 
-                lastCondition = new Condition(expressionVariable, leftToken, logicalQualifier, rightToken);
+                var rightConditionValue = new QueryFieldExpressionString
+                {
+                    Value = rightToken
+                };
+
+                var rightQueryField = new QueryField("", 0, rightConditionValue);
+
+                lastCondition = new Condition(expressionVariable, leftToken, logicalQualifier, rightQueryField);
 
                 if (conditionGroup == null)
                 {
@@ -153,6 +163,31 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
                 }
             }
+        }
+
+        static (string right, LogicalQualifier qualifier, string left)
+            ParseRightAndLeft(QueryBatch queryBatch, Tokenizer parentTokenizer, Tokenizer tokenizer)
+        {
+            (string right, LogicalQualifier qualifier, string left) result = new();
+
+            //sw.Text LIKE $s_0$ and Length ( sw.Text ) / $n_11$ < sw.Id and sw.Text != sw.Text + $s_1$ and sw.Text LIKE $s_2$ and sw.Text like $s_3$ and ( sw.LanguageId >= $n_12$ OR sw.LanguageId <= $n_13$ ) and sw.Id > $n_14$
+            if (tokenizer.Contains("Length"))
+            {
+            }
+            
+
+            //queryBatch.que
+
+            string token;
+
+            token = tokenizer.EatGetNext();
+
+            if (parentTokenizer.PredefinedConstants.TryGetValue(token, out var constant))
+            {
+
+            }
+
+            return result;
         }
     }
 }
