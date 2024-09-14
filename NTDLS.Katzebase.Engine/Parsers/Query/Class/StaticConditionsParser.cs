@@ -244,8 +244,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 //
             }
 
-            var left = StaticParserFieldList.ParseField(parentTokenizer, leftExpressionString.EnsureNotNullOrEmpty(), ref conditionCollection.FieldCollection);
-            var right = StaticParserFieldList.ParseField(parentTokenizer, rightExpressionString.EnsureNotNullOrEmpty(), ref conditionCollection.FieldCollection);
+            var left = StaticParserField.Parse(parentTokenizer, leftExpressionString.EnsureNotNullOrEmpty(), ref conditionCollection.FieldCollection);
+            var right = StaticParserField.Parse(parentTokenizer, rightExpressionString.EnsureNotNullOrEmpty(), ref conditionCollection.FieldCollection);
 
             var result = new ConditionLeftAndRight(conditionCollection.NextExpressionVariable(), left, logicalQualifier, right);
 
