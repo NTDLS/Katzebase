@@ -23,6 +23,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             };
         }
 
+        public static bool IsLogicalQualifier(string text)
+           => (new string[] { "=", "!=", ">", "<", ">=", "<=", "like", "not like", "between", "not between" }).Contains(text.ToLowerInvariant());
+
         public static string LogicalQualifierToString(LogicalQualifier logicalQualifier)
         {
             return logicalQualifier switch
@@ -39,10 +42,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             };
         }
 
+        public static bool IsLogicalConnector(string text)
+           => (new string[] { "and", "or" }).Contains(text.ToLowerInvariant());
+
         public static string LogicalConnectorToString(LogicalConnector logicalConnector)
-        {
-            return logicalConnector == LogicalConnector.None ? string.Empty : logicalConnector.ToString().ToUpper();
-        }
+            => logicalConnector == LogicalConnector.None ? string.Empty : logicalConnector.ToString().ToUpper();
 
         public static string LogicalConnectorToOperator(LogicalConnector logicalConnector)
         {
@@ -56,6 +60,5 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
             return string.Empty;
         }
-
     }
 }

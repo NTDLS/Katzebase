@@ -625,7 +625,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// <summary>
         /// Gets the a substring from tokenizer from the internal caret position for a given length.
         /// </summary>
-        public string EatSubString(int length)
+        public string EatSubstring(int length)
         {
             RecordBreadcrumb();
 
@@ -653,7 +653,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// <summary>
         /// Gets the a substring from tokenizer from the internal caret position to the given absolute position.
         /// </summary>
-        public string EatSubString(int startPosition, int length)
+        public string EatSubstring(int startPosition, int length)
         {
             RecordBreadcrumb();
 
@@ -667,7 +667,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// <summary>
         /// Gets a substring from the tokenizer.
         /// </summary>
-        public string SubString(int startPosition, int length)
+        public string Substring(int startPosition, int length)
             => _text.Substring(startPosition, length);
 
         /// <summary>
@@ -1366,6 +1366,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             => EatGetNext(_standardTokenDelimiters, out _);
 
         /// <summary>
+        /// Skips the next token using the standard delimiters.
+        /// </summary>
+        public void EatNext()
+            => EatGetNext(_standardTokenDelimiters, out _);
+
+        /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters.
         /// </summary>
         public string? EatGetNextEvaluated()
@@ -1392,6 +1398,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             => EatGetNext(_standardTokenDelimiters, out outStoppedOnDelimiter);
 
         /// <summary>
+        /// Skips the next token using the standard delimiters,
+        /// returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.
+        /// </summary>
+        public void EatNext(out char outStoppedOnDelimiter)
+            => EatGetNext(_standardTokenDelimiters, out outStoppedOnDelimiter);
+
+        /// <summary>
         /// Gets the next token, resolving it using the Numeric or String literals, using the standard delimiters,
         ///     returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.
         /// </summary>
@@ -1409,6 +1422,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// Gets the next token using the given delimiters.
         /// </summary>
         public string EatGetNext(char[] delimiters)
+            => EatGetNext(delimiters, out _);
+
+        /// <summary>
+        /// Skips the next token using the given delimiters.
+        /// </summary>
+        public void EatNext(char[] delimiters)
             => EatGetNext(delimiters, out _);
 
         /// <summary>

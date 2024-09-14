@@ -1,4 +1,8 @@
-﻿using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
@@ -20,13 +24,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             public string? SchemaAlias { get; set; }
             public string FinalExpression { get; set; }
 
-            private int _nextExpressionVariable = 0;
+            public QueryFieldCollection FieldCollection;
 
+            private int _nextExpressionVariable = 0;
             public string NextExpressionVariable()
                 => $"v{_nextExpressionVariable++}";
 
-            public ConditionCollection(string finalExpression, string? schemaAlias = null)
+            public ConditionCollection(QueryBatch queryBatch, string finalExpression, string? schemaAlias = null)
             {
+                FieldCollection = new(queryBatch);
                 FinalExpression = finalExpression;
                 SchemaAlias = schemaAlias;
             }
@@ -45,15 +51,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         public class Condition
         {
             public string ExpressionVariable { get; set; }
-
-            public string? LeftValue { get; set; }
+            public IQueryField LeftValue { get; set; }
             public LogicalQualifier Qualifier { get; set; }
-            public QueryField RightValue { get; set; }
+            public IQueryField RightValue { get; set; }
 
             public List<ConditionGroup> Children { get; set; } = new();
 
-
-            public Condition(string expressionVariable, string? leftValue, LogicalQualifier qualifier, QueryField rightValue)
+            public Condition(string expressionVariable, IQueryField leftValue, LogicalQualifier qualifier, IQueryField rightValue)
             {
                 ExpressionVariable = expressionVariable;
                 LeftValue = leftValue;
@@ -70,8 +74,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// </summary>
         public static void Parse(QueryBatch queryBatch, Tokenizer parentTokenizer, string conditionsText, string leftHandAliasOfJoin = "")
         {
-
-            var conditionCollection = new ConditionCollection(conditionsText, leftHandAliasOfJoin);
+            var conditionCollection = new ConditionCollection(queryBatch, conditionsText, leftHandAliasOfJoin);
 
             conditionCollection.FinalExpression = conditionCollection.FinalExpression
                 .Replace(" OR ", " || ", StringComparison.InvariantCultureIgnoreCase)
@@ -122,26 +125,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 int startOfSubExpression = tokenizer.Caret;
 
-                var leftAndRight = ParseRightAndLeft(queryBatch, parentTokenizer, tokenizer);
+                var leftAndRight = ParseRightAndLeft(conditionCollection, parentTokenizer, tokenizer);
 
-                var leftToken = tokenizer.EatGetNext();
-                var logicalQualifier = StaticConditionHelpers.ParseLogicalQualifier(tokenizer.EatGetNext());
-                var rightToken = tokenizer.EatGetNext();
+                //var subExpressionText = tokenizer.Substring(startOfSubExpression, tokenizer.Caret - startOfSubExpression);
+                //var expressionVariable = conditionCollection.NextExpressionVariable();
 
-                var subExpressionText = tokenizer.SubString(startOfSubExpression, tokenizer.Caret - startOfSubExpression);
-
-                var expressionVariable = conditionCollection.NextExpressionVariable();
-
-                conditionCollection.FinalExpression = conditionCollection.FinalExpression.Replace(subExpressionText, $" {expressionVariable} ");
-
-                var rightConditionValue = new QueryFieldExpressionString
-                {
-                    Value = rightToken
-                };
-
-                var rightQueryField = new QueryField("", 0, rightConditionValue);
-
-                lastCondition = new Condition(expressionVariable, leftToken, logicalQualifier, rightQueryField);
+                lastCondition = new Condition(leftAndRight.ExpressionVariable, leftAndRight.Left, leftAndRight.Qualifier, leftAndRight.Right);
 
                 if (conditionGroup == null)
                 {
@@ -165,27 +154,103 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
         }
 
-        static (string right, LogicalQualifier qualifier, string left)
-            ParseRightAndLeft(QueryBatch queryBatch, Tokenizer parentTokenizer, Tokenizer tokenizer)
+        static ConditionLeftAndRight ParseRightAndLeft(ConditionCollection conditionCollection, Tokenizer parentTokenizer, Tokenizer tokenizer)
         {
-            (string right, LogicalQualifier qualifier, string left) result = new();
-
             //sw.Text LIKE $s_0$ and Length ( sw.Text ) / $n_11$ < sw.Id and sw.Text != sw.Text + $s_1$ and sw.Text LIKE $s_2$ and sw.Text like $s_3$ and ( sw.LanguageId >= $n_12$ OR sw.LanguageId <= $n_13$ ) and sw.Id > $n_14$
             if (tokenizer.Contains("Length"))
             {
+                //
             }
-            
 
-            //queryBatch.que
+            int startLeftRightCaret = tokenizer.Caret;
+            int startConditionSetCaret = tokenizer.Caret;
+            string? leftExpressionString = null;
+            string? rightExpressionString = null;
 
-            string token;
+            LogicalQualifier logicalQualifier = LogicalQualifier.None;
 
-            token = tokenizer.EatGetNext();
-
-            if (parentTokenizer.PredefinedConstants.TryGetValue(token, out var constant))
+            //Here we are just validating the condition tokens and finding the end of the condition pair values as well as the logical qualifier.
+            while (!tokenizer.IsExhausted())
             {
+                string token = tokenizer.GetNext();
 
+                if (StaticConditionHelpers.IsLogicalQualifier(token))
+                {
+                    //This is a logical qualifier, we're all good. We now have the left expression and the qualifier.
+                    leftExpressionString = tokenizer.Substring(startLeftRightCaret, tokenizer.Caret - startLeftRightCaret).Trim();
+                    logicalQualifier = StaticConditionHelpers.ParseLogicalQualifier(token);
+                    tokenizer.EatNext();
+                    startLeftRightCaret = tokenizer.Caret;
+                }
+                else if (StaticConditionHelpers.IsLogicalConnector(token))
+                {
+                    //This is a logical qualifier, we're all good. We now have the right expression.
+                    break;
+                }
+                else if (token.Length == 1 && (token[0].IsTokenConnectorCharacter() || token[0].IsMathematicalOperator()))
+                {
+                    //This is a connector character, we're all good.
+                    tokenizer.EatNext();
+                }
+                else if (token.StartsWith("$s_") && token.EndsWith('$')) //A string placeholder.
+                {
+                    //This is a string placeholder, we're all good.
+                    tokenizer.EatNext();
+                }
+                else if (token.StartsWith("$n_") && token.EndsWith('$')) //A numeric placeholder.
+                {
+                    //This is a numeric placeholder, we're all good.
+                    tokenizer.EatNext();
+                }
+                else if (token.StartsWith("$n_") && token.EndsWith('$')) //A numeric placeholder.
+                {
+                    //This is a numeric placeholder, we're all good.
+                    tokenizer.EatNext();
+                }
+                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
+                {
+                    if (!tokenizer.IsNextNonIdentifier(['(']))
+                    {
+                        throw new KbParserException($"Function [{token}] must be called with parentheses.");
+                    }
+                    tokenizer.EatNext();
+
+                    tokenizer.EatGetMatchingScope('(', ')');
+
+                    //This is a scaler function, we're all good.
+                }
+                else if (token.IsQueryFieldIdentifier())
+                {
+                    if (tokenizer.IsNextNonIdentifier(['(']))
+                    {
+                        //The character after this identifier is an open parenthesis, so this
+                        //  looks like a function call but the function is undefined.
+                        throw new KbParserException($"Function [{token}] is undefined.");
+                    }
+
+                    //This is a document field, we're all good.
+                    tokenizer.EatNext();
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
             }
+
+            rightExpressionString = tokenizer.Substring(startLeftRightCaret, tokenizer.Caret - startLeftRightCaret).Trim();
+
+            if (tokenizer.Contains("Length"))
+            {
+                //
+            }
+
+            var left = StaticParserFieldList.ParseField(parentTokenizer, leftExpressionString.EnsureNotNullOrEmpty(), ref conditionCollection.FieldCollection);
+            var right = StaticParserFieldList.ParseField(parentTokenizer, rightExpressionString.EnsureNotNullOrEmpty(), ref conditionCollection.FieldCollection);
+
+            var result = new ConditionLeftAndRight(conditionCollection.NextExpressionVariable(), left, logicalQualifier, right);
+
+            string conditionSetText = tokenizer.Substring(startConditionSetCaret, tokenizer.Caret - startConditionSetCaret).Trim();
+            conditionCollection.FinalExpression = conditionCollection.FinalExpression.ReplaceFirst(conditionSetText, result.ExpressionVariable);
 
             return result;
         }

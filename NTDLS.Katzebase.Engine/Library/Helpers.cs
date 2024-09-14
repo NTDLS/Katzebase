@@ -6,6 +6,16 @@ namespace NTDLS.Katzebase.Engine.Library
 {
     public static class Helpers
     {
+        public static string ReplaceFirst(this string input, string search, string replacement)
+        {
+            int pos = input.IndexOf(search);
+            if (pos < 0)
+            {
+                return input; // Return the original string if the search string is not found
+            }
+            return input.Substring(0, pos) + replacement + input.Substring(pos + search.Length);
+        }
+
         /// <summary>
         /// Adds the values of the given dictionary to the referenced dictionary.
         /// </summary>

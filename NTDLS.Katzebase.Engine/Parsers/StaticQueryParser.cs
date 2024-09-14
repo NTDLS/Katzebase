@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 int preParseTokenPosition = tokenizer.Caret;
                 var preparedQuery = ParseQuery(queryBatch, tokenizer);
 
-                var singleQueryText = tokenizer.SubString(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
+                var singleQueryText = tokenizer.Substring(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
                 preparedQuery.Hash = Library.Helpers.ComputeSHA256(singleQueryText);
 
                 queryBatch.Add(preparedQuery);

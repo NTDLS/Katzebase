@@ -58,7 +58,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// <summary>
         /// Returns true if the text is a valid identifier string, such as a schema name, field name etc.
         /// </summary>
-        public static bool IsQueryIdentifier(this string text)
+        public static bool IsQueryFieldIdentifier(this string text)
             => string.IsNullOrWhiteSpace(text) == false && text.All(IsQueryIdentifier);
 
         /// <summary>

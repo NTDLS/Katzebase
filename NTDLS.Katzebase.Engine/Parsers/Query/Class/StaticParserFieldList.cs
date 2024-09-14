@@ -88,7 +88,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             return queryFields;
         }
 
-        private static IQueryField ParseField(Tokenizer parentTokenizer, string givenFieldText, ref QueryFieldCollection queryFields)
+        public static IQueryField ParseField(Tokenizer parentTokenizer, string givenFieldText, ref QueryFieldCollection queryFields)
         {
             Tokenizer tokenizer = new(givenFieldText);
 
@@ -96,7 +96,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             if (tokenizer.IsExhausted()) //This is a single value (document field, number or string), the simple case.
             {
-                if (token.IsQueryIdentifier())
+                if (token.IsQueryFieldIdentifier())
                 {
                     if (ScalerFunctionCollection.TryGetFunction(token, out var _))
                     {
@@ -184,6 +184,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
                 else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
                 {
+                    if (!tokenizer.IsNextNonIdentifier(['(']))
+                    {
+                        throw new KbParserException($"Function [{token}] must be called with parentheses.");
+                    }
+
                     //The expression key is used to match the function calls to the token in the parent expression.
                     var expressionKey = queryFields.GetNextExpressionKey();
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionAggregate(aggregateFunction.Name, expressionKey, KbBasicDataType.Numeric);
@@ -192,7 +197,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                     buffer.Append(expressionKey);
                 }
-                else if (token.IsQueryIdentifier())
+                else if (token.IsQueryFieldIdentifier())
                 {
                     if (tokenizer.IsNextNonIdentifier(['(']))
                     {

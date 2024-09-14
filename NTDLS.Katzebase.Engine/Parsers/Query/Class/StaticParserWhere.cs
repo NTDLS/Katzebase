@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             try
             {
-                //StaticConditionsParser.Parse(queryBatch, tokenizer, conditionText);
+                StaticConditionsParser.Parse(queryBatch, tokenizer, conditionText);
             }
             catch
             {
