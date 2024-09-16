@@ -15,19 +15,13 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// Contains a list of nested operations that will be used for indexing operations.
         /// </summary>
         public List<IndexingConditionGroup> IndexingConditionGroup { get; set; } = new();
-
-        /// <summary>
-        /// A clone of the conditions that this optimization was built for.
-        /// Also contains the indexes associated with each SubCondition of conditions.
-        /// </summary>
         public ConditionCollection Conditions { get; private set; }
-
         public Transaction Transaction { get; private set; }
 
         public IndexingConditionOptimization(Transaction transaction, ConditionCollection conditions)
         {
             Transaction = transaction;
-            Conditions = conditions.Clone();
+            Conditions = conditions;
         }
 
         #region Builder.

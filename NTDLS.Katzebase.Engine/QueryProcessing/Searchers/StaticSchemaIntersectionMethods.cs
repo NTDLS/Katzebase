@@ -406,7 +406,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <param name="resultingRows">The buffer containing all of the rows which have been found.</param>
         /// <param name="threadScopedContentCache">Document cache for the lifetime of the entire join operation for this thread.</param>
         /// <param name="joinScopedContentCache">>Document cache used the lifetime of a single row join for this thread.</param>
-        /// <exception cref="KbEngineException"></exception>
         private static void IntersectAllSchemasRecursive(DocumentLookupOperation.Instance instance,
             int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
             ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
@@ -441,6 +440,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             if (currentSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
             {
+                /* TODO//Reimplement:
                 //All condition SubConditions have a selected index. Start building a list of possible document IDs.
                 foreach (var subCondition in currentSchemaMap.Optimization.Conditions.NonRootSubConditions)
                 {
@@ -456,6 +456,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         joinKeyValues[condition.Right?.Key ?? ""] = documentValue?.ToString() ?? "";
                     }
                 }
+                */
 
                 //We are going to create a limited document catalog from the indexes.
 
@@ -542,13 +543,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Gets the json content values for the specified conditions.
         /// </summary>
-        /// <param name="expression"></param>
-        /// <param name="conditions"></param>
-        /// <param name="jContent"></param>
         private static void SetSchemaIntersectionConditionParameters(Transaction transaction,
             ref NCalc.Expression expression, ConditionCollection conditions,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
+            /* //TODO: Reimplement
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
             foreach (var expressionKey in conditions.Root.ExpressionKeys)
             {
@@ -556,6 +555,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 SetSchemaIntersectionConditionParametersRecursive(transaction,
                     ref expression, conditions, subCondition, joinScopedContentCache);
             }
+            */
         }
 
         private static void SetSchemaIntersectionConditionParametersRecursive(Transaction transaction,
@@ -707,11 +707,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.
-            foreach (var field in instance.Operation.Query.Conditions.AllFields.Where(o => o.Prefix == schemaKey).Distinct())
+            foreach (var field in instance.Operation.Query.Conditions.FieldCollection.DocumentIdentifierFields.Where(o => o.SchemaAlias == schemaKey).Distinct())
             {
-                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Name) == false)
                 {
-                    if (documentContent.TryGetValue(field.Field, out string? documentValue) == false)
+                    if (documentContent.TryGetValue(field.Name, out string? documentValue) == false)
                     {
                         instance.Operation.Transaction.AddWarning(KbTransactionWarning.ConditionFieldNotFound,
                             $"'{field.Key}' will be treated as null.");
@@ -781,21 +781,23 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         }
 
         /// <summary>
-        /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the MSQ lookup.
+        /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the multi-schema lookup.
         /// </summary>
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction,
             ref NCalc.Expression expression, ConditionCollection conditions, KbInsensitiveDictionary<string?> conditionField)
         {
+            /* //TODO: Reimplement
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
             foreach (var expressionKey in conditions.Root.ExpressionKeys)
             {
                 var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
                 SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
             }
+            */
         }
 
         /// <summary>
-        /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the MSQ lookup.
+        /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the multi-schema lookup.
         /// </summary>
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction, ref NCalc.Expression expression,
             Old_Conditions conditions, Old_SubCondition givenSubCondition, KbInsensitiveDictionary<string?> conditionField)

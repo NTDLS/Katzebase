@@ -11,6 +11,21 @@
         public string SchemaAlias { get; private set; }
         public string Name { get; private set; }
 
+        public string Key
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(SchemaAlias))
+                {
+                    return Name;
+                }
+                else
+                {
+                    return $"{SchemaAlias}.{Name}";
+                }
+            }
+        }
+
         public ExposedDocumentIdentifier(int ordinal, string alias, string schemaAlias, string name)
         {
             Ordinal = ordinal;
