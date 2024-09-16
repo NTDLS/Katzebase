@@ -495,7 +495,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 joinScopedContentCache.Add(currentSchemaKVP.Key.ToLowerInvariant(), documentContentNextLevel);
 
-                SetSchemaIntersectionConditionParameters(instance, ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
+                SetSchemaIntersectionConditionParameters(instance, expression, currentSchemaMap.Conditions, joinScopedContentCache);
 
                 var ptEvaluate = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
@@ -540,27 +540,38 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         #region Schema inersection.
 
         /// <summary>
-        /// Gets the json content values for the specified conditions.
+        /// Collapses all left-and-right condition values, compares them, and fills in the expression variables with the comparison result.
         /// </summary>
-        private static void SetSchemaIntersectionConditionParameters(DocumentLookupOperation.Instance instance, ref NCalc.Expression expression,
+        private static void SetSchemaIntersectionConditionParameters(DocumentLookupOperation.Instance instance, NCalc.Expression expression,
              ConditionCollection conditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
+            //TODO: Maybe we can just use the auxiliary values instead of the joinScopedContentCache, if do, we can use SetExpressionParameters() instead of this function.
             var documentContent = joinScopedContentCache[conditions.SchemaAlias.EnsureNotNull()];
 
-            foreach (var conditionSet in conditions)
-            {
-                foreach (var condition in conditionSet)
-                {
-                    var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, documentContent);
-                    var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, documentContent);
+            SetExpressionParametersRecursive(conditions);
 
-                    expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
+            void SetExpressionParametersRecursive(List<ConditionSet> conditionSets)
+            {
+                foreach (var conditionSet in conditionSets)
+                {
+                    foreach (var condition in conditionSet)
+                    {
+                        if (condition.Children.Count > 0)
+                        {
+                            SetExpressionParametersRecursive(condition.Children);
+                        }
+
+                        var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, documentContent);
+                        var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, documentContent);
+
+                        expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
+                    }
                 }
             }
         }
 
         /// <summary>
-        /// This function will "produce" a single row.
+        /// This function will "produce" a single row by filling in the document values with the values from the given schema.
         /// </summary>
         private static void FillInSchemaResultDocumentValues(DocumentLookupOperation.Instance instance, string schemaKey,
             DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
@@ -706,7 +717,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         #region WHERE clause.
 
         /// <summary>
-        /// This is where we filter the results by the WHERE clause.
+        /// Filters the given rows by the WHERE clause conditions.
         /// </summary>
         private static void FilterByWhereClauseConditions(this SchemaIntersectionRowCollection rows, DocumentLookupOperation.Instance instance)
         {
@@ -746,7 +757,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         }
 
         /// <summary>
-        /// Collapses all left-and-right condition values and fills in the expression variables.
+        /// Collapses all left-and-right condition values, compares them, and fills in the expression variables with the comparison result.
         /// </summary>
         private static void SetExpressionParameters(DocumentLookupOperation.Instance instance,
             NCalc.Expression expression, ConditionCollection conditions, KbInsensitiveDictionary<string?> auxiliaryFields)
