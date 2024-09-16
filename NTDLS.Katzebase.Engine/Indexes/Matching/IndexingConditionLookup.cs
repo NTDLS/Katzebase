@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// <summary>
         /// Dictionary of index attribute field name that contains the conditions that need to be matched on that index attribute level.
         /// </summary>
-        public Dictionary<string, List<Old_Condition>> AttributeConditionSets { get; set; } = new();
+        public Dictionary<string, List<Condition>> AttributeConditionSets { get; set; } = new();
 
         public IndexingConditionLookup(PhysicalIndex index)
         {

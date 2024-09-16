@@ -7,11 +7,12 @@ from
 where
 (
 	sw.Text LIKE 'As%'
-	and Length(sw.Text) / 1000 < sw.Id
-	and sw.Text != sw.Text + 'More Text'
-	and sw.Text LIKE '%to'
-	and sw.Text like '%in%'
+	--and Length(sw.Text) / 1000 < sw.Id
+	--and sw.Text != sw.Text + 'More Text'
+	--and sw.Text LIKE '%to'
+	--and sw.Text like '%in%'
 	--and sw.LanguageId between 3 and 5
+	/*
 	and (
 		sw.LanguageId >= 3
 		OR sw.LanguageId <= 5
@@ -28,7 +29,7 @@ where
 	and sw.Text like '%al'
 	and sw.Text like '%na%'
 	and sw.LanguageId = 5
-
+*/
 order by
 	sw.Text
 

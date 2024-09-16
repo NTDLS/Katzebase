@@ -7,5 +7,18 @@
     {
         string Value { get; set; }
         string SchemaAlias { get; }
+
+        public string Key
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(SchemaAlias))
+                {
+                    return Value;
+                }
+                return $"{SchemaAlias}.{Value}";
+            }
+        }
+
     }
 }

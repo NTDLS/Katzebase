@@ -15,6 +15,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         public LogicalQualifier Qualifier { get; set; }
         public IQueryField Right { get; set; }
 
+        /// <summary>
+        /// Used by ConditionOptimization.BuildTree() do determine when an index has already been matched to this condition.
+        /// </summary>
+        public bool IsIndexOptimized { get; set; } = false;
+
         public List<ConditionSet> Children { get; set; } = new();
 
         public Condition(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)

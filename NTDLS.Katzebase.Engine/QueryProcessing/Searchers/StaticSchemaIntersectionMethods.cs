@@ -30,6 +30,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         internal static DocumentLookupResults GetDocumentsByConditions(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix = null)
         {
+            if (query.Hash == "ba42d303f96e7b5a2a6e57a82974f43eb73dc30b93682bed0626d52f37b2195a")
+            {
+            }
+
             var topLevelSchemaMap = schemaMap.First().Value;
 
             IEnumerable<DocumentPointer>? documentPointers = null;

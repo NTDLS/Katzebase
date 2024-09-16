@@ -22,6 +22,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
         /// </summary>
         public string FieldName { get; private set; }
 
+        /// <summary>
+        /// Used by ConditionOptimization.BuildTree() do determine when an index has already been matched to this condition.
+        /// </summary>
+        //public bool IsIndexOptimized { get; set; } = false;
+
         public QueryFieldDocumentIdentifier(string value)
         {
             Value = value.Trim();
