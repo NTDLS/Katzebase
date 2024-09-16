@@ -4,7 +4,6 @@ using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
-using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Parsers.Query.Exposed;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
@@ -39,18 +38,18 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// <summary>
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
-        public static string? CollapseScalerQueryField(this QueryField queryField, Transaction transaction,
+        public static string? CollapseScalerQueryField(this IQueryField queryField, Transaction transaction,
             PreparedQuery query, KbInsensitiveDictionary<string?> auxiliaryFields)
         {
-            if (queryField.Expression is QueryFieldExpressionNumeric expressionNumeric)
+            if (queryField is QueryFieldExpressionNumeric expressionNumeric)
             {
                 return CollapseScalerFunctionNumericParameter(transaction, query, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value);
             }
-            else if (queryField.Expression is QueryFieldExpressionString expressionString)
+            else if (queryField is QueryFieldExpressionString expressionString)
             {
                 return CollapseScalerFunctionStringParameter(transaction, query, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value);
             }
-            else if (queryField.Expression is QueryFieldDocumentIdentifier documentIdentifier)
+            else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
             {
                 if (auxiliaryFields.TryGetValue(documentIdentifier.Value, out var auxiliaryValue))
                 {
@@ -58,9 +57,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 }
                 throw new KbEngineException($"Auxiliary fields not found: [{documentIdentifier.Value}].");
             }
+            else if (queryField is QueryFieldConstantNumeric constantNumeric)
+            {
+                return query.Batch.GetLiteralValue(constantNumeric.Value);
+            }
+            else if (queryField is QueryFieldConstantString constantString)
+            {
+                return query.Batch.GetLiteralValue(constantString.Value);
+            }
             else
             {
-                throw new KbEngineException($"Field expression type is not implemented: [{queryField.Expression.GetType().Name}].");
+                throw new KbEngineException($"Field expression type is not implemented: [{queryField.GetType().Name}].");
             }
         }
 

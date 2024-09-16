@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
-using NTDLS.Helpers;
+﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
@@ -259,7 +258,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     foreach (var groupField in instance.Operation.Query.GroupFields)
                     {
-                        var collapsedGroupField = groupField.CollapseScalerQueryField(instance.Operation.Transaction,
+                        var collapsedGroupField = groupField.Expression.CollapseScalerQueryField(instance.Operation.Transaction,
                             instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields);
 
                         groupKey.Append($"[{collapsedGroupField?.ToLowerInvariant()}]");
@@ -393,7 +392,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             if (instance.Operation.Query.Conditions.Count != 0)
             {
                 //Remove rows that do not match the the global query conditions (ones in the where clause).
-                resultingRows.FilterByGlobalQueryConditions(instance.Operation.Transaction, instance);
+                resultingRows.FilterByWhereClauseConditions(instance.Operation.Transaction, instance);
             }
         }
 
@@ -496,8 +495,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                 joinScopedContentCache.Add(currentSchemaKVP.Key.ToLowerInvariant(), documentContentNextLevel);
 
-                SetSchemaIntersectionConditionParameters(instance.Operation.Transaction,
-                    ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
+                SetSchemaIntersectionConditionParameters(instance, ref expression, currentSchemaMap.Conditions, joinScopedContentCache);
 
                 var ptEvaluate = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
@@ -544,53 +542,20 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Gets the json content values for the specified conditions.
         /// </summary>
-        private static void SetSchemaIntersectionConditionParameters(Transaction transaction,
-            ref NCalc.Expression expression, ConditionCollection conditions,
-            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
+        private static void SetSchemaIntersectionConditionParameters(DocumentLookupOperation.Instance instance, ref NCalc.Expression expression,
+             ConditionCollection conditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
-            /* //TODO: Reimplement
-            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var expressionKey in conditions.Root.ExpressionKeys)
-            {
-                var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
-                SetSchemaIntersectionConditionParametersRecursive(transaction,
-                    ref expression, conditions, subCondition, joinScopedContentCache);
-            }
-            */
-        }
+            var documentContent = joinScopedContentCache[conditions.SchemaAlias.EnsureNotNull()];
 
-        private static void SetSchemaIntersectionConditionParametersRecursive(Transaction transaction,
-            ref NCalc.Expression expression, Old_Conditions conditions, Old_SubCondition givenSubCondition,
-            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
-        {
-            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
+            foreach (var conditionSet in conditions)
             {
-                var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
-                SetSchemaIntersectionConditionParametersRecursive(transaction,
-                    ref expression, conditions, subCondition, joinScopedContentCache);
-            }
-
-            foreach (var condition in givenSubCondition.Conditions)
-            {
-                //Get the value of the condition:
-                var documentContent = joinScopedContentCache[condition.Left.Prefix];
-                if (!documentContent.TryGetValue(condition.Left.Value.EnsureNotNull(), out string? leftDocumentValue))
+                foreach (var condition in conditionSet)
                 {
-                    throw new KbEngineException($"Field not found in document [{condition.Left.Value}].");
+                    var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, documentContent);
+                    var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, documentContent);
+
+                    expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
                 }
-
-                //Get the value of the condition:
-                documentContent = joinScopedContentCache[condition.Right.Prefix];
-                if (!documentContent.TryGetValue(condition.Right.Value.EnsureNotNull(), out string? rightDocumentValue))
-                {
-                    throw new KbEngineException($"Field not found in document [{condition.Right.Value}].");
-                }
-
-                var singleConditionResult = Old_Condition.IsMatch(transaction,
-                    leftDocumentValue?.ToLowerInvariant(), condition.LogicalQualifier, rightDocumentValue);
-
-                expression.Parameters[condition.ConditionKey] = singleConditionResult;
             }
         }
 
@@ -743,7 +708,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
-        private static void FilterByGlobalQueryConditions(this SchemaIntersectionRowCollection rows, Transaction transaction, DocumentLookupOperation.Instance instance)
+        private static void FilterByWhereClauseConditions(this SchemaIntersectionRowCollection rows,
+            Transaction transaction, DocumentLookupOperation.Instance instance)
         {
             NCalc.Expression? expression = null;
 
@@ -763,10 +729,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var rowsToRemove = new List<SchemaIntersectionRow>();
 
-
             foreach (var inputResult in rows)
             {
-                SetQueryGlobalConditionsExpressionParameters(transaction, instance, ref expression, instance.Operation.Query.Conditions, inputResult.AuxiliaryFields);
+                SetExpressionParameters(instance, ref expression, instance.Operation.Query.Conditions, inputResult.AuxiliaryFields);
 
                 var ptEvaluate = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
@@ -781,96 +746,24 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             rows.RemoveAll(o => rowsToRemove.Contains(o));
         }
 
-        private static string? ResolveIQueryField(DocumentLookupOperation.Instance instance, KbInsensitiveDictionary<string?> auxiliaryFields, IQueryField queryField)
-        {
-            if (queryField is QueryFieldConstantNumeric constantNumeric)
-            {
-                return instance.Operation.Query.Batch.GetLiteralValue(constantNumeric.Value);
-            }
-            else if (queryField is QueryFieldConstantString constantString)
-            {
-                return instance.Operation.Query.Batch.GetLiteralValue(constantString.Value);
-            }
-            else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
-            {
-                var fieldName = instance.Operation.Query.Batch.GetLiteralValue(documentIdentifier.Value);
-                if (fieldName != null && auxiliaryFields.TryGetValue(fieldName, out var auxiliaryValue))
-                {
-                    return auxiliaryValue;
-                }
-                else
-                {
-                    instance.Operation.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound,
-                        $"'{fieldName}' will be treated as null.");
-                }
-            }
-
-            //TODO: We will need to handler function calls here. Should be pretty simple.
-            //var collapsedResult = CollapseScalerExpression(transaction, query, row.AuxiliaryFields, expressionField);
-
-            throw new NotImplementedException();
-        }
-
         /// <summary>
         /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the multi-schema lookup.
         /// </summary>
-        private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction, DocumentLookupOperation.Instance instance,
+        private static void SetExpressionParameters(DocumentLookupOperation.Instance instance,
             ref NCalc.Expression expression, ConditionCollection conditions, KbInsensitiveDictionary<string?> auxiliaryFields)
         {
-            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
             foreach (var conditionSet in conditions)
             {
                 foreach (var condition in conditionSet)
                 {
-                    var collapsedLeft = ResolveIQueryField(instance, auxiliaryFields, condition.Left);
-                    var collapsedRight = ResolveIQueryField(instance, auxiliaryFields, condition.Right);
-                    expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(transaction, collapsedLeft, collapsedRight);
-                }
+                    var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, auxiliaryFields);
+                    var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, auxiliaryFields);
 
-                //var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
-                //SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
-            }
-
-            /* //Scraps:
-            foreach (var expressionField in query.SelectFields.ExpressionFields.Where(o => o.CollapseType == CollapseType.Scaler))
-            {
-                foreach (var row in resultingRows)
-                {
-                    var collapsedResult = CollapseScalerExpression(transaction, query, row.AuxiliaryFields, expressionField);
-                    row.InsertValue(expressionField.FieldAlias, expressionField.Ordinal, collapsedResult);
+                    expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
                 }
             }
-
-            */
         }
 
-        /* //TODO: Delete
-        /// <summary>
-        /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the multi-schema lookup.
-        /// </summary>
-        private static void old_SetQueryGlobalConditionsExpressionParameters(Transaction transaction, ref NCalc.Expression expression,
-            Old_Conditions conditions, Old_SubCondition givenSubCondition, KbInsensitiveDictionary<string?> conditionField)
-        {
-            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var expressionKey in givenSubCondition.ExpressionKeys)
-            {
-                var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
-                old_SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
-            }
-
-            foreach (var condition in givenSubCondition.Conditions)
-            {
-                //Get the value of the condition:
-                if (conditionField.TryGetValue(condition.Left.Key, out string? value) == false)
-                {
-                    //Field was not found, log warning which can be returned to the user.
-                    //throw new KbEngineException($"Field not found in document [{condition.Left.Key}].");
-                }
-
-                expression.Parameters[condition.ConditionKey] = condition.IsMatch(transaction, value?.ToLowerInvariant());
-            }
-        }
-        */
         #endregion
     }
 }
