@@ -392,7 +392,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             if (instance.Operation.Query.Conditions.Count != 0)
             {
                 //Remove rows that do not match the the global query conditions (ones in the where clause).
-                resultingRows.FilterByWhereClauseConditions(instance.Operation.Transaction, instance);
+                resultingRows.FilterByWhereClauseConditions(instance);
             }
         }
 
@@ -708,8 +708,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// This is where we filter the results by the WHERE clause.
         /// </summary>
-        private static void FilterByWhereClauseConditions(this SchemaIntersectionRowCollection rows,
-            Transaction transaction, DocumentLookupOperation.Instance instance)
+        private static void FilterByWhereClauseConditions(this SchemaIntersectionRowCollection rows, DocumentLookupOperation.Instance instance)
         {
             NCalc.Expression? expression = null;
 
@@ -747,7 +746,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         }
 
         /// <summary>
-        /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the multi-schema lookup.
+        /// Collapses all left-and-right condition values and fills in the expression variables.
         /// </summary>
         private static void SetExpressionParameters(DocumentLookupOperation.Instance instance,
             NCalc.Expression expression, ConditionCollection conditions, KbInsensitiveDictionary<string?> auxiliaryFields)
