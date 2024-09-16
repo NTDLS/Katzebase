@@ -731,7 +731,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             foreach (var inputResult in rows)
             {
-                SetExpressionParameters(instance, ref expression, instance.Operation.Query.Conditions, inputResult.AuxiliaryFields);
+                SetExpressionParameters(instance, expression, instance.Operation.Query.Conditions, inputResult.AuxiliaryFields);
 
                 var ptEvaluate = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
@@ -750,16 +750,26 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the multi-schema lookup.
         /// </summary>
         private static void SetExpressionParameters(DocumentLookupOperation.Instance instance,
-            ref NCalc.Expression expression, ConditionCollection conditions, KbInsensitiveDictionary<string?> auxiliaryFields)
+            NCalc.Expression expression, ConditionCollection conditions, KbInsensitiveDictionary<string?> auxiliaryFields)
         {
-            foreach (var conditionSet in conditions)
-            {
-                foreach (var condition in conditionSet)
-                {
-                    var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, auxiliaryFields);
-                    var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, auxiliaryFields);
+            SetExpressionParametersRecursive(conditions);
 
-                    expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
+            void SetExpressionParametersRecursive(List<ConditionSet> conditionSets)
+            {
+                foreach (var conditionSet in conditionSets)
+                {
+                    foreach (var condition in conditionSet)
+                    {
+                        if (condition.Children.Count > 0)
+                        {
+                            SetExpressionParametersRecursive(condition.Children);
+                        }
+
+                        var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, auxiliaryFields);
+                        var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, auxiliaryFields);
+
+                        expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
+                    }
                 }
             }
         }

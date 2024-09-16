@@ -1,4 +1,4 @@
-select top 10
+select 
 	sw.Id,
 	Length(sw.Text) + 'Some value' as Test,
 	sw.LanguageId
@@ -18,11 +18,12 @@ where
 	)
 	and sw.Id > 1000
 	)
+
 	OR sw.Text like 'Ca%'
 	and sw.Text like '%al'
 	and sw.Text like '%na%'
 	and sw.LanguageId = 4
-	
+
 	OR sw.Text like 'Ca%'
 	and sw.Text like '%al'
 	and sw.Text like '%na%'

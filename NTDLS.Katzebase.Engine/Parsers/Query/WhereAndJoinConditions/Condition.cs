@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchGreaterOrEqual(Transaction transaction, string? left, string? right)
         {
-            if (left != null && right != null && int.TryParse(left, out var iLeft))
+            if (left != null && right != null && double.TryParse(left, out var iLeft))
             {
                 if (double.TryParse(right, out var iRight))
                 {
@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchLesserOrEqual(Transaction transaction, string? left, string? right)
         {
-            if (left != null && right != null && int.TryParse(left, out var iLeft))
+            if (left != null && right != null && double.TryParse(left, out var iLeft))
             {
                 if (double.TryParse(right, out var iRight))
                 {
@@ -107,7 +107,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchGreater(Transaction transaction, string? left, string? right)
         {
-            if (left != null && right != null && int.TryParse(left, out var iLeft))
+            if (left != null && right != null && double.TryParse(left, out var iLeft))
             {
                 if (double.TryParse(right, out var iRight))
                 {
@@ -122,7 +122,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool? IsMatchLesser(Transaction transaction, string? left, string? right)
         {
-            if (left != null && right != null && int.TryParse(left, out var iLeft))
+            if (left != null && right != null && double.TryParse(left, out var iLeft))
             {
                 if (double.TryParse(right, out var iRight))
                 {
