@@ -9,7 +9,9 @@ using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
+using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using System.Text;
@@ -214,7 +216,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="keyValues">For JOIN operations, contains the values of the joining document.</param>
         /// <returns></returns>
         internal Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClause(
-                    PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, string workingSchemaPrefix, KbInsensitiveDictionary<string>? keyValues = null)
+                    PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
+                    PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
         {
             Dictionary<uint, DocumentPointer> accumulatedResults = new();
 
@@ -226,7 +229,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var lookup in indexingConditionGroup.Lookups) //Loop thorough the AND conditions.
                 {
-                    var partialResults = MatchSchemaDocumentsByConditionsClauseGroup(optimization.Transaction, lookup, physicalSchema, workingSchemaPrefix, keyValues);
+                    var partialResults = MatchSchemaDocumentsByConditionsClauseGroup(optimization.Transaction, query, lookup, physicalSchema, workingSchemaPrefix, keyValues);
 
                     var ptDocumentPointerIntersect = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                     groupResults = groupResults.Intersect(partialResults);
@@ -249,8 +252,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return accumulatedResults;
         }
 
-        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseGroup(Transaction transaction,
-            IndexingConditionLookup lookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<string>? keyValues)
+        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseGroup(Transaction transaction, PreparedQuery query,
+            IndexingConditionLookup lookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues)
         {
             Dictionary<uint, DocumentPointer>? accumulatedResults = null;
 
@@ -260,6 +263,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var condition in conditionSet)
                 {
+                    //TODO: Instead of collapsing here, we need to collapse them in a clone and replace right with QueryFieldCollapsedValue
+                    var collapsedRight = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new());
+
                     List<uint> indexPartitions = new();
 
                     if (condition.Qualifier == LogicalQualifier.Equals)
@@ -286,7 +292,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
                     }
 
-                    var operation = new MatchSchemaDocumentsByConditionsOperation(transaction, lookup, physicalSchema, workingSchemaPrefix, condition, keyValues);
+                    var operation = new MatchSchemaDocumentsByConditionsOperation(transaction, query, lookup, physicalSchema, workingSchemaPrefix, condition, keyValues);
 
                     if (indexPartitions.Count > 1)
                     {
@@ -359,7 +365,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (workingPhysicalIndexLeaves.Count > 0)
                 {
                     //First process the condition at the AttributeDepth that was passed in.
-                    workingPhysicalIndexLeaves = MatchIndexLeaves(instance.Operation.Transaction,
+                    workingPhysicalIndexLeaves = MatchIndexLeaves(instance.Operation.Transaction, instance.Operation.Query,
                         instance.Operation.Condition, workingPhysicalIndexLeaves, instance.Operation.KeyValues);
 
                     if (instance.Operation.Lookup.Index.Attributes.Count == 1)
@@ -404,7 +410,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             foreach (var condition in conditionSet)
             {
-                var partitionResults = MatchIndexLeaves(instance.Operation.Transaction, condition, workingPhysicalIndexLeaves, instance.Operation.KeyValues);
+                var partitionResults = MatchIndexLeaves(instance.Operation.Transaction, instance.Operation.Query, condition, workingPhysicalIndexLeaves, instance.Operation.KeyValues);
 
                 if (attributeDepth == instance.Operation.Lookup.AttributeConditionSets.Count - 1)
                 {
@@ -448,13 +454,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region Matching / Seeking / Scanning.
 
-        private static List<PhysicalIndexLeaf> MatchIndexLeaves(Transaction transaction, Condition condition,
-            List<PhysicalIndexLeaf> workingPhysicalIndexLeaves, KbInsensitiveDictionary<string>? keyValues)
+        private static List<PhysicalIndexLeaf> MatchIndexLeaves(Transaction transaction, PreparedQuery query, Condition condition,
+            List<PhysicalIndexLeaf> workingPhysicalIndexLeaves, KbInsensitiveDictionary<string?>? keyValues)
         {
             //For join operations, check the keyValues for the raw value to lookup.
             if (keyValues?.TryGetValue(condition.Right.Key, out string? keyValue) != true)
             {
-                keyValue = condition.Right.Value; //Otherwise default to the value in the condition.
+                //TODO: Instead of collapsing here, we need to collapse them in a clone and replace right with QueryFieldCollapsedValue
+                keyValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new());
             }
 
             return condition.Qualifier switch

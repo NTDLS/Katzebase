@@ -46,5 +46,21 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         {
             throw new NotImplementedException();
         }
+
+        public ConditionCollection Clone()
+        {
+            var clone = new ConditionCollection(FieldCollection.QueryBatch, MathematicalExpression, SchemaAlias)
+            {
+                Hash = Hash,
+                _nextExpressionVariable = _nextExpressionVariable
+            };
+
+            foreach (var conditionSet in this)
+            {
+                clone.Add(conditionSet.Clone());
+            }
+
+            return clone;
+        }
     }
 }

@@ -16,5 +16,15 @@
         {
             Value = value;
         }
+
+        public IQueryField Clone()
+        {
+            var clone = new QueryFieldConstantNumeric(Value)
+            {
+                SchemaAlias = SchemaAlias,
+            };
+
+            return clone;
+        }
     }
 }

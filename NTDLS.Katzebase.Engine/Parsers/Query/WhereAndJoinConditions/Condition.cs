@@ -30,6 +30,18 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             Right = right;
         }
 
+        public Condition Clone()
+        {
+            var clone = new Condition(ExpressionVariable, Left.Clone(), Qualifier, Right.Clone());
+
+            foreach (var children in Children)
+            {
+                clone.Children.Add(children.Clone());
+            }
+
+            return clone;
+        }
+
         public bool IsMatch(Transaction transaction, string? collapsedLeft, string? collapsedRight)
         {
             return IsMatch(transaction, collapsedLeft, Qualifier, collapsedRight);

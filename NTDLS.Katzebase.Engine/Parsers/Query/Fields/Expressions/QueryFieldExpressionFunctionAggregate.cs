@@ -20,5 +20,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
             ExpressionKey = expressionKey;
             ReturnType = returnType;
         }
+
+        public IQueryFieldExpressionFunction Clone()
+        {
+            var clone = new QueryFieldExpressionFunctionAggregate(FunctionName, ExpressionKey, ReturnType);
+
+            foreach (var parameter in Parameters)
+            {
+                clone.Parameters.Add(parameter.Clone());
+            }
+
+            return clone;
+        }
     }
 }

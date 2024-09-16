@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     documentPointers = new List<DocumentPointer>();
 
                     var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(
-                        topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, topLevelSchemaMap.Prefix);
+                        topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, query, topLevelSchemaMap.Prefix);
 
                     if (indexMatchedDocuments != null)
                     {
@@ -440,7 +440,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             #region Indexing to reduce the number of document pointers in "limitedDocumentPointers".
 
-            var joinKeyValues = new KbInsensitiveDictionary<string>();
+            var joinKeyValues = new KbInsensitiveDictionary<string?>();
 
             if (currentSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
             {
@@ -465,7 +465,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 //We are going to create a limited document catalog from the indexes.
 
                 var limitedDocumentPointers = instance.Operation.Core.Indexes.MatchSchemaDocumentsByConditionsClause(
-                    currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, currentSchemaMap.Prefix, joinKeyValues);
+                    currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, instance.Operation.Query, currentSchemaMap.Prefix, joinKeyValues);
 
                 documentPointers = limitedDocumentPointers.Select(o => o.Value);
             }

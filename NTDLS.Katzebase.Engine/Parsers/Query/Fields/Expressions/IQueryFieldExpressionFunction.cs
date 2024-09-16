@@ -13,5 +13,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
         /// Parameter list for the this function.
         /// </summary>
         List<IExpressionFunctionParameter> Parameters { get; }
+        public IQueryFieldExpressionFunction Clone();
     }
 }

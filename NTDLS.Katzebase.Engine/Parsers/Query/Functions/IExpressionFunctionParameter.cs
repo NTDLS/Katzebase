@@ -3,5 +3,7 @@
     internal interface IExpressionFunctionParameter
     {
         string Expression { get; set; }
+
+        public IExpressionFunctionParameter Clone();
     }
 }

@@ -20,5 +20,21 @@
         public QueryFieldExpressionString()
         {
         }
+
+        public IQueryField Clone()
+        {
+            var clone = new QueryFieldExpressionString()
+            {
+                Value = Value,
+                SchemaAlias = SchemaAlias,
+            };
+
+            foreach (var functionDependency in FunctionDependencies)
+            {
+                clone.FunctionDependencies.Add(functionDependency.Clone());
+            }
+
+            return clone;
+        }
     }
 }

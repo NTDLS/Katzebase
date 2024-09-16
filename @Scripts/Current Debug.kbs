@@ -1,11 +1,12 @@
 select 
 	sw.Id,
+	sw.Text,
 	Length(sw.Text) + 'Some value' as Test,
 	sw.LanguageId
 from
 	WordList::Word as sw --(15 rows affected)
 where
-(
+--(
 	sw.Text LIKE 'As%'
 	--and Length(sw.Text) / 1000 < sw.Id
 	--and sw.Text != sw.Text + 'More Text'

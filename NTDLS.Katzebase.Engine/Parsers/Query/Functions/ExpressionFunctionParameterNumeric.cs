@@ -11,5 +11,10 @@
         {
             Expression = value;
         }
+
+        public IExpressionFunctionParameter Clone()
+        {
+            return new ExpressionFunctionParameterNumeric(Expression);
+        }
     }
 }

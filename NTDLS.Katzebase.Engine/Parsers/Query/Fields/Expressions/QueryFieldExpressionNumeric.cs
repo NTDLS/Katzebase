@@ -5,7 +5,6 @@
     /// </summary>
     internal class QueryFieldExpressionNumeric : IQueryFieldExpression
     {
-
         public string Value { get; set; }
 
         /// <summary>
@@ -21,6 +20,21 @@
         public QueryFieldExpressionNumeric(string value)
         {
             Value = value;
+        }
+
+        public IQueryField Clone()
+        {
+            var clone = new QueryFieldExpressionNumeric(Value)
+            {
+                SchemaAlias = SchemaAlias,
+            };
+
+            foreach (var functionDependency in FunctionDependencies)
+            {
+                clone.FunctionDependencies.Add(functionDependency.Clone());
+            }
+
+            return clone;
         }
     }
 }
