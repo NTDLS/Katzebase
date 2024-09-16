@@ -1,4 +1,5 @@
-﻿using NTDLS.Helpers;
+﻿using Newtonsoft.Json.Linq;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
@@ -765,7 +766,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             foreach (var inputResult in rows)
             {
-                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, instance.Operation.Query.Conditions, inputResult.AuxiliaryFields);
+                SetQueryGlobalConditionsExpressionParameters(transaction, instance, ref expression, instance.Operation.Query.Conditions, inputResult.AuxiliaryFields);
 
                 var ptEvaluate = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.Evaluate);
                 bool evaluation = (bool)expression.Evaluate();
@@ -780,33 +781,81 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             rows.RemoveAll(o => rowsToRemove.Contains(o));
         }
 
-        /// <summary>
-        /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the multi-schema lookup.
-        /// </summary>
-        private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction,
-            ref NCalc.Expression expression, ConditionCollection conditions, KbInsensitiveDictionary<string?> conditionField)
+        private static string? ResolveIQueryField(DocumentLookupOperation.Instance instance, KbInsensitiveDictionary<string?> auxiliaryFields, IQueryField queryField)
         {
-            /* //TODO: Reimplement
-            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
-            foreach (var expressionKey in conditions.Root.ExpressionKeys)
+            if (queryField is QueryFieldConstantNumeric constantNumeric)
             {
-                var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
-                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
+                return instance.Operation.Query.Batch.GetLiteralValue(constantNumeric.Value);
             }
-            */
+            else if (queryField is QueryFieldConstantString constantString)
+            {
+                return instance.Operation.Query.Batch.GetLiteralValue(constantString.Value);
+            }
+            else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
+            {
+                var fieldName = instance.Operation.Query.Batch.GetLiteralValue(documentIdentifier.Value);
+                if (fieldName != null && auxiliaryFields.TryGetValue(fieldName, out var auxiliaryValue))
+                {
+                    return auxiliaryValue;
+                }
+                else
+                {
+                    instance.Operation.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound,
+                        $"'{fieldName}' will be treated as null.");
+                }
+            }
+
+            //TODO: We will need to handler function calls here. Should be pretty simple.
+            //var collapsedResult = CollapseScalerExpression(transaction, query, row.AuxiliaryFields, expressionField);
+
+            throw new NotImplementedException();
         }
 
         /// <summary>
         /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the multi-schema lookup.
         /// </summary>
-        private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction, ref NCalc.Expression expression,
+        private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction, DocumentLookupOperation.Instance instance,
+            ref NCalc.Expression expression, ConditionCollection conditions, KbInsensitiveDictionary<string?> auxiliaryFields)
+        {
+            //If we have SubConditions, then we need to satisfy those in order to complete the equation.
+            foreach (var conditionSet in conditions)
+            {
+                foreach (var condition in conditionSet)
+                {
+                    var collapsedLeft = ResolveIQueryField(instance, auxiliaryFields, condition.Left);
+                    var collapsedRight = ResolveIQueryField(instance, auxiliaryFields, condition.Right);
+                    expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(transaction, collapsedLeft, collapsedRight);
+                }
+
+                //var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
+                //SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
+            }
+
+            /* //Scraps:
+            foreach (var expressionField in query.SelectFields.ExpressionFields.Where(o => o.CollapseType == CollapseType.Scaler))
+            {
+                foreach (var row in resultingRows)
+                {
+                    var collapsedResult = CollapseScalerExpression(transaction, query, row.AuxiliaryFields, expressionField);
+                    row.InsertValue(expressionField.FieldAlias, expressionField.Ordinal, collapsedResult);
+                }
+            }
+
+            */
+        }
+
+        /* //TODO: Delete
+        /// <summary>
+        /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the multi-schema lookup.
+        /// </summary>
+        private static void old_SetQueryGlobalConditionsExpressionParameters(Transaction transaction, ref NCalc.Expression expression,
             Old_Conditions conditions, Old_SubCondition givenSubCondition, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
             foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
                 var subCondition = conditions.SubConditionFromExpressionKey(expressionKey);
-                SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
+                old_SetQueryGlobalConditionsExpressionParameters(transaction, ref expression, conditions, subCondition, conditionField);
             }
 
             foreach (var condition in givenSubCondition.Conditions)
@@ -821,7 +870,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 expression.Parameters[condition.ConditionKey] = condition.IsMatch(transaction, value?.ToLowerInvariant());
             }
         }
-
+        */
         #endregion
     }
 }

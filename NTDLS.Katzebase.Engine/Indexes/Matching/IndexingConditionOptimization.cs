@@ -509,6 +509,5 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         }
 
         #endregion
-
     }
 }
