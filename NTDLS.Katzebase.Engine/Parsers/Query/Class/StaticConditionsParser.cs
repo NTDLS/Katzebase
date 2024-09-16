@@ -170,16 +170,16 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             var left = StaticParserField.Parse(parentTokenizer, leftExpressionString.EnsureNotNullOrEmpty(), conditionCollection.FieldCollection);
             var right = StaticParserField.Parse(parentTokenizer, rightExpressionString.EnsureNotNullOrEmpty(), conditionCollection.FieldCollection);
 
-            var result = new ConditionPair(conditionCollection.NextExpressionVariable(), left, logicalQualifier, right);
+            var conditionPair = new ConditionPair(conditionCollection.NextExpressionVariable(), left, logicalQualifier, right);
 
             //Replace the condition with the name of the variable that must be evaluated to determine the value for this condition.
             string conditionSetText = tokenizer.Substring(startConditionSetCaret, tokenizer.Caret - startConditionSetCaret).Trim();
-            conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.ReplaceFirst(conditionSetText, result.ExpressionVariable);
+            conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.ReplaceFirst(conditionSetText, conditionPair.ExpressionVariable);
 
             conditionCollection.FieldCollection.Add(new QueryField(string.Empty, conditionCollection.FieldCollection.Count, left));
             conditionCollection.FieldCollection.Add(new QueryField(string.Empty, conditionCollection.FieldCollection.Count, right));
 
-            return result;
+            return conditionPair;
         }
     }
 }

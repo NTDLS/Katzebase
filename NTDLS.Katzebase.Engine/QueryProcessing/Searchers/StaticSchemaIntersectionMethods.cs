@@ -245,7 +245,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 //We ARE NOT grouping, so collapse all field expressions as scaler expressions.
                 instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
-                resultingRows.CollapseScalerRowExpressions(instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull());
+                resultingRows.CollapseScalerRowExpressions(instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), instance.Operation.Query.SelectFields);
                 instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Release();
             }
             else
@@ -259,7 +259,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     foreach (var groupField in instance.Operation.Query.GroupFields)
                     {
                         var collapsedGroupField = groupField.Expression.CollapseScalerQueryField(instance.Operation.Transaction,
-                            instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields);
+                            instance.Operation.Query.EnsureNotNull(), instance.Operation.Query.SelectFields, row.AuxiliaryFields);
 
                         groupKey.Append($"[{collapsedGroupField?.ToLowerInvariant()}]");
                     }
@@ -292,7 +292,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                             //All aggregation parameters are collapsed here at query processing time.
                             var collapsedAggregationParameterValue = aggregationArrayParam.CollapseScalerExpressionFunctionParameter(instance.Operation.Transaction,
-                                instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, aggregationFunction.FunctionDependencies);
+                                instance.Operation.Query.EnsureNotNull(), instance.Operation.Query.SelectFields, row.AuxiliaryFields, aggregationFunction.FunctionDependencies);
 
                             if (groupRowCollection.GroupAggregateFunctionParameters.TryGetValue(aggregationFunction.Function.ExpressionKey, out var groupAggregateFunctionParameter) == false)
                             {
@@ -305,7 +305,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                                 foreach (var supplementalParam in aggregationFunction.Function.Parameters.Skip(1))
                                 {
                                     var collapsedSupplementalParamValue = supplementalParam.CollapseScalerExpressionFunctionParameter(
-                                        instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), row.AuxiliaryFields, new());
+                                        instance.Operation.Transaction, instance.Operation.Query.EnsureNotNull(), instance.Operation.Query.SelectFields, row.AuxiliaryFields, new());
 
                                     groupAggregateFunctionParameter.SupplementalParameters.Add(collapsedSupplementalParamValue);
                                 }
@@ -551,8 +551,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 foreach (var condition in conditionSet)
                 {
-                    var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, documentContent);
-                    var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, documentContent);
+                    var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, documentContent);
+                    var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, documentContent);
 
                     expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
                 }
@@ -647,35 +647,35 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 //TODO: AuxiliaryFields were intended to be used for satisfying functions,
                 //  grouping and sorting, it seems as though the new parser just fills in everything.
-                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Value.FieldName) == false)
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Value.Value) == false)
                 {
                     if (documentContent.TryGetValue(field.Value.FieldName, out string? documentValue) == false)
                     {
                         instance.Operation.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound,
                             $"'{field.Value.FieldName}' will be treated as null.");
                     }
-                    schemaResultRow.AuxiliaryFields.Add(field.Value.FieldName, documentValue);
+                    schemaResultRow.AuxiliaryFields.Add(field.Value.Value, documentValue);
                 }
             }
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
             foreach (var field in instance.Operation.Query.GroupFields.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey).Distinct())
             {
-                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Value.FieldName) == false)
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Value.Value) == false)
                 {
                     if (documentContent.TryGetValue(field.Value.FieldName, out string? documentValue) == false)
                     {
                         instance.Operation.Transaction.AddWarning(KbTransactionWarning.GroupFieldNotFound,
                             $"'{field.Value.FieldName}' will be treated as null.");
                     }
-                    schemaResultRow.AuxiliaryFields.Add(field.Value.FieldName, documentValue);
+                    schemaResultRow.AuxiliaryFields.Add(field.Value.Value, documentValue);
                 }
             }
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.
             foreach (var field in instance.Operation.Query.Conditions.FieldCollection.DocumentIdentifierFields.Where(o => o.SchemaAlias == schemaKey).Distinct())
             {
-                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Name) == false)
+                if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
                     if (documentContent.TryGetValue(field.Name, out string? documentValue) == false)
                     {
@@ -756,8 +756,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 foreach (var condition in conditionSet)
                 {
-                    var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, auxiliaryFields);
-                    var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, auxiliaryFields);
+                    var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, auxiliaryFields);
+                    var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, auxiliaryFields);
 
                     expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
                 }
