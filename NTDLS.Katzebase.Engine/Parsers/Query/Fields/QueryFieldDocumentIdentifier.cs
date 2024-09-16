@@ -3,7 +3,7 @@
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
 {
     /// <summary>
-    /// Contains the name of a schema.field or just a field name if the schema was nto specified.
+    /// Contains the name of a schema.field or just a field name if the schema was not specified.
     /// </summary>
     internal class QueryFieldDocumentIdentifier : IQueryField
     {

@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserWhere
     {
-        public static Conditions Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        public static ConditionCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             //Look for tokens that would mean the end of the where clause
             if (tokenizer.TryGetNextIndexOf([" group ", " order ", " offset ", " inner "], out int endOfWhere) == false)
@@ -26,19 +26,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException("Invalid query. Found '" + conditionText + "', expected: list of conditions.");
             }
 
-            int debugCaret = tokenizer.Caret;
-
-            try
-            {
-                StaticConditionsParser.Parse(queryBatch, tokenizer, conditionText);
-            }
-            catch
-            {
-            }
-
-            tokenizer.SetCaret(debugCaret);
-
-            return Conditions.Create(queryBatch, conditionText, tokenizer);
+            return StaticConditionsParser.Parse(queryBatch, tokenizer, conditionText);
         }
     }
 }

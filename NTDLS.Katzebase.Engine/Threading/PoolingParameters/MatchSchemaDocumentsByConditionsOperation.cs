@@ -17,12 +17,12 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         public IndexingConditionLookup Lookup { get; set; }
         public PhysicalSchema PhysicalSchema { get; set; }
         public string WorkingSchemaPrefix { get; set; }
-        public Condition Condition { get; set; }
+        public Old_Condition Condition { get; set; }
 
         public KbInsensitiveDictionary<string>? KeyValues { get; set; }
 
         public MatchSchemaDocumentsByConditionsOperation(Transaction transaction, IndexingConditionLookup lookup,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition, KbInsensitiveDictionary<string>? keyValues = null)
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, Old_Condition condition, KbInsensitiveDictionary<string>? keyValues = null)
         {
             Transaction = transaction;
             Lookup = lookup;

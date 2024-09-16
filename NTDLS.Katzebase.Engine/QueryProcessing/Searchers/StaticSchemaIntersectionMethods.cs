@@ -389,7 +389,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
             }
 
-            if (instance.Operation.Query.Conditions.AllFields.Count != 0)
+            if (instance.Operation.Query.Conditions.Count != 0)
             {
                 //Remove rows that do not match the the global query conditions (ones in the where clause).
                 resultingRows.FilterByGlobalQueryConditions(instance.Operation.Transaction, instance);
@@ -424,7 +424,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 if (r.TryGetValue(conditionHash, out expression) == false)
                 {
-                    expression = new NCalc.Expression(currentSchemaMap.Conditions.EnsureNotNull().Expression);
+                    expression = new NCalc.Expression(currentSchemaMap.Conditions.MathematicalExpression);
 
                     instance.ExpressionCache.Write(w => w.Add(conditionHash, expression));
                 }
@@ -546,7 +546,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <param name="conditions"></param>
         /// <param name="jContent"></param>
         private static void SetSchemaIntersectionConditionParameters(Transaction transaction,
-            ref NCalc.Expression expression, Conditions conditions,
+            ref NCalc.Expression expression, ConditionCollection conditions,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
@@ -559,7 +559,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         }
 
         private static void SetSchemaIntersectionConditionParametersRecursive(Transaction transaction,
-            ref NCalc.Expression expression, Conditions conditions, SubCondition givenSubCondition,
+            ref NCalc.Expression expression, Old_Conditions conditions, Old_SubCondition givenSubCondition,
             KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
@@ -586,7 +586,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     throw new KbEngineException($"Field not found in document [{condition.Right.Value}].");
                 }
 
-                var singleConditionResult = Condition.IsMatch(transaction,
+                var singleConditionResult = Old_Condition.IsMatch(transaction,
                     leftDocumentValue?.ToLowerInvariant(), condition.LogicalQualifier, rightDocumentValue);
 
                 expression.Parameters[condition.ConditionKey] = singleConditionResult;
@@ -753,7 +753,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 if (r.TryGetValue(conditionHash, out expression) == false)
                 {
-                    expression = new NCalc.Expression(instance.Operation.Query.Conditions.Expression);
+                    expression = new NCalc.Expression(instance.Operation.Query.Conditions.MathematicalExpression);
                     instance.ExpressionCache.Write(w => w.Add(conditionHash, expression));
                 }
             });
@@ -784,7 +784,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction,
-            ref NCalc.Expression expression, Conditions conditions, KbInsensitiveDictionary<string?> conditionField)
+            ref NCalc.Expression expression, ConditionCollection conditions, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
             foreach (var expressionKey in conditions.Root.ExpressionKeys)
@@ -798,7 +798,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Sets the parameters for the WHERE clause expression evaluation from the condition field values saved from the MSQ lookup.
         /// </summary>
         private static void SetQueryGlobalConditionsExpressionParameters(Transaction transaction, ref NCalc.Expression expression,
-            Conditions conditions, SubCondition givenSubCondition, KbInsensitiveDictionary<string?> conditionField)
+            Old_Conditions conditions, Old_SubCondition givenSubCondition, KbInsensitiveDictionary<string?> conditionField)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
             foreach (var expressionKey in givenSubCondition.ExpressionKeys)

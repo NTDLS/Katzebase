@@ -60,7 +60,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 var aliasRemovedFieldText = (aliasIndex > 0 ? field.Substring(0, aliasIndex) : field).Trim();
 
-                var queryField = StaticParserField.Parse(tokenizer, aliasRemovedFieldText, ref queryFields);
+                var queryField = StaticParserField.Parse(tokenizer, aliasRemovedFieldText, queryFields);
 
                 //If the query didn't provide an alias, figure one out.
                 if (string.IsNullOrWhiteSpace(fieldAlias))

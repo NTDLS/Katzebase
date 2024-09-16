@@ -3,15 +3,21 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 {
-    internal class ConditionLeftAndRight
+    /// <summary>
+    /// Used when parsing a condition, contains the left and right value along with the comparison operator.
+    /// </summary>
+    internal class ConditionPair
     {
         public IQueryField Right { get; set; }
         public LogicalQualifier Qualifier { get; set; }
         public IQueryField Left { get; set; }
 
+        /// <summary>
+        /// The name of the variable in ConditionCollection.MathematicalExpression that is represented by this condition.
+        /// </summary>
         public string ExpressionVariable { get; set; }
 
-        public ConditionLeftAndRight(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
+        public ConditionPair(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
         {
             ExpressionVariable = expressionVariable;
             Left = left;

@@ -10,9 +10,9 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 {
-    internal class Conditions
+    internal class Old_Conditions
     {
-        private SubCondition? _root;
+        private Old_SubCondition? _root;
 
         public const string TempKeyMarker = "t";
         private int _lastTempKey = 0;
@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
         public QueryBatch QueryBatch { get; private set; }
 
-        public List<SubCondition> SubConditions { get; private set; } = new();
+        public List<Old_SubCondition> SubConditions { get; private set; } = new();
 
         /// <summary>
         /// List of all fields referenced by the conditions tree.
@@ -49,13 +49,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// Every condition instance starts with a single root node that all others 
         ///     point back to (given some lineage). This is it, the root node.
         /// </summary>
-        public SubCondition Root
+        public Old_SubCondition Root
             => _root.EnsureNotNull();
 
-        public IEnumerable<SubCondition> NonRootSubConditions
+        public IEnumerable<Old_SubCondition> NonRootSubConditions
             => SubConditions.Where(o => !o.IsRoot);
 
-        public Conditions(QueryBatch queryBatch)
+        public Old_Conditions(QueryBatch queryBatch)
         {
             QueryBatch = queryBatch;
         }
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// </summary>
         /// <param name="key"></param>
         /// <returns></returns>
-        public SubCondition SubConditionFromExpressionKey(string key)
+        public Old_SubCondition SubConditionFromExpressionKey(string key)
             => SubConditions.First(o => o.Key == key);
 
         /// <summary>
@@ -76,9 +76,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// <param name="parentTokenizer"></param>
         /// <param name="leftHandAliasOfJoin">When parsing a JOIN, this is the schema that we are joining to.</param>
         /// <returns></returns>
-        public static Conditions Create(QueryBatch queryBatch, string conditionsText, Tokenizer parentTokenizer, string leftHandAliasOfJoin = "")
+        public static Old_Conditions Create(QueryBatch queryBatch, string conditionsText, Tokenizer parentTokenizer, string leftHandAliasOfJoin = "")
         {
-            var conditions = new Conditions(queryBatch);
+            var conditions = new Old_Conditions(queryBatch);
 
             conditions.Parse(conditionsText.ToLowerInvariant(), parentTokenizer, leftHandAliasOfJoin);
 
@@ -198,7 +198,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                             }
                         }
 
-                        var subCondition = new SubCondition(subExpressionKey, logicalConnector, parenTrimmedSubConditionText);
+                        var subCondition = new Old_SubCondition(subExpressionKey, logicalConnector, parenTrimmedSubConditionText);
 
                         AddSubCondition(parentTokenizer, subCondition, leftHandAliasOfJoin);
 
@@ -291,7 +291,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             return str;
         }
 
-        private void AddSubCondition(Tokenizer parentTokenizer, SubCondition subCondition, string leftHandAliasOfJoin)
+        private void AddSubCondition(Tokenizer parentTokenizer, Old_SubCondition subCondition, string leftHandAliasOfJoin)
         {
             var logicalConnector = LogicalConnector.None;
 
@@ -386,7 +386,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                         endPosition = tokenizer.Caret;
                     }
 
-                    var condition = new Condition(conditionPlaceholder, logicalConnector,
+                    var condition = new Old_Condition(conditionPlaceholder, logicalConnector,
                         new SmartValue(left, leftDataType), logicalQualifier, new SmartValue(right, rightDataType));
 
                     if (right?.StartsWith($"{leftHandAliasOfJoin}.") == true)
@@ -445,7 +445,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             return result.ToString();
         }
 
-        private void CollapseToExpression(ref StringBuilder result, SubCondition givenSubCondition)
+        private void CollapseToExpression(ref StringBuilder result, Old_SubCondition givenSubCondition)
         {
             foreach (var key in givenSubCondition.ExpressionKeys)
             {
@@ -477,7 +477,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             return Library.Helpers.ComputeSHA256(result.ToString());
         }
 
-        private void BuildConditionHash(ref StringBuilder result, SubCondition givenSubCondition, int depth)
+        private void BuildConditionHash(ref StringBuilder result, Old_SubCondition givenSubCondition, int depth)
         {
             //If we have SubConditions, then we need to satisfy those in order to complete the equation.
             foreach (var expressionKey in givenSubCondition.ExpressionKeys)
@@ -532,9 +532,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
         #endregion
 
-        public Conditions Clone()
+        public Old_Conditions Clone()
         {
-            var clone = new Conditions(QueryBatch)
+            var clone = new Old_Conditions(QueryBatch)
             {
                 RootKey = RootKey,
                 Expression = Expression,
@@ -545,7 +545,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
             foreach (var subCondition in SubConditions)
             {
-                var subConditionClone = new SubCondition(subCondition.Key, subCondition.LogicalConnector, subCondition.Expression);
+                var subConditionClone = new Old_SubCondition(subCondition.Key, subCondition.LogicalConnector, subCondition.Expression);
 
                 if (subCondition.IsRoot)
                 {
@@ -598,7 +598,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// It also demonstrates how we process the recursive condition logic.
         /// Called by parent ExplainConditionTree()
         /// </summary>
-        private void ExplainSubOperations(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
+        private void ExplainSubOperations(ref StringBuilder result, Old_SubCondition givenSubCondition, int indentation)
         {
             foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {
@@ -652,7 +652,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             return result.ToString();
         }
 
-        private void ExplainFlatSubCondition(ref StringBuilder result, SubCondition givenSubCondition, int indentation)
+        private void ExplainFlatSubCondition(ref StringBuilder result, Old_SubCondition givenSubCondition, int indentation)
         {
             foreach (var expressionKey in givenSubCondition.ExpressionKeys)
             {

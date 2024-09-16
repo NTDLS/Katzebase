@@ -3,12 +3,12 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 {
-    internal class SubCondition
+    internal class Old_SubCondition
     {
         public bool IsRoot { get; set; } = false;
         public string Key { get; set; }
         public string Expression { get; set; }
-        public List<Condition> Conditions { get; set; } = new();
+        public List<Old_Condition> Conditions { get; set; } = new();
 
         /// <summary>
         /// List of all expression keys referenced by the expression.
@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// </summary>
         public HashSet<IndexSelection> IndexSelections { get; set; } = new();
 
-        public SubCondition(string key, LogicalConnector logicalConnector, string condition)
+        public Old_SubCondition(string key, LogicalConnector logicalConnector, string condition)
         {
             LogicalConnector = logicalConnector;
             Key = key;

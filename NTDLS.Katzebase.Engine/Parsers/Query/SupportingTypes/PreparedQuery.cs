@@ -78,7 +78,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         public int RowOffset { get; set; }
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }
-        public Conditions Conditions { get; set; }
+        public ConditionCollection Conditions { get; set; }
         public PrefixedFields CreateFields { get; set; } = new();
         public QueryFieldCollection SelectFields { get; set; }
         public FunctionParameterBase ProcedureCall { get; set; } = new();

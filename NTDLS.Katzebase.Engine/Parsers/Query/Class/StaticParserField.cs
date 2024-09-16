@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// <summary>
         /// Parses a field expression containing fields, functions. string and math operations.
         /// </summary>
-        public static IQueryField Parse(Tokenizer parentTokenizer, string givenFieldText, ref QueryFieldCollection queryFields)
+        public static IQueryField Parse(Tokenizer parentTokenizer, string givenFieldText, QueryFieldCollection queryFields)
         {
             Tokenizer tokenizer = new(givenFieldText);
 

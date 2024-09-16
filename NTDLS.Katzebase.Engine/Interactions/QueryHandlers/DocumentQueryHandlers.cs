@@ -127,7 +127,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                             //TODO: Reimplement scaler functions for insert.
                             //fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(
                             //    transactionReference.Transaction, updateValue.Value, new KbInsensitiveDictionary<string?>());
-                            throw new NotImplementedException("Reimplement scaler funcitons for update statements");
+                            throw new NotImplementedException("Reimplement scaler functions for update statements");
                         }
                         else if (updateValue.Value is FunctionConstantParameter functionConstantParameter)
                         {
@@ -193,7 +193,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
                         {
                             //fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(transactionReference.Transaction, updateValue.Value, physicalDocument.Elements);
-                            throw new NotImplementedException("Reimplement scaler funcitons for update statements");
+                            throw new NotImplementedException("Reimplement scaler functions for update statements");
                         }
                         else if (updateValue.Value is FunctionConstantParameter functionConstantParameter)
                         {

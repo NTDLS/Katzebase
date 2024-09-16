@@ -6,9 +6,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
     {
         public string Name { get; set; }
         public string Prefix { get; set; } = string.Empty;
-        public Conditions? Conditions { get; set; }
+        public ConditionCollection? Conditions { get; set; }
 
-        public QuerySchema(string name, string prefix, Conditions conditions)
+        public QuerySchema(string name, string prefix, ConditionCollection conditions)
         {
             Name = name;
             Prefix = prefix;
