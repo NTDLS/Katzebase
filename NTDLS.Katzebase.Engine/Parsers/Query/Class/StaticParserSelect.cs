@@ -119,6 +119,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 result.RowOffset = tokenizer.EatGetNextEvaluated<int>();
             }
 
+            //----------------------------------------------------------------------------------------------------------------------------------
+            // Validation
+            //----------------------------------------------------------------------------------------------------------------------------------
+
             //Validation (field list):
             foreach (var documentIdentifier in result.SelectFields.DocumentIdentifiers)
             {
@@ -143,15 +147,25 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
             }
 
-            foreach (var schema in result.Schemas)
+            //Validation (join conditions):
+            foreach (var schema in result.Schemas.Skip(1))
             {
-                foreach (var conditions in schema.Conditions!)
+                if (schema.Conditions != null)
                 {
-
+                    foreach (var documentIdentifier in schema.Conditions.FieldCollection.DocumentIdentifiers)
+                    {
+                        if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
+                        {
+                            if (result.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
+                            {
+                                throw new KbParserException($"Invalid query. Schema [{documentIdentifier.Value.SchemaAlias}] referenced in join condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
+                            }
+                        }
+                    }
                 }
             }
 
-            //Validation (conditions):
+            //Validation (root conditions):
             foreach (var documentIdentifier in result.Conditions.FieldCollection.DocumentIdentifiers)
             {
                 if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)

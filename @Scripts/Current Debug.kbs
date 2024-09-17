@@ -1,3 +1,28 @@
+select
+	sw.Id as SourceWordId,
+	sw.Text as SourceWord,
+	sl.Name as SourceLanguage,
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+	tl.Name as TargetLanguage
+from
+	WordList:Word as sw
+inner join WordList:Language as sl
+	on sl.Id = sw.LanguageId
+inner join WordList:Synonym as S
+	on S.SourceWordId = sw.Id
+inner join WordList:Word as tw
+	on tw.Id = S.TargetWordId
+inner join WordList:Language as tl
+	on tl.Id = TW.LanguageId
+where
+	sl.Name = 'English'
+	and (
+		sw.Text = 'Gym'
+		or sw.Text = 'Arm'
+	)
+	
+/*
 select 
 	sw.Id,
 	sw.Text,
@@ -19,7 +44,6 @@ where
 	and sw.Text like '%in%'
 	and sl.Name = 'Spanish'
 	--and sw.LanguageId between 3 and 5
-	/*
 	and (
 		sw.LanguageId >= 3
 		OR sw.LanguageId <= 5
@@ -36,10 +60,9 @@ where
 	and sw.Text like '%al'
 	and sw.Text like '%na%'
 	and sw.LanguageId = 5
-*/
 order by
 	sw.Text
-
+*/
 
 /*
 Create schema WordList
