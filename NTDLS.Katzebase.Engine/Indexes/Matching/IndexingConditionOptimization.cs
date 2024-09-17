@@ -19,10 +19,10 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// Contains a list of nested operations that will be used for indexing operations.
         /// </summary>
         public List<IndexingConditionGroup> IndexingConditionGroup { get; set; } = new();
-        public ConditionCollection Conditions { get; private set; }
+        public Old_ConditionCollection Conditions { get; private set; }
         public Transaction Transaction { get; private set; }
 
-        public IndexingConditionOptimization(Transaction transaction, ConditionCollection conditions)
+        public IndexingConditionOptimization(Transaction transaction, Old_ConditionCollection conditions)
         {
             Transaction = transaction;
             Conditions = conditions;//.Clone();
@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// </summary>
         public static IndexingConditionOptimization BuildTree(EngineCore core, Transaction transaction, PreparedQuery query,
-            PhysicalSchema physicalSchema, ConditionCollection givenConditionCollection, string workingSchemaPrefix)
+            PhysicalSchema physicalSchema, Old_ConditionCollection givenConditionCollection, string workingSchemaPrefix)
         {
             var optimization = new IndexingConditionOptimization(transaction, givenConditionCollection);
 
@@ -56,11 +56,11 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// </summary>
         private static bool BuildTree(IndexingConditionOptimization optimization, PreparedQuery query, EngineCore core,
             Transaction transaction, PhysicalIndexCatalog indexCatalog, PhysicalSchema physicalSchema, string workingSchemaPrefix,
-            List<ConditionSet> givenConditionCollection, List<IndexingConditionGroup> indexingConditionGroups)
+            Old_ConditionSetCollection givenConditionCollection, List<IndexingConditionGroup> indexingConditionGroups)
         {
             foreach (var conditionSet in givenConditionCollection)
             {
-                var conditionsWithApplicableLeftDocumentIdentifiers = new List<Condition>();
+                var conditionsWithApplicableLeftDocumentIdentifiers = new List<Old_Condition>();
 
                 foreach (var condition in conditionSet)
                 {
@@ -74,13 +74,34 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
                 if (conditionSet.Count > 0)
                 {
+                    IndexingConditionGroup subGroup = new(conditionSet.Connector);
+
+                    foreach (var childConditions in conditionSet)
+                    {
+                        if (childConditions?.Children?.Count > 0)
+                        {
+                            //TODO: Look into nested condition indexing.... I am positive that this does not work. 
+                            if (!BuildTree(optimization, query, core, transaction, indexCatalog, physicalSchema,
+                                workingSchemaPrefix, childConditions.Children, subGroup.SubIndexingConditionGroups))
+                            {
+                                return false; //Invalidate indexing optimization.
+                            }
+
+                            if (subGroup.Lookups.Count > 0 || subGroup.SubIndexingConditionGroups.Count > 0)
+                            {
+                                indexingConditionGroups.Add(subGroup);
+                            }
+                        }
+                    }
+
                     if (conditionsWithApplicableLeftDocumentIdentifiers.Any(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)) == false)
                     {
                         //Each "OR" condition group must have at least one potential indexable match for the selected schema,
                         //  this is because we need to be able to create a full list of all possible documents for this schema,
                         //  and if we have an "OR" group that does not further limit these documents by the given schema then
                         //  we will have to do a full namespace scan anyway.
-                        return false; //Invalidate indexing optimization.
+                        continue;
+                        //return false; //Invalidate indexing optimization.
                     }
 
                     bool locatedGroupIndex = false;
@@ -98,7 +119,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         {
                             locatedIndexAttribute = false;
 
-                            List<Condition> applicableConditions = new List<Condition>();
+                            List<Old_Condition> applicableConditions = new List<Old_Condition>();
 
                             if (string.IsNullOrEmpty(workingSchemaPrefix))
                             {
@@ -233,16 +254,6 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                     {
                         indexingConditionGroups.Add(indexingConditionGroup);
                     }
-
-                    foreach (var childConditions in conditionSet)
-                    {
-                        //TODO: Look into nested condition indexing.... I am positive that this does not work. 
-                        if (!BuildTree(optimization, query, core, transaction, indexCatalog, physicalSchema,
-                            workingSchemaPrefix, childConditions.Children, indexingConditionGroup.SubIndexingConditionGroups))
-                        {
-                            return false; //Invalidate indexing optimization.
-                        }
-                    }
                 }
 
                 #endregion
@@ -318,7 +329,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         }
 
         private void ExplainLookupCondition(ref StringBuilder result, EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition)
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, Old_Condition condition)
         {
             try
             {
@@ -374,7 +385,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
         private static void ExplainLookupConditionRecursive(ref StringBuilder result,
             EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition, int attributeDepth)
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, Old_Condition condition, int attributeDepth)
         {
             var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[attributeDepth].Field.EnsureNotNull()];
 

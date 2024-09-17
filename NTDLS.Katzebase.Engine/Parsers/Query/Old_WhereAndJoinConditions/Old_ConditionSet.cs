@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
     /// <summary>
     /// A collection of conditions of which all are to be evaluated with AND connectors.
     /// </summary>
-    internal class ConditionSet : List<Condition>
+    internal class Old_ConditionSet : List<Old_Condition>
     {
         public LogicalConnector Connector { get; set; }
 
@@ -15,14 +15,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// </summary>
         public HashSet<IndexSelection> UsableIndexes { get; set; } = new();
 
-        public ConditionSet(LogicalConnector logicalConnector)
+        public Old_ConditionSet(LogicalConnector logicalConnector)
         {
             Connector = logicalConnector;
         }
 
-        public ConditionSet Clone()
+        public Old_ConditionSet Clone()
         {
-            var clone = new ConditionSet(Connector);
+            var clone = new Old_ConditionSet(Connector);
 
             foreach (var condition in this)
             {

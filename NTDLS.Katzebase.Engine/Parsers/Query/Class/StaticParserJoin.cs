@@ -83,7 +83,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
 
                 var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Caret - joinConditionsStartPosition).Trim();
-                var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, subSchemaAlias);
+                var joinConditions = Old_StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, subSchemaAlias);
 
                 result.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
             }

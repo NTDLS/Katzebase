@@ -8,22 +8,38 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 {
-    internal class Condition : ICondition
+    internal class Old_Condition
     {
-        public LogicalConnector Connector { get; set; }
-
         public string ExpressionVariable { get; set; }
         public IQueryField Left { get; set; }
         public LogicalQualifier Qualifier { get; set; }
         public IQueryField Right { get; set; }
 
-        public Condition(string expressionVariable, LogicalConnector connector, IQueryField left, LogicalQualifier qualifier, IQueryField right)
+        /// <summary>
+        /// Used by ConditionOptimization.BuildTree() do determine when an index has already been matched to this condition.
+        /// </summary>
+        public bool IsIndexOptimized { get; set; } = false;
+
+        public Old_ConditionSetCollection? Children { get; set; }
+
+        public Old_Condition(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
         {
             ExpressionVariable = expressionVariable;
-            Connector = connector;
             Left = left;
             Qualifier = qualifier;
             Right = right;
+        }
+
+        public Old_Condition Clone()
+        {
+            var clone = new Old_Condition(ExpressionVariable, Left.Clone(), Qualifier, Right.Clone());
+
+            if (Children != null)
+            {
+                clone.Children = Children.Clone();
+            }
+
+            return clone;
         }
 
         public bool IsMatch(Transaction transaction, string? collapsedLeft, string? collapsedRight)

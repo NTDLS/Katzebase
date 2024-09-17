@@ -544,17 +544,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Collapses all left-and-right condition values, compares them, and fills in the expression variables with the comparison result.
         /// </summary>
         private static void SetSchemaIntersectionConditionParameters(DocumentLookupOperation.Instance instance, NCalc.Expression expression,
-             ConditionCollection conditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
+             Old_ConditionCollection conditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
             SetExpressionParametersRecursive(conditions);
 
-            void SetExpressionParametersRecursive(List<ConditionSet> conditionSets)
+            void SetExpressionParametersRecursive(List<Old_ConditionSet> conditionSets)
             {
                 foreach (var conditionSet in conditionSets)
                 {
                     foreach (var condition in conditionSet)
                     {
-                        if (condition.Children.Count > 0)
+                        if (condition.Children?.Count > 0)
                         {
                             SetExpressionParametersRecursive(condition.Children);
                         }
@@ -763,17 +763,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Collapses all left-and-right condition values, compares them, and fills in the expression variables with the comparison result.
         /// </summary>
         private static void SetExpressionParameters(DocumentLookupOperation.Instance instance,
-            NCalc.Expression expression, ConditionCollection conditions, KbInsensitiveDictionary<string?> auxiliaryFields)
+            NCalc.Expression expression, Old_ConditionCollection conditions, KbInsensitiveDictionary<string?> auxiliaryFields)
         {
             SetExpressionParametersRecursive(conditions);
 
-            void SetExpressionParametersRecursive(List<ConditionSet> conditionSets)
+            void SetExpressionParametersRecursive(List<Old_ConditionSet> conditionSets)
             {
                 foreach (var conditionSet in conditionSets)
                 {
                     foreach (var condition in conditionSet)
                     {
-                        if (condition.Children.Count > 0)
+                        if (condition.Children?.Count > 0)
                         {
                             SetExpressionParametersRecursive(condition.Children);
                         }
