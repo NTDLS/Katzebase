@@ -2,7 +2,8 @@ select
 	sw.Id,
 	sw.Text,
 	Length(sw.Text) + 'Some value' as Test,
-	sw.LanguageId
+	sw.LanguageId,
+	sl.Name
 from
 	WordList::Word as sw --(15 rows affected)
 inner join WordList:Language as sl
@@ -16,7 +17,7 @@ where
 	and sw.Text != sw.Text + 'More Text'
 	and sw.Text LIKE '%to'
 	and sw.Text like '%in%'
-	and sl.Name = 'English'
+	and sl.Name = 'Spanish'
 	--and sw.LanguageId between 3 and 5
 	/*
 	and (

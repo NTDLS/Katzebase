@@ -549,9 +549,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         private static void SetSchemaIntersectionConditionParameters(DocumentLookupOperation.Instance instance, NCalc.Expression expression,
              ConditionCollection conditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
-            //TODO: Maybe we can just use the auxiliary values instead of the joinScopedContentCache, if do, we can use SetExpressionParameters() instead of this function.
-            var documentContent = joinScopedContentCache[conditions.SchemaAlias.EnsureNotNull()];
-
             SetExpressionParametersRecursive(conditions);
 
             void SetExpressionParametersRecursive(List<ConditionSet> conditionSets)
@@ -565,8 +562,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             SetExpressionParametersRecursive(condition.Children);
                         }
 
-                        var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, documentContent);
-                        var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, documentContent);
+                        var leftDocumentContent = joinScopedContentCache[condition.Left.SchemaAlias];
+                        var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction,
+                            instance.Operation.Query, conditions.FieldCollection, leftDocumentContent);
+
+                        var rightDocumentContent = joinScopedContentCache[condition.Right.SchemaAlias];
+                        var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction,
+                            instance.Operation.Query, conditions.FieldCollection, rightDocumentContent);
 
                         expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
                     }
