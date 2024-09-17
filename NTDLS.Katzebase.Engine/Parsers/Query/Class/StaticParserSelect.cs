@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
+using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
@@ -116,6 +117,50 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             if (tokenizer.TryEatIsNextToken("offset"))
             {
                 result.RowOffset = tokenizer.EatGetNextEvaluated<int>();
+            }
+
+            //Validation (field list):
+            foreach (var documentIdentifier in result.SelectFields.DocumentIdentifiers)
+            {
+                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
+                {
+                    if (result.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
+                    {
+                        throw new KbParserException($"Invalid query. Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
+                    }
+                }
+            }
+
+            //Validation (conditions):
+            foreach (var documentIdentifier in result.Conditions.FieldCollection.DocumentIdentifiers)
+            {
+                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
+                {
+                    if (result.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
+                    {
+                        throw new KbParserException($"Invalid query. Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
+                    }
+                }
+            }
+
+            foreach (var schema in result.Schemas)
+            {
+                foreach (var conditions in schema.Conditions!)
+                {
+
+                }
+            }
+
+            //Validation (conditions):
+            foreach (var documentIdentifier in result.Conditions.FieldCollection.DocumentIdentifiers)
+            {
+                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
+                {
+                    if (result.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
+                    {
+                        throw new KbParserException($"Invalid query. Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
+                    }
+                }
             }
 
             return result;

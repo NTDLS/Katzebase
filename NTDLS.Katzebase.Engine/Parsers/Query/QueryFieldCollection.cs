@@ -226,7 +226,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         }
 
         /// <summary>
-        /// Returns a list of fields that have function call dependencies.
+        /// Returns a list of fields that are of type QueryFieldDocumentIdentifier.
         /// </summary>
         public List<ExposedDocumentIdentifier> DocumentIdentifierFields
         {
