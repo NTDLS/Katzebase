@@ -229,24 +229,6 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
         #endregion
 
-        public static List<Old_Condition> GetConvertedConditions(List<Old_Condition> conditions, List<PrefixedField> coveredFields)
-        {
-            var result = new List<Old_Condition>();
-
-            foreach (var coveredField in coveredFields)
-            {
-                foreach (var condition in conditions)
-                {
-                    if (condition.Left.Key == coveredField.Key)
-                    {
-                        result.Add(condition);
-                    }
-                }
-            }
-
-            return result;
-        }
-
         #region Optimization explanation.
 
         private static string Pad(int indentation) => "".PadLeft(indentation * 2, ' ');
@@ -312,10 +294,11 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         }
 
         private void ExplainLookupCondition(ref StringBuilder result, EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, Old_Condition condition)
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition)
         {
             try
             {
+                /*
                 var indexAttribute = lookup.Index.Attributes[0].Field;
 
                 if (condition.LogicalQualifier == LogicalQualifier.Equals)
@@ -356,6 +339,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                     ExplainLookupConditionRecursive(ref result, core, optimization,
                         lookup, physicalSchema, workingSchemaPrefix, condition, 1);
                 }
+                */
             }
             catch (Exception ex)
             {
@@ -366,7 +350,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
         private static void ExplainLookupConditionRecursive(ref StringBuilder result,
             EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, Old_Condition condition, int attributeDepth)
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, Condition condition, int attributeDepth)
         {
             var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[attributeDepth].Field.EnsureNotNull()];
 
