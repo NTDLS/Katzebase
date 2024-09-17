@@ -30,10 +30,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         internal static DocumentLookupResults GetDocumentsByConditions(EngineCore core, Transaction transaction,
             QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix = null)
         {
-            if (query.Hash == "0dc0aede78bf14a01eb16b85716503828fcdc9faeb1ebd66698ef9a6963101e1")
-            {
-            }
-
             var topLevelSchemaMap = schemaMap.First().Value;
 
             IEnumerable<DocumentPointer>? documentPointers = null;
@@ -444,23 +440,24 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             if (currentSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
             {
-                /* TODO//Reimplement:
                 //All condition SubConditions have a selected index. Start building a list of possible document IDs.
-                foreach (var subCondition in currentSchemaMap.Optimization.Conditions.NonRootSubConditions)
+                foreach (var conditionSet in currentSchemaMap.Optimization.Conditions)
                 {
                     //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
-                    foreach (var condition in subCondition.Conditions)
+                    foreach (var condition in conditionSet)
                     {
-                        var documentContent = joinScopedContentCache[condition.Right?.Prefix ?? ""];
+                        var documentContent = joinScopedContentCache[condition.Right?.SchemaAlias ?? ""];
 
-                        if (!documentContent.TryGetValue(condition.Right?.Value ?? "", out string? documentValue))
+                        if (condition.Right is QueryFieldDocumentIdentifier documentIdentifier)
                         {
-                            throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
+                            if (!documentContent.TryGetValue(documentIdentifier.FieldName, out string? documentValue))
+                            {
+                                throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
+                            }
+                            joinKeyValues[documentIdentifier.Value] = documentValue?.ToString() ?? "";
                         }
-                        joinKeyValues[condition.Right?.Key ?? ""] = documentValue?.ToString() ?? "";
                     }
                 }
-                */
 
                 //We are going to create a limited document catalog from the indexes.
 

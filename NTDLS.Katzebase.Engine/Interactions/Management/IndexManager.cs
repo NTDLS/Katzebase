@@ -10,6 +10,7 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Parsers.Query;
+using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Engine.QueryProcessing;
@@ -264,8 +265,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var condition in conditionSet)
                 {
-                    var collapsedRight = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new());
-
                     List<uint> indexPartitions = new();
 
                     if (condition.Qualifier == LogicalQualifier.Equals)
@@ -273,7 +272,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         //For join operations, check the keyValues for the raw value to lookup.
                         if (keyValues?.TryGetValue(condition.Right.Value, out string? keyValue) != true)
                         {
-                            keyValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new());
+                            if (condition.Right is QueryFieldCollapsedValue collapsedValue)
+                            {
+                                keyValue = collapsedValue.Value;
+                            }
+                            else
+                            {
+                                keyValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new())?.ToLowerInvariant();
+                            }
                         }
                         else
                         {
@@ -461,7 +467,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             //For join operations, check the keyValues for the raw value to lookup.
             if (auxiliaryFields?.TryGetValue(condition.Right.Value, out string? keyValue) != true)
             {
-                keyValue = condition.Right.CollapseScalerQueryField(transaction, query, fieldCollection, auxiliaryFields ?? new());
+                keyValue = condition.Right.CollapseScalerQueryField(transaction, query, fieldCollection, auxiliaryFields ?? new())?.ToLowerInvariant();
             }
 
             return condition.Qualifier switch

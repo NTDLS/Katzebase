@@ -1,26 +1,27 @@
 select
-	sw.Id as SourceWordId,
-	sw.Text as SourceWord,
-	sl.Name as SourceLanguage,
-	tw.Id as TargetWordId,	
-	tw.Text as TargetWord,
-	tl.Name as TargetLanguage
+	sw.Id as SourceWordId
+	--sw.Text as SourceWord,
+	--sl.Name as SourceLanguage,
+	--tw.Id as TargetWordId,	
+--	tw.Text as TargetWord,
+	--tl.Name as TargetLanguage
 from
 	WordList:Word as sw
 inner join WordList:Language as sl
 	on sl.Id = sw.LanguageId
-inner join WordList:Synonym as S
-	on S.SourceWordId = sw.Id
-inner join WordList:Word as tw
-	on tw.Id = S.TargetWordId
-inner join WordList:Language as tl
-	on tl.Id = TW.LanguageId
+--inner join WordList:Synonym as S
+	--on S.SourceWordId = sw.Id
+--inner join WordList:Word as tw
+	--on tw.Id = S.TargetWordId
+--inner join WordList:Language as tl
+	--on tl.Id = TW.LanguageId
 where
 	sl.Name = 'English'
-	and (
+	AND
+	(
 		sw.Text = 'Gym'
-		or sw.Text = 'Arm'
-	)
+		OR sw.Text = 'Arm'
+	)	
 	
 /*
 select 

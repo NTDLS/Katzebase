@@ -98,8 +98,21 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         {
                             locatedIndexAttribute = false;
 
-                            var applicableConditions = conditionsWithApplicableLeftDocumentIdentifiers
-                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value));
+                            List<Condition> applicableConditions = new List<Condition>();
+
+                            if (string.IsNullOrEmpty(workingSchemaPrefix))
+                            {
+                                //For non-schema joins, we do not currently support indexing on anything other than constant expressions.
+                                //However, I think this could be implemented pretty easily.
+                                applicableConditions.AddRange(conditionsWithApplicableLeftDocumentIdentifiers
+                                    .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value)));
+                            }
+                            else
+                            {
+                                //For schema joins, we already have a schema document value cache in the lookup functions so we allow non-constants.
+                                applicableConditions.AddRange(conditionsWithApplicableLeftDocumentIdentifiers
+                                    .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)));
+                            }
 
                             foreach (var condition in applicableConditions)
                             {
@@ -110,7 +123,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                                         if (StaticParserField.IsConstantExpression(condition.Right.Value))
                                         {
                                             //To save time while indexing, we are going to collapse the value here if the expression does not contain non-constants.
-                                            var constantValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, new());
+                                            var constantValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
 
                                             //TODO: Think about the nullability of constantValue.
                                             condition.Right = new QueryFieldCollapsedValue(constantValue.EnsureNotNull());
@@ -184,11 +197,16 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         //Find the condition fields that match the index attributes.
                         foreach (var attribute in indexSelection.Index.Attributes)
                         {
+                            //For non-schema joins, we do not currently support indexing on anything other than constant expressions.
+                            //However, I think this could be implemented pretty easily.
+                            //For schema joins, we already have a schema document value cache in the lookup functions so we allow non-constants.
+                            //Which is th purpose of: "&& (o.Right is QueryFieldCollapsedValue || !string.IsNullOrEmpty(workingSchemaPrefix))"
+
                             var matchedConditions = conditionsWithApplicableLeftDocumentIdentifiers
                                 .Where(o =>
                                        o.Left is QueryFieldDocumentIdentifier identifier
-                                    && o.Right is QueryFieldCollapsedValue
-                                    && identifier.SchemaAlias == workingSchemaPrefix
+                                    && (o.Right is QueryFieldCollapsedValue || !string.IsNullOrEmpty(workingSchemaPrefix))
+                                    && identifier.SchemaAlias.Is(workingSchemaPrefix)
                                     && o.IsIndexOptimized == false
                                     && identifier.FieldName.Is(attribute.Field) == true).ToList();
 
