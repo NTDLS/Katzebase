@@ -50,14 +50,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
         private static void ParseRecursive(QueryBatch queryBatch, Tokenizer parentTokenizer,
             ConditionCollection conditionCollection, ConditionGroup rootConditions,
-             string conditionsText, LogicalConnector givenLogicalConnector, ConditionGroup? parentConditionGroup = null)
+            string conditionsText, LogicalConnector givenLogicalConnector, ConditionGroup? parentConditionGroup = null)
         {
             var tokenizer = new Tokenizer(conditionsText);
 
             var lastLogicalConnector = LogicalConnector.None;
-
-            //ConditionSet? conditionGroup = null;
-            //Condition? lastCondition = null;
 
             ConditionGroup? currentConditionGroup = parentConditionGroup;
 
@@ -78,7 +75,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
                 else
                 {
-
                     var leftAndRight = ParseRightAndLeft(conditionCollection, parentTokenizer, tokenizer);
 
                     if (currentConditionGroup == null)
@@ -90,20 +86,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     var condition = new Condition(leftAndRight.ExpressionVariable, lastLogicalConnector, leftAndRight.Left, leftAndRight.Qualifier, leftAndRight.Right);
                     currentConditionGroup.Collection.Add(condition);
                 }
-
-                /*
-                lastCondition = new Condition(leftAndRight.ExpressionVariable, leftAndRight.Left, leftAndRight.Qualifier, leftAndRight.Right);
-
-                if (conditionGroup == null)
-                {
-                    //We late initialize here because the first thing we encounter might be a parenthesis
-                    //instead of a condition and we don't want to have added an empty condition group.
-                    conditionGroup = new ConditionSet(givenLogicalConnector);
-                    parentConditionGroup.Add(conditionGroup);
-                }
-
-                conditionGroup.Add(lastCondition);
-                */
 
                 if (!tokenizer.IsExhausted())
                 {
