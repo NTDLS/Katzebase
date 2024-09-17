@@ -53,7 +53,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             }
             else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
             {
-                if (auxiliaryFields.TryGetValue(documentIdentifier.Value, out var auxiliaryValue))
+                if (auxiliaryFields.TryGetValue(documentIdentifier.Value, out var exactAuxiliaryValue))
+                {
+                    return exactAuxiliaryValue ?? string.Empty; //TODO: Should auxiliaryFields really allow NULL values?
+                }
+                if (auxiliaryFields.TryGetValue(documentIdentifier.FieldName, out var auxiliaryValue))
                 {
                     return auxiliaryValue ?? string.Empty; //TODO: Should auxiliaryFields really allow NULL values?
                 }
