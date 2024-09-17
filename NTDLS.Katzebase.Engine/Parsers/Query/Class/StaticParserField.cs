@@ -214,7 +214,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         }
 
         /// <summary>
-        /// /// Returns true if all variables, placeholders and functions return numeric values.
+        /// Returns true if all variables, placeholders and functions return numeric values.
         /// </summary>
         private static bool IsNumericExpression(string expressionText, IQueryFieldExpression? rootExpressionEvaluation = null)
         {
@@ -299,6 +299,67 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     //This is likely a document field, we'll assume its a number
                     //return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Returns true if all variables and placeholders are constant expressions (e.g. does not contain document fields or functions).
+        /// </summary>
+        public static bool IsConstantExpression(string? expressionText)
+        {
+            if (expressionText == null)
+            {
+                return true;
+            }
+
+            Tokenizer tokenizer = new(expressionText, [' ', '+']);
+
+            while (!tokenizer.IsExhausted())
+            {
+                if (tokenizer.TryIsNextCharacter(c => c.IsMathematicalOperator()))
+                {
+                    tokenizer.EatNextCharacter();
+                    continue;
+                }
+
+                string token = tokenizer.EatGetNext();
+                if (string.IsNullOrEmpty(token))
+                {
+                    break;
+                }
+
+                if (token.StartsWith("$x_") && token.EndsWith('$'))
+                {
+                    //This is a function result placeholder, and functions are not constant.
+                    return false;
+                }
+                else if (token.StartsWith("$s_") && token.EndsWith('$'))
+                {
+                    //This is a string constant, we're all good.
+                    continue;
+                }
+                else if (token.StartsWith("$n_") && token.EndsWith('$'))
+                {
+                    //This is a numeric constant, we're all good.
+                    continue;
+                }
+                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
+                {
+                    //Functions are not constant.
+                    return false;
+                }
+                else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
+                {
+                    //Functions are not constant.
+                    return false;
+                }
+                else
+                {
+                    //This is likely a document field, we'll assume its a number
+                    return false;
                 }
             }
 

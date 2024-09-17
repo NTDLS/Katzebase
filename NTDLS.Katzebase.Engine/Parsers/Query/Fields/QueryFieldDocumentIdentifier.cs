@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
 {
@@ -24,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
 
         public IQueryField Clone()
         {
-            var clone = new QueryFieldDocumentIdentifier(Value)
+            var clone = new QueryFieldDocumentIdentifier(Value.EnsureNotNull())
             {
                 SchemaAlias = SchemaAlias,
                 FieldName = FieldName,

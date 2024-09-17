@@ -263,7 +263,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var condition in conditionSet)
                 {
-                    //TODO: Instead of collapsing here, we need to collapse them in a clone and replace right with QueryFieldCollapsedValue
                     var collapsedRight = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new());
 
                     List<uint> indexPartitions = new();
@@ -271,9 +270,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (condition.Qualifier == LogicalQualifier.Equals)
                     {
                         //For join operations, check the keyValues for the raw value to lookup.
-                        if (keyValues?.TryGetValue(condition.Right.Key, out string? keyValue) != true)
+                        if (keyValues?.TryGetValue(condition.Right.Value, out string? keyValue) != true)
                         {
-                            keyValue = condition.Right.Value;
+                            keyValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new());
                         }
                         else
                         {
@@ -458,9 +457,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             List<PhysicalIndexLeaf> workingPhysicalIndexLeaves, KbInsensitiveDictionary<string?>? keyValues)
         {
             //For join operations, check the keyValues for the raw value to lookup.
-            if (keyValues?.TryGetValue(condition.Right.Key, out string? keyValue) != true)
+            if (keyValues?.TryGetValue(condition.Right.Value, out string? keyValue) != true)
             {
-                //TODO: Instead of collapsing here, we need to collapse them in a clone and replace right with QueryFieldCollapsedValue
                 keyValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new());
             }
 

@@ -67,6 +67,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             {
                 return query.Batch.GetLiteralValue(constantString.Value);
             }
+            else if (queryField is QueryFieldCollapsedValue collapsedValue)
+            {
+                return collapsedValue.Value;
+            }
             else
             {
                 throw new KbEngineException($"Field expression type is not implemented: [{queryField.GetType().Name}].");

@@ -1,9 +1,11 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.Management;
+using NTDLS.Katzebase.Engine.Parsers.Query.Class;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
+using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Shared;
 using System.Text;
@@ -23,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         public IndexingConditionOptimization(Transaction transaction, ConditionCollection conditions)
         {
             Transaction = transaction;
-            Conditions = conditions;
+            Conditions = conditions.Clone();
         }
 
         #region Builder.
@@ -31,14 +33,14 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// <summary>
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// </summary>
-        public static IndexingConditionOptimization BuildTree(EngineCore core, Transaction transaction,
+        public static IndexingConditionOptimization BuildTree(EngineCore core, Transaction transaction, PreparedQuery query,
             PhysicalSchema physicalSchema, ConditionCollection givenConditionCollection, string workingSchemaPrefix)
         {
             var optimization = new IndexingConditionOptimization(transaction, givenConditionCollection);
 
             var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
-            if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema,
+            if (!BuildTree(optimization, query, core, transaction, indexCatalog, physicalSchema,
                 workingSchemaPrefix, givenConditionCollection, optimization.IndexingConditionGroup))
             {
                 //Invalidate indexing optimization.
@@ -52,8 +54,9 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// Called reclusively by BuildTree().
         /// </summary>
-        private static bool BuildTree(IndexingConditionOptimization optimization, EngineCore core, Transaction transaction, PhysicalIndexCatalog indexCatalog,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, List<ConditionSet> givenConditionCollection, List<IndexingConditionGroup> indexingConditionGroups)
+        private static bool BuildTree(IndexingConditionOptimization optimization, PreparedQuery query, EngineCore core,
+            Transaction transaction, PhysicalIndexCatalog indexCatalog, PhysicalSchema physicalSchema, string workingSchemaPrefix,
+            List<ConditionSet> givenConditionCollection, List<IndexingConditionGroup> indexingConditionGroups)
         {
             foreach (var conditionSet in givenConditionCollection)
             {
@@ -67,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                     }
                 }
 
-                //var leftDocumentIdentifiers = conditionSet.Select(o => o.Left).OfType<QueryFieldDocumentIdentifier>().ToList();
+                #region Build list of usable indexes.
 
                 if (conditionSet.Count > 0)
                 {
@@ -100,6 +103,15 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                                 {
                                     if (leftValue.FieldName?.Is(attribute.Field) == true)
                                     {
+                                        if (StaticParserField.IsConstantExpression(condition.Right.Value))
+                                        {
+                                            //To save time while indexing, we are going to collapse the value here if the expression does not contain non-constants.
+                                            var constantValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, new());
+
+                                            //TODO: Think about the nullability of constantValue.
+                                            condition.Right = new QueryFieldCollapsedValue(constantValue.EnsureNotNull());
+                                        }
+
                                         indexSelection.CoveredConditions.Add(condition);
                                         //Console.WriteLine($"Indexed: {condition.ConditionKey} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
                                         locatedIndexAttribute = true;
@@ -120,9 +132,9 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         if (indexSelection.CoveredConditions.Count > 0)
                         {
                             //We either have a full or a partial index match.
-                            indexSelection.IsFullIndexMatch = indexSelection.CoveredConditions.Count == indexSelection.Index.Attributes.Count;
+                            indexSelection.IsFullIndexMatch = indexSelection.CoveredConditions.Select(o => o.Left.Value).Distinct().Count() == indexSelection.Index.Attributes.Count;
 
-                            conditionSet.IndexSelections.Add(indexSelection);
+                            conditionSet.UsableIndexes.Add(indexSelection);
                         }
                     }
 
@@ -132,204 +144,66 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         //  given schema, we are going to have to do a full schema scan.
                         return false; //Invalidate indexing optimization.
                     }
-
-                    foreach (var indexSelection in conditionSet.IndexSelections)
-                    {
-                        //Console.WriteLine($"{indexSelection.Index.Name}, CoveredFields: ({indexSelection.CoveredFields.Count})");
-                    }
                 }
 
-                if (conditionSet.IndexSelections.Count > 0)
+                #endregion
+
+                #region Select the best indexes from the usable indexes.
+
+                if (conditionSet.UsableIndexes.Count > 0)
                 {
                     IndexingConditionGroup indexingConditionGroup = new(conditionSet.Connector);
 
-                    //At this point, we have settled on the possible indexes for the conditions in this expression, now we need
-                    //to create some kind of new "indexing operation" class where we layout exactly how each condition will be used.
-                    //Fist lets find out if we have any fields that are using composite indexes where we have the fields to satisfy it.
+                    //Here we are ordering by the "full match" indexes first, then descending by the number of index attributes.
+                    //The thinking being that we want to prefer full index matches that contain multiple index attributes
+                    //  (composite indexes), then we want to look at non-composite full matches, and finally let any partial
+                    //  match composite indexes pick up any remaining un-optimized conditions, but we want those to be ordered
+                    //  ascending by the index attribute account because we want the smallest non-full-match composite indexes
+                    //  because they require less work to distill later.
 
-                    #region Composite index matching.
+                    var preferenceOrderedIndexSelections = new List<IndexSelection>();
 
-                    while (true)
+                    var fullMatches = conditionSet.UsableIndexes
+                        .Where(o => o.IsFullIndexMatch == true && o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 0)
+                        .OrderByDescending(o => o.CoveredConditions.Count).ToList();
+                    preferenceOrderedIndexSelections.AddRange(fullMatches);
+
+                    var partialMatches = conditionSet.UsableIndexes
+                        .Where(o => o.IsFullIndexMatch == false && o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 0)
+                        .OrderBy(o => o.CoveredConditions.Count).ToList();
+                    preferenceOrderedIndexSelections.AddRange(partialMatches);
+
+                    foreach (var indexSelection in preferenceOrderedIndexSelections)
                     {
-                        var compositeIndex = conditionSet
-                            .IndexSelections.Where(o => o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 1 && o.IsFullIndexMatch)
-                            .OrderByDescending(o => o.CoveredConditions.Count).FirstOrDefault();
+                        var indexingConditionLookup = new IndexingConditionLookup(indexSelection.Index);
 
-                        List<Condition> conditionsOptimizedByThisIndex = new();
-
-                        if (compositeIndex != null)
+                        //Find the condition fields that match the index attributes.
+                        foreach (var attribute in indexSelection.Index.Attributes)
                         {
-                            IndexingConditionLookup indexingConditionLookup = new(compositeIndex.Index);
-
-                            //Find the condition fields that match the index attributes.
-                            foreach (var attribute in compositeIndex.Index.Attributes)
-                            {
-                                var matchedConditions = conditionsWithApplicableLeftDocumentIdentifiers
-                                    .Where(o => o.Left is QueryFieldDocumentIdentifier identifier
-                                        && identifier.SchemaAlias == workingSchemaPrefix
-                                        && o.IsIndexOptimized == false
-                                        && identifier.FieldName.Is(attribute.Field) == true).ToList();
-
-                                if (matchedConditions.Count == 0)
-                                {
-                                    //No condition fields were found for this index attribute.
-                                    break;
-                                }
-
-                                foreach (var condition in matchedConditions)
-                                {
-                                    //Set these matched conditions as IsIndexOptimized so that we can
-                                    //  break out of this loop when we run out of conditions to evaluate.
-                                    condition.IsIndexOptimized = true;
-                                    conditionsOptimizedByThisIndex.Add(condition);
-                                }
-
-                                indexingConditionLookup.AttributeConditionSets.Add(attribute.Field.EnsureNotNull(), matchedConditions);
-                            }
-
-                            if (indexingConditionLookup.AttributeConditionSets.Count > 0)
-                            {
-                                indexingConditionGroup.Lookups.Add(indexingConditionLookup);
-                            }
-                        }
-                        else
-                        {
-                            //No suitable composite index was found.
-                            //Make the conditions available for other indexing operations.
-                            foreach (var condition in conditionsOptimizedByThisIndex)
-                            {
-                                condition.IsIndexOptimized = false;
-                            }
-                            break;
-                        }
-                    }
-
-                    #endregion
-
-                    #region non-Composite index matching (exact).
-
-                    if (transaction.Session.IsPreLogin == false)
-                    {
-                    }
-
-                    while (true)
-                    {
-                        //First try to match conditions to exact non-composite indexes, meaning indexes
-                        //  that have only one attribute and that attribute matches the condition field.
-                        var nonCompositeIndex = conditionSet
-                            .IndexSelections.Where(o => o.CoveredConditions.Count(c => c.IsIndexOptimized == false) == 1 && o.IsFullIndexMatch)
-                            .FirstOrDefault();
-
-                        List<Condition> conditionsOptimizedByThisIndex = new();
-
-                        if (nonCompositeIndex != null)
-                        {
-                            IndexingConditionLookup indexingConditionLookup = new(nonCompositeIndex.Index);
-
-                            //Find the condition fields that match the index attributes.
-                            foreach (var attribute in nonCompositeIndex.Index.Attributes)
-                            {
-                                var matchedConditions = conditionsWithApplicableLeftDocumentIdentifiers
-                                    .Where(o => o.Left is QueryFieldDocumentIdentifier identifier
+                            var matchedConditions = conditionsWithApplicableLeftDocumentIdentifiers
+                                .Where(o => o.Left is QueryFieldDocumentIdentifier identifier
                                     && identifier.SchemaAlias == workingSchemaPrefix
                                     && o.IsIndexOptimized == false
                                     && identifier.FieldName.Is(attribute.Field) == true).ToList();
 
-                                if (matchedConditions.Count == 0)
-                                {
-                                    //No condition fields were found for this index attribute.
-                                    break;
-                                }
-
-                                foreach (var condition in matchedConditions)
-                                {
-                                    //Set these matched conditions as IsIndexOptimized so that we can
-                                    //  break out of this loop when we run out of conditions to evaluate.
-                                    condition.IsIndexOptimized = true;
-                                    conditionsOptimizedByThisIndex.Add(condition);
-                                }
-
-                                indexingConditionLookup.AttributeConditionSets.Add(attribute.Field.EnsureNotNull(), matchedConditions);
-                            }
-
-                            if (indexingConditionLookup.AttributeConditionSets.Count > 0)
+                            if (matchedConditions.Count == 0)
                             {
-                                indexingConditionGroup.Lookups.Add(indexingConditionLookup);
+                                break; //No additional condition fields were found for this index attribute.
                             }
+
+                            foreach (var condition in matchedConditions)
+                            {
+                                condition.IsIndexOptimized = true;
+                            }
+
+                            indexingConditionLookup.AttributeConditionSets.Add(attribute.Field.EnsureNotNull(), matchedConditions);
                         }
-                        else
+
+                        if (indexingConditionLookup.AttributeConditionSets.Count > 0)
                         {
-                            //No suitable composite index was found. 
-                            //Make the conditions available for other indexing operations.
-                            foreach (var condition in conditionsOptimizedByThisIndex)
-                            {
-                                condition.IsIndexOptimized = false;
-                            }
-                            break;
+                            indexingConditionGroup.Lookups.Add(indexingConditionLookup);
                         }
                     }
-
-                    #endregion
-
-                    #region non-Composite index matching (partial).
-
-                    //I believe this is handled by the composite index matching.
-                    //while (true)
-                    //{
-                    //    //First try to match conditions to non-exact composite indexes, meaning indexes
-                    //    //  that have only one attribute and that attribute matches the condition field.
-                    //    var nonCompositeIndex = conditionSet
-                    //        .IndexSelections.Where(o => o.CoveredConditions.Count(c => c.IsIndexOptimized == false) == 1)
-                    //        .FirstOrDefault();
-
-                    //    List<Condition> conditionsOptimizedByThisIndex = new();
-
-                    //    if (nonCompositeIndex != null)
-                    //    {
-                    //        IndexingOperationConditions indexingOperationConditions = new(nonCompositeIndex.Index);
-
-                    //        //Find the condition fields that match the index attributes.
-                    //        foreach (var attribute in nonCompositeIndex.Index.Attributes)
-                    //        {
-                    //            var matchedConditions = conditionSet
-                    //                .Where(o => o.Left.Prefix == workingSchemaPrefix && o.IsIndexOptimized == false && o.Left.Value?.Is(attribute.Field) == true).ToList();
-
-                    //            if (matchedConditions.Count == 0)
-                    //            {
-                    //                //No condition fields were found for this index attribute.
-                    //                break;
-                    //            }
-
-                    //            foreach (var condition in matchedConditions)
-                    //            {
-                    //                //Set these matched conditions as IsIndexOptimized so that we can
-                    //                //  break out of this loop when we run out of conditions to evaluate.
-                    //                condition.IsIndexOptimized = true;
-                    //                conditionsOptimizedByThisIndex.Add(condition);
-                    //            }
-
-                    //            indexingOperationConditions.Conditions.Add(attribute.Field.EnsureNotNull(), matchedConditions);
-                    //        }
-
-                    //        if (indexingOperationConditions.Conditions.Count > 0)
-                    //        {
-                    //            indexingOperation.Conditions.Add(indexingOperationConditions);
-                    //        }
-                    //    }
-                    //    else
-                    //    {
-                    //        //No suitable composite index was found.
-
-                    //        //Make the conditions available for other indexing operations.
-                    //        foreach (var condition in conditionsOptimizedByThisIndex)
-                    //        {
-                    //            condition.IsIndexOptimized = false;
-                    //        }
-                    //        break;
-                    //    }
-                    //}
-
-                    #endregion
 
                     if (indexingConditionGroup.Lookups.Count > 0)
                     {
@@ -338,16 +212,16 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
                     foreach (var childConditions in conditionSet)
                     {
-                        if (!BuildTree(optimization, core, transaction, indexCatalog, physicalSchema,
+                        //TODO: Look into nested condition indexing.... I am positive that this does not work. 
+                        if (!BuildTree(optimization, query, core, transaction, indexCatalog, physicalSchema,
                             workingSchemaPrefix, childConditions.Children, indexingConditionGroup.SubIndexingConditionGroups))
                         {
                             return false; //Invalidate indexing optimization.
                         }
                     }
-
                 }
 
-                //LogManager.Debug($"SubExpression: {conditionSet.Expression}");
+                #endregion
             }
 
             return true;

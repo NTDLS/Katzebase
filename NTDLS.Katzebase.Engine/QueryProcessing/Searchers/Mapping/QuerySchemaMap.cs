@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Engine.Schemas;
 
@@ -14,10 +15,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
     {
         private readonly EngineCore _core;
         public Transaction Transaction { get; private set; }
+        public PreparedQuery Query { get; private set; }
 
-        public QuerySchemaMap(EngineCore core, Transaction transaction)
+        public QuerySchemaMap(EngineCore core, Transaction transaction, PreparedQuery query)
         {
             _core = core;
+            Query = query;
             Transaction = transaction;
         }
 

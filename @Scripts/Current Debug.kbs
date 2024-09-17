@@ -8,6 +8,7 @@ from
 where
 --(
 	sw.Text LIKE 'As%'
+	and sw.LanguageId = 3
 	--and Length(sw.Text) / 1000 < sw.Id
 	--and sw.Text != sw.Text + 'More Text'
 	--and sw.Text LIKE '%to'

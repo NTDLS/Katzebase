@@ -106,7 +106,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var result = new KbQueryDocumentListResult();
 
-            var schemaMap = new QuerySchemaMap(core, transaction);
+            var schemaMap = new QuerySchemaMap(core, transaction, query);
 
             foreach (var querySchema in query.Schemas)
             {
@@ -148,7 +148,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         internal static IEnumerable<DocumentPointer> FindDocumentPointersByPreparedQuery(
             EngineCore core, Transaction transaction, PreparedQuery query, string schemaPrefix)
         {
-            var schemaMap = new QuerySchemaMap(core, transaction);
+            var schemaMap = new QuerySchemaMap(core, transaction, query);
 
             foreach (var querySchema in query.Schemas)
             {

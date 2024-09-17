@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
 
             if (conditions != null)
             {
-                Optimization = IndexingConditionOptimization.BuildTree(core, transaction, physicalSchema, conditions, prefix);
+                Optimization = IndexingConditionOptimization.BuildTree(core, transaction, schemaMap.Query, physicalSchema, conditions, prefix);
             }
         }
     }
