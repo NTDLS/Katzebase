@@ -32,14 +32,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     .Replace(" OR ", " || ", StringComparison.InvariantCultureIgnoreCase)
                     .Replace(" AND ", " && ", StringComparison.InvariantCultureIgnoreCase);
 
-                List<ICondition> rootConditions = new List<ICondition>();
-
                 ParseRecursive(queryBatch, parentTokenizer, conditionCollection, conditionCollection, conditionsText, LogicalConnector.None);
 
                 conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.Replace("  ", " ").Trim();
 
                 conditionCollection.Hash = Library.Helpers.GetSHA256Hash(conditionCollection.MathematicalExpression);
-
             }
             catch (Exception ex)
             {

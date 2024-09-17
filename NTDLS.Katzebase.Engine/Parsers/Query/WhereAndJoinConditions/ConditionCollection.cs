@@ -8,8 +8,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
     /// </summary>
     internal class ConditionCollection: ConditionGroup
     {
-        //public List<ICondition> Conditions { get; set; }
-
         /// <summary>
         /// For conditions on joins, this is the alias of the schema that these conditions are for.
         /// </summary>
