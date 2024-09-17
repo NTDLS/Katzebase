@@ -101,7 +101,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #endregion
 
-        #region Exposed collection: FieldsWithAggregateFunctionCalls.
+        #region Collection: FieldsWithAggregateFunctionCalls.
 
         private List<QueryField>? _exposedAggregateFunctions = null;
         private readonly object _exposedAggregateFunctionsLock = new();

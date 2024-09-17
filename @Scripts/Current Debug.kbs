@@ -1,8 +1,8 @@
 select 
-	sw.Id,
-	sw.Text,
-	Length(sw.Text) + 'Some value' as Test,
-	sw.LanguageId
+	--sw.Id,
+	--sw.Text,
+	Length(sw.Text) + 'Some value' as Test
+	--sw.LanguageId
 from
 	WordList::Word as sw --(15 rows affected)
 where
@@ -10,6 +10,7 @@ where
 	sw.Text LIKE 'As%'
 	and sw.LanguageId = 3
 	--and Length(sw.Text) / 1000 < sw.Id
+	and sw.Text = sw.Text
 	--and sw.Text != sw.Text + 'More Text'
 	--and sw.Text LIKE '%to'
 	--and sw.Text like '%in%'

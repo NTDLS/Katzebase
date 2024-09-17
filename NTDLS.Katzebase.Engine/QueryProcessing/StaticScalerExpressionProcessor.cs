@@ -168,7 +168,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 {
                     //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = CollapseScalerFunction(transaction, query, auxiliaryFields, functions, subFunction);
+                    var functionResult = CollapseScalerFunction(transaction, query, fieldCollection, auxiliaryFields, functions, subFunction);
 
                     string mathVariable = $"v{variableNumber++}";
                     expressionVariables.Add(mathVariable, functionResult);
@@ -258,7 +258,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 {
                     //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
-                    var functionResult = CollapseScalerFunction(transaction, query, auxiliaryFields, functions, subFunction);
+                    var functionResult = CollapseScalerFunction(transaction, query, fieldCollection, auxiliaryFields, functions, subFunction);
                     sb.Append(functionResult);
                 }
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
@@ -288,14 +288,14 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Takes a function and recursively collapses all of the parameters, then recursively
         ///     executes all dependency functions to collapse the function to a single value.
         /// </summary>
-        static string CollapseScalerFunction(Transaction transaction, PreparedQuery query,
+        static string CollapseScalerFunction(Transaction transaction, PreparedQuery query, QueryFieldCollection fieldCollection,
             KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
         {
             var collapsedParameters = new List<string?>();
 
             foreach (var parameter in function.Parameters)
             {
-                collapsedParameters.Add(parameter.CollapseScalerExpressionFunctionParameter(transaction, query, query.SelectFields, auxiliaryFields, functions));
+                collapsedParameters.Add(parameter.CollapseScalerExpressionFunctionParameter(transaction, query, fieldCollection, auxiliaryFields, functions));
             }
 
             if (AggregateFunctionCollection.TryGetFunction(function.FunctionName, out _))

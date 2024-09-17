@@ -9,6 +9,7 @@ using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Engine.QueryProcessing;
@@ -365,7 +366,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     //First process the condition at the AttributeDepth that was passed in.
                     workingPhysicalIndexLeaves = MatchIndexLeaves(instance.Operation.Transaction, instance.Operation.Query,
-                        instance.Operation.Condition, workingPhysicalIndexLeaves, instance.Operation.KeyValues);
+                        instance.Operation.Condition, workingPhysicalIndexLeaves, instance.Operation.Query.Conditions.FieldCollection, instance.Operation.KeyValues);
 
                     if (instance.Operation.Lookup.Index.Attributes.Count == 1)
                     {
@@ -409,7 +410,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             foreach (var condition in conditionSet)
             {
-                var partitionResults = MatchIndexLeaves(instance.Operation.Transaction, instance.Operation.Query, condition, workingPhysicalIndexLeaves, instance.Operation.KeyValues);
+                var partitionResults = MatchIndexLeaves(instance.Operation.Transaction, instance.Operation.Query,
+                    condition, workingPhysicalIndexLeaves, instance.Operation.Query.Conditions.FieldCollection, instance.Operation.KeyValues);
 
                 if (attributeDepth == instance.Operation.Lookup.AttributeConditionSets.Count - 1)
                 {
@@ -454,12 +456,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         #region Matching / Seeking / Scanning.
 
         private static List<PhysicalIndexLeaf> MatchIndexLeaves(Transaction transaction, PreparedQuery query, Condition condition,
-            List<PhysicalIndexLeaf> workingPhysicalIndexLeaves, KbInsensitiveDictionary<string?>? keyValues)
+            List<PhysicalIndexLeaf> workingPhysicalIndexLeaves, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?>? auxiliaryFields)
         {
             //For join operations, check the keyValues for the raw value to lookup.
-            if (keyValues?.TryGetValue(condition.Right.Value, out string? keyValue) != true)
+            if (auxiliaryFields?.TryGetValue(condition.Right.Value, out string? keyValue) != true)
             {
-                keyValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new());
+                keyValue = condition.Right.CollapseScalerQueryField(transaction, query, fieldCollection, auxiliaryFields ?? new());
             }
 
             return condition.Qualifier switch

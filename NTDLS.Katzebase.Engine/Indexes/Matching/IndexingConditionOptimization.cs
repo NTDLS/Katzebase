@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         public IndexingConditionOptimization(Transaction transaction, ConditionCollection conditions)
         {
             Transaction = transaction;
-            Conditions = conditions.Clone();
+            Conditions = conditions;//.Clone();
         }
 
         #region Builder.
@@ -97,7 +97,11 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         foreach (var attribute in physicalIndex.Attributes)
                         {
                             locatedIndexAttribute = false;
-                            foreach (var condition in conditionsWithApplicableLeftDocumentIdentifiers.Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)))
+
+                            var applicableConditions = conditionsWithApplicableLeftDocumentIdentifiers
+                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value));
+
+                            foreach (var condition in applicableConditions)
                             {
                                 if (condition.Left is QueryFieldDocumentIdentifier leftValue)
                                 {
@@ -181,7 +185,9 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         foreach (var attribute in indexSelection.Index.Attributes)
                         {
                             var matchedConditions = conditionsWithApplicableLeftDocumentIdentifiers
-                                .Where(o => o.Left is QueryFieldDocumentIdentifier identifier
+                                .Where(o =>
+                                       o.Left is QueryFieldDocumentIdentifier identifier
+                                    && o.Right is QueryFieldCollapsedValue
                                     && identifier.SchemaAlias == workingSchemaPrefix
                                     && o.IsIndexOptimized == false
                                     && identifier.FieldName.Is(attribute.Field) == true).ToList();
