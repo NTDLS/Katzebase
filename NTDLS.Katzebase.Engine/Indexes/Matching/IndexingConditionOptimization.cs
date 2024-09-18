@@ -172,7 +172,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                 {
                     IndexingConditionGroup indexingConditionGroup = new(flattenedGroup.Connector);
 
-                    var conditionsWithApplicableLeftDocumentIdentifiers = flattenedGroup.ThisLevelDocumentIdentifiers();
+                    var conditionsWithApplicableLeftDocumentIdentifiers = flattenedGroup.ThisLevelWithLeftDocumentIdentifiers();
 
                     //Here we are ordering by the "full match" indexes first, then descending by the number of index attributes.
                     //The thinking being that we want to prefer full index matches that contain multiple index attributes

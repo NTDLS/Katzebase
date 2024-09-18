@@ -7,6 +7,7 @@ using NTDLS.Katzebase.Engine.Parsers.Query;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
+using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
 using NTDLS.Katzebase.Engine.QueryProcessing.Sorting;
@@ -38,22 +39,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             if (topLevelSchemaMap.Optimization != null)
             {
-                var limitedDocumentPointers = new List<DocumentPointer>();
-
                 if (topLevelSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
                 {
-                    //We are going to create a limited document catalog from the indexes. So kill the reference and create an empty list.
-                    documentPointers = new List<DocumentPointer>();
-
+                    //We are going to create a limited document catalog using the indexes.
                     var indexMatchedDocuments = core.Indexes.MatchSchemaDocumentsByConditionsClause(
                         topLevelSchemaMap.PhysicalSchema, topLevelSchemaMap.Optimization, query, topLevelSchemaMap.Prefix);
 
-                    if (indexMatchedDocuments != null)
-                    {
-                        limitedDocumentPointers.AddRange(indexMatchedDocuments.Select(o => o.Value));
-                    }
-
-                    documentPointers = limitedDocumentPointers;
+                    documentPointers = indexMatchedDocuments.Select(o => o.Value);
                 }
             }
 
@@ -436,35 +428,25 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             #region Indexing to reduce the number of document pointers in "limitedDocumentPointers".
 
-            var joinKeyValues = new KbInsensitiveDictionary<string?>();
+            var joinClauseKeyValues = new KbInsensitiveDictionary<string?>();
 
             if (currentSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
             {
-                /* TODO: Reimplement:
-                //All condition SubConditions have a selected index. Start building a list of possible document IDs.
-                foreach (var conditionSet in currentSchemaMap.Optimization.Conditions)
+                //Grab the values from the right-hand-schema join clause and create a lookup of the values.
+                var rightHandDocumentIdentifiers = currentSchemaMap.Optimization.Conditions.FlattenToRightDocumentIdentifiers();
+                foreach (var documentIdentifier in rightHandDocumentIdentifiers)
                 {
-                    //Grab the values from the schema above and save them for the index lookup of the next schema in the join.
-                    foreach (var condition in conditionSet)
+                    var documentContent = joinScopedContentCache[documentIdentifier.SchemaAlias ?? ""];
+                    if (!documentContent.TryGetValue(documentIdentifier.FieldName, out string? documentValue))
                     {
-                        var documentContent = joinScopedContentCache[condition.Right?.SchemaAlias ?? ""];
-
-                        if (condition.Right is QueryFieldDocumentIdentifier documentIdentifier)
-                        {
-                            if (!documentContent.TryGetValue(documentIdentifier.FieldName, out string? documentValue))
-                            {
-                                throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
-                            }
-                            joinKeyValues[documentIdentifier.Value] = documentValue?.ToString() ?? "";
-                        }
+                        throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
                     }
+                    joinClauseKeyValues[documentIdentifier.FieldName] = documentValue?.ToString() ?? "";
                 }
-                */
 
-                //We are going to create a limited document catalog from the indexes.
-
+                //We are going to create a limited document catalog using the indexes.
                 var limitedDocumentPointers = instance.Operation.Core.Indexes.MatchSchemaDocumentsByConditionsClause(
-                    currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, instance.Operation.Query, currentSchemaMap.Prefix, joinKeyValues);
+                    currentSchemaMap.PhysicalSchema, currentSchemaMap.Optimization, instance.Operation.Query, currentSchemaMap.Prefix, joinClauseKeyValues);
 
                 documentPointers = limitedDocumentPointers.Select(o => o.Value);
             }

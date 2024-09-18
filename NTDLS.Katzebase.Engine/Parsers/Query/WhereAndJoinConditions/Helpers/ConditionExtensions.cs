@@ -64,27 +64,27 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
             => givenConditions.Collection.FlattenToEntries();
 
         /// <summary>
-        /// Recursively rolls through nested conditions, producing a flat list of the entry references where the left side is a document identifier.
+        /// Recursively rolls through nested conditions, producing a flat list of left-hand-side document identifiers.
         /// </summary>
-        public static List<ConditionEntry> FlattenToDocumentIdentifiers(this List<ICondition> givenConditions)
+        public static List<QueryFieldDocumentIdentifier> FlattenToLeftDocumentIdentifiers(this List<ICondition> givenConditions)
         {
-            var results = new List<ConditionEntry>();
-            FlattenToDocumentIdentifiers(givenConditions, results);
+            var results = new List<QueryFieldDocumentIdentifier>();
+            FlattenToLeftDocumentIdentifiers(givenConditions, results);
             return results;
 
-            static void FlattenToDocumentIdentifiers(List<ICondition> conditions, List<ConditionEntry> refConditions)
+            static void FlattenToLeftDocumentIdentifiers(List<ICondition> conditions, List<QueryFieldDocumentIdentifier> refConditions)
             {
                 foreach (var condition in conditions)
                 {
                     if (condition is ConditionGroup group)
                     {
-                        FlattenToDocumentIdentifiers(group.Collection, refConditions);
+                        FlattenToLeftDocumentIdentifiers(group.Collection, refConditions);
                     }
                     else if (condition is ConditionEntry entry)
                     {
-                        if (entry.Left is QueryFieldDocumentIdentifier)
+                        if (entry.Left is QueryFieldDocumentIdentifier left)
                         {
-                            refConditions.Add(entry);
+                            refConditions.Add(left);
                         }
                     }
                     else
@@ -96,15 +96,54 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         }
 
         /// <summary>
-        /// Recursively rolls through nested conditions, producing a flat list of the entry references where the left side is a document identifier.
+        /// Recursively rolls through nested conditions, producing a flat list of left-hand-side document identifiers.
         /// </summary>
-        public static List<ConditionEntry> FlattenToDocumentIdentifiers(this ConditionCollection givenConditions)
-            => givenConditions.Collection.FlattenToDocumentIdentifiers();
+        public static List<QueryFieldDocumentIdentifier> FlattenToLeftDocumentIdentifiers(this ConditionCollection givenConditions)
+            => givenConditions.Collection.FlattenToLeftDocumentIdentifiers();
+
+        /// <summary>
+        /// Recursively rolls through nested conditions, producing a flat list of right-hand-side document identifiers.
+        /// </summary>
+        public static List<QueryFieldDocumentIdentifier> FlattenToRightDocumentIdentifiers(this List<ICondition> givenConditions)
+        {
+            var results = new List<QueryFieldDocumentIdentifier>();
+            FlattenToRightDocumentIdentifiers(givenConditions, results);
+            return results;
+
+            static void FlattenToRightDocumentIdentifiers(List<ICondition> conditions, List<QueryFieldDocumentIdentifier> refConditions)
+            {
+                foreach (var condition in conditions)
+                {
+                    if (condition is ConditionGroup group)
+                    {
+                        FlattenToRightDocumentIdentifiers(group.Collection, refConditions);
+                    }
+                    else if (condition is ConditionEntry entry)
+                    {
+                        if (entry.Right is QueryFieldDocumentIdentifier right)
+                        {
+                            refConditions.Add(right);
+                        }
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Recursively rolls through nested conditions, producing a flat list of right-hand-side document identifiers.
+        /// </summary>
+        public static List<QueryFieldDocumentIdentifier> FlattenToRightDocumentIdentifiers(this ConditionCollection givenConditions)
+            => givenConditions.Collection.FlattenToRightDocumentIdentifiers();
+
 
         /// <summary>
         /// Rolls through a condition group, producing a flat list of the entry references where the left side is a document identifier.
         /// </summary>
-        public static List<ConditionEntry> ThisLevelDocumentIdentifiers(this ConditionGroup givenConditionGroups)
+        public static List<ConditionEntry> ThisLevelWithLeftDocumentIdentifiers(this ConditionGroup givenConditionGroups)
         {
             var results = new List<ConditionEntry>();
 
