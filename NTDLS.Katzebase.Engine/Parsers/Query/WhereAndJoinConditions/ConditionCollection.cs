@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
     /// Contains the collection of ConditionSets, each group contains AND expressions (NO OR expressions) as there
     ///     is a seperate ConditionGroup for each OR expression and for each expression contained in parentheses.
     /// </summary>
-    internal class ConditionsRoot : ConditionGroup
+    internal class ConditionCollection : ConditionGroup
     {
         /// <summary>
         /// For conditions on joins, this is the alias of the schema that these conditions are for.
@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         public string NextExpressionVariable()
             => $"v{_nextExpressionVariable++}";
 
-        public ConditionsRoot(QueryBatch queryBatch, string mathematicalExpression, string? schemaAlias = null)
+        public ConditionCollection(QueryBatch queryBatch, string mathematicalExpression, string? schemaAlias = null)
             : base(Library.EngineConstants.LogicalConnector.None)
         {
             FieldCollection = new(queryBatch);
@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             SchemaAlias = schemaAlias;
         }
 
-        public ConditionsRoot(QueryBatch queryBatch)
+        public ConditionCollection(QueryBatch queryBatch)
             : base(Library.EngineConstants.LogicalConnector.None)
         {
             FieldCollection = new(queryBatch);
@@ -49,9 +49,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             throw new NotImplementedException();
         }
 
-        public new ConditionsRoot Clone()
+        public new ConditionCollection Clone()
         {
-            var clone = new ConditionsRoot(FieldCollection.QueryBatch)
+            var clone = new ConditionCollection(FieldCollection.QueryBatch)
             {
                 Connector = this.Connector,
                 SchemaAlias = this.SchemaAlias,

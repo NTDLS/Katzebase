@@ -20,10 +20,10 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// Contains a list of nested operations that will be used for indexing operations.
         /// </summary>
         public List<IndexingConditionGroup> IndexingConditionGroup { get; set; } = new();
-        public ConditionsRoot Conditions { get; private set; }
+        public ConditionCollection Conditions { get; private set; }
         public Transaction Transaction { get; private set; }
 
-        public IndexingConditionOptimization(Transaction transaction, ConditionsRoot conditions)
+        public IndexingConditionOptimization(Transaction transaction, ConditionCollection conditions)
         {
             Transaction = transaction;
             Conditions = conditions.Clone();
@@ -35,9 +35,9 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// </summary>
         public static IndexingConditionOptimization BuildTree(EngineCore core, Transaction transaction, PreparedQuery query,
-            PhysicalSchema physicalSchema, ConditionsRoot conditionsRoot, string workingSchemaPrefix)
+            PhysicalSchema physicalSchema, ConditionCollection conditions, string workingSchemaPrefix)
         {
-            var optimization = new IndexingConditionOptimization(transaction, conditionsRoot);
+            var optimization = new IndexingConditionOptimization(transaction, conditions);
 
             var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                 physicalSchema, workingSchemaPrefix, optimization.IndexingConditionGroup))
             {
                 //Invalidate indexing optimization.
-                return new IndexingConditionOptimization(transaction, conditionsRoot);
+                return new IndexingConditionOptimization(transaction, conditions);
             }
 
             return optimization;
