@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
+namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
 {
     internal static class StaticConditionHelpers
     {

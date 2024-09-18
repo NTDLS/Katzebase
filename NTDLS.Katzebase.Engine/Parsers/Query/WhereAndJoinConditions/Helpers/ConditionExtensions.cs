@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 
-namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
+namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
 {
     internal static class ConditionExtensions
     {
@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// Recursively rolls through nested conditions, producing a flat list of the group references. 
         /// </summary>
         public static List<ConditionGroup> FlattenToGroups(this ConditionCollection givenConditions)
-            => FlattenToGroups(givenConditions.Entries);
+            => givenConditions.Entries.FlattenToGroups();
 
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of the entry references.
@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// Recursively rolls through nested conditions, producing a flat list of the entry references.
         /// </summary>
         public static List<ConditionEntry> FlattenToEntries(this ConditionCollection givenConditions)
-            => FlattenToEntries(givenConditions.Entries);
+            => givenConditions.Entries.FlattenToEntries();
 
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of the entry references where the left side is a document identifier.
@@ -99,6 +99,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// Recursively rolls through nested conditions, producing a flat list of the entry references where the left side is a document identifier.
         /// </summary>
         public static List<ConditionEntry> FlattenToDocumentIdentifiers(this ConditionCollection givenConditions)
-            => FlattenToDocumentIdentifiers(givenConditions.Entries);
+            => givenConditions.Entries.FlattenToDocumentIdentifiers();
     }
 }
