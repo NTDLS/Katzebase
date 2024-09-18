@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Library
         /// Produces a new dictionary that is the product of the common keys between the two.
         /// If the given dictionary is null, a clone of dictionary two is returned.
         /// </summary>
-        public static Dictionary<K, V> Intersect<K, V>(this Dictionary<K, V>? one, Dictionary<K, V> two) where K : notnull
+        public static Dictionary<K, V> IntersectWith<K, V>(this Dictionary<K, V>? one, Dictionary<K, V> two) where K : notnull
         {
             //return one.Where(o => two.ContainsKey(o.Key)).ToDictionary(o => o.Key, o => o.Value);
 

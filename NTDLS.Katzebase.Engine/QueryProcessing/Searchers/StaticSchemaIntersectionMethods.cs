@@ -389,7 +389,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
             }
 
-            if (instance.Operation.Query.Conditions.Entries.Count != 0)
+            if (instance.Operation.Query.Conditions.Collection.Count != 0)
             {
                 //Remove rows that do not match the the global query conditions (ones in the where clause).
                 resultingRows.FilterByWhereClauseConditions(instance);
@@ -548,7 +548,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         private static void SetSchemaIntersectionConditionParameters(DocumentLookupOperation.Instance instance, NCalc.Expression expression,
              ConditionCollection givenConditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
-            SetExpressionParametersRecursive(givenConditions.Entries);
+            SetExpressionParametersRecursive(givenConditions.Collection);
 
             void SetExpressionParametersRecursive(List<ICondition> conditions)
             {
@@ -556,7 +556,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     if (condition is ConditionGroup group)
                     {
-                        SetExpressionParametersRecursive(group.Entries);
+                        SetExpressionParametersRecursive(group.Collection);
                     }
                     else if (condition is ConditionEntry entry)
                     {
@@ -770,7 +770,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         private static void SetExpressionParameters(DocumentLookupOperation.Instance instance,
             NCalc.Expression expression, ConditionCollection givenConditions, KbInsensitiveDictionary<string?> auxiliaryFields)
         {
-            SetExpressionParametersRecursive(givenConditions.Entries);
+            SetExpressionParametersRecursive(givenConditions.Collection);
 
             void SetExpressionParametersRecursive(List<ICondition> conditions)
             {
@@ -778,7 +778,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     if (condition is ConditionGroup group)
                     {
-                        SetExpressionParametersRecursive(group.Entries);
+                        SetExpressionParametersRecursive(group.Collection);
                     }
                     else if (condition is ConditionEntry entry)
                     {

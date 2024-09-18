@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     //When we encounter an "(", we create a new condition group.
                     currentConditionGroup = new ConditionGroup(lastLogicalConnector);
-                    parentConditionGroup.Entries.Add(currentConditionGroup);
+                    parentConditionGroup.Collection.Add(currentConditionGroup);
 
                     string subConditionsText = tokenizer.EatMatchingScope();
                     ParseRecursive(queryBatch, parentTokenizer, conditionCollection,
@@ -64,11 +64,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     if (currentConditionGroup == null)
                     {
                         currentConditionGroup = new ConditionGroup(lastLogicalConnector);
-                        parentConditionGroup.Entries.Add(currentConditionGroup);
+                        parentConditionGroup.Collection.Add(currentConditionGroup);
                     }
 
                     var leftAndRight = ParseRightAndLeft(conditionCollection, parentTokenizer, tokenizer);
-                    currentConditionGroup.Entries.Add(new ConditionEntry(leftAndRight));
+                    currentConditionGroup.Collection.Add(new ConditionEntry(leftAndRight));
                 }
 
                 if (!tokenizer.IsExhausted())

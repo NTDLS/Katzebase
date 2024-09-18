@@ -221,66 +221,74 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
                     PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
         {
+            Dictionary<uint, DocumentPointer>? accumulatedResults = null;
+
             var ptIndexSearch = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.IndexSearch, $"Schema: {workingSchemaPrefix}");
 
-            var accumulatedResults = MatchSchemaDocumentsByConditionsClauseRecursive(
-                optimization.IndexingConditionGroup, physicalSchema, optimization, query, workingSchemaPrefix, keyValues);
+            //We aggregate the values for the entries into the ConditionGroup.IndexLookup,
+            //  which contains all of the values for all entries in the group.
+            //  For this reason, we do not perform index lookups on individual condition entries.
+            foreach (var group in optimization.Conditions.Collection.OfType<ConditionGroup>().Where(group => group.IndexLookup != null))
+            {
+                var groupResults = MatchSchemaDocumentsByConditionsClauseRecursive(
+                    physicalSchema, optimization, group, query, workingSchemaPrefix, keyValues);
+
+                var ptDocumentPointerIntersect = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
+                if (group.Connector == LogicalConnector.Or)
+                {
+                    accumulatedResults ??= new();
+                    accumulatedResults.UnionWith(groupResults);
+                }
+                else
+                {
+                    accumulatedResults = accumulatedResults.IntersectWith(groupResults);
+                }
+                ptDocumentPointerIntersect?.StopAndAccumulate();
+            }
 
             ptIndexSearch?.StopAndAccumulate();
 
-            return accumulatedResults;
+            return accumulatedResults ?? new();
         }
 
         private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseRecursive(
-            List<IndexingConditionGroup> indexingConditionGroups, PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
+            PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, ConditionGroup givenConditionGroup,
             PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
         {
-            var accumulatedResults = new Dictionary<uint, DocumentPointer>();
+            //TODO: Do not use indexingConditionGroups, use optimization.Conditions recursively.
+            //TODO: Delete or otherwise cleanup indexingConditionGroups
 
-            foreach (var indexingConditionGroup in indexingConditionGroups) //Loop through the OR groups
+            var thisGroupResults = MatchSchemaDocumentsByIndexingConditionLookup(optimization.Transaction,
+                query, givenConditionGroup.IndexLookup.EnsureNotNull(), physicalSchema, workingSchemaPrefix, keyValues);
+
+            foreach (var group in givenConditionGroup.Collection.OfType<ConditionGroup>().Where(o => o.IndexLookup != null))
             {
-                Dictionary<uint, DocumentPointer>? groupResults = null;
+                var childGroupResults = MatchSchemaDocumentsByConditionsClauseRecursive(
+                     physicalSchema, optimization, group, query, workingSchemaPrefix, keyValues);
 
-                foreach (var lookup in indexingConditionGroup.Lookups) //Loop thorough the AND conditions.
+                var ptDocumentPointerIntersect = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
+                if (group.Connector == LogicalConnector.Or)
                 {
-                    var partialResults = MatchSchemaDocumentsByConditionsClauseGroup(optimization.Transaction, query, lookup, physicalSchema, workingSchemaPrefix, keyValues);
-
-                    var ptDocumentPointerIntersect = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
-                    groupResults = groupResults.Intersect(partialResults);
-                    ptDocumentPointerIntersect?.StopAndAccumulate();
-
-                    //LogManager.Debug($"Depth: <root>, Count: {partialResults.Count}, Total: {groupResults.Count}");
-                    if (groupResults.Count == 0)
-                    {
-                        break; //Condition eliminated all possible results on this level.
-                    }
+                    thisGroupResults.UnionWith(childGroupResults);
                 }
-
-                if (indexingConditionGroup.SubIndexingConditionGroups.Count > 0)
+                else
                 {
-                    //var subGroupResults = MatchSchemaDocumentsByConditionsClauseRecursive(
-                    //  indexingConditionGroup.SubIndexingConditionGroups, physicalSchema, optimization, query, workingSchemaPrefix, keyValues);
-
-                    //accumulatedResults.Intersect(subGroupResults);
-                    //accumulatedResults.UnionWith(subGroupResults);
+                    thisGroupResults = thisGroupResults.IntersectWith(childGroupResults);
                 }
-
-                var ptDocumentPointerUnion = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerUnion);
-                accumulatedResults.UnionWith(groupResults); //Each group is an OR condition, so just union them.
-                ptDocumentPointerUnion?.StopAndAccumulate();
+                ptDocumentPointerIntersect?.StopAndAccumulate();
             }
 
-            return accumulatedResults;
+            return thisGroupResults;
         }
 
-        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseGroup(Transaction transaction, PreparedQuery query,
-            IndexingConditionLookup lookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues)
+        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookup(Transaction transaction, PreparedQuery query,
+            IndexingConditionLookup indexLookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues)
         {
             Dictionary<uint, DocumentPointer>? accumulatedResults = null;
 
             try
             {
-                var conditionEntries = lookup.AttributeConditionSets[lookup.Index.Attributes[0].Field.EnsureNotNull()];
+                var conditionEntries = indexLookup.AttributeConditionSets[indexLookup.Index.Attributes[0].Field.EnsureNotNull()];
 
                 foreach (var condition in conditionEntries)
                 {
@@ -302,22 +310,22 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
                         else
                         {
-                            //This is a join clause.
+                            //This is most likely a join clause... or we have soemthing wrong.
                         }
 
                         //Eliminated all but one index partitions.
-                        indexPartitions.Add(lookup.Index.ComputePartition(keyValue));
+                        indexPartitions.Add(indexLookup.Index.ComputePartition(keyValue));
                     }
                     else
                     {
                         //We have to search all index partitions.
-                        for (uint indexPartition = 0; indexPartition < lookup.Index.Partitions; indexPartition++)
+                        for (uint indexPartition = 0; indexPartition < indexLookup.Index.Partitions; indexPartition++)
                         {
                             indexPartitions.Add(indexPartition);
                         }
                     }
 
-                    var operation = new MatchSchemaDocumentsByConditionsOperation(transaction, query, lookup, physicalSchema, workingSchemaPrefix, condition, keyValues);
+                    var operation = new MatchSchemaDocumentsByConditionsOperation(transaction, query, indexLookup, physicalSchema, workingSchemaPrefix, condition, keyValues);
 
                     if (indexPartitions.Count > 1)
                     {
@@ -328,19 +336,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             var parameter = new MatchSchemaDocumentsByConditionsOperation.Instance(operation, indexPartition);
 
                             var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
-                            queue.Enqueue(parameter, MatchSchemaDocumentsByConditionsClauseThread/*, (QueueItemState<MatchSchemaDocumentsByConditionsOperation.Parameter> o) =>
+                            queue.Enqueue(parameter, MatchSchemaDocumentsByIndexingConditionLookupThread/*, (QueueItemState<MatchSchemaDocumentsByConditionsOperation.Parameter> o) =>
                         {
                             LogManager.Information($"Indexing:CompletionTime: {o.CompletionTime?.TotalMilliseconds:n0}.");
                         }*/);
                             ptThreadQueue?.StopAndAccumulate();
                         }
 
-                        var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {lookup.Index.Name}");
+                        var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {indexLookup.Index.Name}");
                         queue.WaitForCompletion();
                         ptThreadCompletion?.StopAndAccumulate();
 
                         var ptDocumentPointerIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
-                        accumulatedResults = accumulatedResults.Intersect(operation.ThreadResults);
+                        accumulatedResults = accumulatedResults.IntersectWith(operation.ThreadResults);
                         ptDocumentPointerIntersect?.StopAndAccumulate();
 
                         //LogManager.Debug($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
@@ -352,10 +360,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     else
                     {
                         //No need for additional threads, its just a single partition.
-                        MatchSchemaDocumentsByConditionsClauseThread(new MatchSchemaDocumentsByConditionsOperation.Instance(operation, indexPartitions.First()));
+                        MatchSchemaDocumentsByIndexingConditionLookupThread(new MatchSchemaDocumentsByConditionsOperation.Instance(operation, indexPartitions.First()));
 
                         var ptDocumentPointerIntersect = transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
-                        accumulatedResults = accumulatedResults.Intersect(operation.ThreadResults);
+                        accumulatedResults = accumulatedResults.IntersectWith(operation.ThreadResults);
                         ptDocumentPointerIntersect?.StopAndAccumulate();
 
                         //LogManager.Debug($"Depth: root, Count: {operation.ThreadResults.Count}, Total: {accumulatedResults.Count}");
@@ -375,7 +383,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private void MatchSchemaDocumentsByConditionsClauseThread(MatchSchemaDocumentsByConditionsOperation.Instance instance)
+        private void MatchSchemaDocumentsByIndexingConditionLookupThread(MatchSchemaDocumentsByConditionsOperation.Instance instance)
         {
             Thread.CurrentThread.Name = $"@Thread_{instance.Operation.PhysicalSchema.Name}:{instance.IndexPartition}";
 
@@ -405,7 +413,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     else if (workingPhysicalIndexLeaves.Count > 0)
                     {
                         //Further, recursively, process additional compound index attribute condition matches.
-                        threadResults = MatchSchemaDocumentsByConditionsClauseRecursive(instance, 1, workingPhysicalIndexLeaves);
+                        threadResults = MatchSchemaDocumentsByIndexingConditionLookupRecursive(instance, 1, workingPhysicalIndexLeaves);
                     }
                 }
 
@@ -426,7 +434,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private static Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseRecursive(
+        private static Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookupRecursive(
             MatchSchemaDocumentsByConditionsOperation.Instance instance, int attributeDepth, List<PhysicalIndexLeaf> workingPhysicalIndexLeaves)
         {
             Dictionary<uint, DocumentPointer>? results = null;
@@ -447,7 +455,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     ptIndexDistillation?.StopAndAccumulate();
 
                     var ptDocumentPointerIntersect = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
-                    results = results.Intersect(partialResults);
+                    results = results.IntersectWith(partialResults);
                     ptDocumentPointerIntersect?.StopAndAccumulate();
 
                     //LogManager.Debug($"Partition: {parameter.IndexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");
@@ -459,10 +467,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 else if (attributeDepth < instance.Operation.Lookup.AttributeConditionSets.Count - 1)
                 {
                     //Further, recursively, process additional compound index attribute condition matches.
-                    var partialResults = MatchSchemaDocumentsByConditionsClauseRecursive(instance, attributeDepth + 1, partitionResults);
+                    var partialResults = MatchSchemaDocumentsByIndexingConditionLookupRecursive(instance, attributeDepth + 1, partitionResults);
 
                     var ptDocumentPointerIntersect = instance.Operation.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
-                    results = results.Intersect(partialResults);
+                    results = results.IntersectWith(partialResults);
                     ptDocumentPointerIntersect?.StopAndAccumulate();
 
                     //LogManager.Debug($"Partition: {parameter.IndexPartition}, Depth: {attributeDepth}, Count: {partialResults.Count}, Total: {results.Count}");

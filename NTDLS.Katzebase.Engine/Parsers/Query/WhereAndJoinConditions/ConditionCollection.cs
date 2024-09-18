@@ -60,9 +60,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                 Hash = this.Hash,
             };
 
-            foreach (var entry in Entries)
+            foreach (var entry in Collection)
             {
-                clone.Entries.Add(entry.Clone());
+                clone.Collection.Add(entry.Clone());
             }
 
             foreach (var usableIndex in UsableIndexes)

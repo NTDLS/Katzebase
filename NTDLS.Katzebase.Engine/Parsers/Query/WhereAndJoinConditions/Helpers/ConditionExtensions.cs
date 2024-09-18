@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
                     if (condition is ConditionGroup group)
                     {
                         refGroups.Add(group);
-                        FlattenToGroups(group.Entries, refGroups);
+                        FlattenToGroups(group.Collection, refGroups);
                     }
                 }
             }
@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         /// Recursively rolls through nested conditions, producing a flat list of the group references. 
         /// </summary>
         public static List<ConditionGroup> FlattenToGroups(this ConditionCollection givenConditions)
-            => givenConditions.Entries.FlattenToGroups();
+            => givenConditions.Collection.FlattenToGroups();
 
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of the entry references.
@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
                 {
                     if (condition is ConditionGroup group)
                     {
-                        FlattenToEntries(group.Entries, refEntries);
+                        FlattenToEntries(group.Collection, refEntries);
                     }
                     else if (condition is ConditionEntry entry)
                     {
@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         /// Recursively rolls through nested conditions, producing a flat list of the entry references.
         /// </summary>
         public static List<ConditionEntry> FlattenToEntries(this ConditionCollection givenConditions)
-            => givenConditions.Entries.FlattenToEntries();
+            => givenConditions.Collection.FlattenToEntries();
 
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of the entry references where the left side is a document identifier.
@@ -78,7 +78,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
                 {
                     if (condition is ConditionGroup group)
                     {
-                        FlattenToDocumentIdentifiers(group.Entries, refConditions);
+                        FlattenToDocumentIdentifiers(group.Collection, refConditions);
                     }
                     else if (condition is ConditionEntry entry)
                     {
@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         /// Recursively rolls through nested conditions, producing a flat list of the entry references where the left side is a document identifier.
         /// </summary>
         public static List<ConditionEntry> FlattenToDocumentIdentifiers(this ConditionCollection givenConditions)
-            => givenConditions.Entries.FlattenToDocumentIdentifiers();
+            => givenConditions.Collection.FlattenToDocumentIdentifiers();
 
         /// <summary>
         /// Rolls through a condition group, producing a flat list of the entry references where the left side is a document identifier.
@@ -108,7 +108,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         {
             var results = new List<ConditionEntry>();
 
-            foreach (var groupEntry in givenConditionGroups.Entries)
+            foreach (var groupEntry in givenConditionGroups.Collection)
             {
                 if (groupEntry is ConditionEntry entry)
                 {

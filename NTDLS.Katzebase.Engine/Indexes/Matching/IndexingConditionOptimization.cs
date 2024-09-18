@@ -67,7 +67,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             {
                 #region Build list of usable indexes.
 
-                if (flattenedGroup.Entries.OfType<ConditionEntry>().Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)).Any() == false)
+                if (flattenedGroup.Collection.OfType<ConditionEntry>().Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)).Any() == false)
                 {
                     //Each "OR" condition group must have at least one potential indexable match for the selected schema,
                     //  this is because we need to be able to create a full list of all possible documents for this schema,
@@ -105,14 +105,14 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                             //For non-schema joins, we do not currently support indexing on anything other than constant expressions.
                             //However, I think this could be implemented pretty easily.
                             applicableConditions.AddRange(
-                                flattenedGroup.Entries.OfType<ConditionEntry>()
+                                flattenedGroup.Collection.OfType<ConditionEntry>()
                                 .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value)));
                         }
                         else
                         {
                             //For schema joins, we already have a schema document value cache in the lookup functions so we allow non-constants.
                             applicableConditions.AddRange(
-                                flattenedGroup.Entries.OfType<ConditionEntry>()
+                                flattenedGroup.Collection.OfType<ConditionEntry>()
                                 .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)));
                         }
 
@@ -229,6 +229,8 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         if (indexingConditionLookup.AttributeConditionSets.Count > 0)
                         {
                             indexingConditionGroup.Lookups.Add(indexingConditionLookup);
+
+                            flattenedGroup.IndexLookup = indexingConditionLookup;
                         }
                     }
 
