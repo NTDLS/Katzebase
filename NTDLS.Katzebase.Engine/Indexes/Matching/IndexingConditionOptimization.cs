@@ -1,13 +1,10 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Interactions.Management;
-using NTDLS.Katzebase.Engine.Parsers.Query.Class;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
-using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Schemas;
-using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -19,10 +16,10 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// Contains a list of nested operations that will be used for indexing operations.
         /// </summary>
         public List<IndexingConditionGroup> IndexingConditionGroup { get; set; } = new();
-        public Old_ConditionCollection Conditions { get; private set; }
+        public ConditionCollection Conditions { get; private set; }
         public Transaction Transaction { get; private set; }
 
-        public IndexingConditionOptimization(Transaction transaction, Old_ConditionCollection conditions)
+        public IndexingConditionOptimization(Transaction transaction, ConditionCollection conditions)
         {
             Transaction = transaction;
             Conditions = conditions;//.Clone();
@@ -34,14 +31,14 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// </summary>
         public static IndexingConditionOptimization BuildTree(EngineCore core, Transaction transaction, PreparedQuery query,
-            PhysicalSchema physicalSchema, Old_ConditionCollection givenConditionCollection, string workingSchemaPrefix)
+            PhysicalSchema physicalSchema, ConditionCollection givenConditionCollection, string workingSchemaPrefix)
         {
             var optimization = new IndexingConditionOptimization(transaction, givenConditionCollection);
 
             var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
             if (!BuildTree(optimization, query, core, transaction, indexCatalog, physicalSchema,
-                workingSchemaPrefix, givenConditionCollection, optimization.IndexingConditionGroup))
+                workingSchemaPrefix, givenConditionCollection.Collection, optimization.IndexingConditionGroup))
             {
                 //Invalidate indexing optimization.
                 return new IndexingConditionOptimization(transaction, givenConditionCollection);
@@ -50,29 +47,99 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             return optimization;
         }
 
+        private static void DistilConditionDocumentIdentifiers(List<ICondition> givenConditions, out List<ConditionEntry> outConditions)
+        {
+            outConditions = new List<ConditionEntry>();
+
+            foreach (var givenCondition in givenConditions)
+            {
+                if (givenCondition is ConditionGroup conditionGroup)
+                {
+                    DistilConditionDocumentIdentifiers(conditionGroup.Collection, outConditions);
+                }
+                else if (givenCondition is ConditionEntry conditionEntry)
+                {
+                    if (conditionEntry.Left is QueryFieldDocumentIdentifier)
+                    {
+                        outConditions.Add(conditionEntry);
+                    }
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
+            static void DistilConditionDocumentIdentifiers(List<ICondition> conditions, List<ConditionEntry> refConditions)
+            {
+                foreach (var condition in conditions)
+                {
+                    if (condition is ConditionGroup conditionGroup)
+                    {
+                        DistilConditionDocumentIdentifiers(conditionGroup.Collection, refConditions);
+                    }
+                    else if (condition is ConditionEntry conditionEntry)
+                    {
+                        if (conditionEntry.Left is QueryFieldDocumentIdentifier)
+                        {
+                            refConditions.Add(conditionEntry);
+                        }
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
+                    }
+                }
+            }
+        }
+
+        private static List<ConditionGroup> FlattenConditionGroups(List<ICondition> givenConditions)
+        {
+            List<ConditionGroup> groups = new();
+
+            foreach (var givenCondition in givenConditions)
+            {
+                if (givenCondition is ConditionGroup conditionGroup)
+                {
+                    groups.Add(conditionGroup);
+                    FlattenConditionGroups(conditionGroup.Collection, groups);
+                }
+            }
+
+            return groups;
+
+            static void FlattenConditionGroups(List<ICondition> conditions, List<ConditionGroup> refGroups)
+            {
+                foreach (var condition in conditions)
+                {
+                    if (condition is ConditionGroup conditionGroup)
+                    {
+                        refGroups.Add(conditionGroup);
+                        FlattenConditionGroups(conditionGroup.Collection, refGroups);
+                    }
+                }
+            }
+        }
+
         /// <summary>
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// Called reclusively by BuildTree().
         /// </summary>
         private static bool BuildTree(IndexingConditionOptimization optimization, PreparedQuery query, EngineCore core,
             Transaction transaction, PhysicalIndexCatalog indexCatalog, PhysicalSchema physicalSchema, string workingSchemaPrefix,
-            Old_ConditionSetCollection givenConditionCollection, List<IndexingConditionGroup> indexingConditionGroups)
+            List<ICondition> givenConditions, List<IndexingConditionGroup> indexingConditionGroups)
         {
-            foreach (var conditionSet in givenConditionCollection)
+            foreach (var givenCondition in givenConditions)
             {
-                var conditionsWithApplicableLeftDocumentIdentifiers = new List<Old_Condition>();
-
-                foreach (var condition in conditionSet)
-                {
-                    if (condition.Left is QueryFieldDocumentIdentifier)
-                    {
-                        conditionsWithApplicableLeftDocumentIdentifiers.Add(condition);
-                    }
-                }
+                DistilConditionDocumentIdentifiers(givenConditions, out var conditionsWithApplicableLeftDocumentIdentifiers);
 
                 #region Build list of usable indexes.
 
-                if (conditionSet.Count > 0)
+                FlattenConditionGroups(givenConditions);
+
+                /*
+
+                if (givenCondition.Count > 0)
                 {
                     IndexingConditionGroup subGroup = new(conditionSet.Connector);
 
@@ -119,7 +186,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         {
                             locatedIndexAttribute = false;
 
-                            List<Old_Condition> applicableConditions = new List<Old_Condition>();
+                            List<ConditionEntry> applicableConditions = new List<ConditionEntry>();
 
                             if (string.IsNullOrEmpty(workingSchemaPrefix))
                             {
@@ -255,6 +322,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         indexingConditionGroups.Add(indexingConditionGroup);
                     }
                 }
+                */
 
                 #endregion
             }
@@ -329,7 +397,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         }
 
         private void ExplainLookupCondition(ref StringBuilder result, EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, Old_Condition condition)
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, ConditionEntry condition)
         {
             try
             {
@@ -385,7 +453,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
         private static void ExplainLookupConditionRecursive(ref StringBuilder result,
             EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, Old_Condition condition, int attributeDepth)
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, ConditionEntry condition, int attributeDepth)
         {
             var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[attributeDepth].Field.EnsureNotNull()];
 

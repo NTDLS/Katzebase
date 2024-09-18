@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
     /// Contains the collection of ConditionSets, each group contains AND expressions (NO OR expressions) as there
     ///     is a seperate ConditionGroup for each OR expression and for each expression contained in parentheses.
     /// </summary>
-    internal class ConditionCollection: ConditionGroup
+    internal class ConditionCollection : ConditionGroup
     {
         /// <summary>
         /// For conditions on joins, this is the alias of the schema that these conditions are for.

@@ -5,7 +5,8 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
     internal class IndexSelection
     {
-        public HashSet<Old_Condition> CoveredConditions { get; private set; } = new();
+        public HashSet<ConditionEntry> CoveredConditions { get; private set; } = new();
+
         public PhysicalIndex Index { get; private set; }
 
         /// <summary>

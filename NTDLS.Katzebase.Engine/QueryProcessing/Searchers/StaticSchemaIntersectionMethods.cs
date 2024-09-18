@@ -389,7 +389,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
             }
 
-            if (instance.Operation.Query.Conditions.Count != 0)
+            if (instance.Operation.Query.Conditions.Collection.Count != 0)
             {
                 //Remove rows that do not match the the global query conditions (ones in the where clause).
                 resultingRows.FilterByWhereClauseConditions(instance);
@@ -440,6 +440,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             if (currentSchemaMap.Optimization?.IndexingConditionGroup.Count > 0)
             {
+                /* TODO: Reimplement:
                 //All condition SubConditions have a selected index. Start building a list of possible document IDs.
                 foreach (var conditionSet in currentSchemaMap.Optimization.Conditions)
                 {
@@ -458,6 +459,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         }
                     }
                 }
+                */
 
                 //We are going to create a limited document catalog from the indexes.
 
@@ -544,30 +546,33 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Collapses all left-and-right condition values, compares them, and fills in the expression variables with the comparison result.
         /// </summary>
         private static void SetSchemaIntersectionConditionParameters(DocumentLookupOperation.Instance instance, NCalc.Expression expression,
-             Old_ConditionCollection conditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
+             ConditionCollection givenConditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
-            SetExpressionParametersRecursive(conditions);
+            SetExpressionParametersRecursive(givenConditions.Collection);
 
-            void SetExpressionParametersRecursive(List<Old_ConditionSet> conditionSets)
+            void SetExpressionParametersRecursive(List<ICondition> conditions)
             {
-                foreach (var conditionSet in conditionSets)
+                foreach (var condition in conditions)
                 {
-                    foreach (var condition in conditionSet)
+                    if (condition is ConditionGroup conditionGroup)
                     {
-                        if (condition.Children?.Count > 0)
-                        {
-                            SetExpressionParametersRecursive(condition.Children);
-                        }
+                        SetExpressionParametersRecursive(conditionGroup.Collection);
+                    }
+                    else if (condition is ConditionEntry conditionEntry)
+                    {
+                        var leftDocumentContent = joinScopedContentCache[conditionEntry.Left.SchemaAlias];
+                        var collapsedLeft = conditionEntry.Left.CollapseScalerQueryField(instance.Operation.Transaction,
+                            instance.Operation.Query, givenConditions.FieldCollection, leftDocumentContent);
 
-                        var leftDocumentContent = joinScopedContentCache[condition.Left.SchemaAlias];
-                        var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction,
-                            instance.Operation.Query, conditions.FieldCollection, leftDocumentContent);
+                        var rightDocumentContent = joinScopedContentCache[conditionEntry.Right.SchemaAlias];
+                        var collapsedRight = conditionEntry.Right.CollapseScalerQueryField(instance.Operation.Transaction,
+                            instance.Operation.Query, givenConditions.FieldCollection, rightDocumentContent);
 
-                        var rightDocumentContent = joinScopedContentCache[condition.Right.SchemaAlias];
-                        var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction,
-                            instance.Operation.Query, conditions.FieldCollection, rightDocumentContent);
-
-                        expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
+                        expression.Parameters[conditionEntry.ExpressionVariable] = conditionEntry.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
                     }
                 }
             }
@@ -763,25 +768,28 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Collapses all left-and-right condition values, compares them, and fills in the expression variables with the comparison result.
         /// </summary>
         private static void SetExpressionParameters(DocumentLookupOperation.Instance instance,
-            NCalc.Expression expression, Old_ConditionCollection conditions, KbInsensitiveDictionary<string?> auxiliaryFields)
+            NCalc.Expression expression, ConditionCollection givenConditions, KbInsensitiveDictionary<string?> auxiliaryFields)
         {
-            SetExpressionParametersRecursive(conditions);
+            SetExpressionParametersRecursive(givenConditions.Collection);
 
-            void SetExpressionParametersRecursive(List<Old_ConditionSet> conditionSets)
+            void SetExpressionParametersRecursive(List<ICondition> conditions)
             {
-                foreach (var conditionSet in conditionSets)
+                foreach (var condition in conditions)
                 {
-                    foreach (var condition in conditionSet)
+                    if (condition is ConditionGroup conditionGroup)
                     {
-                        if (condition.Children?.Count > 0)
-                        {
-                            SetExpressionParametersRecursive(condition.Children);
-                        }
+                        SetExpressionParametersRecursive(conditionGroup.Collection);
+                    }
+                    else if (condition is ConditionEntry conditionEntry)
+                    {
+                        var collapsedLeft = conditionEntry.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields);
+                        var collapsedRight = conditionEntry.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields);
 
-                        var collapsedLeft = condition.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, auxiliaryFields);
-                        var collapsedRight = condition.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, conditions.FieldCollection, auxiliaryFields);
-
-                        expression.Parameters[condition.ExpressionVariable] = condition.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
+                        expression.Parameters[conditionEntry.ExpressionVariable] = conditionEntry.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
+                    }
+                    else
+                    {
+                        throw new NotImplementedException();
                     }
                 }
             }

@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
     /// <summary>
     /// Used when parsing a condition, contains the left and right value along with the comparison operator.
     /// </summary>
-    internal class ConditionPair
+    internal class ConditionValuesPair
     {
         public IQueryField Right { get; set; }
         public LogicalQualifier Qualifier { get; set; }
@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// </summary>
         public string ExpressionVariable { get; set; }
 
-        public ConditionPair(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
+        public ConditionValuesPair(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
         {
             ExpressionVariable = expressionVariable;
             Left = left;
