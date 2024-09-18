@@ -260,7 +260,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                             //We either have a full or a partial index match.
                             indexSelection.IsFullIndexMatch = indexSelection.CoveredConditions.Select(o => o.Left.Value).Distinct().Count() == indexSelection.Index.Attributes.Count;
 
-                            conditionSet.UsableIndexes.Add(indexSelection);
+                            flattenedGroup.UsableIndexes.Add(indexSelection);
                         }
                     }
 
@@ -345,168 +345,168 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                     indexingConditionGroups.Add(indexingConditionGroup);
                 }
             }
+            }
             */
 
             #endregion
-        }
 
             return true;
         }
 
-    #endregion
+        #endregion
 
-    #region Optimization explanation.
+        #region Optimization explanation.
 
-    private static string Pad(int indentation) => "".PadLeft(indentation * 2, ' ');
+        private static string Pad(int indentation) => "".PadLeft(indentation * 2, ' ');
 
-    /// <summary>
-    /// This function makes returns a string that represents how and where indexes are used to satisfy a query.
-    /// </summary>
-    public string ExplainPlan(EngineCore core, PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, string workingSchemaPrefix)
-    {
-        var result = new StringBuilder();
-
-        /*
-        string schemaIdentifier = $"Schema: '{physicalSchema.Name}'";
-        if (!string.IsNullOrEmpty(workingSchemaPrefix))
+        /// <summary>
+        /// This function makes returns a string that represents how and where indexes are used to satisfy a query.
+        /// </summary>
+        public string ExplainPlan(EngineCore core, PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, string workingSchemaPrefix)
         {
-            schemaIdentifier += $", alias: '{workingSchemaPrefix}'";
-        }
+            var result = new StringBuilder();
 
-        result.AppendLine("BEGIN>•••••••••••••••••••••••••••••••••••••••••••••••••••••");
-        result.AppendLine($"• " + $"{schemaIdentifier}");
-        result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
-
-        if (optimization.IndexingConditionGroup.Count == 0)
-        {
-            //No indexing on this condition group.
-            result.AppendLine("• " + "Full schema scan:\r\n" + optimization.Conditions.ExplainFlat().Trim());
-        }
-        else
-        {
-            foreach (var indexingConditionGroup in optimization.IndexingConditionGroup) //Loop through the OR groups
-            {
-                foreach (var lookup in indexingConditionGroup.Lookups) //Loop thorough the AND conditions.
-                {
-                    ExplainLookupPlan(ref result, core, optimization, lookup, physicalSchema, workingSchemaPrefix);
-                }
-            }
-        }
-
-        result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••<END");
-        */
-
-        return result.ToString();
-    }
-
-    private void ExplainLookupPlan(ref StringBuilder result, EngineCore core, IndexingConditionOptimization optimization,
-        IndexingConditionLookup lookup, PhysicalSchema physicalSchema, string workingSchemaPrefix)
-    {
-        try
-        {
-            var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[0].Field.EnsureNotNull()];
-
-            foreach (var condition in conditionSet)
-            {
-                //TODO: Reimplement.
-                //ExplainLookupCondition(ref result, core, optimization, lookup, physicalSchema, workingSchemaPrefix, condition);
-            }
-        }
-        catch (Exception ex)
-        {
-            LogManager.Error($"Failed to match index documents for process id {optimization.Transaction.ProcessId}.", ex);
-            throw;
-        }
-    }
-
-    private void ExplainLookupCondition(ref StringBuilder result, EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
-        PhysicalSchema physicalSchema, string workingSchemaPrefix, ConditionEntry condition)
-    {
-        try
-        {
             /*
-            var indexAttribute = lookup.Index.Attributes[0].Field;
-
-            if (condition.LogicalQualifier == LogicalQualifier.Equals)
+            string schemaIdentifier = $"Schema: '{physicalSchema.Name}'";
+            if (!string.IsNullOrEmpty(workingSchemaPrefix))
             {
-                if (condition.Right.IsConstant)
-                {
-                    result.AppendLine("• " + Pad(0) + $"Index seek of '{lookup.Index.Name}' on partition: {lookup.Index.ComputePartition(condition.Right.Value)}.");
-                }
-                else
-                {
-                    result.AppendLine("• " + Pad(0) + $"Index seek of '{lookup.Index.Name}' on partition: single, determined at compile-time.");
-                }
+                schemaIdentifier += $", alias: '{workingSchemaPrefix}'";
+            }
+
+            result.AppendLine("BEGIN>•••••••••••••••••••••••••••••••••••••••••••••••••••••");
+            result.AppendLine($"• " + $"{schemaIdentifier}");
+            result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
+
+            if (optimization.IndexingConditionGroup.Count == 0)
+            {
+                //No indexing on this condition group.
+                result.AppendLine("• " + "Full schema scan:\r\n" + optimization.Conditions.ExplainFlat().Trim());
             }
             else
             {
-                if (condition.Right.IsConstant)
+                foreach (var indexingConditionGroup in optimization.IndexingConditionGroup) //Loop through the OR groups
                 {
-                    result.AppendLine("• " + Pad(0) + $"Index scan of '{lookup.Index.Name}' on partitions: 1-{lookup.Index.Partitions}.");
-                }
-                else
-                {
-                    result.AppendLine("• " + Pad(0) + $"Index scan of '{lookup.Index.Name}' on partitions: 1-{lookup.Index.Partitions}.");
+                    foreach (var lookup in indexingConditionGroup.Lookups) //Loop thorough the AND conditions.
+                    {
+                        ExplainLookupPlan(ref result, core, optimization, lookup, physicalSchema, workingSchemaPrefix);
+                    }
                 }
             }
 
-            if (condition.Right.IsConstant)
-            {
-                result.AppendLine("• " + Pad(1) + $"'{indexAttribute}' on constant '{condition.Left.Key}' {condition.LogicalQualifier} '{condition.Right.Value}'.");
-            }
-            else
-            {
-                result.AppendLine("• " + Pad(1) + $"'{indexAttribute}' on value of '{condition.Left.Key}' {condition.LogicalQualifier} '{condition.Right.Key}'.");
-            }
-
-            if (lookup.Index.Attributes.Count > 1)
-            {
-                //Further, recursively, process additional compound index attribute condition matches.
-                ExplainLookupConditionRecursive(ref result, core, optimization,
-                    lookup, physicalSchema, workingSchemaPrefix, condition, 1);
-            }
+            result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••<END");
             */
+
+            return result.ToString();
         }
-        catch (Exception ex)
+
+        private void ExplainLookupPlan(ref StringBuilder result, EngineCore core, IndexingConditionOptimization optimization,
+            IndexingConditionLookup lookup, PhysicalSchema physicalSchema, string workingSchemaPrefix)
         {
-            LogManager.Error($"Failed to match index by thread.", ex);
-            throw;
-        }
-    }
-
-    private static void ExplainLookupConditionRecursive(ref StringBuilder result,
-        EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
-        PhysicalSchema physicalSchema, string workingSchemaPrefix, ConditionEntry condition, int attributeDepth)
-    {
-        var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[attributeDepth].Field.EnsureNotNull()];
-
-        foreach (var singleCondition in conditionSet)
-        {
-            var indexAttribute = lookup.Index.Attributes[attributeDepth].Field;
-
-            if (attributeDepth == lookup.AttributeConditionSets.Count - 1)
+            try
             {
-                //TODO: Reimplement
-                /*
-                if (singleCondition.Right.IsConstant)
+                var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[0].Field.EnsureNotNull()];
+
+                foreach (var condition in conditionSet)
                 {
-                    result.AppendLine("• " + Pad(1 + attributeDepth) + $"Leaf seek '{indexAttribute}' on constant '{singleCondition.Left.Key}' {singleCondition.LogicalQualifier} '{singleCondition.Right.Value}'.");
+                    //TODO: Reimplement.
+                    //ExplainLookupCondition(ref result, core, optimization, lookup, physicalSchema, workingSchemaPrefix, condition);
+                }
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"Failed to match index documents for process id {optimization.Transaction.ProcessId}.", ex);
+                throw;
+            }
+        }
+
+        private void ExplainLookupCondition(ref StringBuilder result, EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, ConditionEntry condition)
+        {
+            try
+            {
+                /*
+                var indexAttribute = lookup.Index.Attributes[0].Field;
+
+                if (condition.LogicalQualifier == LogicalQualifier.Equals)
+                {
+                    if (condition.Right.IsConstant)
+                    {
+                        result.AppendLine("• " + Pad(0) + $"Index seek of '{lookup.Index.Name}' on partition: {lookup.Index.ComputePartition(condition.Right.Value)}.");
+                    }
+                    else
+                    {
+                        result.AppendLine("• " + Pad(0) + $"Index seek of '{lookup.Index.Name}' on partition: single, determined at compile-time.");
+                    }
                 }
                 else
                 {
-                    result.AppendLine("• " + Pad(1 + attributeDepth) + $"Leaf seek '{indexAttribute}' on value of '{singleCondition.Left.Key}' {singleCondition.LogicalQualifier} '{singleCondition.Right.Key}'.");
+                    if (condition.Right.IsConstant)
+                    {
+                        result.AppendLine("• " + Pad(0) + $"Index scan of '{lookup.Index.Name}' on partitions: 1-{lookup.Index.Partitions}.");
+                    }
+                    else
+                    {
+                        result.AppendLine("• " + Pad(0) + $"Index scan of '{lookup.Index.Name}' on partitions: 1-{lookup.Index.Partitions}.");
+                    }
+                }
+
+                if (condition.Right.IsConstant)
+                {
+                    result.AppendLine("• " + Pad(1) + $"'{indexAttribute}' on constant '{condition.Left.Key}' {condition.LogicalQualifier} '{condition.Right.Value}'.");
+                }
+                else
+                {
+                    result.AppendLine("• " + Pad(1) + $"'{indexAttribute}' on value of '{condition.Left.Key}' {condition.LogicalQualifier} '{condition.Right.Key}'.");
+                }
+
+                if (lookup.Index.Attributes.Count > 1)
+                {
+                    //Further, recursively, process additional compound index attribute condition matches.
+                    ExplainLookupConditionRecursive(ref result, core, optimization,
+                        lookup, physicalSchema, workingSchemaPrefix, condition, 1);
                 }
                 */
             }
-            else if (attributeDepth < lookup.AttributeConditionSets.Count - 1)
+            catch (Exception ex)
             {
-                //Further, recursively, process additional compound index attribute condition matches.
-                ExplainLookupConditionRecursive(ref result, core, optimization, lookup,
-                    physicalSchema, workingSchemaPrefix, condition, attributeDepth + 1);
+                LogManager.Error($"Failed to match index by thread.", ex);
+                throw;
             }
         }
-    }
 
-    #endregion
-}
+        private static void ExplainLookupConditionRecursive(ref StringBuilder result,
+            EngineCore core, IndexingConditionOptimization optimization, IndexingConditionLookup lookup,
+            PhysicalSchema physicalSchema, string workingSchemaPrefix, ConditionEntry condition, int attributeDepth)
+        {
+            var conditionSet = lookup.AttributeConditionSets[lookup.Index.Attributes[attributeDepth].Field.EnsureNotNull()];
+
+            foreach (var singleCondition in conditionSet)
+            {
+                var indexAttribute = lookup.Index.Attributes[attributeDepth].Field;
+
+                if (attributeDepth == lookup.AttributeConditionSets.Count - 1)
+                {
+                    //TODO: Reimplement
+                    /*
+                    if (singleCondition.Right.IsConstant)
+                    {
+                        result.AppendLine("• " + Pad(1 + attributeDepth) + $"Leaf seek '{indexAttribute}' on constant '{singleCondition.Left.Key}' {singleCondition.LogicalQualifier} '{singleCondition.Right.Value}'.");
+                    }
+                    else
+                    {
+                        result.AppendLine("• " + Pad(1 + attributeDepth) + $"Leaf seek '{indexAttribute}' on value of '{singleCondition.Left.Key}' {singleCondition.LogicalQualifier} '{singleCondition.Right.Key}'.");
+                    }
+                    */
+                }
+                else if (attributeDepth < lookup.AttributeConditionSets.Count - 1)
+                {
+                    //Further, recursively, process additional compound index attribute condition matches.
+                    ExplainLookupConditionRecursive(ref result, core, optimization, lookup,
+                        physicalSchema, workingSchemaPrefix, condition, attributeDepth + 1);
+                }
+            }
+        }
+
+        #endregion
+    }
 }

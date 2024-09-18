@@ -1,6 +1,6 @@
 select
 	sw.Id as SourceWordId,
-	sw.Text as SourceWord,
+	--sw.Text as SourceWord,
 	sl.Name as SourceLanguage
 	--tw.Id as TargetWordId,	
 --	tw.Text as TargetWord,
@@ -16,42 +16,12 @@ inner join WordList:Language as sl
 --inner join WordList:Language as tl
 	--on tl.Id = TW.LanguageId
 where
-	sw.Text = 'Gym'
-	AND sw.Text = 'Gym'
-	AND sw.Text = 'Gym'
-	OR (
-		sw.Text = 'Job'
-		AND sw.Text = 'Job'
-		AND sw.Text = 'Job'
-			OR (
-		sw.Text = 'Job'
-		AND sw.Text = 'Job'
-		AND sw.Text = 'Job'
-	)
-	)
-	AND sw.Text = 'Gym'
-	AND sw.Text = 'Gym'	
-/*
 	sl.Name = 'English'
-	or sl.Name = 'English'
-	or sl.Name = 'English'
-	or sl.Name = 'English'
-	
-	AND ( -- <-This should be a different condition set, not a child.
-		sw.Text = 'aaa'
-		and sw.Text = 'bbb'
-		
-		AND ( -- <-This should be a different condition set, not a child.
-			sw.aaa = 'aaa'
-			and sw.bbb = 'bbb'
-			and sw.ccc = 'ccc'
-			and sw.ddd = 'ddd'
-		)		
-		
-		and sw.Text = 'ccc'
-		and sw.Text = 'ddd'
+	AND (
+		sw.Text LIKE 'as%'
+		and sw.Text = '%by'
 	)
-*/
+		
 /*
 select 
 	sw.Id,

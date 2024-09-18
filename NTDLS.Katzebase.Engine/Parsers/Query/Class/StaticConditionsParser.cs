@@ -25,6 +25,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 .Replace(" OR ", " || ", StringComparison.InvariantCultureIgnoreCase)
                 .Replace(" AND ", " && ", StringComparison.InvariantCultureIgnoreCase);
 
+            if (conditionsText.Contains("sl.Name"))
+            {
+            }
+
             ParseRecursive(queryBatch, parentTokenizer, conditionCollection, conditionCollection, conditionsText, LogicalConnector.None);
 
             conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.Replace("  ", " ").Trim();
