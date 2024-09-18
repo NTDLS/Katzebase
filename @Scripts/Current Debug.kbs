@@ -9,8 +9,8 @@ FROM
 	WordList:Word as sw
 INNER JOIN WordList:Language as sl
 	ON sl.Id = sw.LanguageId
---INNER JOIN WordList:Synonym as S
-	--ON S.SourceWordId = sw.Id
+INNER JOIN WordList:Synonym as S
+	ON S.SourceWordId = sw.Id
 --INNER JOIN WordList:Word as tw
 	--ON tw.Id = S.TargetWordId
 --INNER JOIN WordList:Language as tl
@@ -29,7 +29,7 @@ WHERE
 		sw.Text LIKE 'au%'
 		AND sw.Text LIKE '%le'
 	)
-		
+
 /*
 select 
 	sw.Id,

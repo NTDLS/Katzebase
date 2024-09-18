@@ -235,7 +235,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (group.Connector == LogicalConnector.Or)
                 {
-                    accumulatedResults ??= new();
+                    accumulatedResults ??= new(); //Really though, we should never start with an OR connector...
 
                     var ptDocumentPointerUnion = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerUnion);
                     accumulatedResults.UnionWith(groupResults);
@@ -315,7 +315,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
                         else
                         {
-                            //This is most likely a join clause... or we have soemthing wrong.
+                            //This is most likely a join clause... or we have something wrong.
                         }
 
                         //Eliminated all but one index partitions.
