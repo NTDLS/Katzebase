@@ -10,6 +10,33 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 {
     internal class ConditionEntry : ICondition
     {
+        #region Internal classes.
+
+        /// <summary>
+        /// Used when parsing a condition, contains the left and right value along with the comparison operator.
+        /// </summary>
+        internal class ConditionValuesPair
+        {
+            public IQueryField Right { get; set; }
+            public LogicalQualifier Qualifier { get; set; }
+            public IQueryField Left { get; set; }
+
+            /// <summary>
+            /// The name of the variable in ConditionCollection.MathematicalExpression that is represented by this condition.
+            /// </summary>
+            public string ExpressionVariable { get; set; }
+
+            public ConditionValuesPair(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
+            {
+                ExpressionVariable = expressionVariable;
+                Left = left;
+                Qualifier = qualifier;
+                Right = right;
+            }
+        }
+
+        #endregion
+
         public string ExpressionVariable { get; set; }
         public IQueryField Left { get; set; }
         public LogicalQualifier Qualifier { get; set; }
@@ -28,12 +55,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             Right = pair.Right;
         }
 
-        public ConditionEntry(string expressionVariable, LogicalConnector connector, IQueryField left, LogicalQualifier qualifier, IQueryField right)
+        public ConditionEntry(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
         {
             ExpressionVariable = expressionVariable;
             Left = left;
             Qualifier = qualifier;
             Right = right;
+        }
+
+        public ICondition Clone()
+        {
+            return new ConditionEntry(ExpressionVariable, Left.Clone(), Qualifier, Right.Clone());
         }
 
         public bool IsMatch(Transaction transaction, string? collapsedLeft, string? collapsedRight)

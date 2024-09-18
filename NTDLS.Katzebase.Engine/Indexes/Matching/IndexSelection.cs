@@ -32,5 +32,20 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         {
             return Index.Name.GetHashCode();
         }
+
+        public IndexSelection Clone()
+        {
+            var clone = new IndexSelection(Index)
+            {
+                IsFullIndexMatch = IsFullIndexMatch,
+            };
+
+            foreach (var condition in CoveredConditions)
+            {
+                CoveredConditions.Add(condition);
+            }
+
+            return clone;
+        }
     }
 }

@@ -18,5 +18,22 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         {
             Connector = logicalConnector;
         }
+
+        public ICondition Clone()
+        {
+            var clone = new ConditionGroup(Connector);
+
+            foreach (var entry in Entries)
+            {
+                clone.Entries.Add(entry.Clone());
+            }
+
+            foreach (var usableIndex in UsableIndexes)
+            {
+                clone.UsableIndexes.Add(usableIndex.Clone());
+            }
+
+            return clone;
+        }
     }
 }

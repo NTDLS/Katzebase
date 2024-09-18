@@ -2,5 +2,6 @@
 {
     internal interface ICondition
     {
+        ICondition Clone();
     }
 }

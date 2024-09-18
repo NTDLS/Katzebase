@@ -8,8 +8,6 @@ using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Shared;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -27,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         public IndexingConditionOptimization(Transaction transaction, ConditionCollection conditions)
         {
             Transaction = transaction;
-            Conditions = conditions;//.Clone();
+            Conditions = conditions.Clone();
         }
 
         #region Builder.
@@ -42,8 +40,8 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
             var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
-            if (!BuildTree(optimization, query, core, transaction, indexCatalog, physicalSchema,
-                workingSchemaPrefix, givenConditionCollection.Entries, optimization.IndexingConditionGroup))
+            if (!BuildTree(optimization, query, core, transaction, indexCatalog,
+                physicalSchema, workingSchemaPrefix, optimization.IndexingConditionGroup))
             {
                 //Invalidate indexing optimization.
                 return new IndexingConditionOptimization(transaction, givenConditionCollection);
@@ -58,9 +56,9 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// </summary>
         private static bool BuildTree(IndexingConditionOptimization optimization, PreparedQuery query, EngineCore core,
             Transaction transaction, PhysicalIndexCatalog indexCatalog, PhysicalSchema physicalSchema, string workingSchemaPrefix,
-            List<ICondition> givenConditions, List<IndexingConditionGroup> indexingConditionGroups)
+             List<IndexingConditionGroup> indexingConditionGroups)
         {
-            var flattenedGroups = givenConditions.FlattenToGroups();
+            var flattenedGroups = optimization.Conditions.FlattenToGroups();
 
             #region Build list of usable indexes.
 

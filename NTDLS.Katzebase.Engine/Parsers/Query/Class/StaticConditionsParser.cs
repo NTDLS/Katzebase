@@ -25,10 +25,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 .Replace(" OR ", " || ", StringComparison.InvariantCultureIgnoreCase)
                 .Replace(" AND ", " && ", StringComparison.InvariantCultureIgnoreCase);
 
-            if (conditionsText.Contains("sl.Name"))
-            {
-            }
-
             ParseRecursive(queryBatch, parentTokenizer, conditionCollection, conditionCollection, conditionsText, LogicalConnector.None);
 
             conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.Replace("  ", " ").Trim();
@@ -86,7 +82,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
         }
 
-        private static ConditionValuesPair ParseRightAndLeft(ConditionCollection conditionCollection, Tokenizer parentTokenizer, Tokenizer tokenizer)
+        private static ConditionEntry.ConditionValuesPair ParseRightAndLeft(ConditionCollection conditionCollection, Tokenizer parentTokenizer, Tokenizer tokenizer)
         {
             int startLeftRightCaret = tokenizer.Caret;
             int startConditionSetCaret = tokenizer.Caret;
@@ -167,7 +163,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             var left = StaticParserField.Parse(parentTokenizer, leftExpressionString.EnsureNotNullOrEmpty(), conditionCollection.FieldCollection);
             var right = StaticParserField.Parse(parentTokenizer, rightExpressionString.EnsureNotNullOrEmpty(), conditionCollection.FieldCollection);
 
-            var conditionPair = new ConditionValuesPair(conditionCollection.NextExpressionVariable(), left, logicalQualifier, right);
+            var conditionPair = new ConditionEntry.ConditionValuesPair(conditionCollection.NextExpressionVariable(), left, logicalQualifier, right);
 
             //Replace the condition with the name of the variable that must be evaluated to determine the value for this condition.
             string conditionSetText = tokenizer.Substring(startConditionSetCaret, tokenizer.Caret - startConditionSetCaret).Trim();
