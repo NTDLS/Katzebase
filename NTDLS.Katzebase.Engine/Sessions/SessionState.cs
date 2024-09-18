@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// <summary>
         /// The UTC date/time that the session was created.
         /// </summary>
-        public DateTime LoginTime { get; set; } = DateTime.UtcNow;
+        public DateTime LoginTime { get; private set; } = DateTime.UtcNow;
 
         /// <summary>
         /// The last UTC date/time that the connection was interacted with.
@@ -40,22 +40,22 @@ namespace NTDLS.Katzebase.Engine.Sessions
         /// <summary>
         /// SessionId is produced by the client.
         /// </summary>
-        public Guid ConnectionId { get; set; }
+        public Guid ConnectionId { get; private set; }
 
         /// <summary>
         /// A user supplied client name to assist in identifying connection sources.
         /// </summary>
-        public string ClientName { get; set; }
+        public string ClientName { get; private set; }
 
         /// <summary>
         /// The name of the user logged in to the session.
         /// </summary>
-        public string Username { get; set; }
+        public string Username { get; private set; }
 
         /// <summary>
         /// Whether this session is a pre-login session. These are used by the engine to access data (like user accounts) to facilitate the login process.
         /// </summary>
-        public bool IsPreLogin { get; set; }
+        public bool IsPreLogin { get; private set; }
 
         public KbNameValuePair<KbConnectionSetting, double> UpsertConnectionSetting(KbConnectionSetting name, double value)
         {

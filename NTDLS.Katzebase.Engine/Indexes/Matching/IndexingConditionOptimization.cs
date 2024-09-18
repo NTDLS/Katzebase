@@ -8,6 +8,8 @@ using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Shared;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -50,118 +52,6 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             return optimization;
         }
 
-        private static void DistilConditionDocumentIdentifiers(List<ICondition> givenConditions, out List<ConditionEntry> outConditions)
-        {
-            outConditions = new List<ConditionEntry>();
-
-            foreach (var givenCondition in givenConditions)
-            {
-                if (givenCondition is ConditionGroup group)
-                {
-                    DistilConditionDocumentIdentifiers(group.Entries, outConditions);
-                }
-                else if (givenCondition is ConditionEntry entry)
-                {
-                    if (entry.Left is QueryFieldDocumentIdentifier)
-                    {
-                        outConditions.Add(entry);
-                    }
-                }
-                else
-                {
-                    throw new NotImplementedException();
-                }
-            }
-
-            static void DistilConditionDocumentIdentifiers(List<ICondition> conditions, List<ConditionEntry> refConditions)
-            {
-                foreach (var condition in conditions)
-                {
-                    if (condition is ConditionGroup group)
-                    {
-                        DistilConditionDocumentIdentifiers(group.Entries, refConditions);
-                    }
-                    else if (condition is ConditionEntry entry)
-                    {
-                        if (entry.Left is QueryFieldDocumentIdentifier)
-                        {
-                            refConditions.Add(entry);
-                        }
-                    }
-                    else
-                    {
-                        throw new NotImplementedException();
-                    }
-                }
-            }
-        }
-
-        private static List<ConditionGroup> FlattenConditionGroups(List<ICondition> givenConditions)
-        {
-            List<ConditionGroup> groups = new();
-
-            foreach (var givenCondition in givenConditions)
-            {
-                if (givenCondition is ConditionGroup group)
-                {
-                    groups.Add(group);
-                    FlattenConditionGroups(group.Entries, groups);
-                }
-            }
-
-            return groups;
-
-            static void FlattenConditionGroups(List<ICondition> conditions, List<ConditionGroup> refGroups)
-            {
-                foreach (var condition in conditions)
-                {
-                    if (condition is ConditionGroup group)
-                    {
-                        refGroups.Add(group);
-                        FlattenConditionGroups(group.Entries, refGroups);
-                    }
-                }
-            }
-        }
-
-        private static List<ConditionEntry> FlattenConditionEntries(List<ICondition> givenConditions)
-        {
-            List<ConditionEntry> entries = new();
-
-            foreach (var givenCondition in givenConditions)
-            {
-                if (givenCondition is ConditionGroup group)
-                {
-                    FlattenConditionEntries(group.Entries, entries);
-                }
-                else if (givenCondition is ConditionEntry entry)
-                {
-                    entries.Add(entry);
-                }
-                else
-                {
-                    throw new NotImplementedException();
-                }
-            }
-
-            return entries;
-
-            static void FlattenConditionEntries(List<ICondition> conditions, List<ConditionEntry> refEntries)
-            {
-                foreach (var condition in conditions)
-                {
-                    if (condition is ConditionGroup group)
-                    {
-                        FlattenConditionEntries(group.Entries, refEntries);
-                    }
-                    else if (condition is ConditionEntry entry)
-                    {
-                        refEntries.Add(entry);
-                    }
-                }
-            }
-        }
-
         /// <summary>
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// Called reclusively by BuildTree().
@@ -170,110 +60,117 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             Transaction transaction, PhysicalIndexCatalog indexCatalog, PhysicalSchema physicalSchema, string workingSchemaPrefix,
             List<ICondition> givenConditions, List<IndexingConditionGroup> indexingConditionGroups)
         {
-            var flattenedGroups = FlattenConditionGroups(givenConditions);
+            var flattenedGroups = givenConditions.FlattenToGroups();
 
-            DistilConditionDocumentIdentifiers(givenConditions, out var conditionsWithApplicableLeftDocumentIdentifiers);
+            #region Build list of usable indexes.
 
             foreach (var flattenedGroup in flattenedGroups)
             {
-                IndexingConditionGroup subGroup = new(flattenedGroup.Connector);
+                var subGroup = new IndexingConditionGroup(flattenedGroup.Connector);
 
-                foreach (var entry in flattenedGroup.Entries)
+                if (flattenedGroup.Entries.OfType<ConditionEntry>().Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)).Any() == false)
                 {
-                    #region Build list of usable indexes.
-
-                    if (conditionsWithApplicableLeftDocumentIdentifiers.Any(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)) == false)
+                    //Each "OR" condition group must have at least one potential indexable match for the selected schema,
+                    //  this is because we need to be able to create a full list of all possible documents for this schema,
+                    //  and if we have an "OR" group that does not further limit these documents by the given schema then
+                    //  we will have to do a full namespace scan anyway.
+                    if (flattenedGroup.Connector == LogicalConnector.Or)
                     {
-                        //Each "OR" condition group must have at least one potential indexable match for the selected schema,
-                        //  this is because we need to be able to create a full list of all possible documents for this schema,
-                        //  and if we have an "OR" group that does not further limit these documents by the given schema then
-                        //  we will have to do a full namespace scan anyway.
-                        continue;
-                        //return false; //Invalidate indexing optimization.
-                    }
-
-                    bool locatedGroupIndex = false;
-
-                    //Loop through all indexes, all their attributes and all conditions in this sub-condition
-                    //  for the given schema. Keep track of which indexes match each condition field.
-                    foreach (var physicalIndex in indexCatalog.Collection)
-                    {
-                        //Console.WriteLine($"Considering index: {physicalIndex.Name}");
-
-                        bool locatedIndexAttribute = false;
-
-                        var indexSelection = new IndexSelection(physicalIndex);
-                        foreach (var attribute in physicalIndex.Attributes)
-                        {
-                            locatedIndexAttribute = false;
-
-                            List<ConditionEntry> applicableConditions = new List<ConditionEntry>();
-
-                            if (string.IsNullOrEmpty(workingSchemaPrefix))
-                            {
-                                //For non-schema joins, we do not currently support indexing on anything other than constant expressions.
-                                //However, I think this could be implemented pretty easily.
-                                applicableConditions.AddRange(conditionsWithApplicableLeftDocumentIdentifiers
-                                    .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value)));
-                            }
-                            else
-                            {
-                                //For schema joins, we already have a schema document value cache in the lookup functions so we allow non-constants.
-                                applicableConditions.AddRange(conditionsWithApplicableLeftDocumentIdentifiers
-                                    .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)));
-                            }
-
-                            foreach (var condition in applicableConditions)
-                            {
-                                if (condition.Left is QueryFieldDocumentIdentifier leftValue)
-                                {
-                                    if (leftValue.FieldName?.Is(attribute.Field) == true)
-                                    {
-                                        if (StaticParserField.IsConstantExpression(condition.Right.Value))
-                                        {
-                                            //To save time while indexing, we are going to collapse the value here if the expression does not contain non-constants.
-                                            var constantValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
-
-                                            //TODO: Think about the nullability of constantValue.
-                                            condition.Right = new QueryFieldCollapsedValue(constantValue.EnsureNotNull());
-                                        }
-
-                                        indexSelection.CoveredConditions.Add(condition);
-                                        //Console.WriteLine($"Indexed: {condition.ConditionKey} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
-                                        locatedIndexAttribute = true;
-                                        locatedGroupIndex = true;
-                                    }
-                                }
-                            }
-
-                            if (locatedIndexAttribute == false)
-                            {
-                                //We want to match the index attributes in the order which they appear in the index, so if we find 
-                                //  one index attribute that we can not match to a condition then we need to break. In this case, we 
-                                //  will either use a better index (if found) or use this partial index match with leaf-distillation.
-                                break;
-                            }
-                        }
-
-                        if (indexSelection.CoveredConditions.Count > 0)
-                        {
-                            //We either have a full or a partial index match.
-                            indexSelection.IsFullIndexMatch = indexSelection.CoveredConditions.Select(o => o.Left.Value).Distinct().Count() == indexSelection.Index.Attributes.Count;
-
-                            flattenedGroup.UsableIndexes.Add(indexSelection);
-                        }
-                    }
-
-                    if (locatedGroupIndex == false)
-                    {
-                        //This group has no indexing, but since it does reference the
-                        //  given schema, we are going to have to do a full schema scan.
                         return false; //Invalidate indexing optimization.
                     }
+                    else
+                    {
+                        continue; //This group does not have conditions for the given schema, but this is an AND group, just skip the group.
+                    }
+                }
+
+                bool locatedGroupIndex = false;
+
+                //Loop through all indexes, all their attributes and all conditions in this sub-condition
+                //  for the given schema. Keep track of which indexes match each condition field.
+                foreach (var physicalIndex in indexCatalog.Collection)
+                {
+                    //Console.WriteLine($"Considering index: {physicalIndex.Name}");
+
+                    bool locatedIndexAttribute = false;
+
+                    var indexSelection = new IndexSelection(physicalIndex);
+                    foreach (var attribute in physicalIndex.Attributes)
+                    {
+                        locatedIndexAttribute = false;
+
+                        List<ConditionEntry> applicableConditions = new List<ConditionEntry>();
+
+                        if (string.IsNullOrEmpty(workingSchemaPrefix))
+                        {
+                            //For non-schema joins, we do not currently support indexing on anything other than constant expressions.
+                            //However, I think this could be implemented pretty easily.
+                            applicableConditions.AddRange(
+                                flattenedGroup.Entries.OfType<ConditionEntry>()
+                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value)));
+                        }
+                        else
+                        {
+                            //For schema joins, we already have a schema document value cache in the lookup functions so we allow non-constants.
+                            applicableConditions.AddRange(
+                                flattenedGroup.Entries.OfType<ConditionEntry>()
+                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)));
+                        }
+
+                        foreach (var condition in applicableConditions)
+                        {
+                            if (condition.Left is QueryFieldDocumentIdentifier leftValue)
+                            {
+                                if (leftValue.FieldName?.Is(attribute.Field) == true)
+                                {
+                                    if (StaticParserField.IsConstantExpression(condition.Right.Value))
+                                    {
+                                        //To save time while indexing, we are going to collapse the value here if the expression does not contain non-constants.
+                                        var constantValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
+
+                                        //TODO: Think about the nullability of constantValue.
+                                        condition.Right = new QueryFieldCollapsedValue(constantValue.EnsureNotNull());
+                                    }
+
+                                    indexSelection.CoveredConditions.Add(condition);
+                                    //Console.WriteLine($"Indexed: {condition.ConditionKey} is ({condition.Left} {condition.LogicalQualifier} {condition.Right})");
+                                    locatedIndexAttribute = true;
+                                    locatedGroupIndex = true;
+                                }
+                            }
+                        }
+
+                        if (locatedIndexAttribute == false)
+                        {
+                            //We want to match the index attributes in the order which they appear in the index, so if we find 
+                            //  one index attribute that we can not match to a condition then we need to break. In this case, we 
+                            //  will either use a better index (if found) or use this partial index match with leaf-distillation.
+                            break;
+                        }
+                    }
+
+                    if (indexSelection.CoveredConditions.Count > 0)
+                    {
+                        //We either have a full or a partial index match.
+                        indexSelection.IsFullIndexMatch = indexSelection.CoveredConditions.Select(o => o.Left.Value).Distinct().Count() == indexSelection.Index.Attributes.Count;
+
+                        flattenedGroup.UsableIndexes.Add(indexSelection);
+                    }
+                }
+
+                if (locatedGroupIndex == false)
+                {
+                    //This group has no indexing, but since it does reference the
+                    //  given schema, we are going to have to do a full schema scan.
+                    return false; //Invalidate indexing optimization.
                 }
             }
 
             #endregion
+
+            if (!transaction.Session.IsPreLogin)
+            {
+            }
 
             #region Select the best indexes from the usable indexes.
 
@@ -349,6 +246,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             */
 
             #endregion
+
 
             return true;
         }
