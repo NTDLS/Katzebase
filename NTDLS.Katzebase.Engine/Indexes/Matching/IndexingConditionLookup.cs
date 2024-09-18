@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
     /// </summary>
     internal class IndexingConditionLookup
     {
-        public PhysicalIndex Index { get; set; }
+        public IndexSelection IndexSelection { get; set; }
 
         /*
         For an index which is on LastName, FirstName, the conditions could look like this
@@ -20,9 +20,9 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// </summary>
         public Dictionary<string, List<ConditionEntry>> AttributeConditionSets { get; set; } = new();
 
-        public IndexingConditionLookup(PhysicalIndex index)
+        public IndexingConditionLookup(IndexSelection indexSelection)
         {
-            Index = index;
+            IndexSelection = indexSelection;
         }
     }
 }

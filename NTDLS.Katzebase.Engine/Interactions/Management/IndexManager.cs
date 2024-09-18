@@ -258,9 +258,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, ConditionGroup givenConditionGroup,
             PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
         {
-            //TODO: Do not use indexingConditionGroups, use optimization.Conditions recursively.
-            //TODO: Delete or otherwise cleanup indexingConditionGroups
-
             var thisGroupResults = MatchSchemaDocumentsByIndexingConditionLookup(optimization.Transaction,
                 query, givenConditionGroup.IndexLookup.EnsureNotNull(), physicalSchema, workingSchemaPrefix, keyValues);
 
@@ -293,7 +290,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             try
             {
-                var conditionEntries = indexLookup.AttributeConditionSets[indexLookup.Index.Attributes[0].Field.EnsureNotNull()];
+                var conditionEntries = indexLookup.AttributeConditionSets[indexLookup.IndexSelection.PhysicalIndex.Attributes[0].Field.EnsureNotNull()];
 
                 foreach (var condition in conditionEntries)
                 {
@@ -319,12 +316,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         }
 
                         //Eliminated all but one index partitions.
-                        indexPartitions.Add(indexLookup.Index.ComputePartition(keyValue));
+                        indexPartitions.Add(indexLookup.IndexSelection.PhysicalIndex.ComputePartition(keyValue));
                     }
                     else
                     {
                         //We have to search all index partitions.
-                        for (uint indexPartition = 0; indexPartition < indexLookup.Index.Partitions; indexPartition++)
+                        for (uint indexPartition = 0; indexPartition < indexLookup.IndexSelection.PhysicalIndex.Partitions; indexPartition++)
                         {
                             indexPartitions.Add(indexPartition);
                         }
@@ -348,7 +345,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             ptThreadQueue?.StopAndAccumulate();
                         }
 
-                        var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {indexLookup.Index.Name}");
+                        var ptThreadCompletion = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadCompletion, $"Index: {indexLookup.IndexSelection.PhysicalIndex.Name}");
                         queue.WaitForCompletion();
                         ptThreadCompletion?.StopAndAccumulate();
 
@@ -396,7 +393,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 Dictionary<uint, DocumentPointer> threadResults = new();
 
-                string pageDiskPath = instance.Operation.Lookup.Index.GetPartitionPagesFileName(instance.Operation.PhysicalSchema, instance.IndexPartition);
+                string pageDiskPath = instance.Operation.Lookup.IndexSelection.PhysicalIndex.GetPartitionPagesFileName(instance.Operation.PhysicalSchema, instance.IndexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Read);
 
                 List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
@@ -406,7 +403,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     workingPhysicalIndexLeaves = MatchIndexLeaves(instance.Operation.Transaction, instance.Operation.Query,
                         instance.Operation.Condition, workingPhysicalIndexLeaves, instance.Operation.Query.Conditions.FieldCollection, instance.Operation.KeyValues);
 
-                    if (instance.Operation.Lookup.Index.Attributes.Count == 1)
+                    if (instance.Operation.Lookup.IndexSelection.PhysicalIndex.Attributes.Count == 1)
                     {
                         //The index only has one attribute, so we are at the base where the document pointers are.
                         //(workingPhysicalIndexLeaves.FirstOrDefault()?.Documents?.Count > 0) //We found documents, we are at the base of the index.
@@ -444,7 +441,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             Dictionary<uint, DocumentPointer>? results = null;
 
-            var conditionSet = instance.Operation.Lookup.AttributeConditionSets[instance.Operation.Lookup.Index.Attributes[attributeDepth].Field.EnsureNotNull()];
+            var conditionSet = instance.Operation.Lookup.AttributeConditionSets[
+                instance.Operation.Lookup.IndexSelection.PhysicalIndex.Attributes[attributeDepth].Field.EnsureNotNull()];
 
             foreach (var condition in conditionSet)
             {

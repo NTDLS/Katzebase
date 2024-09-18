@@ -284,7 +284,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         var lookupOptimization = IndexingConditionOptimization.BuildTree(_core,
                             transactionReference.Transaction, preparedQuery, physicalSchema, schema.Conditions, schema.Prefix);
 
-                        var explanation = lookupOptimization.ExplainPlan(_core, physicalSchema, lookupOptimization, schema.Prefix);
+                        var explanation = lookupOptimization.ExplainPlan(_core, physicalSchema, lookupOptimization, preparedQuery, schema.Prefix);
 
                         transactionReference.Transaction.AddMessage(explanation, KbMessageType.Explain);
                     }
