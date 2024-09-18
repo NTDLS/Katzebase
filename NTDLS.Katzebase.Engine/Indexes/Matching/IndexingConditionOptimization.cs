@@ -262,16 +262,16 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                 schemaIdentifier += $", alias: [{workingSchemaPrefix}]";
             }
 
-            result.AppendLine("<BEGIN>••••••••••••••••••••••••••••••••••••••••••••••••••••");
+            result.AppendLine("<BEGIN>••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
             result.AppendLine($"• " + $"{schemaIdentifier}");
-            result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
+            result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
 
             foreach (var group in optimization.Conditions.Collection.OfType<ConditionGroup>())
             {
                 ExplainPlanRecursive(physicalSchema, optimization, workingSchemaPrefix, group, query, result);
             }
 
-            result.AppendLine("<END>••••••••••••••••••••••••••••••••••••••••••••••••••••••");
+            result.AppendLine("<END>••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
 
             return result.ToString();
         }

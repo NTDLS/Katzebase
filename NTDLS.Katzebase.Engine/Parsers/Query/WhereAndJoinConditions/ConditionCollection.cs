@@ -1,4 +1,7 @@
-﻿using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+﻿using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+using System.Text;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 {
@@ -44,11 +47,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             FieldCollection = new(queryBatch);
         }
 
-        public string ExplainOperations()
-        {
-            throw new NotImplementedException();
-        }
-
         public new ConditionCollection Clone()
         {
             var clone = new ConditionCollection(FieldCollection.QueryBatch)
@@ -72,5 +70,99 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
             return clone;
         }
+
+        #region Explain Operations.
+
+        private static string Pad(int indentation) => "".PadLeft(indentation * 2, ' ');
+
+        public string ExplainOperations()
+        {
+            var result = new StringBuilder();
+
+            result.AppendLine("<BEGIN>••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
+            if (!string.IsNullOrEmpty(SchemaAlias)) result.AppendLine($"• " + $"Schema: {SchemaAlias}");
+            result.AppendLine($"• " + $"Expression: {MathematicalExpression}");
+            result.AppendLine($"• " + $"Hash: {Hash}");
+            result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
+
+            foreach (var item in Collection)
+            {
+                if (item is ConditionGroup group)
+                {
+                    result.AppendLine("• " + Pad(0) + $"{(group.Connector != LogicalConnector.None ? $"{group.Connector} " : string.Empty)}(");
+
+                    ExplainOperationsRecursive(group, result);
+
+                    result.AppendLine("• " + Pad(0) + ")");
+                }
+                else if (item is ConditionEntry entry)
+                {
+                    throw new NotImplementedException("Condition entries are not supported at the root level.");
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
+            result.AppendLine("<END>••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
+
+            return result.ToString();
+        }
+
+        private void ExplainOperationsRecursive(ConditionGroup givenGroup, StringBuilder result, int depth = 0)
+        {
+            foreach (var item in givenGroup.Collection)
+            {
+                if (item is ConditionGroup group)
+                {
+                    result.AppendLine("• " + Pad(1 + depth) + $"{(group.Connector != LogicalConnector.None ? $"{group.Connector} " : string.Empty)}(");
+
+                    ExplainOperationsRecursive(group, result, depth + 1);
+
+                    result.AppendLine("• " + Pad(1 + depth) + ")");
+                }
+                else if (item is ConditionEntry entry)
+                {
+                    string left;
+                    if (entry.Left is QueryFieldExpressionNumeric)
+                    {
+                        left = "(Numeric Expression)";
+                    }
+                    else if (entry.Left is QueryFieldExpressionString)
+                    {
+                        left = "(String Expression)";
+                    }
+                    else
+                    {
+                        left = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Left.Value)}";
+                    }
+
+                    string right;
+                    if (entry.Right is QueryFieldExpressionNumeric)
+                    {
+                        right = "(Numeric Expression)";
+                    }
+                    else if (entry.Right is QueryFieldExpressionString)
+                    {
+                        right = "(String Expression)";
+                    }
+                    else
+                    {
+                        right = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Right.Value)}";
+                    }
+
+
+                    result.AppendLine("• " + Pad(1 + depth) + $"[{left}] {entry.Qualifier} [{right}].");
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
+        }
+
+        #endregion
     }
 }
