@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
             if (!BuildTree(optimization, query, core, transaction, indexCatalog, physicalSchema,
-                workingSchemaPrefix, givenConditionCollection.Collection, optimization.IndexingConditionGroup))
+                workingSchemaPrefix, givenConditionCollection.Entries, optimization.IndexingConditionGroup))
             {
                 //Invalidate indexing optimization.
                 return new IndexingConditionOptimization(transaction, givenConditionCollection);
@@ -53,15 +53,15 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
             foreach (var givenCondition in givenConditions)
             {
-                if (givenCondition is ConditionGroup conditionGroup)
+                if (givenCondition is ConditionGroup group)
                 {
-                    DistilConditionDocumentIdentifiers(conditionGroup.Collection, outConditions);
+                    DistilConditionDocumentIdentifiers(group.Entries, outConditions);
                 }
-                else if (givenCondition is ConditionEntry conditionEntry)
+                else if (givenCondition is ConditionEntry entry)
                 {
-                    if (conditionEntry.Left is QueryFieldDocumentIdentifier)
+                    if (entry.Left is QueryFieldDocumentIdentifier)
                     {
-                        outConditions.Add(conditionEntry);
+                        outConditions.Add(entry);
                     }
                 }
                 else
@@ -74,15 +74,15 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             {
                 foreach (var condition in conditions)
                 {
-                    if (condition is ConditionGroup conditionGroup)
+                    if (condition is ConditionGroup group)
                     {
-                        DistilConditionDocumentIdentifiers(conditionGroup.Collection, refConditions);
+                        DistilConditionDocumentIdentifiers(group.Entries, refConditions);
                     }
-                    else if (condition is ConditionEntry conditionEntry)
+                    else if (condition is ConditionEntry entry)
                     {
-                        if (conditionEntry.Left is QueryFieldDocumentIdentifier)
+                        if (entry.Left is QueryFieldDocumentIdentifier)
                         {
-                            refConditions.Add(conditionEntry);
+                            refConditions.Add(entry);
                         }
                     }
                     else
@@ -99,10 +99,10 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
             foreach (var givenCondition in givenConditions)
             {
-                if (givenCondition is ConditionGroup conditionGroup)
+                if (givenCondition is ConditionGroup group)
                 {
-                    groups.Add(conditionGroup);
-                    FlattenConditionGroups(conditionGroup.Collection, groups);
+                    groups.Add(group);
+                    FlattenConditionGroups(group.Entries, groups);
                 }
             }
 
@@ -112,10 +112,10 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             {
                 foreach (var condition in conditions)
                 {
-                    if (condition is ConditionGroup conditionGroup)
+                    if (condition is ConditionGroup group)
                     {
-                        refGroups.Add(conditionGroup);
-                        FlattenConditionGroups(conditionGroup.Collection, refGroups);
+                        refGroups.Add(group);
+                        FlattenConditionGroups(group.Entries, refGroups);
                     }
                 }
             }
@@ -129,17 +129,17 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             Transaction transaction, PhysicalIndexCatalog indexCatalog, PhysicalSchema physicalSchema, string workingSchemaPrefix,
             List<ICondition> givenConditions, List<IndexingConditionGroup> indexingConditionGroups)
         {
+            var flattened = FlattenConditionGroups(givenConditions);
+
             foreach (var givenCondition in givenConditions)
             {
                 DistilConditionDocumentIdentifiers(givenConditions, out var conditionsWithApplicableLeftDocumentIdentifiers);
 
                 #region Build list of usable indexes.
-
+                /*
                 FlattenConditionGroups(givenConditions);
 
-                /*
-
-                if (givenCondition.Count > 0)
+                if (givenCondition..Count > 0)
                 {
                     IndexingConditionGroup subGroup = new(conditionSet.Connector);
 
@@ -250,11 +250,12 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                         return false; //Invalidate indexing optimization.
                     }
                 }
-
+            */
                 #endregion
 
                 #region Select the best indexes from the usable indexes.
 
+                /*
                 if (conditionSet.UsableIndexes.Count > 0)
                 {
                     IndexingConditionGroup indexingConditionGroup = new(conditionSet.Connector);

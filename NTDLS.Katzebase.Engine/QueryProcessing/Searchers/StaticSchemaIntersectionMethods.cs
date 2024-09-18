@@ -389,7 +389,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
             }
 
-            if (instance.Operation.Query.Conditions.Collection.Count != 0)
+            if (instance.Operation.Query.Conditions.Entries.Count != 0)
             {
                 //Remove rows that do not match the the global query conditions (ones in the where clause).
                 resultingRows.FilterByWhereClauseConditions(instance);
@@ -548,27 +548,27 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         private static void SetSchemaIntersectionConditionParameters(DocumentLookupOperation.Instance instance, NCalc.Expression expression,
              ConditionCollection givenConditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
         {
-            SetExpressionParametersRecursive(givenConditions.Collection);
+            SetExpressionParametersRecursive(givenConditions.Entries);
 
             void SetExpressionParametersRecursive(List<ICondition> conditions)
             {
                 foreach (var condition in conditions)
                 {
-                    if (condition is ConditionGroup conditionGroup)
+                    if (condition is ConditionGroup group)
                     {
-                        SetExpressionParametersRecursive(conditionGroup.Collection);
+                        SetExpressionParametersRecursive(group.Entries);
                     }
-                    else if (condition is ConditionEntry conditionEntry)
+                    else if (condition is ConditionEntry entry)
                     {
-                        var leftDocumentContent = joinScopedContentCache[conditionEntry.Left.SchemaAlias];
-                        var collapsedLeft = conditionEntry.Left.CollapseScalerQueryField(instance.Operation.Transaction,
+                        var leftDocumentContent = joinScopedContentCache[entry.Left.SchemaAlias];
+                        var collapsedLeft = entry.Left.CollapseScalerQueryField(instance.Operation.Transaction,
                             instance.Operation.Query, givenConditions.FieldCollection, leftDocumentContent);
 
-                        var rightDocumentContent = joinScopedContentCache[conditionEntry.Right.SchemaAlias];
-                        var collapsedRight = conditionEntry.Right.CollapseScalerQueryField(instance.Operation.Transaction,
+                        var rightDocumentContent = joinScopedContentCache[entry.Right.SchemaAlias];
+                        var collapsedRight = entry.Right.CollapseScalerQueryField(instance.Operation.Transaction,
                             instance.Operation.Query, givenConditions.FieldCollection, rightDocumentContent);
 
-                        expression.Parameters[conditionEntry.ExpressionVariable] = conditionEntry.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
+                        expression.Parameters[entry.ExpressionVariable] = entry.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
                     }
                     else
                     {
@@ -770,22 +770,22 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         private static void SetExpressionParameters(DocumentLookupOperation.Instance instance,
             NCalc.Expression expression, ConditionCollection givenConditions, KbInsensitiveDictionary<string?> auxiliaryFields)
         {
-            SetExpressionParametersRecursive(givenConditions.Collection);
+            SetExpressionParametersRecursive(givenConditions.Entries);
 
             void SetExpressionParametersRecursive(List<ICondition> conditions)
             {
                 foreach (var condition in conditions)
                 {
-                    if (condition is ConditionGroup conditionGroup)
+                    if (condition is ConditionGroup group)
                     {
-                        SetExpressionParametersRecursive(conditionGroup.Collection);
+                        SetExpressionParametersRecursive(group.Entries);
                     }
-                    else if (condition is ConditionEntry conditionEntry)
+                    else if (condition is ConditionEntry entry)
                     {
-                        var collapsedLeft = conditionEntry.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields);
-                        var collapsedRight = conditionEntry.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields);
+                        var collapsedLeft = entry.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields);
+                        var collapsedRight = entry.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields);
 
-                        expression.Parameters[conditionEntry.ExpressionVariable] = conditionEntry.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
+                        expression.Parameters[entry.ExpressionVariable] = entry.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
                     }
                     else
                     {

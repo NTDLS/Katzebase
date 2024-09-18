@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
     {
         public LogicalConnector Connector { get; set; }
 
-        public List<ICondition> Collection { get; set; } = new();
+        public List<ICondition> Entries { get; set; } = new();
 
         public ConditionGroup(LogicalConnector logicalConnector)
         {
