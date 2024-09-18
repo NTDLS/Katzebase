@@ -100,5 +100,30 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         /// </summary>
         public static List<ConditionEntry> FlattenToDocumentIdentifiers(this ConditionCollection givenConditions)
             => givenConditions.Entries.FlattenToDocumentIdentifiers();
+
+        /// <summary>
+        /// Rolls through a condition group, producing a flat list of the entry references where the left side is a document identifier.
+        /// </summary>
+        public static List<ConditionEntry> FlattenToDocumentIdentifiers(this ConditionGroup givenConditionGroups)
+        {
+            var results = new List<ConditionEntry>();
+
+            foreach (var groupEntry in givenConditionGroups.Entries)
+            {
+                if (groupEntry is ConditionEntry entry)
+                {
+                    if (entry.Left is QueryFieldDocumentIdentifier)
+                    {
+                        results.Add(entry);
+                    }
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+            }
+
+            return results;
+        }
     }
 }

@@ -222,15 +222,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
         {
             var ptIndexSearch = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.IndexSearch, $"Schema: {workingSchemaPrefix}");
-            var accumulatedResults = DoStuffRecursive(optimization.IndexingConditionGroup, physicalSchema, optimization, query, workingSchemaPrefix, keyValues);
+
+            var accumulatedResults = MatchSchemaDocumentsByConditionsClauseRecursive(
+                optimization.IndexingConditionGroup, physicalSchema, optimization, query, workingSchemaPrefix, keyValues);
+
             ptIndexSearch?.StopAndAccumulate();
 
             return accumulatedResults;
         }
 
-        private Dictionary<uint, DocumentPointer> DoStuffRecursive(List<IndexingConditionGroup> indexingConditionGroups, PhysicalSchema physicalSchema,
-            IndexingConditionOptimization optimization, PreparedQuery query, string workingSchemaPrefix,
-            KbInsensitiveDictionary<string?>? keyValues = null)
+        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseRecursive(
+            List<IndexingConditionGroup> indexingConditionGroups, PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
+            PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
         {
             var accumulatedResults = new Dictionary<uint, DocumentPointer>();
 
@@ -255,7 +258,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (indexingConditionGroup.SubIndexingConditionGroups.Count > 0)
                 {
-                    //var subGroupResults = DoStuffRecursive(indexingConditionGroup.SubIndexingConditionGroups, physicalSchema, optimization, query, workingSchemaPrefix, keyValues);
+                    //var subGroupResults = MatchSchemaDocumentsByConditionsClauseRecursive(
+                    //  indexingConditionGroup.SubIndexingConditionGroups, physicalSchema, optimization, query, workingSchemaPrefix, keyValues);
+
                     //accumulatedResults.Intersect(subGroupResults);
                     //accumulatedResults.UnionWith(subGroupResults);
                 }

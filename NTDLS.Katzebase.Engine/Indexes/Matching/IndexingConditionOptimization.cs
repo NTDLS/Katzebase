@@ -59,13 +59,14 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             Transaction transaction, PhysicalIndexCatalog indexCatalog, PhysicalSchema physicalSchema, string workingSchemaPrefix,
              List<IndexingConditionGroup> indexingConditionGroups)
         {
+            //We only flatten the condition groups because its easer to work with them this way,
+            //    these are references to the optimizers copy of the nested groups, so changes
+            //    made here affect the condition groups/entries (such as assigning indexes).
             var flattenedGroups = optimization.Conditions.FlattenToGroups();
-
-            #region Build list of usable indexes.
 
             foreach (var flattenedGroup in flattenedGroups)
             {
-                var subGroup = new IndexingConditionGroup(flattenedGroup.Connector);
+                #region Build list of usable indexes.
 
                 if (flattenedGroup.Entries.OfType<ConditionEntry>().Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)).Any() == false)
                 {
@@ -163,89 +164,83 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                     //  given schema, we are going to have to do a full schema scan.
                     return false; //Invalidate indexing optimization.
                 }
-            }
 
-            #endregion
+                #endregion
 
-            if (!transaction.Session.IsPreLogin)
-            {
-            }
+                #region Select the best indexes from the usable indexes.
 
-            #region Select the best indexes from the usable indexes.
-
-            /*
-            if (conditionSet.UsableIndexes.Count > 0)
-            {
-                IndexingConditionGroup indexingConditionGroup = new(conditionSet.Connector);
-
-                //Here we are ordering by the "full match" indexes first, then descending by the number of index attributes.
-                //The thinking being that we want to prefer full index matches that contain multiple index attributes
-                //  (composite indexes), then we want to look at non-composite full matches, and finally let any partial
-                //  match composite indexes pick up any remaining un-optimized conditions, but we want those to be ordered
-                //  ascending by the index attribute account because we want the smallest non-full-match composite indexes
-                //  because they require less work to distill later.
-
-                var preferenceOrderedIndexSelections = new List<IndexSelection>();
-
-                var fullMatches = conditionSet.UsableIndexes
-                    .Where(o => o.IsFullIndexMatch == true && o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 0)
-                    .OrderByDescending(o => o.CoveredConditions.Count).ToList();
-                preferenceOrderedIndexSelections.AddRange(fullMatches);
-
-                var partialMatches = conditionSet.UsableIndexes
-                    .Where(o => o.IsFullIndexMatch == false && o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 0)
-                    .OrderBy(o => o.CoveredConditions.Count).ToList();
-                preferenceOrderedIndexSelections.AddRange(partialMatches);
-
-                foreach (var indexSelection in preferenceOrderedIndexSelections)
+                if (flattenedGroup.UsableIndexes.Count > 0)
                 {
-                    var indexingConditionLookup = new IndexingConditionLookup(indexSelection.Index);
+                    IndexingConditionGroup indexingConditionGroup = new(flattenedGroup.Connector);
 
-                    //Find the condition fields that match the index attributes.
-                    foreach (var attribute in indexSelection.Index.Attributes)
+                    var conditionsWithApplicableLeftDocumentIdentifiers = flattenedGroup.FlattenToDocumentIdentifiers();
+
+                    //Here we are ordering by the "full match" indexes first, then descending by the number of index attributes.
+                    //The thinking being that we want to prefer full index matches that contain multiple index attributes
+                    //  (composite indexes), then we want to look at non-composite full matches, and finally let any partial
+                    //  match composite indexes pick up any remaining un-optimized conditions, but we want those to be ordered
+                    //  ascending by the index attribute account because we want the smallest non-full-match composite indexes
+                    //  because they require less work to distill later.
+
+                    var preferenceOrderedIndexSelections = new List<IndexSelection>();
+
+                    var fullMatches = flattenedGroup.UsableIndexes
+                        .Where(o => o.IsFullIndexMatch == true && o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 0)
+                        .OrderByDescending(o => o.CoveredConditions.Count).ToList();
+                    preferenceOrderedIndexSelections.AddRange(fullMatches);
+
+                    var partialMatches = flattenedGroup.UsableIndexes
+                        .Where(o => o.IsFullIndexMatch == false && o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 0)
+                        .OrderBy(o => o.CoveredConditions.Count).ToList();
+                    preferenceOrderedIndexSelections.AddRange(partialMatches);
+
+                    foreach (var indexSelection in preferenceOrderedIndexSelections)
                     {
-                        //For non-schema joins, we do not currently support indexing on anything other than constant expressions.
-                        //However, I think this could be implemented pretty easily.
-                        //For schema joins, we already have a schema document value cache in the lookup functions so we allow non-constants.
-                        //Which is th purpose of: "&& (o.Right is QueryFieldCollapsedValue || !string.IsNullOrEmpty(workingSchemaPrefix))"
+                        var indexingConditionLookup = new IndexingConditionLookup(indexSelection.Index);
 
-                        var matchedConditions = conditionsWithApplicableLeftDocumentIdentifiers
-                            .Where(o =>
-                                   o.Left is QueryFieldDocumentIdentifier identifier
-                                && (o.Right is QueryFieldCollapsedValue || !string.IsNullOrEmpty(workingSchemaPrefix))
-                                && identifier.SchemaAlias.Is(workingSchemaPrefix)
-                                && o.IsIndexOptimized == false
-                                && identifier.FieldName.Is(attribute.Field) == true).ToList();
-
-                        if (matchedConditions.Count == 0)
+                        //Find the condition fields that match the index attributes.
+                        foreach (var attribute in indexSelection.Index.Attributes)
                         {
-                            break; //No additional condition fields were found for this index attribute.
+                            //For non-schema joins, we do not currently support indexing on anything other than constant expressions.
+                            //However, I think this could be implemented pretty easily.
+                            //For schema joins, we already have a schema document value cache in the lookup functions so we allow non-constants.
+                            //Which is th purpose of: "&& (o.Right is QueryFieldCollapsedValue || !string.IsNullOrEmpty(workingSchemaPrefix))"
+
+                            var matchedConditions = conditionsWithApplicableLeftDocumentIdentifiers
+                                .Where(o =>
+                                       o.Left is QueryFieldDocumentIdentifier identifier
+                                    && (o.Right is QueryFieldCollapsedValue || !string.IsNullOrEmpty(workingSchemaPrefix))
+                                    && identifier.SchemaAlias.Is(workingSchemaPrefix)
+                                    && o.IsIndexOptimized == false
+                                    && identifier.FieldName.Is(attribute.Field) == true).ToList();
+
+                            if (matchedConditions.Count == 0)
+                            {
+                                break; //No additional condition fields were found for this index attribute.
+                            }
+
+                            foreach (var condition in matchedConditions)
+                            {
+                                condition.IsIndexOptimized = true;
+                            }
+
+                            indexingConditionLookup.AttributeConditionSets.Add(attribute.Field.EnsureNotNull(), matchedConditions);
                         }
 
-                        foreach (var condition in matchedConditions)
+                        if (indexingConditionLookup.AttributeConditionSets.Count > 0)
                         {
-                            condition.IsIndexOptimized = true;
+                            indexingConditionGroup.Lookups.Add(indexingConditionLookup);
                         }
-
-                        indexingConditionLookup.AttributeConditionSets.Add(attribute.Field.EnsureNotNull(), matchedConditions);
                     }
 
-                    if (indexingConditionLookup.AttributeConditionSets.Count > 0)
+                    if (indexingConditionGroup.Lookups.Count > 0)
                     {
-                        indexingConditionGroup.Lookups.Add(indexingConditionLookup);
+                        indexingConditionGroups.Add(indexingConditionGroup);
                     }
                 }
 
-                if (indexingConditionGroup.Lookups.Count > 0)
-                {
-                    indexingConditionGroups.Add(indexingConditionGroup);
-                }
+                #endregion
             }
-            }
-            */
-
-            #endregion
-
 
             return true;
         }
