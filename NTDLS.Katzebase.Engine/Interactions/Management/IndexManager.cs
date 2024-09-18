@@ -233,17 +233,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var groupResults = MatchSchemaDocumentsByConditionsClauseRecursive(
                     physicalSchema, optimization, group, query, workingSchemaPrefix, keyValues);
 
-                var ptDocumentPointerIntersect = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                 if (group.Connector == LogicalConnector.Or)
                 {
                     accumulatedResults ??= new();
+
+                    var ptDocumentPointerUnion = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerUnion);
                     accumulatedResults.UnionWith(groupResults);
+                    ptDocumentPointerUnion?.StopAndAccumulate();
                 }
-                else
+                else // LogicalConnector.And || LogicalConnector.None
                 {
+                    var ptDocumentPointerIntersect = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                     accumulatedResults = accumulatedResults.IntersectWith(groupResults);
+                    ptDocumentPointerIntersect?.StopAndAccumulate();
                 }
-                ptDocumentPointerIntersect?.StopAndAccumulate();
             }
 
             ptIndexSearch?.StopAndAccumulate();
@@ -266,16 +269,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var childGroupResults = MatchSchemaDocumentsByConditionsClauseRecursive(
                      physicalSchema, optimization, group, query, workingSchemaPrefix, keyValues);
 
-                var ptDocumentPointerIntersect = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                 if (group.Connector == LogicalConnector.Or)
                 {
+                    var ptDocumentPointerUnion = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerUnion);
                     thisGroupResults.UnionWith(childGroupResults);
+                    ptDocumentPointerUnion?.StopAndAccumulate();
                 }
-                else
+                else // LogicalConnector.And || LogicalConnector.None
                 {
+                    var ptDocumentPointerIntersect = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.DocumentPointerIntersect);
                     thisGroupResults = thisGroupResults.IntersectWith(childGroupResults);
+                    ptDocumentPointerIntersect?.StopAndAccumulate();
                 }
-                ptDocumentPointerIntersect?.StopAndAccumulate();
             }
 
             return thisGroupResults;
