@@ -104,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         /// <summary>
         /// Rolls through a condition group, producing a flat list of the entry references where the left side is a document identifier.
         /// </summary>
-        public static List<ConditionEntry> FlattenToDocumentIdentifiers(this ConditionGroup givenConditionGroups)
+        public static List<ConditionEntry> ThisLevelDocumentIdentifiers(this ConditionGroup givenConditionGroups)
         {
             var results = new List<ConditionEntry>();
 
@@ -116,6 +116,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
                     {
                         results.Add(entry);
                     }
+                }
+                else if (groupEntry is ConditionGroup)
+                {
+                    //We only get the current level, so ignore these.
                 }
                 else
                 {

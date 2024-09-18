@@ -41,8 +41,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
             var indexCatalog = core.Indexes.AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
 
-            if (!BuildTree(optimization, query, core, transaction, indexCatalog,
-                physicalSchema, workingSchemaPrefix, optimization.IndexingConditionGroup))
+            if (!BuildTree(optimization, query, transaction, indexCatalog, workingSchemaPrefix, optimization.IndexingConditionGroup))
             {
                 //Invalidate indexing optimization.
                 return new IndexingConditionOptimization(transaction, conditions);
@@ -55,9 +54,9 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// Called reclusively by BuildTree().
         /// </summary>
-        private static bool BuildTree(IndexingConditionOptimization optimization, PreparedQuery query, EngineCore core,
-            Transaction transaction, PhysicalIndexCatalog indexCatalog, PhysicalSchema physicalSchema, string workingSchemaPrefix,
-             List<IndexingConditionGroup> indexingConditionGroups)
+        private static bool BuildTree(IndexingConditionOptimization optimization, PreparedQuery query,
+            Transaction transaction, PhysicalIndexCatalog indexCatalog, string workingSchemaPrefix,
+            List<IndexingConditionGroup> indexingConditionGroups)
         {
             //We only flatten the condition groups because its easer to work with them this way,
             //    these are references to the optimizers copy of the nested groups, so changes
@@ -173,7 +172,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                 {
                     IndexingConditionGroup indexingConditionGroup = new(flattenedGroup.Connector);
 
-                    var conditionsWithApplicableLeftDocumentIdentifiers = flattenedGroup.FlattenToDocumentIdentifiers();
+                    var conditionsWithApplicableLeftDocumentIdentifiers = flattenedGroup.ThisLevelDocumentIdentifiers();
 
                     //Here we are ordering by the "full match" indexes first, then descending by the number of index attributes.
                     //The thinking being that we want to prefer full index matches that contain multiple index attributes

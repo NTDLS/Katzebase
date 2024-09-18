@@ -1,25 +1,33 @@
-select
+SELECT
 	sw.Id as SourceWordId,
-	--sw.Text as SourceWord,
+	sw.Text as SourceWord,
 	sl.Name as SourceLanguage
 	--tw.Id as TargetWordId,	
---	tw.Text as TargetWord,
+	--tw.Text as TargetWord,
 	--tl.Name as TargetLanguage
-from
+FROM
 	WordList:Word as sw
-inner join WordList:Language as sl
-	on sl.Id = sw.LanguageId
---inner join WordList:Synonym as S
-	--on S.SourceWordId = sw.Id
---inner join WordList:Word as tw
-	--on tw.Id = S.TargetWordId
---inner join WordList:Language as tl
-	--on tl.Id = TW.LanguageId
-where
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+--INNER JOIN WordList:Synonym as S
+	--ON S.SourceWordId = sw.Id
+--INNER JOIN WordList:Word as tw
+	--ON tw.Id = S.TargetWordId
+--INNER JOIN WordList:Language as tl
+	--ON tl.Id = TW.LanguageId
+WHERE
 	sl.Name = 'English'
 	AND (
 		sw.Text LIKE 'as%'
-		and sw.Text = '%by'
+		AND sw.Text LIKE '%er'
+		OR (
+			sw.Text LIKE 'Sp%'
+			and sw.Text LIKE '%sh'
+		)
+	)
+	OR (
+		sw.Text LIKE 'au%'
+		AND sw.Text LIKE '%le'
 	)
 		
 /*
