@@ -1,8 +1,5 @@
 ﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
@@ -12,7 +9,6 @@ using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Shared;
 using System.Text;
-using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
@@ -253,9 +249,34 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
         #region Optimization explanation.
 
-        private static string Pad(int indentation) => "".PadLeft(indentation * 2, ' ');
+        /// <summary>
+        /// This function makes returns a string that represents how and where indexes are used to satisfy a query.
+        /// </summary>
+        public static string ExplainPlan(PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, PreparedQuery query, string workingSchemaPrefix)
+        {
+            var result = new StringBuilder();
 
-        private void ExplainPlanRecursive(PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
+            string schemaIdentifier = $"Schema: [{physicalSchema.Name}]";
+            if (!string.IsNullOrEmpty(workingSchemaPrefix))
+            {
+                schemaIdentifier += $", alias: [{workingSchemaPrefix}]";
+            }
+
+            result.AppendLine("<BEGIN>••••••••••••••••••••••••••••••••••••••••••••••••••••");
+            result.AppendLine($"• " + $"{schemaIdentifier}");
+            result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
+
+            foreach (var group in optimization.Conditions.Collection.OfType<ConditionGroup>())
+            {
+                ExplainPlanRecursive(physicalSchema, optimization, workingSchemaPrefix, group, query, result);
+            }
+
+            result.AppendLine("<END>••••••••••••••••••••••••••••••••••••••••••••••••••••••");
+
+            return result.ToString();
+        }
+
+        private static void ExplainPlanRecursive(PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
             string workingSchemaPrefix, ConditionGroup givenConditionGroup, PreparedQuery query, StringBuilder result)
         {
             if (givenConditionGroup.IndexLookup != null)
@@ -301,34 +322,6 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                     }
                 }
             }
-        }
-
-        /// <summary>
-        /// This function makes returns a string that represents how and where indexes are used to satisfy a query.
-        /// </summary>
-        public string ExplainPlan(EngineCore core,
-            PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, PreparedQuery query, string workingSchemaPrefix)
-        {
-            var result = new StringBuilder();
-
-            string schemaIdentifier = $"Schema: [{physicalSchema.Name}]";
-            if (!string.IsNullOrEmpty(workingSchemaPrefix))
-            {
-                schemaIdentifier += $", alias: [{workingSchemaPrefix}]";
-            }
-
-            result.AppendLine("<BEGIN>••••••••••••••••••••••••••••••••••••••••••••••••••••");
-            result.AppendLine($"• " + $"{schemaIdentifier}");
-            result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
-
-            foreach (var group in optimization.Conditions.Collection.OfType<ConditionGroup>())
-            {
-                ExplainPlanRecursive(physicalSchema, optimization, workingSchemaPrefix, group, query, result);
-            }
-
-            result.AppendLine("<END>••••••••••••••••••••••••••••••••••••••••••••••••••••••");
-
-            return result.ToString();
         }
 
         #endregion
