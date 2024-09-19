@@ -1,10 +1,21 @@
-SELECT
-	sw.Id as SourceWordId,
-	sw.Text as SourceWord,
-	sl.Name as SourceLanguage,
-	tw.Id as TargetWordId,	
-	tw.Text as TargetWord,
-	tl.Name as TargetLanguage
+UPDATE
+	Test
+SET
+	SourceLanguage = Length(TargetWord) + 'Test'
+WHERE
+	TargetLanguage = 'Test'
+
+--select * from Test
+
+/*
+CREATE INDEX IX_Language (
+	Name,
+	Id
+) ON WordList:Language
+*/
+
+/*
+DELETE
 FROM
 	WordList:Word as sw
 INNER JOIN WordList:Language as sl
@@ -16,9 +27,9 @@ INNER JOIN WordList:Word as tw
 INNER JOIN WordList:Language as tl
 	ON tl.Id = TW.LanguageId
 WHERE
-	--sw.Text = 'job'
-    tl.Name = 'English'
-
+	sw.Text = 'job'
+    and tl.Name = 'English'
+*/
 
 
 --select Text from WordList:Word as sw where sw.Text = 'Gym' 

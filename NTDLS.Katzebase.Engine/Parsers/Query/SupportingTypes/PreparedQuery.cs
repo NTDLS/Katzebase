@@ -98,6 +98,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 
         #endregion
 
+        #region Update Statement.
+
+        public List<string> UpdateFieldNames { get; set; } = new();
+
+        public List<QueryFieldCollection>? UpdateFieldValues { get; set; }
+
+        #endregion
+
         #region Insert Statement.
 
         /// <summary>

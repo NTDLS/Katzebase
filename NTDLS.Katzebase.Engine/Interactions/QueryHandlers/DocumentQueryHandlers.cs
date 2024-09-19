@@ -3,6 +3,7 @@ using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.QueryProcessing;
@@ -194,8 +195,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         /// <returns></returns>
         internal KbActionResponse ExecuteUpdate(SessionState session, PreparedQuery preparedQuery)
         {
-            throw new NotImplementedException("TODO:");
-            /*
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
@@ -219,42 +218,44 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     var physicalDocument = _core.Documents.AcquireDocument
                         (transactionReference.Transaction, physicalSchema, documentPointer, LockOperation.Write);
 
-                    foreach (var updateValue in preparedQuery.UpdateValues)
+                    var queryFieldCollection = preparedQuery.UpdateFieldValues.EnsureNotNull().First();
+
+                    //Fill in the auxiliaryFields with the values from the document which we are updating.
+                    //TODO: This should also be updated to support getting values from multiple schemas.
+                    var auxiliaryFields = new KbInsensitiveDictionary<string?>();
+                    foreach (var documentIdentifier in queryFieldCollection.DocumentIdentifiers)
                     {
-                        string? fieldValue = string.Empty;
-
-                        //Execute functions
-                        if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
+                        if (auxiliaryFields.ContainsKey(documentIdentifier.Value.FieldName) == false)
                         {
-                            //fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(transactionReference.Transaction, updateValue.Value, physicalDocument.Elements);
-                            throw new NotImplementedException("Reimplement scaler functions for update statements");
+                            if (physicalDocument.Elements.TryGetValue(documentIdentifier.Value.FieldName, out var documentFieldValue))
+                            {
+                                auxiliaryFields.Add(documentIdentifier.Value.FieldName, documentFieldValue);
+                            }
                         }
-                        else if (updateValue.Value is FunctionConstantParameter functionConstantParameter)
+                    }
+
+                    foreach (var updateValue in queryFieldCollection)
+                    {
+                        var collapsedValue = updateValue.Expression.CollapseScalerQueryField(
+                            transactionReference.Transaction, preparedQuery, queryFieldCollection, auxiliaryFields);
+
+                        if (physicalDocument.Elements.ContainsKey(updateValue.Alias))
                         {
-                            fieldValue = functionConstantParameter.RawValue;
+                            physicalDocument.Elements[updateValue.Alias] = collapsedValue;
                         }
                         else
                         {
-                            throw new KbNotImplementedException($"Function type {updateValue.Value.GetType().Name} is not implemented.");
-                        }
-
-                        if (physicalDocument.Elements.ContainsKey(updateValue.Key))
-                        {
-                            physicalDocument.Elements[updateValue.Key] = fieldValue;
-                        }
-                        else
-                        {
-                            physicalDocument.Elements.Add(updateValue.Key, fieldValue);
+                            physicalDocument.Elements.Add(updateValue.Alias, collapsedValue);
                         }
                     }
 
                     updatedDocumentPointers.Add(documentPointer);
                 }
 
-                var listOfModifiedFields = preparedQuery.UpdateValues.Select(o => o.Key);
+                //var listOfModifiedFields = preparedQuery.UpdateValues.Select(o => o.Key);
 
                 //We update all of the documents all at once so we don't have to keep opening/closing catalogs.
-                _core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocumentPointers, listOfModifiedFields);
+                //_core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocumentPointers, listOfModifiedFields);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
             }
@@ -263,7 +264,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 Management.LogManager.Error($"Failed to execute document update for process id {session.ProcessId}.", ex);
                 throw;
             }
-            */
         }
 
         internal KbQueryDocumentListResult ExecuteSample(SessionState session, PreparedQuery preparedQuery)

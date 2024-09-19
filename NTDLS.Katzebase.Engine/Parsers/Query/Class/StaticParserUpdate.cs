@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
+using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
@@ -9,24 +10,81 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            string token;
-
-            throw new NotImplementedException("Reimplement this query type.");
-
             var query = new PreparedQuery(queryBatch, QueryType.Update);
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
                 throw new KbParserException("Invalid query. Found '" + schemaName + "', expected: schema name.");
             }
-            query.Schemas.Add(new QuerySchema(schemaName));
-
+            if (tokenizer.TryEatIfNext("as"))
+            {
+                var schemaAlias = tokenizer.EatGetNext();
+                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+            }
+            else
+            {
+                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant(), schemaName.ToLowerInvariant()));
+            }
             tokenizer.EatIfNext("set");
 
-            //result.UpdateValues = StaticFunctionParsers.ParseUpdateFields(tokenizer);
-            //result.UpdateValues.RepopulateLiterals(tokenizer);
+            var queryFieldCollection = new QueryFieldCollection(queryBatch);
 
-            throw new NotImplementedException();
+            query.UpdateFieldValues = new List<QueryFieldCollection>();
+
+            while (!tokenizer.IsExhausted())
+            {
+                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var fieldName) == false)
+                {
+                    throw new KbParserException("Invalid query. Found '" + fieldName + "', expected: field name.");
+                }
+                query.UpdateFieldNames.Add(fieldName);
+
+                tokenizer.EatIfNext('=');
+
+                string token;
+                int startCaret = tokenizer.Caret;
+                int endCaret = 0;
+
+                while (!tokenizer.IsExhausted())
+                {
+                    token = tokenizer.GetNext();
+                    if (token == "(")
+                    {
+                        tokenizer.EatMatchingScope();
+                    }
+                    else if (token.Is("where") || token.Is("inner"))
+                    {
+                        endCaret = tokenizer.Caret;
+                        break; //exit loop to parse, found where or join clause.
+                    }
+                    else if (token.Length == 1 && token[0] == ',')
+                    {
+                        endCaret = tokenizer.Caret;
+                        tokenizer.EatNext();
+                        break; //exit loop to parse next field.
+                    }
+                    else if (token.Length == 1 && (token[0].IsTokenConnectorCharacter() || token[0].IsMathematicalOperator()))
+                    {
+                        tokenizer.EatNext();
+                    }
+                    else
+                    {
+                        tokenizer.EatNext();
+                    }
+                }
+
+                var fieldValue = tokenizer.Substring(startCaret, endCaret - startCaret).Trim();
+                var queryField = StaticParserField.Parse(tokenizer, fieldValue, queryFieldCollection);
+
+                queryFieldCollection.Add(new QueryField(fieldName, queryFieldCollection.Count, queryField));
+
+                if (tokenizer.TryIsNext(["where", "inner"]))
+                {
+                    break; //exit loop to parse, found where or join clause.
+                }
+            }
+
+            query.UpdateFieldValues.Add(queryFieldCollection);
 
             if (tokenizer.TryEatIfNext("where"))
             {
