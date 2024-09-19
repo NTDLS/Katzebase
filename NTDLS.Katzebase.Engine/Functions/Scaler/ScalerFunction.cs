@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 throw new KbEngineException($"Unknown scaler function return type: [{token}].");
             }
 
-            if (tokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var functionName) == false)
+            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var functionName) == false)
             {
                 throw new KbEngineException($"Invalid scaler function name: [{functionName}].");
             }
@@ -67,7 +67,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     infiniteParameterFound = true;
                 }
 
-                if (paramTokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var parameterName) == false)
+                if (paramTokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var parameterName) == false)
                 {
                     throw new KbEngineException($"Invalid scaler function [{functionName}] parameter name: [{parameterName}].");
                 }

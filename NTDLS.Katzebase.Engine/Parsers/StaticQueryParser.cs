@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class;
+using NTDLS.Katzebase.Engine.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using static NTDLS.Katzebase.Client.KbConstants;
@@ -62,6 +63,10 @@ namespace NTDLS.Katzebase.Engine.Parsers
             if (queryType == QueryType.Select)
             {
                 return StaticParserSelect.Parse(queryBatch, tokenizer);
+            }
+            else if (queryType == QueryType.Insert)
+            {
+                return StaticParserInsert.Parse(queryBatch, tokenizer);
             }
 
             throw new KbParserException($"The query type is not implemented: [{token}].");

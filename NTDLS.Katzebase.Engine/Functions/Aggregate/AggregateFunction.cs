@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 throw new KbEngineException($"Unknown aggregate function return type: [{token}].");
             }
 
-            if (tokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var functionName) == false)
+            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var functionName) == false)
             {
                 throw new KbEngineException($"Invalid aggregate function name: [{functionName}].");
             }
@@ -67,7 +67,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     infiniteParameterFound = true;
                 }
 
-                if (paramTokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var parameterName) == false)
+                if (paramTokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var parameterName) == false)
                 {
                     throw new KbEngineException($"Invalid aggregate function [{functionName}] parameter name: [{parameterName}].");
                 }

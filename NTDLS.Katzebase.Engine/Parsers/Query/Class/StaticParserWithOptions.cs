@@ -1,8 +1,9 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 
-namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
+namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserWithOptions
     {
@@ -10,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
         {
             var results = new List<WithOption>();
 
-            if (tokenizer.TryEatIsNextToken("with"))
+            if (tokenizer.TryEatIsNext("with"))
             {
                 if (tokenizer.TryIsNextCharacter('(') == false)
                 {

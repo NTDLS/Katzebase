@@ -1,3 +1,7 @@
+insert into Temporary (FirstName,  LastName)
+Values ('Josh', 'Patterson'), ('Bridget', 'Patterson'), ('Pat', 'Lester')
+
+/*
 SELECT
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
@@ -30,7 +34,7 @@ WHERE
 		AND sw.Text LIKE '%le'
 	)
 	and Length(sw.Text) < 10
-
+*/
 /*
 select 
 	sw.Id,

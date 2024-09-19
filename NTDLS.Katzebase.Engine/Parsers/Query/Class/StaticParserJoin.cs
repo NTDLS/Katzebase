@@ -1,4 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
@@ -13,9 +14,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             var result = new List<QuerySchema>();
             string token;
 
-            while (tokenizer.TryEatIsNextToken("inner"))
+            while (tokenizer.TryEatIsNext("inner"))
             {
-                if (tokenizer.TryEatIsNextToken("join") == false)
+                if (tokenizer.TryEatIsNext("join") == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'join'.");
                 }
@@ -27,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     throw new KbParserException("Invalid query. Found '" + subSchemaSchema + "', expected: schema name.");
                 }
 
-                if (tokenizer.TryEatIsNextToken("as"))
+                if (tokenizer.TryEatIsNext("as"))
                 {
                     subSchemaAlias = tokenizer.EatGetNext();
                 }
@@ -37,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
 
 
-                if (tokenizer.TryEatIsNextToken("on", out token) == false)
+                if (tokenizer.TryEatIsNext("on", out token) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected 'on'.");
                 }
@@ -46,21 +47,21 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 while (true)
                 {
-                    if (tokenizer.TryIsNextToken(["where", "order", "inner", ""]))
+                    if (tokenizer.TryIsNext(["where", "order", "inner", ""]))
                     {
                         //Found start of next part of query.
                         break;
                     }
 
-                    if (tokenizer.TryCompareNextToken((o) => StaticParserUtility.IsStartOfQuery(o)))
+                    if (tokenizer.TryCompareNext((o) => StaticParserUtility.IsStartOfQuery(o)))
                     {
                         //Found start of next query.
                         break;
                     }
 
-                    if (tokenizer.TryIsNextToken(["and", "or"]))
+                    if (tokenizer.TryIsNext(["and", "or"]))
                     {
-                        tokenizer.EatNextToken();
+                        tokenizer.EatNext();
                     }
 
                     var joinLeftCondition = tokenizer.EatGetNext();

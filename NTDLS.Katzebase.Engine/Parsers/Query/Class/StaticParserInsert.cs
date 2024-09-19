@@ -2,12 +2,11 @@
 using NTDLS.Katzebase.Engine.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
-using NTDLS.Katzebase.Shared;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserSelect
+    internal static class StaticParserInsert
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
@@ -19,16 +18,23 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
             }
 
+            //tokenizer.TryEatIsNext();
+            //tokenizer.EatNext();
+
             var result = new PreparedQuery(queryBatch, queryType);
 
+
+
+
+            /*
             //Parse "TOP n".
-            if (tokenizer.TryEatIsNext("top"))
+            if (tokenizer.TryEatIsNextToken("top"))
             {
                 result.RowLimit = tokenizer.EatGetNextEvaluated<int>();
             }
 
             //Parse field list.
-            if (tokenizer.TryEatIsNext("*"))
+            if (tokenizer.TryEatIsNextToken("*"))
             {
                 //Select all fields from all schemas.
                 result.DynamicSchemaFieldFilter ??= new();
@@ -50,7 +56,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
 
             //Parse "into".
-            if (tokenizer.TryEatIsNext("into"))
+            if (tokenizer.TryEatIsNextToken("into"))
             {
                 var selectIntoSchema = tokenizer.EatGetNext();
                 result.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, selectIntoSchema);
@@ -59,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
 
             //Parse primary schema.
-            if (!tokenizer.TryEatIsNext("from"))
+            if (!tokenizer.TryEatIsNextToken("from"))
             {
                 throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'from'.");
             }
@@ -71,7 +77,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException("Invalid query. Found '" + sourceSchema + "', expected: schema name.");
             }
 
-            if (tokenizer.TryEatIsNext("as"))
+            if (tokenizer.TryEatIsNextToken("as"))
             {
                 schemaAlias = tokenizer.EatGetNext();
             }
@@ -79,14 +85,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
 
             //Parse joins.
-            while (tokenizer.TryIsNext("inner"))
+            while (tokenizer.TryIsNextToken("inner"))
             {
                 var joinedSchemas = StaticParserJoin.Parse(queryBatch, tokenizer);
                 result.Schemas.AddRange(joinedSchemas);
             }
 
             //Parse "where" clause.
-            if (tokenizer.TryEatIsNext("where"))
+            if (tokenizer.TryEatIsNextToken("where"))
             {
                 result.Conditions = StaticParserWhere.Parse(queryBatch, tokenizer);
 
@@ -95,9 +101,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
 
             //Parse "group by".
-            if (tokenizer.TryEatIsNext("group"))
+            if (tokenizer.TryEatIsNextToken("group"))
             {
-                if (tokenizer.TryEatIsNext("by") == false)
+                if (tokenizer.TryEatIsNextToken("by") == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
                 }
@@ -105,9 +111,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
 
             //Parse "order by".
-            if (tokenizer.TryEatIsNext("order"))
+            if (tokenizer.TryEatIsNextToken("order"))
             {
-                if (tokenizer.TryEatIsNext("by") == false)
+                if (tokenizer.TryEatIsNextToken("by") == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
                 }
@@ -115,7 +121,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
 
             //Parse "limit" clause.
-            if (tokenizer.TryEatIsNext("offset"))
+            if (tokenizer.TryEatIsNextToken("offset"))
             {
                 result.RowOffset = tokenizer.EatGetNextEvaluated<int>();
             }
@@ -177,6 +183,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
                 }
             }
+            */
 
             return result;
         }

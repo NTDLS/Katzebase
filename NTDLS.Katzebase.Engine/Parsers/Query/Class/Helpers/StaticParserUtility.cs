@@ -1,6 +1,6 @@
 ﻿using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
-namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
+namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.Helpers
 {
     internal static class StaticParserUtility
     {
