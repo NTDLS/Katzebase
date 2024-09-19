@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
             }
 
-            //tokenizer.TryEatIsNext();
+            tokenizer.EatIfNext("into");
             //tokenizer.EatNext();
 
             var result = new PreparedQuery(queryBatch, queryType);
