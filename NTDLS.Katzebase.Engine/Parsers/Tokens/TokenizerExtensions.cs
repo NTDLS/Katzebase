@@ -84,6 +84,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             => char.IsWhiteSpace(c)
                 || char.IsLetterOrDigit(c) //Numbers or letters, could be a field name, schema name, function name, etc.
                 || c == '_'
+                || c == '#' //Temp schema.
                 || c == ':' //Schema separators. [Schema1:Schema2].
                 || c == '.'; //Schema field-separators. [schemaPrefix.FieldName].
 

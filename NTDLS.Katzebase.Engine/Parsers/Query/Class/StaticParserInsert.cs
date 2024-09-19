@@ -23,9 +23,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             tokenizer.EatIfNext("into");
 
-            var insertIntoSchemaName = tokenizer.EatGetNext();
-
-            query.Schemas.Add(new QuerySchema(insertIntoSchemaName));
+            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+            {
+                throw new KbParserException("Invalid query. Found '" + schemaName + "', expected: schema name.");
+            }
+            query.Schemas.Add(new QuerySchema(schemaName));
 
             tokenizer.IsNext('(');
             query.InsertFieldNames = tokenizer.EatGetMatchingScope().Split(',').Select(o => o.Trim()).ToList();

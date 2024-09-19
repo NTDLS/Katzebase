@@ -64,19 +64,20 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'from'.");
             }
 
-            string sourceSchema = tokenizer.EatGetNext();
-            string schemaAlias = string.Empty;
-            if (!TokenizerHelpers.IsValidIdentifier(sourceSchema, ['#', ':']))
+            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
-                throw new KbParserException("Invalid query. Found '" + sourceSchema + "', expected: schema name.");
+                throw new KbParserException("Invalid query. Found '" + schemaName + "', expected: schema name.");
             }
 
             if (tokenizer.TryEatIfNext("as"))
             {
-                schemaAlias = tokenizer.EatGetNext();
+                var schemaAlias = tokenizer.EatGetNext();
+                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
             }
-
-            query.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+            else
+            {
+                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant()));
+            }
 
             //Parse joins.
             while (tokenizer.TryIsNext("inner"))
