@@ -1,5 +1,4 @@
-﻿using NTDLS.Helpers;
-using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
@@ -35,6 +34,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             {
                 //We have a values list.
 
+                query.InsertFieldValues = new List<QueryFieldCollection>();
+
                 while (!tokenizer.IsExhausted())
                 {
                     tokenizer.IsNext('(');
@@ -67,9 +68,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
                 }
             }
+            else if (tokenizer.TryIsNext("select"))
+            {
+                query.InsertSelectQuery = StaticParserSelect.Parse(queryBatch, tokenizer);
+            }
             else
             {
-                throw new NotImplementedException("insert select statement");
+                throw new KbParserException($"Invalid token, found [{tokenizer.GetNext()}], expected [values], [select]");
             }
 
             return query;

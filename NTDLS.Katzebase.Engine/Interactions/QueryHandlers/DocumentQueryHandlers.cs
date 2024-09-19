@@ -3,10 +3,7 @@ using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
-using NTDLS.Katzebase.Engine.Parsers.Query;
-using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
@@ -116,25 +113,71 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 var physicalSchema = _core.Schemas.Acquire(
                     transactionReference.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
 
-                foreach (QueryFieldCollection insertFieldValues in preparedQuery.InsertFieldValues)
+                if (preparedQuery.InsertFieldValues != null)
                 {
-                    var keyValuePairs = new KbInsensitiveDictionary<string?>();
+                    //Executing a "insert into, values" statement.
 
-                    foreach (var insertValue in insertFieldValues)
+                    foreach (var insertFieldValues in preparedQuery.InsertFieldValues)
                     {
-                        var collapsedValue = insertValue.Expression.CollapseScalerQueryField(
-                            transactionReference.Transaction,preparedQuery, new(preparedQuery.Batch), new());
+                        var keyValuePairs = new KbInsensitiveDictionary<string?>();
 
-                        keyValuePairs.Add(insertValue.Alias, collapsedValue);
+                        foreach (var insertValue in insertFieldValues)
+                        {
+                            var collapsedValue = insertValue.Expression.CollapseScalerQueryField(
+                                transactionReference.Transaction, preparedQuery, new(preparedQuery.Batch), new());
+
+                            keyValuePairs.Add(insertValue.Alias, collapsedValue);
+                        }
+
+                        var documentContent = JsonConvert.SerializeObject(keyValuePairs);
+                        _core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
                     }
 
-                    var documentContent = JsonConvert.SerializeObject(keyValuePairs);
-                    _core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
+                    return transactionReference.CommitAndApplyMetricsThenReturnResults(preparedQuery.InsertFieldValues.Count);
+                }
+                else if (preparedQuery.InsertSelectQuery != null)
+                {
+                    //Executing a "insert into, select from" statement.
+
+                    var results = _core.Query.ExecuteQuery(session, preparedQuery.InsertSelectQuery);
+
+                    if (results.Collection.Count == 0)
+                    {
+                        return transactionReference.CommitAndApplyMetricsThenReturnResults(0);
+                    }
+                    else if (results.Collection.Count == 1)
+                    {
+                        if (results.Collection[0].Fields.Count < preparedQuery.InsertFieldNames.Count)
+                        {
+                            throw new KbParserException("Values list contains less values than the field list.");
+                        }
+                        else if (results.Collection[0].Fields.Count > preparedQuery.InsertFieldNames.Count)
+                        {
+                            throw new KbParserException("Values list contains more values than the field list.");
+                        }
+
+                        foreach (var row in results.Collection[0].Rows)
+                        {
+                            var keyValuePairs = new KbInsensitiveDictionary<string?>();
+
+                            for (int fieldIndex = 0; fieldIndex < results.Collection[0].Fields.Count; fieldIndex++)
+                            {
+                                keyValuePairs.Add(preparedQuery.InsertFieldNames[fieldIndex], row.Values[fieldIndex]);
+                            }
+
+                            var documentContent = JsonConvert.SerializeObject(keyValuePairs);
+                            _core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
+                        }
+
+                        return transactionReference.CommitAndApplyMetricsThenReturnResults(results.Collection[0].Rows.Count);
+                    }
+                    else if (results.Collection.Count > 1)
+                    {
+                        throw new KbMultipleRecordSetsException("Insert select resulted in more than one result-set.");
+                    }
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(preparedQuery.InsertFieldValues.Count);
-
-                throw new NotImplementedException();
+                throw new KbEngineException("Insert statement must be accompanied by a values list or a source select statement.");
             }
             catch (Exception ex)
             {

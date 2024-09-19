@@ -96,8 +96,20 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 
         #region Insert Statement.
 
+        /// <summary>
+        /// Query that needs to be executed to get the insert values for a "insert into, select from" statement.
+        /// </summary>
+        public PreparedQuery? InsertSelectQuery { get; set; }
+
+        /// <summary>
+        /// Values that are used when executing a "insert into, values" statement.
+        /// </summary>
+        public List<QueryFieldCollection>? InsertFieldValues { get; set; }
+
+        /// <summary>
+        /// The field names that are to be used when inserting values from InsertFieldValues or InsertSelectQuery.
+        /// </summary>
         public List<string> InsertFieldNames { get; set; } = new();
-        public List<QueryFieldCollection> InsertFieldValues { get; set; } = new();
 
         #endregion
 
