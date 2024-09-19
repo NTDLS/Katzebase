@@ -10,8 +10,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            string token = tokenizer.EatGetNext();
-
             var query = new PreparedQuery(queryBatch, QueryType.Create)
             {
                 SubQueryType = SubQueryType.Schema
