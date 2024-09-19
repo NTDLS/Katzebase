@@ -76,8 +76,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         public List<QuerySchema> Schemas { get; private set; } = new();
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }
-        public PrefixedFields CreateFields { get; set; } = new();
         public FunctionParameterBase ProcedureCall { get; set; } = new();
+
+        /// <summary>
+        /// Used for creating indexes.
+        /// </summary>
+        public List<string> CreateIndexFields { get; set; } = new();
 
         #region Shared statement components.
         public int RowLimit { get; set; }

@@ -1,4 +1,6 @@
-﻿using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -8,69 +10,40 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            string token;
-
             var query = new PreparedQuery(queryBatch, QueryType.Create)
             {
                 SubQueryType = SubQueryType.Index
             };
 
-            throw new NotImplementedException("Reimplement this query type.");
+            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var indexName) == false)
+            {
+                throw new KbParserException("Invalid query. Found '" + indexName + "', expected: index name.");
+            }
 
-            /*
-                query.AddAttribute(PreparedQuery.QueryAttribute.IndexName, token);
-                query.AddAttribute(PreparedQuery.QueryAttribute.IsUnique, (subQueryType == SubQueryType.UniqueKey));
+            query.AddAttribute(PreparedQuery.QueryAttribute.IndexName, indexName);
+            query.AddAttribute(PreparedQuery.QueryAttribute.IsUnique, false);
 
+            tokenizer.IsNext('(');
 
-                if (tokenizer.NextCharacter != '(')
-                {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.NextCharacter + "', expected: ','.");
-                }
-                tokenizer.SkipDelimiters('(');
+            var indexFields = tokenizer.EatGetMatchingScope().Split(',').Select(o => o.Trim()).ToList();
+            query.CreateIndexFields.AddRange(indexFields);
 
-                while (true) //Get fields
-                {
-                    token = tokenizer.GetNext().ToLowerInvariant();
-                    if (token == string.Empty)
-                    {
-                        throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: ',' or ')'.");
-                    }
+            tokenizer.EatIfNext("on");
 
-                    query.CreateFields.Add(token);
+            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+            {
+                throw new KbParserException("Invalid query. Found '" + indexName + "', expected: schema name.");
+            }
+            query.Schemas.Add(new QuerySchema(schemaName));
 
-                    if (tokenizer.NextCharacter == ',')
-                    {
-                        tokenizer.SkipDelimiters(',');
-                    }
-                    if (tokenizer.NextCharacter == ')')
-                    {
-                        tokenizer.SkipDelimiters(')');
-                        break;
-                    }
-                }
-
-                if (tokenizer.GetNext().Is("on") == false)
-                {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'on'.");
-                }
-
-                token = tokenizer.GetNext();
-                if (!TokenHelpers.IsValidIdentifier(token, ':'))
-                {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
-                }
-
-                query.Schemas.Add(new QuerySchema(token));
-
-                if (tokenizer.TryIsNextToken("with"))
-                {
-                    var options = new ExpectedWithOptions
+            if (tokenizer.TryEatIfNext("with"))
+            {
+                var options = new ExpectedWithOptions
                         {
                             {"partitions", typeof(uint) }
                         };
-                    StaticWithOptionsParser.ParseWithOptions(ref tokenizer, options, ref query);
-                }
-            */
+                StaticParserWithOptions.Parse(tokenizer, options, query);
+            }
 
             return query;
         }

@@ -114,9 +114,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         Partitions = indexPartitions
                     };
 
-                    foreach (var field in preparedQuery.CreateFields)
+                    foreach (var field in preparedQuery.CreateIndexFields)
                     {
-                        index.Attributes.Add(new KbIndexAttribute() { Field = field.Field });
+                        index.Attributes.Add(new KbIndexAttribute() { Field = field });
                     }
 
                     string schemaName = preparedQuery.Schemas.Single().Name;
