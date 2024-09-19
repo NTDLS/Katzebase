@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         {
             var results = new List<WithOption>();
 
-            if (tokenizer.TryEatIsNext("with"))
+            if (tokenizer.TryEatIfNext("with"))
             {
                 if (tokenizer.TryIsNextCharacter('(') == false)
                 {
@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                     results.Add(new WithOption(name, convertedValue, convertedValue.GetType()));
 
-                    if (tokenizer.TryEatIsNextCharacter(',') == false)
+                    if (tokenizer.TryEatIfNextCharacter(',') == false)
                     {
                         break;
                     }

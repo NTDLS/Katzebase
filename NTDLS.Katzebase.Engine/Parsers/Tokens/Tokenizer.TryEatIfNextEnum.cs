@@ -4,12 +4,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
     internal partial class Tokenizer
     {
-        public bool TryEatIsNextEnum<T>(char[] delimiters, out string outFoundToken, [NotNullWhen(true)] out T? value) where T : Enum
+        public bool TryEatIfNextEnum<T>(char[] delimiters, out string outFoundToken, [NotNullWhen(true)] out T? value) where T : Enum
         {
             outFoundToken = string.Empty;
             try
             {
-                value = EatIsNextEnumToken<T>(delimiters, out outFoundToken);
+                value = EatIfNextEnum<T>(delimiters, out outFoundToken);
                 return true;
             }
             catch
@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             }
         }
 
-        public bool TryEatIsNextEnumToken<T>([NotNullWhen(true)] out T? value) where T : Enum
-            => TryEatIsNextEnum(_standardTokenDelimiters, out _, out value);
+        public bool TryEatIfNextEnum<T>([NotNullWhen(true)] out T? value) where T : Enum
+            => TryEatIfNextEnum(_standardTokenDelimiters, out _, out value);
     }
 }

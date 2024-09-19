@@ -73,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 if (!tokenizer.IsExhausted())
                 {
-                    lastLogicalConnector = tokenizer.EatIsNextEnumToken<LogicalConnector>();
+                    lastLogicalConnector = tokenizer.EatIfNextEnum<LogicalConnector>();
                     if (lastLogicalConnector == LogicalConnector.Or)
                     {
                         //When we encounter an OR, we null out the current group because whatever we find next will need to be in a new group.

@@ -79,7 +79,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                         throw new KbEngineException($"Invalid aggregate function [{functionName}] prototype. Function cannot contain both infinite parameters and optional parameters.");
                     }
 
-                    if (paramTokenizer.TryEatIsNextCharacter('=') == false)
+                    if (paramTokenizer.TryEatIfNextCharacter('=') == false)
                     {
                         throw new KbEngineException($"Invalid aggregate function [{functionName}] prototype when parsing optional parameter [{parameterName}]. Expected '=', found: [{paramTokenizer.NextCharacter}].");
                     }

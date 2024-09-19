@@ -14,9 +14,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             var result = new List<QuerySchema>();
             string token;
 
-            while (tokenizer.TryEatIsNext("inner"))
+            while (tokenizer.TryEatIfNext("inner"))
             {
-                if (tokenizer.TryEatIsNext("join") == false)
+                if (tokenizer.TryEatIfNext("join") == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'join'.");
                 }
@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     throw new KbParserException("Invalid query. Found '" + subSchemaSchema + "', expected: schema name.");
                 }
 
-                if (tokenizer.TryEatIsNext("as"))
+                if (tokenizer.TryEatIfNext("as"))
                 {
                     subSchemaAlias = tokenizer.EatGetNext();
                 }
@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
 
 
-                if (tokenizer.TryEatIsNext("on", out token) == false)
+                if (tokenizer.TryEatIfNext("on", out token) == false)
                 {
                     throw new KbParserException("Invalid query. Found '" + token + "', expected 'on'.");
                 }

@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// Returns true if the next token is a member of the given enum.
         /// Moves the caret past the token only if its matched.
         /// </summary>
-        public T EatIsNextEnumToken<T>(char[] delimiters, out string outFoundToken) where T : Enum
+        public T EatIfNextEnum<T>(char[] delimiters, out string outFoundToken) where T : Enum
         {
             int restoreCaret = _caret;
             outFoundToken = EatGetNext(delimiters, out _);
@@ -26,10 +26,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             throw new KbParserException($"Invalid token, found [{outFoundToken}] expected [{string.Join("],[", Enum.GetNames(typeof(T)))}]");
         }
 
-        public T EatIsNextEnumToken<T>(out string outFoundToken) where T : Enum
-            => EatIsNextEnumToken<T>(_standardTokenDelimiters, out outFoundToken);
+        public T EatIfNextEnum<T>(out string outFoundToken) where T : Enum
+            => EatIfNextEnum<T>(_standardTokenDelimiters, out outFoundToken);
 
-        public T EatIsNextEnumToken<T>() where T : Enum
-            => EatIsNextEnumToken<T>(_standardTokenDelimiters, out _);
+        public T EatIfNextEnum<T>() where T : Enum
+            => EatIfNextEnum<T>(_standardTokenDelimiters, out _);
     }
 }

@@ -2,7 +2,7 @@
 {
     internal partial class Tokenizer
     {
-        public bool TryEatIsNextCharacter(char character)
+        public bool TryEatIfNextCharacter(char character)
         {
             RecordBreadcrumb();
             if (NextCharacter == character)
