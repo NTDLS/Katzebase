@@ -60,6 +60,8 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
             }
 
+            tokenizer.EatNext();
+
             return queryType switch
             {
                 QueryType.Select => StaticParserSelect.Parse(queryBatch, tokenizer),

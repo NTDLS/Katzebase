@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserWithOptions
     {
-        internal static List<WithOption> Parse(Tokenizer tokenizer, ExpectedWithOptions expectedOptions, ref PreparedQuery preparedQuery)
+        internal static List<WithOption> Parse(Tokenizer tokenizer, ExpectedWithOptions expectedOptions, PreparedQuery preparedQuery)
         {
             var results = new List<WithOption>();
 

@@ -1,5 +1,4 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
@@ -11,15 +10,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            string token = tokenizer.EatGetNext();
-
-            if (StaticParserUtility.IsStartOfQuery(token, out var queryType) == false)
-            {
-                string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
-                throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
-            }
-
-            var query = new PreparedQuery(queryBatch, queryType);
+            var query = new PreparedQuery(queryBatch, QueryType.Insert);
 
             tokenizer.EatIfNext("into");
 
