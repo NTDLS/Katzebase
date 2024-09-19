@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 //Select all fields from all schemas.
                 query.DynamicSchemaFieldFilter ??= new();
             }
-            if (tokenizer.TryEatNextEndsWith(".*")) //schemaName.*
+            else if (tokenizer.TryEatNextEndsWith(".*")) //schemaName.*
             {
                 //Select all fields from given schema.
                 //TODO: Looks like do we not support "select *" from than one schema.
