@@ -1,8 +1,9 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class.Helpers;
+using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
-using System.Diagnostics;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
@@ -19,37 +20,45 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
             }
 
+            var query = new PreparedQuery(queryBatch, queryType);
+
             tokenizer.EatIfNext("into");
 
             var insertIntoSchemaName = tokenizer.EatGetNext();
 
-            var result = new PreparedQuery(queryBatch, queryType);
+            query.Schemas.Add(new QuerySchema(insertIntoSchemaName));
 
             tokenizer.IsNext('(');
-            var fieldNameList = tokenizer.EatGetMatchingScope().Split(',').Select(o => o.Trim()).ToList();
+            query.InsertFieldNames = tokenizer.EatGetMatchingScope().Split(',').Select(o => o.Trim()).ToList();
 
             if (tokenizer.TryEatIfNext("values"))
             {
                 //We have a values list.
 
-                var constantValues = new List<List<string?>>();
-
                 while (!tokenizer.IsExhausted())
                 {
                     tokenizer.IsNext('(');
 
-                    var values = tokenizer.EatGetMatchingScope().Split(',').Select(o => queryBatch.GetLiteralValue(o.Trim())).ToList();
+                    var constantExpressions = tokenizer.EatGetMatchingScope().Split(',')
+                        .Select(o => new QueryFieldCollapsedValue(queryBatch.GetLiteralValue(o.Trim()) ?? string.Empty)).ToList();
 
-                    if (values.Count < fieldNameList.Count)
+                    if (constantExpressions.Count < query.InsertFieldNames.Count)
                     {
                         throw new KbParserException("Values list contains less values than the field list.");
                     }
-                    else if (values.Count > fieldNameList.Count)
+                    else if (constantExpressions.Count > query.InsertFieldNames.Count)
                     {
                         throw new KbParserException("Values list contains more values than the field list.");
                     }
 
-                    constantValues.Add(values);
+                    var queryFieldCollection = new QueryFieldCollection(queryBatch);
+
+                    foreach (var value in constantExpressions)
+                    {
+                        queryFieldCollection.Add(new QueryField(query.InsertFieldNames[queryFieldCollection.Count], queryFieldCollection.Count, value));
+                    }
+
+                    query.InsertFieldValues.Add(queryFieldCollection);
 
                     if (tokenizer.TryEatIfNext(',') == false)
                     {
@@ -57,176 +66,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                         break;
                     }
                 }
-
             }
             else
             {
                 throw new NotImplementedException("insert select statement");
             }
 
-            Debug.WriteLine("");
-
-
-            /*
-            //Parse "TOP n".
-            if (tokenizer.TryEatIsNextToken("top"))
-            {
-                result.RowLimit = tokenizer.EatGetNextEvaluated<int>();
-            }
-
-            //Parse field list.
-            if (tokenizer.TryEatIsNextToken("*"))
-            {
-                //Select all fields from all schemas.
-                result.DynamicSchemaFieldFilter ??= new();
-            }
-            if (tokenizer.TryEatNextTokenEndsWith(".*")) //schemaName.*
-            {
-                //Select all fields from given schema.
-                //TODO: Looks like do we not support "select *" from than one schema.
-
-                token = tokenizer.EatGetNext();
-
-                result.DynamicSchemaFieldFilter ??= new();
-                var starSchemaAlias = token.Substring(0, token.Length - 2); //Trim off the trailing .*
-                result.DynamicSchemaFieldFilter.Add(starSchemaAlias.ToLowerInvariant());
-            }
-            else
-            {
-                result.SelectFields = StaticParserFieldList.Parse(queryBatch, tokenizer, [" from ", " into "], false);
-            }
-
-            //Parse "into".
-            if (tokenizer.TryEatIsNextToken("into"))
-            {
-                var selectIntoSchema = tokenizer.EatGetNext();
-                result.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, selectIntoSchema);
-
-                result.QueryType = QueryType.SelectInto;
-            }
-
-            //Parse primary schema.
-            if (!tokenizer.TryEatIsNextToken("from"))
-            {
-                throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'from'.");
-            }
-
-            string sourceSchema = tokenizer.EatGetNext();
-            string schemaAlias = string.Empty;
-            if (!TokenizerHelpers.IsValidIdentifier(sourceSchema, ['#', ':']))
-            {
-                throw new KbParserException("Invalid query. Found '" + sourceSchema + "', expected: schema name.");
-            }
-
-            if (tokenizer.TryEatIsNextToken("as"))
-            {
-                schemaAlias = tokenizer.EatGetNext();
-            }
-
-            result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
-
-            //Parse joins.
-            while (tokenizer.TryIsNextToken("inner"))
-            {
-                var joinedSchemas = StaticParserJoin.Parse(queryBatch, tokenizer);
-                result.Schemas.AddRange(joinedSchemas);
-            }
-
-            //Parse "where" clause.
-            if (tokenizer.TryEatIsNextToken("where"))
-            {
-                result.Conditions = StaticParserWhere.Parse(queryBatch, tokenizer);
-
-                //Associate the root query schema with the root conditions.
-                result.Schemas.First().Conditions = result.Conditions;
-            }
-
-            //Parse "group by".
-            if (tokenizer.TryEatIsNextToken("group"))
-            {
-                if (tokenizer.TryEatIsNextToken("by") == false)
-                {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
-                }
-                result.GroupFields = StaticParserGroupBy.Parse(queryBatch, tokenizer);
-            }
-
-            //Parse "order by".
-            if (tokenizer.TryEatIsNextToken("order"))
-            {
-                if (tokenizer.TryEatIsNextToken("by") == false)
-                {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
-                }
-                result.SortFields = StaticParserOrderBy.Parse(queryBatch, tokenizer);
-            }
-
-            //Parse "limit" clause.
-            if (tokenizer.TryEatIsNextToken("offset"))
-            {
-                result.RowOffset = tokenizer.EatGetNextEvaluated<int>();
-            }
-
-            //----------------------------------------------------------------------------------------------------------------------------------
-            // Validation
-            //----------------------------------------------------------------------------------------------------------------------------------
-
-            //Validation (field list):
-            foreach (var documentIdentifier in result.SelectFields.DocumentIdentifiers)
-            {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                {
-                    if (result.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        throw new KbParserException($"Invalid query. Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
-                    }
-                }
-            }
-
-            //Validation (conditions):
-            foreach (var documentIdentifier in result.Conditions.FieldCollection.DocumentIdentifiers)
-            {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                {
-                    if (result.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        throw new KbParserException($"Invalid query. Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
-                    }
-                }
-            }
-
-            //Validation (join conditions):
-            foreach (var schema in result.Schemas.Skip(1))
-            {
-                if (schema.Conditions != null)
-                {
-                    foreach (var documentIdentifier in schema.Conditions.FieldCollection.DocumentIdentifiers)
-                    {
-                        if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                        {
-                            if (result.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                            {
-                                throw new KbParserException($"Invalid query. Schema [{documentIdentifier.Value.SchemaAlias}] referenced in join condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
-                            }
-                        }
-                    }
-                }
-            }
-
-            //Validation (root conditions):
-            foreach (var documentIdentifier in result.Conditions.FieldCollection.DocumentIdentifiers)
-            {
-                if (string.IsNullOrEmpty(documentIdentifier.Value.SchemaAlias) == false)
-                {
-                    if (result.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
-                    {
-                        throw new KbParserException($"Invalid query. Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
-                    }
-                }
-            }
-            */
-
-            return result;
+            return query;
         }
     }
 }

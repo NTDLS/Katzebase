@@ -3,10 +3,12 @@ using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Functions.Parameters;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
+using NTDLS.Katzebase.Engine.Parsers.Query;
+using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Client.KbConstants;
@@ -110,42 +112,29 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
+
                 var physicalSchema = _core.Schemas.Acquire(
                     transactionReference.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
 
-                foreach (var upsertValues in preparedQuery.UpsertValues)
+                foreach (QueryFieldCollection insertFieldValues in preparedQuery.InsertFieldValues)
                 {
                     var keyValuePairs = new KbInsensitiveDictionary<string?>();
 
-                    foreach (var updateValue in upsertValues)
+                    foreach (var insertValue in insertFieldValues)
                     {
-                        string? fieldValue = string.Empty;
+                        var collapsedValue = insertValue.Expression.CollapseScalerQueryField(
+                            transactionReference.Transaction,preparedQuery, new(preparedQuery.Batch), new());
 
-                        //Execute functions
-                        if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
-                        {
-                            //TODO: Reimplement scaler functions for insert.
-                            //fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(
-                            //    transactionReference.Transaction, updateValue.Value, new KbInsensitiveDictionary<string?>());
-                            throw new NotImplementedException("Reimplement scaler functions for update statements");
-                        }
-                        else if (updateValue.Value is FunctionConstantParameter functionConstantParameter)
-                        {
-                            fieldValue = functionConstantParameter.RawValue;
-                        }
-                        else
-                        {
-                            throw new KbNotImplementedException($"Function type {updateValue.Value.GetType().Name} is not implemented.");
-                        }
-
-                        keyValuePairs.Add(updateValue.Key, fieldValue);
+                        keyValuePairs.Add(insertValue.Alias, collapsedValue);
                     }
 
                     var documentContent = JsonConvert.SerializeObject(keyValuePairs);
                     _core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(preparedQuery.UpsertValues.Count);
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(preparedQuery.InsertFieldValues.Count);
+
+                throw new NotImplementedException();
             }
             catch (Exception ex)
             {
@@ -162,6 +151,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         /// <returns></returns>
         internal KbActionResponse ExecuteUpdate(SessionState session, PreparedQuery preparedQuery)
         {
+            throw new NotImplementedException("TODO:");
+            /*
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
@@ -229,6 +220,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 Management.LogManager.Error($"Failed to execute document update for process id {session.ProcessId}.", ex);
                 throw;
             }
+            */
         }
 
         internal KbQueryDocumentListResult ExecuteSample(SessionState session, PreparedQuery preparedQuery)

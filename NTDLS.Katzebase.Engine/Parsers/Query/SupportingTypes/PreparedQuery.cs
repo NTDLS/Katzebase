@@ -74,27 +74,32 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         public QueryBatch Batch { get; private set; }
         public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
         public List<QuerySchema> Schemas { get; private set; } = new();
-        public int RowLimit { get; set; }
-        public int RowOffset { get; set; }
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }
-        public ConditionCollection Conditions { get; set; }
         public PrefixedFields CreateFields { get; set; } = new();
-        public QueryFieldCollection SelectFields { get; set; }
         public FunctionParameterBase ProcedureCall { get; set; } = new();
+
+        #region Shared statement components.
+        public int RowLimit { get; set; }
+        public int RowOffset { get; set; }
+        public ConditionCollection Conditions { get; set; }
+
+        #endregion
+
+        #region Select Statement.
+
+        public QueryFieldCollection SelectFields { get; set; }
         public QueryFieldCollection GroupFields { get; set; }
         public SortFields SortFields { get; set; } = new();
 
-        /// <summary>
-        /// List of key/values used for insert statements.
-        /// </summary>
-        //public List<UpsertKeyValues> UpsertValues { get; set; } = new();
-        public List<NamedFunctionParameterBaseCollection> UpsertValues { get; set; } = new();
+        #endregion
 
-        /// <summary>
-        /// List of values for updates by field name.
-        /// </summary>
-        public NamedFunctionParameterBaseCollection UpdateValues { get; set; } = new();
+        #region Insert Statement.
+
+        public List<string> InsertFieldNames { get; set; } = new();
+        public List<QueryFieldCollection> InsertFieldValues { get; set; } = new();
+
+        #endregion
 
         public List<KbNameValuePair<string, string>> VariableValues { get; set; } = new();
 
