@@ -3,6 +3,41 @@
     internal partial class Tokenizer
     {
         /// <summary>
+        /// Moves the caret forward by one character (then whitespace) if the character is in the given list, returns true if match was found.
+        /// </summary>
+        public bool TryEatIfNext(char[] characters)
+        {
+            if (_caret < _text.Length && characters.Contains(_text[_caret]))
+            {
+                _caret++;
+                InternalEatWhiteSpace();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Moves the caret forward by one character (then whitespace) if the character is in the given list, returns true if match was found.
+        /// </summary>
+        public bool TryEatIfNext(char[] characters, out char foundCharacter)
+        {
+            foundCharacter = _text[_caret];
+            if (_caret < _text.Length && characters.Contains(_text[_caret]))
+            {
+                _caret++;
+                InternalEatWhiteSpace();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Moves the caret forward by one character (then whitespace) if the character matches the given value, returns true if match was found.
+        /// </summary>
+        public bool TryEatIfNext(char character)
+            => TryEatIfNext([character]);
+
+        /// <summary>
         /// Returns true if the next token is in the given array, using the given delimiters.
         /// Moves the caret past the token only if its matched.
         /// </summary>

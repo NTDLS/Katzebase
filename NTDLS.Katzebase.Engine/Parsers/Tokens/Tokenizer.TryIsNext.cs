@@ -3,6 +3,32 @@
     internal partial class Tokenizer
     {
         /// <summary>
+        /// Returns true if the next character is in the given array, using the given delimiters.
+        /// </summary>
+        public bool TryIsNext(char[] characters, out char foundCharacter)
+        {
+            foundCharacter = _text[_caret];
+            if (_caret < _text.Length && characters.Contains(_text[_caret]))
+            {
+                InternalEatWhiteSpace();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Returns true if the next character matches the given token, using the standard delimiters.
+        /// </summary>
+        public bool TryIsNext(char character, out char foundCharacter)
+            => TryIsNext([character], out foundCharacter);
+
+        /// <summary>
+        /// Returns true if the next character matches the given token, using the standard delimiters.
+        /// </summary>
+        public bool TryIsNext(char character)
+            => TryIsNext([character], out _);
+
+        /// <summary>
         /// Returns true if the next token is in the given array, using the given delimiters.
         /// </summary>
         public bool TryIsNext(string[] givenTokens, char[] delimiters)

@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Engine.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
+using System.Diagnostics;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
@@ -19,11 +20,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
 
             tokenizer.EatIfNext("into");
-            //tokenizer.EatNext();
+
+            var insertIntoSchemaName = tokenizer.EatGetNext();
 
             var result = new PreparedQuery(queryBatch, queryType);
 
+            tokenizer.IsNext('(');
+            var fieldNameList = tokenizer.EatGetMatchingScope().Split(',').Select(o => o.Trim()).ToList();
 
+            Debug.WriteLine("");
 
 
             /*
