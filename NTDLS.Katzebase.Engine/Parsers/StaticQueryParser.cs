@@ -65,6 +65,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
             return queryType switch
             {
                 QueryType.Select => StaticParserSelect.Parse(queryBatch, tokenizer),
+                QueryType.Delete => StaticParserDelete.Parse(queryBatch, tokenizer),
                 QueryType.Insert => StaticParserInsert.Parse(queryBatch, tokenizer),
                 QueryType.Update => StaticParserUpdate.Parse(queryBatch, tokenizer),
                 QueryType.Begin => StaticParserBegin.Parse(queryBatch, tokenizer),

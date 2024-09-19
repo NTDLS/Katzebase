@@ -146,7 +146,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <param name="schemaPrefix"></param>
         /// <returns></returns>
         internal static IEnumerable<DocumentPointer> FindDocumentPointersByPreparedQuery(
-            EngineCore core, Transaction transaction, PreparedQuery query, string schemaPrefix)
+            EngineCore core, Transaction transaction, PreparedQuery query, string gatherDocumentPointersForSchemaPrefix)
         {
             var schemaMap = new QuerySchemaMap(core, transaction, query);
 
@@ -158,9 +158,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 schemaMap.Add(querySchema.Prefix, physicalSchema, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
-            var subConditionResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, schemaPrefix);
+            var subConditionResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
             return subConditionResults.DocumentPointers;
         }
-
     }
 }

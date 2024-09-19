@@ -364,19 +364,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
+                var firstSchema = preparedQuery.Schemas.First();
+
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var firstSchema = preparedQuery.Schemas.Single();
-                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
-                var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
+                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(_core, transactionReference.Transaction, preparedQuery, firstSchema.Prefix);
+              
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Delete);
 
-                if (preparedQuery.Attributes.TryGetValue(PreparedQuery.QueryAttribute.SpecificSchemaPrefix, out object? value))
-                {
-                    getDocumentPointsForSchemaPrefix = value as string;
-                }
-
-                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery
-                    (_core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix.EnsureNotNull());
                 _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, documentPointers.ToArray());
+
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
             }
             catch (Exception ex)

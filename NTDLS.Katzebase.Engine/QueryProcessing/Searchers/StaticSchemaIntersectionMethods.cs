@@ -222,17 +222,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             IntersectAllSchemas(instance, instance.DocumentPointer, ref resultingRows);
 
-            //Limit the results by the rows that have the correct number of schema matches.
-            //TODO: This could probably be used to implement OUTER JOINS.
-            if (instance.Operation.GatherDocumentPointersForSchemaPrefix == null)
-            {
-                resultingRows.RemoveAll(o => o.SchemaKeys.Count != instance.Operation.SchemaMap.Count);
-            }
-            else
-            {
-                resultingRows.RemoveAll(o => o.SchemaDocumentPointers.Count != instance.Operation.SchemaMap.Count);
-            }
-
             if (instance.Operation.Query.GroupFields.Any() == false)
             {
                 //We ARE NOT grouping, so collapse all field expressions as scaler expressions.
@@ -379,6 +368,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 IntersectAllSchemasRecursive(instance, 1, ref resultingRow,
                     ref resultingRows, ref threadScopedContentCache, ref joinScopedContentCache);
+            }
+
+            //Limit the results by the rows that have the correct number of schema matches.
+            //TODO: This could probably be used to implement OUTER JOINS.
+            if (instance.Operation.GatherDocumentPointersForSchemaPrefix == null)
+            {
+                resultingRows.RemoveAll(o => o.SchemaKeys.Count != instance.Operation.SchemaMap.Count);
+            }
+            else
+            {
+                resultingRows.RemoveAll(o => o.SchemaDocumentPointers.Count != instance.Operation.SchemaMap.Count);
             }
 
             if (instance.Operation.Query.Conditions.Collection.Count != 0)
@@ -544,11 +544,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     {
                         var leftDocumentContent = joinScopedContentCache[entry.Left.SchemaAlias];
                         var collapsedLeft = entry.Left.CollapseScalerQueryField(instance.Operation.Transaction,
-                            instance.Operation.Query, givenConditions.FieldCollection, leftDocumentContent);
+                            instance.Operation.Query, givenConditions.FieldCollection, leftDocumentContent)?.ToLowerInvariant();
 
                         var rightDocumentContent = joinScopedContentCache[entry.Right.SchemaAlias];
                         var collapsedRight = entry.Right.CollapseScalerQueryField(instance.Operation.Transaction,
-                            instance.Operation.Query, givenConditions.FieldCollection, rightDocumentContent);
+                            instance.Operation.Query, givenConditions.FieldCollection, rightDocumentContent)?.ToLowerInvariant();
 
                         expression.Parameters[entry.ExpressionVariable] = entry.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
                     }
@@ -616,22 +616,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             //Keep track of which schemas we've matched on.
             schemaResultRow.SchemaKeys.Add(schemaKey);
 
-            if (schemaKey != string.Empty)
-            {
-                //Grab all of the selected fields from the document for this schema.
-                foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifierFields.Where(o => o.SchemaAlias == schemaKey))
-                {
-                    if (documentContent.TryGetValue(field.Name, out string? documentValue) == false)
-                    {
-                        instance.Operation.Transaction.AddWarning(KbTransactionWarning.SelectFieldNotFound,
-                            $"'{field.Name}' will be treated as null.");
-                    }
-                    schemaResultRow.InsertValue(field.Name, field.Ordinal, documentValue);
-                }
-            }
-
-            //Grab all of the selected fields from the document for the empty schema.
-            foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifierFields.Where(o => o.SchemaAlias == string.Empty))
+            //Grab all of the selected fields from the document for this schema.
+            foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifierFields.Where(o => o.SchemaAlias == schemaKey || o.SchemaAlias == string.Empty))
             {
                 if (documentContent.TryGetValue(field.Name, out string? documentValue) == false)
                 {
@@ -644,7 +630,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.{UIDMarker}", documentPointer.Key);
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey).Distinct())
+            foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey || o.Value.SchemaAlias == string.Empty).Distinct())
             {
                 //TODO: AuxiliaryFields were intended to be used for satisfying functions,
                 //  grouping and sorting, it seems as though the new parser just fills in everything.
@@ -660,7 +646,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
-            foreach (var field in instance.Operation.Query.GroupFields.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey).Distinct())
+            foreach (var field in instance.Operation.Query.GroupFields.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey || o.Value.SchemaAlias == string.Empty).Distinct())
             {
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Value.Value) == false)
                 {
@@ -674,7 +660,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
 
             //We have to make sure that we have all of the condition fields too so we can filter on them.
-            foreach (var field in instance.Operation.Query.Conditions.FieldCollection.DocumentIdentifierFields.Where(o => o.SchemaAlias == schemaKey).Distinct())
+            foreach (var field in instance.Operation.Query.Conditions.FieldCollection.DocumentIdentifierFields.Where(o => o.SchemaAlias == schemaKey || o.SchemaAlias == string.Empty).Distinct())
             {
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
@@ -688,7 +674,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             }
 
             //We have to make sure that we have all of the sort fields too so we can filter on them.
-            foreach (var field in instance.Operation.Query.SortFields.Where(o => o.Prefix == schemaKey).Distinct())
+            foreach (var field in instance.Operation.Query.SortFields.Where(o => o.Prefix == schemaKey || o.Prefix == string.Empty).Distinct())
             {
                 if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Key) == false)
                 {
@@ -764,8 +750,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     }
                     else if (condition is ConditionEntry entry)
                     {
-                        var collapsedLeft = entry.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields);
-                        var collapsedRight = entry.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields);
+                        var collapsedLeft = entry.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields)?.ToLowerInvariant();
+                        var collapsedRight = entry.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields)?.ToLowerInvariant();
 
                         expression.Parameters[entry.ExpressionVariable] = entry.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
                     }
