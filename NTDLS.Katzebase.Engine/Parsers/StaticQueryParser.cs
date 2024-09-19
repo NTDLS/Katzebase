@@ -60,16 +60,16 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
             }
 
-            if (queryType == QueryType.Select)
+            return queryType switch
             {
-                return StaticParserSelect.Parse(queryBatch, tokenizer);
-            }
-            else if (queryType == QueryType.Insert)
-            {
-                return StaticParserInsert.Parse(queryBatch, tokenizer);
-            }
+                QueryType.Select => StaticParserSelect.Parse(queryBatch, tokenizer),
+                QueryType.Insert => StaticParserInsert.Parse(queryBatch, tokenizer),
+                QueryType.Begin => StaticParserBegin.Parse(queryBatch, tokenizer),
+                QueryType.Commit => StaticParserCommit.Parse(queryBatch, tokenizer),
+                QueryType.Rollback => StaticParserRollback.Parse(queryBatch, tokenizer),
 
-            throw new KbParserException($"The query type is not implemented: [{token}].");
+                _ => throw new KbParserException($"The query type is not implemented: [{token}]."),
+            };
 
             #region Reimplment.
 
@@ -79,49 +79,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
             if (queryType == QueryType.Exec)
             {
                 result.ProcedureCall = StaticFunctionParsers.ParseProcedureParameters(tokenizer);
-            }
-            */
-
-            #endregion
-
-            #region Begin ----------------------------------------------------------------------------------------------
-
-            /*
-            else if (queryType == QueryType.Begin)
-            {
-                if (tokenizer.TryIsNextToken("transaction") == false)
-                    if (tokenizer.TryIsNextToken("transaction") == false)
-                    {
-                        throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: 'transaction'.");
-                    }
-
-                token = tokenizer.GetNext();
-                if (Enum.TryParse(token, true, out SubQueryType subQueryType) == false)
-                {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
-                }
-                result.SubQueryType = subQueryType;
-            }
-            */
-
-            #endregion
-
-            #region Commit ---------------------------------------------------------------------------------------------
-
-            /*
-            else if (queryType == QueryType.Commit)
-            {
-                if (tokenizer.TryIsNextToken("transaction") == false)
-                {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: 'transaction'.");
-                }
-
-                token = tokenizer.GetNext();
-                if (Enum.TryParse(token, true, out SubQueryType subQueryType) == false)
-                {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction.");
-                }
-                result.SubQueryType = subQueryType;
             }
             */
 
