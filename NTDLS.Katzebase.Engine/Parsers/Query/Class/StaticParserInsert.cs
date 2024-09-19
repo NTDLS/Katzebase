@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserInsert
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(QueryBatch query, Tokenizer tokenizer)
         {
             string token = tokenizer.EatGetNext();
 
@@ -23,10 +23,46 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             var insertIntoSchemaName = tokenizer.EatGetNext();
 
-            var result = new PreparedQuery(queryBatch, queryType);
+            var result = new PreparedQuery(query, queryType);
 
             tokenizer.IsNext('(');
             var fieldNameList = tokenizer.EatGetMatchingScope().Split(',').Select(o => o.Trim()).ToList();
+
+            if (tokenizer.TryEatIfNext("values"))
+            {
+                //We have a values list.
+
+                var constantValues = new List<List<string?>>();
+
+                while (!tokenizer.IsExhausted())
+                {
+                    tokenizer.IsNext('(');
+
+                    var values = tokenizer.EatGetMatchingScope().Split(',').Select(o => query.GetLiteralValue(o.Trim())).ToList();
+
+                    if (values.Count < fieldNameList.Count)
+                    {
+                        throw new KbParserException("Values list contains less values than the field list.");
+                    }
+                    else if (values.Count > fieldNameList.Count)
+                    {
+                        throw new KbParserException("Values list contains more values than the field list.");
+                    }
+
+                    constantValues.Add(values);
+
+                    if (tokenizer.TryEatIfNext(',') == false)
+                    {
+                        //We are done parsing the values list.
+                        break;
+                    }
+                }
+
+            }
+            else
+            {
+                throw new NotImplementedException("insert select statement");
+            }
 
             Debug.WriteLine("");
 

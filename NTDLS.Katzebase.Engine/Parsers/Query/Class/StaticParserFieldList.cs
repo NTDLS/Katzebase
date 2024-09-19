@@ -16,9 +16,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// <param name="stopAtTokens">Array of tokens for which the parsing will stop if encountered.</param>
         /// <param name="allowEntireConsumption">If true, in the event that stopAtTokens are not found, the entire remaining text will be consumed.</param>
         /// <returns></returns>
-        public static QueryFieldCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer, string[] stopAtTokens, bool allowEntireConsumption)
+        public static QueryFieldCollection Parse(QueryBatch query, Tokenizer tokenizer, string[] stopAtTokens, bool allowEntireConsumption)
         {
-            var queryFields = new QueryFieldCollection(queryBatch);
+            var queryFields = new QueryFieldCollection(query);
 
             //Get the position which represents the end of the select list.
             if (tokenizer.TryGetNextIndexOf(stopAtTokens, out int stopAt) == false)

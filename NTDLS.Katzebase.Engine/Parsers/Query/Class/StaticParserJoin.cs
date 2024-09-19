@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserJoin
     {
-        public static List<QuerySchema> Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        public static List<QuerySchema> Parse(QueryBatch query, Tokenizer tokenizer)
         {
             var result = new List<QuerySchema>();
             string token;
@@ -84,7 +84,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
 
                 var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Caret - joinConditionsStartPosition).Trim();
-                var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, subSchemaAlias);
+                var joinConditions = StaticConditionsParser.Parse(query, tokenizer, joinConditionsText, subSchemaAlias);
 
                 result.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
             }

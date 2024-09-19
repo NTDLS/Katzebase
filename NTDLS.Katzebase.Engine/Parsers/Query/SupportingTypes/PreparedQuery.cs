@@ -98,13 +98,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 
         public List<KbNameValuePair<string, string>> VariableValues { get; set; } = new();
 
-        public PreparedQuery(QueryBatch queryBatch, QueryType queryType)
+        public PreparedQuery(QueryBatch query, QueryType queryType)
         {
             QueryType = queryType;
-            Batch = queryBatch;
-            Conditions = new(queryBatch);
-            SelectFields = new(queryBatch);
-            GroupFields = new(queryBatch);
+            Batch = query;
+            Conditions = new(query);
+            SelectFields = new(query);
+            GroupFields = new(query);
         }
 
         public T Attribute<T>(QueryAttribute attribute, T defaultValue)

@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserOrderBy
     {
-        public static SortFields Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        public static SortFields Parse(QueryBatch query, Tokenizer tokenizer)
         {
             string token;
             var sortFields = new SortFields();

@@ -33,23 +33,23 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         public string NextExpressionVariable()
             => $"v{_nextExpressionVariable++}";
 
-        public ConditionCollection(QueryBatch queryBatch, string mathematicalExpression, string? schemaAlias = null)
-            : base(Library.EngineConstants.LogicalConnector.None)
+        public ConditionCollection(QueryBatch query, string mathematicalExpression, string? schemaAlias = null)
+            : base(LogicalConnector.None)
         {
-            FieldCollection = new(queryBatch);
+            FieldCollection = new(query);
             MathematicalExpression = mathematicalExpression;
             SchemaAlias = schemaAlias;
         }
 
-        public ConditionCollection(QueryBatch queryBatch)
-            : base(Library.EngineConstants.LogicalConnector.None)
+        public ConditionCollection(QueryBatch query)
+            : base(LogicalConnector.None)
         {
-            FieldCollection = new(queryBatch);
+            FieldCollection = new(query);
         }
 
         public new ConditionCollection Clone()
         {
-            var clone = new ConditionCollection(FieldCollection.QueryBatch)
+            var clone = new ConditionCollection(FieldCollection.Query)
             {
                 Connector = this.Connector,
                 SchemaAlias = this.SchemaAlias,
@@ -135,7 +135,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                     }
                     else
                     {
-                        left = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Left.Value)}";
+                        left = $"{FieldCollection.Query.GetLiteralValue(entry.Left.Value)}";
                     }
 
                     string right;
@@ -149,7 +149,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                     }
                     else
                     {
-                        right = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Right.Value)}";
+                        right = $"{FieldCollection.Query.GetLiteralValue(entry.Right.Value)}";
                     }
 
 

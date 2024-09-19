@@ -13,7 +13,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
     /// </summary>
     internal class QueryFieldCollection : List<QueryField>
     {
-        public QueryBatch QueryBatch { get; private set; }
+        public QueryBatch Query { get; private set; }
 
         /// <summary>
         /// A list of all distinct document identifiers from all fields, even nested expressions.
@@ -41,9 +41,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
             => $"$f_{_nextDocumentFieldKey++}$";
         private int _nextDocumentFieldKey = 0;
 
-        public QueryFieldCollection(QueryBatch queryBatch)
+        public QueryFieldCollection(QueryBatch query)
         {
-            QueryBatch = queryBatch;
+            Query = query;
         }
 
         #region Exposed collection: FieldsWithScalerFunctionCalls.
