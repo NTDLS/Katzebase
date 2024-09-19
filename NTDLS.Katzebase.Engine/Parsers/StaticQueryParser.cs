@@ -64,6 +64,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
             {
                 QueryType.Select => StaticParserSelect.Parse(queryBatch, tokenizer),
                 QueryType.Insert => StaticParserInsert.Parse(queryBatch, tokenizer),
+                QueryType.Update => StaticParserUpdate.Parse(queryBatch, tokenizer),
                 QueryType.Begin => StaticParserBegin.Parse(queryBatch, tokenizer),
                 QueryType.Commit => StaticParserCommit.Parse(queryBatch, tokenizer),
                 QueryType.Rollback => StaticParserRollback.Parse(queryBatch, tokenizer),
@@ -79,27 +80,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
             if (queryType == QueryType.Exec)
             {
                 result.ProcedureCall = StaticFunctionParsers.ParseProcedureParameters(tokenizer);
-            }
-            */
-
-            #endregion
-
-            #region Rollback -------------------------------------------------------------------------------------------
-
-            /*
-            else if (queryType == QueryType.Rollback)
-            {
-            if (tokenizer.TryIsNextToken("transaction") == false)
-            {
-                throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: 'transaction'.");
-            }
-
-            token = tokenizer.GetNext();
-            if (Enum.TryParse(token, true, out SubQueryType subQueryType) == false)
-            {
-                throw new KbParserException("Invalid query. Found '" + token + "', expected: 'transaction'.");
-            }
-            result.SubQueryType = subQueryType;
             }
             */
 
@@ -474,83 +454,6 @@ namespace NTDLS.Katzebase.Engine.Parsers
                         {"partitions", typeof(uint) }
                     };
                 StaticWithOptionsParser.ParseWithOptions(ref tokenizer, options, ref result);
-            }
-            }
-            */
-
-            #endregion
-
-            #region Update ---------------------------------------------------------------------------------------------
-
-            /*
-            else if (queryType == QueryType.Update)
-            {
-            string sourceSchema = tokenizer.GetNext();
-            string schemaAlias = string.Empty;
-            if (!TokenHelpers.IsValidIdentifier(sourceSchema, ':'))
-            {
-                throw new KbParserException("Invalid query. Found '" + sourceSchema + "', expected: schema name.");
-            }
-
-            result.Schemas.Add(new QuerySchema(sourceSchema.ToLowerInvariant()));
-
-            if (tokenizer.GetNext().Is("set") == false)
-            {
-                throw new KbParserException("Invalid query. Found '" + tokenizer.Breadcrumbs.Last() + "', expected: 'set'.");
-            }
-
-            result.UpdateValues = StaticFunctionParsers.ParseUpdateFields(tokenizer);
-            result.UpdateValues.RepopulateLiterals(tokenizer);
-
-            token = tokenizer.GetNext();
-            if (token != string.Empty && !token.Is("where"))
-            {
-                throw new KbParserException("Invalid query. Found '" + token + "', expected: 'where' or end of statement.");
-            }
-
-            if (token.Is("where"))
-            {
-                var conditionTokenizer = new ConditionTokenizer(tokenizer.Text, tokenizer.Caret);
-                int parenthesisScope = 0;
-
-                while (true)
-                {
-                    int previousTokenPosition = conditionTokenizer.Caret;
-                    var conditionToken = conditionTokenizer.PeekNext();
-
-                    if (conditionToken == "(") parenthesisScope++;
-                    if (conditionToken == ")") parenthesisScope--;
-
-                    if (parenthesisScope < 0 || int.TryParse(conditionToken, out _) == false && Enum.TryParse(conditionToken, true, out QueryType testQueryType) && Enum.IsDefined(typeof(QueryType), testQueryType))
-                    {
-                        //We found the beginning of a new statement, break here.
-                        conditionTokenizer.SetCaret(previousTokenPosition);
-                        tokenizer.SetCaret(previousTokenPosition);
-                        break;
-                    }
-
-                    conditionTokenizer.SkipNext();
-
-                    if ((new string[] { "order", "group", "" }).Contains(conditionToken) && conditionTokenizer.TryIsNextToken("by"))
-                    {
-                        throw new KbParserException("Invalid query. Found '" + conditionToken + "', expected: end of statement.");
-                    }
-                    else if (conditionToken == string.Empty)
-                    {
-                        //Set both the condition and query position to the beginning of the "ORDER BY" or "GROUP BY".
-                        conditionTokenizer.SetCaret(previousTokenPosition);
-                        tokenizer.SetCaret(previousTokenPosition);
-                        break;
-                    }
-                }
-
-                string conditionText = tokenizer.Text.Substring(conditionTokenizer.StartPosition, conditionTokenizer.Caret - conditionTokenizer.StartPosition).Trim();
-                if (conditionText == string.Empty)
-                {
-                    throw new KbParserException("Invalid query. Found '" + token + "', expected: list of conditions.");
-                }
-
-                result.Conditions = Conditions.Create(conditionText, tokenizer);
             }
             }
             */
