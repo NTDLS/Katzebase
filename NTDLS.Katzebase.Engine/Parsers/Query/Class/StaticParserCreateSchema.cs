@@ -1,12 +1,13 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class.Helpers;
+using NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserUpdate
+    internal static class StaticParserCreateSchema
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
@@ -18,9 +19,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
             }
 
-            throw new NotImplementedException("Reimplement this query type.");
+            var query = new PreparedQuery(queryBatch, queryType)
+            {
+                SubQueryType = SubQueryType.Schema
+            };
 
-            var query = new PreparedQuery(queryBatch, queryType);
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
@@ -28,19 +31,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
             query.Schemas.Add(new QuerySchema(schemaName));
 
-            tokenizer.EatIfNext("set");
-
-            //result.UpdateValues = StaticFunctionParsers.ParseUpdateFields(tokenizer);
-            //result.UpdateValues.RepopulateLiterals(tokenizer);
-
-            throw new NotImplementedException();
-
-            if (tokenizer.TryEatIfNext("where"))
+            if (tokenizer.TryEatIfNext("with"))
             {
-                query.Conditions = StaticParserWhere.Parse(queryBatch, tokenizer);
-
-                //Associate the root query schema with the root conditions.
-                query.Schemas.First().Conditions = query.Conditions;
+                var options = new ExpectedWithOptions
+                        {
+                            {"pagesize", typeof(uint) }
+                        };
+                StaticWithOptionsParser.ParseWithOptions(ref tokenizer, options, ref query);
             }
 
             return query;

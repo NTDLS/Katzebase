@@ -6,7 +6,7 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParser_This_Is_A_Template
+    internal static class StaticParserCreate
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
@@ -18,11 +18,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
             }
 
-            var query = new PreparedQuery(queryBatch, queryType);
+            var querySubType = tokenizer.EatIfNextEnum([SubQueryType.Schema, SubQueryType.Index, SubQueryType.UniqueKey, SubQueryType.Procedure]);
 
-            throw new NotImplementedException("Reimplement this query type.");
+            return querySubType switch
+            {
+                SubQueryType.Schema => StaticParserCreateSchema.Parse(queryBatch, tokenizer),
+                SubQueryType.Index => StaticParserCreateIndex.Parse(queryBatch, tokenizer),
+                SubQueryType.UniqueKey => StaticParserCreateUniqueKey.Parse(queryBatch, tokenizer),
+                SubQueryType.Procedure => StaticParserCreateProcedure.Parse(queryBatch, tokenizer),
 
-            return query;
+                _ => throw new KbParserException($"The query type is not implemented: [{token}]."),
+            };
         }
     }
 }
