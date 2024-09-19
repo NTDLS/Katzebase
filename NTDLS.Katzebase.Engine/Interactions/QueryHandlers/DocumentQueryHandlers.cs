@@ -368,7 +368,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 using var transactionReference = _core.Transactions.Acquire(session);
                 var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(_core, transactionReference.Transaction, preparedQuery, firstSchema.Prefix);
-              
+
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Delete);
 
                 _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, documentPointers.ToArray());
