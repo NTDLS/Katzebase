@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
                 }
             }
-            else if (tokenizer.TryIsNext("select"))
+            else if (tokenizer.TryEatIfNext("select"))
             {
                 query.InsertSelectQuery = StaticParserSelect.Parse(queryBatch, tokenizer);
             }
