@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserInsert
     {
-        internal static PreparedQuery Parse(QueryBatch query, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             string token = tokenizer.EatGetNext();
 
@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             var insertIntoSchemaName = tokenizer.EatGetNext();
 
-            var result = new PreparedQuery(query, queryType);
+            var result = new PreparedQuery(queryBatch, queryType);
 
             tokenizer.IsNext('(');
             var fieldNameList = tokenizer.EatGetMatchingScope().Split(',').Select(o => o.Trim()).ToList();
@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     tokenizer.IsNext('(');
 
-                    var values = tokenizer.EatGetMatchingScope().Split(',').Select(o => query.GetLiteralValue(o.Trim())).ToList();
+                    var values = tokenizer.EatGetMatchingScope().Split(',').Select(o => queryBatch.GetLiteralValue(o.Trim())).ToList();
 
                     if (values.Count < fieldNameList.Count)
                     {

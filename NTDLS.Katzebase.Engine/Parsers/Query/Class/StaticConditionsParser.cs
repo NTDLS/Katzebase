@@ -18,15 +18,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// and all conditions in a ConditionGroup will be comprised solely of AND conditions. This way we can use the groups to match indexes
         /// before evaluating the whole expression on the limited set of documents we derived from the indexing operations.
         /// </summary>
-        public static ConditionCollection Parse(QueryBatch query, Tokenizer parentTokenizer, string conditionsText, string leftHandAliasOfJoin = "")
+        public static ConditionCollection Parse(QueryBatch queryBatch, Tokenizer parentTokenizer, string conditionsText, string leftHandAliasOfJoin = "")
         {
-            var conditionCollection = new ConditionCollection(query, conditionsText, leftHandAliasOfJoin);
+            var conditionCollection = new ConditionCollection(queryBatch, conditionsText, leftHandAliasOfJoin);
 
             conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression
                 .Replace(" OR ", " || ", StringComparison.InvariantCultureIgnoreCase)
                 .Replace(" AND ", " && ", StringComparison.InvariantCultureIgnoreCase);
 
-            ParseRecursive(query, parentTokenizer, conditionCollection, conditionCollection, conditionsText);
+            ParseRecursive(queryBatch, parentTokenizer, conditionCollection, conditionCollection, conditionsText);
 
             conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.Replace("  ", " ").Trim();
             conditionCollection.Hash = Library.Helpers.GetSHA256Hash(conditionCollection.MathematicalExpression);
@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             return conditionCollection;
         }
 
-        private static void ParseRecursive(QueryBatch query, Tokenizer parentTokenizer,
+        private static void ParseRecursive(QueryBatch queryBatch, Tokenizer parentTokenizer,
             ConditionCollection conditionCollection, ConditionGroup parentConditionGroup,
             string conditionsText, ConditionGroup? givenCurrentConditionGroup = null)
         {
@@ -53,7 +53,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     parentConditionGroup.Collection.Add(currentConditionGroup);
 
                     string subConditionsText = tokenizer.EatMatchingScope();
-                    ParseRecursive(query, parentTokenizer, conditionCollection,
+                    ParseRecursive(queryBatch, parentTokenizer, conditionCollection,
                         currentConditionGroup, subConditionsText, currentConditionGroup);
 
                     //After we finish recursively parsing the parentheses, we null out the current group because whatever we find next will need to be in a new group.

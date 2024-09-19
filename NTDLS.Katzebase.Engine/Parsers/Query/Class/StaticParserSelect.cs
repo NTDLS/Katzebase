@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserSelect
     {
-        internal static PreparedQuery Parse(QueryBatch query, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             string token = tokenizer.EatGetNext();
 
@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
             }
 
-            var result = new PreparedQuery(query, queryType);
+            var result = new PreparedQuery(queryBatch, queryType);
 
             //Parse "TOP n".
             if (tokenizer.TryEatIfNext("top"))
@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
             else
             {
-                result.SelectFields = StaticParserFieldList.Parse(query, tokenizer, [" from ", " into "], false);
+                result.SelectFields = StaticParserFieldList.Parse(queryBatch, tokenizer, [" from ", " into "], false);
             }
 
             //Parse "into".
@@ -81,14 +81,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             //Parse joins.
             while (tokenizer.TryIsNext("inner"))
             {
-                var joinedSchemas = StaticParserJoin.Parse(query, tokenizer);
+                var joinedSchemas = StaticParserJoin.Parse(queryBatch, tokenizer);
                 result.Schemas.AddRange(joinedSchemas);
             }
 
             //Parse "where" clause.
             if (tokenizer.TryEatIfNext("where"))
             {
-                result.Conditions = StaticParserWhere.Parse(query, tokenizer);
+                result.Conditions = StaticParserWhere.Parse(queryBatch, tokenizer);
 
                 //Associate the root query schema with the root conditions.
                 result.Schemas.First().Conditions = result.Conditions;
@@ -101,7 +101,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
                 }
-                result.GroupFields = StaticParserGroupBy.Parse(query, tokenizer);
+                result.GroupFields = StaticParserGroupBy.Parse(queryBatch, tokenizer);
             }
 
             //Parse "order by".
@@ -111,7 +111,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
                 }
-                result.SortFields = StaticParserOrderBy.Parse(query, tokenizer);
+                result.SortFields = StaticParserOrderBy.Parse(queryBatch, tokenizer);
             }
 
             //Parse "limit" clause.

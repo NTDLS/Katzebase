@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <summary>
         /// Parse the single.
         /// </summary>
-        static public PreparedQuery ParseQuery(QueryBatch query, Tokenizer tokenizer)
+        static public PreparedQuery ParseQuery(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             string token = tokenizer.GetNext();
 
@@ -62,11 +62,11 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
             if (queryType == QueryType.Select)
             {
-                return StaticParserSelect.Parse(query, tokenizer);
+                return StaticParserSelect.Parse(queryBatch, tokenizer);
             }
             else if (queryType == QueryType.Insert)
             {
-                return StaticParserInsert.Parse(query, tokenizer);
+                return StaticParserInsert.Parse(queryBatch, tokenizer);
             }
 
             throw new KbParserException($"The query type is not implemented: [{token}].");

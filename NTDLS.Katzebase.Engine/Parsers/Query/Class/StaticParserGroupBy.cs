@@ -5,9 +5,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserGroupBy
     {
-        public static QueryFieldCollection Parse(QueryBatch query, Tokenizer tokenizer)
+        public static QueryFieldCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            return StaticParserFieldList.Parse(query, tokenizer, [" order ", " offset "], true);
+            return StaticParserFieldList.Parse(queryBatch, tokenizer, [" order ", " offset "], true);
         }
     }
 }

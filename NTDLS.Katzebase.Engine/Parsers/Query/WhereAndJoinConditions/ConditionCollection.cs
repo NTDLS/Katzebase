@@ -33,23 +33,23 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         public string NextExpressionVariable()
             => $"v{_nextExpressionVariable++}";
 
-        public ConditionCollection(QueryBatch query, string mathematicalExpression, string? schemaAlias = null)
+        public ConditionCollection(QueryBatch queryBatch, string mathematicalExpression, string? schemaAlias = null)
             : base(LogicalConnector.None)
         {
-            FieldCollection = new(query);
+            FieldCollection = new(queryBatch);
             MathematicalExpression = mathematicalExpression;
             SchemaAlias = schemaAlias;
         }
 
-        public ConditionCollection(QueryBatch query)
+        public ConditionCollection(QueryBatch queryBatch)
             : base(LogicalConnector.None)
         {
-            FieldCollection = new(query);
+            FieldCollection = new(queryBatch);
         }
 
         public new ConditionCollection Clone()
         {
-            var clone = new ConditionCollection(FieldCollection.Query)
+            var clone = new ConditionCollection(FieldCollection.QueryBatch)
             {
                 Connector = this.Connector,
                 SchemaAlias = this.SchemaAlias,
@@ -135,7 +135,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                     }
                     else
                     {
-                        left = $"{FieldCollection.Query.GetLiteralValue(entry.Left.Value)}";
+                        left = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Left.Value)}";
                     }
 
                     string right;
@@ -149,7 +149,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                     }
                     else
                     {
-                        right = $"{FieldCollection.Query.GetLiteralValue(entry.Right.Value)}";
+                        right = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Right.Value)}";
                     }
 
 
