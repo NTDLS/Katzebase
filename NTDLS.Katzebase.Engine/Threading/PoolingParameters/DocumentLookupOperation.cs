@@ -18,18 +18,18 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// </summary>
         public Dictionary<string, GroupRowCollection> GroupRows { get; set; } = new();
 
-        public string? GatherDocumentPointersForSchemaPrefix { get; set; } = null;
+        public string[]? GatherDocumentsIdsForSchemaPrefixes { get; set; } = null;
         public SchemaIntersectionRowCollection ResultingRows { get; set; } = new();
-        public List<DocumentPointer> DocumentPointers { get; set; } = new();
+        public List<SchemaIntersectionRowDocumentIdentifier> RowDocumentIdentifiers { get; set; } = new();
         public QuerySchemaMap SchemaMap { get; private set; }
         public EngineCore Core { get; private set; }
         public Transaction Transaction { get; private set; }
         public PreparedQuery Query { get; private set; }
 
         public DocumentLookupOperation(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix)
+            QuerySchemaMap schemaMap, PreparedQuery query, string[]? getDocumentsIdsForSchemaPrefixes)
         {
-            GatherDocumentPointersForSchemaPrefix = gatherDocumentPointersForSchemaPrefix;
+            GatherDocumentsIdsForSchemaPrefixes = getDocumentsIdsForSchemaPrefixes;
             Core = core;
             Transaction = transaction;
             SchemaMap = schemaMap;

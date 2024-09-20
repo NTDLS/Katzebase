@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -145,8 +146,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <param name="query"></param>
         /// <param name="schemaPrefix"></param>
         /// <returns></returns>
-        internal static IEnumerable<DocumentPointer> FindDocumentPointersByPreparedQuery(
-            EngineCore core, Transaction transaction, PreparedQuery query, string gatherDocumentPointersForSchemaPrefix)
+        internal static IEnumerable<SchemaIntersectionRowDocumentIdentifier> FindDocumentPointersByPreparedQuery(
+            EngineCore core, Transaction transaction, PreparedQuery query, string[] getDocumentsIdsForSchemaPrefixes)
         {
             var schemaMap = new QuerySchemaMap(core, transaction, query);
 
@@ -158,8 +159,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 schemaMap.Add(querySchema.Prefix, physicalSchema, physicalDocumentPageCatalog, querySchema.Conditions);
             }
 
-            var subConditionResults = StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
-            return subConditionResults.DocumentPointers;
+            return StaticSchemaIntersectionMethods.GetDocumentsByConditions(core, transaction, schemaMap, query, getDocumentsIdsForSchemaPrefixes).RowDocumentIdentifiers;
         }
     }
 }

@@ -1,11 +1,12 @@
 UPDATE
 	Test
 SET
-	SourceLanguage = Length(TargetWord) + 'Test'
+	SourceLanguage = Length(TargetWord) + 'Test',
+	Blah = 'Another Test' + Length(TargetWord)
 WHERE
-	TargetLanguage = 'Test'
+	TargetLanguage = 'Spanish'
 
---select * from Test
+select * from Test
 
 /*
 CREATE INDEX IX_Language (

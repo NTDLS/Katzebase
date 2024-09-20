@@ -25,11 +25,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Build a generic key/value dataset which is the combined field-set from each inner joined document.
         /// </summary>
-        /// <param name="gatherDocumentPointersForSchemaPrefix">When not null, the process will focus on
+        /// <param name="gatherDocumentsIdsForSchemaPrefixes">When not null, the process will focus on
         /// obtaining a list of DocumentPointers instead of key/values. This is used for UPDATES and DELETES.</param>
         /// <returns></returns>
         internal static DocumentLookupResults GetDocumentsByConditions(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMap, PreparedQuery query, string? gatherDocumentPointersForSchemaPrefix = null)
+            QuerySchemaMap schemaMap, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
         {
             var topLevelSchemaMap = schemaMap.First().Value;
 
@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, topLevelSchemaMap.PhysicalSchema, LockOperation.Read);
 
             var queue = core.ThreadPool.Lookup.CreateChildQueue<DocumentLookupOperation.Instance>(core.Settings.LookupOperationThreadPoolQueueDepth);
-            var operation = new DocumentLookupOperation(core, transaction, schemaMap, query, gatherDocumentPointersForSchemaPrefix);
+            var operation = new DocumentLookupOperation(core, transaction, schemaMap, query, gatherDocumentsIdsForSchemaPrefixes);
 
             foreach (var documentPointer in documentPointers)
             {
@@ -180,10 +180,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             #endregion
 
-            if (gatherDocumentPointersForSchemaPrefix != null)
+            if (gatherDocumentsIdsForSchemaPrefixes != null)
             {
                 //Distill the document pointers to a distinct list. Can we do this in the threads? Maybe prevent the dups in the first place?
-                operation.DocumentPointers = operation.DocumentPointers.Distinct(new DocumentPageEqualityComparer()).ToList();
+                operation.RowDocumentIdentifiers = operation.RowDocumentIdentifiers.Distinct(new DocumentPageEqualityComparer()).ToList();
             }
 
             if (query.DynamicSchemaFieldFilter != null && operation.ResultingRows.Count > 0)
@@ -204,7 +204,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             var results = new DocumentLookupResults();
 
-            results.DocumentPointers.AddRange(operation.DocumentPointers);
+            results.RowDocumentIdentifiers.AddRange(operation.RowDocumentIdentifiers);
 
             results.AddRange(operation.ResultingRows);
 
@@ -313,13 +313,21 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             lock (instance.Operation.ResultingRows)
             {
                 //Accumulate the results up to the parent.
-                if (instance.Operation.GatherDocumentPointersForSchemaPrefix == null)
+                if (instance.Operation.GatherDocumentsIdsForSchemaPrefixes == null)
                 {
                     instance.Operation.ResultingRows.AddRange(resultingRows);
                 }
                 else
                 {
-                    instance.Operation.DocumentPointers.AddRange(resultingRows.Select(o => o.SchemaDocumentPointers[instance.Operation.GatherDocumentPointersForSchemaPrefix]));
+                    foreach (var GatherDocumentsIdsForSchemaPrefix in instance.Operation.GatherDocumentsIdsForSchemaPrefixes)
+                    {
+                        var rowDocumentIdentifiers = resultingRows
+                            .Select(o => new SchemaIntersectionRowDocumentIdentifier(o.SchemaDocumentPointers[GatherDocumentsIdsForSchemaPrefix], o.AuxiliaryFields));
+
+                        var auxiliaryFields = resultingRows.Select(o => o.AuxiliaryFields);
+
+                        instance.Operation.RowDocumentIdentifiers.AddRange(rowDocumentIdentifiers);
+                    }
                 }
             }
         }
@@ -348,7 +356,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             var resultingRow = new SchemaIntersectionRow();
             resultingRows.Add(resultingRow);
 
-            if (instance.Operation.GatherDocumentPointersForSchemaPrefix != null)
+            if (instance.Operation.GatherDocumentsIdsForSchemaPrefixes != null)
             {
                 resultingRow.AddSchemaDocumentPointer(topLevelSchemaMap.Key, topLevelDocumentPointer);
             }
@@ -372,7 +380,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             //Limit the results by the rows that have the correct number of schema matches.
             //TODO: This could probably be used to implement OUTER JOINS.
-            if (instance.Operation.GatherDocumentPointersForSchemaPrefix == null)
+            if (instance.Operation.GatherDocumentsIdsForSchemaPrefixes == null)
             {
                 resultingRows.RemoveAll(o => o.SchemaKeys.Count != instance.Operation.SchemaMap.Count);
             }
@@ -501,7 +509,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         resultingRows.Add(resultingRow);
                     }
 
-                    if (instance.Operation.GatherDocumentPointersForSchemaPrefix != null)
+                    if (instance.Operation.GatherDocumentsIdsForSchemaPrefixes != null)
                     {
                         resultingRow.AddSchemaDocumentPointer(currentSchemaKVP.Key, documentPointer);
                     }
@@ -616,6 +624,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             //Keep track of which schemas we've matched on.
             schemaResultRow.SchemaKeys.Add(schemaKey);
 
+            schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.{UIDMarker}", documentPointer.Key);
+
             //Grab all of the selected fields from the document for this schema.
             foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifierFields.Where(o => o.SchemaAlias == schemaKey || o.SchemaAlias == string.Empty))
             {
@@ -626,8 +636,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 }
                 schemaResultRow.InsertValue(field.Name, field.Ordinal, documentValue);
             }
-
-            schemaResultRow.AuxiliaryFields.Add($"{schemaKey}.{UIDMarker}", documentPointer.Key);
 
             //We have to make sure that we have all of the method fields too so we can use them for calling functions.
             foreach (var field in instance.Operation.Query.SelectFields.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey || o.Value.SchemaAlias == string.Empty).Distinct())
@@ -642,6 +650,25 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                             $"'{field.Value.FieldName}' will be treated as null.");
                     }
                     schemaResultRow.AuxiliaryFields.Add(field.Value.Value, documentValue);
+                }
+            }
+
+            if (instance.Operation.Query.UpdateFieldValues != null)
+            {
+                foreach (var updateFieldValue in instance.Operation.Query.UpdateFieldValues)
+                {
+                    foreach (var field in updateFieldValue.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey || o.Value.SchemaAlias == string.Empty).Distinct())
+                    {
+                        if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Value.Value) == false)
+                        {
+                            if (documentContent.TryGetValue(field.Value.FieldName, out string? documentValue) == false)
+                            {
+                                instance.Operation.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound,
+                                    $"'{field.Value.FieldName}' will be treated as null.");
+                            }
+                            schemaResultRow.AuxiliaryFields.Add(field.Value.Value, documentValue);
+                        }
+                    }
                 }
             }
 
@@ -752,6 +779,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     {
                         var collapsedLeft = entry.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields)?.ToLowerInvariant();
                         var collapsedRight = entry.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields)?.ToLowerInvariant();
+
+                        if (collapsedLeft?.Equals("spanish", StringComparison.InvariantCultureIgnoreCase) == true)
+                        {
+                        }
 
                         expression.Parameters[entry.ExpressionVariable] = entry.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
                     }

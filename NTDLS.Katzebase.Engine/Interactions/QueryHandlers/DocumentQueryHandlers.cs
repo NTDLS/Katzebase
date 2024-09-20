@@ -201,43 +201,24 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 var firstSchema = preparedQuery.Schemas.Single();
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
 
-                var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
+                var getDocumentsIdsForSchemaPrefixes = new string[] { firstSchema.Prefix };
 
-                if (preparedQuery.Attributes.TryGetValue(PreparedQuery.QueryAttribute.SpecificSchemaPrefix, out object? value))
-                {
-                    getDocumentPointsForSchemaPrefix = value as string;
-                }
-
-                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
-                    _core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix.EnsureNotNull());
+                var rowDocumentIdentifiers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
+                    _core, transactionReference.Transaction, preparedQuery, getDocumentsIdsForSchemaPrefixes);
 
                 var updatedDocumentPointers = new List<DocumentPointer>();
 
-                foreach (var documentPointer in documentPointers)
+                foreach (var rowDocumentIdentifier in rowDocumentIdentifiers)
                 {
                     var physicalDocument = _core.Documents.AcquireDocument
-                        (transactionReference.Transaction, physicalSchema, documentPointer, LockOperation.Write);
+                        (transactionReference.Transaction, physicalSchema, rowDocumentIdentifier.DocumentPointer, LockOperation.Write);
 
                     var queryFieldCollection = preparedQuery.UpdateFieldValues.EnsureNotNull().First();
-
-                    //Fill in the auxiliaryFields with the values from the document which we are updating.
-                    //TODO: This should also be updated to support getting values from multiple schemas.
-                    var auxiliaryFields = new KbInsensitiveDictionary<string?>();
-                    foreach (var documentIdentifier in queryFieldCollection.DocumentIdentifiers)
-                    {
-                        if (auxiliaryFields.ContainsKey(documentIdentifier.Value.FieldName) == false)
-                        {
-                            if (physicalDocument.Elements.TryGetValue(documentIdentifier.Value.FieldName, out var documentFieldValue))
-                            {
-                                auxiliaryFields.Add(documentIdentifier.Value.FieldName, documentFieldValue);
-                            }
-                        }
-                    }
 
                     foreach (var updateValue in queryFieldCollection)
                     {
                         var collapsedValue = updateValue.Expression.CollapseScalerQueryField(
-                            transactionReference.Transaction, preparedQuery, queryFieldCollection, auxiliaryFields);
+                            transactionReference.Transaction, preparedQuery, queryFieldCollection, rowDocumentIdentifier.AuxiliaryFields);
 
                         if (physicalDocument.Elements.ContainsKey(updateValue.Alias))
                         {
@@ -249,15 +230,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         }
                     }
 
-                    updatedDocumentPointers.Add(documentPointer);
+                    updatedDocumentPointers.Add(rowDocumentIdentifier.DocumentPointer);
                 }
 
-                //var listOfModifiedFields = preparedQuery.UpdateValues.Select(o => o.Key);
-
-                //We update all of the documents all at once so we don't have to keep opening/closing catalogs.
-                //_core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocumentPointers, listOfModifiedFields);
-
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(rowDocumentIdentifiers.Count());
             }
             catch (Exception ex)
             {
@@ -367,13 +343,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 var firstSchema = preparedQuery.Schemas.First();
 
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(_core, transactionReference.Transaction, preparedQuery, firstSchema.Prefix);
+
+                var rowDocumentIdentifiers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
+                    _core, transactionReference.Transaction, preparedQuery, [firstSchema.Prefix]);
 
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Delete);
 
-                _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, documentPointers.ToArray());
+                _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, rowDocumentIdentifiers.Select(o => o.DocumentPointer));
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(rowDocumentIdentifiers.Count());
             }
             catch (Exception ex)
             {

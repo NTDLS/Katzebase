@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
+﻿using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {
@@ -10,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// This is only used when we just want to return a list of document pointers and no fields.
         /// </summary>
-        public List<DocumentPointer> DocumentPointers { get; private set; } = new();
+        public List<SchemaIntersectionRowDocumentIdentifier> RowDocumentIdentifiers { get; private set; } = new();
 
         public void AddRange(SchemaIntersectionRowCollection rowCollection)
         {

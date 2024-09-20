@@ -1,4 +1,6 @@
-﻿namespace NTDLS.Katzebase.Engine.Documents
+﻿using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
+
+namespace NTDLS.Katzebase.Engine.Documents
 {
     /// <summary>
     /// This is a simple class that contains a document page number as well as the page ID.
@@ -30,12 +32,12 @@
                 => HashCode.Combine(obj?.PageNumber, obj?.DocumentId);
         }
 
-        public class DocumentPageEqualityComparer : IEqualityComparer<DocumentPointer>
+        public class DocumentPageEqualityComparer : IEqualityComparer<SchemaIntersectionRowDocumentIdentifier>
         {
-            public bool Equals(DocumentPointer? x, DocumentPointer? y)
-                => x?.PageNumber == y?.PageNumber && x?.DocumentId == y?.DocumentId;
+            public bool Equals(SchemaIntersectionRowDocumentIdentifier? x, SchemaIntersectionRowDocumentIdentifier? y)
+                => x?.DocumentPointer.PageNumber == y?.DocumentPointer.PageNumber && x?.DocumentPointer.DocumentId == y?.DocumentPointer.DocumentId;
 
-            public int GetHashCode(DocumentPointer obj)
+            public int GetHashCode(SchemaIntersectionRowDocumentIdentifier obj)
                 => obj.GetHashCode();
         }
 

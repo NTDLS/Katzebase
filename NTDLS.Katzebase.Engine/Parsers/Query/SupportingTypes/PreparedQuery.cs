@@ -15,7 +15,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
             IndexName,
             IsUnique,
             ProcessId,
-            SpecificSchemaPrefix,
             IncludePhysicalPages,
             TargetSchema,
             Schema,
