@@ -1,5 +1,4 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
 using NTDLS.Katzebase.Shared;
 using System.Diagnostics.CodeAnalysis;
 
@@ -40,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             return function != null;
         }
 
-        public static AggregateFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<AggregateGenericParameter> parameters)
+        public static AggregateFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string?> parameters)
         {
             if (_protypes == null)
             {

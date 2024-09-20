@@ -59,7 +59,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
             if (Parameters.Count < requiredParameterCount)
             {
-                if (Parameters.Count > 0 && Parameters[0].Type == KbProcedureParameterType.Infinite_String)
+                if (Parameters.Count > 0 && Parameters[0].Type == KbProcedureParameterType.StringInfinite)
                 {
                     //The first parameter is infinite, we don't even check anything else.
                 }
@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
 
             var result = new ProcedureParameterValueCollection();
 
-            if (Parameters.Count > 0 && Parameters[0].Type == KbProcedureParameterType.Infinite_String)
+            if (Parameters.Count > 0 && Parameters[0].Type == KbProcedureParameterType.StringInfinite)
             {
                 for (int i = 0; i < Parameters.Count; i++)
                 {

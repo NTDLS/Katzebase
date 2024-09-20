@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
-using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 

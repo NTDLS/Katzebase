@@ -26,8 +26,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-
-
         public KbQueryServerStartSessionReply StartSession(RmContext context, KbQueryServerStartSession param)
         {
 #if DEBUG
@@ -46,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 try
                 {
-                    preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), param.Username, param.ClientName);
+                    preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), param.Username, param.ClientName, true);
 
                     using var transactionReference = _core.Transactions.Acquire(preLogin);
 

@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.Query;
+﻿using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 
 namespace NTDLS.Katzebase.Engine.Functions.Parameters
 {

@@ -4,11 +4,10 @@ using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Functions.Parameters;
-using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
-using NTDLS.Katzebase.Engine.Query;
-using NTDLS.Katzebase.Engine.Query.Searchers;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.QueryProcessing;
+using NTDLS.Katzebase.Engine.QueryProcessing.Searchers;
 using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -111,40 +110,75 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
+
                 var physicalSchema = _core.Schemas.Acquire(
                     transactionReference.Transaction, preparedQuery.Schemas.Single().Name, LockOperation.Write);
 
-                foreach (var upsertValues in preparedQuery.UpsertValues)
+                if (preparedQuery.InsertFieldValues != null)
                 {
-                    var keyValuePairs = new KbInsensitiveDictionary<string?>();
+                    //Executing a "insert into, values" statement.
 
-                    foreach (var updateValue in upsertValues)
+                    foreach (var insertFieldValues in preparedQuery.InsertFieldValues)
                     {
-                        string? fieldValue = string.Empty;
+                        var keyValuePairs = new KbInsensitiveDictionary<string?>();
 
-                        //Execute functions
-                        if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
+                        foreach (var insertValue in insertFieldValues)
                         {
-                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(
-                                transactionReference.Transaction, updateValue.Value, new KbInsensitiveDictionary<string?>());
-                        }
-                        else if (updateValue.Value is FunctionConstantParameter functionConstantParameter)
-                        {
-                            fieldValue = functionConstantParameter.RawValue;
-                        }
-                        else
-                        {
-                            throw new KbNotImplementedException($"Function type {updateValue.Value.GetType().Name} is not implemented.");
+                            var collapsedValue = insertValue.Expression.CollapseScalerQueryField(
+                                transactionReference.Transaction, preparedQuery, new(preparedQuery.Batch), new());
+
+                            keyValuePairs.Add(insertValue.Alias, collapsedValue);
                         }
 
-                        keyValuePairs.Add(updateValue.Key, fieldValue);
+                        var documentContent = JsonConvert.SerializeObject(keyValuePairs);
+                        _core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
                     }
 
-                    var documentContent = JsonConvert.SerializeObject(keyValuePairs);
-                    _core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
+                    return transactionReference.CommitAndApplyMetricsThenReturnResults(preparedQuery.InsertFieldValues.Count);
+                }
+                else if (preparedQuery.InsertSelectQuery != null)
+                {
+                    //Executing a "insert into, select from" statement.
+
+                    var results = _core.Query.ExecuteQuery(session, preparedQuery.InsertSelectQuery);
+
+                    if (results.Collection.Count == 0)
+                    {
+                        return transactionReference.CommitAndApplyMetricsThenReturnResults(0);
+                    }
+                    else if (results.Collection.Count == 1)
+                    {
+                        if (results.Collection[0].Fields.Count < preparedQuery.InsertFieldNames.Count)
+                        {
+                            throw new KbParserException("Values list contains less values than the field list.");
+                        }
+                        else if (results.Collection[0].Fields.Count > preparedQuery.InsertFieldNames.Count)
+                        {
+                            throw new KbParserException("Values list contains more values than the field list.");
+                        }
+
+                        foreach (var row in results.Collection[0].Rows)
+                        {
+                            var keyValuePairs = new KbInsensitiveDictionary<string?>();
+
+                            for (int fieldIndex = 0; fieldIndex < results.Collection[0].Fields.Count; fieldIndex++)
+                            {
+                                keyValuePairs.Add(preparedQuery.InsertFieldNames[fieldIndex], row.Values[fieldIndex]);
+                            }
+
+                            var documentContent = JsonConvert.SerializeObject(keyValuePairs);
+                            _core.Documents.InsertDocument(transactionReference.Transaction, physicalSchema, documentContent);
+                        }
+
+                        return transactionReference.CommitAndApplyMetricsThenReturnResults(results.Collection[0].Rows.Count);
+                    }
+                    else if (results.Collection.Count > 1)
+                    {
+                        throw new KbMultipleRecordSetsException("Insert select resulted in more than one result-set.");
+                    }
                 }
 
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(preparedQuery.UpsertValues.Count);
+                throw new KbEngineException("Insert statement must be accompanied by a values list or a source select statement.");
             }
             catch (Exception ex)
             {
@@ -167,60 +201,39 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 var firstSchema = preparedQuery.Schemas.Single();
                 var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
 
-                var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
+                var getDocumentsIdsForSchemaPrefixes = new string[] { firstSchema.Prefix };
 
-                if (preparedQuery.Attributes.TryGetValue(PreparedQuery.QueryAttribute.SpecificSchemaPrefix, out object? value))
-                {
-                    getDocumentPointsForSchemaPrefix = value as string;
-                }
-
-                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
-                    _core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix.EnsureNotNull());
+                var rowDocumentIdentifiers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
+                    _core, transactionReference.Transaction, preparedQuery, getDocumentsIdsForSchemaPrefixes);
 
                 var updatedDocumentPointers = new List<DocumentPointer>();
 
-                foreach (var documentPointer in documentPointers)
+                foreach (var rowDocumentIdentifier in rowDocumentIdentifiers)
                 {
                     var physicalDocument = _core.Documents.AcquireDocument
-                        (transactionReference.Transaction, physicalSchema, documentPointer, LockOperation.Write);
+                        (transactionReference.Transaction, physicalSchema, rowDocumentIdentifier.DocumentPointer, LockOperation.Write);
 
-                    foreach (var updateValue in preparedQuery.UpdateValues)
+                    var queryFieldCollection = preparedQuery.UpdateFieldValues.EnsureNotNull().First();
+
+                    foreach (var updateValue in queryFieldCollection)
                     {
-                        string? fieldValue = string.Empty;
+                        var collapsedValue = updateValue.Expression.CollapseScalerQueryField(
+                            transactionReference.Transaction, preparedQuery, queryFieldCollection, rowDocumentIdentifier.AuxiliaryFields);
 
-                        //Execute functions
-                        if (updateValue.Value is FunctionWithParams || updateValue.Value is FunctionExpression)
+                        if (physicalDocument.Elements.ContainsKey(updateValue.Alias))
                         {
-                            fieldValue = ScalerFunctionImplementation.CollapseAllFunctionParameters(transactionReference.Transaction, updateValue.Value, physicalDocument.Elements);
-                        }
-                        else if (updateValue.Value is FunctionConstantParameter functionConstantParameter)
-                        {
-                            fieldValue = functionConstantParameter.RawValue;
+                            physicalDocument.Elements[updateValue.Alias] = collapsedValue;
                         }
                         else
                         {
-                            throw new KbNotImplementedException($"Function type {updateValue.Value.GetType().Name} is not implemented.");
-                        }
-
-                        if (physicalDocument.Elements.ContainsKey(updateValue.Key))
-                        {
-                            physicalDocument.Elements[updateValue.Key] = fieldValue;
-                        }
-                        else
-                        {
-                            physicalDocument.Elements.Add(updateValue.Key, fieldValue);
+                            physicalDocument.Elements.Add(updateValue.Alias, collapsedValue);
                         }
                     }
 
-                    updatedDocumentPointers.Add(documentPointer);
+                    updatedDocumentPointers.Add(rowDocumentIdentifier.DocumentPointer);
                 }
 
-                var listOfModifiedFields = preparedQuery.UpdateValues.Select(o => o.Key);
-
-                //We update all of the documents all at once so we don't have to keep opening/closing catalogs.
-                _core.Documents.UpdateDocuments(transactionReference.Transaction, physicalSchema, updatedDocumentPointers, listOfModifiedFields);
-
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(rowDocumentIdentifiers.Count());
             }
             catch (Exception ex)
             {
@@ -280,9 +293,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schema.Name, LockOperation.Read);
 
                         var lookupOptimization = IndexingConditionOptimization.BuildTree(_core,
-                            transactionReference.Transaction, physicalSchema, schema.Conditions, schema.Prefix);
+                            transactionReference.Transaction, preparedQuery, physicalSchema, schema.Conditions, schema.Prefix);
 
-                        var explanation = lookupOptimization.ExplainPlan(_core, physicalSchema, lookupOptimization, schema.Prefix);
+                        var explanation = IndexingConditionOptimization.ExplainPlan(physicalSchema, lookupOptimization, preparedQuery, schema.Prefix);
 
                         transactionReference.Transaction.AddMessage(explanation, KbMessageType.Explain);
                     }
@@ -327,20 +340,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
+                var firstSchema = preparedQuery.Schemas.First();
+
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var firstSchema = preparedQuery.Schemas.Single();
-                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Read);
-                var getDocumentPointsForSchemaPrefix = firstSchema.Prefix;
 
-                if (preparedQuery.Attributes.TryGetValue(PreparedQuery.QueryAttribute.SpecificSchemaPrefix, out object? value))
-                {
-                    getDocumentPointsForSchemaPrefix = value as string;
-                }
+                var rowDocumentIdentifiers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
+                    _core, transactionReference.Transaction, preparedQuery, [firstSchema.Prefix]);
 
-                var documentPointers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery
-                    (_core, transactionReference.Transaction, preparedQuery, getDocumentPointsForSchemaPrefix.EnsureNotNull());
-                _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, documentPointers.ToArray());
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(documentPointers.Count());
+                var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, firstSchema.Name, LockOperation.Delete);
+
+                _core.Documents.DeleteDocuments(transactionReference.Transaction, physicalSchema, rowDocumentIdentifiers.Select(o => o.DocumentPointer));
+
+                return transactionReference.CommitAndApplyMetricsThenReturnResults(rowDocumentIdentifiers.Count());
             }
             catch (Exception ex)
             {

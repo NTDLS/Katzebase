@@ -3,23 +3,38 @@
     /// <summary>
     /// Contains a numeric evaluation expression. This could be as simple as [10 + 10] or could contain function calls which child nodes.
     /// </summary>
-    public class QueryFieldExpressionNumeric : IQueryFieldExpression
+    internal class QueryFieldExpressionNumeric : IQueryFieldExpression
     {
-        private int _nextExpressionKey = 0;
+        public string Value { get; set; }
 
-        public string Expression { get; set; }
+        /// <summary>
+        /// Not applicable to IQueryFieldExpression
+        /// </summary>
+        public string SchemaAlias { get; private set; } = string.Empty;
 
         /// <summary>
         /// Contains the function names and their parameters that are used to satisfy the expression,
         /// </summary>
         public List<IQueryFieldExpressionFunction> FunctionDependencies { get; private set; } = new();
 
-        public QueryFieldExpressionNumeric(string expression)
+        public QueryFieldExpressionNumeric(string value)
         {
-            Expression = expression;
+            Value = value;
         }
 
-        public string GetKeyExpressionKey()
-            => $"$x_{_nextExpressionKey++}$";
+        public IQueryField Clone()
+        {
+            var clone = new QueryFieldExpressionNumeric(Value)
+            {
+                SchemaAlias = SchemaAlias,
+            };
+
+            foreach (var functionDependency in FunctionDependencies)
+            {
+                clone.FunctionDependencies.Add(functionDependency.Clone());
+            }
+
+            return clone;
+        }
     }
 }

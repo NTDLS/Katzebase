@@ -18,6 +18,12 @@ namespace NTDLS.Katzebase.Shared
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsNot(this string value, string? otherValue)
+        {
+            return !string.Equals(value, otherValue, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsOneOf(this string value, string?[] otherValues)
         {
             foreach (var otherValue in otherValues)

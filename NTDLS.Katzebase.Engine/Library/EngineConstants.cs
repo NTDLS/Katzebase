@@ -118,11 +118,5 @@
             LessThanOrEqual,
             GreaterThanOrEqual
         }
-
-        public enum BasicDataType
-        {
-            String,
-            Numeric
-        }
     }
 }

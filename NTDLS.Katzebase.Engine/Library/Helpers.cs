@@ -6,6 +6,16 @@ namespace NTDLS.Katzebase.Engine.Library
 {
     public static class Helpers
     {
+        public static string ReplaceFirst(this string input, string search, string replacement)
+        {
+            int pos = input.IndexOf(search);
+            if (pos < 0)
+            {
+                return input; // Return the original string if the search string is not found
+            }
+            return input.Substring(0, pos) + replacement + input.Substring(pos + search.Length);
+        }
+
         /// <summary>
         /// Adds the values of the given dictionary to the referenced dictionary.
         /// </summary>
@@ -24,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Library
         /// Produces a new dictionary that is the product of the common keys between the two.
         /// If the given dictionary is null, a clone of dictionary two is returned.
         /// </summary>
-        public static Dictionary<K, V> Intersect<K, V>(this Dictionary<K, V>? one, Dictionary<K, V> two) where K : notnull
+        public static Dictionary<K, V> IntersectWith<K, V>(this Dictionary<K, V>? one, Dictionary<K, V> two) where K : notnull
         {
             //return one.Where(o => two.ContainsKey(o.Key)).ToDictionary(o => o.Key, o => o.Value);
 
@@ -104,6 +114,20 @@ namespace NTDLS.Katzebase.Engine.Library
         {
             byte[] inputBytes = Encoding.UTF8.GetBytes(input);
             byte[] hashBytes = SHA256.HashData(inputBytes);
+
+            var builder = new StringBuilder();
+            for (int i = 0; i < hashBytes.Length; i++)
+            {
+                builder.Append(hashBytes[i].ToString("x2"));
+            }
+
+            return builder.ToString();
+        }
+
+        public static string GetSHA512Hash(string input)
+        {
+            byte[] inputBytes = Encoding.UTF8.GetBytes(input);
+            byte[] hashBytes = SHA512.HashData(inputBytes);
 
             var builder = new StringBuilder();
             for (int i = 0; i < hashBytes.Length; i++)

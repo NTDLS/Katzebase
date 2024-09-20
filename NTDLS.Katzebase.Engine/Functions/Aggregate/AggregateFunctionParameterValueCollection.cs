@@ -1,6 +1,5 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Engine.Functions.Aggregate.Parameters;
 using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
@@ -16,22 +15,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))
                     ?? throw new KbGenericException($"Value for {name} cannot be null.");
 
-                var paramValue = string.Empty;
-
-                if (parameter.Value is AggregateDecimalArrayParameter)
-                {
-                    if (typeof(T) == typeof(AggregateDecimalArrayParameter))
-                    {
-                        return (T)Convert.ChangeType(parameter.Value, typeof(T));
-                    }
-                    throw new KbEngineException("Requested type must be AggregateDecimalArrayParameter.");
-                }
-                else if (parameter.Value is AggregateSingleParameter aggregateSingleParameter)
-                {
-                    paramValue = aggregateSingleParameter.Value;
-                }
-
-                if (paramValue == null)
+                if (parameter.Value == null)
                 {
                     if (parameter.Parameter.DefaultValue == null)
                     {
@@ -40,7 +24,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
                 }
 
-                return Converters.ConvertTo<T>(paramValue);
+                return Converters.ConvertTo<T>(parameter.Value);
             }
             catch
             {
@@ -48,12 +32,11 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             }
         }
 
-        /*
         public T Get<T>(string name, T defaultValue)
         {
             try
             {
-                var value = Values.FirstOrDefault(o => o.Parameter.Name.ToLowerInvariant() == name.ToLowerInvariant())?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
                 if (value == null)
                 {
                     return defaultValue;
@@ -66,17 +49,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 throw new KbGenericException($"Undefined parameter {name}.");
             }
         }
-        */
-        /*
+
         public T? GetNullable<T>(string name)
         {
             try
             {
-                var parameter = Values.FirstOrDefault(o => o.Parameter.Name.ToLowerInvariant() == name.ToLowerInvariant());
-                if (parameter == null)
-                {
-                    throw new KbGenericException($"Value for {name} cannot be null.");
-                }
+                var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))
+                    ?? throw new KbGenericException($"Value for {name} cannot be null.");
 
                 if (parameter.Value == null)
                 {
@@ -94,13 +73,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 throw new KbGenericException($"Undefined parameter {name}.");
             }
         }
-        */
-        /*
+
         public T? GetNullable<T>(string name, T? defaultValue)
         {
             try
             {
-                var value = Values.FirstOrDefault(o => o.Parameter.Name.ToLowerInvariant() == name.ToLowerInvariant()).?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
                 if (value == null)
                 {
                     return defaultValue;
@@ -113,6 +91,5 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 throw new KbGenericException($"Undefined parameter {name}.");
             }
         }
-        */
     }
 }

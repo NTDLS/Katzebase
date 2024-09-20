@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
-using NTDLS.Katzebase.Engine.Query;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -114,9 +114,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                         Partitions = indexPartitions
                     };
 
-                    foreach (var field in preparedQuery.CreateFields)
+                    foreach (var field in preparedQuery.CreateIndexFields)
                     {
-                        index.Attributes.Add(new KbIndexAttribute() { Field = field.Field });
+                        index.Attributes.Add(new KbIndexAttribute() { Field = field });
                     }
 
                     string schemaName = preparedQuery.Schemas.Single().Name;

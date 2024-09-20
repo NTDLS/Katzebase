@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
         {
             Function = functionName;
 
-            if (AggregateFunctionNames.Contains(Function.ToLowerInvariant()))
+            if (Old_AggregateFunctionNames.Contains(Function.ToLowerInvariant()))
             {
                 FunctionType = FunctionType.Aggregate;
             }

@@ -2,7 +2,7 @@
 {
     internal static class FunctionParameterTypes
     {
-        internal static string[] AggregateFunctionNames = { "min", "max", "sum", "avg", "count" };
+        internal static string[] Old_AggregateFunctionNames = { "min", "max", "sum", "avg", "count" };
 
         internal enum FunctionType
         {

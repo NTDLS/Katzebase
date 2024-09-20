@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.Query.Constraints;
+﻿using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
     /// </summary>
     internal class IndexingConditionLookup
     {
-        public PhysicalIndex Index { get; set; }
+        public IndexSelection IndexSelection { get; set; }
 
         /*
         For an index which is on LastName, FirstName, the conditions could look like this
@@ -18,11 +18,11 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// <summary>
         /// Dictionary of index attribute field name that contains the conditions that need to be matched on that index attribute level.
         /// </summary>
-        public Dictionary<string, List<Condition>> AttributeConditionSets { get; set; } = new();
+        public Dictionary<string, List<ConditionEntry>> AttributeConditionSets { get; set; } = new();
 
-        public IndexingConditionLookup(PhysicalIndex index)
+        public IndexingConditionLookup(IndexSelection indexSelection)
         {
-            Index = index;
+            IndexSelection = indexSelection;
         }
     }
 }

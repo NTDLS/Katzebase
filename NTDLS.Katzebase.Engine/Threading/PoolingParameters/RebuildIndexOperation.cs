@@ -6,7 +6,7 @@ using NTDLS.Katzebase.Engine.Schemas;
 namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
 {
     /// <summary>
-    /// Thread parameters for a lookup operations. Shared across all threads in a single lookup operation.
+    /// Thread parameters for a index rebuild. Shared across all threads in a single operation.
     /// </summary>
     internal class RebuildIndexOperation
     {
@@ -33,9 +33,9 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         }
 
         /// <summary>
-        /// Thread parameters for a lookup operations. Used by a single thread.
+        /// Thread parameters for a index rebuild operation. Used by a single thread.
         /// </summary>
-        internal class Parameter(RebuildIndexOperation operation, DocumentPointer documentPointer)
+        internal class Instance(RebuildIndexOperation operation, DocumentPointer documentPointer)
         {
             public RebuildIndexOperation Operation { get; set; } = operation;
             public DocumentPointer DocumentPointer { get; set; } = documentPointer;

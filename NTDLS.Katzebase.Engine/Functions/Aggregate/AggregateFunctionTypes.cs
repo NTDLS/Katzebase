@@ -3,9 +3,11 @@
     public enum KbAggregateFunctionParameterType
     {
         Undefined,
-        NumericArray,
         String,
         Boolean,
-        Integer
+        Numeric,
+        StringInfinite,
+        NumericInfinite,
+        AggregationArray //The first parameter of all aggregation functions.
     }
 }

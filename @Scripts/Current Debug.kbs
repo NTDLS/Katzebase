@@ -1,3 +1,174 @@
+UPDATE
+	Test
+SET
+	SourceLanguage = Length(TargetWord) + 'Test',
+	Blah = 'Another Test' + Length(TargetWord)
+WHERE
+	TargetLanguage = 'Spanish'
+
+select * from Test
+
+/*
+CREATE INDEX IX_Language (
+	Name,
+	Id
+) ON WordList:Language
+*/
+
+/*
+DELETE
+FROM
+	WordList:Word as sw
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN WordList:Synonym as S
+	ON S.SourceWordId = sw.Id
+INNER JOIN WordList:Word as tw
+	ON tw.Id = S.TargetWordId
+INNER JOIN WordList:Language as tl
+	ON tl.Id = TW.LanguageId
+WHERE
+	sw.Text = 'job'
+    and tl.Name = 'English'
+*/
+
+
+--select Text from WordList:Word as sw where sw.Text = 'Gym' 
+--select Text from WordList:Word where Text = 'Gym' 
+
+
+/*
+delete from Test where TargetLanguage = 'English'
+
+DELETE FROM
+	WordList:Word as sw
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN WordList:Synonym as S
+	ON S.SourceWordId = sw.Id
+INNER JOIN WordList:Word as tw
+	ON tw.Id = S.TargetWordId
+INNER JOIN WordList:Language as tl
+	ON tl.Id = TW.LanguageId
+WHERE
+    tl.Name = 'English'
+
+*/	
+
+--select * from WordList:Language
+
+
+/*
+insert into Test (SourceWordId,SourceWord,SourceLanguage,TargetWordId,TargetWord,TargetLanguage)
+SELECT
+	sw.Id as SourceWordId,
+	sw.Text as SourceWord,
+	sl.Name as SourceLanguage,
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+	tl.Name as TargetLanguage
+FROM
+	WordList:Word as sw
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN WordList:Synonym as S
+	ON S.SourceWordId = sw.Id
+INNER JOIN WordList:Word as tw
+	ON tw.Id = S.TargetWordId
+INNER JOIN WordList:Language as tl
+	ON tl.Id = TW.LanguageId
+WHERE
+	sw.Text = 'gym'
+	
+Create schema Test
+*/
+--delete from Test where TargetLanguage = 'Spanish'
+
+--insert into Temporary (FirstName,  LastName)
+--Values ('Josh', 'Patterson'), ('Bridget', 'Patterson'), ('Pat', 'Lester')
+
+/*
+insert into Temporary (FirstName,  LastName)
+Values ('Josh', 'Patterson'), ('Bridget', 'Patterson'), ('Pat', 'Lester')
+*/
+
+/*
+SELECT
+	sw.Id as SourceWordId,
+	sw.Text as SourceWord,
+	sl.Name as SourceLanguage,
+	tw.Id as TargetWordId,	
+	tw.Text as TargetWord,
+	tl.Name as TargetLanguage
+FROM
+	WordList:Word as sw
+INNER JOIN WordList:Language as sl
+	ON sl.Id = sw.LanguageId
+INNER JOIN WordList:Synonym as S
+	ON S.SourceWordId = sw.Id
+INNER JOIN WordList:Word as tw
+	ON tw.Id = S.TargetWordId
+INNER JOIN WordList:Language as tl
+	ON tl.Id = TW.LanguageId
+WHERE
+
+	sl.Name = 'English'
+	AND (
+		sw.Text LIKE 'as%'
+		AND sw.Text LIKE '%er'
+		OR (
+			sw.Text LIKE 'Sp%'
+			and sw.Text LIKE '%sh'
+		)
+	)
+	OR (
+		sw.Text LIKE 'au%'
+		AND sw.Text LIKE '%le'
+	)
+	and Length(sw.Text) < 10
+*/
+/*
+select 
+	sw.Id,
+	sw.Text,
+	Length(sw.Text) + 'Some value' as Test,
+	sw.LanguageId,
+	sl.Name
+from
+	WordList::Word as sw --(15 rows affected)
+inner join WordList:Language as sl
+	on sl.Id = sw.LanguageId
+where
+--(
+	sw.Text LIKE 'As%'
+	and sw.LanguageId = 3
+	and Length(sw.Text) / 1000 < sw.Id
+	and sw.Text = sw.Text
+	and sw.Text != sw.Text + 'More Text'
+	and sw.Text LIKE '%to'
+	and sw.Text like '%in%'
+	and sl.Name = 'Spanish'
+	--and sw.LanguageId between 3 and 5
+	and (
+		sw.LanguageId >= 3
+		OR sw.LanguageId <= 5
+	)
+	and sw.Id > 1000
+	)
+
+	OR sw.Text like 'Ca%'
+	and sw.Text like '%al'
+	and sw.Text like '%na%'
+	and sw.LanguageId = 4
+
+	OR sw.Text like 'Ca%'
+	and sw.Text like '%al'
+	and sw.Text like '%na%'
+	and sw.LanguageId = 5
+order by
+	sw.Text
+*/
+
 /*
 Create schema WordList
 Create schema WordList:Words with (PageSize = 100)
@@ -5,6 +176,50 @@ Create schema WordList:Words with (PageSize = 100)
 
 --set TraceWaitTimes true
 
+/*
+DECLARE @Var1 = 'Test'
+DECLARE @Var2 = 10
+DECLARE @Var3 = 16.5
+
+SELECT
+	@Var1 as v1,
+	@Var2 as v2,
+	@Var3 as v3,
+	LanguageId,
+	Id - 651947 as NumberOf
+FROM
+	WordList:Word
+WHERE
+	Text LIKE 'Tab%'
+*/
+
+/*
+SELECT TOP 10
+	LanguageId,
+	Text,
+	Id
+FROM
+	WordList:Word
+WHERE
+	Text LIKE 'Tab%'
+ORDER BY
+	Text,
+	Id
+OFFSET
+	100
+	
+/*
+SELECT
+	LanguageId,
+	Text,
+	Id
+FROM
+	WordList:Word
+WHERE
+	Text LIKE 'Tab%'
+*/	
+
+/*
 select top 100
 	sw.Id as SourceWordId,
 	ToProper(sw.Text) as SourceWord,
@@ -31,7 +246,7 @@ where
 order by
 	sw.Text,
 	tw.Text
-
+*/
 --assumption
 /*
 exec showcachepartitions

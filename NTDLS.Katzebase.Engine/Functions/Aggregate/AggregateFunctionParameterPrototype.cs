@@ -15,7 +15,6 @@
             Type = type;
             Name = name;
             HasDefault = false;
-
         }
 
         public AggregateFunctionParameterPrototype(KbAggregateFunctionParameterType type, string name, string? defaultValue)
