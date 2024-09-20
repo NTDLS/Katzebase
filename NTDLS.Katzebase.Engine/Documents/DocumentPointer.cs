@@ -46,8 +46,5 @@ namespace NTDLS.Katzebase.Engine.Documents
 
         public int GetHashCode(DocumentPointer? obj)
             => HashCode.Combine(obj?.PageNumber, obj?.DocumentId);
-
-        //public int GetHashCode(DocumentPointer obj)
-        //    => HashCode.Combine(obj.PageNumber, obj.DocumentId);
     }
 }

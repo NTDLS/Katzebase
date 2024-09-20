@@ -324,8 +324,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         var rowDocumentIdentifiers = resultingRows
                             .Select(o => new SchemaIntersectionRowDocumentIdentifier(o.SchemaDocumentPointers[GatherDocumentsIdsForSchemaPrefix], o.AuxiliaryFields));
 
-                        var auxiliaryFields = resultingRows.Select(o => o.AuxiliaryFields);
-
                         instance.Operation.RowDocumentIdentifiers.AddRange(rowDocumentIdentifiers);
                     }
                 }
