@@ -6,11 +6,11 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserCreateSchema
+    internal static class StaticParserAnalyzeSchema
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Create)
+            var query = new PreparedQuery(queryBatch, QueryType.Analyze)
             {
                 SubQueryType = SubQueryType.Schema
             };
@@ -21,13 +21,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
             query.Schemas.Add(new QuerySchema(schemaName));
 
+            //result.AddAttribute(PreparedQuery.QueryAttribute.Schema, token);
+
             if (tokenizer.TryEatIfNext("with"))
             {
                 var options = new ExpectedWithOptions
                 {
-                    {"pagesize", typeof(uint) }
+                    {"includephysicalpages", typeof(bool) }
                 };
-
                 query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
             }
 

@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
     internal static class StaticParserWithOptions
     {
         /// <summary>
-        /// Parses "with options" and adds the attributes to the given query.
+        /// Parses "with options" and returns the dictionary of values that can be added to a prepared query.
         /// </summary>
         internal static Dictionary<QueryAttribute, object> Parse(Tokenizer tokenizer, ExpectedWithOptions expectedOptions)
         {

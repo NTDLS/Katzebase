@@ -19,7 +19,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             {
                 throw new KbParserException("Invalid query. Found '" + schemaName + "', expected: schema name.");
             }
-
             query.Schemas.Add(new QuerySchema(schemaName));
 
             tokenizer.EatIfNext("with");

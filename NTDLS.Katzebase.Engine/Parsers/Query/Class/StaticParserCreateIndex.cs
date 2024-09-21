@@ -39,9 +39,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             if (tokenizer.TryEatIfNext("with"))
             {
                 var options = new ExpectedWithOptions
-                        {
-                            {"partitions", typeof(uint) }
-                        };
+                {
+                    {"partitions", typeof(uint) }
+                };
 
                 query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
             }

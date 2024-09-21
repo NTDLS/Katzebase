@@ -1,4 +1,4 @@
-sample test
+analyze schema test
 
 --ALTER CONFIGURATION WITH (DeferredIOEnabled = true, CacheMaxMemory = 1024)
 
