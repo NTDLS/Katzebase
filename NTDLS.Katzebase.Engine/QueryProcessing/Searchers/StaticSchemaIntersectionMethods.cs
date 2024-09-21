@@ -147,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             {
                 if (query.RowOffset == 0)
                 {
-                    operation.ResultingRows.RemoveRange(query.RowLimit, operation.ResultingRows.Count - 10);
+                    operation.ResultingRows.RemoveRange(query.RowLimit, operation.ResultingRows.Count - query.RowLimit);
                 }
                 else
                 {
@@ -161,7 +161,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         if (operation.ResultingRows.Count > query.RowLimit)
                         {
-                            operation.ResultingRows.RemoveRange(query.RowLimit, operation.ResultingRows.Count - 10);
+                            operation.ResultingRows.RemoveRange(query.RowLimit, operation.ResultingRows.Count - query.RowLimit);
                         }
                     }
                 }
