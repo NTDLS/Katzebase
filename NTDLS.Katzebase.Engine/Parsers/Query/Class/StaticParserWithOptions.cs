@@ -1,6 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions;
-using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using static NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes.PreparedQuery;
 

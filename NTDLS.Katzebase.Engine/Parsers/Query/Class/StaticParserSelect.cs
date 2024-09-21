@@ -45,7 +45,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             //Parse "into".
             if (tokenizer.TryEatIfNext("into"))
             {
-                var selectIntoSchema = tokenizer.EatGetNext();
+                if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var selectIntoSchema) == false)
+                {
+                    throw new KbParserException("Invalid query. Found '" + selectIntoSchema + "', expected: schema name.");
+                }
+
                 query.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, selectIntoSchema);
 
                 query.QueryType = QueryType.SelectInto;

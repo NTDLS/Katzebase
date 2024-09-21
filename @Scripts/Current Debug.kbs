@@ -1,8 +1,14 @@
+--ALTER CONFIGURATION WITH (DeferredIOEnabled = true, CacheMaxMemory = 1024)
+
+--ALTER schema Test with (pagesize = 100)
+
+/*
 CREATE UNIQUEKEY ix_SourceWordId(
     id
 ) ON Test WITH (PARTITIONS=100)
 
 DROP INDEX ix_SourceWordId ON Test
+*/
 
 /*
 SELECT

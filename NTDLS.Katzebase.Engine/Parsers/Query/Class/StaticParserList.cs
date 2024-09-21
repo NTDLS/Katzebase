@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         {
             var query = new PreparedQuery(queryBatch, QueryType.List)
             {
-                //SubQueryType = tokenizer.EatIfNextEnum([SubQueryType.None])
+                //SubQueryType = SubQueryType.None
             };
 
             throw new NotImplementedException("reimplement");

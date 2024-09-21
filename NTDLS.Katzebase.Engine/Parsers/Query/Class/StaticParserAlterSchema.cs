@@ -1,4 +1,6 @@
-﻿using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -10,28 +12,24 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         {
             var query = new PreparedQuery(queryBatch, QueryType.Alter)
             {
-                SubQueryType = tokenizer.EatIfNextEnum([SubQueryType.Schema])
+                SubQueryType = SubQueryType.Schema
             };
 
-            /*
-            result.AddAttribute(PreparedQuery.QueryAttribute.IsUnique, (subQueryType == SubQueryType.UniqueKey));
-
-            token = tokenizer.GetNext();
-            if (token == string.Empty)
+            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
-                throw new KbParserException("Invalid query. Found '" + token + "', expected: object name.");
+                throw new KbParserException("Invalid query. Found '" + schemaName + "', expected: schema name.");
             }
-            result.Schemas.Add(new QuerySchema(token));
 
-            if (tokenizer.PeekNext().Is("with"))
+            query.Schemas.Add(new QuerySchema(schemaName));
+
+            tokenizer.EatIfNext("with");
             {
                 var options = new ExpectedWithOptions
-                                    {
-                                        {"pagesize", typeof(uint) }
-                                    };
-                StaticWithOptionsParser.ParseWithOptions(ref tokenizer, options, ref result);
+                {
+                    {"pagesize", typeof(uint) }
+                };
+                query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
             }
-        */
 
             return query;
         }
