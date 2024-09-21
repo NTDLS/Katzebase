@@ -26,9 +26,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
                 return Converters.ConvertTo<T>(parameter.Value);
             }
-            catch
+            catch (Exception ex)
             {
-                throw new KbGenericException($"Undefined parameter {name}.");
+                throw new KbGenericException($"Error parsing function parameter [{name}]. {ex.Message}");
             }
         }
 
@@ -44,9 +44,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
                 return Converters.ConvertTo<T>(value);
             }
-            catch
+            catch (Exception ex)
             {
-                throw new KbGenericException($"Undefined parameter {name}.");
+                throw new KbGenericException($"Error parsing function parameter [{name}]. {ex.Message}");
             }
         }
 
@@ -68,9 +68,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
                 return Converters.ConvertToNullable<T>(parameter.Value);
             }
-            catch
+            catch (Exception ex)
             {
-                throw new KbGenericException($"Undefined parameter {name}.");
+                throw new KbGenericException($"Error parsing function parameter [{name}]. {ex.Message}");
             }
         }
 
@@ -86,9 +86,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
                 return Converters.ConvertToNullable<T>(value);
             }
-            catch
+            catch (Exception ex)
             {
-                throw new KbGenericException($"Undefined parameter {name}.");
+                throw new KbGenericException($"Error parsing function parameter [{name}]. {ex.Message}");
             }
         }
     }

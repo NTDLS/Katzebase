@@ -141,7 +141,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
 
             var expressionVariables = new Dictionary<string, string?>();
 
-            while (!tokenizer.Exausted())
+            while (!tokenizer.IsExausted())
             {
                 var token = tokenizer.EatGetNext();
 
@@ -234,7 +234,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
 
             var sb = new StringBuilder();
 
-            while (!tokenizer.Exausted())
+            while (!tokenizer.IsExausted())
             {
                 token = tokenizer.EatGetNext();
 

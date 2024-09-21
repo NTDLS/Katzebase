@@ -19,7 +19,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             {
                 throw new KbParserException("Invalid query. Found '" + indexName + "', expected: unique key name.");
             }
-
             query.AddAttribute(PreparedQuery.QueryAttribute.IndexName, indexName);
 
             tokenizer.EatIfNext("on");

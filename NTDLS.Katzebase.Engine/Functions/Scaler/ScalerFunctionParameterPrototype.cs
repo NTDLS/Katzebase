@@ -15,7 +15,6 @@
             Type = type;
             Name = name;
             HasDefault = false;
-
         }
 
         public ScalerFunctionParameterPrototype(KbScalerFunctionParameterType type, string name, string? defaultValue)

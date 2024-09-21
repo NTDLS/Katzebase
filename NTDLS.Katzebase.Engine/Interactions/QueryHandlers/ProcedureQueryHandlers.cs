@@ -1,7 +1,9 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
+using NTDLS.Katzebase.Engine.Functions.System;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -61,8 +63,33 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         {
             try
             {
+                var schemaName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Schema);
+                var objectName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.ObjectName);
+
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var result = _core.Procedures.ExecuteProcedure(transactionReference.Transaction, preparedQuery.ProcedureCall);
+
+                var collapsedParameters = new List<string?>();
+
+                if (preparedQuery.ProcedureParameters != null)
+                {
+                    foreach (var parameter in preparedQuery.ProcedureParameters)
+                    {
+                        var collapsedParameter = StaticScalerExpressionProcessor.CollapseScalerQueryField(parameter.Expression,
+                            transactionReference.Transaction, preparedQuery, preparedQuery.ProcedureParameters, new());
+
+                        collapsedParameters.Add(collapsedParameter);
+                    }
+                }
+
+                if (string.IsNullOrEmpty(schemaName) || schemaName == ":")
+                {
+                    if (SystemFunctionCollection.TryGetFunction(objectName, out var systemFunction))
+                    {
+                        return SystemFunctionImplementation.ExecuteFunction(_core, transactionReference.Transaction, objectName, collapsedParameters);
+                    }
+                }
+
+                var result = _core.Procedures.ExecuteProcedure(transactionReference.Transaction, schemaName, objectName);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 0);
             }
             catch (Exception ex)

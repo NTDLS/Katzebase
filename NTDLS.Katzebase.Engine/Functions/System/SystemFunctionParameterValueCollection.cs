@@ -2,11 +2,11 @@
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Shared;
 
-namespace NTDLS.Katzebase.Engine.Functions.Aggregate
+namespace NTDLS.Katzebase.Engine.Functions.System
 {
-    public class AggregateFunctionParameterValueCollection
+    public class SystemFunctionParameterValueCollection
     {
-        public List<AggregateFunctionParameterValue> Values { get; private set; } = new();
+        public List<SystemFunctionParameterValue> Values { get; private set; } = new();
 
         public T Get<T>(string name)
         {
@@ -50,23 +50,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             }
         }
 
+
         public T? GetNullable<T>(string name)
         {
             try
             {
-                var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))
-                    ?? throw new KbGenericException($"Value for {name} cannot be null.");
-
-                if (parameter.Value == null)
-                {
-                    if (parameter.Parameter.DefaultValue == null)
-                    {
-                        throw new KbGenericException($"Value for {name} cannot be null.");
-                    }
-                    return Converters.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
-                }
-
-                return Converters.ConvertToNullable<T>(parameter.Value);
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
+                return Converters.ConvertToNullable<T?>(value);
             }
             catch (Exception ex)
             {
@@ -84,7 +74,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     return defaultValue;
                 }
 
-                return Converters.ConvertToNullable<T>(value);
+                return Converters.ConvertToNullable<T?>(value);
             }
             catch (Exception ex)
             {

@@ -1,5 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.Functions.Parameters;
-using NTDLS.Katzebase.Engine.Library;
+﻿using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -75,12 +74,18 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         public List<QuerySchema> Schemas { get; private set; } = new();
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }
-        public FunctionParameterBase ProcedureCall { get; set; } = new();
 
         /// <summary>
         /// Used for creating indexes.
         /// </summary>
         public List<string> CreateIndexFields { get; set; } = new();
+
+        #region Execute Statement.
+        public string? ProcedureName { get; set; }
+
+        public QueryFieldCollection? ProcedureParameters { get; set; }
+
+        #endregion
 
         #region Shared statement components.
         public int RowLimit { get; set; }
@@ -101,7 +106,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 
         public List<string> UpdateFieldNames { get; set; } = new();
 
-        public List<QueryFieldCollection>? UpdateFieldValues { get; set; }
+        public QueryFieldCollection? UpdateFieldValues { get; set; }
 
         #endregion
 

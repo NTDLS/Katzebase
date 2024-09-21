@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
+using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
@@ -84,9 +85,11 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                         throw new KbEngineException($"Invalid aggregate function [{functionName}] prototype when parsing optional parameter [{parameterName}]. Expected '=', found: [{paramTokenizer.NextCharacter}].");
                     }
 
-                    token = paramTokenizer.EatGetNext();
-
-                    var optionalParameterDefaultValue = tokenizer.ResolveLiteral(token);
+                    var optionalParameterDefaultValue = tokenizer.ResolveLiteral(paramTokenizer.EatGetNext());
+                    if (optionalParameterDefaultValue == null || optionalParameterDefaultValue?.Is("null") == true)
+                    {
+                        optionalParameterDefaultValue = null;
+                    }
 
                     parameters.Add(new AggregateFunctionParameterPrototype(paramType, parameterName, optionalParameterDefaultValue));
 

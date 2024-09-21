@@ -653,19 +653,16 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             if (instance.Operation.Query.UpdateFieldValues != null)
             {
-                foreach (var updateFieldValue in instance.Operation.Query.UpdateFieldValues)
+                foreach (var field in instance.Operation.Query.UpdateFieldValues.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey || o.Value.SchemaAlias == string.Empty).Distinct())
                 {
-                    foreach (var field in updateFieldValue.DocumentIdentifiers.Where(o => o.Value.SchemaAlias == schemaKey || o.Value.SchemaAlias == string.Empty).Distinct())
+                    if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Value.Value) == false)
                     {
-                        if (schemaResultRow.AuxiliaryFields.ContainsKey(field.Value.Value) == false)
+                        if (documentContent.TryGetValue(field.Value.FieldName, out string? documentValue) == false)
                         {
-                            if (documentContent.TryGetValue(field.Value.FieldName, out string? documentValue) == false)
-                            {
-                                instance.Operation.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound,
-                                    $"'{field.Value.FieldName}' will be treated as null.");
-                            }
-                            schemaResultRow.AuxiliaryFields.Add(field.Value.Value, documentValue);
+                            instance.Operation.Transaction.AddWarning(KbTransactionWarning.MethodFieldNotFound,
+                                $"'{field.Value.FieldName}' will be treated as null.");
                         }
+                        schemaResultRow.AuxiliaryFields.Add(field.Value.Value, documentValue);
                     }
                 }
             }

@@ -1,7 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Functions.Parameters;
-using NTDLS.Katzebase.Engine.Functions.Procedures;
 using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
@@ -30,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 QueryHandlers = new ProcedureQueryHandlers(core);
                 APIHandlers = new ProcedureAPIHandlers(core);
 
-                ProcedureCollection.Initialize();
+                //ProcedureCollection.Initialize();
             }
             catch (Exception ex)
             {
@@ -98,9 +96,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return procedureCatalog.Collection.FirstOrDefault(o => o.Name.Is(procedureName));
         }
 
-        internal KbQueryResultCollection ExecuteProcedure(Transaction transaction, FunctionParameterBase procedureCall)
+        internal KbQueryResultCollection ExecuteProcedure(Transaction transaction, string schemaName, string procedureName)
         {
-            return SystemProcedureImplementations.ExecuteProcedure(_core, transaction, procedureCall);
+            throw new NotImplementedException("Reimplement user procedures");
         }
     }
 }

@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     fieldAlias = fieldAliasTokenizer.EatGetNext();
 
                     //Make sure that the single token was the entire alias, otherwise we have a syntax error.
-                    if (!fieldAliasTokenizer.Exausted())
+                    if (!fieldAliasTokenizer.IsExausted())
                     {
                         throw new Exception($"Expected end of alias, found [{fieldAliasTokenizer.Remainder()}].");
                     }

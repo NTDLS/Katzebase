@@ -27,9 +27,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
             tokenizer.EatIfNext("set");
 
-            var queryFieldCollection = new QueryFieldCollection(queryBatch);
-
-            query.UpdateFieldValues = new List<QueryFieldCollection>();
+            query.UpdateFieldValues = new QueryFieldCollection(queryBatch);
 
             while (!tokenizer.IsExhausted())
             {
@@ -74,17 +72,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
 
                 var fieldValue = tokenizer.Substring(startCaret, endCaret - startCaret).Trim();
-                var queryField = StaticParserField.Parse(tokenizer, fieldValue, queryFieldCollection);
+                var queryField = StaticParserField.Parse(tokenizer, fieldValue, query.UpdateFieldValues);
 
-                queryFieldCollection.Add(new QueryField(fieldName, queryFieldCollection.Count, queryField));
+                query.UpdateFieldValues.Add(new QueryField(fieldName, query.UpdateFieldValues.Count, queryField));
 
                 if (tokenizer.TryIsNext(["where", "inner"]))
                 {
                     break; //exit loop to parse, found where or join clause.
                 }
             }
-
-            query.UpdateFieldValues.Add(queryFieldCollection);
 
             if (tokenizer.TryEatIfNext("where"))
             {

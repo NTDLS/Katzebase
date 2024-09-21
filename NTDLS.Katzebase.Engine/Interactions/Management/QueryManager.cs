@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
+using NTDLS.Katzebase.Engine.Functions.System;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Parsers;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
@@ -37,6 +38,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             KbGlobalConstants.Add("false", new("0", KbBasicDataType.Numeric));
             KbGlobalConstants.Add("null", new(null, KbBasicDataType.Undefined));
 
+            SystemFunctionCollection.Initialize();
             ScalerFunctionCollection.Initialize();
             AggregateFunctionCollection.Initialize();
         }

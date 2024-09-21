@@ -55,7 +55,6 @@ namespace NTDLS.Katzebase.Server
                 }
             }
         }
-
         public static void Main()
         {
             Log.Logger = new LoggerConfiguration()

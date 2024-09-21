@@ -213,12 +213,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     var physicalDocument = _core.Documents.AcquireDocument
                         (transactionReference.Transaction, physicalSchema, rowDocumentIdentifier.DocumentPointer, LockOperation.Write);
 
-                    var queryFieldCollection = preparedQuery.UpdateFieldValues.EnsureNotNull().First();
-
-                    foreach (var updateValue in queryFieldCollection)
+                    foreach (var updateValue in preparedQuery.UpdateFieldValues.EnsureNotNull())
                     {
                         var collapsedValue = updateValue.Expression.CollapseScalerQueryField(
-                            transactionReference.Transaction, preparedQuery, queryFieldCollection, rowDocumentIdentifier.AuxiliaryFields);
+                            transactionReference.Transaction, preparedQuery, preparedQuery.UpdateFieldValues, rowDocumentIdentifier.AuxiliaryFields);
 
                         if (physicalDocument.Elements.ContainsKey(updateValue.Alias))
                         {
