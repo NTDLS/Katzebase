@@ -21,14 +21,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 while (!tokenizer.IsExhausted())
                 {
-                    string name = tokenizer.GetNext().ToLowerInvariant();
+                    string name = tokenizer.EatGetNext().ToLowerInvariant();
                     if (tokenizer.TryIsNextCharacter('=') == false)
                     {
                         throw new KbParserException("Invalid query. Found '" + tokenizer.NextCharacter + "', expected: '='.");
                     }
                     tokenizer.EatNextCharacter();
 
-                    string? tokenValue = tokenizer.GetNext().ToLowerInvariant();
+                    string? tokenValue = tokenizer.EatGetNext().ToLowerInvariant();
 
                     if (expectedOptions.ContainsKey(name) == false)
                     {
@@ -39,7 +39,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     if (tokenizer.Literals.TryGetValue(tokenValue, out var literal))
                     {
                         tokenValue = literal.Value;
-                        tokenValue = tokenValue == null ? null : tokenValue.Substring(1, tokenValue.Length - 2);
                     }
 
                     var convertedValue = expectedOptions.ValidateAndConvert(name, tokenValue);

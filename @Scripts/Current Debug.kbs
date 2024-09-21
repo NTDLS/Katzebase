@@ -1,3 +1,10 @@
+CREATE UNIQUEKEY ix_SourceWordId(
+    id
+) ON Test WITH (PARTITIONS=100)
+
+DROP INDEX ix_SourceWordId ON Test
+
+/*
 SELECT
 	sw.Id as SourceWordId,
 	sw.Text as SourceWord,
@@ -19,7 +26,7 @@ INNER JOIN WordList:Language as tl
 	ON tl.Id = TW.LanguageId
 WHERE
 	sw.Text = 'gym'
-	
+*/	
 /*
 UPDATE
 	Test

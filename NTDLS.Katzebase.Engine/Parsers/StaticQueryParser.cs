@@ -4,8 +4,11 @@ using NTDLS.Katzebase.Engine.Parsers.Query.Class;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
+using System.Collections.Generic;
+using System.Diagnostics.Metrics;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace NTDLS.Katzebase.Engine.Parsers
 {
@@ -72,6 +75,16 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 QueryType.Commit => StaticParserCommit.Parse(queryBatch, tokenizer),
                 QueryType.Rollback => StaticParserRollback.Parse(queryBatch, tokenizer),
                 QueryType.Create => StaticParserCreate.Parse(queryBatch, tokenizer),
+                QueryType.Drop => StaticParserCreate.Parse(queryBatch, tokenizer),
+
+                QueryType.Sample => StaticParserSample.Parse(queryBatch, tokenizer),
+                QueryType.Analyze => StaticParserAnalyze.Parse(queryBatch, tokenizer),
+                QueryType.List => StaticParserList.Parse(queryBatch, tokenizer),
+                QueryType.Alter => StaticParserAlter.Parse(queryBatch, tokenizer),
+                QueryType.Rebuild => StaticParserRebuild.Parse(queryBatch, tokenizer),
+                QueryType.Set => StaticParserSet.Parse(queryBatch, tokenizer),
+                QueryType.Kill => StaticParserKill.Parse(queryBatch, tokenizer),
+                QueryType.Exec => StaticParserExec.Parse(queryBatch, tokenizer),
 
                 _ => throw new KbParserException($"The query type is not implemented: [{token}]."),
             };

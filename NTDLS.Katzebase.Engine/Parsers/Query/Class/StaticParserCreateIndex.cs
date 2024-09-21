@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
             query.Schemas.Add(new QuerySchema(schemaName));
 
-            if (tokenizer.TryEatIfNext("with"))
+            if (tokenizer.TryIsNext("with"))
             {
                 var options = new ExpectedWithOptions
                         {

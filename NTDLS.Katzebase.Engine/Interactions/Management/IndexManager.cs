@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (indexCatalog.GetByName(index.Name) != null)
                 {
-                    throw new KbObjectAlreadyExistsException(index.Name);
+                    throw new KbObjectAlreadyExistsException($"Index already exists: [{index.Name}].");
                 }
 
                 indexCatalog.Add(physicalIndex);
