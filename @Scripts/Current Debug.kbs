@@ -1,4 +1,7 @@
-analyze schema test
+LIST schemas WordList
+LIST documents test size 100
+
+--analyze schema test with (includephysicalpages = true)
 
 --ALTER CONFIGURATION WITH (DeferredIOEnabled = true, CacheMaxMemory = 1024)
 
