@@ -1,5 +1,9 @@
-LIST schemas WordList
-LIST documents test size 100
+kill 11
+--rebuild uniquekey ix_SourceWordId on Test with (partitions = 100)
+--rebuild index ix_SourceWordId on Test with (partitions = 100)
+
+--LIST schemas WordList
+--LIST documents test size 100
 
 --analyze schema test with (includephysicalpages = true)
 
