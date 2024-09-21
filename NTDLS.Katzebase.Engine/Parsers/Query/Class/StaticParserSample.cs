@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+﻿using NTDLS.Katzebase.Client.Exceptions;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -10,36 +11,25 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         {
             var query = new PreparedQuery(queryBatch, QueryType.Sample)
             {
-                //SubQueryType = SubQueryType.None
+                SubQueryType = SubQueryType.Documents
             };
 
-            throw new NotImplementedException("reimplement");
+            if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
+            {
+                throw new KbParserException("Invalid query. Found '" + schemaName + "', expected: schema name.");
+            }
+            query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant()));
 
-            /*
-                result.SubQueryType = SubQueryType.Documents;
+            if (tokenizer.TryEatIfNext("size"))
+            {
+                query.RowLimit = tokenizer.EatGetNextEvaluated<int>();
+            }
+            else
+            {
+                query.RowLimit = 100;
+            }
 
-                token = tokenizer.GetNext();
-                if (token == string.Empty)
-                {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.PeekNext() + "', expected: schema name.");
-                }
-
-                result.Schemas.Add(new QuerySchema(token));
-
-                token = tokenizer.GetNext();
-                if (token != string.Empty)
-                {
-                    if (int.TryParse(token, out int topCount) == false)
-                    {
-                        throw new KbParserException("Invalid query. Found '" + token + "', expected: numeric top count.");
-                    }
-                    result.RowLimit = topCount;
-                }
-                else
-                {
-                    result.RowLimit = 100;
-                }
-            */
+            return query;
         }
     }
 }

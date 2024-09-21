@@ -1,3 +1,5 @@
+sample test
+
 --ALTER CONFIGURATION WITH (DeferredIOEnabled = true, CacheMaxMemory = 1024)
 
 --ALTER schema Test with (pagesize = 100)
