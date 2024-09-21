@@ -8,10 +8,16 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Begin)
+            var query = new PreparedQuery(queryBatch, QueryType.Exec)
             {
-                SubQueryType = tokenizer.EatIfNextEnum([SubQueryType.Transaction])
+                //SubQueryType = tokenizer.EatIfNextEnum([SubQueryType.None])
             };
+
+            throw new NotImplementedException("reimplement");
+
+            /*
+                result.ProcedureCall = StaticFunctionParsers.ParseProcedureParameters(tokenizer);
+            */
 
             return query;
         }
