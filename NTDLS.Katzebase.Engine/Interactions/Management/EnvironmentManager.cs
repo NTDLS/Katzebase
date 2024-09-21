@@ -61,10 +61,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 using (JsonDocument document = JsonDocument.Parse(json))
                 {
                     var root = document.RootElement;
-                    var settingsElement = root.GetProperty("Settings");
-                    var settings = JsonSerializer.Deserialize<KatzebaseSettings>(settingsElement.ToString());
+                    //var settingsElement = root.GetProperty("Settings");
+                    var settings = JsonSerializer.Deserialize<KatzebaseSettings>(root.ToString());
 
-                    foreach (var settingElement in settingsElement.EnumerateObject())
+                    foreach (var settingElement in root.EnumerateObject())
                     {
                         if (Enum.TryParse(settingElement.Name, true, out QueryAttribute optionType))
                         {

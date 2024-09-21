@@ -156,5 +156,16 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
                 Attributes[key] = value;
             }
         }
+
+        public void AddAttributes(Dictionary<QueryAttribute, object> attributes)
+        {
+            foreach (var attribute in attributes)
+            {
+                if (!Attributes.TryAdd(attribute.Key, attribute.Value))
+                {
+                    Attributes[attribute.Key] = attribute.Value;
+                }
+            }
+        }
     }
 }

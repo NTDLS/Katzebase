@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                         {"pagesize", typeof(uint) }
                     };
 
-                StaticParserWithOptions.Parse(tokenizer, options, query);
+                query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
             }
 
             return query;

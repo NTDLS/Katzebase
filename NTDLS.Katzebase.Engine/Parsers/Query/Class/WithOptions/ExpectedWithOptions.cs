@@ -24,6 +24,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
                         }
                         return Convert.ChangeType(enumValue, resultType);
                     }
+                    else if (resultType.Name.Is("boolean"))
+                    {
+                        if (double.TryParse(value, out var boolValue))
+                        {
+                            return boolValue != 0;
+                        }
+
+                        return value?.Is("true") == true;
+                    }
 
                     var resultingValue = Convert.ChangeType(value, resultType);
                     if (resultingValue == null)

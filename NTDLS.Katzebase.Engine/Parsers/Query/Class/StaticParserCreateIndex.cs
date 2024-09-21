@@ -36,13 +36,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
             query.Schemas.Add(new QuerySchema(schemaName));
 
-            if (tokenizer.TryIsNext("with"))
+            if (tokenizer.TryEatIfNext("with"))
             {
                 var options = new ExpectedWithOptions
                         {
                             {"partitions", typeof(uint) }
                         };
-                StaticParserWithOptions.Parse(tokenizer, options, query);
+
+                query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
             }
 
             return query;
