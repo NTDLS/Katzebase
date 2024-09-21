@@ -1,0 +1,14 @@
+﻿using NTDLS.Katzebase.Client.Types;
+using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
+
+namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
+{
+    internal static class ScalerIsNotEqual
+    {
+        public static string? Execute(Transaction transaction, ScalerFunctionParameterValueCollection function, KbInsensitiveDictionary<string?> rowFields)
+        {
+            return (ConditionEntry.IsMatchEqual(transaction, function.Get<string>("text1"), function.Get<string>("text2")) == false).ToString();
+        }
+    }
+}

@@ -32,8 +32,4 @@
     <ProjectReference Include="..\NTDLS.Katzebase.Shared\NTDLS.Katzebase.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Functions\Scaler\Implementations\" />
-  </ItemGroup>
-
 </Project>

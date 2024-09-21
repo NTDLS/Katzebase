@@ -1,11 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
-using System.Globalization;
-using System.Text;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using NTDLS.Katzebase.Engine.Functions.Scaler.Implementations;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
@@ -37,7 +33,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 "String DocumentID (String schemaAlias)",
                 "String DocumentPage (String schemaAlias)",
                 "String DocumentUID (String schemaAlias)",
-                "String Guid()",
+                "String Guid ()",
                 "String IIF (Boolean condition, String whenTrue, String whenFalse)",
                 "String IndexOf (String textToFind, String textToSearch)",
                 "String Left (String text, Numeric length)",
@@ -54,121 +50,46 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
         public static string? ExecuteFunction(Transaction transaction, string functionName, List<string?> parameters, KbInsensitiveDictionary<string?> rowFields)
         {
-            var proc = ScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
+            var function = ScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
-            switch (functionName.ToLowerInvariant())
+            return functionName.ToLowerInvariant() switch
             {
-                case "documentuid":
-                    {
-                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.{UIDMarker}");
-                        return rowId.Value;
-                    }
-                case "documentid":
-                    {
-                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.{UIDMarker}");
-                        if (rowId.Value == null)
-                        {
-                            return null;
-                        }
-                        return DocumentPointer.Parse(rowId.Value).DocumentId.ToString();
-                    }
-                case "documentpage":
-                    {
-                        var rowId = rowFields.FirstOrDefault(o => o.Key == $"{proc.Get<string>("schemaAlias")}.{UIDMarker}");
-                        if (rowId.Value == null)
-                        {
-                            return null;
-                        }
-                        return DocumentPointer.Parse(rowId.Value).PageNumber.ToString();
-                    }
+                "isbetween" => ScalerIsBetween.Execute(function),
+                "isequal" => ScalerIsEqual.Execute(function),
+                "isgreater" => ScalerIsGreater.Execute(function),
+                "isgreaterorequal" => ScalerIsGreaterOrEq.Execute(function),
+                "isless" => ScalerIsLess.Execute(function),
+                "islessorequal" => ScalerIsLessOrEqual.Execute(function),
+                "islike" => ScalerIsLike.Execute(function),
+                "isnotbetween" => ScalerIsNotBetween.Execute(function),
+                "isnotequal" => ScalerIsNotEqual.Execute(function),
+                "isnotlike" => ScalerIsNotLike.Execute(function),
+                "checksum" => ScalerChecksum.Execute(function),
+                "lastindexof" => ScalerLastIndexOf.Execute(function),
+                "length" => ScalerLength.Execute(function),
+                "coalesce" => ScalerCoalesce.Execute(function),
+                "concat" => ScalerConcat.Execute(function),
+                "datetime" => ScalerDateTime.Execute(function),
+                "datetimeutc" => ScalerDateTimeUTC.Execute(function),
+                "documentid" => ScalerDocumentID.Execute(function),
+                "documentpage" => ScalerDocumentPage.Execute(function),
+                "documentuid" => ScalerDocumentUID.Execute(function),
+                "guid" => ScalerGuid.Execute(function),
+                "iif" => ScalerIIF.Execute(function),
+                "indexof" => ScalerIndexOf.Execute(function),
+                "left" => ScalerLeft.Execute(function),
+                "right" => ScalerRight.Execute(function),
+                "sha1" => ScalerSha1.Execute(function),
+                "sha256" => ScalerSha256.Execute(function),
+                "sha512" => ScalerSha512.Execute(function),
+                "substring" => ScalerSubString.Execute(function),
+                "tolower" => ScalerToLower.Execute(function),
+                "toproper" => ScalerToProper.Execute(function),
+                "toupper" => ScalerToUpper.Execute(function),
+                "trim" => ScalerTrim.Execute(function),
 
-                case "isgreater":
-                    return (ConditionEntry.IsMatchGreater(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
-                case "isless":
-                    return (ConditionEntry.IsMatchLesser(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
-                case "isgreaterorequal":
-                    return (ConditionEntry.IsMatchGreater(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
-                case "islessorequal":
-                    return (ConditionEntry.IsMatchLesserOrEqual(transaction, proc.Get<int>("value1"), proc.Get<int>("value2")) == true).ToString();
-                case "isbetween":
-                    return (ConditionEntry.IsMatchBetween(transaction, proc.Get<int>("value"), proc.Get<int>("rangeLow"), proc.Get<int>("rangeHigh")) == true).ToString();
-                case "isnotbetween":
-                    return (ConditionEntry.IsMatchBetween(transaction, proc.Get<int>("value"), proc.Get<int>("rangeLow"), proc.Get<int>("rangeHigh")) == false).ToString();
-                case "isequal":
-                    return (ConditionEntry.IsMatchEqual(transaction, proc.Get<string>("text1"), proc.Get<string>("text2")) == true).ToString();
-                case "isnotequal":
-                    return (ConditionEntry.IsMatchEqual(transaction, proc.Get<string>("text1"), proc.Get<string>("text2")) == false).ToString();
-                case "islike":
-                    return (ConditionEntry.IsMatchLike(transaction, proc.Get<string>("text"), proc.Get<string>("pattern")) == true).ToString();
-                case "isnotlike":
-                    return (ConditionEntry.IsMatchLike(transaction, proc.Get<string>("text"), proc.Get<string>("pattern")) == false).ToString();
-
-                case "guid":
-                    return Guid.NewGuid().ToString();
-
-                case "datetimeutc":
-                    return DateTime.UtcNow.ToString(proc.Get<string>("format"));
-                case "datetime":
-                    return DateTime.Now.ToString(proc.Get<string>("format"));
-
-                case "checksum":
-                    return Library.Helpers.Checksum(proc.Get<string>("text")).ToString();
-                case "sha1":
-                    return Library.Helpers.GetSHA1Hash(proc.Get<string>("text"));
-                case "sha256":
-                    return Library.Helpers.GetSHA256Hash(proc.Get<string>("text"));
-                case "sha512":
-                    return Library.Helpers.GetSHA512Hash(proc.Get<string>("text"));
-                case "indexof":
-                    return proc.Get<string>("textToSearch").IndexOf(proc.Get<string>("textToFind")).ToString();
-                case "lastindexof":
-                    return proc.Get<string>("textToSearch").LastIndexOf(proc.Get<string>("textToFind")).ToString();
-                case "right":
-                    return proc.Get<string>("text").Substring(proc.Get<string>("text").Length - proc.Get<int>("length"));
-                case "left":
-                    return proc.Get<string>("text").Substring(0, proc.Get<int>("length"));
-                case "iif":
-                    {
-                        if (proc.Get<bool>("condition"))
-                            return proc.Get<string>("whenTrue");
-                        else return proc.Get<string>("whenFalse");
-                    }
-                case "toproper":
-                    return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(proc.Get<string>("text"));
-                case "tolower":
-                    return proc.Get<string>("text").ToLowerInvariant();
-                case "toupper":
-                    return proc.Get<string>("text").ToUpperInvariant();
-                case "length":
-                    return proc.Get<string>("text").Length.ToString();
-                case "trim":
-                    return proc.Get<string>("text").Trim();
-                case "substring":
-                    return proc.Get<string>("text").Substring(proc.Get<int>("startIndex"), proc.Get<int>("length"));
-                case "concat":
-                    {
-                        var builder = new StringBuilder();
-                        foreach (var p in parameters)
-                        {
-                            builder.Append(p);
-                        }
-                        return builder.ToString();
-                    }
-                case "coalesce":
-                    {
-                        foreach (var p in parameters)
-                        {
-                            if (p != null)
-                            {
-                                return p;
-                            }
-                        }
-                        return null;
-                    }
-
-            }
-
-            throw new KbFunctionException($"Undefined function: {functionName}.");
+                _ => throw new KbParserException($"The scaler function is not implemented: [{functionName}].")
+            };
         }
     }
 }
