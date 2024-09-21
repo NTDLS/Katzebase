@@ -11,10 +11,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         public static ConditionCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
             //Look for tokens that would mean the end of the where clause
-            if (tokenizer.TryGetNextIndexOf([" group ", " order ", " offset ", " inner "], out int endOfWhere) == false)
+            if (tokenizer.TryGetNextIndexOfAny([" group ", " order ", " offset ", " inner "], out int endOfWhere) == false)
             {
                 //Maybe we end at the next query?
-                if (tokenizer.TryGetNextIndexOf((o) => StaticParserUtility.IsStartOfQuery(o), out endOfWhere) == false)
+                if (tokenizer.TryEatCompareNext((o) => StaticParserUtility.IsStartOfQuery(o), out endOfWhere) == false)
                 {
                     //Well, I suppose we will take the remainder of the query text.
                     endOfWhere = tokenizer.Length;

@@ -47,5 +47,31 @@
             _caret = restoreCaret;
             return false;
         }
+
+        /// <summary>
+        /// Returns true if the next token causes the given delegate to return true and passes out the index of the found value.
+        /// </summary>
+        public bool TryEatCompareNext(GetNextIndexOfProc proc, out int foundIndex)
+        {
+            int restoreCaret = _caret;
+
+            while (IsExhausted() == false)
+            {
+                int previousCaret = _caret;
+                var token = EatGetNext();
+
+                if (proc(token))
+                {
+                    foundIndex = previousCaret;
+                    _caret = restoreCaret;
+                    return true;
+                }
+            }
+
+            foundIndex = -1;
+            _caret = restoreCaret;
+
+            return false;
+        }
     }
 }

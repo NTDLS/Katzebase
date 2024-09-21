@@ -8,7 +8,7 @@
         /// </summary>
         public int GetNextIndexOf(char[] characters)
         {
-            if (TryGetNextIndexOf(characters, out int foundIndex))
+            if (TryGetNextIndexOfAny(characters, out int foundIndex))
             {
                 return foundIndex;
             }
@@ -21,7 +21,7 @@
         /// </summary>
         public int GetNextIndexOf(string[] givenStrings)
         {
-            if (TryGetNextIndexOf(givenStrings, out int foundIndex))
+            if (TryGetNextIndexOfAny(givenStrings, out int foundIndex))
             {
                 return foundIndex;
             }
@@ -34,7 +34,7 @@
         /// </summary>
         public int GetNextIndexOf(GetNextIndexOfProc proc)
         {
-            if (TryGetNextIndexOf(proc, out int foundIndex))
+            if (TryEatCompareNext(proc, out int foundIndex))
             {
                 return foundIndex;
             }
@@ -47,7 +47,7 @@
         /// </summary>
         public int GetNextIndexOf(string givenString)
         {
-            if (TryGetNextIndexOf(givenString, out int foundIndex))
+            if (TryGetNextIndexOfAny(givenString, out int foundIndex))
             {
                 return foundIndex;
             }

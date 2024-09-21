@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             var queryFields = new QueryFieldCollection(queryBatch);
 
             //Get the position which represents the end of the select list.
-            if (tokenizer.TryGetNextIndexOf(stopAtTokens, out int stopAt) == false)
+            if (tokenizer.TryGetFirstIndexOf(stopAtTokens, out int stopAt) == false)
             {
                 if (allowEntireConsumption)
                 {
