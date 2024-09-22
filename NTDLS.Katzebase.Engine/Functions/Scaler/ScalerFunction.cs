@@ -25,12 +25,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
         {
             var tokenizer = new Tokenizer(prototype, true);
 
-            string token = tokenizer.EatGetNext();
-
-            if (Enum.TryParse(token, true, out KbScalerFunctionParameterType returnType) == false)
-            {
-                throw new KbEngineException($"Unknown scaler function return type: [{token}].");
-            }
+            var returnType = tokenizer.EatIfNextEnum<KbScalerFunctionParameterType>();
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var functionName) == false)
             {
@@ -47,11 +42,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             {
                 var paramTokenizer = new Tokenizer(parametersString);
 
-                token = paramTokenizer.EatGetNext();
-                if (Enum.TryParse(token, true, out KbScalerFunctionParameterType paramType) == false)
-                {
-                    throw new KbEngineException($"Unknown scaler function [{functionName}] parameter type: [{token}].");
-                }
+                var paramType = paramTokenizer.EatIfNextEnum<KbScalerFunctionParameterType>();
 
                 if (paramType == KbScalerFunctionParameterType.NumericInfinite || paramType == KbScalerFunctionParameterType.StringInfinite)
                 {

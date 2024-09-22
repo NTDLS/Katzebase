@@ -25,12 +25,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             var tokenizer = new Tokenizer(prototype, true);
 
-            string token = tokenizer.EatGetNext();
-
-            if (Enum.TryParse(token, true, out KbAggregateFunctionParameterType returnType) == false)
-            {
-                throw new KbEngineException($"Unknown aggregate function return type: [{token}].");
-            }
+            var returnType = tokenizer.EatIfNextEnum<KbAggregateFunctionParameterType>();
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var functionName) == false)
             {
@@ -47,11 +42,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             {
                 var paramTokenizer = new Tokenizer(parametersString);
 
-                token = paramTokenizer.EatGetNext();
-                if (Enum.TryParse(token, true, out KbAggregateFunctionParameterType paramType) == false)
-                {
-                    throw new KbEngineException($"Unknown aggregate function [{functionName}] parameter type: [{token}].");
-                }
+                var paramType = paramTokenizer.EatIfNextEnum<KbAggregateFunctionParameterType>();
 
                 if (paramType == KbAggregateFunctionParameterType.NumericInfinite || paramType == KbAggregateFunctionParameterType.StringInfinite)
                 {
