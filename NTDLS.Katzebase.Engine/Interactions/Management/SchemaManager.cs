@@ -327,7 +327,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
-                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), intendedOperation, out var schemaCatalogLockKey);
+                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Stability, out var schemaCatalogLockKey);
 
                     var physicalSchema = parentCatalog.GetByName(thisSchemaName);
                     if (physicalSchema != null)
@@ -339,11 +339,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                     else
                     {
-                        //TODO: Somehow we get here and it looks like the same transaction is the one that
-                        //  wrote the record for the creation of the schema that we cannot find. From what I
-                        //  can tell, the schema catalog is cached without the schema we're looking for although
-                        //  it does in fact exist on the filesystem and even has the default files in it.
-
                         throw new KbObjectNotFoundException(schemaName);
                     }
 

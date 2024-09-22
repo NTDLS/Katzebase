@@ -104,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var result = new KbQueryDocumentStoreReply()
                 {
                     Value = _core.Documents.InsertDocument(
-                        transactionReference.Transaction, param.Schema, param.Document.Content).DocumentId,
+                        transactionReference.Transaction, param.Schema, param.Document.Content).DocumentId
                 };
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, 1);
