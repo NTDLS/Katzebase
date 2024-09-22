@@ -131,3 +131,7 @@ QueryTest/obj/
 ParserV2/obj/
 
 ParserV2/bin/
+
+InsertLockTest/bin/
+
+InsertLockTest/obj/
