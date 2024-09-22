@@ -1,4 +1,4 @@
-exec showprocesses ('h')
+--exec showprocesses
 
 --kill 11
 --rebuild uniquekey ix_SourceWordId on Test with (partitions = 100)
@@ -7,7 +7,7 @@ exec showprocesses ('h')
 --LIST schemas WordList
 --LIST documents test size 100
 
---analyze schema test with (includephysicalpages = true)
+analyze schema WordList:Synonym --with (includephysicalpages = true)
 
 --ALTER CONFIGURATION WITH (DeferredIOEnabled = true, CacheMaxMemory = 1024)
 

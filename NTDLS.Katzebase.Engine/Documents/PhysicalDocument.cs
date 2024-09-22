@@ -22,7 +22,17 @@ namespace NTDLS.Katzebase.Engine.Documents
         public DateTime Modified { get; set; }
 
         [ProtoIgnore]
-        public int ContentLength { get; set; }
+        private int? _contentLength { get; set; } = null;
+
+        [ProtoIgnore]
+        public int ContentLength
+        {
+            get
+            {
+                _contentLength ??= JsonConvert.SerializeObject(Elements).Length;
+                return (int)_contentLength;
+            }
+        }
 
         public PhysicalDocument()
         {
@@ -31,22 +41,14 @@ namespace NTDLS.Katzebase.Engine.Documents
 
         public PhysicalDocument(string jsonString)
         {
+            _contentLength = jsonString.Length;
             Elements = JsonConvert.DeserializeObject<KbInsensitiveDictionary<string?>>(jsonString).EnsureNotNull();
         }
 
         public void SetElementsByJson(string jsonString)
         {
+            _contentLength = jsonString.Length;
             Elements = JsonConvert.DeserializeObject<KbInsensitiveDictionary<string?>>(jsonString).EnsureNotNull();
-        }
-
-        public PhysicalDocument Clone()
-        {
-            return new PhysicalDocument
-            {
-                Elements = Elements,
-                Created = Created,
-                Modified = Modified
-            };
         }
     }
 }

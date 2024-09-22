@@ -6,11 +6,11 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserCreateUniqueKey
+    internal static class StaticParserDropUniqueKey
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Create)
+            var query = new PreparedQuery(queryBatch, QueryType.Drop)
             {
                 SubQueryType = SubQueryType.Index
             };
@@ -36,15 +36,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
             query.Schemas.Add(new QuerySchema(schemaName));
             query.AddAttribute(PreparedQuery.QueryAttribute.Schema, schemaName);
-
-            if (tokenizer.TryEatIfNext("with"))
-            {
-                var options = new ExpectedWithOptions
-                {
-                    {"partitions", typeof(uint) }
-                };
-                query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
-            }
 
             return query;
         }

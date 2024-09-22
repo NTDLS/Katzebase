@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
                 QueryType.Commit => StaticParserCommit.Parse(queryBatch, tokenizer),
                 QueryType.Rollback => StaticParserRollback.Parse(queryBatch, tokenizer),
                 QueryType.Create => StaticParserCreate.Parse(queryBatch, tokenizer),
-                QueryType.Drop => StaticParserCreate.Parse(queryBatch, tokenizer),
+                QueryType.Drop => StaticParserDrop.Parse(queryBatch, tokenizer),
 
                 QueryType.Sample => StaticParserSample.Parse(queryBatch, tokenizer),
                 QueryType.Analyze => StaticParserAnalyze.Parse(queryBatch, tokenizer),
