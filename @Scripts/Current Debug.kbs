@@ -1,3 +1,7 @@
+set TraceWaitTimes false
+GO
+create schema StackOverflow2010:Votes with (pagesize = 10000)
+
 --exec showprocesses
 
 --kill 11
@@ -7,7 +11,7 @@
 --LIST schemas WordList
 --LIST documents test size 100
 
-analyze schema WordList:Synonym --with (includephysicalpages = true)
+--analyze schema WordList:Synonym --with (includephysicalpages = true)
 
 --ALTER CONFIGURATION WITH (DeferredIOEnabled = true, CacheMaxMemory = 1024)
 
