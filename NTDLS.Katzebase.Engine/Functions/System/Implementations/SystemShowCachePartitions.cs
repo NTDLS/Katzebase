@@ -4,24 +4,28 @@ using NTDLS.Katzebase.Engine.Atomicity;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class ShowHealthCounters
+    internal static class SystemShowCachePartitions
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {
             var collection = new KbQueryResultCollection();
             var result = collection.AddNew();
 
-            result.AddField("Counter");
-            result.AddField("Value");
+            result.AddField("Partition");
+            result.AddField("Allocations");
+            result.AddField("Size");
+            result.AddField("Max Size");
 
-            var counters = core.Health.CloneCounters();
+            var cachePartitions = core.Cache.GetPartitionAllocationStatistics();
 
-            foreach (var counter in counters)
+            foreach (var partition in cachePartitions.Partitions)
             {
                 var values = new List<string?>
                 {
-                    Text.SeperateCamelCase(counter.Key),
-                    counter.Value.Value.ToString("n0")
+                    $"{partition.Partition:n0}",
+                    $"{partition.Count:n0}",
+                    $"{Formatters.FileSize(partition.SizeInBytes)}",
+                    $"{Formatters.FileSize(partition.Configuration.MaxMemoryBytes):n2}"
                 };
 
                 result.AddRow(values);

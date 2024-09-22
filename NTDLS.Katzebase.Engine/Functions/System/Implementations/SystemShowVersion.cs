@@ -4,7 +4,7 @@ using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class ShowVersion
+    internal static class SystemShowVersion
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {

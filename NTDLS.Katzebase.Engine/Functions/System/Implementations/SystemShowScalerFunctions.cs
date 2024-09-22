@@ -1,11 +1,12 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
+using NTDLS.Katzebase.Engine.Functions.Scaler;
 using System.Text;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class ShowSystemFunctions
+    internal static class SystemShowScalerFunctions
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {
@@ -13,9 +14,10 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             var result = collection.AddNew();
 
             result.AddField("Name");
+            result.AddField("Return Type");
             result.AddField("Parameters");
 
-            foreach (var prototype in SystemFunctionCollection.Prototypes)
+            foreach (var prototype in ScalerFunctionCollection.Prototypes)
             {
                 var parameters = new StringBuilder();
 
@@ -36,6 +38,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 var values = new List<string?>
                 {
                     prototype.Name,
+                    prototype.ReturnType.ToString(),
                     parameters.ToString()
                 };
                 result.AddRow(values);
@@ -44,6 +47,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 //This is to provide code for the documentation wiki.
                 var wikiPrototype = new StringBuilder();
 
+                wikiPrototype.Append($"##Color(#318000, {prototype.ReturnType})");
                 wikiPrototype.Append($" ##Color(#c6680e, {prototype.Name})(");
 
                 if (prototype.Parameters.Count > 0)

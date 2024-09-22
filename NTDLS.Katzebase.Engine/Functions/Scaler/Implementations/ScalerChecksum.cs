@@ -1,10 +1,8 @@
-﻿using NTDLS.Katzebase.Client.Types;
-
-namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
+﻿namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {
     internal static class ScalerChecksum
     {
-        public static string? Execute(Transaction transaction, ScalerFunctionParameterValueCollection function, KbInsensitiveDictionary<string?> rowFields)
+        public static string? Execute(ScalerFunctionParameterValueCollection function)
         {
             return Library.Helpers.Checksum(function.Get<string>("text")).ToString();
         }

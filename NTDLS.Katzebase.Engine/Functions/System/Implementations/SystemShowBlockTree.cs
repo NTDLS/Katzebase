@@ -5,7 +5,7 @@ using System.Text;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class ShowBlockTree
+    internal static class SystemShowBlockTree
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {

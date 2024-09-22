@@ -1,17 +1,14 @@
-﻿using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Engine.Atomicity;
-
-namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
+﻿namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {
     internal static class ScalerCoalesce
     {
-        public static string? Execute(Transaction transaction, ScalerFunctionParameterValueCollection function, KbInsensitiveDictionary<string?> rowFields)
+        public static string? Execute(List<string?> parameters)
         {
-            foreach (var p in function.Values)
+            foreach (var p in parameters)
             {
                 if (p != null)
                 {
-                    return p.Value;
+                    return p;
                 }
             }
             return null;

@@ -3,11 +3,11 @@ using NTDLS.Katzebase.Engine.Atomicity;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class ClearHealthCounters
+    internal static class SystemReleaseCacheAllocations
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {
-            core.Health.ClearCounters();
+            GC.Collect();
             return new KbQueryResultCollection();
         }
     }

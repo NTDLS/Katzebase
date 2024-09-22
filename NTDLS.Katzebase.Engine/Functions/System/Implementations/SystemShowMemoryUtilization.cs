@@ -5,7 +5,7 @@ using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class ShowMemoryUtilization
+    internal static class SystemShowMemoryUtilization
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {

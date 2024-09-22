@@ -6,7 +6,7 @@ using NTDLS.Katzebase.Engine.Library;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class ShowCachePages
+    internal static class SystemShowCachePages
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {

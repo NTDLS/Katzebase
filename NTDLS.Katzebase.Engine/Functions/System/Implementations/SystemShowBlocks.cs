@@ -3,17 +3,15 @@ using NTDLS.Katzebase.Engine.Atomicity;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class ShowLocks
+    internal static class SystemShowBlocks
     {
         public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
         {
             var collection = new KbQueryResultCollection();
             var result = collection.AddNew();
 
-            result.AddField("ProcessId");
-            result.AddField("Granularity");
-            result.AddField("Operation");
-            result.AddField("Object Name");
+            result.AddField("Process Id");
+            result.AddField("Blocked By");
 
             var txSnapshots = core.Transactions.Snapshot();
 
@@ -23,18 +21,11 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 txSnapshots = txSnapshots.Where(o => o.ProcessId == processId).ToList();
             }
 
-            foreach (var tx in txSnapshots)
+            foreach (var txSnapshot in txSnapshots)
             {
-                foreach (var heldLockKey in tx.HeldLockKeys)
+                foreach (var block in txSnapshot.BlockedByKeys)
                 {
-
-                    var values = new List<string?>
-                    {
-                        heldLockKey.ProcessId.ToString(),
-                        heldLockKey.ObjectLock.Granularity.ToString(),
-                        heldLockKey.Operation.ToString(),
-                        heldLockKey.ObjectName.ToString(),
-                    };
+                    var values = new List<string?> { txSnapshot.ProcessId.ToString(), block.ToString() };
                     result.AddRow(values);
                 }
             }

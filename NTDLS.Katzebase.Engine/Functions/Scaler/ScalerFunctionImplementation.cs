@@ -48,32 +48,32 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 "String Trim  (String text)",
             };
 
-        public static string? ExecuteFunction(Transaction transaction, string functionName, List<string?> parameters, KbInsensitiveDictionary<string?> rowFields)
+        public static string? ExecuteFunction(Transaction transaction, string functionName, List<string?> parameters, KbInsensitiveDictionary<string?> rowValues)
         {
             var function = ScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
             return functionName.ToLowerInvariant() switch
             {
-                "isbetween" => ScalerIsBetween.Execute(function),
-                "isequal" => ScalerIsEqual.Execute(function),
-                "isgreater" => ScalerIsGreater.Execute(function),
-                "isgreaterorequal" => ScalerIsGreaterOrEq.Execute(function),
-                "isless" => ScalerIsLess.Execute(function),
-                "islessorequal" => ScalerIsLessOrEqual.Execute(function),
-                "islike" => ScalerIsLike.Execute(function),
-                "isnotbetween" => ScalerIsNotBetween.Execute(function),
-                "isnotequal" => ScalerIsNotEqual.Execute(function),
-                "isnotlike" => ScalerIsNotLike.Execute(function),
+                "isbetween" => ScalerIsBetween.Execute(transaction, function),
+                "isequal" => ScalerIsEqual.Execute(transaction, function),
+                "isgreater" => ScalerIsGreater.Execute(transaction, function),
+                "isgreaterorequal" => ScalerIsGreaterOrEqual.Execute(transaction, function),
+                "isless" => ScalerIsLess.Execute(transaction, function),
+                "islessorequal" => ScalerIsLessOrEqual.Execute(transaction, function),
+                "islike" => ScalerIsLike.Execute(transaction, function),
+                "isnotbetween" => ScalerIsNotBetween.Execute(transaction, function),
+                "isnotequal" => ScalerIsNotEqual.Execute(transaction, function),
+                "isnotlike" => ScalerIsNotLike.Execute(transaction, function),
                 "checksum" => ScalerChecksum.Execute(function),
                 "lastindexof" => ScalerLastIndexOf.Execute(function),
                 "length" => ScalerLength.Execute(function),
-                "coalesce" => ScalerCoalesce.Execute(function),
-                "concat" => ScalerConcat.Execute(function),
+                "coalesce" => ScalerCoalesce.Execute(parameters),
+                "concat" => ScalerConcat.Execute(parameters),
                 "datetime" => ScalerDateTime.Execute(function),
                 "datetimeutc" => ScalerDateTimeUTC.Execute(function),
-                "documentid" => ScalerDocumentID.Execute(function),
-                "documentpage" => ScalerDocumentPage.Execute(function),
-                "documentuid" => ScalerDocumentUID.Execute(function),
+                "documentid" => ScalerDocumentID.Execute(function, rowValues),
+                "documentpage" => ScalerDocumentPage.Execute(function, rowValues),
+                "documentuid" => ScalerDocumentUID.Execute(function, rowValues),
                 "guid" => ScalerGuid.Execute(function),
                 "iif" => ScalerIIF.Execute(function),
                 "indexof" => ScalerIndexOf.Execute(function),
