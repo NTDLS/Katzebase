@@ -1,4 +1,4 @@
-exec showprocesses(4)
+exec showprocesses ('h')
 
 --kill 11
 --rebuild uniquekey ix_SourceWordId on Test with (partitions = 100)
