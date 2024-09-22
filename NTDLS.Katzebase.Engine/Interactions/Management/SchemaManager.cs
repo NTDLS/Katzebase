@@ -314,20 +314,19 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 else
                 {
                     var segments = schemaName.Split(':');
-                    var thisSchemaName = segments[segments.Count() - 1];
+                    var thisSchemaName = segments[segments.Length - 1];
 
                     var schemaDiskPath = Path.Combine(_core.Settings.DataRootPath, string.Join("\\", segments));
                     var parentSchemaDiskPath = Directory.GetParent(schemaDiskPath)?.FullName;
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
-
-                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var parentSchemaCatalogLockKey) == false)
+                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var _) == false)
                     {
                         throw new KbObjectNotFoundException($"Schema [{schemaName}] does not exist.");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
-                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Stability, out var schemaCatalogLockKey);
+                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Read, out var _);
 
                     var physicalSchema = parentCatalog.GetByName(thisSchemaName);
                     if (physicalSchema != null)
@@ -343,12 +342,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     transaction.LockDirectory(intendedOperation, physicalSchema.DiskPath);
-
-                    //We want to acquire the locks as usual, but we do not want to retain a full lock because it causes
-                    //  unnecessary blocking. So we will instead convert these locks to "stability" locks so we do not block
-                    //  read/writes but only block deletes.
-                    //transaction.ConvertLockToStability(parentSchemaCatalogLockKey);
-                    //transaction.ConvertLockToStability(schemaCatalogLockKey);
 
                     return physicalSchema;
                 }
@@ -399,13 +392,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
 
-                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var parentSchemaCatalogLockKey) == false)
+                    if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Read, out var _) == false)
                     {
                         throw new KbObjectNotFoundException($"Schema [{schemaName}] does not exist.");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
-                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), intendedOperation, out var schemaCatalogLockKey);
+                        Path.Combine(parentSchemaDiskPath, SchemaCatalogFile), LockOperation.Read, out var _);
 
                     var virtualSchema = parentCatalog.GetByName(parentSchemaName)?.ToVirtual();
                     if (virtualSchema != null)
@@ -430,12 +423,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
 
                     transaction.LockDirectory(intendedOperation, virtualSchema.DiskPath);
-
-                    //We want to acquire the locks as usual, but we do not want to retain a full lock because it causes
-                    //  unnecessary blocking. So we will instead convert these locks to "stability" locks so we do not block
-                    //  read/writes but only block deletes.
-                    //transaction.ConvertLockToStability(parentSchemaCatalogLockKey);
-                    //transaction.ConvertLockToStability(schemaCatalogLockKey);
 
                     return virtualSchema;
                 }
