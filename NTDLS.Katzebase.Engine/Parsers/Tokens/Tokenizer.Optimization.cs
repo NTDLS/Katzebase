@@ -93,6 +93,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                                 Literals.Add(key, new(KbBasicDataType.String, constant.Value));
                                 query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                             }
+                            else
+                            {
+                                //Keep track of "constants" that we do not have definitions for, we will need replace these.
+                                string key = $"$temp_const_{nextTriedConstant++}$";
+                                query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                                triedConstants.Add(key, match.ToString());
+                            }
                         }
                         else
                         {
@@ -183,6 +190,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                                 string key = $"$n_{_literalKey++}$";
                                 Literals.Add(key, new(KbBasicDataType.Numeric, constant.Value));
                                 query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                            }
+                            else
+                            {
+                                //Keep track of "constants" that we do not have definitions for, we will need replace these.
+                                string key = $"$temp_const_{nextTriedConstant++}$";
+                                query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
+                                triedConstants.Add(key, match.ToString());
                             }
                         }
                         else
