@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             {
                 if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var selectIntoSchema) == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + selectIntoSchema + "', expected: schema name.");
+                    throw new KbParserException($"Invalid query. Found [{selectIntoSchema}], expected: schema name.");
                 }
 
                 query.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, selectIntoSchema);
@@ -58,12 +58,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             //Parse primary schema.
             if (!tokenizer.TryEatIfNext("from"))
             {
-                throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'from'.");
+                throw new KbParserException($"Invalid query. Found [{tokenizer.EatGetNext()}], expected: 'from'.");
             }
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
-                throw new KbParserException("Invalid query. Found [" + schemaName + "], expected: schema name.");
+                throw new KbParserException($"Invalid query. Found [{schemaName}], expected: schema name.");
             }
 
             if (tokenizer.TryEatIfNext("as"))
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             {
                 if (tokenizer.TryEatIfNext("by") == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
+                    throw new KbParserException($"Invalid query. Found [{tokenizer.EatGetNext()}], expected: 'by'.");
                 }
                 query.GroupFields = StaticParserGroupBy.Parse(queryBatch, tokenizer);
             }
@@ -107,7 +107,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             {
                 if (tokenizer.TryEatIfNext("by") == false)
                 {
-                    throw new KbParserException("Invalid query. Found '" + tokenizer.EatGetNext() + "', expected: 'by'.");
+                    throw new KbParserException($"Invalid query. Found [{tokenizer.EatGetNext()}], expected: 'by'.");
                 }
                 query.SortFields = StaticParserOrderBy.Parse(queryBatch, tokenizer);
             }

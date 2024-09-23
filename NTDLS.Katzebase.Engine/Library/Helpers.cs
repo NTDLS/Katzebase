@@ -151,7 +151,7 @@ namespace NTDLS.Katzebase.Engine.Library
         {
             if (diskPath == null)
             {
-                throw new KbNullException($"Value should not be null {nameof(diskPath)}.");
+                throw new KbNullException($"Value should not be null: [{nameof(diskPath)}].");
             }
 
             if (IsDirectoryEmpty(diskPath))

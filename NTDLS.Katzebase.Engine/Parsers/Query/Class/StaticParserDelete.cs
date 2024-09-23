@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
-                throw new KbParserException("Invalid query. Found [" + schemaName + "], expected: schema name.");
+                throw new KbParserException($"Invalid query. Found [{schemaName}], expected: schema name.");
             }
 
             if (tokenizer.TryEatIfNext("as"))

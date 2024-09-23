@@ -73,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 
                     if (paramTokenizer.TryEatIfNextCharacter('=') == false)
                     {
-                        throw new KbEngineException($"Invalid aggregate function [{functionName}] prototype when parsing optional parameter [{parameterName}]. Expected '=', found: [{paramTokenizer.NextCharacter}].");
+                        throw new KbEngineException($"Invalid aggregate function [{functionName}] prototype when parsing optional parameter [{parameterName}]. Expected [=], found: [{paramTokenizer.NextCharacter}].");
                     }
 
                     var optionalParameterDefaultValue = tokenizer.ResolveLiteral(paramTokenizer.EatGetNext());
@@ -154,7 +154,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 
             if (satisfiedParameterCount != Parameters.Count)
             {
-                throw new KbFunctionException($"Incorrect number of parameters passed to [{Name}].");
+                throw new KbFunctionException($"Incorrect number of parameters passed to aggregate function: [{Name}].");
             }
 
             return result;

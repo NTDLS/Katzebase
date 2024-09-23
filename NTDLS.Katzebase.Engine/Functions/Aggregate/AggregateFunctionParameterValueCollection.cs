@@ -13,13 +13,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             try
             {
                 var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))
-                    ?? throw new KbGenericException($"Value for {name} cannot be null.");
+                    ?? throw new KbGenericException($"Value for [{name}] cannot be null.");
 
                 if (parameter.Value == null)
                 {
                     if (parameter.Parameter.DefaultValue == null)
                     {
-                        throw new KbGenericException($"Value for {name} cannot be null.");
+                        throw new KbGenericException($"Value for [{name}] cannot be null.");
                     }
                     return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
                 }
@@ -55,13 +55,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             try
             {
                 var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))
-                    ?? throw new KbGenericException($"Value for {name} cannot be null.");
+                    ?? throw new KbGenericException($"Value for [{name}] cannot be null.");
 
                 if (parameter.Value == null)
                 {
                     if (parameter.Parameter.DefaultValue == null)
                     {
-                        throw new KbGenericException($"Value for {name} cannot be null.");
+                        throw new KbGenericException($"Value for [{name}] cannot be null.");
                     }
                     return Converters.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
                 }

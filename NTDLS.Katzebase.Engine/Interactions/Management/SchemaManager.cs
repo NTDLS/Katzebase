@@ -125,7 +125,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var singleSchema = parentCatalog.GetByName(physicalSchema.Name);
                 if (singleSchema == null)
                 {
-                    throw new KbObjectNotFoundException($"Schema not found: '{physicalSchema.Name}'");
+                    throw new KbObjectNotFoundException($"Schema not found: [{physicalSchema.Name}].");
                 }
                 singleSchema.PageSize = pageSize;
 
@@ -271,7 +271,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (child.VirtualPath == null)
                 {
-                    throw new KbNullException($"Value should not be null {nameof(child.VirtualPath)}.");
+                    throw new KbNullException($"Value should not be null: [{nameof(child.VirtualPath)}].");
                 }
 
                 var segments = child.VirtualPath.Split(':').ToList();
@@ -322,7 +322,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var parentCatalogDiskPath = Path.Combine(parentSchemaDiskPath.EnsureNotNull(), SchemaCatalogFile);
                     if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Stability, out var _) == false)
                     {
-                        throw new KbObjectNotFoundException($"Schema [{schemaName}] does not exist.");
+                        throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,
@@ -338,7 +338,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                     else
                     {
-                        throw new KbObjectNotFoundException(schemaName);
+                        throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
                     }
 
                     transaction.LockDirectory(intendedOperation, physicalSchema.DiskPath);
@@ -394,7 +394,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (_core.IO.FileExists(transaction, parentCatalogDiskPath, LockOperation.Read, out var _) == false)
                     {
-                        throw new KbObjectNotFoundException($"Schema [{schemaName}] does not exist.");
+                        throw new KbObjectNotFoundException($"Schema not found: [{schemaName}].");
                     }
 
                     var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction,

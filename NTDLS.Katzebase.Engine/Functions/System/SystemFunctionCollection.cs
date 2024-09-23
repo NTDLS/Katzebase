@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
             }
 
             var function = _protypes.FirstOrDefault(o => o.Name.Is(functionName))
-                ?? throw new KbFunctionException($"Undefined function: {functionName}.");
+                ?? throw new KbFunctionException($"Undefined system function: [{functionName}].");
 
             return function.ApplyParameters(parameters);
         }

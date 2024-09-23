@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 _ => throw new KbParserException($"The aggregate function is not implemented: [{functionName}].")
             };
 
-            throw new KbFunctionException($"Undefined function: {functionName}.");
+            throw new KbFunctionException($"Undefined function: [{functionName}].");
         }
     }
 }

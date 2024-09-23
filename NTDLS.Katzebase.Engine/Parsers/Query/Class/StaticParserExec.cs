@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var procedureName) == false)
             {
-                throw new KbParserException("Invalid query. Found '" + procedureName + "', expected: procedure name.");
+                throw new KbParserException($"Invalid query. Found [{procedureName}], expected: procedure name.");
             }
 
             var parts = procedureName.Split(':');

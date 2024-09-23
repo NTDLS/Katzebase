@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     if (Enum.TryParse(variable.Name, true, out KbConnectionSetting connectionSetting) == false
                         || Enum.IsDefined(typeof(KbConnectionSetting), connectionSetting) == false)
                     {
-                        throw new KbGenericException($"Unknown system variable: {variable.Name}.");
+                        throw new KbGenericException($"Unknown system variable: [{variable.Name}].");
                     }
 
                     switch (connectionSetting)

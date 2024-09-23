@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
                 {
                     if (double.TryParse(_value, out _))
                     {
-                        throw new KbParserException("Invalid query. Found [" + _value + "], expected identifier.");
+                        throw new KbParserException($"Invalid query. Found [{_value}], expected identifier.");
                     }
                     else
                     {
@@ -76,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
                             var parts = _value.Split('.');
                             if (parts.Length != 2)
                             {
-                                throw new KbParserException("Invalid query. Found [" + _value + "], Expected a multi-part condition field.");
+                                throw new KbParserException($"Invalid query. Found [{_value}], Expected a multi-part condition field.");
                             }
 
                             Prefix = parts[0];

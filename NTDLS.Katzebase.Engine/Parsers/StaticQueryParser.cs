@@ -56,8 +56,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
             if (StaticParserUtility.IsStartOfQuery(token, out var queryType) == false)
             {
-                string acceptableValues = string.Join("', '", Enum.GetValues<QueryType>().Where(o => o != QueryType.None));
-                throw new KbParserException($"Invalid query. Found '{token}', expected: '{acceptableValues}'.");
+                throw new KbParserException($"Invalid query. Found [{token}], expected: [{string.Join("],[", Enum.GetValues<QueryType>().Where(o => o != QueryType.None))}].");
             }
 
             tokenizer.EatNext();
@@ -101,23 +100,23 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
                 if (!lineTokenizer.TryEatIsNextToken("declare", out var token))
                 {
-                    throw new KbParserException($"Invalid query. Found '{token}', expected: 'declare'.");
+                    throw new KbParserException($"Invalid query. Found [{token}], expected: [declare].");
                 }
 
                 if (lineTokenizer.NextCharacter != '@')
                 {
-                    throw new KbParserException($"Invalid query. Found '{lineTokenizer.NextCharacter}', expected: '@'.");
+                    throw new KbParserException($"Invalid query. Found [{lineTokenizer.NextCharacter}], expected: [@].");
                 }
                 lineTokenizer.EatNextCharacter();
 
                 if (lineTokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var variableName) == false)
                 {
-                    throw new KbParserException($"Invalid query. Found '{token}', expected: 'declare'.");
+                    throw new KbParserException($"Invalid query. Found [{token}], expected: [declare].");
                 }
 
                 if (lineTokenizer.NextCharacter != '=')
                 {
-                    throw new KbParserException($"Invalid query. Found '{lineTokenizer.NextCharacter}', expected: '='.");
+                    throw new KbParserException($"Invalid query. Found [{lineTokenizer.NextCharacter}], expected: [=].");
                 }
                 lineTokenizer.EatNextCharacter();
 

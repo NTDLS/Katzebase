@@ -39,7 +39,7 @@
                 return foundIndex;
             }
 
-            throw new Exception($"Expected string not found {proc.GetType().Name}.");
+            throw new Exception($"Expected string not found: [{proc.GetType().Name}].");
         }
 
         /// <summary>

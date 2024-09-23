@@ -189,7 +189,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    throw new Exception($"IO format {format} is not implemented.");
+                    throw new NotImplementedException($"IO format is not implemented: [{format}].");
                 }
 
                 if (_core.Settings.CacheEnabled && deserializedObject != null)
@@ -403,7 +403,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    throw new NotImplementedException();
+                    throw new NotImplementedException($"IO format is not implemented: [{format}].");
                 }
 
                 if (_core.Settings.CacheEnabled)

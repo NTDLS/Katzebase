@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 {
                     if (modelAuxiliaryFields.ContainsKey(sortField.Key) == false)
                     {
-                        throw new KbEngineException($"Sort field '{sortField.Alias}' was not found.");
+                        throw new KbEngineException($"Sort field was not found: [{sortField.Alias}].");
                     }
                     sortingColumns.Add(new(sortField.Key, sortField.SortDirection));
                 }
@@ -445,7 +445,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     var documentContent = joinScopedContentCache[documentIdentifier.SchemaAlias ?? ""];
                     if (!documentContent.TryGetValue(documentIdentifier.FieldName, out string? documentValue))
                     {
-                        throw new KbEngineException($"Join clause field not found in document [{currentSchemaKVP.Key}].");
+                        throw new KbEngineException($"Join clause field not found in document: [{currentSchemaKVP.Key}].");
                     }
                     joinClauseKeyValues[documentIdentifier.FieldName] = documentValue?.ToString() ?? "";
                 }

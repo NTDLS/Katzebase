@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (!File.Exists(appSettingsPath))
                 {
-                    throw new KbEngineException($"Could not locate configuration file: '{appSettingsPath}'.");
+                    throw new KbEngineException($"Could not locate configuration file: [{appSettingsPath}[.");
                 }
 
                 string json = File.ReadAllText(appSettingsPath);

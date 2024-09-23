@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var indexName) == false)
             {
-                throw new KbParserException("Invalid query. Found '" + indexName + "', expected: index name.");
+                throw new KbParserException($"Invalid query. Found [{indexName}], expected: index name.");
             }
 
             query.AddAttribute(PreparedQuery.QueryAttribute.IndexName, indexName);

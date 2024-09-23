@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures.Persistent
                 }
                 else
                 {
-                    throw new KbFunctionException($"Incorrect number of parameter passed to {Name}.");
+                    throw new KbFunctionException($"Incorrect number of parameter passed to procedure: [{Name}].");
                 }
             }
 

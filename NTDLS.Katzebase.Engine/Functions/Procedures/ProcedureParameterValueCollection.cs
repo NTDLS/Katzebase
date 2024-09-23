@@ -13,13 +13,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
             try
             {
                 var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))
-                    ?? throw new KbGenericException($"Value for {name} cannot be null.");
+                    ?? throw new KbGenericException($"Value for [{name}] cannot be null.");
 
                 if (parameter.Value == null)
                 {
                     if (parameter.Parameter.DefaultValue == null)
                     {
-                        throw new KbGenericException($"Value for {name} cannot be null.");
+                        throw new KbGenericException($"Value for [{name}] cannot be null.");
                     }
 
                     return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
             }
             catch
             {
-                throw new KbGenericException($"Undefined parameter {name}.");
+                throw new KbGenericException($"Undefined parameter: [{name}].");
             }
         }
 
@@ -57,20 +57,20 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
             }
             catch
             {
-                throw new KbGenericException($"Undefined parameter {name}.");
+                throw new KbGenericException($"Undefined parameter: [{name}].");
             }
         }
 
         public T? GetNullable<T>(string name)
         {
             var parameter = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))
-                ?? throw new KbGenericException($"Value for {name} cannot be null.");
+                ?? throw new KbGenericException($"Value for [{name}] cannot be null.");
 
             if (parameter.Value == null)
             {
                 if (parameter.Parameter.HasDefault == false)
                 {
-                    throw new KbGenericException($"Value for {name} is not optional.");
+                    throw new KbGenericException($"Value for [{name}] is not optional.");
                 }
                 return Converters.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
             }

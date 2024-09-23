@@ -73,8 +73,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (duplicateFields.Count != 0)
                 {
-                    string fields = "[" + string.Join("],[", duplicateFields) + "]";
-                    throw new KbEngineException($"Field(s) {fields} were specified more than once.");
+                    throw new KbEngineException($"Field(s) [{string.Join("],[", duplicateFields)}] were specified more than once.");
                 }
 
                 foreach (var row in result.Rows)

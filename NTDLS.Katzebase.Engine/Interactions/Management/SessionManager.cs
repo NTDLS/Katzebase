@@ -76,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     session.LastCheckInTime = DateTime.UtcNow;
                     return session;
                 }
-                throw new Exception($"Failed to find session id {connectionId}.");
+                throw new Exception($"Failed to find session id: [{connectionId}].");
             });
         }
 
@@ -143,7 +143,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         return result.Value;
                     }
-                    throw new KbSessionNotFoundException($"Session was not found: {processId}");
+                    throw new KbSessionNotFoundException($"Session was not found: [{processId}]");
                 }
                 catch (Exception ex)
                 {

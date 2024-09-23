@@ -16,12 +16,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Parameters
         {
             if (ordinal >= Parameters.Count)
             {
-                throw new KbFunctionException($"Parameter {ordinal} was not passed to function.");
+                throw new KbFunctionException($"Parameter at ordinal [{ordinal}] was not passed to function.");
             }
 
             if (Parameters[ordinal] is not FunctionExpression expression)
             {
-                throw new KbFunctionException($"Parameter {ordinal} could not be converted to an expression.");
+                throw new KbFunctionException($"Parameter at ordinal [{ordinal}] could not be converted to an expression.");
             }
 
             return Converters.ConvertTo<T?>(expression.Value);

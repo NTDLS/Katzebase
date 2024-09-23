@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 if (physicalSchema.DiskPath == null)
                 {
-                    throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                    throw new KbNullException($"Value should not be null [{nameof(physicalSchema.DiskPath)}].");
                 }
 
                 var schemaCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(
@@ -160,7 +160,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var parentPhysicalSchema = _core.Schemas.AcquireParent(transactionReference.Transaction, physicalSchema, LockOperation.Write);
 
                 if (parentPhysicalSchema.DiskPath == null || physicalSchema.DiskPath == null)
-                    throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                    throw new KbNullException($"Value should not be null [{nameof(physicalSchema.DiskPath)}].");
 
                 var parentSchemaCatalogFile = parentPhysicalSchema.SchemaCatalogFilePath();
                 var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(

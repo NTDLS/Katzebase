@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
                     {
                         if (Enum.TryParse(resultType, value, true, out var enumValue) == false)
                         {
-                            throw new KbParserException($"Invalid value passed to with option '{name}'.");
+                            throw new KbParserException($"Invalid value passed to with option: [{name}].");
                         }
                         return Convert.ChangeType(enumValue, resultType);
                     }
@@ -37,16 +37,16 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions
                     var resultingValue = Convert.ChangeType(value, resultType);
                     if (resultingValue == null)
                     {
-                        throw new KbParserException($"Invalid NULL value passed to with option '{name}'.");
+                        throw new KbParserException($"Invalid NULL value passed to with option: [{name}].");
                     }
                     return resultingValue;
                 }
                 catch
                 {
-                    throw new KbParserException($"Failed to convert with option '{name}' value to '{resultType.Name}'.");
+                    throw new KbParserException($"Failed to convert with option [{name}] value to [{resultType.Name}].");
                 }
             }
-            throw new KbParserException($"Invalid with option '{name}'.");
+            throw new KbParserException($"Invalid with option: [{name}].");
         }
     }
 }

@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                 var typeAndName = param.Split("/");
                 if (Enum.TryParse(typeAndName[0], true, out KbProcedureParameterType paramType) == false)
                 {
-                    throw new KbGenericException($"Unknown parameter type {typeAndName[0]}");
+                    throw new KbGenericException($"Unknown parameter type: [{typeAndName[0]}]");
                 }
 
                 var nameAndDefault = typeAndName[1].Trim().Split('=');
@@ -46,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                 }
                 else
                 {
-                    throw new KbGenericException($"Wrong number of default parameters supplied to prototype for {typeAndName[0]}");
+                    throw new KbGenericException($"Wrong number of default parameters supplied to prototype for: [{typeAndName[0]}]");
                 }
             }
 
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Procedures
                 }
                 else
                 {
-                    throw new KbFunctionException($"Incorrect number of parameter passed to {Name}.");
+                    throw new KbFunctionException($"Incorrect number of parameter passed to: [{Name}].");
                 }
             }
 

@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 
             if (function == null)
             {
-                throw new KbFunctionException($"Undefined function: {functionName}.");
+                throw new KbFunctionException($"Undefined function: [{functionName}].");
             }
 
             return function.ApplyParameters(parameters);

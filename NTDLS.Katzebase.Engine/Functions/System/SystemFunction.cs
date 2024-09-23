@@ -68,7 +68,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
 
                     if (paramTokenizer.TryEatIfNextCharacter('=') == false)
                     {
-                        throw new KbEngineException($"Invalid system function [{functionName}] prototype when parsing optional parameter [{parameterName}]. Expected '=', found: [{paramTokenizer.NextCharacter}].");
+                        throw new KbEngineException($"Invalid system function [{functionName}] prototype when parsing optional parameter [{parameterName}]. Expected [=], found: [{paramTokenizer.NextCharacter}].");
                     }
 
                     var optionalParameterDefaultValue = tokenizer.ResolveLiteral(paramTokenizer.EatGetNext());

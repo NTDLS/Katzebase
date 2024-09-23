@@ -206,7 +206,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, lockWaitTime);
                     _core.Health.IncrementContinuous(HealthCounterType.LockWaitMs, intention.ObjectName, lockWaitTime);
                     transaction.Rollback();
-                    throw new KbTimeoutException($"Timeout exceeded while waiting on lock: {intention.ToString()}");
+                    throw new KbTimeoutException($"Timeout exceeded while waiting on lock: [{intention.ToString()}]");
                 }
 
                 //Since _collection, tx.GrantedLockCache, tx.HeldLockKeys and tx.BlockedByKeys all use the critical
@@ -428,7 +428,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                                         transaction.SetDeadlocked();
 
-                                        throw new KbDeadlockException($"Deadlock occurred, transaction for process {transaction.ProcessId} is being terminated.", explanation.ToString());
+                                        throw new KbDeadlockException($"Deadlock occurred, transaction for process [{transaction.ProcessId}] is being terminated.", explanation.ToString());
                                     }
                                 }
                             });

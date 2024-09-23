@@ -76,7 +76,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
                 {
-                    throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                    throw new KbNullException($"Value should not be null: [{nameof(physicalSchema.DiskPath)}].");
                 }
 
                 _core.IO.PutJson(transaction, indexCatalog.DiskPath, indexCatalog);
@@ -100,10 +100,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Read);
                 if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
                 {
-                    throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                    throw new KbNullException($"Value should not be null: [{nameof(physicalSchema.DiskPath)}].");
                 }
 
-                var physicalIndex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
+                var physicalIndex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException($"Index not found: [{indexName}].");
 
                 var physicalIndexPageMap = new Dictionary<uint, PhysicalIndexPages>();
                 var physicalIndexPageMapDistilledLeaves = new List<List<PhysicalIndexLeaf>>();
@@ -185,7 +185,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
                 if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
                 {
-                    throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                    throw new KbNullException($"Value should not be null: [{nameof(physicalSchema.DiskPath)}].");
                 }
 
                 var physicalIndex = indexCatalog.GetByName(indexName);
@@ -549,7 +549,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                         .SelectMany(o => o.Children
                                         .Where(w => ConditionEntry.IsMatchBetween(transaction, w.Key, keyValue) == false)
                                         .Select(s => s.Value)).ToList(),
-                _ => throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {condition.Qualifier}"),
+                _ => throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: [{condition.Qualifier}]"),
             };
         }
 
@@ -788,8 +788,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (physicalIndex.IsUnique && indexScanResult.Leaf.Documents.EnsureNotNull().Count > 1)
                     {
-                        string exceptionText = $"Duplicate key violation occurred for index [[{physicalIndex.Name}]. Values: {{{string.Join(",", searchTokens)}}}";
-                        throw new KbDuplicateKeyViolationException(exceptionText);
+                        throw new KbDuplicateKeyViolationException($"Duplicate key violation occurred for index [{physicalIndex.Name}], values: [{string.Join("],[", searchTokens)}]");
                     }
                 }
                 else
@@ -1099,10 +1098,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var indexCatalog = AcquireIndexCatalog(transaction, physicalSchema, LockOperation.Write);
                 if (indexCatalog.DiskPath == null || physicalSchema.DiskPath == null)
                 {
-                    throw new KbNullException($"Value should not be null {nameof(physicalSchema.DiskPath)}.");
+                    throw new KbNullException($"Value should not be null: [{nameof(physicalSchema.DiskPath)}].");
                 }
 
-                var physicalIndex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException(indexName);
+                var physicalIndex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException($"Index not found: [{indexName}].");
 
                 if (newPartitionCount != 0)
                 {
@@ -1139,7 +1138,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (instance.Operation.PhysicalSchema.DiskPath == null)
                     {
-                        throw new KbNullException($"Value should not be null {nameof(instance.Operation.PhysicalSchema.DiskPath)}.");
+                        throw new KbNullException($"Value should not be null: [{nameof(instance.Operation.PhysicalSchema.DiskPath)}].");
                     }
 
                     var physicalDocument = _core.Documents.AcquireDocument(
