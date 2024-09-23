@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Exposed
         public ExposedExpression(int ordinal, string fieldAlias, IQueryFieldExpression fieldExpression, CollapseType collapseType)
         {
             Ordinal = ordinal;
-            FieldAlias = fieldAlias;
+            FieldAlias = fieldAlias.ToLowerInvariant();
             FieldExpression = fieldExpression;
             CollapseType = collapseType;
         }

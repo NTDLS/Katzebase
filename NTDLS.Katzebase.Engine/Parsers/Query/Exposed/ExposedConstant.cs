@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Exposed
         {
             Ordinal = ordinal;
             DataType = dataType;
-            FieldAlias = alias;
+            FieldAlias = alias.ToLowerInvariant();
             Value = value;
         }
     }

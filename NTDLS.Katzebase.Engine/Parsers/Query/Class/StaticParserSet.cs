@@ -13,13 +13,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 //SubQueryType = SubQueryType.None
             };
 
-            throw new NotImplementedException("reimplement");
+            string variableName = tokenizer.EatGetNext();
+            string variableValue = tokenizer.EatGetNextEvaluated() ?? string.Empty;
 
-            /*
-                string variableName = tokenizer.GetNext();
-                string variableValue = tokenizer.GetNext();
-                result.VariableValues.Add(new(variableName, variableValue));
-            */
+            query.VariableValues.Add(new(variableName, variableValue));
+
+            return query;
         }
     }
 }

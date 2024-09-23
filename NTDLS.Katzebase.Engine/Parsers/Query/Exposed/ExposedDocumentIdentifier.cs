@@ -11,9 +11,7 @@
         public string SchemaAlias { get; private set; }
         public string Name { get; private set; }
 
-
         private string? _key = null;
-
         public string Key
         {
             get

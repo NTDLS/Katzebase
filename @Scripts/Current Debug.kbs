@@ -1,10 +1,12 @@
---set TraceWaitTimes false
+set TraceWaitTimes false
 GO
 
 SELECT
 	U.Id,
 	U.DisplayName,
-	P.Body
+	P.CreationDate,
+	P.Body,
+	P.Score
 FROM
 	StackOverflow:Users as U
 INNER JOIN StackOverflow:Posts as P
