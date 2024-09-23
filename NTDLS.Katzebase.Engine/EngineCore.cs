@@ -85,7 +85,7 @@ namespace NTDLS.Katzebase.Engine
             Schemas.CreateEphemeralSchema("Single");
 
             using var systemSession = Sessions.CreateEphemeralSystemSession();
-            Documents.InsertDocument(systemSession.Transaction, "Single", "{\"ephemeral\": null}");
+            Documents.InsertDocument(systemSession.Transaction, "Single", "{ephemeral: null}");
             systemSession.Commit();
         }
 
