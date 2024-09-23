@@ -13,7 +13,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
          * (FirstName = 'John', MiddleName = Guid(), LastName = 'Doe')
         */
 
-        /*Example (ragged field list / value list):
+        /*Example (field list / value list):
          * insert into Test(FirstName, LastName)
          * values('Jane', 'Doe'),('John', 'Doe'),('Test', Guid())
         */
