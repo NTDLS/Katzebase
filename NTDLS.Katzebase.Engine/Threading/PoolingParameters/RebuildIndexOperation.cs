@@ -35,10 +35,10 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// <summary>
         /// Thread parameters for a index rebuild operation. Used by a single thread.
         /// </summary>
-        internal class Instance(RebuildIndexOperation operation, DocumentPointer documentPointer)
+        internal class Instance(RebuildIndexOperation operation, int pageNumber)
         {
             public RebuildIndexOperation Operation { get; set; } = operation;
-            public DocumentPointer DocumentPointer { get; set; } = documentPointer;
+            public int PageNumber { get; set; } = pageNumber;
         }
     }
 }

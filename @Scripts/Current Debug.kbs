@@ -1,6 +1,16 @@
-set TraceWaitTimes false
+--set TraceWaitTimes false
 GO
+
+
+exec showprocesses
+
 create schema StackOverflow2010:Votes with (pagesize = 10000)
+
+/*
+CREATE INDEX IX_Posts_OwnerUserId(
+    OwnerUserId
+) ON StackOverflow:Posts WITH (PARTITIONS=1000)
+*/
 
 --exec showprocesses
 

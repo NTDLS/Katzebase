@@ -20,6 +20,7 @@ using System.Text;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Semaphore.OptimisticSemaphore;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -1128,37 +1129,47 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 instance.Operation.Transaction.EnsureActive();
 
-                if (instance.Operation.PhysicalSchema.DiskPath == null)
+                var physicalDocumentPageMap = _core.Documents.AcquireDocumentPageMap(instance.Operation.Transaction,
+                    instance.Operation.PhysicalSchema, instance.PageNumber, LockOperation.Read);
+
+                var documentPointers = physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer(instance.PageNumber, o));
+
+                foreach (var documentPointer in documentPointers)
                 {
-                    throw new KbNullException($"Value should not be null {nameof(instance.Operation.PhysicalSchema.DiskPath)}.");
-                }
+                    instance.Operation.Transaction.EnsureActive();
 
-                var physicalDocument = _core.Documents.AcquireDocument(
-                    instance.Operation.Transaction, instance.Operation.PhysicalSchema, instance.DocumentPointer, LockOperation.Read);
-
-                try
-                {
-                    var documentField = instance.Operation.PhysicalIndex.Attributes[0].Field;
-                    physicalDocument.Elements.TryGetValue(documentField.EnsureNotNull(), out string? value);
-
-                    uint indexPartition = instance.Operation.PhysicalIndex.ComputePartition(value);
-
-                    string pageDiskPath = instance.Operation.PhysicalIndex.GetPartitionPagesFileName(
-                        instance.Operation.PhysicalSchema, indexPartition);
-
-                    var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(
-                        instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
-
-                    lock (instance.Operation.SyncObjects[indexPartition])
+                    if (instance.Operation.PhysicalSchema.DiskPath == null)
                     {
-                        InsertDocumentIntoIndexPages(instance.Operation.Transaction,
-                            instance.Operation.PhysicalIndex, physicalIndexPages, physicalDocument, instance.DocumentPointer);
+                        throw new KbNullException($"Value should not be null {nameof(instance.Operation.PhysicalSchema.DiskPath)}.");
                     }
-                }
-                catch (Exception ex)
-                {
-                    LogManager.Error($"Failed to insert document into index for process id {instance.Operation.Transaction.ProcessId}.", ex);
-                    throw;
+
+                    var physicalDocument = _core.Documents.AcquireDocument(
+                        instance.Operation.Transaction, instance.Operation.PhysicalSchema, documentPointer, LockOperation.Read);
+
+                    try
+                    {
+                        var documentField = instance.Operation.PhysicalIndex.Attributes[0].Field;
+                        physicalDocument.Elements.TryGetValue(documentField.EnsureNotNull(), out string? value);
+
+                        uint indexPartition = instance.Operation.PhysicalIndex.ComputePartition(value);
+
+                        string pageDiskPath = instance.Operation.PhysicalIndex.GetPartitionPagesFileName(
+                            instance.Operation.PhysicalSchema, indexPartition);
+
+                        var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(
+                            instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
+
+                        lock (instance.Operation.SyncObjects[indexPartition])
+                        {
+                            InsertDocumentIntoIndexPages(instance.Operation.Transaction,
+                                instance.Operation.PhysicalIndex, physicalIndexPages, physicalDocument, documentPointer);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        LogManager.Error($"Failed to insert document into index for process id {instance.Operation.Transaction.ProcessId}.", ex);
+                        throw;
+                    }
                 }
             }
             catch (Exception ex)
@@ -1178,7 +1189,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         {
             try
             {
-                var documentPointers = _core.Documents.AcquireDocumentPointers(transaction, physicalSchema, LockOperation.Read).ToList();
+                var physicalDocumentPageCatalog = _core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
                 //Clear out the existing index pages.
                 if (Path.Exists(physicalIndex.GetPartitionPagesPath(physicalSchema)))
@@ -1202,14 +1213,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var operation = new RebuildIndexOperation(
                     transaction, physicalSchema, physicalIndexPageMap, physicalIndex, physicalIndex.Partitions);
 
-                foreach (var documentPointer in documentPointers)
+                foreach (var physicalDocumentPageCatalogItem in physicalDocumentPageCatalog.Catalog)
                 {
                     if (queue.ExceptionOccurred())
                     {
                         break;
                     }
 
-                    var parameter = new RebuildIndexOperation.Instance(operation, documentPointer);
+                    var parameter = new RebuildIndexOperation.Instance(operation, physicalDocumentPageCatalogItem.PageNumber);
 
                     var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
                     queue.Enqueue(parameter, RebuildIndexThreadWorker);
