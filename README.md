@@ -35,8 +35,7 @@ Or, maybe you are just looking for the [client source code](https://github.com/N
 
 ## Sample Data
 To run the included examples, download the [sample Katzebase database]( https://katzebase.com/Download/Katzebase.zip), which is a compressed archive containing a word list and various relationsips between the words and languages.
-
-If you are feeling more ambitious, you can grab the larger [Katzebase with StackOverflow](https://katzebase.com//WWWRoot/Download/Katzebase with StackOverflow.7z) database.
+If you are feeling more ambitious, you can grab the larger [Katzebase with StackOverflow](https://katzebase.com/WWWRoot/Download/Katzebase%20with%20StackOverflow.7z) database.
 
 
 ## SQL Server Migration Tool
