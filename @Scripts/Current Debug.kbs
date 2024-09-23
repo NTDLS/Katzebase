@@ -1,3 +1,9 @@
+select
+	'ten' + 10 * 10
+from
+	single
+
+/*
 update
 	Test
 set
@@ -8,7 +14,7 @@ where
 	Id = 10
 
 select * from Test
-
+*/
 /*
 insert into Test(FirstName, LastName)
 values('Jane', 'Doe'),('John', 'Doe'),('Test', Guid())

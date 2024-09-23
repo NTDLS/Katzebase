@@ -775,10 +775,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                         var collapsedLeft = entry.Left.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields)?.ToLowerInvariant();
                         var collapsedRight = entry.Right.CollapseScalerQueryField(instance.Operation.Transaction, instance.Operation.Query, givenConditions.FieldCollection, auxiliaryFields)?.ToLowerInvariant();
 
-                        if (collapsedLeft?.Equals("spanish", StringComparison.InvariantCultureIgnoreCase) == true)
-                        {
-                        }
-
                         expression.Parameters[entry.ExpressionVariable] = entry.IsMatch(instance.Operation.Transaction, collapsedLeft, collapsedRight);
                     }
                     else
