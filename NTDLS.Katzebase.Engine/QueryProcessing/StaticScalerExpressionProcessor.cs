@@ -13,6 +13,7 @@ using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using System.Text;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions.ExpressionConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing
@@ -135,13 +136,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         {
             //Build a cachable numeric expression, interpolate the values and execute the expression.
 
-            var tokenizer = new TokenizerSlim(expressionString, ['~', '!', '%', '^', '&', '*', '(', ')', '-', '/', '+']);
+            var tokenizer = new TokenizerSlim(expressionString, TokenizerExtensions.MathematicalCharacters);
 
             int variableNumber = 0;
 
             var expressionVariables = new Dictionary<string, string?>();
 
-            while (!tokenizer.IsExausted())
+            while (!tokenizer.IsExhausted())
             {
                 var token = tokenizer.EatGetNext();
 
@@ -226,19 +227,34 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// </summary>
         private static string CollapseScalerFunctionStringParameter(Transaction transaction,
             PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
-
             List<IQueryFieldExpressionFunction> functions, string expressionString)
         {
             var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
             string token;
 
-            var sb = new StringBuilder();
+            var stringResult = new StringBuilder();
 
-            while (!tokenizer.IsExausted())
+            //We keep track of potential numeric operations with the mathBuffer and when whenever we encounter a string token
+            //  we will compute the previously buffered mathematical expression using ComputeAndClearMathBuffer() and append
+            //  the result before processing the string token.
+            //
+            //  This way we can string compute expressions like "11 ^ 3 + 'ten' + 10 * 10" as "8ten100"
+            var mathBuffer = new StringBuilder();
+
+            while (!tokenizer.IsExhausted())
             {
-                token = tokenizer.EatGetNext();
+                int previousCaret = tokenizer.Caret;
 
-                if (token.StartsWith("$f_") && token.EndsWith('$'))
+                token = tokenizer.EatGetNext(TokenizerExtensions.MathematicalCharacters, out var stoppedAtCharacter);
+
+                if (stoppedAtCharacter == '(')
+                {
+                    tokenizer.SetCaret(previousCaret);
+                    var scopeText = tokenizer.EatGetMatchingScope();
+                    mathBuffer.Append($"({scopeText})");
+                    continue;
+                }
+                else if (token.StartsWith("$f_") && token.EndsWith('$'))
                 {
                     //Resolve the token to a field identifier.
                     if (fieldCollection.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
@@ -246,7 +262,18 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                         //Resolve the field identifier to a value.
                         if (auxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
                         {
-                            sb.Append(textValue);
+                            if (double.TryParse(textValue, out _))
+                            {
+                                mathBuffer.Append(textValue);
+                            }
+                            else
+                            {
+                                if (mathBuffer.Length > 0)
+                                {
+                                    stringResult.Append(ComputeAndClearMathBuffer(mathBuffer));
+                                }
+                                stringResult.Append(textValue);
+                            }
                         }
                         else
                         {
@@ -263,17 +290,34 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                     //Search the dependency functions for the one with the expression key, this is the one we need to recursively resolve to fill in this token.
                     var subFunction = functions.Single(o => o.ExpressionKey == token);
                     var functionResult = CollapseScalerFunction(transaction, query, fieldCollection, auxiliaryFields, functions, subFunction);
-                    sb.Append(functionResult);
+
+                    if (subFunction.ReturnType == KbBasicDataType.Numeric)
+                    {
+                        mathBuffer.Append(functionResult);
+                    }
+                    else
+                    {
+                        if (mathBuffer.Length > 0)
+                        {
+                            stringResult.Append(ComputeAndClearMathBuffer(mathBuffer));
+                        }
+
+                        stringResult.Append(functionResult);
+                    }
                 }
                 else if (token.StartsWith("$s_") && token.EndsWith('$'))
                 {
-                    //This is a string placeholder, get the literal value and append it.
-                    sb.Append(query.Batch.GetLiteralValue(token));
+                    if (mathBuffer.Length > 0)
+                    {
+                        stringResult.Append(ComputeAndClearMathBuffer(mathBuffer));
+                    }
+
+                    stringResult.Append(query.Batch.GetLiteralValue(token));
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$'))
                 {
                     //This is a numeric placeholder, get the literal value and append it.
-                    sb.Append(query.Batch.GetLiteralValue(token));
+                    mathBuffer.Append(query.Batch.GetLiteralValue(token));
                 }
                 else if (token.StartsWith('$') && token.EndsWith('$'))
                 {
@@ -281,12 +325,73 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 }
                 else
                 {
-                    sb.Append(query.Batch.GetLiteralValue(token));
+                    var value = query.Batch.GetLiteralValue(token);
+
+                    if (double.TryParse(value, out _))
+                    {
+                        mathBuffer.Append(value);
+                    }
+                    else
+                    {
+                        if (mathBuffer.Length > 0)
+                        {
+                            stringResult.Append(ComputeAndClearMathBuffer(mathBuffer));
+                        }
+                        stringResult.Append(value);
+                    }
+                }
+
+                if (mathBuffer.Length > 0 && stoppedAtCharacter != null)
+                {
+                    mathBuffer.Append(stoppedAtCharacter);
                 }
             }
 
-            return sb.ToString();
+            if (mathBuffer.Length > 0)
+            {
+                //We found a string operator and we have math work in the buffer, collapse the math and append the result.
+                var mathResult = CollapseScalerFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, functions, mathBuffer.ToString());
+                stringResult.Append(mathResult);
+                mathBuffer.Clear();
+            }
+
+            string? ComputeAndClearMathBuffer(StringBuilder mathBuffer)
+            {
+                if (mathBuffer.Length > 0)
+                {
+                    char lastMathCharacter = mathBuffer[mathBuffer.Length - 1];
+                    if (lastMathCharacter.IsMathematicalOperator())
+                    {
+                        if (lastMathCharacter == '+')
+                        {
+                            //The parent function is designed to parse strings, the only connecting mathematical operator we support
+                            //  from a string to a mathematical expression is '+' (concatenate). So validate that if we have a
+                            //  mathematical operator that is '+'.
+                            //
+                            mathBuffer.Length--; //Remove the trailing '+' operator from the mathematical expression.
+                        }
+                        else if (lastMathCharacter != ')')
+                        {
+                            //Because we parse expressions within parentheses separately, we avoid the whole mess of appending a
+                            //  trailing '+' operator. So if the last character is a closing parentheses, just process the math,
+                            //  otherwise throw an exception because we only allow ')' and '+' as the trailing expression character.
+
+                            throw new KbEngineException($"Cannot perform [{mathBuffer[mathBuffer.Length - 1]}] math on string.");
+                        }
+                    }
+
+                    //We found a string operator and we have math work in the buffer, collapse the math and append the result.
+                    var mathResult = CollapseScalerFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, functions, mathBuffer.ToString());
+                    mathBuffer.Clear();
+                    return mathResult;
+                }
+
+                return string.Empty;
+            }
+
+            return stringResult.ToString();
         }
+
 
         /// <summary>
         /// Takes a function and recursively collapses all of the parameters, then recursively

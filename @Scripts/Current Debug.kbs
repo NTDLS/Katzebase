@@ -1,4 +1,7 @@
 select
+	11 ^ (2 + 1) + 'ten' + (10 * 10 + 2),
+	10 + 10 + (11 ^ 3) + 10,
+	10 + 10 + 'ten' + 10 * 10,
 	'ten' + 10 * 10
 from
 	single
@@ -15,12 +18,14 @@ where
 
 select * from Test
 */
+
 /*
 insert into Test(FirstName, LastName)
 values('Jane', 'Doe'),('John', 'Doe'),('Test', Guid())
 select * from Test
 delete from Test
 */
+
 /*
 insert into Test (FirstName = 'Jane', Proc = Guid(), LastName = 'Doe')
 select * from Test

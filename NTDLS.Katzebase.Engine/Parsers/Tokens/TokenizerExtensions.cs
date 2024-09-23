@@ -87,7 +87,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                 || c == '#' //Temp schema.
                 || c == ':' //Schema separators. [Schema1:Schema2].
                 || c == '.'; //Schema field-separators. [schemaPrefix.FieldName].
-
         public static readonly char[] MathematicalCharacters = { '~', '!', '%', '^', '&', '|', '*', '(', ')', '-', '+', '/', '=' };
         /// <summary>
         /// Returns true if the character is a valid mathematical character.

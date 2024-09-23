@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         private static string CollapseAggregateFunctionNumericParameter(Transaction transaction, PreparedQuery query,
             List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters, string expressionString)
         {
-            var tokenizer = new TokenizerSlim(expressionString, ['~', '!', '%', '^', '&', '*', '(', ')', '-', '/', '+']);
+            var tokenizer = new TokenizerSlim(expressionString, TokenizerExtensions.MathematicalCharacters);
 
             var token = tokenizer.EatGetNext();
             if (!tokenizer.IsExhausted())

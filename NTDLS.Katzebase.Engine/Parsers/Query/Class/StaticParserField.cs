@@ -88,18 +88,28 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             {
                 int positionBeforeToken = tokenizer.Caret;
 
-                string token = tokenizer.EatGetNext();
+                string token = tokenizer.GetNext();
 
-                if (token.StartsWith("$s_") && token.EndsWith('$')) //A string placeholder.
+                if (token == "(")
                 {
+                    var scopeText = tokenizer.EatGetMatchingScope();
+                    var parenthesesResult = ParseEvaluationRecursive(parentTokenizer, ref rootQueryFieldExpression, scopeText, ref queryFields);
+
+                    buffer.Append($"({parenthesesResult})");
+                }
+                else if (token.StartsWith("$s_") && token.EndsWith('$')) //A string placeholder.
+                {
+                    tokenizer.EatNext();
                     buffer.Append(token);
                 }
                 else if (token.StartsWith("$n_") && token.EndsWith('$')) //A numeric placeholder.
                 {
+                    tokenizer.EatNext();
                     buffer.Append(token);
                 }
                 else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
                 {
+                    tokenizer.EatNext();
                     //The expression key is used to match the function calls to the token in the parent expression.
                     var expressionKey = queryFields.GetNextExpressionKey();
                     var basicDataType = scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric ? KbBasicDataType.Numeric : KbBasicDataType.String;
@@ -111,6 +121,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
                 else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
                 {
+                    tokenizer.EatNext();
                     if (!tokenizer.IsNextNonIdentifier(['(']))
                     {
                         throw new KbParserException($"Function [{token}] must be called with parentheses.");
@@ -126,6 +137,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
                 else if (token.IsQueryFieldIdentifier())
                 {
+                    tokenizer.EatNext();
                     if (tokenizer.IsNextNonIdentifier(['(']))
                     {
                         //The character after this identifier is an open parenthesis, so this
@@ -139,6 +151,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
                 else
                 {
+                    tokenizer.EatNext();
                     buffer.Append(token);
                 }
 

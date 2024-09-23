@@ -27,6 +27,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
         #endregion
 
+        public void SetCaret(int caret)
+        {
+            _caret = caret;
+        }
+
         /// <summary>
         /// Creates a tokenizer.
         /// </summary>
@@ -128,11 +133,44 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// Gets the next token using the given delimiters.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string EatGetNext(char[] delimiters, out char outStoppedAtDelimiter)
+        public string GetNext(char[] delimiters, out char? outStoppedAtDelimiter)
+        {
+            var token = string.Empty;
+            int restoreCaret = _caret;
+
+            outStoppedAtDelimiter = null;
+
+            if (_caret == _text.Length)
+            {
+                return string.Empty;
+            }
+
+            for (; _caret < _text.Length; _caret++)
+            {
+                if (delimiters.Contains(_text[_caret]) == true)
+                {
+                    outStoppedAtDelimiter = _text[_caret];
+                    _caret++; //skip the delimiter.
+                    break;
+                }
+
+                token += _text[_caret];
+            }
+
+            _caret = restoreCaret;
+
+            return token.Trim();
+        }
+
+        /// <summary>
+        /// Gets the next token using the given delimiters.
+        /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public string EatGetNext(char[] delimiters, out char? outStoppedAtDelimiter)
         {
             var token = string.Empty;
 
-            outStoppedAtDelimiter = '\0';
+            outStoppedAtDelimiter = null;
 
             if (_caret == _text.Length)
             {
@@ -160,11 +198,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// Gets the next token using the standard delimiters.
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public string EatGetNext(out char outStoppedAtDelimiter)
+        public string EatGetNext(out char? outStoppedAtDelimiter)
         {
             var token = string.Empty;
 
-            outStoppedAtDelimiter = '\0';
+            outStoppedAtDelimiter = null;
 
             if (_caret == _text.Length)
             {
@@ -551,6 +589,62 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             => TryEatCompareNextToken((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken);
 
         #endregion
+
+        #endregion
+
+        #region EatGetMatchingScope.
+
+        /// <summary>
+        /// Matches scope using open and close parentheses and returns the text between them.
+        /// </summary>
+        public string EatGetMatchingScope()
+            => EatGetMatchingScope('(', ')');
+
+        /// <summary>
+        /// Matches scope using the given open and close values and returns the text between them.
+        /// </summary>
+        public string EatGetMatchingScope(char open, char close)
+        {
+            int scope = 0;
+
+            EatWhiteSpace();
+
+            if (_text[_caret] != open)
+            {
+                throw new Exception($"Expected scope character not found [{open}].");
+            }
+
+            int startPosition = _caret + 1;
+
+            for (; _caret < _text.Length; _caret++)
+            {
+                if (_text[_caret] == open)
+                {
+                    scope++;
+                }
+                else if (_text[_caret] == close)
+                {
+                    scope--;
+                }
+
+                if (scope < 0)
+                {
+                    throw new Exception($"Expected scope [{open}] and [{close}] fell below zero.");
+                }
+
+                if (scope == 0)
+                {
+                    var result = _text.Substring(startPosition, _caret - startPosition).Trim();
+
+                    _caret++;
+                    EatWhiteSpace();
+
+                    return result;
+                }
+            }
+
+            throw new Exception($"Expected matching scope not found [{open}] and [{close}], ended at scope [{scope}].");
+        }
 
         #endregion
 
