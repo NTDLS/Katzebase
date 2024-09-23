@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             var tokenizer = new TokenizerSlim(expressionString, ['~', '!', '%', '^', '&', '*', '(', ')', '-', '/', '+']);
 
             var token = tokenizer.EatGetNext();
-            if (!tokenizer.IsExausted())
+            if (!tokenizer.IsExhausted())
             {
                 throw new KbEngineException($"The aggregate function expression was not collapsed as expected..");
             }
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
 
             string token = tokenizer.EatGetNext();
-            if (!tokenizer.IsExausted())
+            if (!tokenizer.IsExhausted())
             {
                 throw new KbEngineException($"The aggregate function expression was not collapsed as expected..");
             }

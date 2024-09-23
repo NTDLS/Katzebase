@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
                 else
                 {
-                    if (!fieldTokenizer.IsExausted())
+                    if (!fieldTokenizer.IsExhausted())
                     {
                         throw new KbParserException($"Invalid query. Found [{token}], expected: asc or desc.");
                     }

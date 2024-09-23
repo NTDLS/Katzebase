@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         #region Public properties.
 
         public char? NextCharacter => _caret < _text.Length ? _text[_caret] : null;
-        public bool IsExausted() => _caret >= _text.Length;
+        public bool IsExhausted() => _caret >= _text.Length;
         public char[] TokenDelimiters => _standardTokenDelimiters;
         public int Caret => _caret;
         public int Length => _text.Length;

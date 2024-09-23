@@ -183,7 +183,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     //This is a function call result placeholder.
                     parameter = new ExpressionFunctionParameterFunction(resultingExpressionString);
                 }
-                else if (IsNumericExpression(resultingExpressionString, rootQueryFieldExpression))
+                else if (IsNumericExpression(resultingExpressionString, rootQueryFieldExpression.FunctionDependencies))
                 {
                     //This expression contains only numeric placeholders.
                     parameter = new ExpressionFunctionParameterNumeric(resultingExpressionString);
@@ -216,7 +216,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// <summary>
         /// Returns true if all variables, placeholders and functions return numeric values.
         /// </summary>
-        private static bool IsNumericExpression(string expressionText, IQueryFieldExpression? rootExpressionEvaluation = null)
+        public static bool IsNumericExpression(string expressionText, List<IQueryFieldExpressionFunction>? functionDependencies = null)
         {
             Tokenizer tokenizer = new(expressionText, [' ', '+']);
 
@@ -237,14 +237,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 if (token.StartsWith("$x_") && token.EndsWith('$'))
                 {
                     //This is a function result placeholder.
-
-                    if (rootExpressionEvaluation == null)
+                    if (functionDependencies == null)
                     {
                         throw new KbParserException($"Function reference found without root expression: [{token}].");
                     }
 
                     //Find the function call so we can check the function return type.
-                    var referencedFunction = rootExpressionEvaluation.FunctionDependencies.Single(f => f.ExpressionKey == token);
+                    var referencedFunction = functionDependencies.Single(f => f.ExpressionKey == token);
 
                     if (referencedFunction.ReturnType != KbBasicDataType.Numeric)
                     {
