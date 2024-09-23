@@ -7,6 +7,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserInsert
     {
+        /*Example (ragged key/value pair):
+         * insert into Test
+         * (FirstName = 'Jane', LastName = 'Doe'),
+         * (FirstName = 'John', MiddleName = Guid(), LastName = 'Doe')
+        */
+
+        /*Example (ragged field list / value list):
+         * insert into Test(FirstName, LastName)
+         * values('Jane', 'Doe'),('John', 'Doe'),('Test', Guid())
+        */
+
         enum FieldParserType
         {
             None,
@@ -48,12 +59,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
             tokenizer.SetCaret(firstParenthesesCaret);
 
-            /*
-             * Example:
-             * insert into Test
-             * (FirstName = 'Jane', LastName = 'Doe'),
-             * (FirstName = 'John', MiddleName = Guid(), LastName = 'Doe')
-            */
             if (fieldParserType == FieldParserType.KeyValue)
             {
                 query.InsertFieldValues = new List<QueryFieldCollection>();
@@ -91,11 +96,6 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
 
             }
-            /*
-             * Example:
-             * insert into Test(FirstName, LastName)
-             * values('Jane', 'Doe'),('John', 'Doe'),('Test', Guid())
-            */
             else if (fieldParserType == FieldParserType.ValueListPossibleSelectFrom)
             {
                 query.InsertFieldNames = tokenizer.EatGetMatchingScope().Split(',').Select(o => o.Trim()).ToList();

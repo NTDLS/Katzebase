@@ -1,7 +1,20 @@
+update
+	Test
+set
+	FirstName = 'Jane',
+	MiddleName = Guid(),
+	LastName = 'Doe'
+where
+	Id = 10
+
+select * from Test
+
+/*
 insert into Test(FirstName, LastName)
 values('Jane', 'Doe'),('John', 'Doe'),('Test', Guid())
 select * from Test
 delete from Test
+*/
 /*
 insert into Test (FirstName = 'Jane', Proc = Guid(), LastName = 'Doe')
 select * from Test

@@ -9,6 +9,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
     {
         internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
         {
+            /*Example query:
+             * update
+	         *       Test
+             *   set
+	         *       FirstName = 'Jane',
+	         *       MiddleName = Guid(),
+	         *       LastName = 'Doe'
+             *   where
+	         *       Id = 10
+             */
+
             var query = new PreparedQuery(queryBatch, QueryType.Update);
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
