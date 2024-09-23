@@ -11,18 +11,26 @@
         public string SchemaAlias { get; private set; }
         public string Name { get; private set; }
 
+
+        private string? _key = null;
+
         public string Key
         {
             get
             {
-                if (string.IsNullOrEmpty(SchemaAlias))
+                if (_key == null)
                 {
-                    return Name;
+                    if (string.IsNullOrEmpty(SchemaAlias))
+                    {
+                        _key = Name.ToLowerInvariant();
+                    }
+                    else
+                    {
+                        return $"{SchemaAlias}.{Name}".ToLowerInvariant();
+                    }
                 }
-                else
-                {
-                    return $"{SchemaAlias}.{Name}";
-                }
+
+                return _key;
             }
         }
 
@@ -30,7 +38,7 @@
         {
             Ordinal = ordinal;
             Alias = alias;
-            SchemaAlias = schemaAlias;
+            SchemaAlias = schemaAlias.ToLowerInvariant();
             Name = name;
         }
     }

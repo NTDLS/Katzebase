@@ -33,6 +33,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
         /// <param name="conditions">The conditions used to join this schema mapping to the one before it.</param>
         public void Add(string prefix, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog documentCatalog, ConditionCollection? conditions)
         {
+            prefix = prefix.ToLowerInvariant();
             Add(prefix, new QuerySchemaMapItem(_core, Transaction, this, physicalSchema, documentCatalog, conditions, prefix));
         }
 

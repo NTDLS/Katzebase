@@ -1,10 +1,19 @@
 --set TraceWaitTimes false
 GO
 
+SELECT
+	U.Id,
+	U.DisplayName,
+	P.Body
+FROM
+	StackOverflow:Users as U
+INNER JOIN StackOverflow:Posts as P
+	ON P.OwnerUserId = U.Id
+WHERE
+	U.DisplayName = 'NTDLS'
 
-exec showprocesses
-
-create schema StackOverflow2010:Votes with (pagesize = 10000)
+--exec showprocesses
+--create schema StackOverflow2010:Votes with (pagesize = 10000)
 
 /*
 CREATE INDEX IX_Posts_OwnerUserId(
