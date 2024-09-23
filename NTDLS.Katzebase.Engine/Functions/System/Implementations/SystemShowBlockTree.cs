@@ -1,7 +1,7 @@
-﻿using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Client.Payloads;
+﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using System.Text;
+using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
@@ -83,7 +83,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 string Str(int count) => (new string(' ', count * 4));
             }
 
-            result.Messages.Add(new KbQueryResultMessage(helpText.ToString(), KbConstants.KbMessageType.Verbose));
+            result.Messages.Add(new KbQueryResultMessage(helpText.ToString(), KbMessageType.Verbose));
 
             return collection;
         }

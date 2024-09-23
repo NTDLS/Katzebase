@@ -1,7 +1,7 @@
-﻿using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Client.Payloads;
+﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using System.Text;
+using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                     }
                 }
                 wikiPrototype.Append(')');
-                result.Messages.Add(new KbQueryResultMessage(wikiPrototype.ToString(), KbConstants.KbMessageType.Verbose));
+                result.Messages.Add(new KbQueryResultMessage(wikiPrototype.ToString(), KbMessageType.Verbose));
 #endif
             }
 

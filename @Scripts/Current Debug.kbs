@@ -1,4 +1,14 @@
-set TraceWaitTimes false
+insert into Test(FirstName, LastName)
+values('Jane', 'Doe'),('John', 'Doe'),('Test', Guid())
+select * from Test
+delete from Test
+/*
+insert into Test (FirstName = 'Jane', Proc = Guid(), LastName = 'Doe')
+select * from Test
+delete from Test
+*/
+
+/*set TraceWaitTimes false
 GO
 
 SELECT
@@ -13,6 +23,7 @@ INNER JOIN StackOverflow:Posts as P
 	ON P.OwnerUserId = U.Id
 WHERE
 	U.DisplayName = 'NTDLS'
+*/
 
 --exec showprocesses
 --create schema StackOverflow2010:Votes with (pagesize = 10000)

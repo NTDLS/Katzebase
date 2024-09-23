@@ -1,10 +1,10 @@
-﻿using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Semaphore;
 using System.Text;
+using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
@@ -522,7 +522,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
             explanation.AppendLine("}");
 
-            transaction.AddMessage(explanation.ToString(), KbConstants.KbMessageType.Deadlock);
+            transaction.AddMessage(explanation.ToString(), KbMessageType.Deadlock);
 
             return explanation.ToString();
         }
