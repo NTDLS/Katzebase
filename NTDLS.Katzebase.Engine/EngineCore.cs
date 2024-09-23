@@ -78,6 +78,15 @@ namespace NTDLS.Katzebase.Engine
 
             LogManager.Information("Initializing procedure manager.");
             Procedures = new ProcedureManager(this);
+
+            LogManager.Information("Initializing ephemeral schemas.");
+
+            Schemas.CreateEphemeralSchema("Temporary");
+            Schemas.CreateEphemeralSchema("Single");
+
+            using var systemSession = Sessions.CreateEphemeralSystemSession();
+            Documents.InsertDocument(systemSession.Transaction, "Single", "{\"ephemeral\": null}");
+            systemSession.Commit();
         }
 
         public void Start()

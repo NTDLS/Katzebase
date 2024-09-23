@@ -620,6 +620,9 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public void AddReference()
            => Interlocked.Increment(ref _referenceCount);
 
+        /// <summary>
+        /// This is safe to call on committed, rolled-back or canceled transactions.
+        /// </summary>
         public void Rollback()
         {
             _core.EnsureNotNull();

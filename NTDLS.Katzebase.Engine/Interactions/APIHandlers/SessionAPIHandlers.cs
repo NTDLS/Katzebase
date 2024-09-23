@@ -40,48 +40,35 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                     throw new Exception("No username was specified.");
                 }
 
-                SessionState? preLogin = null;
+                using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
 
-                try
-                {
-                    preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), param.Username, param.ClientName, true);
-
-                    using var transactionReference = _core.Transactions.Acquire(preLogin);
-
-                    var account = _core.Query.ExecuteQuery<Account>(preLogin,
-                        $"SELECT Username, PasswordHash FROM Master:Account WHERE Username = @Username AND PasswordHash = @PasswordHash",
-                        new
-                        {
-                            param.Username,
-                            param.PasswordHash
-                        }).FirstOrDefault();
-
-                    transactionReference.Commit();
-
-                    if (account != null)
+                var account = _core.Query.ExecuteQuery<Account>(systemSession.Session,
+                    $"SELECT Username, PasswordHash FROM Master:Account WHERE Username = @Username AND PasswordHash = @PasswordHash",
+                    new
                     {
-                        LogManager.Debug($"Logged in user [{param.Username}].");
+                        param.Username,
+                        param.PasswordHash
+                    }).FirstOrDefault();
 
-                        var session = _core.Sessions.CreateSession(context.ConnectionId, param.Username, param.ClientName);
+                systemSession.Commit();
 
-                        var result = new KbQueryServerStartSessionReply
-                        {
-                            ProcessId = session.ProcessId,
-                            ConnectionId = context.ConnectionId,
-                            ServerTimeUTC = DateTime.UtcNow
-                        };
-                        return result;
-                    }
-
-                    throw new Exception("Invalid username or password.");
-                }
-                finally
+                if (account != null)
                 {
-                    if (preLogin != null)
+                    LogManager.Debug($"Logged in user [{param.Username}].");
+
+                    var session = _core.Sessions.CreateSession(context.ConnectionId, param.Username, param.ClientName);
+
+                    var result = new KbQueryServerStartSessionReply
                     {
-                        _core.Sessions.CloseByProcessId(preLogin.ProcessId);
-                    }
+                        ProcessId = session.ProcessId,
+                        ConnectionId = context.ConnectionId,
+                        ServerTimeUTC = DateTime.UtcNow
+                    };
+                    return result;
                 }
+
+                throw new Exception("Invalid username or password.");
+
             }
             catch (Exception ex)
             {

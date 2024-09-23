@@ -39,7 +39,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _collection.Read((obj) => obj.ToDictionary(o => o.Key, o => o.Value));
         }
 
-        internal SessionState CreateSession(Guid connectionId, string username, string clientName = "", bool isPreLogin = false)
+        internal InternalSystemSessionTransaction CreateEphemeralSystemSession()
+        {
+            var session = _core.Sessions.CreateSession(Guid.NewGuid(), "system", "system", true);
+            var transactionReference = _core.Transactions.Acquire(session);
+            return new InternalSystemSessionTransaction(_core, session, transactionReference);
+        }
+
+        internal SessionState CreateSession(Guid connectionId, string username, string clientName = "", bool isInternalSystemSession = false)
         {
             return _collection.Write(((obj) =>
             {
@@ -54,7 +61,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         ulong processId = _nextProcessId++;
 
-                        session = new SessionState(processId, connectionId, username, clientName, isPreLogin);
+                        session = new SessionState(processId, connectionId, username, clientName, isInternalSystemSession);
                         obj.Add(connectionId, session);
                         return session;
                     }

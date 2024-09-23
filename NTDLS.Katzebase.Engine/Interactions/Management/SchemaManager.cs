@@ -64,49 +64,52 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 APIHandlers = new SchemaAPIHandlers(core);
 
                 _rootCatalogFile = Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile);
-
-                //If the catalog doesn't exist, create a new empty one.
-                if (File.Exists(_rootCatalogFile) == false)
-                {
-                    Directory.CreateDirectory(core.Settings.DataRootPath);
-
-                    var physicalSchemaCatalog = new PhysicalSchemaCatalog();
-                    physicalSchemaCatalog.Collection.Add(new PhysicalSchema()
-                    {
-                        Name = "Temporary",
-                        VirtualPath = "Temporary",
-                        IsTemporary = false,
-                        Id = Guid.NewGuid(),
-                        PageSize = core.Settings.DefaultDocumentPageSize,
-                        DiskPath = Path.Combine(core.Settings.DataRootPath, "Temporary")
-                    });
-
-                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile), physicalSchemaCatalog);
-                    core.IO.PutPBufNonTracked(Path.Combine(core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
-                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
-                }
-
-                var temporarySchemaPath = Path.Combine(core.Settings.DataRootPath, "Temporary");
-
-                try
-                {
-                    if (Directory.Exists(temporarySchemaPath))
-                    {
-                        Directory.Delete(temporarySchemaPath, true);
-                    }
-                }
-                catch { }
-
-                Directory.CreateDirectory(temporarySchemaPath);
-                core.IO.PutJsonNonTracked(Path.Combine(temporarySchemaPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
-                core.IO.PutPBufNonTracked(Path.Combine(temporarySchemaPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
-                core.IO.PutJsonNonTracked(Path.Combine(temporarySchemaPath, IndexCatalogFile), new PhysicalIndexCatalog());
             }
             catch (Exception ex)
             {
                 LogManager.Error("Failed to instantiate SchemaManager.", ex);
                 throw;
             }
+        }
+
+        internal void CreateEphemeralSchema(string name)
+        {
+            //If the schema doesn't exist, create a new empty one.
+            if (File.Exists(_rootCatalogFile) == false)
+            {
+                Directory.CreateDirectory(_core.Settings.DataRootPath);
+
+                var physicalSchemaCatalog = new PhysicalSchemaCatalog();
+                physicalSchemaCatalog.Collection.Add(new PhysicalSchema()
+                {
+                    Name = name,
+                    VirtualPath = name,
+                    IsTemporary = false,
+                    Id = Guid.NewGuid(),
+                    PageSize = _core.Settings.DefaultDocumentPageSize,
+                    DiskPath = Path.Combine(_core.Settings.DataRootPath, name)
+                });
+
+                _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, SchemaCatalogFile), physicalSchemaCatalog);
+                _core.IO.PutPBufNonTracked(Path.Combine(_core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
+                _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
+            }
+
+            var schemaPath = Path.Combine(_core.Settings.DataRootPath, name);
+
+            try
+            {
+                if (Directory.Exists(schemaPath))
+                {
+                    Directory.Delete(schemaPath, true);
+                }
+            }
+            catch { }
+
+            Directory.CreateDirectory(schemaPath);
+            _core.IO.PutJsonNonTracked(Path.Combine(schemaPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
+            _core.IO.PutPBufNonTracked(Path.Combine(schemaPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
+            _core.IO.PutJsonNonTracked(Path.Combine(schemaPath, IndexCatalogFile), new PhysicalIndexCatalog());
         }
 
         internal void Alter(Transaction transaction, string schemaName, uint pageSize = 0)
