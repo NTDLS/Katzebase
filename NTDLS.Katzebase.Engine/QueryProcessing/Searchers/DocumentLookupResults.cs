@@ -1,10 +1,10 @@
 ﻿using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {
     internal class DocumentLookupResults
     {
-        public List<List<string?>> RowValues { get; private set; } = new();
+        public List<List<fstring?>> RowValues { get; private set; } = new();
 
         /// <summary>
         /// This is only used when we just want to return a list of document pointers and no fields.

@@ -3,7 +3,7 @@ using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using System.Text;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowAggregateFunctions
@@ -34,10 +34,10 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                     parameters.Length -= 2;
                 }
 
-                var values = new List<string?>
+                var values = new List<fstring?>
                 {
-                    prototype.Name,
-                    parameters.ToString()
+                    fstring.NewS(prototype.Name),
+                    fstring.NewS(parameters.ToString())
                 };
                 result.AddRow(values);
 

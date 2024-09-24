@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using System.Diagnostics;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowMemoryUtilization
@@ -32,19 +32,19 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
             var process = Process.GetCurrentProcess();
 
-            var values = new List<string?>
+            var values = new List<fstring?>
             {
-                $"{Formatters.FileSize(process.WorkingSet64)}",
-                $"{Formatters.FileSize(process.MinWorkingSet)}",
-                $"{Formatters.FileSize(process.MaxWorkingSet)}",
-                $"{Formatters.FileSize(process.PeakWorkingSet64)}",
-                $"{Formatters.FileSize(process.PagedMemorySize64)}",
-                $"{Formatters.FileSize(process.NonpagedSystemMemorySize64)}",
-                $"{Formatters.FileSize(process.PeakPagedMemorySize64)}",
-                $"{Formatters.FileSize(process.PeakVirtualMemorySize64)}",
-                $"{Formatters.FileSize(process.VirtualMemorySize64)}",
-                $"{Formatters.FileSize(process.PrivateMemorySize64)}",
-                $"{Formatters.FileSize(totalCacheSize)}",
+                fstring.NewS($"{Formatters.FileSize(process.WorkingSet64)}"),
+                fstring.NewS($"{Formatters.FileSize(process.MinWorkingSet)}"),
+                fstring.NewS($"{Formatters.FileSize(process.MaxWorkingSet)}"),
+                fstring.NewS($"{Formatters.FileSize(process.PeakWorkingSet64)}"),
+                fstring.NewS($"{Formatters.FileSize(process.PagedMemorySize64)}"),
+                fstring.NewS($"{Formatters.FileSize(process.NonpagedSystemMemorySize64)}"),
+                fstring.NewS($"{Formatters.FileSize(process.PeakPagedMemorySize64)}"),
+                fstring.NewS($"{Formatters.FileSize(process.PeakVirtualMemorySize64)}"),
+                fstring.NewS($"{Formatters.FileSize(process.VirtualMemorySize64)}"),
+                fstring.NewS($"{Formatters.FileSize(process.PrivateMemorySize64)}"),
+                fstring.NewS($"{Formatters.FileSize(totalCacheSize)}"),
             };
 
             result.AddRow(values);

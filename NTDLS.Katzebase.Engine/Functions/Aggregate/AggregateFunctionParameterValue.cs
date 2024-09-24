@@ -1,11 +1,12 @@
-﻿namespace NTDLS.Katzebase.Engine.Functions.Aggregate
+﻿using fs;
+namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
     public class AggregateFunctionParameterValue
     {
         public AggregateFunctionParameterPrototype Parameter { get; private set; }
-        public string? Value { get; private set; } = null;
+        public fstring? Value { get; private set; } = null;
 
-        public AggregateFunctionParameterValue(AggregateFunctionParameterPrototype parameter, string? value)
+        public AggregateFunctionParameterValue(AggregateFunctionParameterPrototype parameter, fstring? value)
         {
             Parameter = parameter;
             Value = value;

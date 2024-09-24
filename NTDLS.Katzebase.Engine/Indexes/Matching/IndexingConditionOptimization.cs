@@ -1,4 +1,5 @@
-﻿using NTDLS.Helpers;
+﻿using fs;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
@@ -105,7 +106,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                             //However, I think this could be implemented pretty easily.
                             applicableConditions.AddRange(
                                 flattenedGroup.Collection.OfType<ConditionEntry>()
-                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value)));
+                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value.s)));
                         }
                         else
                         {
@@ -121,10 +122,10 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                             {
                                 if (leftValue.FieldName?.Is(attribute.Field) == true)
                                 {
-                                    if (StaticParserField.IsConstantExpression(condition.Right.Value))
+                                    if (StaticParserField.IsConstantExpression(condition.Right.Value.s))
                                     {
                                         //To save time while indexing, we are going to collapse the value here if the expression does not contain non-constants.
-                                        var constantValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
+                                        var constantValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, new(fstring.CompareFunc))?.ToLowerInvariant();
 
                                         //TODO: Think about the nullability of constantValue.
                                         condition.Right = new QueryFieldCollapsedValue(constantValue.EnsureNotNull());

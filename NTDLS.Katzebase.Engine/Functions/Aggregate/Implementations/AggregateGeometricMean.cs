@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
     {
         public static string Execute(GroupAggregateFunctionParameter parameters)
         {
-            var numbers = parameters.AggregationValues.Select(o => double.Parse(o)).ToList();
+            var numbers = parameters.AggregationValues.Select(o => double.Parse(o.s)).ToList();
             double product = numbers.Aggregate(1.0, (acc, n) => acc * n);
             return (Math.Pow(product, 1.0 / numbers.Count)).ToString();
         }

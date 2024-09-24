@@ -1,11 +1,12 @@
-﻿namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
+﻿using fs;
+namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
 {
     /// <summary>
     /// Contains a numeric evaluation expression. This could be as simple as [10 + 10] or could contain function calls which child nodes.
     /// </summary>
     internal class QueryFieldExpressionNumeric : IQueryFieldExpression
     {
-        public string Value { get; set; }
+        public fstring Value { get; set; }
 
         /// <summary>
         /// Not applicable to IQueryFieldExpression
@@ -17,9 +18,14 @@
         /// </summary>
         public List<IQueryFieldExpressionFunction> FunctionDependencies { get; private set; } = new();
 
-        public QueryFieldExpressionNumeric(string value)
+        public QueryFieldExpressionNumeric(fstring value)
         {
             Value = value;
+        }
+
+        public QueryFieldExpressionNumeric(string value)
+        {
+            Value = fstring.NewS(value);
         }
 
         public IQueryField Clone()

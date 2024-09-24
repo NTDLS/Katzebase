@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using fs;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
@@ -34,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     tokenizer.IsNext('(');
 
                     var constantExpressions = tokenizer.EatGetMatchingScope().Split(',')
-                        .Select(o => new QueryFieldCollapsedValue(queryBatch.GetLiteralValue(o.Trim()) ?? string.Empty)).ToList();
+                        .Select(o => new QueryFieldCollapsedValue(queryBatch.GetLiteralValue(o.Trim()) ?? fstring.SEmpty)).ToList();
 
                     if (constantExpressions.Count < query.InsertFieldNames.Count)
                     {

@@ -3,7 +3,7 @@ using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Library;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowCachePages
@@ -30,17 +30,17 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 {
                     if (pageObject is PhysicalDocumentPage page)
                     {
-                        var values = new List<string?>
+                        var values = new List<fstring?>
                         {
-                            $"{item.Partition:n0}",
-                            $"{Formatters.FileSize(item.ApproximateSizeInBytes)}",
-                            $"{item.Created}",
-                            $"{item.Reads:n0}",
-                            $"{item.LastRead}",
-                            $"{item.Writes:n0}",
-                            $"{item.LastWrite}",
-                            $"{page.Documents.Count:n0}",
-                            $"{item.Key}"
+                            fstring.NewS($"{item.Partition:n0}"),
+                            fstring.NewS($"{Formatters.FileSize(item.ApproximateSizeInBytes)}"),
+                            fstring.NewS($"{item.Created}"),
+                            fstring.NewS($"{item.Reads:n0}"),
+                            fstring.NewS($"{item.LastRead}"),
+                            fstring.NewS($"{item.Writes:n0}"),
+                            fstring.NewS($"{item.LastWrite}"),
+                            fstring.NewS($"{page.Documents.Count:n0}"),
+                            fstring.NewS($"{item.Key}")
                         };
                         result.AddRow(values);
                     }

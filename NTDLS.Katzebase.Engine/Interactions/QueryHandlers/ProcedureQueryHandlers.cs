@@ -6,7 +6,7 @@ using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Sessions;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
     /// <summary>
@@ -68,14 +68,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 using var transactionReference = _core.Transactions.Acquire(session);
 
-                var collapsedParameters = new List<string?>();
+                var collapsedParameters = new List<fstring?>();
 
                 if (preparedQuery.ProcedureParameters != null)
                 {
                     foreach (var parameter in preparedQuery.ProcedureParameters)
                     {
                         var collapsedParameter = StaticScalerExpressionProcessor.CollapseScalerQueryField(parameter.Expression,
-                            transactionReference.Transaction, preparedQuery, preparedQuery.ProcedureParameters, new());
+                            transactionReference.Transaction, preparedQuery, preparedQuery.ProcedureParameters, new(fstring.CompareFunc));
 
                         collapsedParameters.Add(collapsedParameter);
                     }

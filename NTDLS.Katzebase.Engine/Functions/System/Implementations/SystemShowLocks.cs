@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowLocks
@@ -28,12 +28,12 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 foreach (var heldLockKey in tx.HeldLockKeys)
                 {
 
-                    var values = new List<string?>
+                    var values = new List<fstring?>
                     {
-                        heldLockKey.ProcessId.ToString(),
-                        heldLockKey.ObjectLock.Granularity.ToString(),
-                        heldLockKey.Operation.ToString(),
-                        heldLockKey.ObjectName.ToString(),
+                        fstring.NewS(heldLockKey.ProcessId.ToString()),
+                        fstring.NewS(heldLockKey.ObjectLock.Granularity.ToString()),
+                        fstring.NewS(heldLockKey.Operation.ToString()),
+                        fstring.NewS(heldLockKey.ObjectName.ToString()),
                     };
                     result.AddRow(values);
                 }

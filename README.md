@@ -1,3 +1,5 @@
+fstring: refer this [repo](https://github.com/ingted/Katzebase/tree/fstring_experiment)
+
 # Katzebase : Server
 ![Logo128](https://github.com/NTDLS/NTDLS.Katzebase.Server/assets/11428567/fa827156-4d19-4803-860f-aa0ef3a5151d)
 

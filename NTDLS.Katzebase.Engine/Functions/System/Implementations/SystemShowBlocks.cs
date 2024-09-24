@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowBlocks
@@ -25,7 +25,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             {
                 foreach (var block in txSnapshot.BlockedByKeys)
                 {
-                    var values = new List<string?> { txSnapshot.ProcessId.ToString(), block.ToString() };
+                    var values = new List<fstring?> {
+                        fstring.NewS(txSnapshot.ProcessId.ToString()),
+                        fstring.NewS(block.ToString()) };
                     result.AddRow(values);
                 }
             }

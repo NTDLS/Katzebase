@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Types;
 using static NTDLS.Katzebase.Client.KbConstants;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 {
     internal class QueryBatch : List<PreparedQuery>
@@ -12,18 +12,18 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
             Literals = literals;
         }
 
-        public string? GetLiteralValue(string value)
+        public fstring? GetLiteralValue(string value)
         {
             if (Literals.TryGetValue(value, out var literal))
             {
                 return literal.Value;
             }
-            else return value;
+            else return fstring.NewS(value);
         }
 
-        public string? GetLiteralValue(string value, out KbBasicDataType outDataType)
+        public fstring? GetLiteralValue(fstring value, out KbBasicDataType outDataType)
         {
-            if (Literals.TryGetValue(value, out var literal))
+            if (Literals.TryGetValue(value.s, out var literal))
             {
                 outDataType = KbBasicDataType.String;
                 return literal.Value;

@@ -1,6 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
 {
     /// <summary>
@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
         /// <summary>
         /// The qualified name of the document field, e.g. schemaName.fieldName, or just the field name if no schema was specified.
         /// </summary>
-        public string Value { get; set; }
+        public fstring Value { get; set; }
 
         /// <summary>
         /// The alias of the schema for this document field.
@@ -34,11 +34,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
             return clone;
         }
 
-        public QueryFieldDocumentIdentifier(string value)
+        public QueryFieldDocumentIdentifier(string value) : this(fstring.NewS(value))
         {
-            Value = value.Trim();
+            
+        }
+        public QueryFieldDocumentIdentifier(fstring value)
+        {
+            Value = fstring.NewS(value.s.Trim());
 
-            var values = Value.Split('.');
+            var values = Value.s.Split('.');
             if (values.Length == 1)
             {
                 SchemaAlias = string.Empty;

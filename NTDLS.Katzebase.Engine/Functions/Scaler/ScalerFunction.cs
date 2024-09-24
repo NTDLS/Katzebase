@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using fs;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using NTDLS.Katzebase.Shared;
 
@@ -76,8 +77,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                         throw new KbEngineException($"Invalid scaler function [{functionName}] prototype when parsing optional parameter [{parameterName}]. Expected '=', found: [{paramTokenizer.NextCharacter}].");
                     }
 
-                    var optionalParameterDefaultValue = tokenizer.ResolveLiteral(paramTokenizer.EatGetNext());
-                    if (optionalParameterDefaultValue == null || optionalParameterDefaultValue?.Is("null") == true)
+                    var optionalParameterDefaultValue = tokenizer.ResolveLiteral(fstring.NewS( paramTokenizer.EatGetNext()));
+                    if (optionalParameterDefaultValue == null || "optionalParameterDefaultValue"?.Is("null") == true)
                     {
                         optionalParameterDefaultValue = null;
                     }
@@ -114,7 +115,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             return new ScalerFunction(functionName, returnType, parameters);
         }
 
-        internal ScalerFunctionParameterValueCollection ApplyParameters(List<string?> values)
+        internal ScalerFunctionParameterValueCollection ApplyParameters(List<fstring?> values)
         {
             var result = new ScalerFunctionParameterValueCollection();
 

@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using NTDLS.Katzebase.Shared;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
     /// <summary>
@@ -76,8 +76,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                         throw new KbEngineException($"Invalid aggregate function [{functionName}] prototype when parsing optional parameter [{parameterName}]. Expected '=', found: [{paramTokenizer.NextCharacter}].");
                     }
 
-                    var optionalParameterDefaultValue = tokenizer.ResolveLiteral(paramTokenizer.EatGetNext());
-                    if (optionalParameterDefaultValue == null || optionalParameterDefaultValue?.Is("null") == true)
+                    var optionalParameterDefaultValue = tokenizer.ResolveLiteral(fstring.NewS(paramTokenizer.EatGetNext()));
+                    if (optionalParameterDefaultValue == null || optionalParameterDefaultValue.s?.Is("null") == true)
                     {
                         optionalParameterDefaultValue = null;
                     }
@@ -114,7 +114,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             return new AggregateFunction(functionName, returnType, parameters);
         }
 
-        internal AggregateFunctionParameterValueCollection ApplyParameters(List<string?> values)
+        internal AggregateFunctionParameterValueCollection ApplyParameters(List<fstring?> values)
         {
             var result = new AggregateFunctionParameterValueCollection();
 

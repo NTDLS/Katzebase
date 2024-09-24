@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
     {
         public static string Execute(GroupAggregateFunctionParameter parameters)
         {
-            var numbers = parameters.AggregationValues.Select(o => double.Parse(o)).ToList();
+            var numbers = parameters.AggregationValues.Select(o => double.Parse(o.s)).ToList();
             var frequencyDict = numbers.GroupBy(n => n).ToDictionary(g => g.Key, g => g.Count());
             int maxFrequency = frequencyDict.Values.Max();
 

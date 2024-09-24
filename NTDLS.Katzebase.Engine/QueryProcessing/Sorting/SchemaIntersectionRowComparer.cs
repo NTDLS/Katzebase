@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
+﻿using fs;
+using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Sorting
@@ -9,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Sorting
         {
             foreach (var (fieldName, sortDirection) in sortingColumns)
             {
-                int result = string.Compare(x?.AuxiliaryFields[fieldName], y?.AuxiliaryFields?[fieldName], StringComparison.OrdinalIgnoreCase);
+                int result = fstring.Compare(x?.AuxiliaryFields[fstring.NewS(fieldName)], y?.AuxiliaryFields?[fstring.NewS(fieldName)]); //, StringComparison.OrdinalIgnoreCase);
 
                 if (result != 0)
                 {

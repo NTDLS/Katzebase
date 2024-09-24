@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Library;
+﻿using fs;
+using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.Schemas;
 
 namespace NTDLS.Katzebase.Engine.Indexes
@@ -23,14 +24,14 @@ namespace NTDLS.Katzebase.Engine.Indexes
         {
         }
 
-        public uint ComputePartition(string? value)
+        public uint ComputePartition(fstring? value)
         {
             uint hash = 0;
-            if (string.IsNullOrEmpty(value))
+            if (fstring.SIsNullOrEmpty(value))
                 return hash;
             value = value.ToLowerInvariant();
             const uint seed = 131;
-            foreach (char c in value)
+            foreach (char c in value.s)
             {
                 hash = hash * seed + c;
             }

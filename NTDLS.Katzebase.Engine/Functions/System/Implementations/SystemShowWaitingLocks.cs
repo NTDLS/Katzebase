@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
+using fs;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
@@ -25,12 +26,12 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
             foreach (var waitingForLock in waitingTxSnapshots)
             {
-                var values = new List<string?>
+                var values = new List<fstring?>
                 {
-                    waitingForLock.Key.ProcessId.ToString(),
-                    waitingForLock.Value.Granularity.ToString(),
-                    waitingForLock.Value.Operation.ToString(),
-                    waitingForLock.Value.ObjectName.ToString(),
+                    fstring.NewS(waitingForLock.Key.ProcessId.ToString()),
+                    fstring.NewS(waitingForLock.Value.Granularity.ToString()),
+                    fstring.NewS(waitingForLock.Value.Operation.ToString()),
+                    fstring.NewS(waitingForLock.Value.ObjectName.ToString()),
                 };
                 result.AddRow(values);
             }

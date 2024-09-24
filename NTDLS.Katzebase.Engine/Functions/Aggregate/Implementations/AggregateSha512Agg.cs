@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
             using var sha512 = SHA512.Create();
             foreach (var str in parameters.AggregationValues.OrderBy(o => o))
             {
-                var inputBytes = Encoding.UTF8.GetBytes(str);
+                var inputBytes = Encoding.UTF8.GetBytes(str.s);
                 sha512.TransformBlock(inputBytes, 0, inputBytes.Length, null, 0);
             }
 

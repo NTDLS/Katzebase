@@ -1,11 +1,12 @@
-﻿namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
+﻿using fs;
+namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions
 {
     /// <summary>
     /// Contains a string evaluation expression. This could be as simple as ["This" + "That"] or could contain function calls which child nodes.
     /// </summary>
     internal class QueryFieldExpressionString : IQueryFieldExpression
     {
-        public string Value { get; set; } = string.Empty;
+        public fstring Value { get; set; } = fstring.SEmpty;
 
         /// <summary>
         /// Not applicable to IQueryFieldExpression

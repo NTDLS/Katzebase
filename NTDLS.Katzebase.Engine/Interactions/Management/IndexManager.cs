@@ -1,4 +1,5 @@
-﻿using NTDLS.Helpers;
+﻿using fs;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
@@ -219,7 +220,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <returns></returns>
         internal Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClause(
                     PhysicalSchema physicalSchema, IndexingConditionOptimization optimization,
-                    PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
+                    PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<fstring?>? keyValues = null)
         {
             Dictionary<uint, DocumentPointer>? accumulatedResults = null;
 
@@ -256,7 +257,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseRecursive(
             PhysicalSchema physicalSchema, IndexingConditionOptimization optimization, ConditionGroup givenConditionGroup,
-            PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
+            PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<fstring?>? keyValues = null)
         {
             var thisGroupResults = MatchSchemaDocumentsByIndexingConditionLookup(optimization.Transaction,
                 query, givenConditionGroup.IndexLookup.EnsureNotNull(), physicalSchema, workingSchemaPrefix, keyValues);
@@ -284,7 +285,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookup(Transaction transaction, PreparedQuery query,
-            IndexingConditionLookup indexLookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues)
+            IndexingConditionLookup indexLookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<fstring?>? keyValues)
         {
             Dictionary<uint, DocumentPointer>? accumulatedResults = null;
 
@@ -299,7 +300,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (condition.Qualifier == LogicalQualifier.Equals)
                     {
                         //For join operations, check the keyValues for the raw value to lookup.
-                        if (keyValues?.TryGetValue(condition.Right.Value, out string? keyValue) != true)
+                        if (keyValues?.TryGetValue(condition.Right.Value.s, out fstring? keyValue) != true)
                         {
                             if (condition.Right is QueryFieldCollapsedValue collapsedValue)
                             {
@@ -307,7 +308,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             }
                             else
                             {
-                                keyValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new())?.ToLowerInvariant();
+                                var kvs = new KbInsensitiveDictionary<fstring, fstring?>(fstring.CompareFunc);
+                                foreach (var kv in keyValues)
+                                {
+                                    kvs.Add(fstring.NewS(kv.Key), kv.Value);
+                                }
+                                keyValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, kvs)?.ToLowerInvariant();
                             }
                         }
                         else
@@ -399,9 +405,18 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 List<PhysicalIndexLeaf> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
                 if (workingPhysicalIndexLeaves.Count > 0)
                 {
+                    var kvs = new KbInsensitiveDictionary<fstring, fstring?>(fstring.CompareFunc);
+
+                    if (instance.Operation.KeyValues != null)
+                    {
+                        foreach (var kv in instance.Operation.KeyValues)
+                        {
+                            kvs.Add(fstring.NewS(kv.Key), kv.Value);
+                        }
+                    }
                     //First process the condition at the AttributeDepth that was passed in.
                     workingPhysicalIndexLeaves = MatchIndexLeaves(instance.Operation.Transaction, instance.Operation.Query,
-                        instance.Operation.Condition, workingPhysicalIndexLeaves, instance.Operation.Query.Conditions.FieldCollection, instance.Operation.KeyValues);
+                        instance.Operation.Condition, workingPhysicalIndexLeaves, instance.Operation.Query.Conditions.FieldCollection, kvs);
 
                     if (instance.Operation.Lookup.IndexSelection.PhysicalIndex.Attributes.Count == 1)
                     {
@@ -444,10 +459,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             var conditionSet = instance.Operation.Lookup.AttributeConditionSets[
                 instance.Operation.Lookup.IndexSelection.PhysicalIndex.Attributes[attributeDepth].Field.EnsureNotNull()];
 
+            var kvs = new KbInsensitiveDictionary<fstring, fstring?>(fstring.CompareFunc);
+
+            if (instance.Operation.KeyValues != null)
+            {
+                foreach (var kv in instance.Operation.KeyValues)
+                {
+                    kvs.Add(fstring.NewS(kv.Key), kv.Value);
+                }
+            }
+
             foreach (var condition in conditionSet)
             {
                 var partitionResults = MatchIndexLeaves(instance.Operation.Transaction, instance.Operation.Query,
-                    condition, workingPhysicalIndexLeaves, instance.Operation.Query.Conditions.FieldCollection, instance.Operation.KeyValues);
+                    condition, workingPhysicalIndexLeaves, instance.Operation.Query.Conditions.FieldCollection, kvs);
 
                 if (attributeDepth == instance.Operation.Lookup.AttributeConditionSets.Count - 1)
                 {
@@ -492,10 +517,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         #region Matching / Seeking / Scanning.
 
         private static List<PhysicalIndexLeaf> MatchIndexLeaves(Transaction transaction, PreparedQuery query, ConditionEntry condition,
-            List<PhysicalIndexLeaf> workingPhysicalIndexLeaves, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?>? auxiliaryFields)
+            List<PhysicalIndexLeaf> workingPhysicalIndexLeaves, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<fstring, fstring?>? auxiliaryFields)
         {
             //For join operations, check the keyValues for the raw value to lookup.
-            if (auxiliaryFields?.TryGetValue(condition.Right.Value, out string? keyValue) != true)
+            if (auxiliaryFields?.TryGetValue(condition.Right.Value, out fstring? keyValue) != true)
             {
                 if (condition.Right is QueryFieldCollapsedValue collapsedValue)
                 {
@@ -503,7 +528,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    keyValue = condition.Right.CollapseScalerQueryField(transaction, query, fieldCollection, auxiliaryFields ?? new())?.ToLowerInvariant();
+                    keyValue = condition.Right.CollapseScalerQueryField(transaction, query, fieldCollection, auxiliaryFields ?? new(fstring.CompareFunc))?.ToLowerInvariant();
                 }
             }
 
@@ -543,11 +568,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.Between => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchBetween(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry.IsMatchBetween(transaction, w.Key.s, keyValue.s) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotBetween => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchBetween(transaction, w.Key, keyValue) == false)
+                                        .Where(w => ConditionEntry.IsMatchBetween(transaction, w.Key.s, keyValue.s) == false)
                                         .Select(s => s.Value)).ToList(),
                 _ => throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: {condition.Qualifier}"),
             };
@@ -752,7 +777,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var documentField = physicalIndex.Attributes[0].Field;
-                document.Elements.TryGetValue(documentField.EnsureNotNull(), out string? value);
+                document.Elements.TryGetValue(documentField.EnsureNotNull(), out fstring? value);
 
                 uint indexPartition = physicalIndex.ComputePartition(value);
 
@@ -818,15 +843,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private static List<string> GetIndexSearchTokens(Transaction transaction, PhysicalIndex physicalIndex, PhysicalDocument document)
+        private static List<fstring> GetIndexSearchTokens(Transaction transaction, PhysicalIndex physicalIndex, PhysicalDocument document)
         {
             try
             {
-                var result = new List<string>();
+                var result = new List<fstring>();
 
                 foreach (var indexAttribute in physicalIndex.Attributes)
                 {
-                    if (document.Elements.TryGetValue(indexAttribute.Field.EnsureNotNull(), out string? documentValue))
+                    if (document.Elements.TryGetValue(indexAttribute.Field.EnsureNotNull(), out fstring? documentValue))
                     {
                         if (documentValue != null) //TODO: How do we handle indexed NULL values?
                         {
@@ -853,7 +878,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="indexPageCatalog"></param>
         /// <returns>A reference to a node in the suppliedIndexPageCatalog</returns>
         private static IndexScanResult LocateExtentInGivenIndexPageCatalog(
-            Transaction transaction, List<string> searchTokens, PhysicalIndexPages rootPhysicalIndexPages)
+            Transaction transaction, List<fstring> searchTokens, PhysicalIndexPages rootPhysicalIndexPages)
         {
             try
             {
@@ -872,7 +897,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 foreach (var token in searchTokens)
                 {
-                    if (result.Leaf.Children == null)
+                    if (result?.Leaf?.Children == null)
                     {
                         break;
                     }
@@ -888,7 +913,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     }
                 }
 
-                if (result.ExtentLevel > 0)
+                if (result?.ExtentLevel > 0)
                 {
                     result.MatchType = result.ExtentLevel == searchTokens.Count ? IndexMatchType.Full : IndexMatchType.Partial;
                 }
@@ -1139,7 +1164,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 try
                 {
                     var documentField = instance.Operation.PhysicalIndex.Attributes[0].Field;
-                    physicalDocument.Elements.TryGetValue(documentField.EnsureNotNull(), out string? value);
+                    physicalDocument.Elements.TryGetValue(documentField.EnsureNotNull(), out fstring? value);
 
                     uint indexPartition = instance.Operation.PhysicalIndex.ComputePartition(value);
 

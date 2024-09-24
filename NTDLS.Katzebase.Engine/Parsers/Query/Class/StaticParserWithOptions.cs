@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 if (tokenizer.Literals.TryGetValue(tokenValue, out var literal))
                 {
-                    tokenValue = literal.Value;
+                    tokenValue = literal.Value?.s;
                 }
 
                 var convertedValue = expectedOptions.ValidateAndConvert(name, tokenValue);

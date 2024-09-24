@@ -1,4 +1,5 @@
-﻿using NTDLS.Helpers;
+﻿using fs;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 
@@ -20,12 +21,12 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
             foreach (var partition in cachePartitions.Partitions)
             {
-                var values = new List<string?>
+                var values = new List<fstring?>
                 {
-                    $"{partition.Partition:n0}",
-                    $"{partition.Count:n0}",
-                    $"{Formatters.FileSize(partition.SizeInBytes)}",
-                    $"{Formatters.FileSize(partition.Configuration.MaxMemoryBytes):n2}"
+                    fstring.NewS($"{partition.Partition:n0}"),
+                    fstring.NewS($"{partition.Count:n0}"),
+                    fstring.NewS($"{Formatters.FileSize(partition.SizeInBytes)}"),
+                    fstring.NewS($"{Formatters.FileSize(partition.Configuration.MaxMemoryBytes):n2}")
                 };
 
                 result.AddRow(values);

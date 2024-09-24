@@ -1,7 +1,7 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using System.Diagnostics;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowVersion
@@ -38,10 +38,10 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                         }
                     }
 
-                    var values = new List<string?>
+                    var values = new List<fstring?>
                     {
-                        $"{assemblyName.Name}",
-                        $"{assemblyName.Version}"
+                        fstring.NewS($"{assemblyName.Name}"),
+                        fstring.NewS($"{assemblyName.Version}")
                     };
                     result.AddRow(values);
                 }

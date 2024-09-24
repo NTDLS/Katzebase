@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using fs;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 
@@ -29,11 +30,11 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 "String Sha512Agg (AggregationArray values)",
             };
 
-        public static string ExecuteFunction(string functionName, GroupAggregateFunctionParameter parameters)
+        public static fstring ExecuteFunction(string functionName, GroupAggregateFunctionParameter parameters)
         {
             var function = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters.SupplementalParameters);
 
-            return functionName.ToLowerInvariant() switch
+            var rtn = functionName.ToLowerInvariant() switch
             {
                 "avg" => AggregateAvg.Execute(parameters),
                 "count" => AggregateCount.Execute(function, parameters),
@@ -54,7 +55,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 _ => throw new KbParserException($"The aggregate function is not implemented: [{functionName}].")
             };
 
-            throw new KbFunctionException($"Undefined function: {functionName}.");
+            return fstring.NewS(rtn);
+
+            //throw new KbFunctionException($"Undefined function: {functionName}.");
         }
     }
 }

@@ -13,7 +13,7 @@ using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Engine.Schemas.PhysicalSchema;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     /// <summary>
@@ -501,10 +501,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 transaction.EnsureActive();
 
-                var values = new List<string?> {
-                    $"{page.PageNumber:n0}",
-                    $"{page.DocumentCount:n0}",
-                    $"{pageFullness:n2}%" };
+                var values = new List<fstring?> {
+                    fstring.NewS($"{page.PageNumber:n0}"),
+                    fstring.NewS($"{page.DocumentCount:n0}"),
+                    fstring.NewS($"{pageFullness:n2}%") 
+                };
 
                 if (includePhysicalPages)
                 {
@@ -512,12 +513,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var physicalDocumentPage = _core.Documents.AcquireDocumentPage(
                         transaction, physicalSchema, page.PageNumber, LockOperation.Read);
 
-                    values.Add($"{page.PageNumber:n0}");
-                    values.Add($"{physicalDocumentPage.Documents.Count:n0}");
+                    values.Add(fstring.NewS($"{page.PageNumber:n0}"));
+                    values.Add(fstring.NewS($"{physicalDocumentPage.Documents.Count:n0}"));
 
-                    values.Add($"{(physicalDocumentPage.Documents.Min(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
-                    values.Add($"{(physicalDocumentPage.Documents.Max(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
-                    values.Add($"{(physicalDocumentPage.Documents.Average(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
+                    values.Add(fstring.NewS($"{(physicalDocumentPage.Documents.Min(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}"));
+                    values.Add(fstring.NewS($"{(physicalDocumentPage.Documents.Max(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}"));
+                    values.Add(fstring.NewS($"{(physicalDocumentPage.Documents.Average(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}"));
 
                     /*
                     foreach (var document in physicalDocumentPage.Documents)

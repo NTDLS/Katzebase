@@ -135,7 +135,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                     }
                     else
                     {
-                        left = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Left.Value)}";
+                        left = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Left.Value.s)}";
                     }
 
                     string right;
@@ -149,7 +149,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                     }
                     else
                     {
-                        right = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Right.Value)}";
+                        right = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Right.Value.s)}";
                     }
 
 

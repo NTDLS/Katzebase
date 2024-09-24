@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
             using var sha256 = SHA256.Create();
             foreach (var str in parameters.AggregationValues.OrderBy(o => o))
             {
-                var inputBytes = Encoding.UTF8.GetBytes(str);
+                var inputBytes = Encoding.UTF8.GetBytes(str.s);
                 sha256.TransformBlock(inputBytes, 0, inputBytes.Length, null, 0);
             }
 

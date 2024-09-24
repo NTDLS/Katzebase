@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
     {
         public static string Execute(GroupAggregateFunctionParameter parameters)
         {
-            var numbers = parameters.AggregationValues.Select(o => double.Parse(o)).ToList();
+            var numbers = parameters.AggregationValues.Select(o => double.Parse(o.s)).ToList();
             double mean = numbers.Average();
             return (numbers.Sum(n => Math.Pow(n - mean, 2)) / numbers.Count).ToString();
         }

@@ -1,5 +1,5 @@
 ﻿using static NTDLS.Katzebase.Client.KbConstants;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Exposed
 {
     /// <summary>
@@ -10,10 +10,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Exposed
     {
         public int Ordinal { get; private set; }
         public string FieldAlias { get; private set; }
-        public string Value { get; private set; }
+        public fstring Value { get; private set; }
         public KbBasicDataType DataType { get; private set; }
 
-        public ExposedConstant(int ordinal, KbBasicDataType dataType, string alias, string value)
+        public ExposedConstant(int ordinal, KbBasicDataType dataType, string alias, fstring value)
         {
             Ordinal = ordinal;
             DataType = dataType;

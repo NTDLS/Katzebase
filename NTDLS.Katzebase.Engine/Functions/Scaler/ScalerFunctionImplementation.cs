@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using fs;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.Scaler.Implementations;
@@ -48,11 +49,11 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 "String Trim  (String text)",
             };
 
-        public static string? ExecuteFunction(Transaction transaction, string functionName, List<string?> parameters, KbInsensitiveDictionary<string?> rowValues)
+        public static fstring? ExecuteFunction(Transaction transaction, string functionName, List<fstring?> parameters, KbInsensitiveDictionary<fstring?> rowValues)
         {
             var function = ScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
-            return functionName.ToLowerInvariant() switch
+            string? rtn = functionName.ToLowerInvariant() switch
             {
                 "isbetween" => ScalerIsBetween.Execute(transaction, function),
                 "isequal" => ScalerIsEqual.Execute(transaction, function),
@@ -67,7 +68,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 "checksum" => ScalerChecksum.Execute(function),
                 "lastindexof" => ScalerLastIndexOf.Execute(function),
                 "length" => ScalerLength.Execute(function),
-                "coalesce" => ScalerCoalesce.Execute(parameters),
+                "coalesce" => ScalerCoalesce.Execute(parameters)?.s,
                 "concat" => ScalerConcat.Execute(parameters),
                 "datetime" => ScalerDateTime.Execute(function),
                 "datetimeutc" => ScalerDateTimeUTC.Execute(function),
@@ -90,6 +91,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
                 _ => throw new KbParserException($"The scaler function is not implemented: [{functionName}].")
             };
+            return fstring.NewS(rtn);
         }
     }
 }

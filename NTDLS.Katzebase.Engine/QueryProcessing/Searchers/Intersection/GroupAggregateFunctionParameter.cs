@@ -1,4 +1,5 @@
-﻿namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
+﻿using fs;
+namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
     /// <summary>
     /// Contains the values that are needed to be stored at the group level, but per aggregate function expression key.
@@ -11,12 +12,12 @@
         /// Contains the list of values that we will need to collapse aggregation functions.
         /// The key is the ExpressionKey of the aggregation function these values are for.
         /// </summary>
-        public List<string> AggregationValues { get; set; } = new();
+        public List<fstring> AggregationValues { get; set; } = new();
 
         /// <summary>
         /// List of aggregate function parameters after the default first "AggregationValues" parameter.
         /// The key is the ExpressionKey of the aggregation function these values are for.
         /// </summary>
-        public List<string?> SupplementalParameters { get; set; } = new();
+        public List<fstring?> SupplementalParameters { get; set; } = new();
     }
 }

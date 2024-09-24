@@ -2,6 +2,7 @@
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Types;
 using ProtoBuf;
+using fs;
 
 namespace NTDLS.Katzebase.Engine.Documents
 {
@@ -13,7 +14,7 @@ namespace NTDLS.Katzebase.Engine.Documents
     public class PhysicalDocument
     {
         [ProtoMember(1)]
-        public KbInsensitiveDictionary<string?> Elements { get; set; }
+        public KbInsensitiveDictionary<fstring?> Elements { get; set; }
 
         [ProtoMember(2)]
         public DateTime Created { get; set; }
@@ -42,13 +43,13 @@ namespace NTDLS.Katzebase.Engine.Documents
         public PhysicalDocument(string jsonString)
         {
             _contentLength = jsonString.Length;
-            Elements = JsonConvert.DeserializeObject<KbInsensitiveDictionary<string?>>(jsonString).EnsureNotNull();
+            Elements = JsonConvert.DeserializeObject<KbInsensitiveDictionary<fstring?>>(jsonString).EnsureNotNull();
         }
 
         public void SetElementsByJson(string jsonString)
         {
             _contentLength = jsonString.Length;
-            Elements = JsonConvert.DeserializeObject<KbInsensitiveDictionary<string?>>(jsonString).EnsureNotNull();
+            Elements = JsonConvert.DeserializeObject<KbInsensitiveDictionary<fstring?>>(jsonString).EnsureNotNull();
         }
     }
 }

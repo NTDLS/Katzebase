@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
     {
         public static string Execute(GroupAggregateFunctionParameter parameters)
         {
-            return parameters.AggregationValues.Max(o => double.Parse(o)).ToString();
+            return parameters.AggregationValues.Max(o => double.Parse(o.s)).ToString();
         }
     }
 }

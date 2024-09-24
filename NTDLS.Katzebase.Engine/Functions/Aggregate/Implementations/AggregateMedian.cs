@@ -1,12 +1,12 @@
 ﻿using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
-
+using System.Linq;
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
     internal static class AggregateMedian
     {
         public static string Execute(GroupAggregateFunctionParameter parameters)
         {
-            var sortedNumbers = parameters.AggregationValues.Select(o => double.Parse(o)).OrderBy(n => n).ToList();
+            var sortedNumbers = parameters.AggregationValues.Select(o => double.Parse(o.s)).OrderBy(n => n).ToList();
             int count = sortedNumbers.Count;
 
             if (count % 2 == 0)

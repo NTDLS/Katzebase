@@ -1,8 +1,10 @@
-﻿namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
+﻿using fs;
+
+namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {
     internal static class ScalerCoalesce
     {
-        public static string? Execute(List<string?> parameters)
+        public static fstring? Execute(List<fstring?> parameters)
         {
             foreach (var p in parameters)
             {

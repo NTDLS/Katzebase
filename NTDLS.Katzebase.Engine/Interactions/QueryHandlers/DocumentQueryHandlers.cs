@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using fs;
+using Newtonsoft.Json;
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
@@ -79,11 +80,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 foreach (var row in result.Rows)
                 {
-                    var document = new KbInsensitiveDictionary<string>();
+                    var document = new KbInsensitiveDictionary<fstring>();
 
                     for (int i = 0; i < result.Fields.Count; i++)
                     {
-                        document.Add(result.Fields[i].Name, row.Values[i] ?? string.Empty);
+                        document.Add(result.Fields[i].Name, row.Values[i] ?? fstring.SEmpty);
                     }
                     string documentContent = JsonConvert.SerializeObject(document);
 
@@ -120,12 +121,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                     foreach (var insertFieldValues in preparedQuery.InsertFieldValues)
                     {
-                        var keyValuePairs = new KbInsensitiveDictionary<string?>();
+                        var keyValuePairs = new KbInsensitiveDictionary<fstring?>();
 
                         foreach (var insertValue in insertFieldValues)
                         {
                             var collapsedValue = insertValue.Expression.CollapseScalerQueryField(
-                                transactionReference.Transaction, preparedQuery, new(preparedQuery.Batch), new());
+                                transactionReference.Transaction, preparedQuery, new(preparedQuery.Batch), new(fstring.CompareFunc));
 
                             keyValuePairs.Add(insertValue.Alias, collapsedValue);
                         }
@@ -159,7 +160,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                         foreach (var row in results.Collection[0].Rows)
                         {
-                            var keyValuePairs = new KbInsensitiveDictionary<string?>();
+                            var keyValuePairs = new KbInsensitiveDictionary<fstring?>();
 
                             for (int fieldIndex = 0; fieldIndex < results.Collection[0].Fields.Count; fieldIndex++)
                             {

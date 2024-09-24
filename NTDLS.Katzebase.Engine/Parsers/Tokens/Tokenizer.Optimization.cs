@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using fs;
+using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using System.Text.RegularExpressions;
 using static NTDLS.Katzebase.Client.KbConstants;
@@ -14,13 +15,22 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public string? ResolveLiteral(string token)
+        public fstring? ResolveLiteral(fstring token)
+        {
+            if (Literals.TryGetValue(token.s, out var literal))
+            {
+                return literal.Value;
+            }
+            return token;
+        }
+
+        public fstring? ResolveLiteral(string token)
         {
             if (Literals.TryGetValue(token, out var literal))
             {
                 return literal.Value;
             }
-            return token;
+            return fstring.NewS(token);
         }
 
         /// <summary>
@@ -37,7 +47,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                 if (match.Success)
                 {
                     string key = $"$s_{_literalKey++}$";
-                    Literals.Add(key, new(KbBasicDataType.String, match.ToString()[1..^1]));
+                    Literals.Add(key, new(KbBasicDataType.String, fstring.NewS( match.ToString()[1..^1])));
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
@@ -137,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                 if (match.Success)
                 {
                     string key = $"$n_{_literalKey++}$";
-                    Literals.Add(key, new(KbBasicDataType.Numeric, match.ToString()));
+                    Literals.Add(key, new(KbBasicDataType.Numeric, fstring.NewS(match.ToString())));
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
                 else

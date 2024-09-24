@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Types;
+﻿using fs;
+using NTDLS.Katzebase.Client.Types;
 using ProtoBuf;
 
 namespace NTDLS.Katzebase.Engine.Indexes
@@ -8,12 +9,12 @@ namespace NTDLS.Katzebase.Engine.Indexes
     public class PhysicalIndexLeaf
     {
         [ProtoMember(1)]
-        public KbInsensitiveDictionary<PhysicalIndexLeaf> Children { get; set; } = new();
+        public KbInsensitiveDictionary<fstring, PhysicalIndexLeaf> Children { get; set; } = new(fstring.CompareFunc);
 
         [ProtoMember(2)]
         public List<PhysicalIndexEntry>? Documents { get; set; } = null;
 
-        public PhysicalIndexLeaf AddNewLeaf(string value)
+        public PhysicalIndexLeaf AddNewLeaf(fstring value)
         {
             var newLeaf = new PhysicalIndexLeaf();
             Children.Add(value, newLeaf);

@@ -1,11 +1,12 @@
-﻿namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
+﻿using fs;
+namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
 {
     /// <summary>
     /// Contains a numeric constant.
     /// </summary>
     internal class QueryFieldConstantNumeric : IQueryField
     {
-        public string Value { get; set; }
+        public fstring Value { get; set; }
 
         /// <summary>
         /// Not applicable to QueryFieldConstantString
@@ -13,6 +14,11 @@
         public string SchemaAlias { get; private set; } = string.Empty;
 
         public QueryFieldConstantNumeric(string value)
+        {
+            Value = fstring.NewS(value);
+
+        }
+        public QueryFieldConstantNumeric(fstring value)
         {
             Value = value;
         }

@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using fs;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
 using NTDLS.Katzebase.Shared;
 
@@ -109,7 +110,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
             return new SystemFunction(functionName, parameters);
         }
 
-        internal SystemFunctionParameterValueCollection ApplyParameters(List<string?> values)
+        internal SystemFunctionParameterValueCollection ApplyParameters(List<fstring?> values)
         {
             var result = new SystemFunctionParameterValueCollection();
 

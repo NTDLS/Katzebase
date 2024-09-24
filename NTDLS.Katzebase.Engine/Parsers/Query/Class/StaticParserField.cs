@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using fs;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Functions.Aggregate;
 using NTDLS.Katzebase.Engine.Functions.Scaler;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
@@ -77,7 +78,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
         }
 
-        private static string ParseEvaluationRecursive(Tokenizer parentTokenizer, ref IQueryFieldExpression rootQueryFieldExpression,
+        private static fstring ParseEvaluationRecursive(Tokenizer parentTokenizer, ref IQueryFieldExpression rootQueryFieldExpression,
             string givenExpressionText, ref QueryFieldCollection queryFields)
         {
             Tokenizer tokenizer = new(givenExpressionText);
@@ -156,7 +157,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
             }
 
-            return buffer.ToString();
+            return fstring.NewS(buffer.ToString());
         }
 
         /// <summary>
@@ -173,7 +174,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             foreach (var functionCallParameterText in functionCallParametersText)
             {
                 //Recursively process the function parameters.
-                var resultingExpressionString = ParseEvaluationRecursive(parentTokenizer, ref rootQueryFieldExpression, functionCallParameterText, ref queryFields);
+                var resultingExpressionString = ParseEvaluationRecursive(parentTokenizer, ref rootQueryFieldExpression, functionCallParameterText, ref queryFields).s;
 
                 IExpressionFunctionParameter? parameter = null;
 

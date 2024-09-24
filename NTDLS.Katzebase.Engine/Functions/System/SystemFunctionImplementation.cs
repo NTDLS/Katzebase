@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using fs;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Functions.System.Implementations;
@@ -37,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
             };
         /*
          * */
-        public static KbQueryResultCollection ExecuteFunction(EngineCore core, Transaction transaction, string functionName, List<string?> parameters)
+        public static KbQueryResultCollection ExecuteFunction(EngineCore core, Transaction transaction, string functionName, List<fstring?> parameters)
         {
             var function = SystemFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 

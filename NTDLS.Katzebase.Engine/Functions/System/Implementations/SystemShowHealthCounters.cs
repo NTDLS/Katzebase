@@ -1,4 +1,5 @@
-﻿using NTDLS.Helpers;
+﻿using fs;
+using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 
@@ -18,10 +19,11 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
             foreach (var counter in counters)
             {
-                var values = new List<string?>
+                var values = new List<fstring?>
                 {
-                    Text.SeperateCamelCase(counter.Key),
-                    counter.Value.Value.ToString("n0")
+                    fstring.NewS(Text.SeperateCamelCase(counter.Key)),
+                    fstring.NewS(Text.SeperateCamelCase(counter.Key)),
+                    fstring.NewS(counter.Value.Value.ToString("n0"))
                 };
 
                 result.AddRow(values);

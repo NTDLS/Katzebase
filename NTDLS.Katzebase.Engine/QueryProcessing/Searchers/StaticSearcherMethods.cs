@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Payloads;
+﻿using fs;
+using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
@@ -48,12 +49,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     }
 
                     var resultRow = new KbQueryRow();
-                    resultRow.AddValue(documentId.ToString());
+                    resultRow.AddValue(fstring.NewS(documentId.ToString()));
 
                     foreach (var field in result.Fields.Skip(1))
                     {
-                        physicalDocument.Elements.TryGetValue(field.Name, out string? element);
-                        resultRow.AddValue(element?.ToString() ?? string.Empty);
+                        physicalDocument.Elements.TryGetValue(field.Name, out fstring? element);
+                        resultRow.AddValue(element ?? fstring.SEmpty);
                     }
 
                     result.Rows.Add(resultRow);
@@ -90,8 +91,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 var resultRow = new KbQueryRow();
                 foreach (var field in result.Fields)
                 {
-                    persistDocument.Elements.TryGetValue(field.Name, out string? element);
-                    resultRow.AddValue(element?.ToString() ?? string.Empty);
+                    persistDocument.Elements.TryGetValue(field.Name, out fstring? element);
+                    resultRow.AddValue(element ?? fstring.SEmpty);
                 }
 
                 result.Rows.Add(resultRow);

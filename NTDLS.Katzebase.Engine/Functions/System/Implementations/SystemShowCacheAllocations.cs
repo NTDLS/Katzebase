@@ -1,7 +1,7 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowCacheAllocations
@@ -23,16 +23,16 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
             foreach (var item in cachePartitions.Items)
             {
-                var values = new List<string?>
+                var values = new List<fstring?>
                 {
-                    $"{item.Partition:n0}",
-                    $"{Formatters.FileSize(item.ApproximateSizeInBytes)}",
-                    $"{item.Created}",
-                    $"{item.Reads:n0}",
-                    $"{item.LastRead}",
-                    $"{item.Writes:n0}",
-                    $"{item.LastWrite}",
-                    $"{item.Key}",
+                    fstring.NewS($"{item.Partition:n0}"),
+                    fstring.NewS($"{Formatters.FileSize(item.ApproximateSizeInBytes)}"),
+                    fstring.NewS($"{item.Created}"),
+                    fstring.NewS($"{item.Reads:n0}"),
+                    fstring.NewS($"{item.LastRead}"),
+                    fstring.NewS($"{item.Writes:n0}"),
+                    fstring.NewS($"{item.LastWrite}"),
+                    fstring.NewS($"{item.Key}"),
                 };
 
                 result.AddRow(values);

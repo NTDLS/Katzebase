@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using fs;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class.Helpers;
@@ -138,7 +139,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
                     }
                 }
 
-                tokenizerConstants.Add($"@{variableName}", new KbConstant(variableValue, variableType));
+                tokenizerConstants.Add($"@{variableName}", new KbConstant(fstring.NewS(variableValue), variableType));
 
                 queryText = queryText.Replace(line, "");
             }

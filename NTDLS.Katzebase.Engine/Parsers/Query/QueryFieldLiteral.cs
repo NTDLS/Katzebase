@@ -1,13 +1,14 @@
 ﻿using static NTDLS.Katzebase.Client.KbConstants;
+using fs;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query
 {
     internal class ConditionFieldLiteral
     {
-        public string? Value { get; set; }
+        public fstring? Value { get; set; }
         public KbBasicDataType DataType { get; set; }
 
-        public ConditionFieldLiteral(KbBasicDataType dataType, string? value)
+        public ConditionFieldLiteral(KbBasicDataType dataType, fstring? value)
         {
             DataType = dataType;
             Value = value;

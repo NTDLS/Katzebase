@@ -1,7 +1,9 @@
-﻿using Newtonsoft.Json;
+﻿using fs;
+using Newtonsoft.Json;
 using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Locking;
+using static Microsoft.FSharp.Core.ByRefKinds;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -64,12 +66,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (_core.Settings.UseCompression)
                 {
                     using var input = new MemoryStream(Library.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)));
-                    return ProtoBuf.Serializer.Deserialize<T>(input);
+                    //return ProtoBuf.Serializer.Deserialize<T>(input);
+                    return PB.deserializeF<T>(input);
                 }
                 else
                 {
                     using var file = File.OpenRead(filePath);
-                    return ProtoBuf.Serializer.Deserialize<T>(file);
+                    //return ProtoBuf.Serializer.Deserialize<T>(file);
+                    return PB.deserializeF<T>(file);
                 }
             }
             catch (Exception ex)
@@ -170,7 +174,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                         {
                             using var input = new MemoryStream(serializedData);
-                            return ProtoBuf.Serializer.Deserialize<T>(input);
+                            //return ProtoBuf.Serializer.Deserialize<T>(input);
+                            return PB.deserializeF<T>(input);
                         });
                     }
                     else
@@ -183,7 +188,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                         {
                             using var input = new MemoryStream(serializedData);
-                            return ProtoBuf.Serializer.Deserialize<T>(input);
+                            //return ProtoBuf.Serializer.Deserialize<T>(input);
+                            return PB.deserializeF<T>(input);
                         });
                     }
                 }
@@ -271,7 +277,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (_core.Settings.UseCompression)
                 {
                     using var output = new MemoryStream();
-                    ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                    //ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                    PB.serializeF(output, deserializedObject);
                     approximateSizeInBytes = (int)output.Length;
                     var compressedBytes = Library.Compression.Deflate.Compress(output.ToArray());
                     File.WriteAllBytes(filePath, compressedBytes);
@@ -279,7 +286,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 else
                 {
                     using var file = File.Create(filePath);
-                    ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                    //ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                    PB.serializeF(file, deserializedObject);
                     approximateSizeInBytes = (int)file.Length;
                 }
 
@@ -303,13 +311,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 if (_core.Settings.UseCompression)
                 {
                     using var output = new MemoryStream();
-                    ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                    //ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                    PB.serializeF(output, deserializedObject);
                     File.WriteAllBytes(filePath, Library.Compression.Deflate.Compress(output.ToArray()));
                 }
                 else
                 {
                     using var file = File.Create(filePath);
-                    ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                    //ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                    PB.serializeF(file, deserializedObject);
                 }
             }
             catch (Exception ex)
@@ -382,7 +392,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         var bytes = transaction.Instrumentation.Measure(PerformanceCounter.Serialize, () =>
                             {
                                 using var output = new MemoryStream();
-                                ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                                //ProtoBuf.Serializer.Serialize(output, deserializedObject);
+                                PB.serializeF(output, deserializedObject);
                                 return output.ToArray();
                             });
 
@@ -398,7 +409,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         using var file = File.Create(filePath);
                         approximateSizeInBytes = (int)file.Length;
-                        ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                        //ProtoBuf.Serializer.Serialize(file, deserializedObject);
+                        PB.serializeF(file, deserializedObject);
                     }
                 }
                 else

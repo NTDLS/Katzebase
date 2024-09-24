@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using fs;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Shared;
 using System.Diagnostics.CodeAnalysis;
 
@@ -38,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
             return function != null;
         }
 
-        public static SystemFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string?> parameters)
+        public static SystemFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<fstring?> parameters)
         {
             if (_protypes == null)
             {

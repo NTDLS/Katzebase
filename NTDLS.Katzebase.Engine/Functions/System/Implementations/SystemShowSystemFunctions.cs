@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using fs;
+using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
 using System.Text;
@@ -33,10 +34,10 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                     parameters.Length -= 2;
                 }
 
-                var values = new List<string?>
+                var values = new List<fstring?>
                 {
-                    prototype.Name,
-                    parameters.ToString()
+                    fstring.NewS(prototype.Name),
+                    fstring.NewS(parameters.ToString())
                 };
                 result.AddRow(values);
 

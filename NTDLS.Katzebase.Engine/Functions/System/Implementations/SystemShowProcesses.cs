@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
-
+using fs;
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowProcesses
@@ -42,25 +42,25 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             {
                 var txSnapshot = txSnapshots.FirstOrDefault(o => o.ProcessId == s.Value.ProcessId);
 
-                var values = new List<string?>
+                var values = new List<fstring?>
                 {
-                    $"{s.Key}",
-                    $"{s.Value.ProcessId:n0}",
-                    $"{s.Value.ClientName ?? string.Empty}",
-                    $"{s.Value.LoginTime}",
-                    $"{s.Value.LastCheckInTime}",
-                    $"{txSnapshot?.BlockedByKeys.Count > 0:n0}",
-                    string.Join(", ", txSnapshot?.BlockedByKeys.Select(o=>o.ProcessId) ?? new List<ulong>()),
-                    $"{txSnapshot?.ReferenceCount:n0}",
-                    $"{txSnapshot?.StartTime}",
-                    $"{txSnapshot?.HeldLockKeys.Count:n0}",
-                    $"{txSnapshot?.GrantedLockCache?.Count:n0}",
-                    $"{txSnapshot?.FilesReadForCache?.Count:n0}",
-                    $"{txSnapshot?.DeferredIOs?.Count():n0}",
-                    $"{!(txSnapshot?.IsCommittedOrRolledBack == true)}",
-                    $"{txSnapshot?.IsDeadlocked}",
-                    $"{txSnapshot?.IsCancelled}",
-                    $"{txSnapshot?.IsUserCreated}"
+                    fstring.NewS($"{s.Key}"),
+                    fstring.NewS($"{s.Value.ProcessId:n0}"),
+                    fstring.NewS($"{s.Value.ClientName ?? string.Empty}"),
+                    fstring.NewS($"{s.Value.LoginTime}"),
+                    fstring.NewS($"{s.Value.LastCheckInTime}"),
+                    fstring.NewS($"{txSnapshot?.BlockedByKeys.Count > 0:n0}"),
+                    fstring.NewS(string.Join(", ", txSnapshot?.BlockedByKeys.Select(o=>o.ProcessId) ?? new List<ulong>())),
+                    fstring.NewS($"{txSnapshot?.ReferenceCount:n0}"),
+                    fstring.NewS($"{txSnapshot?.StartTime}"),
+                    fstring.NewS($"{txSnapshot?.HeldLockKeys.Count:n0}"),
+                    fstring.NewS($"{txSnapshot?.GrantedLockCache?.Count:n0}"),
+                    fstring.NewS($"{txSnapshot?.FilesReadForCache?.Count:n0}"),
+                    fstring.NewS($"{txSnapshot?.DeferredIOs?.Count():n0}"),
+                    fstring.NewS($"{!(txSnapshot?.IsCommittedOrRolledBack == true)}"),
+                    fstring.NewS($"{txSnapshot?.IsDeadlocked}"),
+                    fstring.NewS($"{txSnapshot?.IsCancelled}"),
+                    fstring.NewS($"{txSnapshot?.IsUserCreated}")
                 };
                 result.AddRow(values);
             }
