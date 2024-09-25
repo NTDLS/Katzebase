@@ -64,6 +64,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 APIHandlers = new SchemaAPIHandlers(core);
 
                 _rootCatalogFile = Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile);
+
+                //If the root schema doesn't exist, create a new empty one.
+                if (File.Exists(_rootCatalogFile) == false)
+                {
+                    Directory.CreateDirectory(core.Settings.DataRootPath);
+                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
+                    core.IO.PutPBufNonTracked(Path.Combine(core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
+                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
+                }
             }
             catch (Exception ex)
             {
@@ -72,44 +81,26 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void CreateEphemeralSchema(string name)
+        public void RecycleEphemeralSchemas()
         {
-            //If the schema doesn't exist, create a new empty one.
-            if (File.Exists(_rootCatalogFile) == false)
+            using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
+
+            //Drop and create "Temporary" schema.
+            if (AcquireVirtual(systemSession.Transaction, "Temporary", LockOperation.Read).Exists)
             {
-                Directory.CreateDirectory(_core.Settings.DataRootPath);
-
-                var physicalSchemaCatalog = new PhysicalSchemaCatalog();
-                physicalSchemaCatalog.Collection.Add(new PhysicalSchema()
-                {
-                    Name = name,
-                    VirtualPath = name,
-                    IsTemporary = false,
-                    Id = Guid.NewGuid(),
-                    PageSize = _core.Settings.DefaultDocumentPageSize,
-                    DiskPath = Path.Combine(_core.Settings.DataRootPath, name)
-                });
-
-                _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, SchemaCatalogFile), physicalSchemaCatalog);
-                _core.IO.PutPBufNonTracked(Path.Combine(_core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
-                _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
+                Drop(systemSession.Transaction, "Temporary");
             }
+            CreateSingleSchema(systemSession.Transaction, "Temporary");
 
-            var schemaPath = Path.Combine(_core.Settings.DataRootPath, name);
-
-            try
+            //Drop and create "Single" schema (then insert a single row).
+            if (AcquireVirtual(systemSession.Transaction, "Single", LockOperation.Read).Exists)
             {
-                if (Directory.Exists(schemaPath))
-                {
-                    Directory.Delete(schemaPath, true);
-                }
+                Drop(systemSession.Transaction, "Single");
             }
-            catch { }
+            CreateSingleSchema(systemSession.Transaction, "Single");
+            _core.Documents.InsertDocument(systemSession.Transaction, "Single", "{ephemeral: null}");
 
-            Directory.CreateDirectory(schemaPath);
-            _core.IO.PutJsonNonTracked(Path.Combine(schemaPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
-            _core.IO.PutPBufNonTracked(Path.Combine(schemaPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
-            _core.IO.PutJsonNonTracked(Path.Combine(schemaPath, IndexCatalogFile), new PhysicalIndexCatalog());
+            systemSession.Commit();
         }
 
         internal void Alter(Transaction transaction, string schemaName, uint pageSize = 0)
@@ -235,7 +226,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             try
             {
                 var schemas = new List<PhysicalSchema>();
-
 
                 if (_core.IO.FileExists(transaction, physicalSchema.SchemaCatalogFilePath(), intendedOperation))
                 {

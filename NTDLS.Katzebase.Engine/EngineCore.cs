@@ -3,8 +3,11 @@ using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Threading.Management;
 using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
+using System.Data;
 using System.Diagnostics;
 using System.Reflection;
+using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace NTDLS.Katzebase.Engine
 {
@@ -80,13 +83,7 @@ namespace NTDLS.Katzebase.Engine
             Procedures = new ProcedureManager(this);
 
             LogManager.Information("Initializing ephemeral schemas.");
-
-            Schemas.CreateEphemeralSchema("Temporary");
-            Schemas.CreateEphemeralSchema("Single");
-
-            using var systemSession = Sessions.CreateEphemeralSystemSession();
-            Documents.InsertDocument(systemSession.Transaction, "Single", "{ephemeral: null}");
-            systemSession.Commit();
+            Schemas.RecycleEphemeralSchemas();
         }
 
         public void Start()
