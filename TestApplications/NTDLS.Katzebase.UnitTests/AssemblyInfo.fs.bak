@@ -10,11 +10,10 @@ do ()
 
 module internal AssemblyVersionInformation =
     [<Literal>]
-    let AssemblyTitle = "NTDLS.Katzebase.UnitTests"
+    let AssemblyTitle = "Akkling.Tests"
 
     [<Literal>]
-    let AssemblyProduct = "NTDLS.Katzebase"
+    let AssemblyProduct = "Akkling"
 
     [<Literal>]
-    let AssemblyDescription = "Unit test cases for Katzebase"
-
+    let AssemblyDescription = "F# wrapper library for Akka.NET"
