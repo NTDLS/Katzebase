@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net8.0</TargetFramework>
+		<OutputPath>.\bin</OutputPath>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+	  <DefineConstants>$(DefineConstants);COMPARE</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+	  <DefineConstants>$(DefineConstants);COMPARE</DefineConstants>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="README.md" />
+		<None Include="Build.ps1" />
+		<None Include="app.config">
+          <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+		<Compile Include="Scripts/UnitTestsSharedResource.ver.0.0.1.fsx">
+			<Link>Shared/UnitTestsSharedResource.fsx</Link>
+		</Compile>
+
+		<Compile Include="Scripts/Tests.ver.0.0.1.fsx">
+			<Link>Shared/Tests.fsx</Link>
+		</Compile>
+
+		<Compile Include="Scripts/Engine/IO/BasicTest.IO.ver.0.0.1.fsx">
+			<Link>Unit/Engine/IO/BasicTest.IO.fsx</Link>
+		</Compile>
+		
+		<Compile Include="Scripts/Engine/Parser/BasicTest.Parser.ver.0.0.1.fsx">
+			<Link>Unit/Engine/Parser/BasicTest.Parser.fsx</Link>
+		</Compile>
+		
+		<Compile Include="Program.ver.0.0.1.fsx">
+
+			<Link>Program.fsx</Link>
+		</Compile>
+		
+	</ItemGroup>
+  <ItemGroup>
+    <!--<ProjectReference Include="..\..\src\Akkling.Cluster.Sharding\Akkling.Cluster.Sharding.fsproj" />
+    <ProjectReference Include="..\..\src\Akkling.DistributedData\Akkling.DistributedData.fsproj" />
+    <ProjectReference Include="..\..\src\Akkling.Hocon\Akkling.Hocon.fsproj" />
+    <ProjectReference Include="..\..\src\Akkling.Persistence\Akkling.Persistence.fsproj" />
+    <ProjectReference Include="..\..\src\Akkling.Streams.TestKit\Akkling.Streams.TestKit.fsproj" />
+    <ProjectReference Include="..\..\src\Akkling.Streams\Akkling.Streams.fsproj" />
+    <ProjectReference Include="..\..\src\Akkling.TestKit\Akkling.TestKit.fsproj" />
+    <ProjectReference Include="..\..\src\Akkling\Akkling.fsproj" />-->
+    <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DecimalMath.DecimalEx" Version="1.0.2" />
+    <PackageReference Include="FsCheck.Xunit" Version="3.0.0-rc3" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.7.8" />
+    <PackageReference Include="protobuf-net" Version="3.2.30" />
+    <PackageReference Include="protobuf-net.Core" Version="3.2.30" />
+    <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
+    <PackageReference Include="xunit" Version="2.9.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.0.0-pre.30">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <ProjectReference Include="..\..\NTDLS.Katzebase.Engine\NTDLS.Katzebase.Engine.csproj" />
+    <ProjectReference Include="..\..\NTDLS.Katzebase.Server\NTDLS.Katzebase.Server.csproj" />
+    <PackageReference Update="FSharp.Core" Version="9.0.100-beta.24406.3" />
+  </ItemGroup>
+  
+</Project>
