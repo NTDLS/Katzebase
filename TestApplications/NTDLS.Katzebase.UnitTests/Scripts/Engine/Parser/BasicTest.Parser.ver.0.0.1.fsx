@@ -37,7 +37,7 @@ module ParserBasicTests =
     let ``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ¢IUsername AND PasswordHash = ¢IPasswordHash"`` (outputOpt:ITestOutputHelper option) =
         try
             let userParameters = null
-            let _ = StaticQueryParser.ParseBatch(_core, "SELECT * FROM MASTER:ACCOUNT¡@WHERE Username = @Username AND PasswordHash = @PasswordHash", userParameters.ToUserParametersInsensitiveDictionary())
+            let _ = StaticQueryParser.ParseBatch(_core, "SELECT * FROM MASTER:ACCOUNT_WHERE Username = @Username AND PasswordHash = @PasswordHash", userParameters.ToUserParametersInsensitiveDictionary())
             ()
         with
         | :? KbParserException as pe ->
