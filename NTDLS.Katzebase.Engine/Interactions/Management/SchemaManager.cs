@@ -1,4 +1,5 @@
 ﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
@@ -8,6 +9,7 @@ using NTDLS.Katzebase.Engine.Instrumentation;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
@@ -64,21 +66,39 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 APIHandlers = new SchemaAPIHandlers(core);
 
                 _rootCatalogFile = Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile);
-
-                //If the root schema doesn't exist, create a new empty one.
-                if (File.Exists(_rootCatalogFile) == false)
-                {
-                    Directory.CreateDirectory(core.Settings.DataRootPath);
-                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
-                    core.IO.PutPBufNonTracked(Path.Combine(core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
-                    core.IO.PutJsonNonTracked(Path.Combine(core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
-                }
             }
             catch (Exception ex)
             {
                 LogManager.Error("Failed to instantiate SchemaManager.", ex);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// To be executed after all other engine components have been initialized, for instance:
+        /// we can't insert rows from the SchemaManager constructor because the document manager is not yet ready.
+        /// </summary>
+        public void PostInitialization()
+        {
+            //If the root schema doesn't exist, create a new empty one.
+            if (File.Exists(_rootCatalogFile) == false)
+            {
+                LogManager.Information("Initializing root schema.");
+                Directory.CreateDirectory(_core.Settings.DataRootPath);
+                _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
+                _core.IO.PutPBufNonTracked(Path.Combine(_core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
+                _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
+
+                //Create Master:Account schema and insert the default account.
+                using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
+                CreateSingleSchema(systemSession.Transaction, "Master");
+                CreateSingleSchema(systemSession.Transaction, "Master:Account");
+                _core.Documents.InsertDocument(systemSession.Transaction, "Master:Account", new Account("admin", KbClient.HashPassword("")));
+                systemSession.Commit();
+            }
+
+            LogManager.Information("Initializing ephemeral schemas.");
+            RecycleEphemeralSchemas();
         }
 
         public void RecycleEphemeralSchemas()

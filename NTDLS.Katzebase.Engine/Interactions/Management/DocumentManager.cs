@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Engine.Atomicity;
+﻿using Newtonsoft.Json;
+using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
@@ -132,6 +133,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 LogManager.Error($"Failed to acquire document page catalog for process {transaction.ProcessId}.", ex);
                 throw;
             }
+        }
+
+        /// <summary>
+        /// When we want to create a document, this is where we do it - no exceptions.
+        /// </summary>
+        internal DocumentPointer InsertDocument(Transaction transaction, string schemaName, object pageContent)
+        {
+            var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
+            return InsertDocument(transaction, physicalSchema, JsonConvert.SerializeObject(pageContent));
         }
 
         /// <summary>
