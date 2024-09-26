@@ -13,7 +13,7 @@ open Xunit.Abstractions
 open System
 open System.Collections.Generic
 
-module DDLExecutionBasicTests =
+module DMLExecutionBasicTests =
     open NTDLS.Katzebase.Engine.Parsers
     open NTDLS.Katzebase.Engine.Parsers.Query    
     open NTDLS.Katzebase.Engine.Parsers.Query.Fields    
