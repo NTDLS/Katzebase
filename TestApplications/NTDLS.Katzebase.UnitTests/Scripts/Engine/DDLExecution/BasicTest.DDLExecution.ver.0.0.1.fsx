@@ -28,7 +28,7 @@ module DDLExecutionBasicTests =
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
         _core.Query.ExecuteNonQuery(preLogin, "DROP SCHEMA testSch")
         _core.Query.ExecuteNonQuery(preLogin, "CREATE SCHEMA testSch")
-        _core.Query.ExecuteNonQuery(preLogin, "insert into testSch (\r\id = 123, value = '456'\r\n)");
+        _core.Query.ExecuteNonQuery(preLogin, "insert into testSch (\r\nid = 123, value = '456'\r\n)");
         let cnt = _core.Query.ExecuteQuery<SingleCount>(preLogin, "SELECT COUNT(*) FROM testSch", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
         equals 1 (cnt |> Seq.item 0).Count
         //_core.Query.ExecuteQuery<int>(preLogin, "SELECT COUNT(*) FROM MASTER:ACCOUNT", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
@@ -39,5 +39,5 @@ module DDLExecutionBasicTests =
     //        ``Parse "SELECT * FROM MASTER:ACCOUNT"`` (Some output)
 
     //    [<Fact>]
-    //    member this.``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ¢IUsername AND PasswordHash = ¢IPasswordHash"`` () =
-    //        ``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ¢IUsername AND PasswordHash = ¢IPasswordHash"`` (Some output)
+    //    member this.``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = Â¢IUsername AND PasswordHash = Â¢IPasswordHash"`` () =
+    //        ``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = Â¢IUsername AND PasswordHash = Â¢IPasswordHash"`` (Some output)
