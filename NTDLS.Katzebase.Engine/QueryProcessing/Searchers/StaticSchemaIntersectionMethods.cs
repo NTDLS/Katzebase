@@ -222,7 +222,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             IntersectAllSchemas(instance, instance.DocumentPointer, ref resultingRows);
 
-            if (instance.Operation.Query.GroupFields.Any() == false)
+            if (instance.Operation.Query.GroupFields.Any() == false && instance.Operation.Query.SelectFields.FieldsWithAggregateFunctionCalls.Count == 0)
             {
                 //We ARE NOT grouping, so collapse all field expressions as scaler expressions.
                 instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
