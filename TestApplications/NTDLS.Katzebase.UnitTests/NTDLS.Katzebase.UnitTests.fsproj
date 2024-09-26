@@ -36,8 +36,11 @@
 		
         <Compile Include="Scripts/Engine/DDLExecution/BasicTest.DDLExecution.ver.0.0.1.fsx">
 			<Link>Unit/Engine/Execution/DDL/BasicTest.DDLExecution.fsx</Link>
+		</Compile>
+
+		<Compile Include="Scripts/Engine/DMLExecution/BasicTest.DMLExecution.ver.0.0.1.fsx">
+			<Link>Unit/Engine/Execution/DML/BasicTest.DMLExecution.fsx</Link>
 		</Compile>		
-		
 		
 		<Compile Include="Program.ver.0.0.1.fsx">
 			<Link>Program.fsx</Link>
