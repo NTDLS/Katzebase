@@ -2,7 +2,7 @@
 {
     internal static class ScalerChecksum
     {
-        public static string? Execute(ScalerFunctionParameterValueCollection function)
+        public static string? Execute<TData>(ScalerFunctionParameterValueCollection<TData> function)
         {
             return Library.Helpers.Checksum(function.Get<string>("text")).ToString();
         }

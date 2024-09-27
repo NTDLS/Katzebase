@@ -8,11 +8,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to sessions.
     /// </summary>
-    public class SessionAPIHandlers : IRmMessageHandler
+    public class SessionAPIHandlers<TData> : IRmMessageHandler
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public SessionAPIHandlers(EngineCore core)
+        public SessionAPIHandlers(EngineCore<TData> core)
         {
             _core = core;
 
@@ -41,7 +41,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 }
 
                 using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
-
+#if UNITTEST_VER_0_0_1_MOD
+                _core.Query.ExecuteNonQuery(systemSession.Session, "create schema master");
+                _core.Query.ExecuteNonQuery(systemSession.Session, "create schema master:account");
+                //_core.Query.ExecuteNonQuery(systemSession.Session, "insert into master:account (\r\nUsername = 'admin', PasswordHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'\r\n)");
+                //systemSession.Commit();
+#endif
                 var account = _core.Query.ExecuteQuery<Account>(systemSession.Session,
                     $"SELECT Username, PasswordHash FROM Master:Account WHERE Username = @Username AND PasswordHash = @PasswordHash",
                     new

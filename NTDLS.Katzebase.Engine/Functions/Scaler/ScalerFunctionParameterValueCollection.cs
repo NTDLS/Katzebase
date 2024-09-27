@@ -4,9 +4,9 @@ using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
-    public class ScalerFunctionParameterValueCollection
+    public class ScalerFunctionParameterValueCollection<TData> where TData : IStringable
     {
-        public List<ScalerFunctionParameterValue> Values { get; private set; } = new();
+        public List<ScalerFunctionParameterValue<TData>> Values { get; private set; } = new();
 
         public T Get<T>(string name)
         {

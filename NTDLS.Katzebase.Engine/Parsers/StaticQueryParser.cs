@@ -9,7 +9,7 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers
 {
-    internal class StaticQueryParser
+    internal class StaticQueryParser<TData> where TData : IStringable
     {
         /// <summary>
         /// Parse the query batch (a single query text containing multiple queries).
@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <param name="queryText"></param>
         /// <param name="userParameters"></param>
         /// <returns></returns>
-        static public QueryBatch ParseBatch(EngineCore core, string queryText, KbInsensitiveDictionary<KbConstant>? userParameters = null)
+        static public QueryBatch ParseBatch(EngineCore<TData> core, string queryText, KbInsensitiveDictionary<KbConstant>? userParameters = null)
         {
             var tokenizerConstants = core.Query.KbGlobalConstants.Clone();
 

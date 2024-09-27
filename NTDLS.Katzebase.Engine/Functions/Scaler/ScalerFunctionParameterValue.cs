@@ -1,17 +1,17 @@
 ﻿namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
-    public class ScalerFunctionParameterValue
+    public class ScalerFunctionParameterValue<TData> where TData : IStringable
     {
-        public ScalerFunctionParameterPrototype Parameter { get; private set; }
-        public string? Value { get; private set; } = null;
+        public ScalerFunctionParameterPrototype<TData> Parameter { get; private set; }
+        public TData? Value { get; private set; } = default(TData);
 
-        public ScalerFunctionParameterValue(ScalerFunctionParameterPrototype parameter, string? value)
+        public ScalerFunctionParameterValue(ScalerFunctionParameterPrototype<TData> parameter, TData? value)
         {
             Parameter = parameter;
             Value = value;
         }
 
-        public ScalerFunctionParameterValue(ScalerFunctionParameterPrototype parameter)
+        public ScalerFunctionParameterValue(ScalerFunctionParameterPrototype<TData> parameter)
         {
             Parameter = parameter;
         }

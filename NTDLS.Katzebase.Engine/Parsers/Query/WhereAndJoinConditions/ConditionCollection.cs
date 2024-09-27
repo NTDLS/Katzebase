@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
     /// Contains the collection of ConditionSets, each group contains AND expressions (NO OR expressions) as there
     ///     is a seperate ConditionGroup for each OR expression and for each expression contained in parentheses.
     /// </summary>
-    internal class ConditionCollection : ConditionGroup
+    internal class ConditionCollection<TData> : ConditionGroup where TData : IStringable
     {
         /// <summary>
         /// For conditions on joins, this is the alias of the schema that these conditions are for.
@@ -27,13 +27,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         /// </summary>
         public string? Hash { get; set; }
 
-        public QueryFieldCollection FieldCollection { get; set; }
+        public QueryFieldCollection<TData> FieldCollection { get; set; }
 
         private int _nextExpressionVariable = 0;
         public string NextExpressionVariable()
             => $"v{_nextExpressionVariable++}";
 
-        public ConditionCollection(QueryBatch queryBatch, string mathematicalExpression, string? schemaAlias = null)
+        public ConditionCollection(QueryBatch<TData> queryBatch, string mathematicalExpression, string? schemaAlias = null)
             : base(LogicalConnector.None)
         {
             FieldCollection = new(queryBatch);
@@ -41,15 +41,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             SchemaAlias = schemaAlias;
         }
 
-        public ConditionCollection(QueryBatch queryBatch)
+        public ConditionCollection(QueryBatch<TData> queryBatch)
             : base(LogicalConnector.None)
         {
             FieldCollection = new(queryBatch);
         }
 
-        public new ConditionCollection Clone()
+        public new ConditionCollection<TData> Clone()
         {
-            var clone = new ConditionCollection(FieldCollection.QueryBatch)
+            var clone = new ConditionCollection<TData>(FieldCollection.QueryBatch)
             {
                 Connector = this.Connector,
                 SchemaAlias = this.SchemaAlias,

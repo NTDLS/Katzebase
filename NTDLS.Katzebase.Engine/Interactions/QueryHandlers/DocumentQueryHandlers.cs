@@ -17,11 +17,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// <summary>
     /// Internal class methods for handling query requests related to documents.
     /// </summary>
-    internal class DocumentQueryHandlers
+    internal class DocumentQueryHandlers<TData> where TData : IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public DocumentQueryHandlers(EngineCore core)
+        public DocumentQueryHandlers(EngineCore<TData> core)
         {
             _core = core;
 
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
+                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery<TData>(_core, transactionReference.Transaction, preparedQuery);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write);
                 }
 
-                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery(_core, transactionReference.Transaction, preparedQuery);
+                var result = StaticSearcherMethods.FindDocumentsByPreparedQuery<TData>(_core, transactionReference.Transaction, preparedQuery);
 
                 var duplicateFields = result.Fields
                     .GroupBy(o => o.Name)
@@ -119,7 +119,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                     foreach (var insertFieldValues in preparedQuery.InsertFieldValues)
                     {
-                        var keyValuePairs = new KbInsensitiveDictionary<string?>();
+                        var keyValuePairs = new KbInsensitiveDictionary<TData?>();
 
                         foreach (var insertValue in insertFieldValues)
                         {
@@ -202,7 +202,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 var getDocumentsIdsForSchemaPrefixes = new string[] { firstSchema.Prefix };
 
-                var rowDocumentIdentifiers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery(
+                var rowDocumentIdentifiers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery<TData>(
                     _core, transactionReference.Transaction, preparedQuery, getDocumentsIdsForSchemaPrefixes);
 
                 var updatedDocumentPointers = new List<DocumentPointer>();
@@ -245,7 +245,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
                 string schemaName = preparedQuery.Schemas.Single().Name;
-                var result = StaticSearcherMethods.SampleSchemaDocuments(
+                var result = StaticSearcherMethods.SampleSchemaDocuments<TData>(
                     _core, transactionReference.Transaction, schemaName, preparedQuery.RowLimit);
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
@@ -289,10 +289,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     {
                         var physicalSchema = _core.Schemas.Acquire(transactionReference.Transaction, schema.Name, LockOperation.Read);
 
-                        var lookupOptimization = IndexingConditionOptimization.BuildTree(_core,
+                        var lookupOptimization = IndexingConditionOptimization<TData>.BuildTree(_core,
                             transactionReference.Transaction, preparedQuery, physicalSchema, schema.Conditions, schema.Prefix);
 
-                        var explanation = IndexingConditionOptimization.ExplainPlan(physicalSchema, lookupOptimization, preparedQuery, schema.Prefix);
+                        var explanation = IndexingConditionOptimization<TData>.ExplainPlan(physicalSchema, lookupOptimization, preparedQuery, schema.Prefix);
 
                         transactionReference.Transaction.AddMessage(explanation, KbMessageType.Explain);
                     }

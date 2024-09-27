@@ -3,9 +3,9 @@ using NTDLS.Katzebase.Engine.Atomicity;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
-    internal class TransactionReference : IDisposable
+    internal class TransactionReference<TData> : IDisposable where TData : IStringable
     {
-        internal Transaction Transaction { get; private set; }
+        internal Transaction<TData> Transaction { get; private set; }
 
         private bool _isCommittedOrRolledBack = false;
         private bool _disposed = false;
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return new KbActionResponse
             {
                 RowCount = rowCount,
-                Metrics = Transaction.Instrumentation.ToCollection(),
+                Metrics  = Transaction.Instrumentation.ToCollection(),
                 Messages = Transaction.Messages,
                 Warnings = Transaction.CloneWarnings(),
                 Duration = (DateTime.UtcNow - Transaction.StartTime).TotalMilliseconds
@@ -82,7 +82,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return result;
         }
 
-        internal TransactionReference(Transaction transaction)
+        internal TransactionReference(Transaction<TData> transaction)
         {
             Transaction = transaction;
         }

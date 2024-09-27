@@ -18,9 +18,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to queries.
     /// </summary>
-    public class QueryManager
+    public class QueryManager<TData> where TData : IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
         public QueryAPIHandlers APIHandlers { get; private set; }
 
         /// <summary>
@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         internal KbInsensitiveDictionary<KbConstant> KbGlobalConstants { get; private set; } = new();
 
-        internal QueryManager(EngineCore core)
+        internal QueryManager(EngineCore<TData> core)
         {
             _core = core;
             APIHandlers = new QueryAPIHandlers(core);

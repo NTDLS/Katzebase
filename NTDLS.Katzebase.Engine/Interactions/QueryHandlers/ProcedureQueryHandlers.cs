@@ -12,11 +12,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// <summary>
     /// Internal class methods for handling query requests related to procedures.
     /// </summary>
-    internal class ProcedureQueryHandlers
+    internal class ProcedureQueryHandlers<TData>
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public ProcedureQueryHandlers(EngineCore core)
+        public ProcedureQueryHandlers(EngineCore<TData> core)
         {
             _core = core;
 

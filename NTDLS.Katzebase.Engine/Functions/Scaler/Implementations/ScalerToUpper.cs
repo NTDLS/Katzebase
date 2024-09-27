@@ -2,7 +2,7 @@
 {
     internal static class ScalerToUpper
     {
-        public static string? Execute(ScalerFunctionParameterValueCollection function)
+        public static string? Execute<TData>(ScalerFunctionParameterValueCollection<TData> function)
         {
             return function.Get<string>("text").ToUpperInvariant();
         }

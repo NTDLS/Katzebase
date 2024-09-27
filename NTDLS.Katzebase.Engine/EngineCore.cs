@@ -8,28 +8,65 @@ using System.Reflection;
 
 namespace NTDLS.Katzebase.Engine
 {
-    public class EngineCore
+
+    public static class StringExtensions
     {
-        internal IOManager IO;
-        internal LockManager Locking;
-        internal CacheManager Cache;
+        public static bool IsNullOrEmpty(this IStringable value)
+        {
+            if (value == null) return true;
+            return value.IsNullOrEmpty();
+        }
+        public static T? ParseToT<T>(this string value, Func<string, T> t)
+        {
+            if (value == null) return default(T);
+            return t(value);
+        }
+        public static IStringable? Empty => null;
+    }
+    public interface IStringable
+    {
+        bool IsNullOrEmpty();
+        IStringable ToLowerInvariant();
+        string ToKey();
+        char[] ToCharArr();
+        //Func<string, IStringable?> Converter { get; }
+        T ToT<T>();
+    }
+
+    public class EngineCore<TData> where TData : IStringable
+    {
+        static public Func<string, TData>? StrCast;
+        static public object StrCastLocker = new object();
+        internal IOManager<TData> IO;
+        internal LockManager<TData> Locking;
+        internal CacheManager<TData> Cache;
         internal KatzebaseSettings Settings;
 
-        public SchemaManager Schemas;
-        public EnvironmentManager Environment;
-        public DocumentManager Documents;
-        public TransactionManager Transactions;
-        public HealthManager Health;
-        public SessionManager Sessions;
-        public ProcedureManager Procedures;
-        public IndexManager Indexes;
-        public QueryManager Query;
-        public ThreadPoolManager ThreadPool;
-
+        public SchemaManager<TData> Schemas;
+        public EnvironmentManager<TData> Environment;
+        public DocumentManager<TData> Documents;
+        public TransactionManager<TData> Transactions;
+        public HealthManager<TData> Health;
+        public SessionManager<TData> Sessions;
+        public ProcedureManager<TData> Procedures;
+        public IndexManager<TData> Indexes;
+        public QueryManager<TData> Query;
+        public ThreadPoolManager<TData> ThreadPool;
         internal OptimisticSemaphore LockManagementSemaphore { get; private set; } = new();
 
-        public EngineCore(KatzebaseSettings settings)
+        public EngineCore(KatzebaseSettings settings, Func<string, TData>? t)
         {
+            lock (StrCastLocker)
+            {
+                if (t == null)
+                {
+                    StrCast = str => (TData)(object)str;
+                }
+                else
+                {
+                    StrCast = t;
+                }
+            }
             Settings = settings;
 
             var fileVersionInfo = FileVersionInfo.GetVersionInfo(Assembly.GetExecutingAssembly().Location);
@@ -41,43 +78,43 @@ namespace NTDLS.Katzebase.Engine
             Directory.CreateDirectory(Settings.LogDirectory);
 
             LogManager.Information("Initializing cache manager.");
-            Cache = new CacheManager(this);
+            Cache = new CacheManager<TData>(this);
 
             LogManager.Information("Initializing IO manager.");
-            IO = new IOManager(this);
+            IO = new IOManager<TData>(this);
 
             LogManager.Information("Initializing health manager.");
-            Health = new HealthManager(this);
+            Health = new HealthManager<TData>(this);
 
             LogManager.Information("Initializing environment manager.");
-            Environment = new EnvironmentManager(this);
+            Environment = new EnvironmentManager<TData>(this);
 
             LogManager.Information("Initializing index manager.");
-            Indexes = new IndexManager(this);
+            Indexes = new IndexManager<TData>(this);
 
             LogManager.Information("Initializing session manager.");
-            Sessions = new SessionManager(this);
+            Sessions = new SessionManager<TData>(this);
 
             LogManager.Information("Initializing lock manager.");
-            Locking = new LockManager(this);
+            Locking = new LockManager<TData>(this);
 
             LogManager.Information("Initializing transaction manager.");
-            Transactions = new TransactionManager(this);
+            Transactions = new TransactionManager<TData>(this);
 
             LogManager.Information("Initializing schema manager.");
-            Schemas = new SchemaManager(this);
+            Schemas = new SchemaManager<TData>(this);
 
             LogManager.Information("Initializing document manager.");
-            Documents = new DocumentManager(this);
+            Documents = new DocumentManager<TData>(this);
 
             LogManager.Information("Initializing query manager.");
-            Query = new QueryManager(this);
+            Query = new QueryManager<TData>(this);
 
             LogManager.Information("Initializing thread pool manager.");
-            ThreadPool = new ThreadPoolManager(this);
+            ThreadPool = new ThreadPoolManager<TData>(this);
 
             LogManager.Information("Initializing procedure manager.");
-            Procedures = new ProcedureManager(this);
+            Procedures = new ProcedureManager<TData>(this);
 
             Schemas.PostInitialization();
         }

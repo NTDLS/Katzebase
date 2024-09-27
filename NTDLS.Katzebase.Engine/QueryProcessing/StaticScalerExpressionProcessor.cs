@@ -24,15 +24,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Resolves all of the query expressions (string concatenation, math and all recursive
         ///     function calls) on a row level and fills in the values in the resultingRows.
         /// </summary>
-        public static void CollapseScalerRowExpressions(this SchemaIntersectionRowCollection resultingRows, Transaction transaction,
-            PreparedQuery query, QueryFieldCollection fieldCollection)
+        public static void CollapseScalerRowExpressions<TData>(this SchemaIntersectionRowCollection<TData> resultingRows, Transaction<TData> transaction,
+            PreparedQuery<TData> query, QueryFieldCollection<TData> fieldCollection) where TData : IStringable
         {
             //Resolve all expressions and fill in the row fields.
             foreach (var expressionField in fieldCollection.ExpressionFields.Where(o => o.CollapseType == CollapseType.Scaler))
             {
                 foreach (var row in resultingRows)
                 {
-                    var collapsedResult = CollapseScalerExpression(transaction, query, fieldCollection, row.AuxiliaryFields, expressionField);
+                    var collapsedResult = CollapseScalerExpression<TData>(transaction, query, fieldCollection, row.AuxiliaryFields, expressionField);
                     row.InsertValue(expressionField.FieldAlias, expressionField.Ordinal, collapsedResult);
                 }
             }
@@ -41,8 +41,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// <summary>
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
-        public static string? CollapseScalerQueryField(this IQueryField queryField, Transaction transaction,
-            PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields)
+        public static TData? CollapseScalerQueryField<TData>(this IQueryField<TData> queryField, Transaction<TData> transaction,
+            PreparedQuery<TData> query, QueryFieldCollection<TData> fieldCollection, KbInsensitiveDictionary<TData?> auxiliaryFields) where TData : IStringable
         {
             if (queryField is QueryFieldExpressionNumeric expressionNumeric)
             {
@@ -56,25 +56,25 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             {
                 if (auxiliaryFields.TryGetValue(documentIdentifier.Value, out var exactAuxiliaryValue))
                 {
-                    return exactAuxiliaryValue ?? string.Empty; //TODO: Should auxiliaryFields really allow NULL values?
+                    return exactAuxiliaryValue ?? (TData)StringExtensions.Empty; //TODO: Should auxiliaryFields really allow NULL values?
                 }
                 if (auxiliaryFields.TryGetValue(documentIdentifier.FieldName, out var auxiliaryValue))
                 {
-                    return auxiliaryValue ?? string.Empty; //TODO: Should auxiliaryFields really allow NULL values?
+                    return auxiliaryValue ?? (TData)StringExtensions.Empty; //TODO: Should auxiliaryFields really allow NULL values?
                 }
                 throw new KbEngineException($"Auxiliary fields not found: [{documentIdentifier.Value}].");
             }
             else if (queryField is QueryFieldConstantNumeric constantNumeric)
             {
-                return query.Batch.GetLiteralValue(constantNumeric.Value);
+                return query.Batch.GetLiteralValue(constantNumeric.Value) ?? (TData)StringExtensions.Empty;
             }
             else if (queryField is QueryFieldConstantString constantString)
             {
-                return query.Batch.GetLiteralValue(constantString.Value);
+                return query.Batch.GetLiteralValue(constantString.Value) ?? (TData)StringExtensions.Empty;
             }
-            else if (queryField is QueryFieldCollapsedValue collapsedValue)
+            else if (queryField is QueryFieldCollapsedValue<TData> collapsedValue)
             {
-                return collapsedValue.Value;
+                return collapsedValue.Value ?? (TData)StringExtensions.Empty;
             }
             else
             {
@@ -85,8 +85,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// <summary>
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
-        public static string? CollapseScalerExpressionFunctionParameter(this IExpressionFunctionParameter parameter, Transaction transaction,
-            PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functionDependencies)
+        public static TData? CollapseScalerExpressionFunctionParameter<TData>(this IExpressionFunctionParameter parameter, Transaction<TData> transaction,
+            PreparedQuery<TData> query, QueryFieldCollection<TData> fieldCollection, KbInsensitiveDictionary<TData?> auxiliaryFields, List<IQueryFieldExpressionFunction> functionDependencies) where TData : IStringable
         {
             if (parameter is ExpressionFunctionParameterString parameterString)
             {
@@ -109,8 +109,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// <summary>
         /// Collapses a string or numeric expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
-        private static string? CollapseScalerExpression(Transaction transaction,
-            PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields, ExposedExpression expression)
+        private static TData? CollapseScalerExpression<TData>(Transaction<TData> transaction,
+            PreparedQuery<TData> query, QueryFieldCollection<TData> fieldCollection, KbInsensitiveDictionary<TData?> auxiliaryFields, ExposedExpression expression) where TData:IStringable
         {
             if (expression.FieldExpression is QueryFieldExpressionNumeric expressionNumeric)
             {
@@ -130,9 +130,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Takes a string expression string and performs math on all of the values, including those from all
         ///     recursive function calls.
         /// </summary>
-        private static string? CollapseScalerFunctionNumericParameter(Transaction transaction,
-            PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
-            List<IQueryFieldExpressionFunction> functions, string expressionString)
+        private static TData? CollapseScalerFunctionNumericParameter<TData>(Transaction<TData> transaction,
+            PreparedQuery<TData> query, QueryFieldCollection<TData> fieldCollection, KbInsensitiveDictionary<TData?> auxiliaryFields,
+            List<IQueryFieldExpressionFunction> functions, string expressionString) where TData : IStringable
         {
             //Build a cachable numeric expression, interpolate the values and execute the expression.
 
@@ -140,7 +140,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
 
             int variableNumber = 0;
 
-            var expressionVariables = new Dictionary<string, string?>();
+            var expressionVariables = new Dictionary<string, TData?>();
 
             while (!tokenizer.IsExhausted())
             {
@@ -215,19 +215,22 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
 
             foreach (var expressionVariable in expressionVariables)
             {
-                expression.Parameters[expressionVariable.Key] = expressionVariable.Value == null ? null : double.Parse(expressionVariable.Value);
+                expression.Parameters[expressionVariable.Key] = expressionVariable.Value == null ? null :
+                    expressionVariable.Value is double ? expressionVariable.Value : expressionVariable.Value.ToT<double>();
             }
 
-            return expression.Evaluate()?.ToString() ?? string.Empty;
+            var exprStr = expression.Evaluate()?.ToString();
+            var exprTD = (TData)(exprStr == null ? StringExtensions.Empty : exprStr.ParseToT<TData>(EngineCore<TData>.StrCast));
+            return exprTD;
         }
 
         /// <summary>
         /// Takes a string expression string and concatenates all of the values, including those from all
         ///     recursive function calls. Concatenation which is really the only operation we support for strings.
         /// </summary>
-        private static string CollapseScalerFunctionStringParameter(Transaction transaction,
-            PreparedQuery query, QueryFieldCollection fieldCollection, KbInsensitiveDictionary<string?> auxiliaryFields,
-            List<IQueryFieldExpressionFunction> functions, string expressionString)
+        private static TData CollapseScalerFunctionStringParameter<TData>(Transaction<TData> transaction,
+            PreparedQuery<TData> query, QueryFieldCollection<TData> fieldCollection, KbInsensitiveDictionary<TData?> auxiliaryFields,
+            List<IQueryFieldExpressionFunction> functions, string expressionString) where TData : IStringable
         {
             var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
             string token;
@@ -262,7 +265,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                         //Resolve the field identifier to a value.
                         if (auxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
                         {
-                            if (double.TryParse(textValue, out _))
+                            if (textValue is double || (textValue != null && double.TryParse(textValue.ToString(), out _)))
                             {
                                 mathBuffer.Append(textValue);
                             }
@@ -355,7 +358,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 mathBuffer.Clear();
             }
 
-            string? ComputeAndClearMathBuffer(StringBuilder mathBuffer)
+            TData? ComputeAndClearMathBuffer(StringBuilder mathBuffer)
             {
                 if (mathBuffer.Length > 0)
                 {
@@ -386,10 +389,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                     return mathResult;
                 }
 
-                return string.Empty;
+                return (TData)StringExtensions.Empty;
             }
 
-            return stringResult.ToString();
+            return stringResult.ToString().ParseToT<TData>(EngineCore<TData>.StrCast);
         }
 
 
@@ -397,10 +400,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Takes a function and recursively collapses all of the parameters, then recursively
         ///     executes all dependency functions to collapse the function to a single value.
         /// </summary>
-        static string CollapseScalerFunction(Transaction transaction, PreparedQuery query, QueryFieldCollection fieldCollection,
-            KbInsensitiveDictionary<string?> auxiliaryFields, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function)
+        static TData CollapseScalerFunction<TData>(Transaction<TData> transaction, PreparedQuery<TData> query, QueryFieldCollection<TData> fieldCollection,
+            KbInsensitiveDictionary<TData?> auxiliaryFields, List<IQueryFieldExpressionFunction> functions, IQueryFieldExpressionFunction function) where TData : IStringable
         {
-            var collapsedParameters = new List<string?>();
+            var collapsedParameters = new List<TData?>();
 
             foreach (var parameter in function.Parameters)
             {
@@ -416,7 +419,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             var methodResult = ScalerFunctionImplementation.ExecuteFunction(transaction, function.FunctionName, collapsedParameters, auxiliaryFields);
 
             //TODO: think through the nullability here.
-            return methodResult ?? string.Empty;
+            return methodResult ?? (TData)StringExtensions.Empty;
         }
     }
 }

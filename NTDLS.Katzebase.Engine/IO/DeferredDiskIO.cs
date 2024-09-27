@@ -6,7 +6,7 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.IO
 {
-    internal class DeferredDiskIO
+    internal class DeferredDiskIO<TData> where TData : IStringable
     {
         private class DeferredDiskIOObject
         {
@@ -22,13 +22,13 @@ namespace NTDLS.Katzebase.Engine.IO
             }
         }
 
-        private EngineCore? _core;
+        private EngineCore<TData>? _core;
         private readonly PessimisticCriticalResource<KbInsensitiveDictionary<DeferredDiskIOObject>> _collection = new();
 
         public bool ContainsKey(string key)
             => _collection.Use(o => o.ContainsKey(key));
 
-        public void SetCore(EngineCore core)
+        public void SetCore(EngineCore<TData> core)
         {
             _core = core;
         }

@@ -11,9 +11,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
     /// <summary>
     /// Collection of query fields, which contains their names and values.
     /// </summary>
-    internal class QueryFieldCollection : List<QueryField>
+    internal class QueryFieldCollection<TData> : List<QueryField<TData>> where TData : IStringable
     {
-        public QueryBatch QueryBatch { get; private set; }
+        public QueryBatch<TData> QueryBatch { get; private set; }
 
         /// <summary>
         /// A list of all distinct document identifiers from all fields, even nested expressions.
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
             => $"$f_{_nextDocumentFieldKey++}$";
         private int _nextDocumentFieldKey = 0;
 
-        public QueryFieldCollection(QueryBatch queryBatch)
+        public QueryFieldCollection(QueryBatch<TData> queryBatch)
         {
             QueryBatch = queryBatch;
         }
@@ -103,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #region Collection: FieldsWithAggregateFunctionCalls.
 
-        private List<QueryField>? _exposedAggregateFunctions = null;
+        private List<QueryField<TData>>? _exposedAggregateFunctions = null;
         private readonly object _exposedAggregateFunctionsLock = new();
 
         public void InvalidateFieldsWithAggregateFunctionCallsCache()
@@ -117,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <summary>
         /// Returns a list of fields that have function call dependencies.
         /// </summary>
-        public List<QueryField> FieldsWithAggregateFunctionCalls
+        public List<QueryField<TData>> FieldsWithAggregateFunctionCalls
         {
             get
             {
@@ -133,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _exposedAggregateFunctions;
                         }
 
-                        var results = new List<QueryField>();
+                        var results = new List<QueryField<TData>>();
 
                         foreach (var queryField in this)
                         {

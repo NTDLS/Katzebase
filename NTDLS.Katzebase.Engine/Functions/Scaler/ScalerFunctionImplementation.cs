@@ -48,11 +48,11 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 "String Trim  (String text)",
             };
 
-        public static string? ExecuteFunction(Transaction transaction, string functionName, List<string?> parameters, KbInsensitiveDictionary<string?> rowValues)
+        public static TData? ExecuteFunction<TData>(Transaction<TData> transaction, string functionName, List<TData?> parameters, KbInsensitiveDictionary<TData?> rowValues) where TData:IStringable
         {
-            var function = ScalerFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
+            var function = ScalerFunctionCollection<TData>.ApplyFunctionPrototype(functionName, parameters);
 
-            return functionName.ToLowerInvariant() switch
+            string? rtn = functionName.ToLowerInvariant() switch
             {
                 "isbetween" => ScalerIsBetween.Execute(transaction, function),
                 "isequal" => ScalerIsEqual.Execute(transaction, function),
@@ -67,7 +67,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 "checksum" => ScalerChecksum.Execute(function),
                 "lastindexof" => ScalerLastIndexOf.Execute(function),
                 "length" => ScalerLength.Execute(function),
-                "coalesce" => ScalerCoalesce.Execute(parameters),
+                "coalesce" => ScalerCoalesce.Execute(parameters)?.ToString(),
                 "concat" => ScalerConcat.Execute(parameters),
                 "datetime" => ScalerDateTime.Execute(function),
                 "datetimeutc" => ScalerDateTimeUTC.Execute(function),
@@ -90,6 +90,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
                 _ => throw new KbParserException($"The scaler function is not implemented: [{functionName}].")
             };
+            return rtn.ParseToT<TData>(EngineCore<TData>.StrCast);
         }
     }
 }

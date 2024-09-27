@@ -5,11 +5,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to health.
     /// </summary>
-    public class HealthAPIHandlers
+    public class HealthAPIHandlers<TData>
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public HealthAPIHandlers(EngineCore core)
+        public HealthAPIHandlers(EngineCore<TData> core)
         {
             _core = core;
 

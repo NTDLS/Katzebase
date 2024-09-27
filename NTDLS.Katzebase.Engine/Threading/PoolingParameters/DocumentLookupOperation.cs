@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// <summary>
     /// Thread parameters for a lookup operations. Shared across all threads in a single operation.
     /// </summary>
-    internal class DocumentLookupOperation
+    internal class DocumentLookupOperation<TData> where TData : IStringable
     {
         /// <summary>
         /// Contains the list of field values for the grouping fields, and the need-to-be aggregated values for fields
@@ -19,15 +19,15 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         public Dictionary<string, GroupRowCollection> GroupRows { get; set; } = new();
 
         public string[]? GatherDocumentsIdsForSchemaPrefixes { get; set; } = null;
-        public SchemaIntersectionRowCollection ResultingRows { get; set; } = new();
+        public SchemaIntersectionRowCollection<TData> ResultingRows { get; set; } = new();
         public List<SchemaIntersectionRowDocumentIdentifier> RowDocumentIdentifiers { get; set; } = new();
-        public QuerySchemaMap SchemaMap { get; private set; }
-        public EngineCore Core { get; private set; }
-        public Transaction Transaction { get; private set; }
+        public QuerySchemaMap<TData> SchemaMap { get; private set; }
+        public EngineCore<TData> Core { get; private set; }
+        public Transaction<TData> Transaction { get; private set; }
         public PreparedQuery Query { get; private set; }
 
-        public DocumentLookupOperation(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMap, PreparedQuery query, string[]? getDocumentsIdsForSchemaPrefixes)
+        public DocumentLookupOperation(EngineCore<TData> core, Transaction<TData> transaction,
+            QuerySchemaMap<TData> schemaMap, PreparedQuery query, string[]? getDocumentsIdsForSchemaPrefixes)
         {
             GatherDocumentsIdsForSchemaPrefixes = getDocumentsIdsForSchemaPrefixes;
             Core = core;
@@ -41,10 +41,10 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// </summary>
         /// <param name="operation"></param>
         /// <param name="documentPointer"></param>
-        internal class Instance(DocumentLookupOperation operation, DocumentPointer documentPointer)
+        internal class Instance(DocumentLookupOperation<TData> operation, DocumentPointer documentPointer)
         {
             public Semaphore.OptimisticCriticalResource<Dictionary<string, NCalc.Expression>> ExpressionCache { get; set; } = new();
-            public DocumentLookupOperation Operation { get; set; } = operation;
+            public DocumentLookupOperation<TData> Operation { get; set; } = operation;
             public DocumentPointer DocumentPointer { get; set; } = documentPointer;
         }
     }

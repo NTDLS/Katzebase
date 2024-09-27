@@ -7,16 +7,16 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// <summary>
     /// Thread parameters for a index rebuild. Shared across all threads in a single operation.
     /// </summary>
-    internal class RebuildIndexOperation
+    internal class RebuildIndexOperation<TData> where TData : IStringable
     {
-        public Transaction Transaction { get; set; }
+        public Transaction<TData> Transaction { get; set; }
         public PhysicalSchema PhysicalSchema { get; set; }
-        public PhysicalIndex PhysicalIndex { get; set; }
+        public PhysicalIndex<TData> PhysicalIndex { get; set; }
         public Dictionary<uint, PhysicalIndexPages> PhysicalIndexPageMap { get; set; }
         public object[] SyncObjects { get; private set; }
 
-        public RebuildIndexOperation(Transaction transaction, PhysicalSchema physicalSchema,
-            Dictionary<uint, PhysicalIndexPages> physicalIndexPageMap, PhysicalIndex physicalIndex, uint indexPartitions)
+        public RebuildIndexOperation(Transaction<TData> transaction, PhysicalSchema physicalSchema,
+            Dictionary<uint, PhysicalIndexPages> physicalIndexPageMap, PhysicalIndex<TData> physicalIndex, uint indexPartitions)
         {
             SyncObjects = new object[indexPartitions];
 
@@ -34,9 +34,9 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// <summary>
         /// Thread parameters for a index rebuild operation. Used by a single thread.
         /// </summary>
-        internal class Instance(RebuildIndexOperation operation, int pageNumber)
+        internal class Instance(RebuildIndexOperation<TData> operation, int pageNumber)
         {
-            public RebuildIndexOperation Operation { get; set; } = operation;
+            public RebuildIndexOperation<TData> Operation { get; set; } = operation;
             public int PageNumber { get; set; } = pageNumber;
         }
     }

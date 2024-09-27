@@ -2,7 +2,7 @@
 {
     internal static class ScalerCoalesce
     {
-        public static string? Execute(List<string?> parameters)
+        public static TData? Execute<TData>(List<TData?> parameters) where TData : IStringable
         {
             foreach (var p in parameters)
             {
@@ -11,7 +11,7 @@
                     return p;
                 }
             }
-            return null;
+            return default(TData);
         }
     }
 }

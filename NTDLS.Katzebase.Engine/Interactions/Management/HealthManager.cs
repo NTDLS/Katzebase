@@ -10,24 +10,24 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to health.
     /// </summary>
-    public class HealthManager
+    public class HealthManager<TData>
     {
         internal OptimisticCriticalResource<KbInsensitiveDictionary<HealthCounter>> Counters { get; private set; } = new();
 
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
         private DateTime lastCheckpoint = DateTime.MinValue;
 
-        internal HealthQueryHandlers QueryHandlers { get; private set; }
-        public HealthAPIHandlers APIHandlers { get; private set; }
+        internal HealthQueryHandlers<TData> QueryHandlers { get; private set; }
+        public HealthAPIHandlers<TData> APIHandlers { get; private set; }
 
-        internal HealthManager(EngineCore core)
+        internal HealthManager(EngineCore<TData> core)
         {
             _core = core;
 
             try
             {
-                QueryHandlers = new HealthQueryHandlers(core);
-                APIHandlers = new HealthAPIHandlers(core);
+                QueryHandlers = new HealthQueryHandlers<TData>(core);
+                APIHandlers = new HealthAPIHandlers<TData>(core);
 
                 string healthCounterDiskPath = Path.Combine(core.Settings.LogDirectory, HealthStatsFile);
                 if (File.Exists(healthCounterDiskPath))

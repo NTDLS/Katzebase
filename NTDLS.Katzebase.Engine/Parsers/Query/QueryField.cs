@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
     /// <summary>
     /// Contains the highest level of query fields, these are things like a select list or update list.
     /// </summary>
-    internal class QueryField
+    internal class QueryField<TData> where TData : IStringable
     {
         /// <summary>
         /// Alias of the expression, such as "SELECT 10+10 as Salary", Alias would contain "Salary".
@@ -17,9 +17,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <summary>
         /// Contains an instance that defines the value of the query field (could be a string, number, string or numeric expression, or a function call).
         /// </summary>
-        public IQueryField Expression { get; set; }
+        public IQueryField<TData> Expression { get; set; }
 
-        public QueryField(string alias, int ordinal, IQueryField expression)
+        public QueryField(string alias, int ordinal, IQueryField<TData> expression)
         {
             Alias = alias;
             Ordinal = ordinal;

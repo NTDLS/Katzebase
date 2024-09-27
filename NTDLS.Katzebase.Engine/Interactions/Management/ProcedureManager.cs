@@ -12,14 +12,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to procedures.
     /// </summary>
-    public class ProcedureManager
+    public class ProcedureManager<TData>
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
         internal ProcedureQueryHandlers QueryHandlers { get; private set; }
         public ProcedureAPIHandlers APIHandlers { get; private set; }
 
-        internal ProcedureManager(EngineCore core)
+        internal ProcedureManager(EngineCore<TData> core)
         {
             _core = core;
 
@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void CreateCustomProcedure(Transaction transaction, string schemaName,
+        internal void CreateCustomProcedure(Transaction<TData> transaction, string schemaName,
             string objectName, List<PhysicalProcedureParameter> parameters, List<string> Batches)
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal PhysicalProcedureCatalog Acquire(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
+        internal PhysicalProcedureCatalog Acquire(Transaction<TData> transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
         {
             if (File.Exists(physicalSchema.ProcedureCatalogFilePath()) == false)
             {
@@ -80,7 +80,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _core.IO.GetJson<PhysicalProcedureCatalog>(transaction, physicalSchema.ProcedureCatalogFilePath(), intendedOperation);
         }
 
-        internal PhysicalProcedure? Acquire(Transaction transaction,
+        internal PhysicalProcedure? Acquire(Transaction<TData> transaction,
             PhysicalSchema physicalSchema, string procedureName, LockOperation intendedOperation)
         {
             procedureName = procedureName.ToLowerInvariant();
@@ -96,7 +96,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return procedureCatalog.Collection.FirstOrDefault(o => o.Name.Is(procedureName));
         }
 
-        internal KbQueryResultCollection ExecuteProcedure(Transaction transaction, string schemaName, string procedureName)
+        internal KbQueryResultCollection ExecuteProcedure(Transaction<TData> transaction, string schemaName, string procedureName)
         {
             throw new NotImplementedException("Reimplement user procedures");
         }

@@ -4,12 +4,12 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Locking
 {
-    internal class ObjectLock
+    internal class ObjectLock<TData> where TData : IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
         public string DiskPath { get; private set; }
         public LockGranularity Granularity { get; private set; }
-        public OptimisticCriticalResource<List<ObjectLockKey>> Keys { get; private set; }
+        public OptimisticCriticalResource<List<ObjectLockKey<TData>>> Keys { get; private set; }
 
         /// <summary>
         /// The total number of times we attempted to lock this object.
@@ -17,10 +17,10 @@ namespace NTDLS.Katzebase.Engine.Locking
         /// </summary>
         public ulong Hits { get; set; }
 
-        public ObjectLock(EngineCore core, ObjectLockIntention intention)
+        public ObjectLock(EngineCore<TData> core, ObjectLockIntention intention)
         {
             _core = core;
-            Keys = new OptimisticCriticalResource<List<ObjectLockKey>>(core.LockManagementSemaphore);
+            Keys = new OptimisticCriticalResource<List<ObjectLockKey<TData>>>(core.LockManagementSemaphore);
             DiskPath = intention.DiskPath;
             Granularity = intention.Granularity;
 
@@ -53,11 +53,11 @@ namespace NTDLS.Katzebase.Engine.Locking
             return snapshot;
         }
 
-        public ObjectLockKey IssueSingleUseKey(Transaction transaction, ObjectLockIntention lockIntention)
+        public ObjectLockKey<TData> IssueSingleUseKey(Transaction<TData> transaction, ObjectLockIntention lockIntention)
         {
             try
             {
-                var key = new ObjectLockKey(this, transaction.ProcessId, lockIntention.Operation);
+                var key = new ObjectLockKey<TData>(this, transaction.ProcessId, lockIntention.Operation);
                 Keys.Write((obj) =>
                 {
                     obj.Add(key);
@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Locking
             }
         }
 
-        public void TurnInKey(ObjectLockKey key)
+        public void TurnInKey(ObjectLockKey<TData> key)
         {
             try
             {

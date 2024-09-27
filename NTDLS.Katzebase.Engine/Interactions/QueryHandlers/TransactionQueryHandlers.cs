@@ -7,11 +7,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// <summary>
     /// Internal class methods for handling query requests related to transactions.
     /// </summary>
-    internal class TransactionQueryHandlers
+    internal class TransactionQueryHandlers<TData> where TData : IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public TransactionQueryHandlers(EngineCore core)
+        public TransactionQueryHandlers(EngineCore<TData> core)
         {
             _core = core;
 
@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        public TransactionReference Begin(SessionState session) => _core.Transactions.Acquire(session, true);
+        public TransactionReference<TData> Begin(SessionState session) => _core.Transactions.Acquire(session, true);
         public void Commit(SessionState session) => _core.Transactions.Commit(session);
         public void Rollback(SessionState session) => _core.Transactions.Rollback(session);
     }

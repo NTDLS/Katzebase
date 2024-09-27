@@ -37,32 +37,32 @@ namespace NTDLS.Katzebase.Engine.Functions.System
             };
         /*
          * */
-        public static KbQueryResultCollection ExecuteFunction(EngineCore core, Transaction transaction, string functionName, List<string?> parameters)
+        public static KbQueryResultCollection ExecuteFunction<TData>(EngineCore<TData> core, Transaction<TData> transaction, string functionName, List<string?> parameters)
         {
             var function = SystemFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
 
             return functionName.ToLowerInvariant() switch
             {
-                "checkpointhealthcounters" => SystemCheckPointHealthCounters.Execute(core, transaction, function),
-                "clearcacheallocations" => SystemClearCacheAllocations.Execute(core, transaction, function),
-                "clearhealthcounters" => SystemClearHealthCounters.Execute(core, transaction, function),
-                "releasecacheallocations" => SystemReleaseCacheAllocations.Execute(core, transaction, function),
-                "showaggregatefunctions" => SystemShowAggregateFunctions.Execute(core, transaction, function),
-                "showblocks" => SystemShowBlocks.Execute(core, transaction, function),
-                "showblocktree" => SystemShowBlockTree.Execute(core, transaction, function),
-                "showcacheallocations" => SystemShowCacheAllocations.Execute(core, transaction, function),
-                "showcachepages" => SystemShowCachePages.Execute(core, transaction, function),
-                "showcachepartitions" => SystemShowCachePartitions.Execute(core, transaction, function),
-                "showhealthcounters" => SystemShowHealthCounters.Execute(core, transaction, function),
-                "showlocks" => SystemShowLocks.Execute(core, transaction, function),
-                "showmemoryutilization" => SystemShowMemoryUtilization.Execute(core, transaction, function),
-                "showprocesses" => SystemShowProcesses.Execute(core, transaction, function),
-                "showscalerfunctions" => SystemShowScalerFunctions.Execute(core, transaction, function),
-                "showsystemfunctions" => SystemShowSystemFunctions.Execute(core, transaction, function),
-                "showtransactions" => SystemShowTransactions.Execute(core, transaction, function),
-                "showversion" => SystemShowVersion.Execute(core, transaction, function),
-                "showwaitinglocks" => SystemShowWaitingLocks.Execute(core, transaction, function),
-                "terminate" => SystemTerminate.Execute(core, transaction, function),
+                "checkpointhealthcounters"  => SystemCheckPointHealthCounters.Execute<TData>(core, transaction, function),
+                "clearcacheallocations"     => SystemClearCacheAllocations.Execute<TData>(core, transaction, function),
+                "clearhealthcounters"       => SystemClearHealthCounters.Execute<TData>(core, transaction, function),
+                "releasecacheallocations"   => SystemReleaseCacheAllocations.Execute<TData>(core, transaction, function),
+                "showaggregatefunctions"    => SystemShowAggregateFunctions.Execute<TData>(core, transaction, function),
+                "showblocks"                => SystemShowBlocks.Execute<TData>(core, transaction, function),
+                "showblocktree"             => SystemShowBlockTree.Execute<TData>(core, transaction, function),
+                "showcacheallocations"      => SystemShowCacheAllocations.Execute(core, transaction, function),
+                "showcachepages"            => SystemShowCachePages.Execute(core, transaction, function),
+                "showcachepartitions"       => SystemShowCachePartitions.Execute(core, transaction, function),
+                "showhealthcounters"        => SystemShowHealthCounters.Execute(core, transaction, function),
+                "showlocks"                 => SystemShowLocks.Execute(core, transaction, function),
+                "showmemoryutilization"     => SystemShowMemoryUtilization.Execute(core, transaction, function),
+                "showprocesses"             => SystemShowProcesses.Execute(core, transaction, function),
+                "showscalerfunctions"       => SystemShowScalerFunctions.Execute(core, transaction, function),
+                "showsystemfunctions"       => SystemShowSystemFunctions.Execute(core, transaction, function),
+                "showtransactions"          => SystemShowTransactions.Execute(core, transaction, function),
+                "showversion"               => SystemShowVersion.Execute(core, transaction, function),
+                "showwaitinglocks"          => SystemShowWaitingLocks.Execute(core, transaction, function),
+                "terminate"                 => SystemTerminate.Execute(core, transaction, function),
 
                 _ => throw new KbParserException($"The system function is not implemented: [{functionName}].")
             };

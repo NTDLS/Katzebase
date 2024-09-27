@@ -4,29 +4,29 @@ using NTDLS.Katzebase.Shared;
 namespace NTDLS.Katzebase.Engine.Indexes
 {
     [Serializable]
-    public class PhysicalIndexCatalog
+    public class PhysicalIndexCatalog<TData> where TData:IStringable
     {
-        public List<PhysicalIndex> Collection = new();
+        public List<PhysicalIndex<TData>> Collection = new();
 
         [JsonIgnore]
         public string? DiskPath { get; set; }
 
-        public void Remove(PhysicalIndex item)
+        public void Remove(PhysicalIndex<TData> item)
         {
             Collection.Remove(item);
         }
 
-        public void Add(PhysicalIndex item)
+        public void Add(PhysicalIndex<TData> item)
         {
             Collection.Add(item);
         }
 
-        public PhysicalIndex? GetById(Guid id)
+        public PhysicalIndex<TData>? GetById(Guid id)
         {
             return (from o in Collection where o.Id == id select o).FirstOrDefault();
         }
 
-        public PhysicalIndex? GetByName(string name)
+        public PhysicalIndex<TData>? GetByName(string name)
         {
             foreach (var item in Collection)
             {
@@ -38,9 +38,9 @@ namespace NTDLS.Katzebase.Engine.Indexes
             return null;
         }
 
-        public PhysicalIndexCatalog Clone()
+        public PhysicalIndexCatalog<TData> Clone()
         {
-            var catalog = new PhysicalIndexCatalog();
+            var catalog = new PhysicalIndexCatalog<TData>();
 
             foreach (var obj in Collection)
             {

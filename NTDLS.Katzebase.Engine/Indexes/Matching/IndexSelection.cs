@@ -3,18 +3,18 @@ using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
-    internal class IndexSelection
+    internal class IndexSelection<TData> where TData : IStringable
     {
         public HashSet<ConditionEntry> CoveredConditions { get; private set; } = new();
 
-        public PhysicalIndex PhysicalIndex { get; private set; }
+        public PhysicalIndex<TData> PhysicalIndex { get; private set; }
 
         /// <summary>
         /// When true, this means that we have all the fields we need to satisfy all index attributes for a index seek operation.
         /// </summary>
         public bool IsFullIndexMatch { get; set; } = false;
 
-        public IndexSelection(PhysicalIndex index)
+        public IndexSelection(PhysicalIndex<TData> index)
         {
             PhysicalIndex = index;
         }
@@ -33,9 +33,9 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             return PhysicalIndex.Name.GetHashCode();
         }
 
-        public IndexSelection Clone()
+        public IndexSelection<TData> Clone()
         {
-            var clone = new IndexSelection(PhysicalIndex)
+            var clone = new IndexSelection<TData>(PhysicalIndex)
             {
                 IsFullIndexMatch = IsFullIndexMatch,
             };

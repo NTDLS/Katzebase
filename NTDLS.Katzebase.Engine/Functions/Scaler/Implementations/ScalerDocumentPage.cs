@@ -6,14 +6,17 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {
     internal static class ScalerDocumentPage
     {
-        public static string? Execute(ScalerFunctionParameterValueCollection function, KbInsensitiveDictionary<string?> rowValues)
+        public static string? Execute<TData>(ScalerFunctionParameterValueCollection<TData> function, KbInsensitiveDictionary<TData?> rowValues) where TData : IStringable
         {
             var rowId = rowValues.FirstOrDefault(o => o.Key == $"{function.Get<string>("schemaAlias")}.{EngineConstants.UIDMarker}");
             if (rowId.Value == null)
             {
                 return null;
             }
-            return DocumentPointer.Parse(rowId.Value).PageNumber.ToString();
+            else
+            {
+                return DocumentPointer.Parse(rowId.Value.ToString()).PageNumber.ToString();
+            }
         }
     }
 }

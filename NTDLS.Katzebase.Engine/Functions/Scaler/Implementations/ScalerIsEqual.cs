@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {
     internal static class ScalerIsEqual
     {
-        public static string? Execute(Transaction transaction, ScalerFunctionParameterValueCollection function)
+        public static string? Execute<TData>(Transaction<TData> transaction, ScalerFunctionParameterValueCollection<TData> function) where TData : IStringable
         {
             return (ConditionEntry.IsMatchEqual(transaction, function.Get<string>("text1"), function.Get<string>("text2")) == true).ToString();
         }

@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {
     internal static class ScalerIsLike
     {
-        public static string? Execute(Transaction transaction, ScalerFunctionParameterValueCollection function)
+        public static string? Execute<TData>(Transaction<TData> transaction, ScalerFunctionParameterValueCollection<TData> function) where TData : IStringable
         {
             return (ConditionEntry.IsMatchLike(transaction, function.Get<string>("text"), function.Get<string>("pattern")) == true).ToString();
         }

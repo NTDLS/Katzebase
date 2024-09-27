@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Engine.Documents;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
-    internal class SchemaIntersectionRow : List<string?>
+    internal class SchemaIntersectionRow<TData> : List<TData?> where TData :IStringable
     {
         public KbInsensitiveDictionary<DocumentPointer> SchemaDocumentPointers { get; private set; } = new();
 
@@ -17,16 +17,16 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
         /// Auxiliary fields are values that may be used for method calls, sorting, grouping, etc.
         ///     where the fields value may not necessarily be returned directly in the results.
         /// </summary>
-        public KbInsensitiveDictionary<string?> AuxiliaryFields { get; private set; } = new();
+        public KbInsensitiveDictionary<TData?> AuxiliaryFields { get; private set; } = new();
 
-        public void InsertValue(string fieldNameForException, int ordinal, string? value)
+        public void InsertValue(string fieldNameForException, int ordinal, TData? value)
         {
             if (Count <= ordinal)
             {
                 int difference = ordinal + 1 - Count;
                 if (difference > 0)
                 {
-                    AddRange(new string[difference]);
+                    AddRange(new TData[difference]);
                 }
             }
             if (this[ordinal] != null)
@@ -42,9 +42,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
             SchemaDocumentPointers.Add(schemaPrefix, documentPointer);
         }
 
-        public SchemaIntersectionRow Clone()
+        public SchemaIntersectionRow<TData> Clone()
         {
-            var newRow = new SchemaIntersectionRow
+            var newRow = new SchemaIntersectionRow<TData>
             {
                 SchemaKeys = new HashSet<string>(SchemaKeys)
             };

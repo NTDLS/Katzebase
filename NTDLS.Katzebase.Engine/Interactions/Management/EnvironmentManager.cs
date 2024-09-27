@@ -11,14 +11,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to configuration.
     /// </summary>
-    public class EnvironmentManager
+    public class EnvironmentManager<TData>
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
         internal EnvironmentQueryHandlers QueryHandlers { get; private set; }
         public EnvironmentAPIHandlers APIHandlers { get; private set; }
 
-        internal EnvironmentManager(EngineCore core)
+        internal EnvironmentManager(EngineCore<TData> core)
         {
             _core = core;
 
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void Alter(Transaction transaction, Dictionary<QueryAttribute, object> attributes)
+        internal void Alter(Transaction<TData> transaction, Dictionary<QueryAttribute, object> attributes)
         {
             try
             {

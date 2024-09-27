@@ -7,21 +7,21 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
     /// <summary>
     /// Contains a parsed function prototype.
     /// </summary>
-    public class ScalerFunction
+    public class ScalerFunction<TData> where TData : IStringable
     {
         public string Name { get; private set; }
         public KbScalerFunctionParameterType ReturnType { get; private set; }
-        public List<ScalerFunctionParameterPrototype> Parameters { get; private set; } = new();
+        public List<ScalerFunctionParameterPrototype<TData>> Parameters { get; private set; } = new();
 
 
-        public ScalerFunction(string name, KbScalerFunctionParameterType returnType, List<ScalerFunctionParameterPrototype> parameters)
+        public ScalerFunction(string name, KbScalerFunctionParameterType returnType, List<ScalerFunctionParameterPrototype<TData>> parameters)
         {
             Name = name;
             ReturnType = returnType;
             Parameters.AddRange(parameters);
         }
 
-        public static ScalerFunction Parse(string prototype)
+        public static ScalerFunction<TData> Parse(string prototype)
         {
             var tokenizer = new Tokenizer(prototype, true);
 
@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             bool foundOptionalParameter = false;
             bool infiniteParameterFound = false;
 
-            var parameters = new List<ScalerFunctionParameterPrototype>();
+            var parameters = new List<ScalerFunctionParameterPrototype<TData>>();
             var parametersStrings = tokenizer.EatGetMatchingScope().ScopeSensitiveSplit(',');
 
             foreach (var parametersString in parametersStrings)
@@ -82,7 +82,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                         optionalParameterDefaultValue = null;
                     }
 
-                    parameters.Add(new ScalerFunctionParameterPrototype(paramType, parameterName, optionalParameterDefaultValue));
+                    parameters.Add(new ScalerFunctionParameterPrototype<TData>(paramType, parameterName, (TData)(optionalParameterDefaultValue?.ToStringable() ?? StringExtensions.Empty())));
 
                     foundOptionalParameter = true;
                 }
@@ -94,7 +94,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                         throw new KbEngineException($"Invalid scaler function [{functionName}] parameter [{parameterName}] must define a default.");
                     }
 
-                    parameters.Add(new ScalerFunctionParameterPrototype(paramType, parameterName));
+                    parameters.Add(new ScalerFunctionParameterPrototype<TData>(paramType, parameterName));
                 }
 
                 if (paramType == KbScalerFunctionParameterType.StringInfinite)
@@ -111,12 +111,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 throw new KbEngineException($"Failed to parse scaler function [{functionName}] prototype, expected end-of-line: [{tokenizer.Remainder}].");
             }
 
-            return new ScalerFunction(functionName, returnType, parameters);
+            return new ScalerFunction<TData>(functionName, returnType, parameters);
         }
 
-        internal ScalerFunctionParameterValueCollection ApplyParameters(List<string?> values)
+        internal ScalerFunctionParameterValueCollection<TData> ApplyParameters(List<TData?> values)
         {
-            var result = new ScalerFunctionParameterValueCollection();
+            var result = new ScalerFunctionParameterValueCollection<TData>();
 
             int satisfiedParameterCount = 0;
 
@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     //parameter in the prototype, it eats the remainder of the passed parameters.
                     for (int passedParamIndex = protoParamIndex; passedParamIndex < values.Count; passedParamIndex++)
                     {
-                        result.Values.Add(new ScalerFunctionParameterValue(Parameters[protoParamIndex], values[passedParamIndex]));
+                        result.Values.Add(new ScalerFunctionParameterValue<TData>(Parameters[protoParamIndex], values[passedParamIndex]));
                     }
                     break;
                 }
@@ -137,7 +137,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 {
                     if (Parameters[protoParamIndex].HasDefault)
                     {
-                        result.Values.Add(new ScalerFunctionParameterValue(Parameters[protoParamIndex], Parameters[protoParamIndex].DefaultValue));
+                        result.Values.Add(new ScalerFunctionParameterValue<TData>(Parameters[protoParamIndex], Parameters[protoParamIndex].DefaultValue));
                     }
                     else
                     {
@@ -146,7 +146,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 }
                 else
                 {
-                    result.Values.Add(new ScalerFunctionParameterValue(Parameters[protoParamIndex], values[protoParamIndex]));
+                    result.Values.Add(new ScalerFunctionParameterValue<TData>(Parameters[protoParamIndex], values[protoParamIndex]));
                 }
 
                 satisfiedParameterCount++;

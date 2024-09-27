@@ -2,7 +2,7 @@
 {
     internal static class ScalerSha256
     {
-        public static string? Execute(ScalerFunctionParameterValueCollection function)
+        public static string? Execute<TData>(ScalerFunctionParameterValueCollection<TData> function)
         {
             return Library.Helpers.GetSHA256Hash(function.Get<string>("text"));
         }

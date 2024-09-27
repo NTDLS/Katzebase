@@ -11,11 +11,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to schema.
     /// </summary>
-    public class SchemaAPIHandlers : IRmMessageHandler
+    public class SchemaAPIHandlers<TData> : IRmMessageHandler where TData : IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public SchemaAPIHandlers(EngineCore core)
+        public SchemaAPIHandlers(EngineCore<TData> core)
         {
             _core = core;
 

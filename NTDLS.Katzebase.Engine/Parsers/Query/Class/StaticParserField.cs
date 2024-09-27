@@ -10,12 +10,12 @@ using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal class StaticParserField
+    internal class StaticParserField<TData> where TData : IStringable
     {
         /// <summary>
         /// Parses a field expression containing fields, functions. string and math operations.
         /// </summary>
-        public static IQueryField Parse(Tokenizer parentTokenizer, string givenFieldText, QueryFieldCollection queryFields)
+        public static IQueryField<TData> Parse(Tokenizer parentTokenizer, string givenFieldText, QueryFieldCollection<TData> queryFields)
         {
             Tokenizer tokenizer = new(givenFieldText);
 
@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             {
                 if (token.IsQueryFieldIdentifier())
                 {
-                    if (ScalerFunctionCollection.TryGetFunction(token, out var _))
+                    if (ScalerFunctionCollection<TData>.TryGetFunction(token, out var _))
                     {
                         //This is a function call, but it is the only token - that's not a valid function call.
                         throw new KbParserException($"Function scaler expects parentheses: [{token}]");
@@ -176,7 +176,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// Parses a function call and its parameters, add them to the passed queryFieldExpressionFunction.
         /// </summary>
         private static void ParseFunctionCallRecursive(Tokenizer parentTokenizer, ref IQueryFieldExpression rootQueryFieldExpression,
-            IQueryFieldExpressionFunction queryFieldExpressionFunction, ref QueryFieldCollection queryFields,
+            IQueryFieldExpressionFunction queryFieldExpressionFunction, ref QueryFieldCollection<TData> queryFields,
             Tokenizer tokenizer, int positionBeforeToken)
         {
             //This contains the text between the open and close parenthesis of a function call, but not the parenthesis themselves or the function name.

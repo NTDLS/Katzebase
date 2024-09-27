@@ -28,8 +28,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <param name="gatherDocumentsIdsForSchemaPrefixes">When not null, the process will focus on
         /// obtaining a list of DocumentPointers instead of key/values. This is used for UPDATES and DELETES.</param>
         /// <returns></returns>
-        internal static DocumentLookupResults GetDocumentsByConditions(EngineCore core, Transaction transaction,
-            QuerySchemaMap schemaMap, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null)
+        internal static DocumentLookupResults GetDocumentsByConditions<TData>(EngineCore<TData> core, Transaction<TData> transaction,
+            QuerySchemaMap<TData> schemaMap, PreparedQuery query, string[]? gatherDocumentsIdsForSchemaPrefixes = null) where TData : IStringable
         {
             var topLevelSchemaMap = schemaMap.First().Value;
 
@@ -56,8 +56,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             //If we do not have any documents, then get the whole schema.
             documentPointers ??= core.Documents.AcquireDocumentPointers(transaction, topLevelSchemaMap.PhysicalSchema, LockOperation.Read);
 
-            var queue = core.ThreadPool.Lookup.CreateChildQueue<DocumentLookupOperation.Instance>(core.Settings.LookupOperationThreadPoolQueueDepth);
-            var operation = new DocumentLookupOperation(core, transaction, schemaMap, query, gatherDocumentsIdsForSchemaPrefixes);
+            var queue = core.ThreadPool.Lookup.CreateChildQueue<DocumentLookupOperation<TData>.Instance>(core.Settings.LookupOperationThreadPoolQueueDepth);
+            var operation = new DocumentLookupOperation<TData>(core, transaction, schemaMap, query, gatherDocumentsIdsForSchemaPrefixes);
 
             foreach (var documentPointer in documentPointers)
             {
@@ -73,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     break;
                 }
 
-                var instance = new DocumentLookupOperation.Instance(operation, documentPointer);
+                var instance = new DocumentLookupOperation<TData>.Instance(operation, documentPointer);
 
                 var ptThreadQueue = transaction.Instrumentation.CreateToken(PerformanceCounter.ThreadQueue);
                 queue.Enqueue(instance, LookupThreadWorker/*, (QueueItemState<DocumentLookupOperation.Parameter> o) =>
@@ -214,15 +214,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
         #region Threading: DocumentLookupThreadInstance.
 
-        private static void LookupThreadWorker(DocumentLookupOperation.Instance instance)
+        private static void LookupThreadWorker<TData>(DocumentLookupOperation<TData>.Instance instance) where TData : IStringable
         {
             instance.Operation.Transaction.EnsureActive();
 
-            var resultingRows = new SchemaIntersectionRowCollection();
+            var resultingRows = new SchemaIntersectionRowCollection<TData>();
 
             IntersectAllSchemas(instance, instance.DocumentPointer, ref resultingRows);
 
-            if (instance.Operation.Query.GroupFields.Any() == false)
+            if (instance.Operation.Query.GroupFields.Any() == false && instance.Operation.Query.SelectFields.FieldsWithAggregateFunctionCalls.Count == 0)
             {
                 //We ARE NOT grouping, so collapse all field expressions as scaler expressions.
                 instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
@@ -332,26 +332,26 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
         #endregion
 
-        private static void IntersectAllSchemas(DocumentLookupOperation.Instance instance,
-            DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection resultingRows)
+        private static void IntersectAllSchemas<TData>(DocumentLookupOperation<TData>.Instance instance,
+            DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection<TData> resultingRows) where TData: IStringable
         {
             var topLevelSchemaMap = instance.Operation.SchemaMap.First();
 
             var topLevelPhysicalDocument = instance.Operation.Core.Documents.AcquireDocument
                 (instance.Operation.Transaction, topLevelSchemaMap.Value.PhysicalSchema, topLevelDocumentPointer, LockOperation.Read);
 
-            var threadScopedContentCache = new KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>
+            var threadScopedContentCache = new KbInsensitiveDictionary<KbInsensitiveDictionary<TData?>>
             {
                 { $"{topLevelSchemaMap.Key.ToLowerInvariant()}:{topLevelDocumentPointer.Key.ToLowerInvariant()}", topLevelPhysicalDocument.Elements }
             };
 
             //This cache is used to store the content of all documents required for a single row join.
-            var joinScopedContentCache = new KbInsensitiveDictionary<KbInsensitiveDictionary<string?>>
+            var joinScopedContentCache = new KbInsensitiveDictionary<KbInsensitiveDictionary<TData?>>
             {
                 { topLevelSchemaMap.Key.ToLowerInvariant(), topLevelPhysicalDocument.Elements }
             };
 
-            var resultingRow = new SchemaIntersectionRow();
+            var resultingRow = new SchemaIntersectionRow<TData>();
             resultingRows.Add(resultingRow);
 
             if (instance.Operation.GatherDocumentsIdsForSchemaPrefixes != null)
@@ -404,10 +404,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <param name="resultingRows">The buffer containing all of the rows which have been found.</param>
         /// <param name="threadScopedContentCache">Document cache for the lifetime of the entire join operation for this thread.</param>
         /// <param name="joinScopedContentCache">>Document cache used the lifetime of a single row join for this thread.</param>
-        private static void IntersectAllSchemasRecursive(DocumentLookupOperation.Instance instance,
-            int skipSchemaCount, ref SchemaIntersectionRow resultingRow, ref SchemaIntersectionRowCollection resultingRows,
-            ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache,
-            ref KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
+        private static void IntersectAllSchemasRecursive<TData>(DocumentLookupOperation<TData>.Instance instance,
+            int skipSchemaCount, ref SchemaIntersectionRow<TData> resultingRow, ref SchemaIntersectionRowCollection<TData> resultingRows,
+            ref KbInsensitiveDictionary<KbInsensitiveDictionary<TData?>> threadScopedContentCache,
+            ref KbInsensitiveDictionary<KbInsensitiveDictionary<TData?>> joinScopedContentCache) where TData : IStringable
         {
             var currentSchemaKVP = instance.Operation.SchemaMap.Skip(skipSchemaCount).First();
             var currentSchemaMap = currentSchemaKVP.Value;
@@ -533,8 +533,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Collapses all left-and-right condition values, compares them, and fills in the expression variables with the comparison result.
         /// </summary>
-        private static void SetSchemaIntersectionConditionParameters(DocumentLookupOperation.Instance instance, NCalc.Expression expression,
-             ConditionCollection givenConditions, KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> joinScopedContentCache)
+        private static void SetSchemaIntersectionConditionParameters<TData>(DocumentLookupOperation<TData>.Instance instance, NCalc.Expression expression,
+             ConditionCollection givenConditions, KbInsensitiveDictionary<KbInsensitiveDictionary<TData?>> joinScopedContentCache) where TData : IStringable
         {
             SetExpressionParametersRecursive(givenConditions.Collection);
 
@@ -569,9 +569,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// This function will "produce" a single row by filling in the document values with the values from the given schema.
         /// </summary>
-        private static void FillInSchemaResultDocumentValues(DocumentLookupOperation.Instance instance, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
-            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
+        private static void FillInSchemaResultDocumentValues<TData>(DocumentLookupOperation<TData>.Instance instance, string schemaKey,
+            DocumentPointer documentPointer, ref SchemaIntersectionRow<TData> schemaResultRow,
+            KbInsensitiveDictionary<KbInsensitiveDictionary<TData?>> threadScopedContentCache) where TData :IStringable
         {
             instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
 
@@ -583,9 +583,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Gets the values of all selected fields from document.
         /// </summary>
-        private static void FillInSchemaResultDocumentValuesAtomic(DocumentLookupOperation.Instance instance, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow schemaResultRow,
-            KbInsensitiveDictionary<KbInsensitiveDictionary<string?>> threadScopedContentCache)
+        private static void FillInSchemaResultDocumentValuesAtomic<TData>(DocumentLookupOperation<TData>.Instance instance, string schemaKey,
+            DocumentPointer documentPointer, ref SchemaIntersectionRow<TData> schemaResultRow,
+            KbInsensitiveDictionary<KbInsensitiveDictionary<TData?>> threadScopedContentCache) where TData : IStringable
         {
             var documentContent = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
 
@@ -612,7 +612,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         if (isFieldAlreadyInCollection == false)
                         {
-                            var additionalField = new QueryField(field.Key, currentFieldList.Count, new QueryFieldDocumentIdentifier(field.Key));
+                            var additionalField = new QueryField<TData>(field.Key, currentFieldList.Count, new QueryFieldDocumentIdentifier(field.Key));
                             instance.Operation.Query.SelectFields.Add(additionalField);
                         }
                     }
@@ -717,7 +717,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Filters the given rows by the WHERE clause conditions.
         /// </summary>
-        private static void FilterByWhereClauseConditions(this SchemaIntersectionRowCollection rows, DocumentLookupOperation.Instance instance)
+        private static void FilterByWhereClauseConditions<TData>(this SchemaIntersectionRowCollection<TData> rows, DocumentLookupOperation<TData>.Instance instance) where TData :IStringable
         {
             NCalc.Expression? expression = null;
 
@@ -735,7 +735,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             if (expression == null) throw new KbEngineException($"Expression cannot be null.");
 
-            var rowsToRemove = new List<SchemaIntersectionRow>();
+            var rowsToRemove = new List<SchemaIntersectionRow<TData>>();
 
             foreach (var inputResult in rows)
             {
@@ -757,8 +757,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Collapses all left-and-right condition values, compares them, and fills in the expression variables with the comparison result.
         /// </summary>
-        private static void SetExpressionParameters(DocumentLookupOperation.Instance instance,
-            NCalc.Expression expression, ConditionCollection givenConditions, KbInsensitiveDictionary<string?> auxiliaryFields)
+        private static void SetExpressionParameters<TData>(DocumentLookupOperation<TData>.Instance instance,
+            NCalc.Expression expression, ConditionCollection givenConditions, KbInsensitiveDictionary<string?> auxiliaryFields)where TData:IStringable
         {
             SetExpressionParametersRecursive(givenConditions.Collection);
 

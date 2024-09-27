@@ -9,11 +9,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// <summary>
     /// Internal class methods for handling query requests related to configuration.
     /// </summary>
-    internal class EnvironmentQueryHandlers
+    internal class EnvironmentQueryHandlers<TData>
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public EnvironmentQueryHandlers(EngineCore core)
+        public EnvironmentQueryHandlers(EngineCore<TData> core)
         {
             _core = core;
 

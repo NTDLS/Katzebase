@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
     /// <summary>
     /// Contains a parsed query via StaticQueryParser.PrepareQuery();
     /// </summary>
-    internal class PreparedQuery
+    internal class PreparedQuery<TData> where TData : IStringable
     {
         public enum QueryAttribute
         {
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         /// Contains the hash of the whole query text with all constants and variables removed.
         /// </summary>
         public string? Hash { get; set; }
-        public QueryBatch Batch { get; private set; }
+        public QueryBatch<TData> Batch { get; private set; }
         public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
         public List<QuerySchema> Schemas { get; private set; } = new();
         public QueryType QueryType { get; set; }
@@ -83,7 +83,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         #region Execute Statement.
         public string? ProcedureName { get; set; }
 
-        public QueryFieldCollection? ProcedureParameters { get; set; }
+        public QueryFieldCollection<TData>? ProcedureParameters { get; set; }
 
         #endregion
 
@@ -96,8 +96,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 
         #region Select Statement.
 
-        public QueryFieldCollection SelectFields { get; set; }
-        public QueryFieldCollection GroupFields { get; set; }
+        public QueryFieldCollection<TData> SelectFields { get; set; }
+        public QueryFieldCollection<TData> GroupFields { get; set; }
         public SortFields SortFields { get; set; } = new();
 
         #endregion
@@ -106,7 +106,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 
         public List<string> UpdateFieldNames { get; set; } = new();
 
-        public QueryFieldCollection? UpdateFieldValues { get; set; }
+        public QueryFieldCollection<TData>? UpdateFieldValues { get; set; }
 
         #endregion
 
@@ -131,7 +131,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 
         public List<KbNameValuePair<string, string>> VariableValues { get; set; } = new();
 
-        public PreparedQuery(QueryBatch queryBatch, QueryType queryType)
+        public PreparedQuery(QueryBatch<TData> queryBatch, QueryType queryType)
         {
             QueryType = queryType;
             Batch = queryBatch;

@@ -9,15 +9,15 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
     /// <summary>
     /// This class maps the schema and documents to a query supplied schema alias.
     /// </summary>
-    internal class QuerySchemaMapItem
+    internal class QuerySchemaMapItem<TData> where TData :IStringable
     {
         public string Prefix { get; private set; }
         public PhysicalSchema PhysicalSchema { get; private set; }
         public PhysicalDocumentPageCatalog DocumentPageCatalog { get; private set; }
         public ConditionCollection? Conditions { get; private set; }
-        public IndexingConditionOptimization? Optimization { get; private set; }
+        public IndexingConditionOptimization<TData>? Optimization { get; private set; }
 
-        public QuerySchemaMapItem(EngineCore core, Transaction transaction, QuerySchemaMap schemaMap, PhysicalSchema physicalSchema,
+        public QuerySchemaMapItem(EngineCore<TData> core, Transaction<TData> transaction, QuerySchemaMap<TData> schemaMap, PhysicalSchema physicalSchema,
             PhysicalDocumentPageCatalog documentPageCatalog, ConditionCollection? conditions, string prefix)
         {
             Prefix = prefix;
@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
 
             if (conditions != null)
             {
-                Optimization = IndexingConditionOptimization.BuildTree(core, transaction, schemaMap.Query, physicalSchema, conditions, prefix);
+                Optimization = IndexingConditionOptimization<TData>.BuildTree(core, transaction, schemaMap.Query, physicalSchema, conditions, prefix);
             }
         }
     }

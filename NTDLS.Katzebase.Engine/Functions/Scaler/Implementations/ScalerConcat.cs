@@ -4,7 +4,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {
     internal static class ScalerConcat
     {
-        public static string? Execute(List<string?> parameters)
+        public static string? Execute<TData>(List<TData?> parameters) where TData : IStringable
         {
             var builder = new StringBuilder();
             foreach (var p in parameters)

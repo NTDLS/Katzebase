@@ -10,10 +10,10 @@ namespace NTDLS.Katzebase.Engine.Documents
     /// </summary>
     [Serializable]
     [ProtoContract]
-    public class PhysicalDocument
+    public class PhysicalDocument<TData>
     {
         [ProtoMember(1)]
-        public KbInsensitiveDictionary<string?> Elements { get; set; }
+        public KbInsensitiveDictionary<TData> Elements { get; set; }
 
         [ProtoMember(2)]
         public DateTime Created { get; set; }
@@ -42,13 +42,13 @@ namespace NTDLS.Katzebase.Engine.Documents
         public PhysicalDocument(string jsonString)
         {
             _contentLength = jsonString.Length;
-            Elements = JsonConvert.DeserializeObject<KbInsensitiveDictionary<string?>>(jsonString).EnsureNotNull();
+            Elements = JsonConvert.DeserializeObject<KbInsensitiveDictionary<TData>>(jsonString).EnsureNotNull();
         }
 
         public void SetElementsByJson(string jsonString)
         {
             _contentLength = jsonString.Length;
-            Elements = JsonConvert.DeserializeObject<KbInsensitiveDictionary<string?>>(jsonString).EnsureNotNull();
+            Elements = JsonConvert.DeserializeObject<KbInsensitiveDictionary<TData>>(jsonString).EnsureNotNull();
         }
     }
 }

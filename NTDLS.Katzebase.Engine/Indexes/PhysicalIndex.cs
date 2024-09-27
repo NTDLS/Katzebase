@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Engine.Schemas;
 namespace NTDLS.Katzebase.Engine.Indexes
 {
     [Serializable]
-    public class PhysicalIndex
+    public class PhysicalIndex<TData> where TData : IStringable
     {
         public List<PhysicalIndexAttribute> Attributes { get; set; } = new List<PhysicalIndexAttribute>();
         public string Name { get; set; } = string.Empty;
@@ -23,23 +23,23 @@ namespace NTDLS.Katzebase.Engine.Indexes
         {
         }
 
-        public uint ComputePartition(string? value)
+        public uint ComputePartition(TData? value)
         {
             uint hash = 0;
-            if (string.IsNullOrEmpty(value))
+            if (value == null ? true : value.IsNullOrEmpty())
                 return hash;
-            value = value.ToLowerInvariant();
+            value = (TData)value.ToLowerInvariant();
             const uint seed = 131;
-            foreach (char c in value)
+            foreach (char c in value.ToCharArr())
             {
                 hash = hash * seed + c;
             }
             return hash % Partitions;
         }
 
-        public PhysicalIndex Clone()
+        public PhysicalIndex<TData> Clone()
         {
-            var result = new PhysicalIndex
+            var result = new PhysicalIndex<TData>
             {
                 Id = Id,
                 Name = Name,
@@ -70,9 +70,9 @@ namespace NTDLS.Katzebase.Engine.Indexes
             Attributes.Add(attribute);
         }
 
-        static public PhysicalIndex FromClientPayload(Client.Payloads.KbIndex index)
+        static public PhysicalIndex<TData> FromClientPayload(Client.Payloads.KbIndex index)
         {
-            var persistIndex = new PhysicalIndex()
+            var persistIndex = new PhysicalIndex<TData>()
             {
                 Id = index.Id,
                 Name = index.Name,
@@ -90,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
             return persistIndex;
         }
 
-        static public Client.Payloads.KbIndex ToClientPayload(PhysicalIndex index)
+        static public Client.Payloads.KbIndex ToClientPayload(PhysicalIndex<TData> index)
         {
             var persistIndex = new Client.Payloads.KbIndex()
             {

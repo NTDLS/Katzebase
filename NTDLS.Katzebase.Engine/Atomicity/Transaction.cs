@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
     /// <summary>
     /// A collection of reversable work and deferred IO.
     /// </summary>
-    internal class Transaction : IDisposable
+    internal class Transaction<TData> : IDisposable where TData : IStringable
     {
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; private set; } = Guid.NewGuid();
@@ -35,8 +35,8 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// </summary>
         public bool IsUserCreated { get; set; }
 
-        private readonly EngineCore _core;
-        private TransactionManager? _transactionManager;
+        private readonly EngineCore<TData> _core;
+        private TransactionManager<TData>? _transactionManager;
         private StreamWriter? _transactionLogHandle = null;
         private readonly PessimisticCriticalResource<Dictionary<KbTransactionWarning, HashSet<string>>> _warnings = new();
 
@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <summary>
         /// Write-cached objects that need to be flushed to disk upon commit.
         /// </summary>
-        public OptimisticCriticalResource<DeferredDiskIO> DeferredIOs { get; private set; } = new();
+        public OptimisticCriticalResource<DeferredDiskIO<TData>> DeferredIOs { get; private set; } = new();
         /// <summary>
         /// Files that have been read by the transaction. These will be placed into read
         /// cache and since they can be modified in memory, the cached items must be removed upon rollback.
@@ -76,13 +76,13 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// <summary>
         /// Outstanding lock-keys that are blocking this transaction.
         /// </summary>
-        public OptimisticCriticalResource<List<ObjectLockKey>> BlockedByKeys { get; private set; }
+        public OptimisticCriticalResource<List<ObjectLockKey<TData>>> BlockedByKeys { get; private set; }
 
         /// <summary>
         /// Lock if you need to read/write.
         /// All lock-keys that are currently held by the transaction.
         /// </summary>
-        public OptimisticCriticalResource<List<ObjectLockKey>> HeldLockKeys { get; private set; }
+        public OptimisticCriticalResource<List<ObjectLockKey<TData>>> HeldLockKeys { get; private set; }
 
         /// <summary>
         /// Lock if you need to read/write.
@@ -186,7 +186,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
             });
         }
 
-        internal void ReleaseLock(ObjectLockKey objectLock)
+        internal void ReleaseLock(ObjectLockKey<TData> objectLock)
         {
             GrantedLockCache.Write((obj) => obj.Remove(objectLock.Key));
 
@@ -246,7 +246,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         #region Locking Helpers.
 
-        public ObjectLockKey? LockFile(LockOperation lockOperation, string diskPath)
+        public ObjectLockKey<TData>? LockFile(LockOperation lockOperation, string diskPath)
         {
             _core.EnsureNotNull();
 
@@ -276,7 +276,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// </summary>
         /// <param name="lockOperation"></param>
         /// <param name="diskPath"></param>
-        public ObjectLockKey? LockDirectory(LockOperation lockOperation, string diskPath)
+        public ObjectLockKey<TData>? LockDirectory(LockOperation lockOperation, string diskPath)
         {
             _core.EnsureNotNull();
 
@@ -306,7 +306,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         /// </summary>
         /// <param name="lockOperation"></param>
         /// <param name="diskPath"></param>
-        public ObjectLockKey? LockPath(LockOperation lockOperation, string diskPath)
+        public ObjectLockKey<TData>? LockPath(LockOperation lockOperation, string diskPath)
         {
             _core.EnsureNotNull();
 
@@ -333,7 +333,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
         #endregion
 
-        public void SetManager(TransactionManager transactionManager)
+        public void SetManager(TransactionManager<TData> transactionManager)
         {
             _transactionManager = transactionManager;
         }
@@ -350,7 +350,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
         public string TransactionLogFilePath
             => TransactionPath + "\\" + TransactionActionsFile;
 
-        public Transaction(EngineCore core, TransactionManager transactionManager, ulong processId, bool isRecovery)
+        public Transaction(EngineCore<TData> core, TransactionManager<TData> transactionManager, ulong processId, bool isRecovery)
         {
             _core = core;
             _transactionManager = transactionManager;

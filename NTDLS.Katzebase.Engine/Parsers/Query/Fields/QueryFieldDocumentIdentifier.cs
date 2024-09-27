@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
 
         public IQueryField Clone()
         {
-            var clone = new QueryFieldDocumentIdentifier(Value.EnsureNotNull())
+            var clone = new QueryFieldDocumentIdentifier(Value.ToString().EnsureNotNull())
             {
                 SchemaAlias = SchemaAlias,
                 FieldName = FieldName,

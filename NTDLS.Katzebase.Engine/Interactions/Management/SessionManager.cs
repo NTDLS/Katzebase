@@ -10,22 +10,22 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to sessions.
     /// </summary>
-    public class SessionManager
+    public class SessionManager<TData> where TData: IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
         private ulong _nextProcessId = 1;
         private readonly OptimisticCriticalResource<Dictionary<Guid, SessionState>> _collection = new();
 
-        public SessionAPIHandlers APIHandlers { get; private set; }
-        internal SessionQueryHandlers QueryHandlers { get; private set; }
+        public SessionAPIHandlers<TData> APIHandlers { get; private set; }
+        internal SessionQueryHandlers<TData> QueryHandlers { get; private set; }
 
-        internal SessionManager(EngineCore core)
+        internal SessionManager(EngineCore<TData> core)
         {
             _core = core;
             try
             {
-                APIHandlers = new SessionAPIHandlers(core);
-                QueryHandlers = new SessionQueryHandlers(core);
+                APIHandlers = new SessionAPIHandlers<TData>(core);
+                QueryHandlers = new SessionQueryHandlers<TData>(core);
             }
             catch (Exception ex)
             {
@@ -39,11 +39,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _collection.Read((obj) => obj.ToDictionary(o => o.Key, o => o.Value));
         }
 
-        internal InternalSystemSessionTransaction CreateEphemeralSystemSession()
+        internal InternalSystemSessionTransaction<TData> CreateEphemeralSystemSession()
         {
             var session = _core.Sessions.CreateSession(Guid.NewGuid(), "system", "system", true);
             var transactionReference = _core.Transactions.Acquire(session);
-            return new InternalSystemSessionTransaction(_core, session, transactionReference);
+            return new InternalSystemSessionTransaction<TData>(_core, session, transactionReference);
         }
 
         internal SessionState CreateSession(Guid connectionId, string username, string clientName = "", bool isInternalSystemSession = false)

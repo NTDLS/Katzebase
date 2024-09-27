@@ -6,14 +6,14 @@ namespace NTDLS.Katzebase.Engine.Sessions
     /// <summary>
     /// Provides an easy way to get a system process and transaction that cleans itself up when you are done with it.
     /// </summary>
-    internal class InternalSystemSessionTransaction : IDisposable
+    internal class InternalSystemSessionTransaction<TData> : IDisposable where TData: IStringable
     {
-        public EngineCore Core { get; set; }
+        public EngineCore<TData> Core { get; set; }
         public SessionState Session { get; set; }
-        public TransactionReference TransactionReference { get; set; }
-        public Transaction Transaction => TransactionReference.Transaction;
+        public TransactionReference<TData> TransactionReference { get; set; }
+        public Transaction<TData> Transaction => TransactionReference.Transaction;
 
-        public InternalSystemSessionTransaction(EngineCore core, SessionState session, TransactionReference transactionReference)
+        public InternalSystemSessionTransaction(EngineCore<TData> core, SessionState session, TransactionReference<TData> transactionReference)
         {
             Core = core;
             Session = session;

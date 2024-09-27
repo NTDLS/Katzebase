@@ -10,11 +10,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to indexes.
     /// </summary>
-    public class IndexAPIHandlers : IRmMessageHandler
+    public class IndexAPIHandlers<TData> : IRmMessageHandler where TData : IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public IndexAPIHandlers(EngineCore core)
+        public IndexAPIHandlers(EngineCore<TData> core)
         {
             _core = core;
 
@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 
                 if (physicalIndex != null)
                 {
-                    indexPayload = PhysicalIndex.ToClientPayload(physicalIndex);
+                    indexPayload = PhysicalIndex<TData>.ToClientPayload(physicalIndex);
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(new KbQueryIndexGetReply(indexPayload), 0);
@@ -72,7 +72,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var indexCatalog = _core.Indexes.AcquireIndexCatalog(transactionReference.Transaction, param.Schema, LockOperation.Read);
                 if (indexCatalog != null)
                 {
-                    result.List.AddRange(indexCatalog.Collection.Select(o => PhysicalIndex.ToClientPayload(o)));
+                    result.List.AddRange(indexCatalog.Collection.Select(o => PhysicalIndex<TData>.ToClientPayload(o)));
                 }
 
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result);

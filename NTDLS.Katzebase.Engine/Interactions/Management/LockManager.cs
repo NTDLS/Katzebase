@@ -12,14 +12,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Internal core class methods for locking, reading, writing and managing tasks related to locking.
     /// </summary>
-    internal class LockManager
+    internal class LockManager<TData> where TData : IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
         /// <summary>
         /// Collection of all locks across all transactions.
         /// </summary>
-        private readonly OptimisticCriticalResource<List<ObjectLock>> _collection;
+        private readonly OptimisticCriticalResource<List<ObjectLock<TData>>> _collection;
 
         /// <summary>
         /// Used to ensure that across all transactions, we only allow 1 thread at a time to lock any individual files.
@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         private readonly OptimisticCriticalResource<Dictionary<Guid, ObjectPendingLockIntention>> _pendingGrants;
 
-        internal LockManager(EngineCore core)
+        internal LockManager(EngineCore<TData> core)
         {
             _core = core;
 
@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void Release(ObjectLock objectLock)
+        internal void Release(ObjectLock<TData> objectLock)
         {
             try
             {
@@ -73,11 +73,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         /// <param name="intention"></param>
         /// <returns></returns>
-        internal HashSet<ObjectLock> GetOverlappingLocks(ObjectLockIntention intention)
+        internal HashSet<ObjectLock<TData>> GetOverlappingLocks(ObjectLockIntention intention)
         {
             var result = _collection.Read((existingLocks) =>
             {
-                var result = new HashSet<ObjectLock>();
+                var result = new HashSet<ObjectLock<TData>>();
 
                 var intentionDirectory = Path.GetDirectoryName(intention.DiskPath) ?? string.Empty;
 
@@ -115,7 +115,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 obj.ToDictionary(o => o.Value.Transaction.Snapshot(), o => o.Value.Intention)
             );
 
-        internal ObjectLockKey? Acquire(Transaction transaction, ObjectLockIntention intention)
+        internal ObjectLockKey<TData>? Acquire(Transaction<TData> transaction, ObjectLockIntention intention)
         {
             ObjectConcurrencyLock? concurrencyLock = null;
 
@@ -193,7 +193,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private ObjectLockKey? AttemptLock(Transaction transaction, ObjectLockIntention intention)
+        private ObjectLockKey<TData>? AttemptLock(Transaction<TData> transaction, ObjectLockIntention intention)
         {
             try
             {
@@ -213,14 +213,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //  section "Locking.CriticalSectionLockManagement", we will only need:
                 return _collection.TryWriteAll([transaction.TransactionSemaphore], out bool isLockHeld, (obj) =>
                 {
-                    ObjectLockKey? lockKey = null;
+                    ObjectLockKey<TData>? lockKey = null;
 
                     var lockedObjects = GetOverlappingLocks(intention); //Find any existing locks on the given lock intention.
 
                     if (lockedObjects.Count == 0)
                     {
                         //No locks on the object exist - so add one to the local and class collections.
-                        var lockedObject = new ObjectLock(_core, intention);
+                        var lockedObject = new ObjectLock<TData>(_core, intention);
                         obj.Add(lockedObject);
                         lockedObjects.Add(lockedObject);
 
@@ -447,7 +447,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private string GetDeadlockExplanation(Transaction transaction,
+        private string GetDeadlockExplanation(Transaction<TData> transaction,
             Dictionary<Guid, ObjectPendingLockIntention> txWaitingForLocks,
             ObjectLockIntention intention, List<Transaction> blockedByMe)
         {

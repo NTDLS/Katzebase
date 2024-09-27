@@ -2,7 +2,7 @@
 {
     internal static class ScalerLastIndexOf
     {
-        public static string? Execute(ScalerFunctionParameterValueCollection function)
+        public static string? Execute<TData>(ScalerFunctionParameterValueCollection<TData> function)
         {
             return function.Get<string>("textToSearch").LastIndexOf(function.Get<string>("textToFind")).ToString();
         }

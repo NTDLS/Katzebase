@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {
     internal static class ScalerIsLess
     {
-        public static string? Execute(Transaction transaction, ScalerFunctionParameterValueCollection function)
+        public static string? Execute<TData>(Transaction<TData> transaction, ScalerFunctionParameterValueCollection<TData> function) where TData : IStringable
         {
             return (ConditionEntry.IsMatchLesser(transaction, function.Get<int>("value1"), function.Get<int>("value2")) == true).ToString();
         }

@@ -8,10 +8,10 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
     //Internal core class methods for locking, reading, writing and managing tasks related to disk I/O.
-    internal class IOManager
+    internal class IOManager<TData> where TData : IStringable
     {
-        private readonly EngineCore _core;
-        internal IOManager(EngineCore core)
+        private readonly EngineCore<TData> _core;
+        internal IOManager(EngineCore<TData> core)
         {
             _core = core;
         }
@@ -79,20 +79,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal T GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
+        internal T GetJson<T>(Transaction<TData> transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey<TData>? acquiredLockKey)
             => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON, out acquiredLockKey);
 
-        internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
+        internal T GetPBuf<T>(Transaction<TData> transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey<TData>? acquiredLockKey)
             => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out acquiredLockKey);
 
-        internal T GetJson<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
+        internal T GetJson<T>(Transaction<TData> transaction, string filePath, LockOperation intendedOperation)
             => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.JSON, out _);
 
-        internal T GetPBuf<T>(Transaction transaction, string filePath, LockOperation intendedOperation)
+        internal T GetPBuf<T>(Transaction<TData> transaction, string filePath, LockOperation intendedOperation)
             => InternalTrackedGet<T>(transaction, filePath, intendedOperation, IOFormat.PBuf, out _);
 
-        protected T InternalTrackedGet<T>(Transaction transaction, string filePath,
-            LockOperation intendedOperation, IOFormat format, out ObjectLockKey? acquiredLockKey)
+        protected T InternalTrackedGet<T>(Transaction<TData> transaction, string filePath,
+            LockOperation intendedOperation, IOFormat format, out ObjectLockKey<TData>? acquiredLockKey)
         {
             try
             {
@@ -319,13 +319,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void PutJson(Transaction transaction, string filePath, object deserializedObject)
+        internal void PutJson(Transaction<TData> transaction, string filePath, object deserializedObject)
             => InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.JSON);
 
-        internal void PutPBuf(Transaction transaction, string filePath, object deserializedObject)
+        internal void PutPBuf(Transaction<TData> transaction, string filePath, object deserializedObject)
             => InternalTrackedPut(transaction, filePath, deserializedObject, IOFormat.PBuf);
 
-        protected void InternalTrackedPut(Transaction transaction, string filePath, object deserializedObject, IOFormat format)
+        protected void InternalTrackedPut(Transaction<TData> transaction, string filePath, object deserializedObject, IOFormat format)
         {
             try
             {
@@ -423,13 +423,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #endregion
 
-        internal bool DirectoryExists(Transaction transaction, string diskPath, LockOperation intendedOperation)
+        internal bool DirectoryExists(Transaction<TData> transaction, string diskPath, LockOperation intendedOperation)
         {
             return DirectoryExists(transaction, diskPath, intendedOperation, out _);
         }
 
-        internal bool DirectoryExists(Transaction transaction, string diskPath,
-            LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
+        internal bool DirectoryExists(Transaction<TData> transaction, string diskPath,
+            LockOperation intendedOperation, out ObjectLockKey<TData>? acquiredLockKey)
         {
             try
             {
@@ -446,12 +446,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void CreateDirectory(Transaction transaction, string? diskPath)
+        internal void CreateDirectory(Transaction<TData> transaction, string? diskPath)
         {
             CreateDirectory(transaction, diskPath, out _);
         }
 
-        internal void CreateDirectory(Transaction transaction, string? diskPath, out ObjectLockKey? acquiredLockKey)
+        internal void CreateDirectory(Transaction<TData> transaction, string? diskPath, out ObjectLockKey<TData>? acquiredLockKey)
         {
             try
             {
@@ -476,12 +476,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal bool FileExists(Transaction transaction, string filePath, LockOperation intendedOperation)
+        internal bool FileExists(Transaction<TData> transaction, string filePath, LockOperation intendedOperation)
         {
             return FileExists(transaction, filePath, intendedOperation, out _);
         }
 
-        internal bool FileExists(Transaction transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey? acquiredLockKey)
+        internal bool FileExists(Transaction<TData> transaction, string filePath, LockOperation intendedOperation, out ObjectLockKey<TData>? acquiredLockKey)
         {
             try
             {
@@ -516,12 +516,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void DeleteFile(Transaction transaction, string filePath)
+        internal void DeleteFile(Transaction<TData> transaction, string filePath)
         {
             DeleteFile(transaction, filePath, out _);
         }
 
-        internal void DeleteFile(Transaction transaction, string filePath, out ObjectLockKey? acquiredLockKey)
+        internal void DeleteFile(Transaction<TData> transaction, string filePath, out ObjectLockKey<TData>? acquiredLockKey)
         {
             try
             {
@@ -548,12 +548,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void DeletePath(Transaction transaction, string diskPath)
+        internal void DeletePath(Transaction<TData> transaction, string diskPath)
         {
             DeletePath(transaction, diskPath, out _);
         }
 
-        internal void DeletePath(Transaction transaction, string diskPath, out ObjectLockKey? acquiredLockKey)
+        internal void DeletePath(Transaction<TData> transaction, string diskPath, out ObjectLockKey<TData>? acquiredLockKey)
         {
             try
             {

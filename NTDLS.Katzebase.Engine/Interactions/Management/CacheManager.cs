@@ -7,14 +7,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to cache.
     /// </summary>
-    internal class CacheManager
+    internal class CacheManager<TData>
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
         private readonly PartitionedMemoryCache _cache;
 
         internal int PartitionCount { get; private set; }
 
-        internal CacheManager(EngineCore core)
+        internal CacheManager(EngineCore<TData> core)
         {
             _core = core;
 

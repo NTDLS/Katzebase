@@ -15,15 +15,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to transactions.
     /// </summary>
-    public class TransactionManager
+    public class TransactionManager<TData> where TData : IStringable
     {
-        private readonly EngineCore _core;
-        private readonly OptimisticCriticalResource<List<Transaction>> _collection = new();
+        private readonly EngineCore<TData> _core;
+        private readonly OptimisticCriticalResource<List<Transaction<TData>>> _collection = new();
 
-        internal TransactionQueryHandlers QueryHandlers { get; private set; }
-        public TransactionAPIHandlers APIHandlers { get; private set; }
+        internal TransactionQueryHandlers<TData> QueryHandlers { get; private set; }
+        public TransactionAPIHandlers<TData> APIHandlers { get; private set; }
 
-        internal TransactionReference Acquire(SessionState session)
+        internal TransactionReference<TData> Acquire(SessionState session)
         {
             var transactionReference = Acquire(session, false);
 
@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         internal List<TransactionSnapshot> Snapshot()
         {
-            var collectionClone = new List<Transaction>();
+            var collectionClone = new List<Transaction<TData>>();
 
             _collection.Read((obj) => collectionClone.AddRange(obj));
 
@@ -52,13 +52,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return clones;
         }
 
-        internal TransactionManager(EngineCore core)
+        internal TransactionManager(EngineCore<TData> core)
         {
             _core = core;
             try
             {
-                QueryHandlers = new TransactionQueryHandlers(core);
-                APIHandlers = new TransactionAPIHandlers(core);
+                QueryHandlers = new TransactionQueryHandlers<TData>(core);
+                APIHandlers = new TransactionAPIHandlers<TData>(core);
             }
             catch (Exception ex)
             {
@@ -67,7 +67,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal Transaction? GetByProcessId(ulong processId)
+        internal Transaction<TData>? GetByProcessId(ulong processId)
         {
             try
             {
@@ -147,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var processIdString = Path.GetFileNameWithoutExtension(Path.GetDirectoryName(transactionFile));
                     ulong processId = ulong.Parse(processIdString.EnsureNotNull());
 
-                    var transaction = new Transaction(_core, this, processId, true);
+                    var transaction = new Transaction<TData>(_core, this, processId, true);
 
                     var atoms = File.ReadLines(transactionFile).ToList();
                     foreach (var atom in atoms)
@@ -181,7 +181,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         /// <param name="processId"></param>
         /// <returns></returns>
-        internal TransactionReference Acquire(SessionState session, bool isUserCreated)
+        internal TransactionReference<TData> Acquire(SessionState session, bool isUserCreated)
         {
             var startTime = DateTime.UtcNow;
 
@@ -193,7 +193,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var transaction = GetByProcessId(session.ProcessId);
                     if (transaction == null)
                     {
-                        transaction = new Transaction(_core, this, session.ProcessId, false)
+                        transaction = new Transaction<TData>(_core, this, session.ProcessId, false)
                         {
                             IsUserCreated = isUserCreated
                         };
@@ -214,7 +214,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     ptAcquireTransaction?.StopAndAccumulate((DateTime.UtcNow - startTime).TotalMilliseconds);
 
-                    return new TransactionReference(transaction);
+                    return new TransactionReference<TData>(transaction);
                 });
             }
             catch (Exception ex)

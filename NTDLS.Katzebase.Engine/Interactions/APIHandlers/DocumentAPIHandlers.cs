@@ -10,11 +10,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to documents.
     /// </summary>
-    public class DocumentAPIHandlers : IRmMessageHandler
+    public class DocumentAPIHandlers<TData> : IRmMessageHandler where TData : IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public DocumentAPIHandlers(EngineCore core)
+        public DocumentAPIHandlers(EngineCore<TData> core)
         {
             _core = core;
 
@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var result = (KbQueryDocumentSampleReply)StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
+                var result = (KbQueryDocumentSampleReply)StaticSearcherMethods<TData>.SampleSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var nativeResults = StaticSearcherMethods.ListSchemaDocuments(
+                var nativeResults = StaticSearcherMethods<TData>.ListSchemaDocuments(
                     _core, transactionReference.Transaction, param.Schema, param.Count);
 
                 var apiResults = new KbQueryDocumentListReply()

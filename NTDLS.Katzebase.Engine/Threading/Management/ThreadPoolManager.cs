@@ -5,14 +5,14 @@ namespace NTDLS.Katzebase.Engine.Threading.Management
     /// <summary>
     /// Public class that houses thread pools for various operations.
     /// </summary>
-    public class ThreadPoolManager
+    public class ThreadPoolManager<TData> where TData : IStringable
     {
         public DelegateThreadPool Lookup { get; set; }
         public DelegateThreadPool Indexing { get; set; }
 
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public ThreadPoolManager(EngineCore core)
+        public ThreadPoolManager(EngineCore<TData> core)
         {
             _core = core;
 

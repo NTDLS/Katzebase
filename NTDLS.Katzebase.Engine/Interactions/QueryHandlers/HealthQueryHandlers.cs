@@ -3,11 +3,11 @@
     /// <summary>
     /// Internal class methods for handling query requests related to health.
     /// </summary>
-    internal class HealthQueryHandlers
+    internal class HealthQueryHandlers<TData>
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public HealthQueryHandlers(EngineCore core)
+        public HealthQueryHandlers(EngineCore<TData> core)
         {
             _core = core;
 

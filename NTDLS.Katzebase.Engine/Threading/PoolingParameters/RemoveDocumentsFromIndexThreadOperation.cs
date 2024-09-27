@@ -8,15 +8,15 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// <summary>
     /// Thread parameters for index row removal operations. Shared across all threads in a single operation.
     /// </summary>
-    internal class RemoveDocumentsFromIndexThreadOperation
+    internal class RemoveDocumentsFromIndexThreadOperation<TData> where TData:IStringable
     {
-        public Transaction Transaction { get; set; }
-        public PhysicalIndex PhysicalIndex { get; set; }
+        public Transaction<TData> Transaction { get; set; }
+        public PhysicalIndex<TData> PhysicalIndex { get; set; }
         public PhysicalSchema PhysicalSchema { get; set; }
         public IEnumerable<DocumentPointer> DocumentPointers { get; set; }
 
-        public RemoveDocumentsFromIndexThreadOperation(Transaction transaction,
-            PhysicalIndex physicalIndex, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
+        public RemoveDocumentsFromIndexThreadOperation(Transaction<TData> transaction,
+            PhysicalIndex<TData> physicalIndex, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
         {
             Transaction = transaction;
             PhysicalIndex = physicalIndex;
@@ -29,10 +29,10 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// </summary>
         internal class Instance
         {
-            internal RemoveDocumentsFromIndexThreadOperation Operation { get; set; }
+            internal RemoveDocumentsFromIndexThreadOperation<TData> Operation { get; set; }
             internal int IndexPartition { get; set; }
 
-            internal Instance(RemoveDocumentsFromIndexThreadOperation operation, int indexPartition)
+            internal Instance(RemoveDocumentsFromIndexThreadOperation<TData> operation, int indexPartition)
             {
                 Operation = operation;
                 IndexPartition = indexPartition;

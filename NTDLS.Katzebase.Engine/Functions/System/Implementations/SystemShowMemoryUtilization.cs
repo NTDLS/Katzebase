@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowMemoryUtilization
     {
-        public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
+        public static KbQueryResultCollection Execute(EngineCore core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
         {
             var cachePartitions = core.Cache.GetPartitionAllocationDetails();
             long totalCacheSize = 0;

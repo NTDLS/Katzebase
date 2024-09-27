@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemClearHealthCounters
     {
-        public static KbQueryResultCollection Execute(EngineCore core, Transaction transaction, SystemFunctionParameterValueCollection function)
+        public static KbQueryResultCollection Execute<TData>(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function) where TData : IStringable
         {
             core.Health.ClearCounters();
             return new KbQueryResultCollection();

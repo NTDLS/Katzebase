@@ -3,25 +3,25 @@ using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 {
-    internal class QueryBatch : List<PreparedQuery>
+    internal class QueryBatch<TData> : List<PreparedQuery<TData>> where TData : IStringable
     {
-        public KbInsensitiveDictionary<ConditionFieldLiteral> Literals { get; set; } = new();
+        public KbInsensitiveDictionary<ConditionFieldLiteral<TData>> Literals { get; set; } = new();
 
-        public QueryBatch(KbInsensitiveDictionary<ConditionFieldLiteral> literals)
+        public QueryBatch(KbInsensitiveDictionary<ConditionFieldLiteral<TData>> literals)
         {
             Literals = literals;
         }
 
-        public string? GetLiteralValue(string value)
+        public TData? GetLiteralValue(string value)
         {
             if (Literals.TryGetValue(value, out var literal))
             {
                 return literal.Value;
             }
-            else return value;
+            else return value.ParseToT<TData>(EngineCore<TData>.StrCast);
         }
 
-        public string? GetLiteralValue(string value, out KbBasicDataType outDataType)
+        public TData? GetLiteralValue(string value, out KbBasicDataType outDataType)
         {
             if (Literals.TryGetValue(value, out var literal))
             {
@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
             }
 
             outDataType = KbBasicDataType.Undefined;
-            return value;
+            return value.ParseToT<TData>(EngineCore<TData>.StrCast);
         }
     }
 }

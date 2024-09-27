@@ -11,13 +11,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
     /// This class maps the schema and documents to a query supplied schema alias.
     /// The key to the dictionary is the schema alias (typically referenced by Condition.Prefix).
     /// </summary>
-    internal class QuerySchemaMap : KbInsensitiveDictionary<QuerySchemaMapItem>
+    internal class QuerySchemaMap<TData> : KbInsensitiveDictionary<QuerySchemaMapItem<TData>> where TData :IStringable
     {
-        private readonly EngineCore _core;
-        public Transaction Transaction { get; private set; }
+        private readonly EngineCore<TData> _core;
+        public Transaction<TData> Transaction { get; private set; }
         public PreparedQuery Query { get; private set; }
 
-        public QuerySchemaMap(EngineCore core, Transaction transaction, PreparedQuery query)
+        public QuerySchemaMap(EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery query)
         {
             _core = core;
             Query = query;
@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
         public void Add(string prefix, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog documentCatalog, ConditionCollection? conditions)
         {
             prefix = prefix.ToLowerInvariant();
-            Add(prefix, new QuerySchemaMapItem(_core, Transaction, this, physicalSchema, documentCatalog, conditions, prefix));
+            Add(prefix, new QuerySchemaMapItem<TData>(_core, Transaction, this, physicalSchema, documentCatalog, conditions, prefix));
         }
 
         public int TotalDocumentCount()

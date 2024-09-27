@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// </summary>
     public class EnvironmentAPIHandlers
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
         public EnvironmentAPIHandlers(EngineCore core)
         {

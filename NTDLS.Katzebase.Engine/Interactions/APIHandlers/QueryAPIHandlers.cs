@@ -8,11 +8,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to queries.
     /// </summary>
-    public class QueryAPIHandlers : IRmMessageHandler
+    public class QueryAPIHandlers<TData> : IRmMessageHandler, IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public QueryAPIHandlers(EngineCore core)
+        public QueryAPIHandlers(EngineCore<TData> core)
         {
             _core = core;
 

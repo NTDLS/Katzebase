@@ -13,8 +13,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Returns a random sample of all document fields from a schema.
         /// </summary>
-        internal static KbQueryDocumentListResult SampleSchemaDocuments(
-            EngineCore core, Transaction transaction, string schemaName, int rowLimit = -1)
+        internal static KbQueryDocumentListResult SampleSchemaDocuments<TData>(
+            EngineCore<TData> core, Transaction<TData> transaction, string schemaName, int rowLimit = -1) where TData : IStringable
         {
             var result = new KbQueryDocumentListResult();
 
@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                     foreach (var field in result.Fields.Skip(1))
                     {
-                        physicalDocument.Elements.TryGetValue(field.Name, out string? element);
+                        physicalDocument.Elements.TryGetValue(field.Name, out TData? element);
                         resultRow.AddValue(element?.ToString() ?? string.Empty);
                     }
 
@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Returns a top list of all document fields from a schema.
         /// </summary>
-        internal static KbQueryDocumentListResult ListSchemaDocuments(EngineCore core, Transaction transaction, string schemaName, int topCount = -1)
+        internal static KbQueryDocumentListResult ListSchemaDocuments<TData>(EngineCore<TData> core, Transaction<TData> transaction, string schemaName, int topCount = -1) where TData : IStringable
         {
             var result = new KbQueryDocumentListResult();
 
@@ -90,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                 var resultRow = new KbQueryRow();
                 foreach (var field in result.Fields)
                 {
-                    persistDocument.Elements.TryGetValue(field.Name, out string? element);
+                    persistDocument.Elements.TryGetValue(field.Name, out TData? element);
                     resultRow.AddValue(element?.ToString() ?? string.Empty);
                 }
 
@@ -103,11 +103,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Finds all documents using a prepared query. Performs all filtering and ordering.
         /// </summary>
-        internal static KbQueryDocumentListResult FindDocumentsByPreparedQuery(EngineCore core, Transaction transaction, PreparedQuery query)
+        internal static KbQueryDocumentListResult FindDocumentsByPreparedQuery<TData>(EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery query) where TData : IStringable
         {
             var result = new KbQueryDocumentListResult();
 
-            var schemaMap = new QuerySchemaMap(core, transaction, query);
+            var schemaMap = new QuerySchemaMap<TData>(core, transaction, query);
 
             foreach (var querySchema in query.Schemas)
             {
@@ -146,10 +146,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <param name="query"></param>
         /// <param name="schemaPrefix"></param>
         /// <returns></returns>
-        internal static IEnumerable<SchemaIntersectionRowDocumentIdentifier> FindDocumentPointersByPreparedQuery(
-            EngineCore core, Transaction transaction, PreparedQuery query, string[] getDocumentsIdsForSchemaPrefixes)
+        internal static IEnumerable<SchemaIntersectionRowDocumentIdentifier> FindDocumentPointersByPreparedQuery<TData>(
+            EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery query, string[] getDocumentsIdsForSchemaPrefixes) where TData : IStringable
         {
-            var schemaMap = new QuerySchemaMap(core, transaction, query);
+            var schemaMap = new QuerySchemaMap<TData>(core, transaction, query);
 
             foreach (var querySchema in query.Schemas)
             {

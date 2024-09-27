@@ -21,15 +21,15 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to schemas.
     /// </summary>
-    public class SchemaManager
+    public class SchemaManager<TData> where TData : IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
         private readonly string _rootCatalogFile;
         private PhysicalSchema? _rootPhysicalSchema = null;
 
-        internal SchemaQueryHandlers QueryHandlers { get; private set; }
+        internal SchemaQueryHandlers<TData> QueryHandlers { get; private set; }
 
-        public SchemaAPIHandlers APIHandlers { get; private set; }
+        public SchemaAPIHandlers<TData> APIHandlers { get; private set; }
 
         internal PhysicalSchema RootPhysicalSchema
         {
@@ -56,14 +56,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal SchemaManager(EngineCore core)
+        internal SchemaManager(EngineCore<TData> core)
         {
             _core = core;
 
             try
             {
-                QueryHandlers = new SchemaQueryHandlers(core);
-                APIHandlers = new SchemaAPIHandlers(core);
+                QueryHandlers = new SchemaQueryHandlers<TData>(core);
+                APIHandlers = new SchemaAPIHandlers<TData>(core);
 
                 _rootCatalogFile = Path.Combine(core.Settings.DataRootPath, SchemaCatalogFile);
             }
@@ -87,7 +87,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 Directory.CreateDirectory(_core.Settings.DataRootPath);
                 _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, SchemaCatalogFile), new PhysicalSchemaCatalog());
                 _core.IO.PutPBufNonTracked(Path.Combine(_core.Settings.DataRootPath, DocumentPageCatalogFile), new PhysicalDocumentPageCatalog());
-                _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog());
+                _core.IO.PutJsonNonTracked(Path.Combine(_core.Settings.DataRootPath, IndexCatalogFile), new PhysicalIndexCatalog<TData>());
 
                 //Create Master:Account schema and insert the default account.
                 using var systemSession = _core.Sessions.CreateEphemeralSystemSession();
@@ -123,7 +123,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             systemSession.Commit();
         }
 
-        internal void Alter(Transaction transaction, string schemaName, uint pageSize = 0)
+        internal void Alter(Transaction<TData> transaction, string schemaName, uint pageSize = 0)
         {
             try
             {
@@ -161,7 +161,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void CreateSingleSchema(Transaction transaction, string schemaName, uint pageSize = 0)
+        internal void CreateSingleSchema(Transaction<TData> transaction, string schemaName, uint pageSize = 0)
         {
             try
             {
@@ -181,7 +181,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 _core.IO.CreateDirectory(transaction, physicalSchema.DiskPath);
                 _core.IO.PutJson(transaction, physicalSchema.SchemaCatalogFilePath(), new PhysicalSchemaCatalog());
                 _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), new PhysicalDocumentPageCatalog());
-                _core.IO.PutJson(transaction, physicalSchema.IndexCatalogFilePath(), new PhysicalIndexCatalog());
+                _core.IO.PutJson(transaction, physicalSchema.IndexCatalogFilePath(), new PhysicalIndexCatalog<TData>());
 
                 var parentCatalog = _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, parentPhysicalSchema.SchemaCatalogFilePath(), LockOperation.Write);
 
@@ -213,7 +213,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void Drop(Transaction transaction, string schemaName)
+        internal void Drop(Transaction<TData> transaction, string schemaName)
         {
             try
             {
@@ -241,7 +241,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal List<PhysicalSchema> AcquireChildren(Transaction transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
+        internal List<PhysicalSchema> AcquireChildren(Transaction<TData> transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
         {
             try
             {
@@ -273,7 +273,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal PhysicalSchema AcquireParent(Transaction transaction, PhysicalSchema child, LockOperation intendedOperation)
+        internal PhysicalSchema AcquireParent(Transaction<TData> transaction, PhysicalSchema child, LockOperation intendedOperation)
         {
             try
             {
@@ -303,7 +303,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Opens a schema for a desired access. Takes a virtual schema path 
         ///     (schema0:schema2:schema3) and converts to to a physical location.
         /// </summary>
-        internal PhysicalSchema Acquire(Transaction transaction, string schemaName, LockOperation intendedOperation)
+        internal PhysicalSchema Acquire(Transaction<TData> transaction, string schemaName, LockOperation intendedOperation)
         {
             InstrumentationDurationToken? ptLockSchema = null;
 
@@ -374,7 +374,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Opens a schema for a desired access even if it does not exist. Takes a virtual 
         ///     schema path (schema:schema2:schema3) and converts to to a physical location.
         /// </summary>
-        internal VirtualSchema AcquireVirtual(Transaction transaction, string schemaName, LockOperation intendedOperation)
+        internal VirtualSchema AcquireVirtual(Transaction<TData> transaction, string schemaName, LockOperation intendedOperation)
         {
             InstrumentationDurationToken? ptLockSchema = null;
 
@@ -451,13 +451,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal PhysicalSchemaCatalog AcquireCatalog(Transaction transaction, string schemaName, LockOperation intendedOperation)
+        internal PhysicalSchemaCatalog AcquireCatalog(Transaction<TData> transaction, string schemaName, LockOperation intendedOperation)
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, intendedOperation);
             return _core.IO.GetJson<PhysicalSchemaCatalog>(transaction, physicalSchema.DocumentPageCatalogFilePath(), intendedOperation);
         }
 
-        internal List<Tuple<string, string>> GetListByPreparedQuery(Transaction transaction, string schemaName, int rowLimit)
+        internal List<Tuple<string, string>> GetListByPreparedQuery(Transaction<TData> transaction, string schemaName, int rowLimit)
         {
             try
             {
@@ -486,7 +486,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal KbQueryDocumentListResult AnalyzePages(Transaction transaction, string schemaName, bool includePhysicalPages)
+        internal KbQueryDocumentListResult AnalyzePages(Transaction<TData> transaction, string schemaName, bool includePhysicalPages)
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
             var pageCatalog = _core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);

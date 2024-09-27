@@ -7,11 +7,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to transactions.
     /// </summary>
-    public class TransactionAPIHandlers : IRmMessageHandler
+    public class TransactionAPIHandlers<TData> : IRmMessageHandler where TData : IStringable
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<TData> _core;
 
-        public TransactionAPIHandlers(EngineCore core)
+        public TransactionAPIHandlers(EngineCore<TData> core)
         {
             _core = core;
 

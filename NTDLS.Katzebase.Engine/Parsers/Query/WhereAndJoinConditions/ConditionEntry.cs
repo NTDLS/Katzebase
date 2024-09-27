@@ -8,25 +8,25 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 {
-    internal class ConditionEntry : ICondition
+    internal class ConditionEntry<TData> : ICondition where TData : IStringable
     {
         #region Internal classes.
 
         /// <summary>
         /// Used when parsing a condition, contains the left and right value along with the comparison operator.
         /// </summary>
-        internal class ConditionValuesPair
+        internal class ConditionValuesPair<TData1> where TData1 : IStringable
         {
-            public IQueryField Right { get; set; }
+            public IQueryField<TData1> Right { get; set; }
             public LogicalQualifier Qualifier { get; set; }
-            public IQueryField Left { get; set; }
+            public IQueryField<TData1> Left { get; set; }
 
             /// <summary>
             /// The name of the variable in ConditionCollection.MathematicalExpression that is represented by this condition.
             /// </summary>
             public string ExpressionVariable { get; set; }
 
-            public ConditionValuesPair(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
+            public ConditionValuesPair(string expressionVariable, IQueryField<TData1> left, LogicalQualifier qualifier, IQueryField<TData1> right)
             {
                 ExpressionVariable = expressionVariable;
                 Left = left;
@@ -38,16 +38,16 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         #endregion
 
         public string ExpressionVariable { get; set; }
-        public IQueryField Left { get; set; }
+        public IQueryField<TData> Left { get; set; }
         public LogicalQualifier Qualifier { get; set; }
-        public IQueryField Right { get; set; }
+        public IQueryField<TData> Right { get; set; }
 
         /// <summary>
         /// Used by ConditionOptimization.BuildTree() do determine when an index has already been matched to this condition.
         /// </summary>
         public bool IsIndexOptimized { get; set; } = false;
 
-        public ConditionEntry(ConditionValuesPair pair)
+        public ConditionEntry(ConditionValuesPair<TData> pair)
         {
             ExpressionVariable = pair.ExpressionVariable;
             Left = pair.Left;
@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             Right = pair.Right;
         }
 
-        public ConditionEntry(string expressionVariable, IQueryField left, LogicalQualifier qualifier, IQueryField right)
+        public ConditionEntry(string expressionVariable, IQueryField<TData> left, LogicalQualifier qualifier, IQueryField<TData> right)
         {
             ExpressionVariable = expressionVariable;
             Left = left;
@@ -65,16 +65,16 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
         public ICondition Clone()
         {
-            return new ConditionEntry(ExpressionVariable, Left.Clone(), Qualifier, Right.Clone());
+            return new ConditionEntry<TData>(ExpressionVariable, Left.Clone(), Qualifier, Right.Clone());
         }
 
-        public bool IsMatch(Transaction transaction, string? collapsedLeft, string? collapsedRight)
+        public bool IsMatch<TData>(Transaction<TData> transaction, string? collapsedLeft, string? collapsedRight) where TData : IStringable
         {
             return IsMatch(transaction, collapsedLeft, Qualifier, collapsedRight);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchGreaterOrEqual(Transaction transaction, double? left, double? right)
+        public static bool? IsMatchGreaterOrEqual<TData>(Transaction<TData> transaction, double? left, double? right) where TData : IStringable
         {
             if (left != null && right != null)
             {
@@ -85,7 +85,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchLesserOrEqual(Transaction transaction, double? left, double? right)
+        public static bool? IsMatchLesserOrEqual<TData>(Transaction<TData> transaction, double? left, double? right) where TData : IStringable
         {
             if (left != null && right != null)
             {
@@ -96,7 +96,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchGreaterOrEqual(Transaction transaction, string? left, string? right)
+        public static bool? IsMatchGreaterOrEqual<TData>(Transaction<TData> transaction, string? left, string? right) where TData : IStringable
         {
             if (left != null && right != null && double.TryParse(left, out var iLeft))
             {
@@ -111,7 +111,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchLesserOrEqual(Transaction transaction, string? left, string? right)
+        public static bool? IsMatchLesserOrEqual<TData>(Transaction<TData> transaction, string? left, string? right) where TData : IStringable
         {
             if (left != null && right != null && double.TryParse(left, out var iLeft))
             {
@@ -126,7 +126,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchGreater(Transaction transaction, double? left, double? right)
+        public static bool? IsMatchGreater<TData>(Transaction<TData> transaction, double? left, double? right) where TData : IStringable
         {
             if (left != null && right != null)
             {
@@ -137,7 +137,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchLesser(Transaction transaction, double? left, double? right)
+        public static bool? IsMatchLesser<TData>(Transaction<TData> transaction, double? left, double? right) where TData : IStringable
         {
             if (left != null && right != null)
             {
@@ -148,7 +148,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchGreater(Transaction transaction, string? left, string? right)
+        public static bool? IsMatchGreater<TData>(Transaction<TData> transaction, string? left, string? right) where TData : IStringable
         {
             if (left != null && right != null && double.TryParse(left, out var iLeft))
             {
@@ -163,7 +163,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchLesser(Transaction transaction, string? left, string? right)
+        public static bool? IsMatchLesser<TData>(Transaction<TData> transaction, string? left, string? right) where TData : IStringable
         {
             if (left != null && right != null && double.TryParse(left, out var iLeft))
             {
@@ -177,7 +177,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchLike(Transaction transaction, string? input, string? pattern)
+        public static bool? IsMatchLike<TData>(Transaction<TData> transaction, string? input, string? pattern) where TData : IStringable
         {
             if (input == null || pattern == null)
             {
@@ -188,7 +188,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchBetween(Transaction transaction, double? value, double? rangeLow, double? rangeHigh)
+        public static bool? IsMatchBetween<TData>(Transaction<TData> transaction, double? value, double? rangeLow, double? rangeHigh) where TData : IStringable 
         {
             if (value == null || rangeLow == null || rangeHigh == null)
             {
@@ -199,7 +199,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchBetween(Transaction transaction, string? input, string? pattern)
+        public static bool? IsMatchBetween<TData>(Transaction<TData> transaction, string? input, string? pattern) where TData : IStringable
         {
             if (input == null || pattern == null)
             {
@@ -231,13 +231,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool? IsMatchEqual(Transaction transaction, string? left, string? right)
+        public static bool? IsMatchEqual<TData>(Transaction<TData> transaction, string? left, string? right) where TData : IStringable
         {
             return left == right;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsMatch(Transaction transaction, string? leftString, LogicalQualifier logicalQualifier, string? rightString)
+        public static bool IsMatch<TData>(Transaction<TData> transaction, string? leftString, LogicalQualifier logicalQualifier, string? rightString) where TData : IStringable
         {
             if (logicalQualifier == LogicalQualifier.Equals)
             {

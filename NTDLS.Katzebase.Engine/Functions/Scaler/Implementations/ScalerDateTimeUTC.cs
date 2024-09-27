@@ -2,7 +2,7 @@
 {
     internal static class ScalerDateTimeUTC
     {
-        public static string? Execute(ScalerFunctionParameterValueCollection function)
+        public static string? Execute<TData>(ScalerFunctionParameterValueCollection<TData> function)
         {
             return DateTime.UtcNow.ToString(function.Get<string>("format"));
         }

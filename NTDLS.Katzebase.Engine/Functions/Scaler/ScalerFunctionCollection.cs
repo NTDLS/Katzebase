@@ -4,10 +4,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {
-    public static class ScalerFunctionCollection
+    public static class ScalerFunctionCollection<TData> where TData : IStringable
     {
-        private static List<ScalerFunction>? _protypes = null;
-        public static List<ScalerFunction> Prototypes
+        private static List<ScalerFunction<TData>>? _protypes = null;
+        public static List<ScalerFunction<TData>> Prototypes
         {
             get
             {
@@ -27,18 +27,18 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
                 foreach (var prototype in ScalerFunctionImplementation.PrototypeStrings)
                 {
-                    _protypes.Add(ScalerFunction.Parse(prototype));
+                    _protypes.Add(ScalerFunction<TData>.Parse(prototype));
                 }
             }
         }
 
-        public static bool TryGetFunction(string name, [NotNullWhen(true)] out ScalerFunction? function)
+        public static bool TryGetFunction(string name, [NotNullWhen(true)] out ScalerFunction<TData>? function)
         {
             function = Prototypes.FirstOrDefault(o => o.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
             return function != null;
         }
 
-        public static ScalerFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string?> parameters)
+        public static ScalerFunctionParameterValueCollection<TData> ApplyFunctionPrototype(string functionName, List<TData?> parameters)
         {
             if (_protypes == null)
             {

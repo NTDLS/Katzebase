@@ -3,19 +3,19 @@
     /// <summary>
     /// Contains a pre-collapsed value.
     /// </summary>
-    internal class QueryFieldCollapsedValue : IQueryField
+    internal class QueryFieldCollapsedValue<TData> : IQueryField<TData> where TData : IStringable
     {
-        public string Value { get; set; }
+        public TData Value { get; set; }
         public string SchemaAlias { get; private set; } = string.Empty;
 
-        public QueryFieldCollapsedValue(string value)
+        public QueryFieldCollapsedValue(TData value)
         {
             Value = value;
         }
 
-        public IQueryField Clone()
+        public IQueryField<TData> Clone()
         {
-            var clone = new QueryFieldCollapsedValue(Value)
+            var clone = new QueryFieldCollapsedValue<TData>(Value)
             {
                 SchemaAlias = SchemaAlias,
             };
