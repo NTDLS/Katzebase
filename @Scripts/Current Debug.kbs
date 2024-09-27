@@ -1,4 +1,8 @@
-SELECT COUNT(*) as Count FROM Master:Account
+const @ddd = 10
+
+select*from master:account
+
+--select col1, IsInteger(col1), IsString(col1), IsDouble(col1) from testsch
 
 /*
 select
@@ -287,9 +291,9 @@ Create schema WordList:Words with (PageSize = 100)
 --set TraceWaitTimes true
 
 /*
-DECLARE @Var1 = 'Test'
-DECLARE @Var2 = 10
-DECLARE @Var3 = 16.5
+const @Var1 = 'Test'
+const @Var2 = 10
+const @Var3 = 16.5
 
 SELECT
 	@Var1 as v1,

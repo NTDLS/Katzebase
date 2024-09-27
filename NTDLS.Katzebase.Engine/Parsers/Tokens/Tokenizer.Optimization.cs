@@ -1,6 +1,7 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using System.Text.RegularExpressions;
+using static Antlr4.Runtime.Atn.SemanticContext;
 using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Tokens
@@ -237,22 +238,30 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 
             SwapOutStringLiterals(ref text);
 
+            var expandCharacters = new List<char>();
+            expandCharacters.AddRange(TokenizerExtensions.MathematicalCharacters);
+            expandCharacters.AddRange(TokenizerExtensions.TokenConnectorCharacters);
+            expandCharacters.Add(',');
+
+
             //We replace numeric constants and we want to make sure we have 
             //  no numbers next to any conditional operators before we do so.
             text = text.Replace("!=", "$$NotEqual$$");
             text = text.Replace(">=", "$$GreaterOrEqual$$");
             text = text.Replace("<=", "$$LesserOrEqual$$");
-            text = text.Replace("(", " ( ");
-            text = text.Replace(")", " ) ");
-            text = text.Replace(",", " , ");
-            text = text.Replace(">", " > ");
-            text = text.Replace("<", " < ");
-            text = text.Replace("=", " = ");
+            text = text.Replace("||", "$$Or$$");
+            text = text.Replace("&&", "$$And$$");
+
+            foreach (var ch in expandCharacters.Distinct())
+            {
+                text = text.Replace($"{ch}", $" {ch} ");
+            }
+
             text = text.Replace("$$NotEqual$$", " != ");
             text = text.Replace("$$GreaterOrEqual$$", " >= ");
             text = text.Replace("$$LesserOrEqual$$", " <= ");
-            text = text.Replace("||", " || ");
-            text = text.Replace("&&", " && ");
+            text = text.Replace("$$Or$$", " || ");
+            text = text.Replace("$$And$$", " && ");
 
             SwapOutNumericLiterals(ref text);
 
