@@ -103,7 +103,7 @@ module DMLExecutionBasicTests =
 
         
         let rString = 
-            _core.Query.ExecuteQuery<TwoColumnString>(preLogin, $"SELECT * FROM {testSchema}", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+            _core.Query.ExecuteQuery<TwoColumnString>(preLogin, $"SELECT * FROM {testSchema} ORDER BY COL1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
             |> Seq.toArray
 
         equals 2 rString.Length
