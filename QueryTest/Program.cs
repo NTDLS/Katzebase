@@ -54,11 +54,18 @@ namespace QueryTest
             public int SpanishWordCount { get; set; }
         }
 
+        class Count
+        {
+            public int count { get; set; }
+        }
+
         static void Main()
         {
             try
             {
                 using var client = new KbClient(_serverHost, _serverPort, _username, KbClient.HashPassword(_password));
+
+                var results = client.Query.Fetch<Count>("SELECT COUNT(*) as Count FROM Master:Account");
 
                 //var queryText = "SELECT\r\n\tLanguageId,\r\n\tSum(Id + 10) as NumberOf1,Min(Id - 10) as NumberOf2\r\nFROM\r\n\tWordList:Word\r\nWHERE\r\n\tText LIKE 'Tab%'\r\nGROUP BY\r\n\tLanguageId";
                 //var queryText = "select Spanish, count(Id + 7, true) + min(Id) as NumberOf1, Latin, Count(Id) as NumberOf2 from WordList:FlatTranslate where English like 'bed%' group by Spanish, Latin";
@@ -76,18 +83,17 @@ namespace QueryTest
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 'Text1' + 'Text2' FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100 Concat('Text1', 'Text2') as Text FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
                 //var words = client.Query.Fetch<Word>("SELECT TOP 100  Concat('Text1: ', 10 + 10 + Length(Concat('Other', 'Text'))) as Text, 10 * 10 as Id, Length('This is text') as LanguageId, 'English' as Language FROM WordList:Word WHERE Text LIKE @Text", new { Text = "Fly%" }, TimeSpan.FromMinutes(600));
-
-                var results = client.Query.Fetch<DistinctTest>(
-                    "SELECT\r\n\t@Var1 as v1,\r\n\t@Var2 as v2,\r\n\t@Var3 as v3,\r\n\tLanguageId,\r\n\tId - 651947 as NumberOf\r\nFROM\r\n\tWordList:Word\r\nWHERE\r\n\tText LIKE 'Tab%'"
-                    , new { Var1 = 124, Var2 = "My Text", Var3 = "321" });
+                //var results = client.Query.Fetch<DistinctTest>(
+                //    "SELECT\r\n\t@Var1 as v1,\r\n\t@Var2 as v2,\r\n\t@Var3 as v3,\r\n\tLanguageId,\r\n\tId - 651947 as NumberOf\r\nFROM\r\n\tWordList:Word\r\nWHERE\r\n\tText LIKE 'Tab%'"
+                //    , new { Var1 = 124, Var2 = "My Text", Var3 = "321" });
 
                 //var results = client.Query.Fetch<BigQuery>(queryText);
-                foreach (var result in results)
-                {
-                    Console.WriteLine($"[{result.Latin}],[{result.GermanWordCount}],[{result.SpanishWordCount}],[{result.RowCount}]");
-                    //Console.WriteLine($"[{result.Test}],[{result.SourceWordId}],[{result.SourceWord}],[{result.SourceLanguage}],{result.TargetWordId},{result.TargetWord},{result.TargetLanguage}");
-                    //Console.WriteLine($"{word.Len},{word.Id},{word.Text},{word.LanguageId},{word.SourceId},{word.IsDirty}");
-                }
+                //foreach (var result in results)
+                //{
+                //    Console.WriteLine($"[{result.Latin}],[{result.GermanWordCount}],[{result.SpanishWordCount}],[{result.RowCount}]");
+                //    //Console.WriteLine($"[{result.Test}],[{result.SourceWordId}],[{result.SourceWord}],[{result.SourceLanguage}],{result.TargetWordId},{result.TargetWord},{result.TargetLanguage}");
+                //    //Console.WriteLine($"{word.Len},{word.Id},{word.Text},{word.LanguageId},{word.SourceId},{word.IsDirty}");
+                //}
 
             }
             catch (Exception ex)
