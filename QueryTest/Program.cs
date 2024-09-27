@@ -1,4 +1,6 @@
 ﻿using NTDLS.Katzebase.Client;
+using NTDLS.Katzebase.Client.Types;
+using static System.Formats.Asn1.AsnWriter;
 
 namespace QueryTest
 {
@@ -54,6 +56,24 @@ namespace QueryTest
             public int SpanishWordCount { get; set; }
         }
 
+        class TwoColumnString
+        {
+            public string? COL1 { get; set; }
+            public string? COL2 { get; set; }
+        }
+
+        class TwoColumnInt
+        {
+            public int COL1 { get; set; }
+            public int COL2 { get; set; }
+        }
+
+        class TwoColumnDouble
+        {
+            public double COL1 { get; set; }
+            public double COL2 { get; set; }
+        }
+
         class Count
         {
             public int count { get; set; }
@@ -65,7 +85,11 @@ namespace QueryTest
             {
                 using var client = new KbClient(_serverHost, _serverPort, _username, KbClient.HashPassword(_password));
 
-                var results = client.Query.Fetch<Count>("SELECT COUNT(*) as Count FROM Master:Account");
+                var twoColumnString = client.Query.Fetch<TwoColumnString>("SELECT * FROM testSch");
+                var twoColumnInt = client.Query.Fetch<TwoColumnInt>("SELECT * FROM testSch");
+                var twoColumnDouble = client.Query.Fetch<TwoColumnDouble>("SELECT * FROM testSch");
+
+                //var results = client.Query.Fetch<Count>("SELECT COUNT(*) as Count FROM Master:Account");
 
                 //var queryText = "SELECT\r\n\tLanguageId,\r\n\tSum(Id + 10) as NumberOf1,Min(Id - 10) as NumberOf2\r\nFROM\r\n\tWordList:Word\r\nWHERE\r\n\tText LIKE 'Tab%'\r\nGROUP BY\r\n\tLanguageId";
                 //var queryText = "select Spanish, count(Id + 7, true) + min(Id) as NumberOf1, Latin, Count(Id) as NumberOf2 from WordList:FlatTranslate where English like 'bed%' group by Spanish, Latin";
