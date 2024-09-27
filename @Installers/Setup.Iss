@@ -3,8 +3,8 @@
  AppName                          = Katzebase Server
  AppVerName                       = Katzebase Server 0.20.0
  AppCopyright                     = Copyright © 2024 NetworkDLS.
- DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase\Server
- DefaultGroupName                 = NetworkDLS\Katzebase
+ DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase
+ DefaultGroupName                 = Katzebase
  UninstallDisplayIcon             = {app}\NTDLS.Katzebase.Server.exe
  SetupIconFile                    = "..\@Art\Icon.ico"
  PrivilegesRequired               = admin
@@ -12,28 +12,72 @@
  MinVersion                       = 0.0,7.0
  Compression                      = bZIP/9
  ChangesAssociations              = Yes
- OutputBaseFilename               = Katzebase.Server
+ OutputBaseFilename               = Katzebase.Bundle.Installer
  ArchitecturesInstallIn64BitMode  = x64compatible
  AppPublisher                     = NetworkDLS
  AppPublisherURL                  = http://www.NetworkDLS.com/
  AppUpdatesURL                    = http://www.NetworkDLS.com/
  AppVersion                       = 0.15.0
 
+[Components]
+ Name: "Server";       Description: "Server";                     Types: Full Compact Custom;
+ Name: "Management";   Description: "Management";                 Types: Full Compact Custom;
+ Name: "Migration";    Description: "SQL Server Migration Tool";  Types: Full Custom;
+  
+ 
 [Files]
- Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\runtimes\*.*";  DestDir: "{app}\runtimes";              Flags: IgnoreVersion recursesubdirs;
- Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\*.exe";         DestDir: "{app}";                       Flags: IgnoreVersion;
- Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\*.dll";         DestDir: "{app}";                       Flags: IgnoreVersion;
- Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\*.json";        DestDir: "{app}";                       Flags: IgnoreVersion;
- Source: "Settings\*.*";                                                DestDir: "{app}";                       Flags: IgnoreVersion;
-
+;Server component.
+ Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\runtimes\*.*"; DestDir: "{app}\Server\runtimes"; Flags: IgnoreVersion recursesubdirs; Components: Server;
+ Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\*.exe"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
+ Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\*.dll"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
+ Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\*.json"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
+ Source: "Settings\*.*"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
+;Management component.
+ Source: "..\..\NTDLS.Katzebase.Management\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.exe"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
+ Source: "..\..\NTDLS.Katzebase.Management\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.dll"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
+ Source: "..\..\NTDLS.Katzebase.Management\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.json"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
+ Source: "..\..\NTDLS.Katzebase.Management\Highlighters\*.*"; DestDir: "{app}\Management\Highlighters";  Flags: IgnoreVersion; Components: Management;
+;Migration component.
+ Source: "..\..\NTDLS.Katzebase.SQLServerMigration\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.exe"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
+ Source: "..\..\NTDLS.Katzebase.SQLServerMigration\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.dll"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
+ Source: "..\..\NTDLS.Katzebase.SQLServerMigration\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.json"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
+ Source: "..\..\NTDLS.Katzebase.SQLServerMigration\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\Runtimes\*.*"; DestDir: "{app}\Migration\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: Migration;
+ 
+[Icons]
+;Management component.
+ Name: "{group}\Katzebase Manager"; Filename: "{app}\Management\NTDLS.Katzebase.Management.exe"; Components: Management;
+ Name: "{commondesktop}\Katzebase Manager"; Filename: "{app}\Management\NTDLS.Katzebase.Management.exe"; Components: Management;
+ Name: "{userdesktop}\Katzebase Manager"; Filename: "{app}\Management\NTDLS.Katzebase.Management.exe"; Components: Management;
+;Migration component.
+ Name: "{group}\Katzebase SQL Server Migration";  Filename: "{app}\Migration\NTDLS.Katzebase.SQLServerMigration.exe"; Components: Migration;
+ 
 [Registry]
- Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Server";                                                             Flags: uninsdeletekey noerror;
- Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Server\"; ValueType: string; ValueName: "Path";   ValueData:"{app}"; Flags: CreateValueIfDoesntExist;
+;-- Create generic registery entires for server component.
+ Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Server"; Flags: uninsdeletekey noerror;   Components: Server;
+ Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Server\"; ValueType: string; ValueName: "Path";   ValueData:"{app}"; Flags: CreateValueIfDoesntExist; Components: Server; 
+;-- Create kbs "Katzebase SQL Script" Association for management component.
+ Root: HKCR; Subkey: ".kbs"; Flags: uninsdeletekey; Components: Management;
+ Root: HKCR; Subkey: ".kbs"; ValueType: string; ValueData: "KatzebaseScript"; Components: Management;
+ Root: HKCR; Subkey: "KatzebaseScript"; Flags: uninsdeletekey; Components: Management;
+ Root: HKCR; Subkey: "KatzebaseScript"; ValueType: string; ValueData:"Katzebase Script"; Components: Management;
+ Root: HKCR; Subkey: "KatzebaseScript\Shell"; ValueType: string; ValueData:"Open"; Components: Management;
+ Root: HKCR; Subkey: "KatzebaseScript\Shell\Open\Command"; Flags: uninsdeletekey; Components: Management;
+ Root: HKCR; Subkey: "KatzebaseScript\Shell\Open\Command"; ValueType: string; ValueData:"""{app}\NTDLS.Katzebase.Management.exe"" ""%1"""; Components: Management;
+ Root: HKCR; Subkey: "KatzebaseScript\DefaultIcon"; Flags: uninsdeletekey; Components: Management;
+ Root: HKCR; Subkey: "KatzebaseScript\DefaultIcon"; ValueType: string; ValueData:"{app}\NTDLS.Katzebase.Management.exe,1"; Components: Management;
+;-- Create generic registery entires for management component.
+ Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Management"; Flags: uninsdeletekey noerror; Components: Management;
+ Root: HKLM; Subkey: "Software\NetworkDLS\Katzebase\Management\"; ValueType: string; ValueName: "Path";   ValueData:"{app}"; Flags: CreateValueIfDoesntExist; Components: Management;
 
 [Run]
- Filename: "{app}\NTDLS.Katzebase.Server.exe"; Parameters: "install"; Flags: runhidden; StatusMsg: "Installing services..."
- Filename: "{app}\NTDLS.Katzebase.Server.exe"; Parameters: "start"; Flags: runhidden; StatusMsg: "Starting services..."
+;Management component.
+ Filename: "{app}\Management\NTDLS.Katzebase.Management.exe"; Description: "Run Katzebase Manager now?"; Flags: postinstall nowait skipifsilent shellexec; Components: Management;
+;Server component.
+ Filename: "{app}\Server\NTDLS.Katzebase.Server.exe"; Parameters: "install"; Flags: runhidden; StatusMsg: "Installing services..."; Components: Server;
+ Filename: "{app}\Server\NTDLS.Katzebase.Server.exe"; Parameters: "start"; Flags: runhidden; StatusMsg: "Starting services..."; Components: Server;
+;Migration component.
+;Filename: "{app}\NTDLS.Katzebase.SQLServerMigration.exe"; Description: "Run SQL Server Migration now?"; Flags: postinstall nowait skipifsilent shellexec; Components: Management;
 
 [UninstallRun]
- Filename: "{app}\NTDLS.Katzebase.Server.exe"; Parameters: "uninstall"; Flags: runhidden; StatusMsg: "Removing services..."; RunOnceId: "ServiceRemoval"
+ Filename: "{app}\Server\NTDLS.Katzebase.Server.exe"; Parameters: "uninstall"; Flags: runhidden; StatusMsg: "Removing services..."; RunOnceId: "ServiceRemoval"; Components: Server;
  
