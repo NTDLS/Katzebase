@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserSelect
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
         {
             string token;
 
@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     throw new KbParserException($"Invalid query. Found [{selectIntoSchema}], expected: schema name.");
                 }
 
-                query.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, selectIntoSchema);
+                query.AddAttribute(PreparedQuery<TData>.QueryAttribute.TargetSchema, selectIntoSchema);
 
                 query.QueryType = QueryType.SelectInto;
             }

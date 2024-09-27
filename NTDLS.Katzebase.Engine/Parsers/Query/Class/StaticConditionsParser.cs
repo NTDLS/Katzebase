@@ -18,9 +18,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// and all conditions in a ConditionGroup will be comprised solely of AND conditions. This way we can use the groups to match indexes
         /// before evaluating the whole expression on the limited set of documents we derived from the indexing operations.
         /// </summary>
-        public static ConditionCollection Parse(QueryBatch queryBatch, Tokenizer parentTokenizer, string conditionsText, string leftHandAliasOfJoin = "")
+        public static ConditionCollection<TData> Parse<TData>(QueryBatch<TData> queryBatch, Tokenizer parentTokenizer, string conditionsText, string leftHandAliasOfJoin = "")
+            where TData : IStringable
         {
-            var conditionCollection = new ConditionCollection(queryBatch, conditionsText, leftHandAliasOfJoin);
+            var conditionCollection = new ConditionCollection<TData>(queryBatch, conditionsText, leftHandAliasOfJoin);
 
             conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression
                 .Replace(" OR ", " || ", StringComparison.InvariantCultureIgnoreCase)
@@ -34,22 +35,23 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             return conditionCollection;
         }
 
-        private static void ParseRecursive(QueryBatch queryBatch, Tokenizer parentTokenizer,
-            ConditionCollection conditionCollection, ConditionGroup parentConditionGroup,
-            string conditionsText, ConditionGroup? givenCurrentConditionGroup = null)
+        private static void ParseRecursive<TData>(QueryBatch<TData> queryBatch, Tokenizer parentTokenizer,
+            ConditionCollection<TData> conditionCollection, ConditionGroup<TData> parentConditionGroup,
+            string conditionsText, ConditionGroup<TData>? givenCurrentConditionGroup = null)
+            where TData : IStringable
         {
             var tokenizer = new Tokenizer(conditionsText);
 
             var lastLogicalConnector = LogicalConnector.None;
 
-            ConditionGroup? currentConditionGroup = givenCurrentConditionGroup;
+            ConditionGroup<TData>? currentConditionGroup = givenCurrentConditionGroup;
 
             while (!tokenizer.IsExhausted())
             {
                 if (tokenizer.TryIsNextCharacter('('))
                 {
                     //When we encounter an "(", we create a new condition group.
-                    currentConditionGroup = new ConditionGroup(lastLogicalConnector);
+                    currentConditionGroup = new ConditionGroup<TData>(lastLogicalConnector);
                     parentConditionGroup.Collection.Add(currentConditionGroup);
 
                     string subConditionsText = tokenizer.EatMatchingScope();
@@ -63,12 +65,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     if (currentConditionGroup == null)
                     {
-                        currentConditionGroup = new ConditionGroup(lastLogicalConnector);
+                        currentConditionGroup = new ConditionGroup<TData>(lastLogicalConnector);
                         parentConditionGroup.Collection.Add(currentConditionGroup);
                     }
 
                     var leftAndRight = ParseRightAndLeft(conditionCollection, parentTokenizer, tokenizer);
-                    currentConditionGroup.Collection.Add(new ConditionEntry(leftAndRight));
+                    currentConditionGroup.Collection.Add(new ConditionEntry<TData>(leftAndRight));
                 }
 
                 if (!tokenizer.IsExhausted())
@@ -83,7 +85,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
         }
 
-        private static ConditionEntry.ConditionValuesPair ParseRightAndLeft(ConditionCollection conditionCollection, Tokenizer parentTokenizer, Tokenizer tokenizer)
+        private static ConditionEntry<TData>.ConditionValuesPair<TData> ParseRightAndLeft<TData>(ConditionCollection<TData> conditionCollection, Tokenizer parentTokenizer, Tokenizer tokenizer)
+            where TData : IStringable
         {
             int startLeftRightCaret = tokenizer.Caret;
             int startConditionSetCaret = tokenizer.Caret;
@@ -130,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     //This is a numeric placeholder, we're all good.
                     tokenizer.EatNext();
                 }
-                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
+                else if (ScalerFunctionCollection<TData>.TryGetFunction(token, out var scalerFunction))
                 {
                     if (!tokenizer.IsNextNonIdentifier(['(']))
                     {
@@ -161,10 +164,10 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             rightExpressionString = tokenizer.Substring(startLeftRightCaret, tokenizer.Caret - startLeftRightCaret).Trim();
 
-            var left = StaticParserField.Parse(parentTokenizer, leftExpressionString.EnsureNotNullOrEmpty(), conditionCollection.FieldCollection);
-            var right = StaticParserField.Parse(parentTokenizer, rightExpressionString.EnsureNotNullOrEmpty(), conditionCollection.FieldCollection);
+            var left = StaticParserField<TData>.Parse(parentTokenizer, leftExpressionString.EnsureNotNullOrEmpty(), conditionCollection.FieldCollection);
+            var right = StaticParserField<TData>.Parse(parentTokenizer, rightExpressionString.EnsureNotNullOrEmpty(), conditionCollection.FieldCollection);
 
-            var conditionPair = new ConditionEntry.ConditionValuesPair(conditionCollection.NextExpressionVariable(), left, logicalQualifier, right);
+            var conditionPair = new ConditionEntry<TData>.ConditionValuesPair<TData>(conditionCollection.NextExpressionVariable(), left, logicalQualifier, right);
 
             //Replace the condition with the name of the variable that must be evaluated to determine the value for this condition.
             string conditionSetText = tokenizer.Substring(startConditionSetCaret, tokenizer.Caret - startConditionSetCaret).Trim();

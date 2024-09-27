@@ -16,18 +16,18 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// Contains the list of field values for the grouping fields, and the need-to-be aggregated values for fields
         /// that are needed to collapse aggregation functions. The key is the concatenated values from the grouping fields.
         /// </summary>
-        public Dictionary<string, GroupRowCollection> GroupRows { get; set; } = new();
+        public Dictionary<string, GroupRowCollection<TData>> GroupRows { get; set; } = new();
 
         public string[]? GatherDocumentsIdsForSchemaPrefixes { get; set; } = null;
         public SchemaIntersectionRowCollection<TData> ResultingRows { get; set; } = new();
-        public List<SchemaIntersectionRowDocumentIdentifier> RowDocumentIdentifiers { get; set; } = new();
+        public List<SchemaIntersectionRowDocumentIdentifier<TData>> RowDocumentIdentifiers { get; set; } = new();
         public QuerySchemaMap<TData> SchemaMap { get; private set; }
         public EngineCore<TData> Core { get; private set; }
         public Transaction<TData> Transaction { get; private set; }
-        public PreparedQuery Query { get; private set; }
+        public PreparedQuery<TData> Query { get; private set; }
 
         public DocumentLookupOperation(EngineCore<TData> core, Transaction<TData> transaction,
-            QuerySchemaMap<TData> schemaMap, PreparedQuery query, string[]? getDocumentsIdsForSchemaPrefixes)
+            QuerySchemaMap<TData> schemaMap, PreparedQuery<TData> query, string[]? getDocumentsIdsForSchemaPrefixes)
         {
             GatherDocumentsIdsForSchemaPrefixes = getDocumentsIdsForSchemaPrefixes;
             Core = core;

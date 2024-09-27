@@ -44,17 +44,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         public static TData? CollapseScalerQueryField<TData>(this IQueryField<TData> queryField, Transaction<TData> transaction,
             PreparedQuery<TData> query, QueryFieldCollection<TData> fieldCollection, KbInsensitiveDictionary<TData?> auxiliaryFields) where TData : IStringable
         {
-            if (queryField is QueryFieldExpressionNumeric expressionNumeric)
+            if (queryField is QueryFieldExpressionNumeric<TData> expressionNumeric)
             {
-                return CollapseScalerFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value);
+                return CollapseScalerFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value.ToT<string>());
             }
-            else if (queryField is QueryFieldExpressionString expressionString)
+            else if (queryField is QueryFieldExpressionString<TData> expressionString)
             {
-                return CollapseScalerFunctionStringParameter(transaction, query, fieldCollection, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value);
+                return CollapseScalerFunctionStringParameter(transaction, query, fieldCollection, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value.ToT<string>());
             }
-            else if (queryField is QueryFieldDocumentIdentifier documentIdentifier)
+            else if (queryField is QueryFieldDocumentIdentifier<TData> documentIdentifier)
             {
-                if (auxiliaryFields.TryGetValue(documentIdentifier.Value, out var exactAuxiliaryValue))
+                if (auxiliaryFields.TryGetValue(documentIdentifier.Value.GetKey(), out var exactAuxiliaryValue))
                 {
                     return exactAuxiliaryValue ?? (TData)StringExtensions.Empty; //TODO: Should auxiliaryFields really allow NULL values?
                 }
@@ -64,9 +64,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 }
                 throw new KbEngineException($"Auxiliary fields not found: [{documentIdentifier.Value}].");
             }
-            else if (queryField is QueryFieldConstantNumeric constantNumeric)
+            else if (queryField is QueryFieldConstantNumeric<TData> constantNumeric)
             {
-                return query.Batch.GetLiteralValue(constantNumeric.Value) ?? (TData)StringExtensions.Empty;
+                return query.Batch.GetLiteralValue(constantNumeric.Value.ToT<string>()) ?? (TData)StringExtensions.Empty;
             }
             else if (queryField is QueryFieldConstantString constantString)
             {
@@ -112,13 +112,13 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         private static TData? CollapseScalerExpression<TData>(Transaction<TData> transaction,
             PreparedQuery<TData> query, QueryFieldCollection<TData> fieldCollection, KbInsensitiveDictionary<TData?> auxiliaryFields, ExposedExpression expression) where TData:IStringable
         {
-            if (expression.FieldExpression is QueryFieldExpressionNumeric expressionNumeric)
+            if (expression.FieldExpression is QueryFieldExpressionNumeric<TData> expressionNumeric)
             {
-                return CollapseScalerFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value);
+                return CollapseScalerFunctionNumericParameter(transaction, query, fieldCollection, auxiliaryFields, expressionNumeric.FunctionDependencies, expressionNumeric.Value.ToT<string>());
             }
-            else if (expression.FieldExpression is QueryFieldExpressionString expressionString)
+            else if (expression.FieldExpression is QueryFieldExpressionString<TData> expressionString)
             {
-                return CollapseScalerFunctionStringParameter(transaction, query, fieldCollection, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value);
+                return CollapseScalerFunctionStringParameter(transaction, query, fieldCollection, auxiliaryFields, expressionString.FunctionDependencies, expressionString.Value.ToT<string>());
             }
             else
             {
@@ -152,12 +152,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                     if (fieldCollection.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
                     {
                         //Resolve the field identifier to a value.
-                        if (auxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
+                        if (auxiliaryFields.TryGetValue(fieldIdentifier.Value.GetKey(), out var textValue))
                         {
                             textValue.EnsureNotNull();
                             string mathVariable = $"v{variableNumber++}";
                             expressionString = expressionString.Replace(token, mathVariable);
-                            expressionVariables.Add(mathVariable, query.Batch.GetLiteralValue(textValue));
+                            expressionVariables.Add(mathVariable, query.Batch.GetLiteralValue(textValue.ToT<string>()));
                         }
                         else
                         {
@@ -263,7 +263,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                     if (fieldCollection.DocumentIdentifiers.TryGetValue(token, out var fieldIdentifier))
                     {
                         //Resolve the field identifier to a value.
-                        if (auxiliaryFields.TryGetValue(fieldIdentifier.Value, out var textValue))
+                        if (auxiliaryFields.TryGetValue(fieldIdentifier.Value.GetKey(), out var textValue))
                         {
                             if (textValue is double || (textValue != null && double.TryParse(textValue.ToString(), out _)))
                             {
@@ -330,7 +330,11 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 {
                     var value = query.Batch.GetLiteralValue(token);
 
-                    if (double.TryParse(value, out _))
+                    if (value is double)
+                    {
+                        mathBuffer.Append($"{value}");
+                    }
+                    else if (double.TryParse(value.ToT<string>(), out _))
                     {
                         mathBuffer.Append(value);
                     }
@@ -410,7 +414,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 collapsedParameters.Add(parameter.CollapseScalerExpressionFunctionParameter(transaction, query, fieldCollection, auxiliaryFields, functions));
             }
 
-            if (AggregateFunctionCollection.TryGetFunction(function.FunctionName, out _))
+            if (AggregateFunctionCollection<TData>.TryGetFunction(function.FunctionName, out _))
             {
                 throw new KbEngineException($"Cannot perform scaler operation on aggregate result of: [{function.FunctionName}].");
             }

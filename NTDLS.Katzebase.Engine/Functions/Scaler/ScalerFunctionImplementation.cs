@@ -90,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
                 _ => throw new KbParserException($"The scaler function is not implemented: [{functionName}].")
             };
-            return rtn.ParseToT<TData>(EngineCore<TData>.StrCast);
+            return rtn.ParseToT(EngineCore<TData>.StrCast);
         }
     }
 }

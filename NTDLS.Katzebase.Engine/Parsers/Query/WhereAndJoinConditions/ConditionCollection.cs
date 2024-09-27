@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
     /// Contains the collection of ConditionSets, each group contains AND expressions (NO OR expressions) as there
     ///     is a seperate ConditionGroup for each OR expression and for each expression contained in parentheses.
     /// </summary>
-    internal class ConditionCollection<TData> : ConditionGroup where TData : IStringable
+    internal class ConditionCollection<TData> : ConditionGroup<TData> where TData : IStringable
     {
         /// <summary>
         /// For conditions on joins, this is the alias of the schema that these conditions are for.
@@ -87,7 +87,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
             foreach (var item in Collection)
             {
-                if (item is ConditionGroup group)
+                if (item is ConditionGroup<TData> group)
                 {
                     result.AppendLine("• " + Pad(0) + $"{(group.Connector != LogicalConnector.None ? $"{group.Connector} " : string.Empty)}(");
 
@@ -95,7 +95,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
                     result.AppendLine("• " + Pad(0) + ")");
                 }
-                else if (item is ConditionEntry entry)
+                else if (item is ConditionEntry<TData> entry)
                 {
                     throw new NotImplementedException("Condition entries are not supported at the root level.");
                 }
@@ -110,11 +110,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
             return result.ToString();
         }
 
-        private void ExplainOperationsRecursive(ConditionGroup givenGroup, StringBuilder result, int depth = 0)
+        private void ExplainOperationsRecursive(ConditionGroup<TData> givenGroup, StringBuilder result, int depth = 0)
         {
             foreach (var item in givenGroup.Collection)
             {
-                if (item is ConditionGroup group)
+                if (item is ConditionGroup<TData> group)
                 {
                     result.AppendLine("• " + Pad(1 + depth) + $"{(group.Connector != LogicalConnector.None ? $"{group.Connector} " : string.Empty)}(");
 
@@ -122,7 +122,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
                     result.AppendLine("• " + Pad(1 + depth) + ")");
                 }
-                else if (item is ConditionEntry entry)
+                else if (item is ConditionEntry<TData> entry)
                 {
                     string left;
                     if (entry.Left is QueryFieldExpressionNumeric)
@@ -135,7 +135,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                     }
                     else
                     {
-                        left = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Left.Value)}";
+                        left = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Left.Value.ToT<string>())}";
                     }
 
                     string right;
@@ -149,7 +149,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                     }
                     else
                     {
-                        right = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Right.Value)}";
+                        right = $"{FieldCollection.QueryBatch.GetLiteralValue(entry.Right.Value.ToT<string>())}";
                     }
 
 

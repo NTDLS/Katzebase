@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserCreateSchema
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
         {
             var query = new PreparedQuery(queryBatch, QueryType.Create)
             {
@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException($"Invalid query. Found [{schemaName}], expected: schema name.");
             }
             query.Schemas.Add(new QuerySchema(schemaName));
-            query.AddAttribute(PreparedQuery.QueryAttribute.Schema, schemaName);
+            query.AddAttribute(PreparedQuery<TData>.QueryAttribute.Schema, schemaName);
 
             if (tokenizer.TryEatIfNext("with"))
             {

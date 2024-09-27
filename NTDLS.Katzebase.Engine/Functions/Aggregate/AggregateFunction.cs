@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
     /// <summary>
     /// Contains a parsed function prototype.
     /// </summary>
-    public class AggregateFunction
+    public class AggregateFunction<TData> where TData : IStringable
     {
         public string Name { get; set; }
         public KbAggregateFunctionParameterType ReturnType { get; private set; }
@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             Parameters.AddRange(parameters);
         }
 
-        public static AggregateFunction Parse(string prototype)
+        public static AggregateFunction<TData> Parse(string prototype)
         {
             var tokenizer = new Tokenizer(prototype, true);
 
@@ -111,12 +111,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 throw new KbEngineException($"Failed to parse aggregate function [{functionName}] prototype, expected end-of-line: [{tokenizer.Remainder}].");
             }
 
-            return new AggregateFunction(functionName, returnType, parameters);
+            return new AggregateFunction<TData>(functionName, returnType, parameters);
         }
 
-        internal AggregateFunctionParameterValueCollection ApplyParameters(List<string?> values)
+        internal AggregateFunctionParameterValueCollection<TData> ApplyParameters(List<TData?> values)
         {
-            var result = new AggregateFunctionParameterValueCollection();
+            var result = new AggregateFunctionParameterValueCollection<TData>();
 
             int satisfiedParameterCount = 1; //Compensate for the aggregate value list which is not really passed by parameter.
 
@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     //parameter in the prototype, it eats the remainder of the passed parameters.
                     for (int passedParamIndex = protoParamIndex; passedParamIndex < values.Count; passedParamIndex++)
                     {
-                        result.Values.Add(new AggregateFunctionParameterValue(Parameters[protoParamIndex], values[passedParamIndex]));
+                        result.Values.Add(new AggregateFunctionParameterValue<TData>(Parameters[protoParamIndex], values[passedParamIndex]));
                     }
                     break;
                 }
@@ -137,7 +137,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 {
                     if (Parameters[protoParamIndex].HasDefault)
                     {
-                        result.Values.Add(new AggregateFunctionParameterValue(Parameters[protoParamIndex], Parameters[protoParamIndex].DefaultValue));
+                        result.Values.Add(new AggregateFunctionParameterValue<TData>(Parameters[protoParamIndex], Parameters[protoParamIndex].DefaultValue));
                     }
                     else
                     {
@@ -146,7 +146,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 }
                 else
                 {
-                    result.Values.Add(new AggregateFunctionParameterValue(Parameters[protoParamIndex], values[protoParamIndex - 1]));
+                    result.Values.Add(new AggregateFunctionParameterValue<TData>(Parameters[protoParamIndex], values[protoParamIndex - 1]));
                 }
 
                 satisfiedParameterCount++;

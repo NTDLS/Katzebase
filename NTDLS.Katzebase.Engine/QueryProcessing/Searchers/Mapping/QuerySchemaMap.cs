@@ -15,9 +15,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
     {
         private readonly EngineCore<TData> _core;
         public Transaction<TData> Transaction { get; private set; }
-        public PreparedQuery Query { get; private set; }
+        public PreparedQuery<TData> query { get; private set; }
 
-        public QuerySchemaMap(EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery query)
+        public QuerySchemaMap(EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery<TData> query)
         {
             _core = core;
             Query = query;

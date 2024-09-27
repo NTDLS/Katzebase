@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSelect(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteSelect(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -50,12 +50,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSelectInto(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteSelectInto(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var targetSchema = preparedQuery.Attributes[PreparedQuery.QueryAttribute.TargetSchema].ToString();
+                var targetSchema = preparedQuery.Attributes[PreparedQuery<TData>.QueryAttribute.TargetSchema].ToString();
 
                 var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema.EnsureNotNull(), LockOperation.Write);
 
@@ -104,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         /// <param name="processId"></param>
         /// <param name="preparedQuery"></param>
         /// <returns></returns>
-        internal KbActionResponse ExecuteInsert(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteInsert(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -192,7 +192,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
         /// <param name="processId"></param>
         /// <param name="preparedQuery"></param>
         /// <returns></returns>
-        internal KbActionResponse ExecuteUpdate(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteUpdate(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -239,7 +239,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSample(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteSample(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -257,7 +257,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteList(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryDocumentListResult ExecuteList(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -275,7 +275,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryExplain ExecuteExplainPlan(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryExplain ExecuteExplainPlan(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -307,7 +307,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryExplain ExecuteExplainOperations(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryExplain ExecuteExplainOperations(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -333,7 +333,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteDelete(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteDelete(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {

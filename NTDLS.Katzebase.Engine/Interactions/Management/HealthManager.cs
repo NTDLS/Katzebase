@@ -10,7 +10,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to health.
     /// </summary>
-    public class HealthManager<TData>
+    public class HealthManager<TData> where TData : IStringable
     {
         internal OptimisticCriticalResource<KbInsensitiveDictionary<HealthCounter>> Counters { get; private set; } = new();
 

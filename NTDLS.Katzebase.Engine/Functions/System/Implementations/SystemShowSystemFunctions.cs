@@ -5,9 +5,9 @@ using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class SystemShowSystemFunctions
+    internal static class SystemShowSystemFunctions<TData> where TData : IStringable
     {
-        public static KbQueryResultCollection Execute(EngineCore core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
+        public static KbQueryResultCollection Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
         {
             var collection = new KbQueryResultCollection();
             var result = collection.AddNew();

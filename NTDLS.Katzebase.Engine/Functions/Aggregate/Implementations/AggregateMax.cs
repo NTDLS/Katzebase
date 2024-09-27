@@ -2,11 +2,11 @@
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
-    internal static class AggregateMax
+    internal static class AggregateMax<TData> where TData : IStringable
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string Execute(GroupAggregateFunctionParameter<TData> parameters)
         {
-            return parameters.AggregationValues.Max(o => double.Parse(o)).ToString();
+            return parameters.AggregationValues.Max(o => o.ToT<double>()).ToString();
         }
     }
 }

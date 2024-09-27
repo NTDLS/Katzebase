@@ -2,11 +2,11 @@
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
-    internal static class AggregateSum
+    internal static class AggregateSum<TData> where TData : IStringable
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string Execute(GroupAggregateFunctionParameter<TData> parameters)
         {
-            return parameters.AggregationValues.Sum(o => double.Parse(o)).ToString();
+            return parameters.AggregationValues.Sum(o => o.ToT<double>()).ToString();
         }
     }
 }

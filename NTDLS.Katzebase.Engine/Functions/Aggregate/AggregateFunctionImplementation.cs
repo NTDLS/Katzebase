@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
     /// <summary>
     /// Contains all function protype definitions, function implementations and expression collapse functionality.
     /// </summary>
-    internal class AggregateFunctionImplementation
+    internal class AggregateFunctionImplementation<TData> where TData : IStringable
     {
         internal static string[] PrototypeStrings = {
                 //Prototype Format: "returnDataType functionName (parameterDataType parameterName, parameterDataType parameterName = defaultValue)"
@@ -29,31 +29,32 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 "String Sha512Agg (AggregationArray values)",
             };
 
-        public static string ExecuteFunction(string functionName, GroupAggregateFunctionParameter parameters)
+        public static TData ExecuteFunction(string functionName, GroupAggregateFunctionParameter<TData> parameters)
         {
-            var function = AggregateFunctionCollection.ApplyFunctionPrototype(functionName, parameters.SupplementalParameters);
+            var function = AggregateFunctionCollection.ApplyFunctionPrototype<TData>(functionName, parameters.SupplementalParameters);
 
-            return functionName.ToLowerInvariant() switch
+            var rtn = functionName.ToLowerInvariant() switch
             {
-                "avg" => AggregateAvg.Execute(parameters),
-                "count" => AggregateCount.Execute(function, parameters),
-                "geometricmean" => AggregateGeometricMean.Execute(parameters),
-                "max" => AggregateMax.Execute(parameters),
-                "mean" => AggregateMean.Execute(parameters),
-                "median" => AggregateMedian.Execute(parameters),
-                "min" => AggregateMin.Execute(parameters),
-                "mode" => AggregateMode.Execute(parameters),
-                "sum" => AggregateSum.Execute(parameters),
-                "variance" => AggregateVariance.Execute(parameters),
-                "minstring" => AggregateMinString.Execute(parameters),
-                "maxstring" => AggregateMaxString.Execute(parameters),
-                "sha1agg" => AggregateSha1Agg.Execute(parameters),
-                "sha256agg" => AggregateSha256Agg.Execute(parameters),
-                "sha512agg" => AggregateSha512Agg.Execute(parameters),
+                "avg" => AggregateAvg<TData>.Execute(parameters),
+                "count" => AggregateCount<TData>.Execute(function, parameters),
+                "geometricmean" => AggregateGeometricMean<TData>.Execute(parameters),
+                "max" => AggregateMax<TData>.Execute(parameters),
+                "mean" => AggregateMean<TData>.Execute(parameters),
+                "median" => AggregateMedian<TData>.Execute(parameters),
+                "min" => AggregateMin<TData>.Execute(parameters),
+                "mode" => AggregateMode<TData>.Execute(parameters),
+                "sum" => AggregateSum<TData>.Execute(parameters),
+                "variance" => AggregateVariance<TData>.Execute(parameters),
+                "minstring" => AggregateMinString<TData>.Execute(parameters),
+                "maxstring" => AggregateMaxString<TData>.Execute(parameters),
+                "sha1agg" => AggregateSha1Agg<TData>.Execute(parameters),
+                "sha256agg" => AggregateSha256Agg<TData>.Execute(parameters),
+                "sha512agg" => AggregateSha512Agg<TData>.Execute(parameters),
 
                 _ => throw new KbParserException($"The aggregate function is not implemented: [{functionName}].")
             };
 
+            return rtn.CastToT<TData>(EngineCore<TData>.StrCast);
             throw new KbFunctionException($"Undefined function: [{functionName}].");
         }
     }

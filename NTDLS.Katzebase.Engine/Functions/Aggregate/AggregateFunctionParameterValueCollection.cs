@@ -4,9 +4,9 @@ using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
-    public class AggregateFunctionParameterValueCollection
+    public class AggregateFunctionParameterValueCollection<TData> where TData : IStringable
     {
-        public List<AggregateFunctionParameterValue> Values { get; private set; } = new();
+        public List<AggregateFunctionParameterValue<TData>> Values { get; private set; } = new();
 
         public T Get<T>(string name)
         {
@@ -24,7 +24,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
                 }
 
-                return Converters.ConvertTo<T>(parameter.Value);
+                //return Converters.ConvertTo<T>(parameter.Value.ToT<T>());
+                return parameter.Value.ToT<T>();
             }
             catch (Exception ex)
             {
@@ -36,13 +37,14 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             try
             {
-                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name)).Value.ToT<T>();
                 if (value == null)
                 {
                     return defaultValue;
                 }
 
-                return Converters.ConvertTo<T>(value);
+                //return Converters.ConvertTo<T>(value);
+                return value;
             }
             catch (Exception ex)
             {
@@ -66,7 +68,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     return Converters.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
                 }
 
-                return Converters.ConvertToNullable<T>(parameter.Value);
+                //return Converters.ConvertToNullable<T>(parameter.Value);
+                return parameter.Value.ToT<T>();
             }
             catch (Exception ex)
             {
@@ -78,13 +81,14 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             try
             {
-                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name)).Value.ToT<T>();
                 if (value == null)
                 {
                     return defaultValue;
                 }
 
-                return Converters.ConvertToNullable<T>(value);
+                //return Converters.ConvertToNullable<T>(value);
+                return value; ;
             }
             catch (Exception ex)
             {

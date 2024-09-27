@@ -1,18 +1,20 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Class.WithOptions;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
-using static NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes.PreparedQuery;
+using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
+
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserWithOptions
+    internal static class StaticParserWithOptions<TData> where TData : IStringable
     {
         /// <summary>
         /// Parses "with options" and returns the dictionary of values that can be added to a prepared query.
         /// </summary>
-        internal static Dictionary<QueryAttribute, object> Parse(Tokenizer tokenizer, ExpectedWithOptions expectedOptions)
+        internal static Dictionary<PreparedQuery<TData>.QueryAttribute, object> Parse<TData>(Tokenizer tokenizer, ExpectedWithOptions expectedOptions)
+            where TData : IStringable
         {
-            var results = new Dictionary<QueryAttribute, object>();
+            var results = new Dictionary<PreparedQuery<TData>.QueryAttribute, object>();
 
             if (tokenizer.TryIsNextCharacter('(') == false)
             {
@@ -44,7 +46,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 var convertedValue = expectedOptions.ValidateAndConvert(name, tokenValue);
 
                 var option = new WithOption(name, convertedValue, convertedValue.GetType());
-                if (Enum.TryParse(option.Name, true, out QueryAttribute optionType) == false)
+                if (Enum.TryParse(option.Name, true, out PreparedQuery<TData>.QueryAttribute optionType) == false)
                 {
                     throw new KbParserException($"Invalid query. Found [{option.Name}], expected [{string.Join("],[", expectedOptions.Select(o => o.Key))}].");
                 }

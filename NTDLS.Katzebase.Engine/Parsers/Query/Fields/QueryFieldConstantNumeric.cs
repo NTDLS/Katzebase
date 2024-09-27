@@ -3,23 +3,23 @@
     /// <summary>
     /// Contains a numeric constant.
     /// </summary>
-    internal class QueryFieldConstantNumeric : IQueryField
+    internal class QueryFieldConstantNumeric<TData> : IQueryField<TData> where TData : IStringable
     {
-        public string Value { get; set; }
+        public TData Value { get; set; }
 
         /// <summary>
         /// Not applicable to QueryFieldConstantString
         /// </summary>
         public string SchemaAlias { get; private set; } = string.Empty;
 
-        public QueryFieldConstantNumeric(string value)
+        public QueryFieldConstantNumeric(TData value)
         {
             Value = value;
         }
 
-        public IQueryField Clone()
+        public IQueryField<TData> Clone()
         {
-            var clone = new QueryFieldConstantNumeric(Value)
+            var clone = new QueryFieldConstantNumeric<TData>(Value)
             {
                 SchemaAlias = SchemaAlias,
             };

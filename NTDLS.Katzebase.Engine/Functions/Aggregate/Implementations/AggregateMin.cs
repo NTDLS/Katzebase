@@ -2,11 +2,11 @@
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
-    internal static class AggregateMin
+    internal static class AggregateMin<TData> where TData : IStringable
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string Execute(GroupAggregateFunctionParameter<TData> parameters)
         {
-            return parameters.AggregationValues.Min(o => double.Parse(o)).ToString();
+            return parameters.AggregationValues.Min(o => o.ToT<double>()).ToString();
         }
     }
 }

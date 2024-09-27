@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <summary>
         /// Parse the single.
         /// </summary>
-        static public PreparedQuery ParseQuery(QueryBatch queryBatch, Tokenizer tokenizer)
+        static public PreparedQuery ParseQuery(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
         {
             string token = tokenizer.GetNext();
 

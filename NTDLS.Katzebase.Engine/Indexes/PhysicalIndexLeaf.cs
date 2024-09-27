@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
         public PhysicalIndexLeaf<TData> AddNewLeaf(TData value)
         {
             var newLeaf = new PhysicalIndexLeaf<TData>();
-            Children.Add(value.ToKey(), newLeaf);
+            Children.Add(value.ToT<string>(), newLeaf);
             return newLeaf;
         }
 

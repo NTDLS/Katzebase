@@ -105,7 +105,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 var physicalIndex = indexCatalog.GetByName(indexName) ?? throw new KbObjectNotFoundException($"Index not found: [{indexName}].");
 
-                var physicalIndexPageMap = new Dictionary<uint, PhysicalIndexPages>();
+                var physicalIndexPageMap = new Dictionary<uint, PhysicalIndexPages<TData>>();
                 var physicalIndexPageMapDistilledLeaves = new List<List<PhysicalIndexLeaf<TData>>>();
 
                 double diskSize = 0;
@@ -116,7 +116,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
                 {
                     string pageDiskPath = physicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                    physicalIndexPageMap[indexPartition] = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Read);
+                    physicalIndexPageMap[indexPartition] = _core.IO.GetPBuf<PhysicalIndexPages<TData>>(transaction, pageDiskPath, LockOperation.Read);
                     diskSize += _core.IO.GetDecompressedSizeTracked(pageDiskPath);
                     decompressedSiskSize += new FileInfo(pageDiskPath).Length;
                     physicalIndexPageMapDistilledLeaves.Add(DistillIndexBaseNodes(physicalIndexPageMap[indexPartition].Root));
@@ -219,7 +219,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <returns></returns>
         internal Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClause(
                     PhysicalSchema physicalSchema, IndexingConditionOptimization<TData> optimization,
-                    PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
+                    PreparedQuery<TData> query, string workingSchemaPrefix, KbInsensitiveDictionary<TData?>? keyValues = null)
         {
             Dictionary<uint, DocumentPointer>? accumulatedResults = null;
 
@@ -228,7 +228,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             //We aggregate the values for the entries into the ConditionGroup.IndexLookup,
             //  which contains all of the values for all entries in the group.
             //  For this reason, we do not perform index lookups on individual condition entries.
-            foreach (var group in optimization.Conditions.Collection.OfType<ConditionGroup>().Where(group => group.IndexLookup != null))
+            foreach (var group in optimization.Conditions.Collection.OfType<ConditionGroup<TData>>().Where(group => group.IndexLookup != null))
             {
                 var groupResults = MatchSchemaDocumentsByConditionsClauseRecursive(
                     physicalSchema, optimization, group, query, workingSchemaPrefix, keyValues);
@@ -255,13 +255,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseRecursive(
-            PhysicalSchema physicalSchema, IndexingConditionOptimization<TData> optimization, ConditionGroup givenConditionGroup,
-            PreparedQuery query, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues = null)
+            PhysicalSchema physicalSchema, IndexingConditionOptimization<TData> optimization, ConditionGroup<TData> givenConditionGroup,
+            PreparedQuery<TData> query, string workingSchemaPrefix, KbInsensitiveDictionary<TData?>? keyValues = null)
         {
             var thisGroupResults = MatchSchemaDocumentsByIndexingConditionLookup(optimization.Transaction,
                 query, givenConditionGroup.IndexLookup.EnsureNotNull(), physicalSchema, workingSchemaPrefix, keyValues);
 
-            foreach (var group in givenConditionGroup.Collection.OfType<ConditionGroup>().Where(o => o.IndexLookup != null))
+            foreach (var group in givenConditionGroup.Collection.OfType<ConditionGroup<TData>>().Where(o => o.IndexLookup != null))
             {
                 var childGroupResults = MatchSchemaDocumentsByConditionsClauseRecursive(
                      physicalSchema, optimization, group, query, workingSchemaPrefix, keyValues);
@@ -283,8 +283,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return thisGroupResults;
         }
 
-        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookup(Transaction<TData> transaction, PreparedQuery query,
-            IndexingConditionLookup indexLookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<string?>? keyValues)
+        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookup(Transaction<TData> transaction, PreparedQuery<TData> query,
+            IndexingConditionLookup<TData> indexLookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<TData?>? keyValues)
         {
             Dictionary<uint, DocumentPointer>? accumulatedResults = null;
 
@@ -299,7 +299,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     if (condition.Qualifier == LogicalQualifier.Equals)
                     {
                         //For join operations, check the keyValues for the raw value to lookup.
-                        if (keyValues?.TryGetValue(condition.Right.Value, out TData? keyValue) != true)
+                        if (keyValues?.TryGetValue(condition.Right.Value.ToT<string>(), out TData? keyValue) != true)
                         {
                             if (condition.Right is QueryFieldCollapsedValue<TData> collapsedValue)
                             {
@@ -307,7 +307,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             }
                             else
                             {
-                                keyValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new())?.ToLowerInvariant();
+                                keyValue = (TData)condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, keyValues ?? new())?.ToLowerInvariant();
                             }
                         }
                         else
@@ -394,7 +394,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 Dictionary<uint, DocumentPointer> threadResults = new();
 
                 string pageDiskPath = instance.Operation.Lookup.IndexSelection.PhysicalIndex.GetPartitionPagesFileName(instance.Operation.PhysicalSchema, instance.IndexPartition);
-                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Read);
+                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages<TData>>(instance.Operation.Transaction, pageDiskPath, LockOperation.Read);
 
                 List<PhysicalIndexLeaf<TData>> workingPhysicalIndexLeaves = [physicalIndexPages.Root];
                 if (workingPhysicalIndexLeaves.Count > 0)
@@ -491,11 +491,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
         #region Matching / Seeking / Scanning.
 
-        private static List<PhysicalIndexLeaf<TData>> MatchIndexLeaves(Transaction<TData> transaction, PreparedQuery query, ConditionEntry condition,
+        private static List<PhysicalIndexLeaf<TData>> MatchIndexLeaves(Transaction<TData> transaction, PreparedQuery<TData> query, ConditionEntry<TData> condition,
             List<PhysicalIndexLeaf<TData>> workingPhysicalIndexLeaves, QueryFieldCollection<TData> fieldCollection, KbInsensitiveDictionary<TData?>? auxiliaryFields)
         {
             //For join operations, check the keyValues for the raw value to lookup.
-            if (auxiliaryFields?.TryGetValue(condition.Right.Value, out TData? keyValue) != true)
+            if (auxiliaryFields?.TryGetValue(condition.Right.Value.ToT<string>(), out TData? keyValue) != true)
             {
                 if (condition.Right is QueryFieldCollapsedValue<TData> collapsedValue)
                 {
@@ -503,7 +503,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 else
                 {
-                    keyValue = condition.Right.CollapseScalerQueryField(transaction, query, fieldCollection, auxiliaryFields ?? new())?.ToLowerInvariant();
+                    keyValue = (TData)condition.Right.CollapseScalerQueryField(transaction, query, fieldCollection, auxiliaryFields ?? new())?.ToLowerInvariant();
                 }
             }
 
@@ -511,43 +511,43 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 LogicalQualifier.Equals => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchEqual(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchEqual(transaction, w.Key, keyValue.ToT<string>()) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotEquals => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchEqual(transaction, w.Key, keyValue) == false)
+                                        .Where(w => ConditionEntry<TData>.IsMatchEqual(transaction, w.Key, keyValue.ToT<string>()) == false)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.GreaterThan => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchGreater(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchGreater(transaction, w.Key, keyValue.ToT<double>()) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.GreaterThanOrEqual => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchGreaterOrEqual(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchGreaterOrEqual(transaction, w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.LessThan => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchLesser(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchLesser(transaction, w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.LessThanOrEqual => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchLesserOrEqual(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchLesserOrEqual(transaction, w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.Like => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchLike(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchLike(transaction, w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotLike => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchLike(transaction, w.Key, keyValue) == false)
+                                        .Where(w => ConditionEntry<TData>.IsMatchLike(transaction, w.Key, keyValue) == false)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.Between => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchBetween(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchBetween(transaction, w.Key, keyValue) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotBetween => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry.IsMatchBetween(transaction, w.Key, keyValue) == false)
+                                        .Where(w => ConditionEntry<TData>.IsMatchBetween(transaction, w.Key, keyValue) == false)
                                         .Select(s => s.Value)).ToList(),
                 _ => throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: [{condition.Qualifier}]"),
             };

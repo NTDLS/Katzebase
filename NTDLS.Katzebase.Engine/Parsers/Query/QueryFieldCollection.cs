@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
     /// <summary>
     /// Collection of query fields, which contains their names and values.
     /// </summary>
-    internal class QueryFieldCollection<TData> : List<QueryField<TData>> where TData : IStringable
+    internal class QueryFieldCollection<TData> : List<QueryField> where TData : IStringable
     {
         public QueryBatch<TData> QueryBatch { get; private set; }
 
@@ -19,7 +19,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// A list of all distinct document identifiers from all fields, even nested expressions.
         /// We go out of our way to create this list because it helps optimize the query execution.
         /// </summary>
-        public KbInsensitiveDictionary<QueryFieldDocumentIdentifier> DocumentIdentifiers { get; set; } = new();
+        public KbInsensitiveDictionary<QueryFieldDocumentIdentifier<TData>> DocumentIdentifiers { get; set; } = new();
 
         /// <summary>
         /// Gets a field alias for a field for which the query did not supply an alias.
@@ -103,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #region Collection: FieldsWithAggregateFunctionCalls.
 
-        private List<QueryField<TData>>? _exposedAggregateFunctions = null;
+        private List<QueryField>? _exposedAggregateFunctions = null;
         private readonly object _exposedAggregateFunctionsLock = new();
 
         public void InvalidateFieldsWithAggregateFunctionCallsCache()
@@ -117,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <summary>
         /// Returns a list of fields that have function call dependencies.
         /// </summary>
-        public List<QueryField<TData>> FieldsWithAggregateFunctionCalls
+        public List<QueryField> FieldsWithAggregateFunctionCalls
         {
             get
             {
@@ -133,7 +133,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _exposedAggregateFunctions;
                         }
 
-                        var results = new List<QueryField<TData>>();
+                        var results = new List<QueryField>();
 
                         foreach (var queryField in this)
                         {
@@ -226,7 +226,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         }
 
         /// <summary>
-        /// Returns a list of fields that are of type QueryFieldDocumentIdentifier.
+        /// Returns a list of fields that are of type QueryFieldDocumentIdentifier<TData>.
         /// </summary>
         public List<ExposedDocumentIdentifier> DocumentIdentifierFields
         {
@@ -248,7 +248,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
                         foreach (var queryField in this)
                         {
-                            if (queryField.Expression is QueryFieldDocumentIdentifier documentIdentifier)
+                            if (queryField.Expression is QueryFieldDocumentIdentifier<TData> documentIdentifier)
                             {
                                 results.Add(new ExposedDocumentIdentifier(queryField.Ordinal, queryField.Alias, documentIdentifier.SchemaAlias, documentIdentifier.FieldName));
                             }

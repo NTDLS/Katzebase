@@ -7,17 +7,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of the group references. 
         /// </summary>
-        public static List<ConditionGroup> FlattenToGroups(this List<ICondition> givenConditions)
+        public static List<ConditionGroup<TData>> FlattenToGroups<TData>(this List<ICondition> givenConditions) where TData : IStringable
         {
-            var results = new List<ConditionGroup>();
+            var results = new List<ConditionGroup<TData>>();
             FlattenToGroups(givenConditions, results);
             return results;
 
-            static void FlattenToGroups(List<ICondition> conditions, List<ConditionGroup> refGroups)
+            static void FlattenToGroups(List<ICondition> conditions, List<ConditionGroup<TData>> refGroups)
             {
                 foreach (var condition in conditions)
                 {
-                    if (condition is ConditionGroup group)
+                    if (condition is ConditionGroup<TData> group)
                     {
                         refGroups.Add(group);
                         FlattenToGroups(group.Collection, refGroups);
@@ -29,27 +29,27 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of the group references. 
         /// </summary>
-        public static List<ConditionGroup> FlattenToGroups(this ConditionCollection givenConditions)
-            => givenConditions.Collection.FlattenToGroups();
+        public static List<ConditionGroup<TData>> FlattenToGroups<TData>(this ConditionCollection<TData> givenConditions) where TData : IStringable
+            => givenConditions.Collection.FlattenToGroups<TData>();
 
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of the entry references.
         /// </summary>
-        public static List<ConditionEntry> FlattenToEntries(this List<ICondition> givenConditions)
+        public static List<ConditionEntry<TData>> FlattenToEntries<TData>(this List<ICondition> givenConditions) where TData : IStringable
         {
-            var results = new List<ConditionEntry>();
+            var results = new List<ConditionEntry<TData>>();
             FlattenToEntries(givenConditions, results);
             return results;
 
-            static void FlattenToEntries(List<ICondition> conditions, List<ConditionEntry> refEntries)
+            static void FlattenToEntries(List<ICondition> conditions, List<ConditionEntry<TData>> refEntries)
             {
                 foreach (var condition in conditions)
                 {
-                    if (condition is ConditionGroup group)
+                    if (condition is ConditionGroup<TData> group)
                     {
                         FlattenToEntries(group.Collection, refEntries);
                     }
-                    else if (condition is ConditionEntry entry)
+                    else if (condition is ConditionEntry<TData> entry)
                     {
                         refEntries.Add(entry);
                     }
@@ -60,29 +60,29 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of the entry references.
         /// </summary>
-        public static List<ConditionEntry> FlattenToEntries(this ConditionCollection givenConditions)
-            => givenConditions.Collection.FlattenToEntries();
+        public static List<ConditionEntry<TData>> FlattenToEntries<TData>(this ConditionCollection<TData> givenConditions) where TData : IStringable
+            => givenConditions.Collection.FlattenToEntries<TData>();
 
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of left-hand-side document identifiers.
         /// </summary>
-        public static List<QueryFieldDocumentIdentifier> FlattenToLeftDocumentIdentifiers(this List<ICondition> givenConditions)
+        public static List<QueryFieldDocumentIdentifier<TData>> FlattenToLeftDocumentIdentifiers<TData>(this List<ICondition> givenConditions) where TData : IStringable
         {
-            var results = new List<QueryFieldDocumentIdentifier>();
+            var results = new List<QueryFieldDocumentIdentifier<TData>>();
             FlattenToLeftDocumentIdentifiers(givenConditions, results);
             return results;
 
-            static void FlattenToLeftDocumentIdentifiers(List<ICondition> conditions, List<QueryFieldDocumentIdentifier> refConditions)
+            static void FlattenToLeftDocumentIdentifiers(List<ICondition> conditions, List<QueryFieldDocumentIdentifier<TData>> refConditions)
             {
                 foreach (var condition in conditions)
                 {
-                    if (condition is ConditionGroup group)
+                    if (condition is ConditionGroup<TData> group)
                     {
                         FlattenToLeftDocumentIdentifiers(group.Collection, refConditions);
                     }
-                    else if (condition is ConditionEntry entry)
+                    else if (condition is ConditionEntry<TData> entry)
                     {
-                        if (entry.Left is QueryFieldDocumentIdentifier left)
+                        if (entry.Left is QueryFieldDocumentIdentifier<TData> left)
                         {
                             refConditions.Add(left);
                         }
@@ -98,29 +98,29 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of left-hand-side document identifiers.
         /// </summary>
-        public static List<QueryFieldDocumentIdentifier> FlattenToLeftDocumentIdentifiers(this ConditionCollection givenConditions)
-            => givenConditions.Collection.FlattenToLeftDocumentIdentifiers();
+        public static List<QueryFieldDocumentIdentifier<TData>> FlattenToLeftDocumentIdentifiers<TData>(this ConditionCollection<TData> givenConditions) where TData : IStringable
+            => givenConditions.Collection.FlattenToLeftDocumentIdentifiers<TData>();
 
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of right-hand-side document identifiers.
         /// </summary>
-        public static List<QueryFieldDocumentIdentifier> FlattenToRightDocumentIdentifiers(this List<ICondition> givenConditions)
+        public static List<QueryFieldDocumentIdentifier<TData>> FlattenToRightDocumentIdentifiers<TData>(this List<ICondition> givenConditions) where TData : IStringable
         {
-            var results = new List<QueryFieldDocumentIdentifier>();
+            var results = new List<QueryFieldDocumentIdentifier<TData>>();
             FlattenToRightDocumentIdentifiers(givenConditions, results);
             return results;
 
-            static void FlattenToRightDocumentIdentifiers(List<ICondition> conditions, List<QueryFieldDocumentIdentifier> refConditions)
+            static void FlattenToRightDocumentIdentifiers(List<ICondition> conditions, List<QueryFieldDocumentIdentifier<TData>> refConditions)
             {
                 foreach (var condition in conditions)
                 {
-                    if (condition is ConditionGroup group)
+                    if (condition is ConditionGroup<TData> group)
                     {
                         FlattenToRightDocumentIdentifiers(group.Collection, refConditions);
                     }
-                    else if (condition is ConditionEntry entry)
+                    else if (condition is ConditionEntry<TData> entry)
                     {
-                        if (entry.Right is QueryFieldDocumentIdentifier right)
+                        if (entry.Right is QueryFieldDocumentIdentifier<TData> right)
                         {
                             refConditions.Add(right);
                         }
@@ -136,27 +136,27 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers
         /// <summary>
         /// Recursively rolls through nested conditions, producing a flat list of right-hand-side document identifiers.
         /// </summary>
-        public static List<QueryFieldDocumentIdentifier> FlattenToRightDocumentIdentifiers(this ConditionCollection givenConditions)
-            => givenConditions.Collection.FlattenToRightDocumentIdentifiers();
+        public static List<QueryFieldDocumentIdentifier<TData>> FlattenToRightDocumentIdentifiers<TData>(this ConditionCollection<TData> givenConditions) where TData : IStringable
+            => givenConditions.Collection.FlattenToRightDocumentIdentifiers<TData>();
 
 
         /// <summary>
         /// Rolls through a condition group, producing a flat list of the entry references where the left side is a document identifier.
         /// </summary>
-        public static List<ConditionEntry> ThisLevelWithLeftDocumentIdentifiers(this ConditionGroup givenConditionGroups)
+        public static List<ConditionEntry<TData>> ThisLevelWithLeftDocumentIdentifiers<TData>(this ConditionGroup<TData> givenConditionGroups) where TData : IStringable
         {
-            var results = new List<ConditionEntry>();
+            var results = new List<ConditionEntry<TData>>();
 
             foreach (var groupEntry in givenConditionGroups.Collection)
             {
-                if (groupEntry is ConditionEntry entry)
+                if (groupEntry is ConditionEntry<TData> entry)
                 {
-                    if (entry.Left is QueryFieldDocumentIdentifier)
+                    if (entry.Left is QueryFieldDocumentIdentifier<TData>)
                     {
                         results.Add(entry);
                     }
                 }
-                else if (groupEntry is ConditionGroup)
+                else if (groupEntry is ConditionGroup<TData>)
                 {
                     //We only get the current level, so ignore these.
                 }

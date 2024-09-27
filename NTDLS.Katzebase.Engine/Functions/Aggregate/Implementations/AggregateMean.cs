@@ -2,11 +2,11 @@
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
-    internal static class AggregateMean
+    internal static class AggregateMean<TData> where TData : IStringable
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string Execute(GroupAggregateFunctionParameter<TData> parameters)
         {
-            return parameters.AggregationValues.Average(o => double.Parse(o)).ToString();
+            return parameters.AggregationValues.Average(o => o.ToT<double>()).ToString();
         }
     }
 }

@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserCreateProcedure
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
         {
             var query = new PreparedQuery(queryBatch, QueryType.Create)
             {
@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             throw new NotImplementedException("Reimplement this query type.");
 
             /*
-                query.AddAttribute(PreparedQuery.QueryAttribute.ObjectName, token);
+                query.AddAttribute(PreparedQuery<TData>.QueryAttribute.ObjectName, token);
 
                 var parameters = new List<PhysicalProcedureParameter>();
 
@@ -56,7 +56,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
                 }
 
-                query.AddAttribute(PreparedQuery.QueryAttribute.Parameters, parameters);
+                query.AddAttribute(PreparedQuery<TData>.QueryAttribute.Parameters, parameters);
 
                 if (tokenizer.GetNext().Is("on") == false)
                 {
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     throw new KbParserException("Invalid query. Found '" + token + "', expected: schema name.");
                 }
 
-                query.AddAttribute(PreparedQuery.QueryAttribute.Schema, token);
+                query.AddAttribute(PreparedQuery<TData>.QueryAttribute.Schema, token);
 
                 if (tokenizer.GetNext().Is("as") == false)
                 {
@@ -116,7 +116,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
                 }
 
-                query.AddAttribute(PreparedQuery.QueryAttribute.Batches, batches);
+                query.AddAttribute(PreparedQuery<TData>.QueryAttribute.Batches, batches);
             */
 
             return query;

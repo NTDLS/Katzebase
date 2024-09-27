@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserExec
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
         {
             var query = new PreparedQuery(queryBatch, QueryType.Exec)
             {
@@ -22,14 +22,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             var parts = procedureName.Split(':');
             if (parts.Length == 1)
             {
-                query.AddAttribute(PreparedQuery.QueryAttribute.Schema, ":");
-                query.AddAttribute(PreparedQuery.QueryAttribute.ObjectName, procedureName);
+                query.AddAttribute(PreparedQuery<TData>.QueryAttribute.Schema, ":");
+                query.AddAttribute(PreparedQuery<TData>.QueryAttribute.ObjectName, procedureName);
             }
             else
             {
                 var schemaName = string.Join(':', parts.Take(parts.Length - 1));
-                query.AddAttribute(PreparedQuery.QueryAttribute.Schema, schemaName);
-                query.AddAttribute(PreparedQuery.QueryAttribute.ObjectName, parts.Last());
+                query.AddAttribute(PreparedQuery<TData>.QueryAttribute.Schema, schemaName);
+                query.AddAttribute(PreparedQuery<TData>.QueryAttribute.ObjectName, parts.Last());
             }
 
             if (tokenizer.TryCompareNext(o => o.StartsWith('$')))

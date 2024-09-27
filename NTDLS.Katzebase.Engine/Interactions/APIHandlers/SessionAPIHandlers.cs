@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to sessions.
     /// </summary>
-    public class SessionAPIHandlers<TData> : IRmMessageHandler
+    public class SessionAPIHandlers<TData> : IRmMessageHandler where TData : IStringable
     {
         private readonly EngineCore<TData> _core;
 

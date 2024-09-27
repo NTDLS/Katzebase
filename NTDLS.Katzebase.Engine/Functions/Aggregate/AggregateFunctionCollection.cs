@@ -4,7 +4,7 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
-    public static class AggregateFunctionCollection
+    public static class AggregateFunctionCollection<TData> where TData : IStringable
     {
         private static List<AggregateFunction>? _protypes = null;
 
@@ -26,7 +26,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             {
                 _protypes = new List<AggregateFunction>();
 
-                foreach (var prototype in AggregateFunctionImplementation.PrototypeStrings)
+                foreach (var prototype in AggregateFunctionImplementation<TData>.PrototypeStrings)
                 {
                     _protypes.Add(AggregateFunction.Parse(prototype));
                 }
@@ -39,7 +39,8 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             return function != null;
         }
 
-        public static AggregateFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<string?> parameters)
+        public static AggregateFunctionParameterValueCollection ApplyFunctionPrototype<TData>(string functionName, List<TData?> parameters)
+            where TData : IStringable
         {
             if (_protypes == null)
             {

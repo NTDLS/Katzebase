@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserSet
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
         {
             var query = new PreparedQuery(queryBatch, QueryType.Set)
             {

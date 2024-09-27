@@ -2,13 +2,13 @@
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
 {
-    internal class QuerySchema
+    internal class QuerySchema<TData> where TData : IStringable
     {
         public string Name { get; set; }
         public string Prefix { get; set; } = string.Empty;
-        public ConditionCollection? Conditions { get; set; }
+        public ConditionCollection<TData>? Conditions { get; set; }
 
-        public QuerySchema(string name, string prefix, ConditionCollection conditions)
+        public QuerySchema(string name, string prefix, ConditionCollection<TData> conditions)
         {
             Name = name;
             Prefix = prefix;

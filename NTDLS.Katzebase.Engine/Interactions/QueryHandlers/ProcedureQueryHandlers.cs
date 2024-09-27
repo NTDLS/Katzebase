@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// <summary>
     /// Internal class methods for handling query requests related to procedures.
     /// </summary>
-    internal class ProcedureQueryHandlers<TData>
+    internal class ProcedureQueryHandlers<TData> where TData : IStringable
     {
         private readonly EngineCore<TData> _core;
 
@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteCreate(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteCreate(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -38,10 +38,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (preparedQuery.SubQueryType == SubQueryType.Procedure)
                 {
-                    var objectName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.ObjectName);
-                    var objectSchema = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Schema);
-                    var parameters = preparedQuery.Attribute<List<PhysicalProcedureParameter>>(PreparedQuery.QueryAttribute.Parameters);
-                    var Batches = preparedQuery.Attribute<List<string>>(PreparedQuery.QueryAttribute.Batches);
+                    var objectName = preparedQuery.Attribute<string>(PreparedQuery<TData>.QueryAttribute.ObjectName);
+                    var objectSchema = preparedQuery.Attribute<string>(PreparedQuery<TData>.QueryAttribute.Schema);
+                    var parameters = preparedQuery.Attribute<List<PhysicalProcedureParameter>>(PreparedQuery<TData>.QueryAttribute.Parameters);
+                    var Batches = preparedQuery.Attribute<List<string>>(PreparedQuery<TData>.QueryAttribute.Batches);
 
                     _core.Procedures.CreateCustomProcedure(transactionReference.Transaction, objectSchema, objectName, parameters, Batches);
                 }
@@ -59,16 +59,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResultCollection ExecuteExec(SessionState session, PreparedQuery preparedQuery)
+        internal KbQueryResultCollection ExecuteExec(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
-                var schemaName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.Schema);
-                var objectName = preparedQuery.Attribute<string>(PreparedQuery.QueryAttribute.ObjectName);
+                var schemaName = preparedQuery.Attribute<string>(PreparedQuery<TData>.QueryAttribute.Schema);
+                var objectName = preparedQuery.Attribute<string>(PreparedQuery<TData>.QueryAttribute.ObjectName);
 
                 using var transactionReference = _core.Transactions.Acquire(session);
 
-                var collapsedParameters = new List<string?>();
+                var collapsedParameters = new List<TData?>();
 
                 if (preparedQuery.ProcedureParameters != null)
                 {

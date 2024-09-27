@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// <summary>
     /// Internal class methods for handling query requests related to sessions.
     /// </summary>
-    internal class SessionQueryHandlers<TData>
+    internal class SessionQueryHandlers<TData> where TData : IStringable
     {
         private readonly EngineCore<TData> _core;
 
@@ -27,12 +27,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteKillProcess(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteKillProcess(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var referencedProcessId = preparedQuery.Attribute<ulong>(PreparedQuery.QueryAttribute.ProcessId);
+                var referencedProcessId = preparedQuery.Attribute<ulong>(PreparedQuery<TData>.QueryAttribute.ProcessId);
 
                 _core.Sessions.CloseByProcessId(referencedProcessId);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults();
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteSetVariable(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteSetVariable(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {

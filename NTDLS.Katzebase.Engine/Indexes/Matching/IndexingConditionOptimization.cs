@@ -18,11 +18,11 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// <summary>
         /// Contains a list of nested operations that will be used for indexing operations.
         /// </summary>
-        public List<IndexingConditionGroup> IndexingConditionGroup { get; set; } = new();
-        public ConditionCollection Conditions { get; private set; }
+        public List<IndexingConditionGroup<TData>> IndexingConditionGroup { get; set; } = new();
+        public ConditionCollection<TData> Conditions { get; private set; }
         public Transaction<TData> Transaction { get; private set; }
 
-        public IndexingConditionOptimization(Transaction<TData> transaction, ConditionCollection conditions)
+        public IndexingConditionOptimization(Transaction<TData> transaction, ConditionCollection<TData> conditions)
         {
             Transaction = transaction;
             Conditions = conditions.Clone();
@@ -33,8 +33,8 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// <summary>
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// </summary>
-        public static IndexingConditionOptimization<TData> BuildTree(EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery query,
-            PhysicalSchema physicalSchema, ConditionCollection conditions, string workingSchemaPrefix)
+        public static IndexingConditionOptimization<TData> BuildTree(EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery<TData> query,
+            PhysicalSchema physicalSchema, ConditionCollection<TData> conditions, string workingSchemaPrefix)
         {
             var optimization = new IndexingConditionOptimization<TData>(transaction, conditions);
 
@@ -53,9 +53,9 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// Called reclusively by BuildTree().
         /// </summary>
-        private static bool BuildTree(IndexingConditionOptimization<TData> optimization, PreparedQuery query,
+        private static bool BuildTree<TData>(IndexingConditionOptimization<TData> optimization, PreparedQuery<TData> query,
             Transaction<TData> transaction, PhysicalIndexCatalog<TData> indexCatalog, string workingSchemaPrefix,
-            List<IndexingConditionGroup> indexingConditionGroups)
+            List<IndexingConditionGroup<TData>> indexingConditionGroups) where TData : IStringable
         {
             //We only flatten the condition groups because its easer to work with them this way,
             //    these are references to the optimizers copy of the nested groups, so changes
@@ -66,7 +66,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             {
                 #region Build list of usable indexes.
 
-                if (flattenedGroup.Collection.OfType<ConditionEntry>().Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)).Any() == false)
+                if (flattenedGroup.Collection.OfType<ConditionEntry<TData>>().Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix)).Any() == false)
                 {
                     //Each "OR" condition group must have at least one potential indexable match for the selected schema,
                     //  this is because we need to be able to create a full list of all possible documents for this schema,
@@ -105,7 +105,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                             //However, I think this could be implemented pretty easily.
                             applicableConditions.AddRange(
                                 flattenedGroup.Collection.OfType<ConditionEntry<TData>>()
-                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField.IsConstantExpression(o.Right.Value)));
+                                .Where(o => o.Left.SchemaAlias.Is(workingSchemaPrefix) && StaticParserField<TData>.IsConstantExpression(o.Right.Value.ToT<string>())));
                         }
                         else
                         {
@@ -117,14 +117,14 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
                         foreach (var condition in applicableConditions)
                         {
-                            if (condition.Left is QueryFieldDocumentIdentifier leftValue)
+                            if (condition.Left is QueryFieldDocumentIdentifier<TData> leftValue)
                             {
                                 if (leftValue.FieldName?.Is(attribute.Field) == true)
                                 {
-                                    if (StaticParserField.IsConstantExpression(condition.Right.Value))
+                                    if (StaticParserField<TData>.IsConstantExpression(condition.Right.Value.ToT<string>()))
                                     {
                                         //To save time while indexing, we are going to collapse the value here if the expression does not contain non-constants.
-                                        var constantValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, new())?.ToLowerInvariant();
+                                        var constantValue = condition.Right.CollapseScalerQueryField(transaction, query, query.SelectFields, new());
 
                                         //TODO: Think about the nullability of constantValue.
                                         condition.Right = new QueryFieldCollapsedValue<TData>(constantValue.EnsureNotNull());
@@ -169,9 +169,9 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
                 if (flattenedGroup.UsableIndexes.Count > 0)
                 {
-                    IndexingConditionGroup indexingConditionGroup = new(flattenedGroup.Connector);
+                    IndexingConditionGroup<TData> indexingConditionGroup = new(flattenedGroup.Connector);
 
-                    var conditionsWithApplicableLeftDocumentIdentifiers = flattenedGroup.ThisLevelWithLeftDocumentIdentifiers();
+                    var conditionsWithApplicableLeftDocumentIdentifiers = flattenedGroup.ThisLevelWithLeftDocumentIdentifiers<TData>();
 
                     //Here we are ordering by the "full match" indexes first, then descending by the number of index attributes.
                     //The thinking being that we want to prefer full index matches that contain multiple index attributes
@@ -180,21 +180,21 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                     //  ascending by the index attribute account because we want the smallest non-full-match composite indexes
                     //  because they require less work to distill later.
 
-                    var preferenceOrderedIndexSelections = new List<IndexSelection>();
+                    var preferenceOrderedIndexSelections = new List<IndexSelection<TData>>();
 
                     var fullMatches = flattenedGroup.UsableIndexes
                         .Where(o => o.IsFullIndexMatch == true && o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 0)
-                        .OrderByDescending(o => o.CoveredConditions.Count).ToList();
+                        .OrderByDescending(o => o.CoveredConditions.Count).Cast<IndexSelection<TData>>();
                     preferenceOrderedIndexSelections.AddRange(fullMatches);
 
                     var partialMatches = flattenedGroup.UsableIndexes
                         .Where(o => o.IsFullIndexMatch == false && o.CoveredConditions.Count(c => c.IsIndexOptimized == false) > 0)
-                        .OrderBy(o => o.CoveredConditions.Count).ToList();
+                        .OrderBy(o => o.CoveredConditions.Count).Cast<IndexSelection<TData>>();
                     preferenceOrderedIndexSelections.AddRange(partialMatches);
 
                     foreach (var indexSelection in preferenceOrderedIndexSelections)
                     {
-                        var indexingConditionLookup = new IndexingConditionLookup(indexSelection);
+                        var indexingConditionLookup = new IndexingConditionLookup<TData>(indexSelection);
 
                         //Find the condition fields that match the index attributes.
                         foreach (var attribute in indexSelection.PhysicalIndex.Attributes)
@@ -206,7 +206,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 
                             var matchedConditions = conditionsWithApplicableLeftDocumentIdentifiers
                                 .Where(o =>
-                                       o.Left is QueryFieldDocumentIdentifier identifier
+                                       o.Left is QueryFieldDocumentIdentifier<TData> identifier
                                     && (o.Right is QueryFieldCollapsedValue<TData> || !string.IsNullOrEmpty(workingSchemaPrefix))
                                     && identifier.SchemaAlias.Is(workingSchemaPrefix)
                                     && o.IsIndexOptimized == false
@@ -252,7 +252,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// <summary>
         /// This function makes returns a string that represents how and where indexes are used to satisfy a query.
         /// </summary>
-        public static string ExplainPlan(PhysicalSchema physicalSchema, IndexingConditionOptimization<TData> optimization, PreparedQuery query, string workingSchemaPrefix)
+        public static string ExplainPlan(PhysicalSchema physicalSchema, IndexingConditionOptimization<TData> optimization, PreparedQuery<TData> query, string workingSchemaPrefix)
         {
             var result = new StringBuilder();
 
@@ -266,7 +266,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             result.AppendLine($"• " + $"{schemaIdentifier}");
             result.AppendLine("•••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••");
 
-            foreach (var group in optimization.Conditions.Collection.OfType<ConditionGroup>())
+            foreach (var group in optimization.Conditions.Collection.OfType<ConditionGroup<TData>>())
             {
                 ExplainPlanRecursive(physicalSchema, optimization, workingSchemaPrefix, group, query, result);
             }
@@ -277,7 +277,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         }
 
         private static void ExplainPlanRecursive(PhysicalSchema physicalSchema, IndexingConditionOptimization<TData> optimization,
-            string workingSchemaPrefix, ConditionGroup givenConditionGroup, PreparedQuery query, StringBuilder result)
+            string workingSchemaPrefix, ConditionGroup<TData> givenConditionGroup, PreparedQuery<TData> query, StringBuilder result)
         {
             if (givenConditionGroup.IndexLookup != null)
             {
@@ -307,16 +307,16 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
                     result.AppendLine("Indexing intersect operation.");
                 }
 
-                foreach (var group in givenConditionGroup.Collection.OfType<ConditionGroup>().Where(o => o.IndexLookup != null))
+                foreach (var group in givenConditionGroup.Collection.OfType<ConditionGroup<TData>>().Where(o => o.IndexLookup != null))
                 {
                     ExplainPlanRecursive(physicalSchema, optimization, workingSchemaPrefix, group, query, result);
                 }
             }
             else
             {
-                foreach (var entry in givenConditionGroup.Collection.OfType<ConditionEntry>())
+                foreach (var entry in givenConditionGroup.Collection.OfType<ConditionEntry<TData>>())
                 {
-                    if (entry.Left is QueryFieldDocumentIdentifier documentIdentifier)
+                    if (entry.Left is QueryFieldDocumentIdentifier<TData> documentIdentifier)
                     {
                         result.AppendLine($"Schema scan of [{documentIdentifier.SchemaAlias}].");
                     }

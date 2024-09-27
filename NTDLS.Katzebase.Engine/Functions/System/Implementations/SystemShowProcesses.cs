@@ -3,9 +3,9 @@ using NTDLS.Katzebase.Engine.Atomicity;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class SystemShowProcesses
+    internal static class SystemShowProcesses<TData> where TData : IStringable
     {
-        public static KbQueryResultCollection Execute(EngineCore core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
+        public static KbQueryResultCollection Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
         {
             var collection = new KbQueryResultCollection();
             var result = collection.AddNew();

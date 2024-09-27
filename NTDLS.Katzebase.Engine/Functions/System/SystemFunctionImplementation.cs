@@ -37,9 +37,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System
             };
         /*
          * */
-        public static KbQueryResultCollection ExecuteFunction<TData>(EngineCore<TData> core, Transaction<TData> transaction, string functionName, List<string?> parameters)
+        public static KbQueryResultCollection ExecuteFunction<TData>(EngineCore<TData> core, Transaction<TData> transaction, string functionName, List<TData?> parameters) where TData : IStringable
         {
-            var function = SystemFunctionCollection.ApplyFunctionPrototype(functionName, parameters);
+            var function = SystemFunctionCollection<TData>.ApplyFunctionPrototype(functionName, parameters);
 
             return functionName.ToLowerInvariant() switch
             {
@@ -50,19 +50,21 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                 "showaggregatefunctions"    => SystemShowAggregateFunctions.Execute<TData>(core, transaction, function),
                 "showblocks"                => SystemShowBlocks.Execute<TData>(core, transaction, function),
                 "showblocktree"             => SystemShowBlockTree.Execute<TData>(core, transaction, function),
-                "showcacheallocations"      => SystemShowCacheAllocations.Execute(core, transaction, function),
-                "showcachepages"            => SystemShowCachePages.Execute(core, transaction, function),
-                "showcachepartitions"       => SystemShowCachePartitions.Execute(core, transaction, function),
-                "showhealthcounters"        => SystemShowHealthCounters.Execute(core, transaction, function),
-                "showlocks"                 => SystemShowLocks.Execute(core, transaction, function),
-                "showmemoryutilization"     => SystemShowMemoryUtilization.Execute(core, transaction, function),
-                "showprocesses"             => SystemShowProcesses.Execute(core, transaction, function),
-                "showscalerfunctions"       => SystemShowScalerFunctions.Execute(core, transaction, function),
-                "showsystemfunctions"       => SystemShowSystemFunctions.Execute(core, transaction, function),
-                "showtransactions"          => SystemShowTransactions.Execute(core, transaction, function),
-                "showversion"               => SystemShowVersion.Execute(core, transaction, function),
-                "showwaitinglocks"          => SystemShowWaitingLocks.Execute(core, transaction, function),
-                "terminate"                 => SystemTerminate.Execute(core, transaction, function),
+                "showcacheallocations"      => SystemShowCacheAllocations.Execute<TData>(core, transaction, function),
+                "showcachepages"            => SystemShowCachePages.Execute<TData>(core, transaction, function),
+                "showcachepartitions"       => SystemShowCachePartitions.Execute<TData>(core, transaction, function),
+                "showhealthcounters"        => SystemShowHealthCounters.Execute<TData>(core, transaction, function),
+
+                "showlocks"                 => SystemShowLocks<TData>.Execute(core, transaction, function),
+                "showmemoryutilization"     => SystemShowMemoryUtilization<TData>.Execute(core, transaction, function),
+                "showprocesses"             => SystemShowProcesses<TData>.Execute(core, transaction, function),
+                "showscalerfunctions"       => SystemShowScalerFunctions<TData>.Execute(core, transaction, function),
+                "showsystemfunctions"       => SystemShowSystemFunctions<TData>.Execute(core, transaction, function),
+                "showtransactions"          => SystemShowTransactions<TData>.Execute(core, transaction, function),
+                "showversion"               => SystemShowVersion<TData>.Execute(core, transaction, function),
+
+                "showwaitinglocks"          => SystemShowWaitingLocks.Execute<TData>(core, transaction, function),
+                "terminate"                 => SystemTerminate.Execute<TData>(core, transaction, function),
 
                 _ => throw new KbParserException($"The system function is not implemented: [{functionName}].")
             };

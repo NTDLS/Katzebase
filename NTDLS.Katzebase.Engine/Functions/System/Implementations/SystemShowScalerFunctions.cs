@@ -6,9 +6,9 @@ using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class SystemShowScalerFunctions
+    internal static class SystemShowScalerFunctions<TData> where TData : IStringable
     {
-        public static KbQueryResultCollection Execute(EngineCore core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
+        public static KbQueryResultCollection Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
         {
             var collection = new KbQueryResultCollection();
             var result = collection.AddNew();
@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             result.AddField("Return Type");
             result.AddField("Parameters");
 
-            foreach (var prototype in ScalerFunctionCollection.Prototypes)
+            foreach (var prototype in ScalerFunctionCollection<TData>.Prototypes)
             {
                 var parameters = new StringBuilder();
 

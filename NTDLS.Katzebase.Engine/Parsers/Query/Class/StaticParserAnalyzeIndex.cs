@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserAnalyzeIndex
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
         {
             var query = new PreparedQuery(queryBatch, QueryType.Analyze)
             {
@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             {
                 throw new KbParserException($"Invalid query. Found [{indexName}], expected: index name.");
             }
-            query.AddAttribute(PreparedQuery.QueryAttribute.IndexName, indexName);
+            query.AddAttribute(PreparedQuery<TData>.QueryAttribute.IndexName, indexName);
 
             tokenizer.EatIfNext("on");
 
@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 throw new KbParserException($"Invalid query. Found [{schemaName}], expected: schema name.");
             }
             query.Schemas.Add(new QuerySchema(schemaName));
-            //result.AddAttribute(PreparedQuery.QueryAttribute.Schema, token);
+            //result.AddAttribute(PreparedQuery<TData>.QueryAttribute.Schema, token);
             return query;
         }
     }

@@ -103,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <summary>
         /// Finds all documents using a prepared query. Performs all filtering and ordering.
         /// </summary>
-        internal static KbQueryDocumentListResult FindDocumentsByPreparedQuery<TData>(EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery query) where TData : IStringable
+        internal static KbQueryDocumentListResult FindDocumentsByPreparedQuery<TData>(EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery<TData> query) where TData : IStringable
         {
             var result = new KbQueryDocumentListResult();
 
@@ -147,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <param name="schemaPrefix"></param>
         /// <returns></returns>
         internal static IEnumerable<SchemaIntersectionRowDocumentIdentifier> FindDocumentPointersByPreparedQuery<TData>(
-            EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery query, string[] getDocumentsIdsForSchemaPrefixes) where TData : IStringable
+            EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery<TData> query, string[] getDocumentsIdsForSchemaPrefixes) where TData : IStringable
         {
             var schemaMap = new QuerySchemaMap<TData>(core, transaction, query);
 

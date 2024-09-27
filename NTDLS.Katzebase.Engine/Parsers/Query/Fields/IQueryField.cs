@@ -11,11 +11,11 @@
         public IQueryField<TData> Clone();
     }
 
-    internal interface IQueryField
-    {
-        string Value { get; set; }
-        string SchemaAlias { get; }
+    //internal interface IQueryField
+    //{
+    //    string Value { get; set; }
+    //    string SchemaAlias { get; }
 
-        public IQueryField Clone();
-    }
+    //    public IQueryField Clone();
+    //}
 }

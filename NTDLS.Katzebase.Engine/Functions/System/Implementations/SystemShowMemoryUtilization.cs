@@ -5,9 +5,9 @@ using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class SystemShowMemoryUtilization
+    internal static class SystemShowMemoryUtilization<TData> where TData : IStringable
     {
-        public static KbQueryResultCollection Execute(EngineCore core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
+        public static KbQueryResultCollection Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
         {
             var cachePartitions = core.Cache.GetPartitionAllocationDetails();
             long totalCacheSize = 0;

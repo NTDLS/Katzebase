@@ -3,9 +3,9 @@
     /// <summary>
     /// Contains a string evaluation expression. This could be as simple as ["This" + "That"] or could contain function calls which child nodes.
     /// </summary>
-    internal class QueryFieldExpressionString : IQueryFieldExpression
+    internal class QueryFieldExpressionString<TData> : IQueryFieldExpression<TData> where TData : IStringable
     {
-        public string Value { get; set; } = string.Empty;
+        public TData Value { get; set; } = default(TData);
 
         /// <summary>
         /// Not applicable to IQueryFieldExpression
@@ -21,9 +21,9 @@
         {
         }
 
-        public IQueryField Clone()
+        public IQueryField<TData> Clone()
         {
-            var clone = new QueryFieldExpressionString()
+            var clone = new QueryFieldExpressionString<TData>()
             {
                 Value = Value,
                 SchemaAlias = SchemaAlias,

@@ -4,9 +4,9 @@ using System.Diagnostics;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
-    internal static class SystemShowVersion
+    internal static class SystemShowVersion<TData> where TData : IStringable
     {
-        public static KbQueryResultCollection Execute(EngineCore core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
+        public static KbQueryResultCollection Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
         {
             var showAll = function.Get("showAll", false);
 

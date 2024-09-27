@@ -16,10 +16,15 @@ namespace NTDLS.Katzebase.Engine
             if (value == null) return true;
             return value.IsNullOrEmpty();
         }
-        public static T? ParseToT<T>(this string value, Func<string, T> t)
+        public static T? ParseToT<T>(this string value, Func<string, T> parse)
         {
             if (value == null) return default(T);
-            return t(value);
+            return parse(value);
+        }
+        public static T? CastToT<T>(this string value, Func<string, T> cast)
+        {
+            if (value == null) return default(T);
+            return cast(value);
         }
         public static IStringable? Empty => null;
     }
@@ -27,8 +32,8 @@ namespace NTDLS.Katzebase.Engine
     {
         bool IsNullOrEmpty();
         IStringable ToLowerInvariant();
-        string ToKey();
-        char[] ToCharArr();
+        string GetKey();
+        //char[] ToCharArr();
         //Func<string, IStringable?> Converter { get; }
         T ToT<T>();
     }
@@ -36,7 +41,9 @@ namespace NTDLS.Katzebase.Engine
     public class EngineCore<TData> where TData : IStringable
     {
         static public Func<string, TData>? StrCast;
-        static public object StrCastLocker = new object();
+        static public Func<string, TData>? StrParse;
+        static public Func<TData, TData, int>? Compare;
+        static public object Locker = new object();
         internal IOManager<TData> IO;
         internal LockManager<TData> Locking;
         internal CacheManager<TData> Cache;
@@ -54,17 +61,41 @@ namespace NTDLS.Katzebase.Engine
         public ThreadPoolManager<TData> ThreadPool;
         internal OptimisticSemaphore LockManagementSemaphore { get; private set; } = new();
 
-        public EngineCore(KatzebaseSettings settings, Func<string, TData>? t)
+        public EngineCore(KatzebaseSettings settings, Func<string, TData>? cast, Func<string, TData>? parse, Func<TData, TData, int>? compare)
         {
-            lock (StrCastLocker)
+            lock (Locker)
             {
-                if (t == null)
+                if (cast == null)
                 {
                     StrCast = str => (TData)(object)str;
                 }
                 else
                 {
-                    StrCast = t;
+                    StrCast = cast;
+                }
+            }
+
+            lock (Locker)
+            {
+                if (cast == null)
+                {
+                    StrParse = str => (TData)(object)str;
+                }
+                else
+                {
+                    StrParse = parse;
+                }
+            }
+
+            lock (Locker)
+            {
+                if (cast == null)
+                {
+                    Compare = (x, y) => string.Compare(x.ToT<string>(), y.ToT<string>());
+                }
+                else
+                {
+                    Compare = compare;
                 }
             }
             Settings = settings;

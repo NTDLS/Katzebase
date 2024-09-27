@@ -1,11 +1,11 @@
 ﻿namespace NTDLS.Katzebase.Engine.Functions.System
 {
-    public class SystemFunctionParameterValue
+    public class SystemFunctionParameterValue<TData> where TData : IStringable
     {
         public SystemFunctionParameterPrototype Parameter { get; private set; }
-        public string? Value { get; private set; } = null;
+        public TData? Value { get; private set; } = default;
 
-        public SystemFunctionParameterValue(SystemFunctionParameterPrototype parameter, string? value)
+        public SystemFunctionParameterValue(SystemFunctionParameterPrototype parameter, TData? value)
         {
             Parameter = parameter;
             Value = value;

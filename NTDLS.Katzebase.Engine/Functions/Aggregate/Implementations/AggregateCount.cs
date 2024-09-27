@@ -2,9 +2,9 @@
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
-    internal static class AggregateCount
+    internal static class AggregateCount<TData> where TData : IStringable
     {
-        public static string Execute(AggregateFunctionParameterValueCollection function, GroupAggregateFunctionParameter parameters)
+        public static string Execute(AggregateFunctionParameterValueCollection function, GroupAggregateFunctionParameter<TData> parameters)
         {
             if (function.Get<bool>("countDistinct"))
             {

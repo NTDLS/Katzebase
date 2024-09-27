@@ -6,13 +6,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
     /// <summary>
     /// A collection of conditions of which all are to be evaluated with AND connectors.
     /// </summary>
-    internal class ConditionGroup : ICondition
+    internal class ConditionGroup<TData> : ICondition where TData : IStringable
     {
         public LogicalConnector Connector { get; set; }
 
-        public HashSet<IndexSelection> UsableIndexes { get; set; } = new();
+        public HashSet<IndexSelection<TData>> UsableIndexes { get; set; } = new();
 
-        public IndexingConditionLookup? IndexLookup { get; set; }
+        public IndexingConditionLookup<TData>? IndexLookup { get; set; }
 
         public List<ICondition> Collection { get; set; } = new();
 
@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
 
         public ICondition Clone()
         {
-            var clone = new ConditionGroup(Connector);
+            var clone = new ConditionGroup<TData>(Connector);
 
             foreach (var entry in Collection)
             {

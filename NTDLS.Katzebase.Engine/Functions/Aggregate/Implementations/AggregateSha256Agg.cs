@@ -4,14 +4,14 @@ using System.Text;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
-    internal static class AggregateSha256Agg
+    internal static class AggregateSha256Agg<TData> where TData : IStringable
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string Execute(GroupAggregateFunctionParameter<TData> parameters)
         {
             using var sha256 = SHA256.Create();
-            foreach (var str in parameters.AggregationValues.OrderBy(o => o))
+            foreach (var str in parameters.AggregationValues.OrderBy(o => o.ToT<string>()))
             {
-                var inputBytes = Encoding.UTF8.GetBytes(str);
+                var inputBytes = Encoding.UTF8.GetBytes(str.ToT<string>());
                 sha256.TransformBlock(inputBytes, 0, inputBytes.Length, null, 0);
             }
 

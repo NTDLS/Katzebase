@@ -12,7 +12,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     /// <summary>
     /// Public core class methods for locking, reading, writing and managing tasks related to procedures.
     /// </summary>
-    public class ProcedureManager<TData>
+    public class ProcedureManager<TData> where TData : IStringable
     {
         private readonly EngineCore<TData> _core;
 

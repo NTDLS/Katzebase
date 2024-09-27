@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
     /// <summary>
     /// Contains a parsed function prototype.
     /// </summary>
-    public class SystemFunction
+    public class SystemFunction<TData> where TData : IStringable
     {
         public string Name { get; private set; }
         public List<SystemFunctionParameterPrototype> Parameters { get; private set; } = new();
@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
             Parameters.AddRange(parameters);
         }
 
-        public static SystemFunction Parse(string prototype)
+        public static SystemFunction<TData> Parse(string prototype)
         {
             var tokenizer = new Tokenizer(prototype, true);
 
@@ -106,10 +106,10 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                 throw new KbEngineException($"Failed to parse system function [{functionName}] prototype, expected end-of-line: [{tokenizer.Remainder}].");
             }
 
-            return new SystemFunction(functionName, parameters);
+            return new SystemFunction<TData>(functionName, parameters);
         }
 
-        internal SystemFunctionParameterValueCollection ApplyParameters(List<string?> values)
+        internal SystemFunctionParameterValueCollection ApplyParameters(List<TData?> values)
         {
             var result = new SystemFunctionParameterValueCollection();
 

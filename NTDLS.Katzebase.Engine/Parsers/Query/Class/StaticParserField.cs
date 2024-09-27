@@ -30,13 +30,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                         //This is a function call, but it is the only token - that's not a valid function call.
                         throw new KbParserException($"Function scaler expects parentheses: [{token}]");
                     }
-                    if (AggregateFunctionCollection.TryGetFunction(token, out var _))
+                    if (AggregateFunctionCollection<TData>.TryGetFunction(token, out var _))
                     {
                         //This is a function call, but it is the only token - that's not a valid function call.
                         throw new KbParserException($"Function aggregate expects parentheses: [{token}]");
                     }
 
-                    var queryFieldDocumentIdentifier = new QueryFieldDocumentIdentifier(token);
+                    var queryFieldDocumentIdentifier = new QueryFieldDocumentIdentifier<TData>(token);
                     var fieldKey = queryFields.GetNextDocumentFieldKey();
                     queryFields.DocumentIdentifiers.Add(fieldKey, queryFieldDocumentIdentifier);
 
@@ -78,7 +78,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         }
 
         private static string ParseEvaluationRecursive(Tokenizer parentTokenizer, ref IQueryFieldExpression rootQueryFieldExpression,
-            string givenExpressionText, ref QueryFieldCollection queryFields)
+            string givenExpressionText, ref QueryFieldCollection<TData> queryFields)
         {
             Tokenizer tokenizer = new(givenExpressionText);
 
@@ -107,7 +107,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     tokenizer.EatNext();
                     buffer.Append(token);
                 }
-                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
+                else if (ScalerFunctionCollection<TData>.TryGetFunction(token, out var scalerFunction))
                 {
                     tokenizer.EatNext();
                     //The expression key is used to match the function calls to the token in the parent expression.
@@ -146,7 +146,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
 
                     var fieldKey = queryFields.GetNextDocumentFieldKey();
-                    queryFields.DocumentIdentifiers.Add(fieldKey, new QueryFieldDocumentIdentifier(token));
+                    queryFields.DocumentIdentifiers.Add(fieldKey, new QueryFieldDocumentIdentifier<TData>(token));
                     buffer.Append(fieldKey);
                 }
                 else
@@ -275,7 +275,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     //This is a number placeholder, so we still have a valid numeric operation.
                     continue;
                 }
-                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
+                else if (ScalerFunctionCollection<TData>.TryGetFunction(token, out var scalerFunction))
                 {
                     if (scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric)
                     {
@@ -358,7 +358,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     //This is a numeric constant, we're all good.
                     continue;
                 }
-                else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
+                else if (ScalerFunctionCollection<TData>.TryGetFunction(token, out var scalerFunction))
                 {
                     //Functions are not constant.
                     return false;

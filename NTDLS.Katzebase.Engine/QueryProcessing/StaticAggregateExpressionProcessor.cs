@@ -15,8 +15,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// <summary>
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
-        public static string CollapseAggregateQueryField(this QueryField queryField, Transaction<TData> transaction,
-            PreparedQuery query, KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters)
+        public static TData CollapseAggregateQueryField<TData>(this QueryField queryField, Transaction<TData> transaction,
+            PreparedQuery<TData> query, KbInsensitiveDictionary<GroupAggregateFunctionParameter<TData>> aggregateFunctionParameters)
+            where TData : IStringable
         {
             if (queryField.Expression is QueryFieldExpressionNumeric expressionNumeric)
             {
@@ -36,8 +37,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Takes a string expression string and performs math on all of the values, including those from all
         ///     recursive function calls.
         /// </summary>
-        private static string CollapseAggregateFunctionNumericParameter(Transaction<TData> transaction, PreparedQuery query,
-            List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters, string expressionString)
+        private static TData CollapseAggregateFunctionNumericParameter<TData>(Transaction<TData> transaction, PreparedQuery<TData> query,
+            List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<GroupAggregateFunctionParameter<TData>> aggregateFunctionParameters, string expressionString)
+            where TData : IStringable
         {
             var tokenizer = new TokenizerSlim(expressionString, TokenizerExtensions.MathematicalCharacters);
 
@@ -63,8 +65,10 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Takes a string expression string and concatenates all of the values, including those from all
         ///     recursive function calls. Concatenation which is really the only operation we support for strings.
         /// </summary>
-        private static string CollapseAggregateFunctionStringParameter(Transaction<TData> transaction, PreparedQuery query,
-            List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters, string expressionString)
+        private static TData CollapseAggregateFunctionStringParameter<TData>(Transaction<TData> transaction, PreparedQuery<TData> query,
+            List<IQueryFieldExpressionFunction> functions, KbInsensitiveDictionary<GroupAggregateFunctionParameter<TData>> aggregateFunctionParameters, string expressionString)
+            where TData : IStringable
+
         {
             var tokenizer = new TokenizerSlim(expressionString, ['+', '(', ')']);
 
@@ -90,8 +94,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Takes a function and recursively collapses all of the parameters, then recursively
         ///     executes all dependency functions to collapse the function to a single value.
         /// </summary>
-        private static string CollapseAggregateFunction(Transaction<TData> transaction, PreparedQuery query, List<IQueryFieldExpressionFunction> functions,
-            KbInsensitiveDictionary<GroupAggregateFunctionParameter> aggregateFunctionParameters, IQueryFieldExpressionFunction function)
+        private static TData CollapseAggregateFunction<TData>(Transaction<TData> transaction, PreparedQuery<TData> query, List<IQueryFieldExpressionFunction> functions,
+            KbInsensitiveDictionary<GroupAggregateFunctionParameter<TData>> aggregateFunctionParameters, IQueryFieldExpressionFunction function)
+            where TData : IStringable
         {
             //The sole parameter for aggregate functions is pre-computed by the query execution engine, just get the values.
             if (aggregateFunctionParameters.TryGetValue(function.ExpressionKey, out var aggregateFunctionParameter) != true)
@@ -99,7 +104,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
                 throw new KbEngineException($"The aggregate function [{function.FunctionName}] resolved expression key was not found: [{function.ExpressionKey}].");
             }
 
-            return AggregateFunctionImplementation.ExecuteFunction(function.FunctionName, aggregateFunctionParameter);
+            return AggregateFunctionImplementation<TData>.ExecuteFunction(function.FunctionName, aggregateFunctionParameter);
         }
     }
 }

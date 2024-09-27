@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         public string? Hash { get; set; }
         public QueryBatch<TData> Batch { get; private set; }
         public Dictionary<QueryAttribute, object> Attributes { get; private set; } = new();
-        public List<QuerySchema> Schemas { get; private set; } = new();
+        public List<QuerySchema<TData>> Schemas { get; private set; } = new();
         public QueryType QueryType { get; set; }
         public SubQueryType SubQueryType { get; set; }
 
@@ -90,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         #region Shared statement components.
         public int RowLimit { get; set; }
         public int RowOffset { get; set; }
-        public ConditionCollection Conditions { get; set; }
+        public ConditionCollection<TData> Conditions { get; set; }
 
         #endregion
 
@@ -115,12 +115,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes
         /// <summary>
         /// Query that needs to be executed to get the insert values for a "insert into, select from" statement.
         /// </summary>
-        public PreparedQuery? InsertSelectQuery { get; set; }
+        public PreparedQuery<TData>? InsertSelectQuery { get; set; }
 
         /// <summary>
         /// Values that are used when executing a "insert into, values" statement.
         /// </summary>
-        public List<QueryFieldCollection>? InsertFieldValues { get; set; }
+        public List<QueryFieldCollection<TData>>? InsertFieldValues { get; set; }
 
         /// <summary>
         /// The field names that are to be used when inserting values from InsertFieldValues or InsertSelectQuery.

@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
     /// <summary>
     /// Internal class methods for handling query requests related to configuration.
     /// </summary>
-    internal class EnvironmentQueryHandlers<TData>
+    internal class EnvironmentQueryHandlers<TData> where TData : IStringable
     {
         private readonly EngineCore<TData> _core;
 
@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbActionResponse ExecuteAlter(SessionState session, PreparedQuery preparedQuery)
+        internal KbActionResponse ExecuteAlter(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {

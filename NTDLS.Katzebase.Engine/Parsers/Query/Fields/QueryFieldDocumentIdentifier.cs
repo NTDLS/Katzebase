@@ -6,12 +6,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
     /// <summary>
     /// Contains the name of a schema.field or just a field name if the schema was not specified.
     /// </summary>
-    internal class QueryFieldDocumentIdentifier : IQueryField
+    internal class QueryFieldDocumentIdentifier<TData> : IQueryField<TData> where TData : IStringable
     {
         /// <summary>
         /// The qualified name of the document field, e.g. schemaName.fieldName, or just the field name if no schema was specified.
         /// </summary>
-        public string Value { get; set; }
+        public TData Value { get; set; }
 
         /// <summary>
         /// The alias of the schema for this document field.
@@ -23,9 +23,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
         /// </summary>
         public string FieldName { get; private set; }
 
-        public IQueryField Clone()
+        public IQueryField<TData> Clone()
         {
-            var clone = new QueryFieldDocumentIdentifier(Value.ToString().EnsureNotNull())
+            var clone = new QueryFieldDocumentIdentifier<TData>(Value.ToString().EnsureNotNull())
             {
                 SchemaAlias = SchemaAlias,
                 FieldName = FieldName,
@@ -36,9 +36,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
 
         public QueryFieldDocumentIdentifier(string value)
         {
-            Value = value.Trim();
+            Value = value.Trim().ParseToT<TData>(EngineCore<TData>.StrParse);
 
-            var values = Value.Split('.');
+            var values = Value.ToT<string>().Split('.');
             if (values.Length == 1)
             {
                 SchemaAlias = string.Empty;
@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Fields
 
         public override bool Equals(object? obj)
         {
-            if (obj is QueryFieldDocumentIdentifier other)
+            if (obj is QueryFieldDocumentIdentifier<TData> other)
             {
                 return SchemaAlias == other.SchemaAlias && FieldName == other.FieldName;
             }

@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
                 return hash;
             value = (TData)value.ToLowerInvariant();
             const uint seed = 131;
-            foreach (char c in value.ToCharArr())
+            foreach (char c in value.ToT<char[]>())
             {
                 hash = hash * seed + c;
             }

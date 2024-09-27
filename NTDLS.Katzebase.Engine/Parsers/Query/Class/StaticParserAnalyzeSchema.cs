@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserAnalyzeSchema
     {
-        internal static PreparedQuery Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
         {
             var query = new PreparedQuery(queryBatch, QueryType.Analyze)
             {
@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
             query.Schemas.Add(new QuerySchema(schemaName));
 
-            //result.AddAttribute(PreparedQuery.QueryAttribute.Schema, token);
+            //result.AddAttribute(PreparedQuery<TData>.QueryAttribute.Schema, token);
 
             if (tokenizer.TryEatIfNext("with"))
             {

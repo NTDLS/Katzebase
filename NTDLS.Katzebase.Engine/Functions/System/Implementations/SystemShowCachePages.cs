@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowCachePages
     {
-        public static KbQueryResultCollection Execute(EngineCore core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
+        public static KbQueryResultCollection Execute<TData>(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function) where TData : IStringable
         {
             var collection = new KbQueryResultCollection();
             var result = collection.AddNew();
@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             {
                 if (core.Cache.TryGet(item.Key, out var pageObject))
                 {
-                    if (pageObject is PhysicalDocumentPage page)
+                    if (pageObject is PhysicalDocumentPage<TData> page)
                     {
                         var values = new List<string?>
                         {

@@ -2,11 +2,11 @@
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
-    internal static class AggregateMedian
+    internal static class AggregateMedian<TData> where TData : IStringable
     {
-        public static string Execute(GroupAggregateFunctionParameter parameters)
+        public static string Execute(GroupAggregateFunctionParameter<TData> parameters)
         {
-            var sortedNumbers = parameters.AggregationValues.Select(o => double.Parse(o)).OrderBy(n => n).ToList();
+            var sortedNumbers = parameters.AggregationValues.Select(o => o.ToT<double>()).OrderBy(n => n).ToList();
             int count = sortedNumbers.Count;
 
             if (count % 2 == 0)

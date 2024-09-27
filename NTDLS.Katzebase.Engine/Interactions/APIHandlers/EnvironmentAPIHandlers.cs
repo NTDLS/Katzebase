@@ -5,11 +5,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to configuration.
     /// </summary>
-    public class EnvironmentAPIHandlers
+    public class EnvironmentAPIHandlers<TData> where TData : IStringable
     {
         private readonly EngineCore<TData> _core;
 
-        public EnvironmentAPIHandlers(EngineCore core)
+        public EnvironmentAPIHandlers(EngineCore<TData> core)
         {
             _core = core;
 

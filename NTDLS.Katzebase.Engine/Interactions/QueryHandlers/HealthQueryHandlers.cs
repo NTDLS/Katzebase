@@ -3,7 +3,7 @@
     /// <summary>
     /// Internal class methods for handling query requests related to health.
     /// </summary>
-    internal class HealthQueryHandlers<TData>
+    internal class HealthQueryHandlers<TData> where TData : IStringable
     {
         private readonly EngineCore<TData> _core;
 

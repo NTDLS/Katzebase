@@ -12,6 +12,6 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
         /// </summary>
         public SchemaIntersectionRow<TData> GroupRow { get; set; } = new();
 
-        public KbInsensitiveDictionary<GroupAggregateFunctionParameter> GroupAggregateFunctionParameters { get; set; } = new();
+        public KbInsensitiveDictionary<GroupAggregateFunctionParameter<TData>> GroupAggregateFunctionParameters { get; set; } = new();
     }
 }

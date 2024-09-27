@@ -3,9 +3,9 @@
     /// <summary>
     /// Contains a numeric evaluation expression. This could be as simple as [10 + 10] or could contain function calls which child nodes.
     /// </summary>
-    internal class QueryFieldExpressionNumeric : IQueryFieldExpression
+    internal class QueryFieldExpressionNumeric<TData> : IQueryFieldExpression<TData> where TData : IStringable
     {
-        public string Value { get; set; }
+        public TData Value { get; set; }
 
         /// <summary>
         /// Not applicable to IQueryFieldExpression
@@ -17,14 +17,14 @@
         /// </summary>
         public List<IQueryFieldExpressionFunction> FunctionDependencies { get; private set; } = new();
 
-        public QueryFieldExpressionNumeric(string value)
+        public QueryFieldExpressionNumeric(TData value)
         {
             Value = value;
         }
 
-        public IQueryField Clone()
+        public IQueryField<TData> Clone()
         {
-            var clone = new QueryFieldExpressionNumeric(Value)
+            var clone = new QueryFieldExpressionNumeric<TData>(Value)
             {
                 SchemaAlias = SchemaAlias,
             };

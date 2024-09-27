@@ -2,7 +2,8 @@
 
 namespace NTDLS.Katzebase.Engine.Locking
 {
-    internal class ObjectPendingLockIntention(Transaction<TData> transaction, ObjectLockIntention intention)
+    internal class ObjectPendingLockIntention<TData>(Transaction<TData> transaction, ObjectLockIntention intention)
+        where TData : IStringable
     {
         public Transaction<TData> transaction { get; set; } = transaction;
         public ObjectLockIntention Intention { get; set; } = intention;

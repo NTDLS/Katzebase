@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
     /// <summary>
     /// Public class methods for handling API requests related to health.
     /// </summary>
-    public class HealthAPIHandlers<TData>
+    public class HealthAPIHandlers<TData> where TData : IStringable
     {
         private readonly EngineCore<TData> _core;
 

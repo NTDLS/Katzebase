@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {
     internal class IndexSelection<TData> where TData : IStringable
     {
-        public HashSet<ConditionEntry> CoveredConditions { get; private set; } = new();
+        public HashSet<ConditionEntry<TData>> CoveredConditions { get; private set; } = new();
 
         public PhysicalIndex<TData> PhysicalIndex { get; private set; }
 

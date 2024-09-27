@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
     internal static class StaticParserWhere
     {
-        public static ConditionCollection Parse(QueryBatch queryBatch, Tokenizer tokenizer)
+        public static ConditionCollection Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
         {
             //Look for tokens that would mean the end of the where clause
             if (tokenizer.TryGetNextIndexOfAny([" group ", " order ", " offset ", " inner "], out int endOfWhere) == false)

@@ -3,12 +3,12 @@ using NTDLS.Katzebase.Engine.Documents;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
-    public class SchemaIntersectionRowDocumentIdentifier
+    public class SchemaIntersectionRowDocumentIdentifier<TData> where TData : IStringable
     {
         public DocumentPointer DocumentPointer { get; set; }
-        public KbInsensitiveDictionary<string?> AuxiliaryFields { get; set; }
+        public KbInsensitiveDictionary<TData?> AuxiliaryFields { get; set; }
 
-        public SchemaIntersectionRowDocumentIdentifier(DocumentPointer documentPointer, KbInsensitiveDictionary<string?> auxiliaryFields)
+        public SchemaIntersectionRowDocumentIdentifier(DocumentPointer documentPointer, KbInsensitiveDictionary<TData?> auxiliaryFields)
         {
             DocumentPointer = documentPointer;
             AuxiliaryFields = auxiliaryFields;
