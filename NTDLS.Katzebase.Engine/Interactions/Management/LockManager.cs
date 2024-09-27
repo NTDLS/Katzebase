@@ -483,7 +483,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             explanation.AppendLine("        Awaiting Locks {");
             foreach (var waitingFor in txWaitingForLocks.Where(o => o.Value.Transaction == transaction))
             {
-                explanation.AppendLine($"            {waitingFor.Value.ToString()}");
+                explanation.AppendLine($"            {waitingFor.Value.Intention.ToString()}");
             }
             explanation.AppendLine("        }");
 
@@ -511,7 +511,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 explanation.AppendLine("        Awaiting Locks {");
                 foreach (var waitingFor in txWaitingForLocks.Where(o => o.Value.Transaction == waiter))
                 {
-                    explanation.AppendLine($"            {waitingFor.Value.Intention}");
+                    explanation.AppendLine($"            {waitingFor.Value.Intention.ToString()}");
                 }
                 explanation.AppendLine("        }");
             }
