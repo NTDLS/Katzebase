@@ -14,6 +14,14 @@ namespace NTDLS.Katzebase.Engine.Schemas
         {
             [JsonIgnore]
             public bool Exists { get; set; }
+
+            [JsonIgnore]
+            public PhysicalSchema ParentPhysicalSchema { get; set; }
+
+            public VirtualSchema(PhysicalSchema parentPhysicalSchema)
+            {
+                ParentPhysicalSchema = parentPhysicalSchema;
+            }
         }
 
         public uint PageSize { get; set; }
@@ -86,9 +94,9 @@ namespace NTDLS.Katzebase.Engine.Schemas
             };
         }
 
-        public VirtualSchema ToVirtual()
+        public VirtualSchema ToVirtual(PhysicalSchema parentPhysicalSchema)
         {
-            return new VirtualSchema
+            return new VirtualSchema(parentPhysicalSchema)
             {
                 DiskPath = DiskPath,
                 Id = Id,

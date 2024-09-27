@@ -119,7 +119,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 foreach (string name in segments)
                 {
                     pathBuilder.Append(name);
-                    var schema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, pathBuilder.ToString(), LockOperation.Read);
+                    var schema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, pathBuilder.ToString(), LockOperation.Read, LockOperation.Stability);
 
                     schemaExists = schema != null && schema.Exists;
                     if (schemaExists == false)

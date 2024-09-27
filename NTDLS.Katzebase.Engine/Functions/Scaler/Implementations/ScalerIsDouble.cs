@@ -2,7 +2,7 @@
 {
     internal static class ScalerIsDouble
     {
-        public static string? Execute( ScalerFunctionParameterValueCollection function)
+        public static string? Execute(ScalerFunctionParameterValueCollection function)
         {
             return double.TryParse(function.Get<string>("value"), out _).ToString();
         }

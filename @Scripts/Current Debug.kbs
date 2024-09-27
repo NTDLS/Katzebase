@@ -1,6 +1,9 @@
-const @ddd = 10
 
-select*from master:account
+
+select
+*
+into :
+from master:account
 
 --select col1, IsInteger(col1), IsString(col1), IsDouble(col1) from testsch
 

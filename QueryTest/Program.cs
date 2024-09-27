@@ -1,6 +1,4 @@
 ﻿using NTDLS.Katzebase.Client;
-using NTDLS.Katzebase.Client.Types;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace QueryTest
 {

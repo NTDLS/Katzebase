@@ -1,7 +1,6 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using System.Text.RegularExpressions;
-using static Antlr4.Runtime.Atn.SemanticContext;
 using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Tokens
