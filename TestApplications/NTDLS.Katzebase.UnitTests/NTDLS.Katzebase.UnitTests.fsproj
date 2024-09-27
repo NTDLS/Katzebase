@@ -36,8 +36,11 @@
 		
         <Compile Include="Scripts/Engine/DDLExecution/BasicTest.DDLExecution.ver.0.0.1.fsx">
 			<Link>Unit/Engine/Execution/DDL/BasicTest.DDLExecution.fsx</Link>
+		</Compile>
+
+		<Compile Include="Scripts/Engine/DMLExecution/BasicTest.DMLExecution.ver.0.0.1.fsx">
+			<Link>Unit/Engine/Execution/DML/BasicTest.DMLExecution.fsx</Link>
 		</Compile>		
-		
 		
 		<Compile Include="Program.ver.0.0.1.fsx">
 			<Link>Program.fsx</Link>
@@ -64,7 +67,7 @@
     <PackageReference Include="protobuf-net" Version="3.2.30" />
     <PackageReference Include="protobuf-net.Core" Version="3.2.30" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
-    <PackageReference Include="xunit" Version="2.9.1" />
+    <PackageReference Include="xunit" Version="2.9.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.0.0-pre.30">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
