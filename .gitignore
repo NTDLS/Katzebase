@@ -135,3 +135,11 @@ ParserV2/bin/
 InsertLockTest/bin/
 
 InsertLockTest/obj/
+
+TestApplications/InsertLockTest/bin/
+
+TestApplications/InsertLockTest/obj/
+
+TestApplications/QueryTest/bin/
+
+TestApplications/QueryTest/obj/

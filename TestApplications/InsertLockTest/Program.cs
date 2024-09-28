@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Payloads;
 
 namespace InsertLockTest
@@ -9,11 +10,6 @@ namespace InsertLockTest
         {
             CreateSchemaDeadlock();
         }
-
-        public delegate void StartThreadDelegate<T>(T proc);
-
-        public static void StartThread<T>(T param, StartThreadDelegate<T> proc)
-            => new Thread(() => proc(param)).Start();
 
         #region CreateSchemaDeadlock.
 
@@ -41,8 +37,8 @@ namespace InsertLockTest
 
             while (true)
             {
-                StartThread(clientA, CreateSchemaDeadlockA);
-                StartThread(clientB, CreateSchemaDeadlockB);
+                Threads.StartThread(clientA, CreateSchemaDeadlockA);
+                Threads.StartThread(clientB, CreateSchemaDeadlockB);
 
                 Thread.Sleep(2500);
             }

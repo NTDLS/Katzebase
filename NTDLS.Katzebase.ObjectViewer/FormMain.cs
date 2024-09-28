@@ -156,14 +156,13 @@ namespace NTDLS.Katzebase.ObjectViewer
         {
             try
             {
-                var fileBytes = File.ReadAllBytes(fileName);
-                var serializedData = Engine.Library.Compression.Deflate.DecompressToString(fileBytes);
+                var plainText = File.ReadAllText(fileName);
 
                 var deserializeMethod = typeof(JsonConvert)?
                         .GetMethod("DeserializeObject", [typeof(string), typeof(Type)]);
 
                 // Invoke the DeserializeObject method to deserialize the JSON string
-                var deserializedObject = deserializeMethod?.Invoke(null, [serializedData, type]);
+                var deserializedObject = deserializeMethod?.Invoke(null, [plainText, type]);
 
                 friendlyText = JsonConvert.SerializeObject(deserializedObject, Formatting.Indented);
                 return true;
