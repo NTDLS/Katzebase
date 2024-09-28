@@ -20,7 +20,6 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal CacheManager(EngineCore core)
         {
             _core = core;
-
             try
             {
                 var config = new PartitionedCacheConfiguration
