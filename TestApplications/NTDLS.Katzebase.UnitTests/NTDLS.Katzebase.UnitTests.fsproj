@@ -6,10 +6,10 @@
 		<OutputPath>.\bin</OutputPath>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-	  <DefineConstants>$(DefineConstants);COMPARE</DefineConstants>
+	  <DefineConstants>$(DefineConstants);COMPARE;GENERIC_TDATA</DefineConstants>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-	  <DefineConstants>$(DefineConstants);COMPARE</DefineConstants>
+	  <DefineConstants>$(DefineConstants);COMPARE;GENERIC_TDATA</DefineConstants>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -18,7 +18,7 @@
 		<None Include="app.config">
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
-		<Compile Include="Scripts/UnitTestsSharedResource.ver.0.0.1.fsx">
+		<Compile Include="Scripts/UnitTestsSharedResource.ver.0.0.2.fsx">
 			<Link>Shared/UnitTestsSharedResource.fsx</Link>
 		</Compile>
 
@@ -34,11 +34,11 @@
 			<Link>Unit/Engine/Parser/BasicTest.Parser.fsx</Link>
 		</Compile>
 		
-        <Compile Include="Scripts/Engine/DDLExecution/BasicTest.DDLExecution.ver.0.0.1.fsx">
+        <Compile Include="Scripts/Engine/DDLExecution/BasicTest.DDLExecution.ver.0.0.2.fsx">
 			<Link>Unit/Engine/Execution/DDL/BasicTest.DDLExecution.fsx</Link>
 		</Compile>
 
-		<Compile Include="Scripts/Engine/DMLExecution/BasicTest.DMLExecution.ver.0.0.1.fsx">
+		<Compile Include="Scripts/Engine/DMLExecution/BasicTest.DMLExecution.ver.0.0.2.fsx">
 			<Link>Unit/Engine/Execution/DML/BasicTest.DMLExecution.fsx</Link>
 		</Compile>		
 		

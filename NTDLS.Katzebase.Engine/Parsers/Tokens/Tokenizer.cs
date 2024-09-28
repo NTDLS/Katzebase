@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
     /// <summary>
     /// Used to walk various types of string and expressions.
     /// </summary>
-    internal partial class Tokenizer
+    internal partial class Tokenizer<TData> where TData : IStringable
     {
         #region Rules and Convention.
 
@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         public string Text => _text;
         public string Hash => _hash ??= Library.Helpers.ComputeSHA256(_text);
         public KbInsensitiveDictionary<KbConstant> PredefinedConstants { get; set; }
-        public KbInsensitiveDictionary<ConditionFieldLiteral> Literals { get; private set; } = new();
+        public KbInsensitiveDictionary<ConditionFieldLiteral<TData>> Literals { get; private set; } = new();
 
         #endregion
 

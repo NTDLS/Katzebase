@@ -6,13 +6,13 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserSelect
+    internal static class StaticParserSelect<TData> where TData : IStringable
     {
-        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
             string token;
 
-            var query = new PreparedQuery(queryBatch, QueryType.Select);
+            var query = new PreparedQuery<TData>(queryBatch, QueryType.Select);
 
             //Parse "TOP n".
             if (tokenizer.TryEatIfNext("top"))
@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
             else
             {
-                query.SelectFields = StaticParserFieldList.Parse(queryBatch, tokenizer, [" from ", " into "], false);
+                query.SelectFields = StaticParserFieldList<TData>.Parse(queryBatch, tokenizer, [" from ", " into "], false);
             }
 
             //Parse "into".
@@ -69,24 +69,24 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             if (tokenizer.TryEatIfNext("as"))
             {
                 var schemaAlias = tokenizer.EatGetNext();
-                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema<TData>(schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
             }
             else
             {
-                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema<TData>(schemaName.ToLowerInvariant()));
             }
 
             //Parse joins.
             while (tokenizer.TryIsNext("inner"))
             {
-                var joinedSchemas = StaticParserJoin.Parse(queryBatch, tokenizer);
+                var joinedSchemas = StaticParserJoin<TData>.Parse(queryBatch, tokenizer);
                 query.Schemas.AddRange(joinedSchemas);
             }
 
             //Parse "where" clause.
             if (tokenizer.TryEatIfNext("where"))
             {
-                query.Conditions = StaticParserWhere.Parse(queryBatch, tokenizer);
+                query.Conditions = StaticParserWhere<TData>.Parse(queryBatch, tokenizer);
 
                 //Associate the root query schema with the root conditions.
                 query.Schemas.First().Conditions = query.Conditions;
@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     throw new KbParserException($"Invalid query. Found [{tokenizer.EatGetNext()}], expected: 'by'.");
                 }
-                query.GroupFields = StaticParserGroupBy.Parse(queryBatch, tokenizer);
+                query.GroupFields = StaticParserGroupBy<TData>.Parse(queryBatch, tokenizer);
             }
 
             //Parse "order by".
@@ -109,7 +109,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     throw new KbParserException($"Invalid query. Found [{tokenizer.EatGetNext()}], expected: 'by'.");
                 }
-                query.SortFields = StaticParserOrderBy.Parse(queryBatch, tokenizer);
+                query.SortFields = StaticParserOrderBy<TData>.Parse(queryBatch, tokenizer);
             }
 
             //Parse "limit" clause.

@@ -12,12 +12,12 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
     internal class QuerySchemaMapItem<TData> where TData :IStringable
     {
         public string Prefix { get; private set; }
-        public PhysicalSchema PhysicalSchema { get; private set; }
+        public PhysicalSchema<TData> PhysicalSchema { get; private set; }
         public PhysicalDocumentPageCatalog DocumentPageCatalog { get; private set; }
         public ConditionCollection<TData>? Conditions { get; private set; }
         public IndexingConditionOptimization<TData>? Optimization { get; private set; }
 
-        public QuerySchemaMapItem(EngineCore<TData> core, Transaction<TData> transaction, QuerySchemaMap<TData> schemaMap, PhysicalSchema physicalSchema,
+        public QuerySchemaMapItem(EngineCore<TData> core, Transaction<TData> transaction, QuerySchemaMap<TData> schemaMap, PhysicalSchema<TData> physicalSchema,
             PhysicalDocumentPageCatalog documentPageCatalog, ConditionCollection<TData>? conditions, string prefix)
         {
             Prefix = prefix;

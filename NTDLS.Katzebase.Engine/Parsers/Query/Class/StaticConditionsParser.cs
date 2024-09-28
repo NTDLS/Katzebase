@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// and all conditions in a ConditionGroup will be comprised solely of AND conditions. This way we can use the groups to match indexes
         /// before evaluating the whole expression on the limited set of documents we derived from the indexing operations.
         /// </summary>
-        public static ConditionCollection<TData> Parse<TData>(QueryBatch<TData> queryBatch, Tokenizer parentTokenizer, string conditionsText, string leftHandAliasOfJoin = "")
+        public static ConditionCollection<TData> Parse<TData>(QueryBatch<TData> queryBatch, Tokenizer<TData> parentTokenizer, string conditionsText, string leftHandAliasOfJoin = "")
             where TData : IStringable
         {
             var conditionCollection = new ConditionCollection<TData>(queryBatch, conditionsText, leftHandAliasOfJoin);
@@ -35,12 +35,12 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             return conditionCollection;
         }
 
-        private static void ParseRecursive<TData>(QueryBatch<TData> queryBatch, Tokenizer parentTokenizer,
+        private static void ParseRecursive<TData>(QueryBatch<TData> queryBatch, Tokenizer<TData> parentTokenizer,
             ConditionCollection<TData> conditionCollection, ConditionGroup<TData> parentConditionGroup,
             string conditionsText, ConditionGroup<TData>? givenCurrentConditionGroup = null)
             where TData : IStringable
         {
-            var tokenizer = new Tokenizer(conditionsText);
+            var tokenizer = new Tokenizer<TData>(conditionsText);
 
             var lastLogicalConnector = LogicalConnector.None;
 
@@ -85,7 +85,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             }
         }
 
-        private static ConditionEntry<TData>.ConditionValuesPair<TData> ParseRightAndLeft<TData>(ConditionCollection<TData> conditionCollection, Tokenizer parentTokenizer, Tokenizer tokenizer)
+        private static ConditionEntry<TData>.ConditionValuesPair<TData> ParseRightAndLeft<TData>(ConditionCollection<TData> conditionCollection, Tokenizer<TData> parentTokenizer, Tokenizer<TData> tokenizer)
             where TData : IStringable
         {
             int startLeftRightCaret = tokenizer.Caret;
@@ -173,8 +173,8 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             string conditionSetText = tokenizer.Substring(startConditionSetCaret, tokenizer.Caret - startConditionSetCaret).Trim();
             conditionCollection.MathematicalExpression = conditionCollection.MathematicalExpression.ReplaceFirst(conditionSetText, conditionPair.ExpressionVariable);
 
-            conditionCollection.FieldCollection.Add(new QueryField(string.Empty, conditionCollection.FieldCollection.Count, left));
-            conditionCollection.FieldCollection.Add(new QueryField(string.Empty, conditionCollection.FieldCollection.Count, right));
+            conditionCollection.FieldCollection.Add(new QueryField<TData>(string.Empty, conditionCollection.FieldCollection.Count, left));
+            conditionCollection.FieldCollection.Add(new QueryField<TData>(string.Empty, conditionCollection.FieldCollection.Count, right));
 
             return conditionPair;
         }

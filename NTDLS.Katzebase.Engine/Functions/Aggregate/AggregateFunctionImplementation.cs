@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 
         public static TData ExecuteFunction(string functionName, GroupAggregateFunctionParameter<TData> parameters)
         {
-            var function = AggregateFunctionCollection.ApplyFunctionPrototype<TData>(functionName, parameters.SupplementalParameters);
+            var function = AggregateFunctionCollection<TData>.ApplyFunctionPrototype(functionName, parameters.SupplementalParameters);
 
             var rtn = functionName.ToLowerInvariant() switch
             {

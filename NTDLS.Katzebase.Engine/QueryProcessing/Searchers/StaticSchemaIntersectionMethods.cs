@@ -14,7 +14,6 @@ using NTDLS.Katzebase.Engine.QueryProcessing.Sorting;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
-using static NTDLS.Katzebase.Engine.Documents.DocumentPointer;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
@@ -33,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         {
             var topLevelSchemaMap = schemaMap.First().Value;
 
-            IEnumerable<DocumentPointer>? documentPointers = null;
+            IEnumerable<DocumentPointer<TData>>? documentPointers = null;
 
             #region Optimization.
 
@@ -183,7 +182,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             if (gatherDocumentsIdsForSchemaPrefixes != null)
             {
                 //Distill the document pointers to a distinct list. Can we do this in the threads? Maybe prevent the dups in the first place?
-                operation.RowDocumentIdentifiers = operation.RowDocumentIdentifiers.Distinct(new DocumentPageEqualityComparer()).ToList();
+                operation.RowDocumentIdentifiers = operation.RowDocumentIdentifiers.Distinct(new DocumentPointer<TData>.DocumentPageEqualityComparer()).ToList();
             }
 
             if (query.DynamicSchemaFieldFilter != null && operation.ResultingRows.Count > 0)
@@ -333,7 +332,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         #endregion
 
         private static void IntersectAllSchemas<TData>(DocumentLookupOperation<TData>.Instance instance,
-            DocumentPointer topLevelDocumentPointer, ref SchemaIntersectionRowCollection<TData> resultingRows) where TData: IStringable
+            DocumentPointer<TData> topLevelDocumentPointer, ref SchemaIntersectionRowCollection<TData> resultingRows) where TData: IStringable
         {
             var topLevelSchemaMap = instance.Operation.SchemaMap.First();
 
@@ -367,7 +366,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             //  for rows produced by any one-to-many relationships.
             foreach (var field in instance.Operation.Query.SelectFields.ConstantFields)
             {
-                resultingRow.InsertValue(field.FieldAlias, field.Ordinal, instance.Operation.Query.Batch.GetLiteralValue(field.Value));
+                resultingRow.InsertValue(field.FieldAlias, field.Ordinal, instance.Operation.Query.Batch.GetLiteralValue(field.Value.ToT<string>()));
             }
 
             if (instance.Operation.SchemaMap.Count > 1)
@@ -430,7 +429,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
             if (expression == null) throw new KbEngineException($"Expression cannot be null.");
 
             //Create a reference to the entire document catalog.
-            IEnumerable<DocumentPointer>? documentPointers = null;
+            IEnumerable<DocumentPointer<TData>>? documentPointers = null;
 
             #region Indexing to reduce the number of document pointers in "limitedDocumentPointers".
 
@@ -447,7 +446,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     {
                         throw new KbEngineException($"Join clause field not found in document: [{currentSchemaKVP.Key}].");
                     }
-                    joinClauseKeyValues[documentIdentifier.FieldName] = documentValue?.ToString() ?? "";
+                    joinClauseKeyValues[documentIdentifier.FieldName] = documentValue ?? "".ParseToT<TData>(EngineCore<TData>.StrParse);
                 }
 
                 //We are going to create a limited document catalog using the indexes.
@@ -570,7 +569,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// This function will "produce" a single row by filling in the document values with the values from the given schema.
         /// </summary>
         private static void FillInSchemaResultDocumentValues<TData>(DocumentLookupOperation<TData>.Instance instance, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow<TData> schemaResultRow,
+            DocumentPointer<TData> documentPointer, ref SchemaIntersectionRow<TData> schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<TData?>> threadScopedContentCache) where TData :IStringable
         {
             instance.Operation.Query?.DynamicSchemaFieldSemaphore?.Wait(); //We only have to lock this is we are dynamically building the select list.
@@ -584,7 +583,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// Gets the values of all selected fields from document.
         /// </summary>
         private static void FillInSchemaResultDocumentValuesAtomic<TData>(DocumentLookupOperation<TData>.Instance instance, string schemaKey,
-            DocumentPointer documentPointer, ref SchemaIntersectionRow<TData> schemaResultRow,
+            DocumentPointer<TData> documentPointer, ref SchemaIntersectionRow<TData> schemaResultRow,
             KbInsensitiveDictionary<KbInsensitiveDictionary<TData?>> threadScopedContentCache) where TData : IStringable
         {
             var documentContent = threadScopedContentCache[$"{schemaKey}:{documentPointer.Key}"];
@@ -612,7 +611,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
                         if (isFieldAlreadyInCollection == false)
                         {
-                            var additionalField = new QueryField(field.Key, currentFieldList.Count, new QueryFieldDocumentIdentifier<TData>(field.Key));
+                            var additionalField = new QueryField<TData>(field.Key, currentFieldList.Count, new QueryFieldDocumentIdentifier<TData>(field.Key));
                             instance.Operation.Query.SelectFields.Add(additionalField);
                         }
                     }

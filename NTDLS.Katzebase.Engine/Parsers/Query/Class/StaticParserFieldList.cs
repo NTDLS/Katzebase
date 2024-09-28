@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
     /// Used to parse complex field lists that contain expressions and are aliases, such as SELECT and GROUP BY fields.
     /// Yes, group by fields do not need aliases, but I opted to not duplicate code.
     /// </summary>
-    internal static class StaticParserFieldList
+    internal static class StaticParserFieldList<TData> where TData : IStringable
     {
         /// <summary>
         /// Parses the field expressions for a "select" or "select into" query.
@@ -16,9 +16,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// <param name="stopAtTokens">Array of tokens for which the parsing will stop if encountered.</param>
         /// <param name="allowEntireConsumption">If true, in the event that stopAtTokens are not found, the entire remaining text will be consumed.</param>
         /// <returns></returns>
-        public static QueryFieldCollection Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer, string[] stopAtTokens, bool allowEntireConsumption)
+        public static QueryFieldCollection<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer, string[] stopAtTokens, bool allowEntireConsumption)
         {
-            var queryFields = new QueryFieldCollection(queryBatch);
+            var queryFields = new QueryFieldCollection<TData>(queryBatch);
 
             //Get the position which represents the end of the select list.
             if (tokenizer.TryGetFirstIndexOf(stopAtTokens, out int stopAt) == false)
@@ -60,14 +60,14 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 var aliasRemovedFieldText = (aliasIndex > 0 ? field.Substring(0, aliasIndex) : field).Trim();
 
-                var queryField = StaticParserField.Parse(tokenizer, aliasRemovedFieldText, queryFields);
+                var queryField = StaticParserField<TData>.Parse(tokenizer, aliasRemovedFieldText, queryFields);
 
                 //If the query didn't provide an alias, figure one out.
                 if (string.IsNullOrWhiteSpace(fieldAlias))
                 {
-                    if (queryField is QueryFieldDocumentIdentifier<TData> QueryFieldDocumentIdentifier<TData>)
+                    if (queryField is QueryFieldDocumentIdentifier<TData> queryFieldDocumentIdentifier)
                     {
-                        fieldAlias = QueryFieldDocumentIdentifier<TData>.FieldName;
+                        fieldAlias = queryFieldDocumentIdentifier.FieldName;
                     }
                     else
                     {
@@ -75,7 +75,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
                 }
 
-                queryFields.Add(new QueryField(fieldAlias, queryFields.Count, queryField));
+                queryFields.Add(new QueryField<TData>(fieldAlias, queryFields.Count, queryField));
             }
 
             return queryFields;

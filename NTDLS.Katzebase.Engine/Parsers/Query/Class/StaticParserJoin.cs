@@ -7,11 +7,11 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserJoin
+    internal static class StaticParserJoin<TData> where TData : IStringable
     {
-        public static List<QuerySchema> Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        public static List<QuerySchema<TData>> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
-            var result = new List<QuerySchema>();
+            var result = new List<QuerySchema<TData>>();
             string token;
 
             while (tokenizer.TryEatIfNext("inner"))
@@ -86,7 +86,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, tokenizer.Caret - joinConditionsStartPosition).Trim();
                 var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, subSchemaAlias);
 
-                result.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
+                result.Add(new QuerySchema<TData>(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
             }
 
             return result;

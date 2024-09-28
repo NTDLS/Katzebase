@@ -15,9 +15,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// <summary>
         /// Parses a field expression containing fields, functions. string and math operations.
         /// </summary>
-        public static IQueryField<TData> Parse(Tokenizer parentTokenizer, string givenFieldText, QueryFieldCollection<TData> queryFields)
+        public static IQueryField<TData> Parse(Tokenizer<TData> parentTokenizer, string givenFieldText, QueryFieldCollection<TData> queryFields)
         {
-            Tokenizer tokenizer = new(givenFieldText);
+            Tokenizer<TData> tokenizer = new(givenFieldText);
 
             string token = tokenizer.EatGetNext();
 
@@ -44,11 +44,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
                 else if (IsNumericExpression(token))
                 {
-                    return new QueryFieldConstantNumeric(token);
+                    return new QueryFieldConstantNumeric<TData>(token.CastToT<TData>(EngineCore<TData>.StrCast));
                 }
                 else
                 {
-                    return new QueryFieldConstantString(token);
+                    return new QueryFieldConstantString<TData>(token.CastToT<TData>(EngineCore<TData>.StrCast));
                 }
             }
 
@@ -65,22 +65,22 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             //This field is going to require evaluation, so figure out if its a number or a string.
             if (IsNumericExpression(givenFieldText))
             {
-                IQueryFieldExpression expression = new QueryFieldExpressionNumeric(givenFieldText);
-                expression.Value = ParseEvaluationRecursive(parentTokenizer, ref expression, givenFieldText, ref queryFields);
+                IQueryFieldExpression<TData> expression = new QueryFieldExpressionNumeric<TData>(givenFieldText.CastToT<TData>(EngineCore<TData>.StrCast));
+                expression.Value = ParseEvaluationRecursive(parentTokenizer, ref expression, givenFieldText, ref queryFields).CastToT<TData>(EngineCore<TData>.StrCast);
                 return expression;
             }
             else
             {
-                IQueryFieldExpression expression = new QueryFieldExpressionString();
-                expression.Value = ParseEvaluationRecursive(parentTokenizer, ref expression, givenFieldText, ref queryFields);
+                IQueryFieldExpression<TData> expression = new QueryFieldExpressionString<TData>();
+                expression.Value = ParseEvaluationRecursive(parentTokenizer, ref expression, givenFieldText, ref queryFields).CastToT<TData>(EngineCore<TData>.StrCast);
                 return expression;
             }
         }
 
-        private static string ParseEvaluationRecursive(Tokenizer parentTokenizer, ref IQueryFieldExpression rootQueryFieldExpression,
+        private static string ParseEvaluationRecursive(Tokenizer<TData> parentTokenizer, ref IQueryFieldExpression<TData> rootQueryFieldExpression,
             string givenExpressionText, ref QueryFieldCollection<TData> queryFields)
         {
-            Tokenizer tokenizer = new(givenExpressionText);
+            Tokenizer<TData> tokenizer = new(givenExpressionText);
 
             StringBuilder buffer = new();
 
@@ -119,7 +119,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                     buffer.Append(expressionKey);
                 }
-                else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
+                else if (AggregateFunctionCollection<TData>.TryGetFunction(token, out var aggregateFunction))
                 {
                     tokenizer.EatNext();
                     if (!tokenizer.IsNextNonIdentifier(['(']))
@@ -175,9 +175,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// <summary>
         /// Parses a function call and its parameters, add them to the passed queryFieldExpressionFunction.
         /// </summary>
-        private static void ParseFunctionCallRecursive(Tokenizer parentTokenizer, ref IQueryFieldExpression rootQueryFieldExpression,
+        private static void ParseFunctionCallRecursive(Tokenizer<TData> parentTokenizer, ref IQueryFieldExpression<TData> rootQueryFieldExpression,
             IQueryFieldExpressionFunction queryFieldExpressionFunction, ref QueryFieldCollection<TData> queryFields,
-            Tokenizer tokenizer, int positionBeforeToken)
+            Tokenizer<TData> tokenizer, int positionBeforeToken)
         {
             //This contains the text between the open and close parenthesis of a function call, but not the parenthesis themselves or the function name.
             string functionCallParametersSegmentText = tokenizer.EatGetMatchingScope('(', ')');
@@ -231,7 +231,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// </summary>
         public static bool IsNumericExpression(string expressionText, List<IQueryFieldExpressionFunction>? functionDependencies = null)
         {
-            Tokenizer tokenizer = new(expressionText, [' ', '+']);
+            Tokenizer<TData> tokenizer = new(expressionText, [' ', '+']);
 
             while (!tokenizer.IsExhausted())
             {
@@ -291,7 +291,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                         return false;
                     }
                 }
-                else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
+                else if (AggregateFunctionCollection<TData>.TryGetFunction(token, out var aggregateFunction))
                 {
                     if (aggregateFunction.ReturnType == KbAggregateFunctionParameterType.Numeric)
                     {
@@ -327,7 +327,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 return true;
             }
 
-            Tokenizer tokenizer = new(expressionText, [' ', '+']);
+            Tokenizer<TData> tokenizer = new(expressionText, [' ', '+']);
 
             while (!tokenizer.IsExhausted())
             {
@@ -363,7 +363,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     //Functions are not constant.
                     return false;
                 }
-                else if (AggregateFunctionCollection.TryGetFunction(token, out var aggregateFunction))
+                else if (AggregateFunctionCollection<TData>.TryGetFunction(token, out var aggregateFunction))
                 {
                     //Functions are not constant.
                     return false;

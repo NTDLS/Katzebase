@@ -2,11 +2,11 @@
 
 namespace NTDLS.Katzebase.Engine.Schemas
 {
-    public class PhysicalSchemaCatalog
+    public class PhysicalSchemaCatalog<TData> where TData : IStringable
     {
-        public List<PhysicalSchema> Collection = new();
+        public List<PhysicalSchema<TData>> Collection = new();
 
-        public void Add(PhysicalSchema schema)
+        public void Add(PhysicalSchema<TData> schema)
         {
             Collection.Add(schema);
         }
@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Schemas
             return false;
         }
 
-        public PhysicalSchema? GetByName(string name)
+        public PhysicalSchema<TData>? GetByName(string name)
         {
             foreach (var item in Collection)
             {
@@ -35,14 +35,14 @@ namespace NTDLS.Katzebase.Engine.Schemas
             return null;
         }
 
-        public PhysicalSchema? GetById(Guid id)
+        public PhysicalSchema<TData>? GetById(Guid id)
         {
             return Collection.FirstOrDefault(o => o.Id == id);
         }
 
-        public PhysicalSchemaCatalog Clone()
+        public PhysicalSchemaCatalog<TData> Clone()
         {
-            var catalog = new PhysicalSchemaCatalog();
+            var catalog = new PhysicalSchemaCatalog<TData>();
 
             lock (this)
             {

@@ -5,7 +5,7 @@ namespace NTDLS.Katzebase.Engine.Documents
     /// <summary>
     /// This is a simple class that contains a document page number as well as the page ID.
     /// </summary>
-    public class DocumentPointer
+    public class DocumentPointer<TData> where TData : IStringable
     {
         public int PageNumber { get; private set; }
         public uint DocumentId { get; set; }
@@ -17,34 +17,34 @@ namespace NTDLS.Katzebase.Engine.Documents
             DocumentId = documentId;
         }
 
-        public static DocumentPointer Parse(string key)
+        public static DocumentPointer<TData> Parse(string key)
         {
             var parts = key.Split(':');
-            return new DocumentPointer(int.Parse(parts[0]), uint.Parse(parts[1]));
+            return new DocumentPointer<TData>(int.Parse(parts[0]), uint.Parse(parts[1]));
         }
 
-        public class DocumentPageEqualityComparerNullable : IEqualityComparer<DocumentPointer?>
+        public class DocumentPageEqualityComparerNullable : IEqualityComparer<DocumentPointer<TData>?>
         {
-            public bool Equals(DocumentPointer? x, DocumentPointer? y)
+            public bool Equals(DocumentPointer<TData>? x, DocumentPointer<TData>? y)
                 => x?.PageNumber == y?.PageNumber && x?.DocumentId == y?.DocumentId;
 
-            public int GetHashCode(DocumentPointer? obj)
+            public int GetHashCode(DocumentPointer<TData>? obj)
                 => HashCode.Combine(obj?.PageNumber, obj?.DocumentId);
         }
 
-        public class DocumentPageEqualityComparer : IEqualityComparer<SchemaIntersectionRowDocumentIdentifier>
+        public class DocumentPageEqualityComparer : IEqualityComparer<SchemaIntersectionRowDocumentIdentifier<TData>>
         {
-            public bool Equals(SchemaIntersectionRowDocumentIdentifier? x, SchemaIntersectionRowDocumentIdentifier? y)
+            public bool Equals(SchemaIntersectionRowDocumentIdentifier<TData>? x, SchemaIntersectionRowDocumentIdentifier<TData>? y)
                 => x?.DocumentPointer.PageNumber == y?.DocumentPointer.PageNumber && x?.DocumentPointer.DocumentId == y?.DocumentPointer.DocumentId;
 
-            public int GetHashCode(SchemaIntersectionRowDocumentIdentifier obj)
+            public int GetHashCode(SchemaIntersectionRowDocumentIdentifier<TData> obj)
                 => obj.GetHashCode();
         }
 
         public override string ToString()
             => Key;
 
-        public int GetHashCode(DocumentPointer? obj)
+        public int GetHashCode(DocumentPointer<TData>? obj)
             => HashCode.Combine(obj?.PageNumber, obj?.DocumentId);
     }
 }

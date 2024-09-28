@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
-    internal partial class Tokenizer
+    internal partial class Tokenizer<TData> where TData : IStringable
     {
         /// <summary>
         /// Returns true if the next character is in the given array, using the given delimiters.

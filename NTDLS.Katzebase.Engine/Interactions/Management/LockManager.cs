@@ -36,7 +36,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         //          threads to access multiple files. So we know the transaction is still present in the engine collection, but other
         //          transactions may be changed.
         /// </summary>
-        private readonly OptimisticCriticalResource<Dictionary<Guid, ObjectPendingLockIntention>> _pendingGrants;
+        private readonly OptimisticCriticalResource<Dictionary<Guid, ObjectPendingLockIntention<TData>>> _pendingGrants;
 
         internal LockManager(EngineCore<TData> core)
         {
@@ -448,8 +448,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         private string GetDeadlockExplanation(Transaction<TData> transaction,
-            Dictionary<Guid, ObjectPendingLockIntention> txWaitingForLocks,
-            ObjectLockIntention intention, List<Transaction> blockedByMe)
+            Dictionary<Guid, ObjectPendingLockIntention<TData>> txWaitingForLocks,
+            ObjectLockIntention intention, List<Transaction<TData>> blockedByMe)
         {
             var deadLockId = Guid.NewGuid().ToString();
 

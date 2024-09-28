@@ -2,7 +2,7 @@
 
 namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
-    internal partial class Tokenizer
+    internal partial class Tokenizer<TData> where TData : IStringable
     {
         public void SetText(string text, int caret)
         {

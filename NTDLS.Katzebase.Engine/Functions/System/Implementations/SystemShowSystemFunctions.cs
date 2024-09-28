@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowSystemFunctions<TData> where TData : IStringable
     {
-        public static KbQueryResultCollection Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection function)
+        public static KbQueryResultCollection Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
         {
             var collection = new KbQueryResultCollection();
             var result = collection.AddNew();
@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             result.AddField("Name");
             result.AddField("Parameters");
 
-            foreach (var prototype in SystemFunctionCollection.Prototypes)
+            foreach (var prototype in SystemFunctionCollection<TData>.Prototypes)
             {
                 var parameters = new StringBuilder();
 

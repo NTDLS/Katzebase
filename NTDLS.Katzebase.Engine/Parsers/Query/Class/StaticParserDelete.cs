@@ -5,11 +5,11 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserDelete
+    internal static class StaticParserDelete<TData> where TData : IStringable
     {
-        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Delete);
+            var query = new PreparedQuery<TData>(queryBatch, QueryType.Delete);
 
             tokenizer.EatIfNext("from");
 
@@ -21,23 +21,23 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             if (tokenizer.TryEatIfNext("as"))
             {
                 var schemaAlias = tokenizer.EatGetNext();
-                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema<TData>(schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
             }
             else
             {
-                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant(), schemaName.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema<TData>(schemaName.ToLowerInvariant(), schemaName.ToLowerInvariant()));
             }
 
             //Parse joins.
             while (tokenizer.TryIsNext("inner"))
             {
-                var joinedSchemas = StaticParserJoin.Parse(queryBatch, tokenizer);
+                var joinedSchemas = StaticParserJoin<TData>.Parse(queryBatch, tokenizer);
                 query.Schemas.AddRange(joinedSchemas);
             }
 
             if (tokenizer.TryEatIfNext("where"))
             {
-                query.Conditions = StaticParserWhere.Parse(queryBatch, tokenizer);
+                query.Conditions = StaticParserWhere<TData>.Parse(queryBatch, tokenizer);
 
                 //Associate the root query schema with the root conditions.
                 query.Schemas.First().Conditions = query.Conditions;

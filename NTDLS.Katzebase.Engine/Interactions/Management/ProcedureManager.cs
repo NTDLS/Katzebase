@@ -16,8 +16,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     {
         private readonly EngineCore<TData> _core;
 
-        internal ProcedureQueryHandlers QueryHandlers { get; private set; }
-        public ProcedureAPIHandlers APIHandlers { get; private set; }
+        internal ProcedureQueryHandlers<TData> QueryHandlers { get; private set; }
+        public ProcedureAPIHandlers<TData> APIHandlers { get; private set; }
 
         internal ProcedureManager(EngineCore<TData> core)
         {
@@ -25,8 +25,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             try
             {
-                QueryHandlers = new ProcedureQueryHandlers(core);
-                APIHandlers = new ProcedureAPIHandlers(core);
+                QueryHandlers = new ProcedureQueryHandlers<TData>(core);
+                APIHandlers = new ProcedureAPIHandlers<TData>(core);
 
                 //ProcedureCollection.Initialize();
             }
@@ -70,7 +70,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal PhysicalProcedureCatalog Acquire(Transaction<TData> transaction, PhysicalSchema physicalSchema, LockOperation intendedOperation)
+        internal PhysicalProcedureCatalog Acquire(Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema, LockOperation intendedOperation)
         {
             if (File.Exists(physicalSchema.ProcedureCatalogFilePath()) == false)
             {
@@ -81,7 +81,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal PhysicalProcedure? Acquire(Transaction<TData> transaction,
-            PhysicalSchema physicalSchema, string procedureName, LockOperation intendedOperation)
+            PhysicalSchema<TData> physicalSchema, string procedureName, LockOperation intendedOperation)
         {
             procedureName = procedureName.ToLowerInvariant();
 

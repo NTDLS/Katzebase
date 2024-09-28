@@ -2,10 +2,10 @@
 {
     public class AggregateFunctionParameterValue<TData> where TData : IStringable
     {
-        public AggregateFunctionParameterPrototype Parameter { get; private set; }
+        public AggregateFunctionParameterPrototype<TData> Parameter { get; private set; }
         public TData? Value { get; private set; } = default;
 
-        public AggregateFunctionParameterValue(AggregateFunctionParameterPrototype parameter, TData? value)
+        public AggregateFunctionParameterValue(AggregateFunctionParameterPrototype<TData> parameter, TData? value)
         {
             Parameter = parameter;
             Value = value;

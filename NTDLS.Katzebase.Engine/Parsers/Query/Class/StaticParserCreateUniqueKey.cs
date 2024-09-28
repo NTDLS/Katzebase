@@ -6,11 +6,11 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserCreateUniqueKey
+    internal static class StaticParserCreateUniqueKey<TData> where TData : IStringable
     {
-        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Create)
+            var query = new PreparedQuery<TData>(queryBatch, QueryType.Create)
             {
                 SubQueryType = SubQueryType.Index
             };
@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             {
                 throw new KbParserException($"Invalid query. Found [{schemaName}], expected: schema name.");
             }
-            query.Schemas.Add(new QuerySchema(schemaName));
+            query.Schemas.Add(new QuerySchema<TData>(schemaName));
             query.AddAttribute(PreparedQuery<TData>.QueryAttribute.Schema, schemaName);
 
             if (tokenizer.TryEatIfNext("with"))
@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     {"partitions", typeof(uint) }
                 };
-                query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
+                query.AddAttributes(StaticParserWithOptions<TData>.Parse(tokenizer, options));
             }
 
             return query;

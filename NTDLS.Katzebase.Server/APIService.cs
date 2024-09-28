@@ -4,14 +4,101 @@ using NTDLS.Katzebase.Engine;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Shared;
 using NTDLS.ReliableMessaging;
+using ProtoBuf;
 
 namespace NTDLS.Katzebase.Server
 {
+    [ProtoContract]
+    public class FString : IStringable
+    {
+        [ProtoMember(1)]
+        private string str;
+
+        public FString()
+        {
+            this.str = string.Empty; // 初始化為空字符串
+        }
+        public FString(string s)
+        {
+            this.str = s;
+        }
+
+        public string Value
+        {
+            get { return str; }
+            set { str = value; }
+        }
+
+        // Implementing IStringable interface
+        public string GetKey()
+        {
+            return str;
+        }
+
+        public bool IsNullOrEmpty()
+        {
+            return string.IsNullOrEmpty(str);
+        }
+
+        public IStringable ToLowerInvariant()
+        {
+            return new FString(str.ToLowerInvariant());
+        }
+
+        public T ToT<T>()
+        {
+            Type targetType = typeof(T);
+
+            if (targetType == typeof(string))
+            {
+                return (T)(object)str;
+            }
+            else if (targetType == typeof(double))
+            {
+                return (T)(object)double.Parse(str);
+            }
+            else if (targetType == typeof(int))
+            {
+                return (T)(object)int.Parse(str);
+            }
+            else
+            {
+                throw new NotSupportedException($"Type {targetType.Name} is not supported");
+            }
+        }
+
+        public T ToNullableT<T>() //where T : struct
+        {
+            Type targetType = typeof(T);
+
+            if (targetType == typeof(double))
+            {
+                return (T)(object)double.Parse(str);
+            }
+            else if (targetType == typeof(int))
+            {
+                return (T)(object)int.Parse(str);
+            }
+            else
+            {
+                throw new NotSupportedException($"Type {targetType.Name} is not supported");
+            }
+        }
+    }
     internal class APIService
     {
-        private readonly EngineCore _core;
+        private readonly EngineCore<FString> _core;
         private readonly RmServer _messageServer;
         private readonly KatzebaseSettings _settings;
+
+        Func<string, FString> cast = s => new FString(s);
+
+        // parse 函數：這裡可以與 cast 相同，也可以根據具體情況設計不同的解析邏輯
+        Func<string, FString> parse = s => new FString(s);
+
+        // compare 函數：用於比較兩個 FString 的值，使用字符串的自然順序比較
+        Func<FString, FString, int> compare = (f1, f2) => string.Compare(f1.Value, f2.Value, StringComparison.Ordinal);
+
 
         public APIService()
         {
@@ -24,7 +111,7 @@ namespace NTDLS.Katzebase.Server
 
                 _settings = settings;
 
-                _core = new EngineCore(settings);
+                _core = new EngineCore<FString>(settings, cast, parse, compare);
 
                 _messageServer = new RmServer();
                 _messageServer.OnException += RmServer_OnException;

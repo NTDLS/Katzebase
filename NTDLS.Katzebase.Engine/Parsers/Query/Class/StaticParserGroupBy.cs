@@ -3,11 +3,11 @@ using NTDLS.Katzebase.Engine.Parsers.Tokens;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserGroupBy
+    internal static class StaticParserGroupBy<TData> where TData : IStringable
     {
-        public static QueryFieldCollection Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        public static QueryFieldCollection<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
-            return StaticParserFieldList.Parse(queryBatch, tokenizer, [" order ", " offset "], true);
+            return StaticParserFieldList<TData>.Parse(queryBatch, tokenizer, [" order ", " offset "], true);
         }
     }
 }

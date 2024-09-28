@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
             }
             else
             {
-                return DocumentPointer.Parse(rowId.Value.ToString()).PageNumber.ToString();
+                return DocumentPointer<TData>.Parse(rowId.Value.ToString()).PageNumber.ToString();
             }
         }
     }

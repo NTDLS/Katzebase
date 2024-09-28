@@ -13,18 +13,18 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     /// </summary>
     class MatchSchemaDocumentsByConditionsOperation<TData> where TData : IStringable
     {
-        public Dictionary<uint, DocumentPointer> ThreadResults = new();
+        public Dictionary<uint, DocumentPointer<TData>> ThreadResults = new();
         public PreparedQuery<TData> Query { get; set; }
         public Transaction<TData> Transaction { get; set; }
         public IndexingConditionLookup<TData> Lookup { get; set; }
-        public PhysicalSchema PhysicalSchema { get; set; }
+        public PhysicalSchema<TData> PhysicalSchema { get; set; }
         public string WorkingSchemaPrefix { get; set; }
         public ConditionEntry<TData> Condition { get; set; }
 
         public KbInsensitiveDictionary<TData?>? KeyValues { get; set; }
 
         public MatchSchemaDocumentsByConditionsOperation(Transaction<TData> transaction, PreparedQuery<TData> query, IndexingConditionLookup<TData> lookup,
-            PhysicalSchema physicalSchema, string workingSchemaPrefix, ConditionEntry<TData> condition, KbInsensitiveDictionary<TData?>? keyValues = null)
+            PhysicalSchema<TData> physicalSchema, string workingSchemaPrefix, ConditionEntry<TData> condition, KbInsensitiveDictionary<TData?>? keyValues = null)
         {
             Transaction = transaction;
             Query = query;

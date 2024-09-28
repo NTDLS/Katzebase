@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
             return function != null;
         }
 
-        public static SystemFunctionParameterValueCollection ApplyFunctionPrototype(string functionName, List<TData?> parameters)
+        public static SystemFunctionParameterValueCollection<TData> ApplyFunctionPrototype(string functionName, List<TData?> parameters)
         {
             if (_protypes == null)
             {

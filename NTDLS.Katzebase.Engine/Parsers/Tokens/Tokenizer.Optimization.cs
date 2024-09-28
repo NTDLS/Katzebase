@@ -5,7 +5,7 @@ using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
-    internal partial class Tokenizer
+    internal partial class Tokenizer<TData> where TData : IStringable
     {
         #region Swap in/out literals.
 
@@ -14,13 +14,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public string? ResolveLiteral(string token)
+        public TData? ResolveLiteral(string token)
         {
             if (Literals.TryGetValue(token, out var literal))
             {
                 return literal.Value;
             }
-            return token;
+            return token.ParseToT<TData>(EngineCore<TData>.StrParse);
         }
 
         /// <summary>
@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                 if (match.Success)
                 {
                     string key = $"$s_{_literalKey++}$";
-                    Literals.Add(key, new(KbBasicDataType.String, match.ToString()[1..^1]));
+                    Literals.Add(key, new(KbBasicDataType.String, match.ToString()[1..^1].ParseToT<TData>(EngineCore<TData>.StrParse)));
 
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
@@ -69,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                                 if (variable.DataType == KbBasicDataType.String)
                                 {
                                     string key = $"$s_{_literalKey++}$";
-                                    Literals.Add(key, new(KbBasicDataType.String, variable.Value));
+                                    Literals.Add(key, new(KbBasicDataType.String, variable.Value.ParseToT<TData>(EngineCore<TData>.StrParse)));
                                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                                 }
                                 else
@@ -90,7 +90,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                             if (constant.DataType == KbBasicDataType.String)
                             {
                                 string key = $"$s_{_literalKey++}$";
-                                Literals.Add(key, new(KbBasicDataType.String, constant.Value));
+                                Literals.Add(key, new(KbBasicDataType.String, constant.Value.ParseToT<TData>(EngineCore<TData>.StrParse)));
                                 query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                             }
                             else
@@ -137,7 +137,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                 if (match.Success)
                 {
                     string key = $"$n_{_literalKey++}$";
-                    Literals.Add(key, new(KbBasicDataType.Numeric, match.ToString()));
+                    Literals.Add(key, new(KbBasicDataType.Numeric, match.ToString().ParseToT<TData>(EngineCore<TData>.StrParse)));
                     query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                 }
                 else
@@ -169,7 +169,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                                     if (variable.DataType == KbBasicDataType.Numeric)
                                     {
                                         string key = $"$s_{_literalKey++}$";
-                                        Literals.Add(key, new(KbBasicDataType.Numeric, variable.Value));
+                                        Literals.Add(key, new(KbBasicDataType.Numeric, variable.Value.ParseToT<TData>(EngineCore<TData>.StrParse)));
                                         query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                                     }
                                     else
@@ -188,7 +188,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
                             else if (constant.DataType == KbBasicDataType.Numeric)
                             {
                                 string key = $"$n_{_literalKey++}$";
-                                Literals.Add(key, new(KbBasicDataType.Numeric, constant.Value));
+                                Literals.Add(key, new(KbBasicDataType.Numeric, constant.Value.ParseToT<TData>(EngineCore<TData>.StrParse)));
                                 query = Helpers.Text.ReplaceRange(query, match.Index, match.Length, key);
                             }
                             else

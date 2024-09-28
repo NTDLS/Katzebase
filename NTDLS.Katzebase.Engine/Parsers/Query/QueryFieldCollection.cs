@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
     /// <summary>
     /// Collection of query fields, which contains their names and values.
     /// </summary>
-    internal class QueryFieldCollection<TData> : List<QueryField> where TData : IStringable
+    internal class QueryFieldCollection<TData> : List<QueryField<TData>> where TData : IStringable
     {
         public QueryBatch<TData> QueryBatch { get; private set; }
 
@@ -48,7 +48,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #region Exposed collection: FieldsWithScalerFunctionCalls.
 
-        private List<ExposedFunction>? _exposedScalerFunctions = null;
+        private List<ExposedFunction<TData>>? _exposedScalerFunctions = null;
         private readonly object _exposedScalerFunctionsLock = new();
 
         public void InvalidateFieldsWithScalerFunctionCallsCache()
@@ -62,7 +62,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <summary>
         /// Returns a list of fields that have function call dependencies.
         /// </summary>
-        public List<ExposedFunction> FieldsWithScalerFunctionCalls
+        public List<ExposedFunction<TData>> FieldsWithScalerFunctionCalls
         {
             get
             {
@@ -78,15 +78,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _exposedScalerFunctions;
                         }
 
-                        var results = new List<ExposedFunction>();
+                        var results = new List<ExposedFunction<TData>>();
 
                         foreach (var queryField in this)
                         {
-                            if (queryField.Expression is IQueryFieldExpression fieldExpression)
+                            if (queryField.Expression is IQueryFieldExpression<TData> fieldExpression)
                             {
                                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionScaler>().Any())
                                 {
-                                    results.Add(new ExposedFunction(queryField.Ordinal, queryField.Alias, fieldExpression));
+                                    results.Add(new ExposedFunction<TData>(queryField.Ordinal, queryField.Alias, fieldExpression));
                                 }
                             }
                         }
@@ -103,7 +103,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #region Collection: FieldsWithAggregateFunctionCalls.
 
-        private List<QueryField>? _exposedAggregateFunctions = null;
+        private List<QueryField<TData>>? _exposedAggregateFunctions = null;
         private readonly object _exposedAggregateFunctionsLock = new();
 
         public void InvalidateFieldsWithAggregateFunctionCallsCache()
@@ -117,7 +117,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <summary>
         /// Returns a list of fields that have function call dependencies.
         /// </summary>
-        public List<QueryField> FieldsWithAggregateFunctionCalls
+        public List<QueryField<TData>> FieldsWithAggregateFunctionCalls
         {
             get
             {
@@ -133,11 +133,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _exposedAggregateFunctions;
                         }
 
-                        var results = new List<QueryField>();
+                        var results = new List<QueryField<TData>>();
 
                         foreach (var queryField in this)
                         {
-                            if (queryField.Expression is IQueryFieldExpression fieldExpression)
+                            if (queryField.Expression is IQueryFieldExpression<TData> fieldExpression)
                             {
                                 if (fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>().Any())
                                 {
@@ -158,7 +158,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #region Exposed collection: ConstantFields.
 
-        private List<ExposedConstant>? _exposedConstants = null;
+        private List<ExposedConstant<TData>>? _exposedConstants = null;
         private readonly object _exposedConstantsLock = new();
 
         public void InvalidateConstantFieldsCache()
@@ -172,7 +172,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <summary>
         /// Returns a list of fields that have function call dependencies.
         /// </summary>
-        public List<ExposedConstant> ConstantFields
+        public List<ExposedConstant<TData>> ConstantFields
         {
             get
             {
@@ -188,17 +188,17 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _exposedConstants;
                         }
 
-                        var results = new List<ExposedConstant>();
+                        var results = new List<ExposedConstant<TData>>();
 
                         foreach (var queryField in this)
                         {
-                            if (queryField.Expression is QueryFieldConstantNumeric constantNumeric)
+                            if (queryField.Expression is QueryFieldConstantNumeric<TData> constantNumeric)
                             {
-                                results.Add(new ExposedConstant(queryField.Ordinal, KbBasicDataType.Numeric, queryField.Alias, constantNumeric.Value));
+                                results.Add(new ExposedConstant<TData>(queryField.Ordinal, KbBasicDataType.Numeric, queryField.Alias, constantNumeric.Value));
                             }
-                            else if (queryField.Expression is QueryFieldConstantString constantString)
+                            else if (queryField.Expression is QueryFieldConstantString<TData> constantString)
                             {
-                                results.Add(new ExposedConstant(queryField.Ordinal, KbBasicDataType.String, queryField.Alias, constantString.Value));
+                                results.Add(new ExposedConstant<TData>(queryField.Ordinal, KbBasicDataType.String, queryField.Alias, constantString.Value));
                             }
                         }
 
@@ -266,7 +266,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
         #region Exposed collection: ExpressionFields.
 
-        private List<ExposedExpression>? _exposedExpressions = null;
+        private List<ExposedExpression<TData>>? _exposedExpressions = null;
         private readonly object _exposedExpressionsLock = new();
 
         public void InvalidateExpressionFieldsCache()
@@ -280,7 +280,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
         /// <summary>
         /// Returns a list of fields that have function call dependencies.
         /// </summary>
-        public List<ExposedExpression> ExpressionFields
+        public List<ExposedExpression<TData>> ExpressionFields
         {
             get
             {
@@ -296,11 +296,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                             return _exposedExpressions;
                         }
 
-                        var results = new List<ExposedExpression>();
+                        var results = new List<ExposedExpression<TData>>();
 
                         foreach (var queryField in this)
                         {
-                            if (queryField.Expression is IQueryFieldExpression fieldExpression)
+                            if (queryField.Expression is IQueryFieldExpression<TData> fieldExpression)
                             {
                                 var collapseType = CollapseType.Scaler;
 
@@ -309,7 +309,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
                                     collapseType = CollapseType.Aggregate;
                                 }
 
-                                results.Add(new ExposedExpression(queryField.Ordinal, queryField.Alias, fieldExpression, collapseType));
+                                results.Add(new ExposedExpression<TData>(queryField.Ordinal, queryField.Alias, fieldExpression, collapseType));
                             }
                         }
 
@@ -359,7 +359,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query
 
                         foreach (var queryField in this)
                         {
-                            if (queryField.Expression is IQueryFieldExpression fieldExpression)
+                            if (queryField.Expression is IQueryFieldExpression<TData> fieldExpression)
                             {
                                 foreach (var function in fieldExpression.FunctionDependencies.OfType<QueryFieldExpressionFunctionAggregate>())
                                 {

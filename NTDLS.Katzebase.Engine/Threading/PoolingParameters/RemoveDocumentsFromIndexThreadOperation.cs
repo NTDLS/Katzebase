@@ -12,11 +12,11 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     {
         public Transaction<TData> Transaction { get; set; }
         public PhysicalIndex<TData> PhysicalIndex { get; set; }
-        public PhysicalSchema PhysicalSchema { get; set; }
-        public IEnumerable<DocumentPointer> DocumentPointers { get; set; }
+        public PhysicalSchema<TData> PhysicalSchema { get; set; }
+        public IEnumerable<DocumentPointer<TData>> DocumentPointers { get; set; }
 
         public RemoveDocumentsFromIndexThreadOperation(Transaction<TData> transaction,
-            PhysicalIndex<TData> physicalIndex, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
+            PhysicalIndex<TData> physicalIndex, PhysicalSchema<TData> physicalSchema, IEnumerable<DocumentPointer<TData>> documentPointers)
         {
             Transaction = transaction;
             PhysicalIndex = physicalIndex;

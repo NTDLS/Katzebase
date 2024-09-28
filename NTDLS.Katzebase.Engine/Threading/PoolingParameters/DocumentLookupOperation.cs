@@ -41,11 +41,11 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
         /// </summary>
         /// <param name="operation"></param>
         /// <param name="documentPointer"></param>
-        internal class Instance(DocumentLookupOperation<TData> operation, DocumentPointer documentPointer)
+        internal class Instance(DocumentLookupOperation<TData> operation, DocumentPointer<TData> documentPointer)
         {
             public Semaphore.OptimisticCriticalResource<Dictionary<string, NCalc.Expression>> ExpressionCache { get; set; } = new();
             public DocumentLookupOperation<TData> Operation { get; set; } = operation;
-            public DocumentPointer DocumentPointer { get; set; } = documentPointer;
+            public DocumentPointer<TData> DocumentPointer { get; set; } = documentPointer;
         }
     }
 }

@@ -5,11 +5,11 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserExec
+    internal static class StaticParserExec<TData> where TData : IStringable
     {
-        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Exec)
+            var query = new PreparedQuery<TData>(queryBatch, QueryType.Exec)
             {
                 SubQueryType = SubQueryType.Procedure
             };
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             if (tokenizer.TryEatIfNextCharacter('('))
             {
-                query.ProcedureParameters = new QueryFieldCollection(queryBatch);
+                query.ProcedureParameters = new QueryFieldCollection<TData>(queryBatch);
 
                 //var parametersScope = tokenizer.EatGetMatchingScope();
                 //var paramTokenizer = new TokenizerSlim(parametersScope);
@@ -80,9 +80,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     }
 
                     var fieldValue = tokenizer.Substring(startCaret, endCaret - startCaret).Trim();
-                    var queryField = StaticParserField.Parse(tokenizer, fieldValue, query.ProcedureParameters);
+                    var queryField = StaticParserField<TData>.Parse(tokenizer, fieldValue, query.ProcedureParameters);
 
-                    query.ProcedureParameters.Add(new QueryField($"p{query.ProcedureParameters.Count}", query.ProcedureParameters.Count, queryField));
+                    query.ProcedureParameters.Add(new QueryField<TData>($"p{query.ProcedureParameters.Count}", query.ProcedureParameters.Count, queryField));
 
                     if (tokenizer.TryEatIfNextCharacter(')'))
                     {

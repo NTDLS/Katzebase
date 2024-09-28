@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
-    internal partial class Tokenizer
+    internal partial class Tokenizer<TData> where TData : IStringable
     {
         /// <summary>
         /// Gets the next token using the given delimiters, returns the delimiter character that the tokenizer stopped on through outStoppedOnDelimiter.

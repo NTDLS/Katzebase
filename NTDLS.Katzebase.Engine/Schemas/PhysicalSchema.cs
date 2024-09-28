@@ -5,12 +5,12 @@ using NTDLS.Katzebase.Engine.Library;
 
 namespace NTDLS.Katzebase.Engine.Schemas
 {
-    public class PhysicalSchema
+    public class PhysicalSchema<TData> where TData : IStringable
     {
         /// <summary>
         /// VirtualSchema is used in the cases where we need to lock a schema that may not exist yet.
         /// </summary>
-        public class VirtualSchema : PhysicalSchema
+        public class VirtualSchema : PhysicalSchema<TData>
         {
             [JsonIgnore]
             public bool Exists { get; set; }
@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Engine.Schemas
         public string DocumentPageCatalogItemFilePath(int pageNumber)
             => Path.Combine(DiskPath, $"{pageNumber}{EngineConstants.DocumentPageExtension}");
 
-        public string DocumentPageCatalogItemFilePath(DocumentPointer documentPointer)
+        public string DocumentPageCatalogItemFilePath(DocumentPointer<TData> documentPointer)
             => DocumentPageCatalogItemFilePath(documentPointer.PageNumber);
 
         public string DocumentPageCatalogItemDiskPath(PhysicalDocumentPageCatalogItem documentPageCatalogItem)
@@ -57,15 +57,15 @@ namespace NTDLS.Katzebase.Engine.Schemas
         public string PhysicalDocumentPageMapFilePath(int pageNumber)
             => Path.Combine(DiskPath, $"{pageNumber}{EngineConstants.DocumentPageDocumentIdExtension}");
 
-        public string PhysicalDocumentPageMapFilePath(DocumentPointer documentPointer)
+        public string PhysicalDocumentPageMapFilePath(DocumentPointer<TData> documentPointer)
             => PhysicalDocumentPageMapFilePath(documentPointer.PageNumber);
 
         public string PhysicalDocumentPageMapFilePath(PhysicalDocumentPageCatalogItem pageCatalogItem)
             => PhysicalDocumentPageMapFilePath(pageCatalogItem.PageNumber);
 
-        public PhysicalSchema Clone()
+        public PhysicalSchema<TData> Clone()
         {
-            return new PhysicalSchema
+            return new PhysicalSchema<TData>
             {
                 DiskPath = DiskPath,
                 Id = Id,

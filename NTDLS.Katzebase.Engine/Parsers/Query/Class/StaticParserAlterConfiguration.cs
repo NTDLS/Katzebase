@@ -5,11 +5,11 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserAlterConfiguration
+    internal static class StaticParserAlterConfiguration<TData> where TData : IStringable
     {
-        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Alter)
+            var query = new PreparedQuery<TData>(queryBatch, QueryType.Alter)
             {
                 SubQueryType = SubQueryType.Configuration
             };
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 { "CacheSeconds", typeof(int) }
             };
 
-            query.AddAttributes(StaticParserWithOptions.Parse(tokenizer, options));
+            query.AddAttributes(StaticParserWithOptions<TData>.Parse(tokenizer, options));
 
             return query;
         }

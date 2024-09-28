@@ -6,9 +6,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 {
     public static class AggregateFunctionCollection<TData> where TData : IStringable
     {
-        private static List<AggregateFunction>? _protypes = null;
+        private static List<AggregateFunction<TData>>? _protypes = null;
 
-        public static List<AggregateFunction> Prototypes
+        public static List<AggregateFunction<TData>> Prototypes
         {
             get
             {
@@ -24,23 +24,22 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         {
             if (_protypes == null)
             {
-                _protypes = new List<AggregateFunction>();
+                _protypes = new List<AggregateFunction<TData>>();
 
                 foreach (var prototype in AggregateFunctionImplementation<TData>.PrototypeStrings)
                 {
-                    _protypes.Add(AggregateFunction.Parse(prototype));
+                    _protypes.Add(AggregateFunction<TData>.Parse(prototype));
                 }
             }
         }
 
-        public static bool TryGetFunction(string name, [NotNullWhen(true)] out AggregateFunction? function)
+        public static bool TryGetFunction(string name, [NotNullWhen(true)] out AggregateFunction<TData>? function)
         {
             function = Prototypes.FirstOrDefault(o => o.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase));
             return function != null;
         }
 
-        public static AggregateFunctionParameterValueCollection ApplyFunctionPrototype<TData>(string functionName, List<TData?> parameters)
-            where TData : IStringable
+        public static AggregateFunctionParameterValueCollection<TData> ApplyFunctionPrototype(string functionName, List<TData?> parameters)
         {
             if (_protypes == null)
             {

@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
-    internal partial class Tokenizer
+    internal partial class Tokenizer<TData> where TData : IStringable
     {
         /// <summary>
         /// Matches scope using open and close parentheses and returns the text between them.

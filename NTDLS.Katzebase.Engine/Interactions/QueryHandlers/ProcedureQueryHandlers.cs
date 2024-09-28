@@ -83,7 +83,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 if (string.IsNullOrEmpty(schemaName) || schemaName == ":")
                 {
-                    if (SystemFunctionCollection.TryGetFunction(objectName, out var systemFunction))
+                    if (SystemFunctionCollection<TData>.TryGetFunction(objectName, out var systemFunction))
                     {
                         return SystemFunctionImplementation.ExecuteFunction(_core, transactionReference.Transaction, objectName, collapsedParameters);
                     }

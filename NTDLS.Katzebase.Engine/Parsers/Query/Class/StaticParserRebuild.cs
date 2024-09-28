@@ -5,16 +5,16 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserRebuild
+    internal static class StaticParserRebuild<TData> where TData : IStringable
     {
-        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
             var querySubType = tokenizer.EatIfNextEnum([SubQueryType.Index, SubQueryType.UniqueKey]);
 
             return querySubType switch
             {
-                SubQueryType.Index => StaticParserRebuildIndex.Parse(queryBatch, tokenizer),
-                SubQueryType.UniqueKey => StaticParserRebuildUniqueKey.Parse(queryBatch, tokenizer),
+                SubQueryType.Index => StaticParserRebuildIndex<TData>.Parse(queryBatch, tokenizer),
+                SubQueryType.UniqueKey => StaticParserRebuildUniqueKey<TData>.Parse(queryBatch, tokenizer),
 
                 _ => throw new KbParserException($"The query type is not implemented: [{querySubType}].")
             };

@@ -15,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
     {
         private readonly EngineCore<TData> _core;
         public Transaction<TData> Transaction { get; private set; }
-        public PreparedQuery<TData> query { get; private set; }
+        public PreparedQuery<TData> Query { get; private set; }
 
         public QuerySchemaMap(EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery<TData> query)
         {
@@ -31,7 +31,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
         /// <param name="physicalSchema">The associated schema meta-data.</param>
         /// <param name="documentCatalog">The document catalog contained in the associated schema.</param>
         /// <param name="conditions">The conditions used to join this schema mapping to the one before it.</param>
-        public void Add(string prefix, PhysicalSchema physicalSchema, PhysicalDocumentPageCatalog documentCatalog, ConditionCollection? conditions)
+        public void Add(string prefix, PhysicalSchema<TData> physicalSchema, PhysicalDocumentPageCatalog documentCatalog, ConditionCollection<TData>? conditions)
         {
             prefix = prefix.ToLowerInvariant();
             Add(prefix, new QuerySchemaMapItem<TData>(_core, Transaction, this, physicalSchema, documentCatalog, conditions, prefix));

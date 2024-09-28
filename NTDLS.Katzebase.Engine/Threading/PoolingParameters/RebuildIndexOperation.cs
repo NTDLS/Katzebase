@@ -10,13 +10,13 @@ namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
     internal class RebuildIndexOperation<TData> where TData : IStringable
     {
         public Transaction<TData> Transaction { get; set; }
-        public PhysicalSchema PhysicalSchema { get; set; }
+        public PhysicalSchema<TData> PhysicalSchema { get; set; }
         public PhysicalIndex<TData> PhysicalIndex { get; set; }
-        public Dictionary<uint, PhysicalIndexPages> PhysicalIndexPageMap { get; set; }
+        public Dictionary<uint, PhysicalIndexPages<TData>> PhysicalIndexPageMap { get; set; }
         public object[] SyncObjects { get; private set; }
 
-        public RebuildIndexOperation(Transaction<TData> transaction, PhysicalSchema physicalSchema,
-            Dictionary<uint, PhysicalIndexPages> physicalIndexPageMap, PhysicalIndex<TData> physicalIndex, uint indexPartitions)
+        public RebuildIndexOperation(Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema,
+            Dictionary<uint, PhysicalIndexPages<TData>> physicalIndexPageMap, PhysicalIndex<TData> physicalIndex, uint indexPartitions)
         {
             SyncObjects = new object[indexPartitions];
 

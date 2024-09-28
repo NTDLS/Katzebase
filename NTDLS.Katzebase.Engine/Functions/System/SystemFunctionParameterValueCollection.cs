@@ -4,9 +4,9 @@ using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.System
 {
-    public class SystemFunctionParameterValueCollection
+    public class SystemFunctionParameterValueCollection<TData> where TData : IStringable
     {
-        public List<SystemFunctionParameterValue> Values { get; private set; } = new();
+        public List<SystemFunctionParameterValue<TData>> Values { get; private set; } = new();
 
         public T Get<T>(string name)
         {
@@ -21,10 +21,12 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                     {
                         throw new KbGenericException($"Value for [{name}] cannot be null.");
                     }
-                    return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
+                    //return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
+                    return parameter.Parameter.DefaultValue.ToT<T>();
                 }
 
-                return Converters.ConvertTo<T>(parameter.Value);
+                //return Converters.ConvertTo<T>(parameter.Value);
+                return parameter.Value.ToT<T>();
             }
             catch (Exception ex)
             {
@@ -36,13 +38,14 @@ namespace NTDLS.Katzebase.Engine.Functions.System
         {
             try
             {
-                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name)).Value;
                 if (value == null)
                 {
                     return defaultValue;
                 }
 
-                return Converters.ConvertTo<T>(value);
+                //return Converters.ConvertTo<T>(value);
+                return value.ToT<T>();
             }
             catch (Exception ex)
             {
@@ -55,8 +58,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System
         {
             try
             {
-                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
-                return Converters.ConvertToNullable<T?>(value);
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name)).Value;
+                //return Converters.ConvertToNullable<T?>(value);
+                return value.ToNullableT<T?>();
             }
             catch (Exception ex)
             {
@@ -68,13 +72,14 @@ namespace NTDLS.Katzebase.Engine.Functions.System
         {
             try
             {
-                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name)).Value;
                 if (value == null)
                 {
                     return defaultValue;
                 }
 
-                return Converters.ConvertToNullable<T?>(value);
+                //return Converters.ConvertToNullable<T?>(value);
+                return value.ToNullableT<T?>();
             }
             catch (Exception ex)
             {

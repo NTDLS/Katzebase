@@ -5,9 +5,9 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserUpdate
+    internal static class StaticParserUpdate<TData> where TData : IStringable
     {
-        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
             /*Example query:
              * update
@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 	         *       Id = 10
              */
 
-            var query = new PreparedQuery(queryBatch, QueryType.Update);
+            var query = new PreparedQuery<TData>(queryBatch, QueryType.Update);
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
@@ -29,15 +29,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             if (tokenizer.TryEatIfNext("as"))
             {
                 var schemaAlias = tokenizer.EatGetNext();
-                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema<TData>(schemaName.ToLowerInvariant(), schemaAlias.ToLowerInvariant()));
             }
             else
             {
-                query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant(), schemaName.ToLowerInvariant()));
+                query.Schemas.Add(new QuerySchema<TData>(schemaName.ToLowerInvariant(), schemaName.ToLowerInvariant()));
             }
             tokenizer.EatIfNext("set");
 
-            query.UpdateFieldValues = new QueryFieldCollection(queryBatch);
+            query.UpdateFieldValues = new QueryFieldCollection<TData>(queryBatch);
 
             while (!tokenizer.IsExhausted())
             {
@@ -51,9 +51,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 bool isTextRemaining = tokenizer.EatGetSingleFieldExpression(["where", "inner"], out var fieldExpression);
 
-                var queryField = StaticParserField.Parse(tokenizer, fieldExpression, query.UpdateFieldValues);
+                var queryField = StaticParserField<TData>.Parse(tokenizer, fieldExpression, query.UpdateFieldValues);
 
-                query.UpdateFieldValues.Add(new QueryField(fieldName, query.UpdateFieldValues.Count, queryField));
+                query.UpdateFieldValues.Add(new QueryField<TData>(fieldName, query.UpdateFieldValues.Count, queryField));
 
                 if (!isTextRemaining)
                 {
@@ -63,7 +63,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             if (tokenizer.TryEatIfNext("where"))
             {
-                query.Conditions = StaticParserWhere.Parse(queryBatch, tokenizer);
+                query.Conditions = StaticParserWhere<TData>.Parse(queryBatch, tokenizer);
 
                 //Associate the root query schema with the root conditions.
                 query.Schemas.First().Conditions = query.Conditions;

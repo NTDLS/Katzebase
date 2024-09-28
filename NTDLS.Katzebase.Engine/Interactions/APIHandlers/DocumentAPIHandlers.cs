@@ -38,7 +38,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var result = (KbQueryDocumentSampleReply)StaticSearcherMethods<TData>.SampleSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
+                var result = (KbQueryDocumentSampleReply)StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
                 return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
             }
             catch (Exception ex)
@@ -65,7 +65,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var nativeResults = StaticSearcherMethods<TData>.ListSchemaDocuments(
+                var nativeResults = StaticSearcherMethods.ListSchemaDocuments<TData>(
                     _core, transactionReference.Transaction, param.Schema, param.Count);
 
                 var apiResults = new KbQueryDocumentListReply()

@@ -2,7 +2,7 @@
 
 namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
-    internal partial class Tokenizer
+    internal partial class Tokenizer<TData> where TData : IStringable
     {
         /// <summary>
         /// Parses the text for a single comma separated field expression, respecting strings, numeric, formulas and parentheses scopes.

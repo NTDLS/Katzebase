@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="physicalSchema"></param>
         /// <param name="documentId"></param>
         internal PhysicalDocument<TData> AcquireDocument(
-            Transaction<TData> transaction, PhysicalSchema physicalSchema, DocumentPointer documentPointer, LockOperation lockIntention)
+            Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema, DocumentPointer<TData> documentPointer, LockOperation lockIntention)
         {
             try
             {
@@ -56,7 +56,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal PhysicalDocumentPage<TData> AcquireDocumentPage(
-            Transaction<TData> transaction, PhysicalSchema physicalSchema, int pageNumber, LockOperation lockIntention)
+            Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema, int pageNumber, LockOperation lockIntention)
         {
             try
             {
@@ -70,27 +70,27 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal IEnumerable<DocumentPointer> AcquireDocumentPointers(
+        internal IEnumerable<DocumentPointer<TData>> AcquireDocumentPointers(
             Transaction<TData> transaction, string schemaName, LockOperation lockIntention)
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             return AcquireDocumentPointers(transaction, physicalSchema, lockIntention);
         }
 
-        internal IEnumerable<DocumentPointer> AcquireDocumentPointers(
-            Transaction<TData> transaction, PhysicalSchema physicalSchema, LockOperation lockIntention, int limit = -1)
+        internal IEnumerable<DocumentPointer<TData>> AcquireDocumentPointers(
+            Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema, LockOperation lockIntention, int limit = -1)
         {
             try
             {
                 var physicalDocumentPageCatalog = _core.IO.GetPBuf<PhysicalDocumentPageCatalog>(
                     transaction, physicalSchema.DocumentPageCatalogFilePath(), lockIntention);
 
-                var documentPointers = new List<DocumentPointer>();
+                var documentPointers = new List<DocumentPointer<TData>>();
 
                 foreach (var item in physicalDocumentPageCatalog.Catalog)
                 {
                     var physicalDocumentPageMap = AcquireDocumentPageMap(transaction, physicalSchema, item.PageNumber, lockIntention);
-                    documentPointers.AddRange(physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer(item.PageNumber, o)));
+                    documentPointers.AddRange(physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer<TData>(item.PageNumber, o)));
 
                     if (limit > 0 && documentPointers.Count > limit)
                     {
@@ -108,7 +108,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal PhysicalDocumentPageMap AcquireDocumentPageMap(
-            Transaction<TData> transaction, PhysicalSchema physicalSchema, int pageNumber, LockOperation lockIntention)
+            Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema, int pageNumber, LockOperation lockIntention)
         {
             try
             {
@@ -122,7 +122,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal PhysicalDocumentPageCatalog AcquireDocumentPageCatalog(
-            Transaction<TData> transaction, PhysicalSchema physicalSchema, LockOperation lockIntention)
+            Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema, LockOperation lockIntention)
         {
             try
             {
@@ -138,7 +138,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// When we want to create a document, this is where we do it - no exceptions.
         /// </summary>
-        internal DocumentPointer InsertDocument(Transaction<TData> transaction, string schemaName, object pageContent)
+        internal DocumentPointer<TData> InsertDocument(Transaction<TData> transaction, string schemaName, object pageContent)
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             return InsertDocument(transaction, physicalSchema, JsonConvert.SerializeObject(pageContent));
@@ -147,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// When we want to create a document, this is where we do it - no exceptions.
         /// </summary>
-        internal DocumentPointer InsertDocument(Transaction<TData> transaction, string schemaName, string pageContent)
+        internal DocumentPointer<TData> InsertDocument(Transaction<TData> transaction, string schemaName, string pageContent)
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Write);
             return InsertDocument(transaction, physicalSchema, pageContent);
@@ -156,7 +156,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// When we want to create a document, this is where we do it - no exceptions.
         /// </summary>
-        internal DocumentPointer InsertDocument(Transaction<TData> transaction, PhysicalSchema physicalSchema, string pageContent)
+        internal DocumentPointer<TData> InsertDocument(Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema, string pageContent)
         {
             try
             {
@@ -232,7 +232,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 //Save the document page catalog:
                 _core.IO.PutPBuf(transaction, physicalSchema.DocumentPageCatalogFilePath(), documentPageCatalog);
 
-                var documentPointer = new DocumentPointer(physicalPageCatalogItem.PageNumber, physicalDocumentId);
+                var documentPointer = new DocumentPointer<TData>(physicalPageCatalogItem.PageNumber, physicalDocumentId);
 
                 //Update all of the indexes that reference the document.
                 _core.Indexes.InsertDocumentIntoIndexes(transaction, physicalSchema, physicalDocument, documentPointer);
@@ -254,12 +254,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="documents">List of document pointers and their new content.</param>
         /// <param name="listOfModifiedFields">A list of the fields that were modified so that we
         /// can filter the indexes we need to update.</param>
-        internal void UpdateDocuments(Transaction<TData> transaction, PhysicalSchema physicalSchema,
-            List<DocumentPointer> updatedDocumentPointers, IEnumerable<string>? listOfModifiedFields = null)
+        internal void UpdateDocuments(Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema,
+            List<DocumentPointer<TData>> updatedDocumentPointers, IEnumerable<string>? listOfModifiedFields = null)
         {
             try
             {
-                var physicalDocuments = new Dictionary<DocumentPointer, PhysicalDocument<TData>>();
+                var physicalDocuments = new Dictionary<DocumentPointer<TData>, PhysicalDocument<TData>>();
 
                 foreach (var documentPointer in updatedDocumentPointers)
                 {
@@ -291,7 +291,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void DeleteDocuments(Transaction<TData> transaction, PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
+        internal void DeleteDocuments(Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema, IEnumerable<DocumentPointer<TData>> documentPointers)
         {
             try
             {

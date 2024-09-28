@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
     {
         public static string? Execute<TData>(Transaction<TData> transaction, ScalerFunctionParameterValueCollection<TData> function) where TData : IStringable
         {
-            return (ConditionEntry.IsMatchEqual(transaction, function.Get<string>("text1"), function.Get<string>("text2")) == false).ToString();
+            return (ConditionEntry<TData>.IsMatchEqual<TData>(transaction, function.Get<string>("text1"), function.Get<string>("text2")) == false).ToString();
         }
     }
 }

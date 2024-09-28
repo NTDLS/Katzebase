@@ -12,9 +12,9 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
         public string Name { get; set; }
         public KbAggregateFunctionParameterType ReturnType { get; private set; }
 
-        public List<AggregateFunctionParameterPrototype> Parameters { get; private set; } = new();
+        public List<AggregateFunctionParameterPrototype<TData>> Parameters { get; private set; } = new();
 
-        public AggregateFunction(string name, KbAggregateFunctionParameterType returnType, List<AggregateFunctionParameterPrototype> parameters)
+        public AggregateFunction(string name, KbAggregateFunctionParameterType returnType, List<AggregateFunctionParameterPrototype<TData>> parameters)
         {
             Name = name;
             ReturnType = returnType;
@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
 
         public static AggregateFunction<TData> Parse(string prototype)
         {
-            var tokenizer = new Tokenizer(prototype, true);
+            var tokenizer = new Tokenizer<TData>(prototype, true);
 
             var returnType = tokenizer.EatIfNextEnum<KbAggregateFunctionParameterType>();
 
@@ -35,12 +35,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
             bool foundOptionalParameter = false;
             bool infiniteParameterFound = false;
 
-            var parameters = new List<AggregateFunctionParameterPrototype>();
+            var parameters = new List<AggregateFunctionParameterPrototype<TData>>();
             var parametersStrings = tokenizer.EatGetMatchingScope().ScopeSensitiveSplit(',');
 
             foreach (var parametersString in parametersStrings)
             {
-                var paramTokenizer = new Tokenizer(parametersString);
+                var paramTokenizer = new Tokenizer<TData>(parametersString);
 
                 var paramType = paramTokenizer.EatIfNextEnum<KbAggregateFunctionParameterType>();
 
@@ -77,12 +77,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                     }
 
                     var optionalParameterDefaultValue = tokenizer.ResolveLiteral(paramTokenizer.EatGetNext());
-                    if (optionalParameterDefaultValue == null || optionalParameterDefaultValue?.Is("null") == true)
+                    if (optionalParameterDefaultValue == null || optionalParameterDefaultValue.ToT<string>() == "null")
                     {
-                        optionalParameterDefaultValue = null;
+                        optionalParameterDefaultValue = default;
                     }
 
-                    parameters.Add(new AggregateFunctionParameterPrototype(paramType, parameterName, optionalParameterDefaultValue));
+                    parameters.Add(new AggregateFunctionParameterPrototype<TData>(paramType, parameterName, optionalParameterDefaultValue));
 
                     foundOptionalParameter = true;
                 }
@@ -94,7 +94,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                         throw new KbEngineException($"Invalid aggregate function [{functionName}] parameter [{parameterName}] must define a default.");
                     }
 
-                    parameters.Add(new AggregateFunctionParameterPrototype(paramType, parameterName));
+                    parameters.Add(new AggregateFunctionParameterPrototype<TData>(paramType, parameterName));
                 }
 
                 if (paramType == KbAggregateFunctionParameterType.StringInfinite)

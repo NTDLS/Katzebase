@@ -60,24 +60,24 @@ module DMLExecutionBasicTests =
         let i1v1 = insert1.Item 1
 
         match i0v0.Expression with
-        | :? Fields.QueryFieldConstantNumeric as num -> 
-            equals "$n_2$" num.Value
+        | :? QueryFieldConstantNumeric as num -> 
+            equals "$n_2$" (num.V<fstring, string>())
 
         match i0v1.Expression with
-        | :? Fields.QueryFieldConstantNumeric as num -> 
-            equals "$n_3$" num.Value
+        | :? QueryFieldConstantNumeric as num -> 
+            equals "$n_3$" (num.V<fstring, string>())
 
         match i1v0.Expression with
-        | :? Fields.QueryFieldConstantString as str -> 
-            equals "$s_0$" str.Value
+        | :? QueryFieldConstantString as str -> 
+            equals "$s_0$" (str.V<fstring, string>())
 
         match i1v1.Expression with
-        | :? Fields.QueryFieldConstantString as str -> 
-            equals "$s_1$" str.Value
+        | :? QueryFieldConstantString as str -> 
+            equals "$s_1$" (str.V<fstring, string>())
            
         let transactionReference = _core.Transactions.Acquire(preLogin)
         let fieldQueryCollection = QueryFieldCollection (preparedQuery.Batch)
-        let auxiliaryFields = KbInsensitiveDictionary<string> ()
+        let auxiliaryFields = KbInsensitiveDictionary<fstring> ()
         let collapsed01 = 
             ExprProc.CollapseScalerQueryField(
                 i0v1.Expression

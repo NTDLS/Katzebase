@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
                     var documentId = physicalDocumentPageMap.DocumentIDs.ToArray()[documentIndex];
 
                     var physicalDocument = core.Documents.AcquireDocument(
-                        transaction, physicalSchema, new DocumentPointer(pageNumber, documentId), LockOperation.Read);
+                        transaction, physicalSchema, new DocumentPointer<TData>(pageNumber, documentId), LockOperation.Read);
 
                     if (i == 0)
                     {
@@ -131,7 +131,8 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 
             foreach (var subConditionResult in subConditionResults.RowValues)
             {
-                result.Rows.Add(new KbQueryRow(subConditionResult));
+                var subConditionResult_ = new List<string?>(subConditionResult.Select(t => t.ToT<string>()));
+                result.Rows.Add(new KbQueryRow(subConditionResult_));
             }
 
             return result;
@@ -146,7 +147,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
         /// <param name="query"></param>
         /// <param name="schemaPrefix"></param>
         /// <returns></returns>
-        internal static IEnumerable<SchemaIntersectionRowDocumentIdentifier> FindDocumentPointersByPreparedQuery<TData>(
+        internal static IEnumerable<SchemaIntersectionRowDocumentIdentifier<TData>> FindDocumentPointersByPreparedQuery<TData>(
             EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery<TData> query, string[] getDocumentsIdsForSchemaPrefixes) where TData : IStringable
         {
             var schemaMap = new QuerySchemaMap<TData>(core, transaction, query);

@@ -217,11 +217,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         /// <param name="keyValues">For JOIN operations, contains the values of the joining document.</param>
         /// <returns></returns>
-        internal Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClause(
-                    PhysicalSchema physicalSchema, IndexingConditionOptimization<TData> optimization,
+        internal Dictionary<uint, DocumentPointer<TData>> MatchSchemaDocumentsByConditionsClause(
+                    PhysicalSchema<TData> physicalSchema, IndexingConditionOptimization<TData> optimization,
                     PreparedQuery<TData> query, string workingSchemaPrefix, KbInsensitiveDictionary<TData?>? keyValues = null)
         {
-            Dictionary<uint, DocumentPointer>? accumulatedResults = null;
+            Dictionary<uint, DocumentPointer<TData>>? accumulatedResults = null;
 
             var ptIndexSearch = optimization.Transaction.Instrumentation.CreateToken(PerformanceCounter.IndexSearch, $"Schema: {workingSchemaPrefix}");
 
@@ -254,8 +254,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return accumulatedResults ?? new();
         }
 
-        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByConditionsClauseRecursive(
-            PhysicalSchema physicalSchema, IndexingConditionOptimization<TData> optimization, ConditionGroup<TData> givenConditionGroup,
+        private Dictionary<uint, DocumentPointer<TData>> MatchSchemaDocumentsByConditionsClauseRecursive(
+            PhysicalSchema<TData> physicalSchema, IndexingConditionOptimization<TData> optimization, ConditionGroup<TData> givenConditionGroup,
             PreparedQuery<TData> query, string workingSchemaPrefix, KbInsensitiveDictionary<TData?>? keyValues = null)
         {
             var thisGroupResults = MatchSchemaDocumentsByIndexingConditionLookup(optimization.Transaction,
@@ -283,10 +283,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return thisGroupResults;
         }
 
-        private Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookup(Transaction<TData> transaction, PreparedQuery<TData> query,
-            IndexingConditionLookup<TData> indexLookup, PhysicalSchema physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<TData?>? keyValues)
+        private Dictionary<uint, DocumentPointer<TData>> MatchSchemaDocumentsByIndexingConditionLookup(Transaction<TData> transaction, PreparedQuery<TData> query,
+            IndexingConditionLookup<TData> indexLookup, PhysicalSchema<TData> physicalSchema, string workingSchemaPrefix, KbInsensitiveDictionary<TData?>? keyValues)
         {
-            Dictionary<uint, DocumentPointer>? accumulatedResults = null;
+            Dictionary<uint, DocumentPointer<TData>>? accumulatedResults = null;
 
             try
             {
@@ -391,7 +391,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
             try
             {
-                Dictionary<uint, DocumentPointer> threadResults = new();
+                Dictionary<uint, DocumentPointer<TData>> threadResults = new();
 
                 string pageDiskPath = instance.Operation.Lookup.IndexSelection.PhysicalIndex.GetPartitionPagesFileName(instance.Operation.PhysicalSchema, instance.IndexPartition);
                 var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages<TData>>(instance.Operation.Transaction, pageDiskPath, LockOperation.Read);
@@ -436,10 +436,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private static Dictionary<uint, DocumentPointer> MatchSchemaDocumentsByIndexingConditionLookupRecursive(
+        private static Dictionary<uint, DocumentPointer<TData>> MatchSchemaDocumentsByIndexingConditionLookupRecursive(
             MatchSchemaDocumentsByConditionsOperation<TData>.Instance instance, int attributeDepth, List<PhysicalIndexLeaf<TData>> workingPhysicalIndexLeaves)
         {
-            Dictionary<uint, DocumentPointer>? results = null;
+            Dictionary<uint, DocumentPointer<TData>>? results = null;
 
             var conditionSet = instance.Operation.Lookup.AttributeConditionSets[
                 instance.Operation.Lookup.IndexSelection.PhysicalIndex.Attributes[attributeDepth].Field.EnsureNotNull()];
@@ -519,35 +519,35 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.GreaterThan => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry<TData>.IsMatchGreater(transaction, w.Key, keyValue.ToT<double>()) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchGreater(transaction, w.Key, keyValue.ToT<string>()) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.GreaterThanOrEqual => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry<TData>.IsMatchGreaterOrEqual(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchGreaterOrEqual(transaction, w.Key, keyValue.ToT<string>()) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.LessThan => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry<TData>.IsMatchLesser(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchLesser(transaction, w.Key, keyValue.ToT<string>()) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.LessThanOrEqual => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry<TData>.IsMatchLesserOrEqual(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchLesserOrEqual(transaction, w.Key, keyValue.ToT<string>()) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.Like => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry<TData>.IsMatchLike(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchLike(transaction, w.Key, keyValue.ToT<string>()) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotLike => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry<TData>.IsMatchLike(transaction, w.Key, keyValue) == false)
+                                        .Where(w => ConditionEntry<TData>.IsMatchLike(transaction, w.Key, keyValue.ToT<string>()) == false)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.Between => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry<TData>.IsMatchBetween(transaction, w.Key, keyValue) == true)
+                                        .Where(w => ConditionEntry<TData>.IsMatchBetween(transaction, w.Key, keyValue.ToT<string>()) == true)
                                         .Select(s => s.Value)).ToList(),
                 LogicalQualifier.NotBetween => workingPhysicalIndexLeaves
                                         .SelectMany(o => o.Children
-                                        .Where(w => ConditionEntry<TData>.IsMatchBetween(transaction, w.Key, keyValue) == false)
+                                        .Where(w => ConditionEntry<TData>.IsMatchBetween(transaction, w.Key, keyValue.ToT<string>()) == false)
                                         .Select(s => s.Value)).ToList(),
                 _ => throw new KbNotImplementedException($"Logical qualifier has not been implemented for indexing: [{condition.Qualifier}]"),
             };
@@ -603,9 +603,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private static Dictionary<uint, DocumentPointer> DistillIndexLeaves(List<PhysicalIndexLeaf<TData>> physicalIndexLeaves)
+        private static Dictionary<uint, DocumentPointer<TData>> DistillIndexLeaves(List<PhysicalIndexLeaf<TData>> physicalIndexLeaves)
         {
-            var result = new List<DocumentPointer>();
+            var result = new List<DocumentPointer<TData>>();
 
             foreach (var leaf in physicalIndexLeaves)
             {
@@ -620,11 +620,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// </summary>
         /// <param name="indexEntires"></param>
         /// <returns></returns>
-        private static List<DocumentPointer> DistillIndexLeaves(PhysicalIndexLeaf<TData> physicalIndexLeaf)
+        private static List<DocumentPointer<TData>> DistillIndexLeaves(PhysicalIndexLeaf<TData> physicalIndexLeaf)
         {
             try
             {
-                var result = new List<DocumentPointer>();
+                var result = new List<DocumentPointer<TData>>();
 
                 void DistillIndexLeavesRecursive(PhysicalIndexLeaf<TData> physicalIndexLeaf)
                 {
@@ -635,13 +635,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     if (physicalIndexLeaf?.Documents?.Count > 0)
                     {
-                        result.AddRange(physicalIndexLeaf.Documents.Select(o => new DocumentPointer(o.PageNumber, o.DocumentId)));
+                        result.AddRange(physicalIndexLeaf.Documents.Select(o => new DocumentPointer<TData>(o.PageNumber, o.DocumentId)));
                     }
                 }
 
                 if (physicalIndexLeaf?.Documents?.Count > 0)
                 {
-                    result.AddRange(physicalIndexLeaf.Documents.Select(o => new DocumentPointer(o.PageNumber, o.DocumentId)));
+                    result.AddRange(physicalIndexLeaf.Documents.Select(o => new DocumentPointer<TData>(o.PageNumber, o.DocumentId)));
                 }
                 else if (physicalIndexLeaf?.Children != null)
                 {
@@ -671,7 +671,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="schema"></param>
         /// <param name="document"></param>
         internal void InsertDocumentIntoIndexes(Transaction<TData> transaction,
-            PhysicalSchema physicalSchema, PhysicalDocument<TData> physicalDocument, DocumentPointer documentPointer)
+            PhysicalSchema<TData> physicalSchema, PhysicalDocument<TData> physicalDocument, DocumentPointer<TData> documentPointer)
         {
             try
             {
@@ -697,7 +697,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="schema"></param>
         /// <param name="document"></param>
         internal void InsertDocumentsIntoIndex(Transaction<TData> transaction,
-            PhysicalSchema physicalSchema, PhysicalIndex<TData> physicalIndex, Dictionary<DocumentPointer, PhysicalDocument<TData>> documents)
+            PhysicalSchema<TData> physicalSchema, PhysicalIndex<TData> physicalIndex, Dictionary<DocumentPointer<TData>, PhysicalDocument<TData>> documents)
         {
             try
             {
@@ -721,7 +721,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="schema"></param>
         /// <param name="document"></param>
         internal void InsertDocumentsIntoIndexes(Transaction<TData> transaction,
-            PhysicalSchema physicalSchema, Dictionary<DocumentPointer, PhysicalDocument<TData>> documents)
+            PhysicalSchema<TData> physicalSchema, Dictionary<DocumentPointer<TData>, PhysicalDocument<TData>> documents)
         {
             try
             {
@@ -747,7 +747,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// Inserts an index entry for a single document into a single index using the file name from the index object.
         /// </summary>
         private void InsertDocumentIntoIndex(Transaction<TData> transaction,
-            PhysicalSchema physicalSchema, PhysicalIndex<TData> physicalIndex, PhysicalDocument<TData> document, DocumentPointer documentPointer)
+            PhysicalSchema<TData> physicalSchema, PhysicalIndex<TData> physicalIndex, PhysicalDocument<TData> document, DocumentPointer<TData> documentPointer)
         {
             try
             {
@@ -757,7 +757,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 uint indexPartition = physicalIndex.ComputePartition(value);
 
                 string pageDiskPath = physicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
+                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages<TData>>(transaction, pageDiskPath, LockOperation.Write);
 
                 InsertDocumentIntoIndexPages(transaction, physicalIndex, physicalIndexPages, document, documentPointer);
 
@@ -773,7 +773,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Inserts an index entry for a single document into a single index using a long lived index page catalog.
         /// </summary>
-        private static void InsertDocumentIntoIndexPages(Transaction<TData> transaction, PhysicalIndex<TData> physicalIndex, PhysicalIndexPages physicalIndexPages, PhysicalDocument<TData> document, DocumentPointer documentPointer)
+        private static void InsertDocumentIntoIndexPages(Transaction<TData> transaction, PhysicalIndex<TData> physicalIndex, PhysicalIndexPages<TData> physicalIndexPages, PhysicalDocument<TData> document, DocumentPointer<TData> documentPointer)
         {
             try
             {
@@ -799,7 +799,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                     for (int i = indexScanResult.ExtentLevel; i < searchTokens.Count; i++)
                     {
-                        indexScanResult.Leaf = indexScanResult.Leaf.EnsureNotNull().AddNewLeaf(searchTokens[i]);
+                        indexScanResult.Leaf = indexScanResult.Leaf.EnsureNotNull().AddNewLeaf(searchTokens[i].CastToT<TData>(EngineCore<TData>.StrCast));
                     }
 
 
@@ -817,11 +817,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private static List<TData> GetIndexSearchTokens(Transaction<TData> transaction, PhysicalIndex<TData> physicalIndex, PhysicalDocument<TData> document)
+        private static List<string> GetIndexSearchTokens(Transaction<TData> transaction, PhysicalIndex<TData> physicalIndex, PhysicalDocument<TData> document)
         {
             try
             {
-                var result = new List<TData>();
+                var result = new List<string>();
 
                 foreach (var indexAttribute in physicalIndex.Attributes)
                 {
@@ -829,7 +829,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     {
                         if (documentValue != null) //TODO: How do we handle indexed NULL values?
                         {
-                            result.Add((TData)documentValue.ToLowerInvariant());
+                            result.Add(documentValue.ToLowerInvariant().GetKey());
                         }
                     }
                 }
@@ -852,7 +852,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="indexPageCatalog"></param>
         /// <returns>A reference to a node in the suppliedIndexPageCatalog</returns>
         private static IndexScanResult<TData> LocateExtentInGivenIndexPageCatalog(
-            Transaction<TData> transaction, List<string> searchTokens, PhysicalIndexPages rootPhysicalIndexPages)
+            Transaction<TData> transaction, List<string> searchTokens, PhysicalIndexPages<TData> rootPhysicalIndexPages)
         {
             try
             {
@@ -911,8 +911,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="transaction"></param>
         /// <param name="schema"></param>
         /// <param name="document"></param>
-        internal void UpdateDocumentsIntoIndexes(Transaction<TData> transaction, PhysicalSchema physicalSchema,
-            Dictionary<DocumentPointer, PhysicalDocument<TData>> documents, IEnumerable<string>? listOfModifiedFields)
+        internal void UpdateDocumentsIntoIndexes(Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema,
+            Dictionary<DocumentPointer<TData>, PhysicalDocument<TData>> documents, IEnumerable<string>? listOfModifiedFields)
         {
             try
             {
@@ -945,7 +945,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="physicalSchema"></param>
         /// <param name="documentPointer"></param>
         internal void RemoveDocumentsFromIndexes(Transaction<TData> transaction,
-            PhysicalSchema physicalSchema, IEnumerable<DocumentPointer> documentPointers)
+            PhysicalSchema<TData> physicalSchema, IEnumerable<DocumentPointer<TData>> documentPointers)
         {
             try
             {
@@ -964,12 +964,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        private long RemoveDocumentsFromLeaves(PhysicalIndexLeaf<TData> leaf, IEnumerable<DocumentPointer> documentPointers)
+        private long RemoveDocumentsFromLeaves(PhysicalIndexLeaf<TData> leaf, IEnumerable<DocumentPointer<TData>> documentPointers)
         {
             return RemoveDocumentsFromLeaves(leaf, documentPointers, documentPointers.Count());
         }
 
-        private long RemoveDocumentsFromLeaves(PhysicalIndexLeaf<TData> leaf, IEnumerable<DocumentPointer> documentPointers, long maxCount)
+        private long RemoveDocumentsFromLeaves(PhysicalIndexLeaf<TData> leaf, IEnumerable<DocumentPointer<TData>> documentPointers, long maxCount)
         {
             long totalDeletes = 0;
 
@@ -1011,8 +1011,8 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <summary>
         /// Removes a collection of documents from an index. Locks the index page catalog for write.
         /// </summary>
-        private void RemoveDocumentsFromIndex(Transaction<TData> transaction, PhysicalSchema physicalSchema,
-            PhysicalIndex<TData> physicalIndex, IEnumerable<DocumentPointer> documentPointers)
+        private void RemoveDocumentsFromIndex(Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema,
+            PhysicalIndex<TData> physicalIndex, IEnumerable<DocumentPointer<TData>> documentPointers)
         {
             try
             {
@@ -1024,7 +1024,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
                     {
                         string pageDiskPath = physicalIndex.GetPartitionPagesFileName(physicalSchema, indexPartition);
-                        var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(transaction, pageDiskPath, LockOperation.Write);
+                        var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages<TData>>(transaction, pageDiskPath, LockOperation.Write);
 
                         if (RemoveDocumentsFromLeaves(physicalIndexPages.Root, documentPointers) > 0)
                         {
@@ -1072,7 +1072,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 string pageDiskPath = instance.Operation.PhysicalIndex.GetPartitionPagesFileName(
                     instance.Operation.PhysicalSchema, (uint)instance.IndexPartition);
 
-                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
+                var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages<TData>>(instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
 
                 if (RemoveDocumentsFromLeaves(physicalIndexPages.Root, instance.Operation.DocumentPointers) > 0)
                 {
@@ -1130,7 +1130,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 var physicalDocumentPageMap = _core.Documents.AcquireDocumentPageMap(instance.Operation.Transaction,
                     instance.Operation.PhysicalSchema, instance.PageNumber, LockOperation.Read);
 
-                var documentPointers = physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer(instance.PageNumber, o));
+                var documentPointers = physicalDocumentPageMap.DocumentIDs.Select(o => new DocumentPointer<TData>(instance.PageNumber, o));
 
                 foreach (var documentPointer in documentPointers)
                 {
@@ -1154,7 +1154,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         string pageDiskPath = instance.Operation.PhysicalIndex.GetPartitionPagesFileName(
                             instance.Operation.PhysicalSchema, indexPartition);
 
-                        var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages>(
+                        var physicalIndexPages = _core.IO.GetPBuf<PhysicalIndexPages<TData>>(
                             instance.Operation.Transaction, pageDiskPath, LockOperation.Write);
 
                         lock (instance.Operation.SyncObjects[indexPartition])
@@ -1183,7 +1183,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <param name="transaction"></param>
         /// <param name="physicalSchema"></param>
         /// <param name="physicalIndex"></param>
-        private void RebuildIndex(Transaction<TData> transaction, PhysicalSchema physicalSchema, PhysicalIndex<TData> physicalIndex)
+        private void RebuildIndex(Transaction<TData> transaction, PhysicalSchema<TData> physicalSchema, PhysicalIndex<TData> physicalIndex)
         {
             try
             {
@@ -1196,10 +1196,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 }
                 _core.IO.CreateDirectory(transaction, physicalIndex.GetPartitionPagesPath(physicalSchema));
 
-                var physicalIndexPageMap = new Dictionary<uint, PhysicalIndexPages>();
+                var physicalIndexPageMap = new Dictionary<uint, PhysicalIndexPages<TData>>();
                 for (uint indexPartition = 0; indexPartition < physicalIndex.Partitions; indexPartition++)
                 {
-                    var physicalIndexPages = new PhysicalIndexPages();
+                    var physicalIndexPages = new PhysicalIndexPages<TData>();
                     physicalIndexPageMap.Add(indexPartition, physicalIndexPages);
 
                     _core.IO.PutPBuf(transaction, physicalIndex.GetPartitionPagesFileName
@@ -1258,7 +1258,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         }
 
         internal PhysicalIndexCatalog<TData> AcquireIndexCatalog(Transaction<TData> transaction,
-            PhysicalSchema physicalSchema, LockOperation intendedOperation)
+            PhysicalSchema<TData> physicalSchema, LockOperation intendedOperation)
         {
             try
             {

@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <param name="queryText"></param>
         /// <param name="userParameters"></param>
         /// <returns></returns>
-        static public QueryBatch ParseBatch(EngineCore<TData> core, string queryText, KbInsensitiveDictionary<KbConstant>? userParameters = null)
+        static public QueryBatch<TData> ParseBatch(EngineCore<TData> core, string queryText, KbInsensitiveDictionary<KbConstant>? userParameters = null)
         {
             var tokenizerConstants = core.Query.KbGlobalConstants.Clone();
 
@@ -30,8 +30,8 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
             queryText = PreParseQueryVariableDeclarations(queryText, ref tokenizerConstants);
 
-            var tokenizer = new Tokenizer(queryText, true, tokenizerConstants);
-            var queryBatch = new QueryBatch(tokenizer.Literals);
+            var tokenizer = new Tokenizer<TData>(queryText, true, tokenizerConstants);
+            var queryBatch = new QueryBatch<TData>(tokenizer.Literals);
 
             while (!tokenizer.IsExhausted())
             {
@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
         /// <summary>
         /// Parse the single.
         /// </summary>
-        static public PreparedQuery ParseQuery(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        static public PreparedQuery<TData> ParseQuery(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
             string token = tokenizer.GetNext();
 
@@ -63,24 +63,24 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
             return queryType switch
             {
-                QueryType.Select => StaticParserSelect.Parse(queryBatch, tokenizer),
-                QueryType.Delete => StaticParserDelete.Parse(queryBatch, tokenizer),
-                QueryType.Insert => StaticParserInsert.Parse(queryBatch, tokenizer),
-                QueryType.Update => StaticParserUpdate.Parse(queryBatch, tokenizer),
-                QueryType.Begin => StaticParserBegin.Parse(queryBatch, tokenizer),
-                QueryType.Commit => StaticParserCommit.Parse(queryBatch, tokenizer),
-                QueryType.Rollback => StaticParserRollback.Parse(queryBatch, tokenizer),
-                QueryType.Create => StaticParserCreate.Parse(queryBatch, tokenizer),
-                QueryType.Drop => StaticParserDrop.Parse(queryBatch, tokenizer),
+                QueryType.Select => StaticParserSelect<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Delete => StaticParserDelete<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Insert => StaticParserInsert<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Update => StaticParserUpdate<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Begin => StaticParserBegin<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Commit => StaticParserCommit<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Rollback => StaticParserRollback<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Create => StaticParserCreate<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Drop => StaticParserDrop<TData>.Parse(queryBatch, tokenizer),
 
-                QueryType.Sample => StaticParserSample.Parse(queryBatch, tokenizer),
-                QueryType.Analyze => StaticParserAnalyze.Parse(queryBatch, tokenizer),
-                QueryType.List => StaticParserList.Parse(queryBatch, tokenizer),
-                QueryType.Alter => StaticParserAlter.Parse(queryBatch, tokenizer),
-                QueryType.Rebuild => StaticParserRebuild.Parse(queryBatch, tokenizer),
-                QueryType.Set => StaticParserSet.Parse(queryBatch, tokenizer),
-                QueryType.Kill => StaticParserKill.Parse(queryBatch, tokenizer),
-                QueryType.Exec => StaticParserExec.Parse(queryBatch, tokenizer),
+                QueryType.Sample => StaticParserSample<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Analyze => StaticParserAnalyze<TData>.Parse(queryBatch, tokenizer),
+                QueryType.List => StaticParserList<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Alter => StaticParserAlter<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Rebuild => StaticParserRebuild<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Set => StaticParserSet<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Kill => StaticParserKill<TData>.Parse(queryBatch, tokenizer),
+                QueryType.Exec => StaticParserExec<TData>.Parse(queryBatch, tokenizer),
 
                 _ => throw new KbParserException($"The query type is not implemented: [{token}]."),
             };

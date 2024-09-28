@@ -205,7 +205,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 var rowDocumentIdentifiers = StaticSearcherMethods.FindDocumentPointersByPreparedQuery<TData>(
                     _core, transactionReference.Transaction, preparedQuery, getDocumentsIdsForSchemaPrefixes);
 
-                var updatedDocumentPointers = new List<DocumentPointer>();
+                var updatedDocumentPointers = new List<DocumentPointer<TData>>();
 
                 foreach (var rowDocumentIdentifier in rowDocumentIdentifiers)
                 {

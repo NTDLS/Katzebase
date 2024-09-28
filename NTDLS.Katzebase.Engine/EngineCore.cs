@@ -21,6 +21,7 @@ namespace NTDLS.Katzebase.Engine
             if (value == null) return default(T);
             return parse(value);
         }
+
         public static T? CastToT<T>(this string value, Func<string, T> cast)
         {
             if (value == null) return default(T);
@@ -36,6 +37,7 @@ namespace NTDLS.Katzebase.Engine
         //char[] ToCharArr();
         //Func<string, IStringable?> Converter { get; }
         T ToT<T>();
+        T ToNullableT<T>();
     }
 
     public class EngineCore<TData> where TData : IStringable

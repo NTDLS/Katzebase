@@ -7,9 +7,9 @@ using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserOrderBy
+    internal static class StaticParserOrderBy<TData> where TData : IStringable
     {
-        public static SortFields Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        public static SortFields Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
             string token;
             var sortFields = new SortFields();

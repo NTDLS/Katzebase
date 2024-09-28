@@ -70,8 +70,8 @@ module ParserBasicTests =
             equals "QueryFieldDocumentIdentifier" (cf0.Expression.GetType().Name)
 
         match cf1.Expression with
-        | :? QueryFieldConstantString as qfcs ->
-            equals "$s_0$" qfcs.Value
+        | :? QueryFieldConstantString as str ->
+            equals "$s_0$" (str.V<fstring, string>())
         | _ ->
             testPrint outputOpt "Field 1 type incorrect."
             equals "QueryFieldConstantString" (cf1.Expression.GetType().Name)
@@ -84,8 +84,8 @@ module ParserBasicTests =
             equals "QueryFieldDocumentIdentifier" (cf2.Expression.GetType().Name)
 
         match cf3.Expression with
-        | :? QueryFieldConstantString as qfcs ->
-            equals "$s_1$" qfcs.Value
+        | :? QueryFieldConstantString as str ->
+            equals "$s_1$" (str.V<fstring, string>())
         | _ ->
             testPrint outputOpt "Field 3 type incorrect."
             equals "QueryFieldConstantString" (cf3.Expression.GetType().Name)

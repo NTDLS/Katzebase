@@ -10,9 +10,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System
     public class SystemFunction<TData> where TData : IStringable
     {
         public string Name { get; private set; }
-        public List<SystemFunctionParameterPrototype> Parameters { get; private set; } = new();
+        public List<SystemFunctionParameterPrototype<TData>> Parameters { get; private set; } = new();
 
-        public SystemFunction(string name, List<SystemFunctionParameterPrototype> parameters)
+        public SystemFunction(string name, List<SystemFunctionParameterPrototype<TData>> parameters)
         {
             Name = name;
             Parameters.AddRange(parameters);
@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
 
         public static SystemFunction<TData> Parse(string prototype)
         {
-            var tokenizer = new Tokenizer(prototype, true);
+            var tokenizer = new Tokenizer<TData>(prototype, true);
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var functionName) == false)
             {
@@ -30,12 +30,12 @@ namespace NTDLS.Katzebase.Engine.Functions.System
             bool foundOptionalParameter = false;
             bool infiniteParameterFound = false;
 
-            var parameters = new List<SystemFunctionParameterPrototype>();
+            var parameters = new List<SystemFunctionParameterPrototype<TData>>();
             var parametersStrings = tokenizer.EatGetMatchingScope().ScopeSensitiveSplit(',');
 
             foreach (var parametersString in parametersStrings)
             {
-                var paramTokenizer = new Tokenizer(parametersString);
+                var paramTokenizer = new Tokenizer<TData>(parametersString);
 
                 var paramType = paramTokenizer.EatIfNextEnum<KbSystemFunctionParameterType>();
 
@@ -72,12 +72,12 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                     }
 
                     var optionalParameterDefaultValue = tokenizer.ResolveLiteral(paramTokenizer.EatGetNext());
-                    if (optionalParameterDefaultValue == null || optionalParameterDefaultValue?.Is("null") == true)
+                    if (optionalParameterDefaultValue == null || optionalParameterDefaultValue.ToT<string>() == "null")
                     {
-                        optionalParameterDefaultValue = null;
+                        optionalParameterDefaultValue = default;
                     }
 
-                    parameters.Add(new SystemFunctionParameterPrototype(paramType, parameterName, optionalParameterDefaultValue));
+                    parameters.Add(new SystemFunctionParameterPrototype<TData>(paramType, parameterName, optionalParameterDefaultValue));
 
                     foundOptionalParameter = true;
                 }
@@ -89,7 +89,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                         throw new KbEngineException($"Invalid system function [{functionName}] parameter [{parameterName}] must define a default.");
                     }
 
-                    parameters.Add(new SystemFunctionParameterPrototype(paramType, parameterName));
+                    parameters.Add(new SystemFunctionParameterPrototype<TData>(paramType, parameterName));
                 }
 
                 if (paramType == KbSystemFunctionParameterType.StringInfinite)
@@ -109,9 +109,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System
             return new SystemFunction<TData>(functionName, parameters);
         }
 
-        internal SystemFunctionParameterValueCollection ApplyParameters(List<TData?> values)
+        internal SystemFunctionParameterValueCollection<TData> ApplyParameters(List<TData?> values)
         {
-            var result = new SystemFunctionParameterValueCollection();
+            var result = new SystemFunctionParameterValueCollection<TData>();
 
             int satisfiedParameterCount = 0;
 
@@ -123,7 +123,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                     //parameter in the prototype, it eats the remainder of the passed parameters.
                     for (int passedParamIndex = protoParamIndex; passedParamIndex < values.Count; passedParamIndex++)
                     {
-                        result.Values.Add(new SystemFunctionParameterValue(Parameters[protoParamIndex], values[passedParamIndex]));
+                        result.Values.Add(new SystemFunctionParameterValue<TData>(Parameters[protoParamIndex], values[passedParamIndex]));
                     }
                     break;
                 }
@@ -132,7 +132,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                 {
                     if (Parameters[protoParamIndex].HasDefault)
                     {
-                        result.Values.Add(new SystemFunctionParameterValue(Parameters[protoParamIndex], Parameters[protoParamIndex].DefaultValue));
+                        result.Values.Add(new SystemFunctionParameterValue<TData>(Parameters[protoParamIndex], Parameters[protoParamIndex].DefaultValue));
                     }
                     else
                     {
@@ -141,7 +141,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                 }
                 else
                 {
-                    result.Values.Add(new SystemFunctionParameterValue(Parameters[protoParamIndex], values[protoParamIndex]));
+                    result.Values.Add(new SystemFunctionParameterValue<TData>(Parameters[protoParamIndex], values[protoParamIndex]));
                 }
 
                 satisfiedParameterCount++;

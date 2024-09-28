@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client;
+﻿using Microsoft.Extensions.Caching.Memory;
+using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
@@ -9,19 +10,100 @@ using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Parsers;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Sessions;
+using NTDLS.ReliableMessaging.Internal;
+using System.Reflection;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
-    /// <summary>
-    /// Public core class methods for locking, reading, writing and managing tasks related to queries.
-    /// </summary>
+
+    public static class QueryExtensions
+    {
+        private static readonly MemoryCache _cache = new(new MemoryCacheOptions());
+        public static IEnumerable<T> MapTo<T>(this KbQueryDocumentListResult result) where T : new()
+        {
+            var list = new List<T>();
+            var properties = GetProperties(typeof(T));
+
+            foreach (var row in result.Rows)
+            {
+                var obj = new T();
+                for (int i = 0; i < result.Fields.Count; i++)
+                {
+                    if (properties.TryGetValue(result.Fields[i].Name, out var property) && i < row.Values.Count)
+                    {
+                        var value = row.Values[i];
+
+                        if (value == null)
+                        {
+                            if (property.PropertyType.IsValueType && Nullable.GetUnderlyingType(property.PropertyType) == null)
+                            {
+                                continue; // Skip setting value if property is non-nullable value type
+                            }
+                            else
+                            {
+                                property.SetValue(obj, null);
+                            }
+                        }
+                        else
+                        {
+                            // 處理自定義類型的轉換
+                            object? convertedValue = null;
+                            var targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+
+                            if (typeof(IStringable).IsAssignableFrom(targetType))
+                            {
+                                // 尝试通过构造函数实例化 IStringable 对象
+                                if (targetType.GetConstructor(new[] { typeof(string) }) != null)
+                                {
+                                    // 先创建 IStringable 实例
+                                    var instance = (IStringable)Activator.CreateInstance(targetType, value.ToString())!;
+
+                                    // 使用 ToT 方法进行进一步的类型转换
+                                    convertedValue = instance.ToT<T>();
+                                }
+                            }
+                            else
+                            {
+                                // 使用 Convert.ChangeType 进行标准类型转换
+                                convertedValue = Convert.ChangeType(value, targetType);
+                            }
+
+                            property.SetValue(obj, convertedValue);
+                        }
+                    }
+                }
+                list.Add(obj);
+            }
+
+            return list;
+        }
+        private static Dictionary<string, PropertyInfo> GetProperties(Type type)
+        {
+            if (!_cache.TryGetValue(type, out Dictionary<string, PropertyInfo>? properties))
+            {
+                properties = type.GetProperties().ToDictionary(p => p.Name, StringComparer.InvariantCultureIgnoreCase);
+
+                var cacheEntryOptions = new MemoryCacheEntryOptions
+                {
+                    SlidingExpiration = TimeSpan.FromMinutes(5)
+                };
+
+                _cache.Set(type, properties, cacheEntryOptions);
+            }
+
+            return properties;
+        }
+    }
+        /// <summary>
+        /// Public core class methods for locking, reading, writing and managing tasks related to queries.
+        /// </summary>
     public class QueryManager<TData> where TData : IStringable
     {
         private readonly EngineCore<TData> _core;
-        public QueryAPIHandlers APIHandlers { get; private set; }
+        public QueryAPIHandlers<TData> APIHandlers { get; private set; }
 
         /// <summary>
         /// Tokens that will be replaced by literal values by the tokenizer.
@@ -31,16 +113,16 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         internal QueryManager(EngineCore<TData> core)
         {
             _core = core;
-            APIHandlers = new QueryAPIHandlers(core);
+            APIHandlers = new QueryAPIHandlers<TData>(core);
 
             //Define all query literal constants here, these will be filled in my the tokenizer. Do not use quotes for strings.
             KbGlobalConstants.Add("true", new("1", KbBasicDataType.Numeric));
             KbGlobalConstants.Add("false", new("0", KbBasicDataType.Numeric));
             KbGlobalConstants.Add("null", new(null, KbBasicDataType.Undefined));
 
-            SystemFunctionCollection.Initialize();
-            ScalerFunctionCollection.Initialize();
-            AggregateFunctionCollection.Initialize();
+            SystemFunctionCollection<TData>.Initialize();
+            ScalerFunctionCollection<TData>.Initialize();
+            AggregateFunctionCollection<TData>.Initialize();
         }
 
         #region Internal helpers.
@@ -55,7 +137,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <exception cref="KbMultipleRecordSetsException"></exception>
         internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
         {
-            var preparedQueries = StaticQueryParser.ParseBatch(_core, queryText, userParameters.ToUserParametersInsensitiveDictionary());
+            var preparedQueries = StaticQueryParser<TData>.ParseBatch(_core, queryText, userParameters.ToUserParametersInsensitiveDictionary());
             if (preparedQueries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
@@ -78,7 +160,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <exception cref="KbMultipleRecordSetsException"></exception>
         internal void ExecuteNonQuery(SessionState session, string queryText)
         {
-            var preparedQueries = StaticQueryParser.ParseBatch(_core, queryText);
+            var preparedQueries = StaticQueryParser<TData>.ParseBatch(_core, queryText);
             if (preparedQueries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
@@ -170,7 +252,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 statement.Append(')');
             }
 
-            var batch = StaticQueryParser.ParseBatch(_core, statement.ToString());
+            var batch = StaticQueryParser<TData>.ParseBatch(_core, statement.ToString());
             if (batch.Count > 1)
             {
                 throw new KbEngineException("Expected only one procedure call per batch.");

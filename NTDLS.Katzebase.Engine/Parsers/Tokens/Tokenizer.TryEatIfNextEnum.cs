@@ -2,7 +2,7 @@
 
 namespace NTDLS.Katzebase.Engine.Parsers.Tokens
 {
-    internal partial class Tokenizer
+    internal partial class Tokenizer<TData> where TData : IStringable
     {
         public bool TryEatIfNextEnum<T>(char[] delimiters, out string outFoundToken, [NotNullWhen(true)] out T? value) where T : Enum
         {

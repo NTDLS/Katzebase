@@ -15,17 +15,17 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// <summary>
         /// Collapses a QueryField expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
-        public static TData CollapseAggregateQueryField<TData>(this QueryField queryField, Transaction<TData> transaction,
+        public static TData CollapseAggregateQueryField<TData>(this QueryField<TData> queryField, Transaction<TData> transaction,
             PreparedQuery<TData> query, KbInsensitiveDictionary<GroupAggregateFunctionParameter<TData>> aggregateFunctionParameters)
             where TData : IStringable
         {
-            if (queryField.Expression is QueryFieldExpressionNumeric expressionNumeric)
+            if (queryField.Expression is QueryFieldExpressionNumeric<TData> expressionNumeric)
             {
-                return CollapseAggregateFunctionNumericParameter(transaction, query, expressionNumeric.FunctionDependencies, aggregateFunctionParameters, expressionNumeric.Value);
+                return CollapseAggregateFunctionNumericParameter(transaction, query, expressionNumeric.FunctionDependencies, aggregateFunctionParameters, expressionNumeric.Value.ToT<string>());
             }
-            else if (queryField.Expression is QueryFieldExpressionString expressionString)
+            else if (queryField.Expression is QueryFieldExpressionString<TData> expressionString)
             {
-                return CollapseAggregateFunctionStringParameter(transaction, query, expressionString.FunctionDependencies, aggregateFunctionParameters, expressionString.Value);
+                return CollapseAggregateFunctionStringParameter(transaction, query, expressionString.FunctionDependencies, aggregateFunctionParameters, expressionString.Value.ToT<string>());
             }
             else
             {

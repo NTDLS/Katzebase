@@ -44,19 +44,19 @@ namespace NTDLS.Katzebase.Engine.Documents
         }
 
         /*
-        public IEnumerable<DocumentPointer> ConsolidatedDocumentPointers()
+        public IEnumerable<DocumentPointer<TData>> ConsolidatedDocumentPointers()
         {
-            return PageMappings.SelectMany(o => o.DocumentIDs.Select(h => new DocumentPointer(o.PageNumber, h)));
+            return PageMappings.SelectMany(o => o.DocumentIDs.Select(h => new DocumentPointer<TData>(o.PageNumber, h)));
         }
 
-        public IEnumerable<DocumentPointer> FindDocumentPointer(uint documentId)
+        public IEnumerable<DocumentPointer<TData>> FindDocumentPointer(uint documentId)
         {
-            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => g == documentId).Select(h => new DocumentPointer(o.PageNumber, h)));
+            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => g == documentId).Select(h => new DocumentPointer<TData>(o.PageNumber, h)));
         }
 
-        public IEnumerable<DocumentPointer> FindDocumentPointers(HashSet<uint> documentIds)
+        public IEnumerable<DocumentPointer<TData>> FindDocumentPointers(HashSet<uint> documentIds)
         {
-            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => documentIds.Contains(g)).Select(h => new DocumentPointer(o.PageNumber, h)));
+            return PageMappings.SelectMany(o => o.DocumentIDs.Where(g => documentIds.Contains(g)).Select(h => new DocumentPointer<TData>(o.PageNumber, h)));
         }
 
         public PhysicalDocumentPageCatalogItem? GetDocumentPageMap(uint documentId)

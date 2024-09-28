@@ -21,10 +21,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     {
                         throw new KbGenericException($"Value for [{name}] cannot be null.");
                     }
-                    return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
+                    //return Converters.ConvertTo<T>(parameter.Parameter.DefaultValue);
+                    return parameter.Parameter.DefaultValue.ToT<T>();
                 }
 
-                return Converters.ConvertTo<T>(parameter.Value);
+                //return Converters.ConvertTo<T>(parameter.Value);
+                return parameter.Value.ToT<T>();
             }
             catch (Exception ex)
             {
@@ -36,13 +38,14 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
         {
             try
             {
-                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name)).Value;
                 if (value == null)
                 {
                     return defaultValue;
                 }
 
-                return Converters.ConvertTo<T>(value);
+                //return Converters.ConvertTo<T>(value);
+                return value.ToT<T>();
             }
             catch (Exception ex)
             {
@@ -63,10 +66,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     {
                         throw new KbGenericException($"Value for [{name}] cannot be null.");
                     }
-                    return Converters.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
+                    //return Converters.ConvertToNullable<T>(parameter.Parameter.DefaultValue);
+                    return parameter.Parameter.DefaultValue.ToT<T>();
                 }
 
-                return Converters.ConvertToNullable<T>(parameter.Value);
+                //return Converters.ConvertToNullable<T>(parameter.Value);
+                return parameter.Value.ToT<T>();
             }
             catch (Exception ex)
             {
@@ -78,13 +83,14 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
         {
             try
             {
-                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name))?.Value;
+                var value = Values.FirstOrDefault(o => o.Parameter.Name.Is(name)).Value;
                 if (value == null)
                 {
                     return defaultValue;
                 }
 
-                return Converters.ConvertToNullable<T>(value);
+                //return Converters.ConvertToNullable<T>(value);
+                return value.ToT<T>();
             }
             catch (Exception ex)
             {

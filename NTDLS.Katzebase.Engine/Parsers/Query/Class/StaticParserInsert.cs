@@ -5,7 +5,7 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserInsert
+    internal static class StaticParserInsert<TData> where TData : IStringable
     {
         /*Example (ragged key/value pair):
          * insert into Test
@@ -25,9 +25,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             ValueListPossibleSelectFrom
         }
 
-        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Insert);
+            var query = new PreparedQuery<TData>(queryBatch, QueryType.Insert);
 
             tokenizer.EatIfNext("into");
 
@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
             {
                 throw new KbParserException($"Invalid query. Found [{schemaName}], expected: schema name.");
             }
-            query.Schemas.Add(new QuerySchema(schemaName));
+            query.Schemas.Add(new QuerySchema<TData>(schemaName));
 
             var fieldParserType = FieldParserType.None;
 
@@ -61,13 +61,13 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
             if (fieldParserType == FieldParserType.KeyValue)
             {
-                query.InsertFieldValues = new List<QueryFieldCollection>();
+                query.InsertFieldValues = new List<QueryFieldCollection<TData>>();
 
                 while (!tokenizer.IsExhausted())
                 {
                     tokenizer.EatIfNext('('); //Beginning of key/values set.
 
-                    var queryFieldCollection = new QueryFieldCollection(queryBatch);
+                    var queryFieldCollection = new QueryFieldCollection<TData>(queryBatch);
 
                     while (!tokenizer.IsExhausted())
                     {
@@ -75,9 +75,9 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                         tokenizer.EatIfNext('=');
                         bool isTextRemaining = tokenizer.EatGetSingleFieldExpression([")"], out var fieldExpression);
 
-                        var queryField = StaticParserField.Parse(tokenizer, fieldExpression, queryFieldCollection);
+                        var queryField = StaticParserField<TData>.Parse(tokenizer, fieldExpression, queryFieldCollection);
 
-                        queryFieldCollection.Add(new QueryField(fieldName, queryFieldCollection.Count, queryField));
+                        queryFieldCollection.Add(new QueryField<TData>(fieldName, queryFieldCollection.Count, queryField));
 
                         if (isTextRemaining == false)
                         {
@@ -104,21 +104,21 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 {
                     //We have a values list.
 
-                    query.InsertFieldValues = new List<QueryFieldCollection>();
+                    query.InsertFieldValues = new List<QueryFieldCollection<TData>>();
 
                     while (!tokenizer.IsExhausted())
                     {
                         tokenizer.EatIfNext('('); //Beginning of key/values set.
 
-                        var queryFieldCollection = new QueryFieldCollection(queryBatch);
+                        var queryFieldCollection = new QueryFieldCollection<TData>(queryBatch);
 
                         while (!tokenizer.IsExhausted())
                         {
                             bool isTextRemaining = tokenizer.EatGetSingleFieldExpression([")"], out var fieldExpression);
 
-                            var queryField = StaticParserField.Parse(tokenizer, fieldExpression, queryFieldCollection);
+                            var queryField = StaticParserField<TData>.Parse(tokenizer, fieldExpression, queryFieldCollection);
 
-                            queryFieldCollection.Add(new QueryField(query.InsertFieldNames[queryFieldCollection.Count], queryFieldCollection.Count, queryField));
+                            queryFieldCollection.Add(new QueryField<TData>(query.InsertFieldNames[queryFieldCollection.Count], queryFieldCollection.Count, queryField));
 
                             if (isTextRemaining == false)
                             {
@@ -148,7 +148,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                 }
                 else if (tokenizer.TryEatIfNext("select"))
                 {
-                    query.InsertSelectQuery = StaticParserSelect.Parse(queryBatch, tokenizer);
+                    query.InsertSelectQuery = StaticParserSelect<TData>.Parse(queryBatch, tokenizer);
                 }
                 else
                 {

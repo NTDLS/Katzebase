@@ -4,11 +4,11 @@ using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserDropProcedure
+    internal static class StaticParserDropProcedure<TData> where TData : IStringable
     {
-        internal static PreparedQuery Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        internal static PreparedQuery<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
-            var query = new PreparedQuery(queryBatch, QueryType.Drop)
+            var query = new PreparedQuery<TData>(queryBatch, QueryType.Drop)
             {
                 SubQueryType = SubQueryType.Procedure
             };

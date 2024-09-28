@@ -73,7 +73,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 "datetimeutc" => ScalerDateTimeUTC.Execute(function),
                 "documentid" => ScalerDocumentID.Execute(function, rowValues),
                 "documentpage" => ScalerDocumentPage.Execute(function, rowValues),
-                "documentuid" => ScalerDocumentUID.Execute(function, rowValues),
+                "documentuid" => ScalerDocumentUID.Execute(function, rowValues).ToT<string>(),
                 "guid" => ScalerGuid.Execute(function),
                 "iif" => ScalerIIF.Execute(function),
                 "indexof" => ScalerIndexOf.Execute(function),

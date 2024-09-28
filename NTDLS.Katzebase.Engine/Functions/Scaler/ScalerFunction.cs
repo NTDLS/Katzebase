@@ -23,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
         public static ScalerFunction<TData> Parse(string prototype)
         {
-            var tokenizer = new Tokenizer(prototype, true);
+            var tokenizer = new Tokenizer<TData>(prototype, true);
 
             var returnType = tokenizer.EatIfNextEnum<KbScalerFunctionParameterType>();
 
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
             foreach (var parametersString in parametersStrings)
             {
-                var paramTokenizer = new Tokenizer(parametersString);
+                var paramTokenizer = new Tokenizer<TData>(parametersString);
 
                 var paramType = paramTokenizer.EatIfNextEnum<KbScalerFunctionParameterType>();
 
@@ -77,12 +77,12 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                     }
 
                     var optionalParameterDefaultValue = tokenizer.ResolveLiteral(paramTokenizer.EatGetNext());
-                    if (optionalParameterDefaultValue == null || optionalParameterDefaultValue?.Is("null") == true)
+                    if (optionalParameterDefaultValue == null || optionalParameterDefaultValue.ToT<string>() == "null")
                     {
-                        optionalParameterDefaultValue = null;
+                        optionalParameterDefaultValue = default;
                     }
 
-                    parameters.Add(new ScalerFunctionParameterPrototype<TData>(paramType, parameterName, (TData)(optionalParameterDefaultValue?.ToStringable() ?? StringExtensions.Empty())));
+                    parameters.Add(new ScalerFunctionParameterPrototype<TData>(paramType, parameterName, optionalParameterDefaultValue ?? (TData)StringExtensions.Empty));
 
                     foundOptionalParameter = true;
                 }

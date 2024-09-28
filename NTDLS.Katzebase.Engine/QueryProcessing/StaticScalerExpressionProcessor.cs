@@ -68,9 +68,9 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
             {
                 return query.Batch.GetLiteralValue(constantNumeric.Value.ToT<string>()) ?? (TData)StringExtensions.Empty;
             }
-            else if (queryField is QueryFieldConstantString constantString)
+            else if (queryField is QueryFieldConstantString<TData> constantString)
             {
-                return query.Batch.GetLiteralValue(constantString.Value) ?? (TData)StringExtensions.Empty;
+                return query.Batch.GetLiteralValue(constantString.Value.ToT<string>()) ?? (TData)StringExtensions.Empty;
             }
             else if (queryField is QueryFieldCollapsedValue<TData> collapsedValue)
             {
@@ -110,7 +110,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing
         /// Collapses a string or numeric expression into a single value. This includes doing string concatenation, math and all recursive function calls.
         /// </summary>
         private static TData? CollapseScalerExpression<TData>(Transaction<TData> transaction,
-            PreparedQuery<TData> query, QueryFieldCollection<TData> fieldCollection, KbInsensitiveDictionary<TData?> auxiliaryFields, ExposedExpression expression) where TData:IStringable
+            PreparedQuery<TData> query, QueryFieldCollection<TData> fieldCollection, KbInsensitiveDictionary<TData?> auxiliaryFields, ExposedExpression<TData?> expression) where TData:IStringable
         {
             if (expression.FieldExpression is QueryFieldExpressionNumeric<TData> expressionNumeric)
             {

@@ -6,9 +6,9 @@ using NTDLS.Katzebase.Engine.Parsers.Tokens;
 
 namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 {
-    internal static class StaticParserWhere
+    internal static class StaticParserWhere<TData> where TData : IStringable
     {
-        public static ConditionCollection Parse(QueryBatch<TData> queryBatch, Tokenizer tokenizer)
+        public static ConditionCollection<TData> Parse(QueryBatch<TData> queryBatch, Tokenizer<TData> tokenizer)
         {
             //Look for tokens that would mean the end of the where clause
             if (tokenizer.TryGetNextIndexOfAny([" group ", " order ", " offset ", " inner "], out int endOfWhere) == false)

@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {
     internal class SchemaIntersectionRow<TData> : List<TData?> where TData :IStringable
     {
-        public KbInsensitiveDictionary<DocumentPointer> SchemaDocumentPointers { get; private set; } = new();
+        public KbInsensitiveDictionary<DocumentPointer<TData>> SchemaDocumentPointers { get; private set; } = new();
 
         /// <summary>
         /// The schemas that were used to make up this row.
@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
             this[ordinal] = value;
         }
 
-        public void AddSchemaDocumentPointer(string schemaPrefix, DocumentPointer documentPointer)
+        public void AddSchemaDocumentPointer(string schemaPrefix, DocumentPointer<TData> documentPointer)
         {
             SchemaDocumentPointers.Add(schemaPrefix, documentPointer);
         }

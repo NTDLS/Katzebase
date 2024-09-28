@@ -11,7 +11,7 @@
     internal class DocumentPointerMatchCollection : Dictionary<uint, DocumentPointerMatch>
     {
         //Add the first item to the dictionary when its constructed.
-        public DocumentPointerMatch Upsert(DocumentPointer documentPointer)
+        public DocumentPointerMatch Upsert(DocumentPointer<TData> documentPointer)
         {
             if (ContainsKey(documentPointer.DocumentId) == false)
             {

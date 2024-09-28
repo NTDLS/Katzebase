@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
         /// <summary>
         /// Parses "with options" and returns the dictionary of values that can be added to a prepared query.
         /// </summary>
-        internal static Dictionary<PreparedQuery<TData>.QueryAttribute, object> Parse<TData>(Tokenizer tokenizer, ExpectedWithOptions expectedOptions)
+        internal static Dictionary<PreparedQuery<TData>.QueryAttribute, object> Parse<TData>(Tokenizer<TData> tokenizer, ExpectedWithOptions expectedOptions)
             where TData : IStringable
         {
             var results = new Dictionary<PreparedQuery<TData>.QueryAttribute, object>();
@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
 
                 if (tokenizer.Literals.TryGetValue(tokenValue, out var literal))
                 {
-                    tokenValue = literal.Value;
+                    tokenValue = literal.Value.ToT<string>();
                 }
 
                 var convertedValue = expectedOptions.ValidateAndConvert(name, tokenValue);

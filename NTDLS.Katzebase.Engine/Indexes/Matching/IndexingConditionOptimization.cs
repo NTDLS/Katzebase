@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// Takes a nested set of conditions and returns a clone of the conditions with associated selection of indexes.
         /// </summary>
         public static IndexingConditionOptimization<TData> BuildTree(EngineCore<TData> core, Transaction<TData> transaction, PreparedQuery<TData> query,
-            PhysicalSchema physicalSchema, ConditionCollection<TData> conditions, string workingSchemaPrefix)
+            PhysicalSchema<TData> physicalSchema, ConditionCollection<TData> conditions, string workingSchemaPrefix)
         {
             var optimization = new IndexingConditionOptimization<TData>(transaction, conditions);
 
@@ -252,7 +252,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
         /// <summary>
         /// This function makes returns a string that represents how and where indexes are used to satisfy a query.
         /// </summary>
-        public static string ExplainPlan(PhysicalSchema physicalSchema, IndexingConditionOptimization<TData> optimization, PreparedQuery<TData> query, string workingSchemaPrefix)
+        public static string ExplainPlan(PhysicalSchema<TData> physicalSchema, IndexingConditionOptimization<TData> optimization, PreparedQuery<TData> query, string workingSchemaPrefix)
         {
             var result = new StringBuilder();
 
@@ -276,7 +276,7 @@ namespace NTDLS.Katzebase.Engine.Indexes.Matching
             return result.ToString();
         }
 
-        private static void ExplainPlanRecursive(PhysicalSchema physicalSchema, IndexingConditionOptimization<TData> optimization,
+        private static void ExplainPlanRecursive(PhysicalSchema<TData> physicalSchema, IndexingConditionOptimization<TData> optimization,
             string workingSchemaPrefix, ConditionGroup<TData> givenConditionGroup, PreparedQuery<TData> query, StringBuilder result)
         {
             if (givenConditionGroup.IndexLookup != null)

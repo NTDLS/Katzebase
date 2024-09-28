@@ -1,3 +1,4 @@
+using NTDLS.Katzebase.Engine;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using Serilog;
 using Topshelf;
@@ -6,6 +7,8 @@ using Topshelf.ServiceConfigurators;
 
 namespace NTDLS.Katzebase.Server
 {
+
+    
     public class Program
     {
         public class KatzebaseService

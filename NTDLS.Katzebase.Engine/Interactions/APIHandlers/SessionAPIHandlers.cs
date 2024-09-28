@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 //_core.Query.ExecuteNonQuery(systemSession.Session, "insert into master:account (\r\nUsername = 'admin', PasswordHash = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'\r\n)");
                 //systemSession.Commit();
 #endif
-                var account = _core.Query.ExecuteQuery<Account>(systemSession.Session,
+                var account = _core.Query.ExecuteQuery<Account<TData>>(systemSession.Session,
                     $"SELECT Username, PasswordHash FROM Master:Account WHERE Username = @Username AND PasswordHash = @PasswordHash",
                     new
                     {

@@ -125,11 +125,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                 else if (item is ConditionEntry<TData> entry)
                 {
                     string left;
-                    if (entry.Left is QueryFieldExpressionNumeric)
+                    if (entry.Left is QueryFieldExpressionNumeric<TData>)
                     {
                         left = "(Numeric Expression)";
                     }
-                    else if (entry.Left is QueryFieldExpressionString)
+                    else if (entry.Left is QueryFieldExpressionString<TData>)
                     {
                         left = "(String Expression)";
                     }
@@ -139,11 +139,11 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions
                     }
 
                     string right;
-                    if (entry.Right is QueryFieldExpressionNumeric)
+                    if (entry.Right is QueryFieldExpressionNumeric<TData>)
                     {
                         right = "(Numeric Expression)";
                     }
-                    else if (entry.Right is QueryFieldExpressionString)
+                    else if (entry.Right is QueryFieldExpressionString<TData>)
                     {
                         right = "(String Expression)";
                     }
