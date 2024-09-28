@@ -5,106 +5,111 @@
         /// <summary>
         /// If true, the all applicable IO operations will be cached on read and write.
         /// </summary>
-        public bool CacheEnabled { get; set; }
+        public bool CacheEnabled { get; set; } = true;
         /// <summary>
         /// The maximum amount of memory in megabytes that the server will be allowed to use before scavenging the cache.
         /// </summary>
-        public int CacheMaxMemoryMegabytes { get; set; }
+        public int CacheMaxMemoryMegabytes { get; set; } = 4096;
 
         /// <summary>
         /// The number of memory cache partitions to create. (0 = CPU Count)
         /// </summary>
-        public int CachePartitions { get; set; }
+        public int CachePartitions { get; set; } = 0;
 
         /// <summary>
         /// The number of seconds between cache scavenge operations. This is when the cache manager enforces memory limits by ejecting
         /// lesser used cache items.
         /// </summary>
-        public int CacheScavengeInterval { get; set; }
+        public int CacheScavengeInterval { get; set; } = 10;
 
         /// <summary>
         /// The number of seconds to keep an item in cache (sliding expiration).
         /// </summary>
-        public int CacheSeconds { get; set; }
+        public int CacheSeconds { get; set; } = 3600;
 
         /// <summary>
         /// The number of documents to be stored per file in the schema. When documents are needed from the disk, the entire page will be read.
         /// The right number strikes the balance between disk trashing and optimal disk reads. This is also the minimum locking granularity.
         /// </summary>
-        public uint DefaultDocumentPageSize { get; set; }
+        public uint DefaultDocumentPageSize { get; set; } = 100;
+
+        /// <summary>
+        /// Number of seconds between operations that check for low server activity before performing LOH compaction. (0 = disabled)
+        /// </summary>
+        public int LargeObjectHeapCompactionInterval { get; set; } = 60;
 
         /// <summary>
         /// Whether documents, pages and indexes will be stored compressed. Don't worry, you can open them in 7-Zip.
         /// </summary>
-        public bool UseCompression { get; set; }
+        public bool UseCompression { get; set; } = true;
 
         /// <summary>
         /// The number of index partitions to create when the partition count is unspecified at index creation.
         /// </summary>
-        public uint DefaultIndexPartitions { get; set; }
+        public uint DefaultIndexPartitions { get; set; } = 100;
 
         /// <summary>
         /// The number of threads to allocate to the indexing thread pool.
         /// </summary>
-        public int IndexingThreadPoolSize { get; set; }
+        public int IndexingThreadPoolSize { get; set; } = 0;
 
         /// <summary>
         /// The maximum number of items to queue in the thread pool.
         /// </summary>
-        public int IndexingThreadPoolQueueDepth { get; set; }
+        public int IndexingThreadPoolQueueDepth { get; set; } = 10000;
 
         /// <summary>
         /// The maximum number of items to queue in each child thread pool per operation.
         /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
         /// </summary>
-        public int IndexingOperationThreadPoolQueueDepth { get; set; }
+        public int IndexingOperationThreadPoolQueueDepth { get; set; } = 100;
 
         /// <summary>
         /// The number of threads to allocate to the thread pool.
         /// </summary>
-        public int LookupThreadPoolSize { get; set; }
+        public int LookupThreadPoolSize { get; set; } = 0;
 
         /// <summary>
         /// The maximum number of items to queue in the thread pool.
         /// </summary>
-        public int LookupThreadPoolQueueDepth { get; set; }
+        public int LookupThreadPoolQueueDepth { get; set; } = 10000;
 
         /// <summary>
         /// The maximum number of items to queue in each child thread pool per operation.
         /// Higher values can increase memory pressure and greatly increase the duration of transaction cancelation.
         /// </summary>
-        public int LookupOperationThreadPoolQueueDepth { get; set; }
+        public int LookupOperationThreadPoolQueueDepth { get; set; } = 100;
 
         /// <summary>
         /// Whether the engine will keep health metrics.
         /// </summary>
-        public bool HealthMonitoringEnabled { get; set; }
+        public bool HealthMonitoringEnabled { get; set; } = true;
 
         /// <summary>
         /// Whether the engine will keep instance level health metrics. This can be useful but will have a serious impact on performance.
         /// Must also enable [HealthMonitoringEnabled].
         /// </summary>
-        public bool HealthMonitoringInstanceLevelEnabled { get; set; }
+        public bool HealthMonitoringInstanceLevelEnabled { get; set; } = false;
 
         /// <summary>
         /// The total number of seconds that instance level counters should stay in the health monitor for observation.
         /// </summary>
-        public int HealthMonitoringInstanceLevelTimeToLiveSeconds { get; set; }
+        public int HealthMonitoringInstanceLevelTimeToLiveSeconds { get; set; } = 600;
 
         /// <summary>
-        /// The maximum number of seconds to wait for a transaction to acquire a lock before timing out.
+        /// The maximum number of seconds to wait for a transaction to acquire a lock before timing out. (0 = infinite)
         /// </summary>
-        public int LockWaitTimeoutSeconds { get; set; }
+        public int LockWaitTimeoutSeconds { get; set; } = 0;
 
         /// <summary>
         /// The number of seconds between writing health statistics to disk and trimming any instance level counters.
         /// </summary>
-        public int HealthMonitoringCheckpointSeconds { get; set; }
+        public int HealthMonitoringCheckpointSeconds { get; set; } = 600;
 
         /// <summary>
         /// The TCP/IP listen port for the server.
         /// </summary>
-        public int ListenPort { get; set; }
+        public int ListenPort { get; set; } = 6858;
 
         /// <summary>
         /// The top level directory for all schemas.

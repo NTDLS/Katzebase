@@ -1,6 +1,8 @@
 ﻿using NTDLS.FastMemoryCache;
 using NTDLS.FastMemoryCache.Metrics;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -11,6 +13,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     {
         private readonly EngineCore _core;
         private readonly PartitionedMemoryCache _cache;
+        private bool _keepRunning = false;
 
         internal int PartitionCount { get; private set; }
 
@@ -29,6 +32,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 };
 
                 _cache = new PartitionedMemoryCache(config);
+
+                _keepRunning = true;
+
+                new Thread(() => CacheMonitorThreadProc()).Start();
             }
             catch (Exception ex)
             {
@@ -37,9 +44,45 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal void Close()
+        internal void Stop()
         {
+            _keepRunning = false;
             _cache.Dispose();
+        }
+
+        private void CacheMonitorThreadProc()
+        {
+            var lastPollTime = DateTime.UtcNow;
+
+            while (_keepRunning)
+            {
+                if (DateTime.UtcNow - lastPollTime > TimeSpan.FromSeconds(_core.Settings.LargeObjectHeapCompactionInterval))
+                {
+                    lastPollTime = DateTime.UtcNow;
+                    if (_core.Transactions == null)
+                    {
+                        continue;
+                    }
+                    var privateMemory = Process.GetCurrentProcess().PrivateMemorySize64 / 1024 / 1024;
+
+                    var areTransactionsActive = _core.Transactions.Snapshot().Count != 0;
+
+                    //If there are no active transactions or we are over a given threshold of memory.
+                    if (areTransactionsActive == false || privateMemory > _core.Settings.CacheMaxMemoryMegabytes * 1.25)
+                    {
+                        GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
+                        if (areTransactionsActive == false)
+                        {
+                            GC.Collect(GC.MaxGeneration, GCCollectionMode.Aggressive, true, true);
+                        }
+                        else
+                        {
+                            GC.Collect(GC.MaxGeneration, GCCollectionMode.Forced, false, false);
+                        }
+                    }
+                }
+                Thread.Sleep(500);
+            }
         }
 
         internal void Upsert(string key, object value, int approximateSizeInBytes = 0)

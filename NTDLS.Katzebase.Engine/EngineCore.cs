@@ -97,10 +97,10 @@ namespace NTDLS.Katzebase.Engine
             ThreadPool.Stop();
 
             LogManager.Information("Stopping cache manager.");
-            Cache.Close();
+            Cache.Stop();
 
             LogManager.Information("Stopping health manager.");
-            Health.Close();
+            Health.Stop();
         }
     }
 }

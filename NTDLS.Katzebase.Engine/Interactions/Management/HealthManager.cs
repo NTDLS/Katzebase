@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        public void Close()
+        public void Stop()
         {
             Checkpoint();
         }

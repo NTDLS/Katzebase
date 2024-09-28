@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Engine;
 using NTDLS.Katzebase.Engine.Interactions.Management;
@@ -17,14 +18,9 @@ namespace NTDLS.Katzebase.Server
         {
             try
             {
-                string json = File.ReadAllText("appsettings.json");
+                _settings = LoadSettings("appsettings.json");
 
-                var settings = JsonConvert.DeserializeObject<KatzebaseSettings>(json)
-                    ?? throw new Exception("Failed to load settings");
-
-                _settings = settings;
-
-                _core = new EngineCore(settings);
+                _core = new EngineCore(_settings);
 
                 _messageServer = new RmServer();
                 _messageServer.OnException += RmServer_OnException;
@@ -45,6 +41,62 @@ namespace NTDLS.Katzebase.Server
                 LogManager.Error(ex);
                 throw;
             }
+        }
+
+        private KatzebaseSettings LoadSettings(string fileName)
+        {
+            var defaultSettings = new KatzebaseSettings();
+
+            //File doesn't exist? Create it and return the default configuration.
+            if (File.Exists(fileName) == false)
+            {
+                try
+                {
+                    File.WriteAllText(fileName, JsonConvert.SerializeObject(defaultSettings));
+                }
+                catch (Exception ex)
+                {
+                    LogManager.Error($"Failed to create default settings file: [{fileName}], Error: {ex.Message}.");
+                }
+                return defaultSettings;
+            }
+
+            var settingsJson = File.ReadAllText(fileName).Trim();
+
+            //File was empty? Create a new one and return the default configuration.
+            if (string.IsNullOrEmpty(settingsJson))
+            {
+                try
+                {
+                    File.WriteAllText(fileName, JsonConvert.SerializeObject(defaultSettings));
+                }
+                catch (Exception ex)
+                {
+                    LogManager.Error($"Failed to create default settings file: [{fileName}], Error: {ex.Message}.");
+                }
+                return defaultSettings;
+            }
+
+            try
+            {
+                var loadedSettings = JsonConvert.DeserializeObject<KatzebaseSettings>(settingsJson);
+
+                //Failed to deserialization? Return the default configuration.
+                if (loadedSettings == null)
+                {
+                    LogManager.Error($"Failed to deserialize settings file: [{fileName}], Error: deserialization resulted in null.");
+                    return defaultSettings;
+                }
+                return loadedSettings;
+            }
+            catch (Exception ex)
+            {
+                LogManager.Error($"Failed to deserialize settings file: [{fileName}], Error: {ex.Message}.");
+            }
+
+            //All else failed, return the default configuration.
+            LogManager.Error($"Failed to load settings file: [{fileName}], using default configuration.");
+            return defaultSettings;
         }
 
         public void Start()

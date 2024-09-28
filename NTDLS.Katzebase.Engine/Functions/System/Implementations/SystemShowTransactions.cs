@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                     $"{txSnapshot?.GrantedLockCache?.Count:n0}",
                     $"{txSnapshot?.FilesReadForCache?.Count:n0}",
                     $"{txSnapshot?.DeferredIOs?.Count():n0}",
-                    $"{!(txSnapshot?.IsCommittedOrRolledBack == true)}",
+                    $"{(txSnapshot?.IsCommittedOrRolledBack == false)}",
                     $"{txSnapshot?.IsDeadlocked}",
                     $"{txSnapshot?.IsCancelled}",
                     $"{txSnapshot?.IsUserCreated}"
