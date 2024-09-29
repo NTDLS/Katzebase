@@ -1,21 +1,19 @@
-select
-	Count(0) as ss,
-	CountDistinct(0) as ss
-
-from single
 
 --region TestCode
 
 --region TestCode
-/*
+
 SELECT
+
     11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
+    6 * -1 as Negative,
     10 + 10 + (11 ^ 3) + 10 + '->' + Guid(),
     10 + 10 + 'ten' + 10 * 10,
     'ten (' + 10 * 10 + ') : ' + DateTimeUTC('yyyy/MM/dd hh:mm:ss tt')
 FROM
 	Single
 --endregion
+/*
 SELECT
 	U.Id,
 	U.DisplayName,

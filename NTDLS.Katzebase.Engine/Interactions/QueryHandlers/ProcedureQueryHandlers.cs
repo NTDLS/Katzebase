@@ -4,6 +4,7 @@ using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Functions.System;
 using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Sessions;
+using NTDLS.Katzebase.Parsers.Functions.System;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using static NTDLS.Katzebase.Parsers.Constants;
 

@@ -1,4 +1,5 @@
-﻿namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
+﻿using NTDLS.Katzebase.Parsers.Functions.Scaler;
+namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {
     internal static class ScalerIsDouble
     {

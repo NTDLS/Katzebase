@@ -1,12 +1,12 @@
 ﻿using NTDLS.Katzebase.Client;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
-using NTDLS.Katzebase.Engine.Functions.Aggregate;
-using NTDLS.Katzebase.Engine.Functions.Scaler;
-using NTDLS.Katzebase.Engine.Functions.System;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers;
+using NTDLS.Katzebase.Parsers.Functions.Aggregate;
+using NTDLS.Katzebase.Parsers.Functions.Scaler;
+using NTDLS.Katzebase.Parsers.Functions.System;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;

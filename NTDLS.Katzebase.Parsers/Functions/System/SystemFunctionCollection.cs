@@ -6,6 +6,31 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
 {
     public static class SystemFunctionCollection
     {
+        internal static string[] PrototypeStrings = {
+                //Prototype Format: "functionName (parameterDataType parameterName, parameterDataType parameterName = defaultValue)"
+                //Parameters that have a default specified are considered optional, they should come after non-optional parameters.
+                "CheckpointHealthCounters()|'Writes the health counters to disk. This can be useful when performance monitoring and you need to get the metrics out of the database engine and into the json file.'",
+                "ClearCacheAllocations()|'Clears the internal memory cache collection. This does not release memory to the operating system, but leaves the memory allocated to free cache slots to be used for further cache operations. If the memory needs to be immediately freed, then use ReleaseCacheAllocations.'",
+                "ClearHealthCounters()|'Clears the health counters that are tracked by the engine. This can be helpful when performance tuning.'",
+                "ReleaseCacheAllocations()|'Releases unused memory from the internal memory cache back to the operating system. Call ClearCache before calling ReleaseCacheAllocations to maximize the memory that will be released.'",
+                "ShowAggregateFunctions()|'Displays the list of built-in aggregation functions and their parameters.'",
+                "ShowBlocks(Numeric processId=null)|'Shows blocks associated with a each process, optionally specifying a process id to filter on.'",
+                "ShowBlockTree()|'Shows all blocking processes and their blocks as well as the resources they are waiting on.'",
+                "ShowCacheAllocations()|'Shows the cache allocation details. This system procedure will show each file in the cache, how long its been there, how many times its been read/written and how large it is.'",
+                "ShowCachePages()|'Much like ShowCacheAllocations, but ShowCachePages only displays information about cached database pages. Notably, this procedure also shows the count of documents in each page.'",
+                "ShowCachePartitions()|'Shows the memory allocations by memory cache partition and the fullness of each partition.'",
+                "ShowHealthCounters()|'Shows the health counters that are tracked by the engine.'",
+                "ShowLocks(Numeric processId=null)|'Shows all locks, what type of lock and the object which has been locked. Optionally specifying a process id to filter by.'",
+                "ShowMemoryUtilization()|'Shows the operating system level memory utilization used by the database engine.'",
+                "ShowProcesses(numeric processId=null)|'Shows all active processes, their session ID, process ID and various transaction information. Optionally specifying a process id to filter on.'",
+                "ShowScalerFunctions()|'Displays the list of built-in scaler functions and their parameters.'",
+                "ShowSystemFunctions()|'Displays the list of built-in system functions and their parameters.'",
+                "ShowTransactions(Numeric processId=null)|'Shows all transactions that are current active. Optionally specifying a process id.'",
+                "ShowVersion(Boolean showAll=false)|'Shows the names and versions of all loaded assemblies.'",
+                "ShowWaitingLocks(Numeric processId=null)|'Shows all processes that are currently waiting on a lock an provides information about those locks.'",
+                "Terminate(Numeric processId)|'The terminate directive terminates (or kills) an existing running process. This termination will terminate any in-progress transaction, roll it back, disconnect the process and free any resources associated with it.'",
+            };
+
         private static List<SystemFunction>? _protypes = null;
         public static List<SystemFunction> Prototypes
         {
@@ -19,13 +44,13 @@ namespace NTDLS.Katzebase.Parsers.Functions.System
             }
         }
 
-        public static void Initialize(string[] prototypeStrings)
+        public static void Initialize()
         {
             if (_protypes == null)
             {
                 _protypes = new();
 
-                foreach (var prototype in prototypeStrings)
+                foreach (var prototype in PrototypeStrings)
                 {
                     _protypes.Add(SystemFunction.Parse(prototype));
                 }
