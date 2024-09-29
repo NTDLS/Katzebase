@@ -10,11 +10,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
     public class ScalerFunction<TData> where TData : IStringable
     {
         public string Name { get; private set; }
+        public string Description { get; private set; }
+
         public KbScalerFunctionParameterType ReturnType { get; private set; }
         public List<ScalerFunctionParameterPrototype<TData>> Parameters { get; private set; } = new();
 
 
-        public ScalerFunction(string name, KbScalerFunctionParameterType returnType, List<ScalerFunctionParameterPrototype<TData>> parameters)
+        public ScalerFunction(string name, KbScalerFunctionParameterType returnType, List<ScalerFunctionParameterPrototype<TData>> parameters, string description)
         {
             Name = name;
             ReturnType = returnType;
@@ -106,12 +108,18 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
                 }
             }
 
+            string description = string.Empty;
+            if (tokenizer.TryEatIfNext('|'))
+            {
+                description = tokenizer.EatRemainder();
+            }
+
             if (!tokenizer.IsExhausted())
             {
                 throw new KbEngineException($"Failed to parse scaler function [{functionName}] prototype, expected end-of-line: [{tokenizer.Remainder}].");
             }
 
-            return new ScalerFunction<TData>(functionName, returnType, parameters);
+            return new ScalerFunction<TData>(functionName, returnType, parameters, description);
         }
 
         internal ScalerFunctionParameterValueCollection<TData> ApplyParameters(List<TData?> values)

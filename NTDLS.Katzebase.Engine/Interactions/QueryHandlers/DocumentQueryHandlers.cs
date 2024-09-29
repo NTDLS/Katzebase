@@ -57,12 +57,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                 using var transactionReference = _core.Transactions.Acquire(session);
                 var targetSchema = preparedQuery.Attributes[PreparedQuery<TData>.QueryAttribute.TargetSchema].ToString();
 
-                var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema.EnsureNotNull(), LockOperation.Write);
-
+                var physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema.EnsureNotNull(), LockOperation.Write, LockOperation.Read);
                 if (physicalTargetSchema.Exists == false)
                 {
                     _core.Schemas.CreateSingleSchema(transactionReference.Transaction, targetSchema, _core.Settings.DefaultDocumentPageSize);
-                    physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write);
+                    physicalTargetSchema = _core.Schemas.AcquireVirtual(transactionReference.Transaction, targetSchema, LockOperation.Write, LockOperation.Read);
                 }
 
                 var result = StaticSearcherMethods.FindDocumentsByPreparedQuery<TData>(_core, transactionReference.Transaction, preparedQuery);

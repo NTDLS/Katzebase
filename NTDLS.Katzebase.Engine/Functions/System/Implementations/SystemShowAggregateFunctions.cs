@@ -14,7 +14,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             var result = collection.AddNew();
 
             result.AddField("Name");
+            result.AddField("ReturnType");
             result.AddField("Parameters");
+            result.AddField("Description");
 
             foreach (var prototype in AggregateFunctionCollection<TData>.Prototypes)
             {
@@ -22,7 +24,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
                 foreach (var param in prototype.Parameters)
                 {
-                    parameters.Append($"{param.Name}:{param.Type}");
+                    parameters.Append($"{param.Type} {param.Name}");
                     if (param.HasDefault)
                     {
                         parameters.Append($" = {param.DefaultValue}");
@@ -37,7 +39,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 var values = new List<TData>
                 {
                     prototype.Name.CastToT<TData> (EngineCore<TData>.StrCast),
-                    parameters.ToString().CastToT<TData> (EngineCore<TData>.StrCast)
+                    prototype.ReturnType.ToString().CastToT<TData> (EngineCore<TData>.StrCast),
+                    parameters.ToString().CastToT<TData> (EngineCore<TData>.StrCast),
+                    prototype.Description.CastToT<TData> (EngineCore<TData>.StrCast)
                 };
                 result.AddRow(values);
 

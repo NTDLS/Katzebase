@@ -14,8 +14,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             var result = collection.AddNew();
 
             result.AddField("Name");
-            result.AddField("Return Type");
+            result.AddField("ReturnType");
             result.AddField("Parameters");
+            result.AddField("Description");
 
             foreach (var prototype in ScalerFunctionCollection<TData>.Prototypes)
             {
@@ -23,7 +24,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
                 foreach (var param in prototype.Parameters)
                 {
-                    parameters.Append($"{param.Name}:{param.Type}");
+                    parameters.Append($"{param.Type} {param.Name}");
                     if (param.HasDefault)
                     {
                         parameters.Append($" = {param.DefaultValue}");
@@ -39,7 +40,8 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 new[]{
                     prototype.Name,
                     prototype.ReturnType.ToString(),
-                    parameters.ToString()
+                    parameters.ToString(),
+                    prototype.Description
                 }.Select(s => s.CastToT<TData>(EngineCore<TData>.StrCast)));
                 result.AddRow(values);
 

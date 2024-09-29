@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <Company>NetworkDLS</Company>
     <Copyright>Copyright © 2024 NetworkDLS</Copyright>
-    <Version>0.19.0</Version>
+    <Version>0.21.0</Version>
     <Authors>NetworkDLS</Authors>
     <ApplicationIcon>Icon.ico</ApplicationIcon>
   </PropertyGroup>
@@ -18,6 +18,24 @@
 
   <ItemGroup>
     <Content Remove="C:\Users\ntdls\.nuget\packages\ntdls.katzebase.client\1.5.2\contentFiles\any\net8.0\%40Art\IconFull.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Functions\Aggregate\AggregateFunction.cs.bak" />
+    <None Remove="Functions\Scaler\ScalerFunction.cs.bak" />
+    <None Remove="Functions\System\Implementations\SystemShowAggregateFunctions.cs.bak" />
+    <None Remove="Functions\System\Implementations\SystemShowProcesses.cs.bak" />
+    <None Remove="Functions\System\Implementations\SystemShowScalerFunctions.cs.bak" />
+    <None Remove="Functions\System\Implementations\SystemShowSystemFunctions.cs.bak" />
+    <None Remove="Functions\System\SystemFunction.cs.bak" />
+    <None Remove="Functions\System\SystemFunctionImplementation.cs.bak" />
+    <None Remove="Interactions\APIHandlers\SchemaAPIHandlers.cs.bak" />
+    <None Remove="Interactions\Management\CacheManager.cs.bak" />
+    <None Remove="Interactions\Management\HealthManager.cs.bak" />
+    <None Remove="Interactions\Management\LockManager.cs.bak" />
+    <None Remove="Interactions\Management\SchemaManager.cs.bak" />
+    <None Remove="Interactions\Management\TransactionManager.cs.bak" />
+    <None Remove="Interactions\QueryHandlers\DocumentQueryHandlers.cs.bak" />
   </ItemGroup>
 
   <ItemGroup>

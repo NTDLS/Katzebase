@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                     prototype.Name.CastToT<TData> (EngineCore<TData>.StrCast),
                     "".CastToT<TData> (EngineCore<TData>.StrCast),
                     parameters.ToString().CastToT<TData> (EngineCore<TData>.StrCast),
-                    prototype.Description.CastToT<TData> (EngineCore<TData>.StrCast)
+                    prototype.Descriptio.CastToT<TData> (EngineCore<TData>.StrCast)n
                 };
                 result.AddRow(values);
 

@@ -10,11 +10,13 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
     public class AggregateFunction<TData> where TData : IStringable
     {
         public string Name { get; set; }
+        public string Description { get; private set; }
+
         public KbAggregateFunctionParameterType ReturnType { get; private set; }
 
         public List<AggregateFunctionParameterPrototype<TData>> Parameters { get; private set; } = new();
 
-        public AggregateFunction(string name, KbAggregateFunctionParameterType returnType, List<AggregateFunctionParameterPrototype<TData>> parameters)
+        public AggregateFunction(string name, KbAggregateFunctionParameterType returnType, List<AggregateFunctionParameterPrototype<TData>> parameters, string description)
         {
             Name = name;
             ReturnType = returnType;
@@ -106,12 +108,18 @@ namespace NTDLS.Katzebase.Engine.Functions.Aggregate
                 }
             }
 
+            string description = string.Empty;
+            if (tokenizer.TryEatIfNext('|'))
+            {
+                description = tokenizer.EatRemainder();
+            }
+
             if (!tokenizer.IsExhausted())
             {
                 throw new KbEngineException($"Failed to parse aggregate function [{functionName}] prototype, expected end-of-line: [{tokenizer.Remainder}].");
             }
 
-            return new AggregateFunction<TData>(functionName, returnType, parameters);
+            return new AggregateFunction<TData>(functionName, returnType, parameters, description);
         }
 
         internal AggregateFunctionParameterValueCollection<TData> ApplyParameters(List<TData?> values)

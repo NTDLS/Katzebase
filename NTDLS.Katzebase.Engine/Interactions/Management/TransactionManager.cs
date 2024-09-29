@@ -30,6 +30,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             var stackFrames = (new StackTrace()).GetFrames();
             if (stackFrames.Length >= 2)
             {
+                //Since we go though Interactions.APIHandlers, the top level function will be the name of the API.
                 transactionReference.Transaction.TopLevelOperation = stackFrames[1].GetMethod()?.Name ?? string.Empty;
             }
 

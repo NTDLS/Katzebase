@@ -13,7 +13,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
         public string Description { get; private set; }
         public List<SystemFunctionParameterPrototype<TData>> Parameters { get; private set; } = new();
 
-        public SystemFunction(string name, List<SystemFunctionParameterPrototype<TData>> parameters, string description)
+        public SystemFunction(string name, List<SystemFunctionParameterPrototype<TData>> parameters)
         {
             Name = name;
             Description = description;

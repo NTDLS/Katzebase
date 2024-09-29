@@ -10,10 +10,18 @@ namespace NTDLS.Katzebase.Engine.Schemas
         /// <summary>
         /// VirtualSchema is used in the cases where we need to lock a schema that may not exist yet.
         /// </summary>
-        public class VirtualSchema : PhysicalSchema<TData>
+        public class VirtualSchema<TData1> : PhysicalSchema<TData1> where TData1 : IStringable
         {
             [JsonIgnore]
             public bool Exists { get; set; }
+
+            [JsonIgnore]
+            public PhysicalSchema<TData1> ParentPhysicalSchema { get; set; }
+
+            public VirtualSchema(PhysicalSchema<TData1> parentPhysicalSchema)
+            {
+                ParentPhysicalSchema = parentPhysicalSchema;
+            }
         }
 
         public uint PageSize { get; set; }
@@ -86,9 +94,9 @@ namespace NTDLS.Katzebase.Engine.Schemas
             };
         }
 
-        public VirtualSchema ToVirtual()
+        public VirtualSchema<TData> ToVirtual(PhysicalSchema<TData> parentPhysicalSchema)
         {
-            return new VirtualSchema
+            return new VirtualSchema<TData>(parentPhysicalSchema)
             {
                 DiskPath = DiskPath,
                 Id = Id,
