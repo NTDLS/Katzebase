@@ -13,7 +13,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             var result = collection.AddNew();
 
             result.AddField("Name");
+            result.AddField("ReturnType");
             result.AddField("Parameters");
+            result.AddField("Description");
 
             foreach (var prototype in SystemFunctionCollection.Prototypes)
             {
@@ -21,10 +23,10 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
                 foreach (var param in prototype.Parameters)
                 {
-                    parameters.Append($"{param.Name}:{param.Type}");
+                    parameters.Append($"{param.Type} {param.Name}");
                     if (param.HasDefault)
                     {
-                        parameters.Append($" = {param.DefaultValue}");
+                        parameters.Append($" = {param.DefaultValue ?? "null"}");
                     }
                     parameters.Append(", ");
                 }
@@ -36,7 +38,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 var values = new List<string?>
                 {
                     prototype.Name,
-                    parameters.ToString()
+                    "",
+                    parameters.ToString(),
+                    prototype.Description
                 };
                 result.AddRow(values);
 

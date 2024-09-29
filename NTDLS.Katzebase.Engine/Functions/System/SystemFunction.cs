@@ -10,11 +10,14 @@ namespace NTDLS.Katzebase.Engine.Functions.System
     public class SystemFunction
     {
         public string Name { get; private set; }
+        public string Description { get; private set; }
+
         public List<SystemFunctionParameterPrototype> Parameters { get; private set; } = new();
 
-        public SystemFunction(string name, List<SystemFunctionParameterPrototype> parameters)
+        public SystemFunction(string name, List<SystemFunctionParameterPrototype> parameters, string description)
         {
             Name = name;
+            Description = description;
             Parameters.AddRange(parameters);
         }
 
@@ -101,12 +104,18 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                 }
             }
 
+            string description = string.Empty;
+            if (tokenizer.TryEatIfNext('|'))
+            {
+                description = tokenizer.EatRemainder();
+            }
+
             if (!tokenizer.IsExhausted())
             {
                 throw new KbEngineException($"Failed to parse system function [{functionName}] prototype, expected end-of-line: [{tokenizer.Remainder}].");
             }
 
-            return new SystemFunction(functionName, parameters);
+            return new SystemFunction(functionName, parameters, description);
         }
 
         internal SystemFunctionParameterValueCollection ApplyParameters(List<string?> values)

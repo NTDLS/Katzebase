@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
                 "ClearHealthCounters()",
                 "ReleaseCacheAllocations()",
                 "ShowAggregateFunctions()",
-                "ShowBlocks(Numeric processId=null)",
+                "ShowBlocks(Numeric processId=null)|Shows blocks",
                 "ShowBlockTree()",
                 "ShowCacheAllocations()",
                 "ShowCachePages()",

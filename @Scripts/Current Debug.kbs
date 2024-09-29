@@ -1,3 +1,9 @@
+exec ShowSystemFunctions
+
+--region TestCode
+
+--region TestCode
+
 SELECT
     11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
     10 + 10 + (11 ^ 3) + 10 + '->' + Guid(),
@@ -5,8 +11,7 @@ SELECT
     'ten (' + 10 * 10 + ') : ' + DateTimeUTC('yyyy/MM/dd hh:mm:ss tt')
 FROM
 	Single
-
-
+--endregion
 SELECT
 	U.Id,
 	U.DisplayName,
@@ -20,6 +25,8 @@ INNER JOIN StackOverflow:Posts as P
 WHERE
 	U.DisplayName = 'NTDLS'
 	
+--endregion
+
 --select
 --*
 --into :
