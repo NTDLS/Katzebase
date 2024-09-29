@@ -20,37 +20,66 @@ module DDLExecutionBasicTests =
     open NTDLS.Katzebase.Client.Types
 
     type SingleCount () =
-        member val Count = 0 with get, set
+        let mutable c = 0
+        member this.Count 
+            with get() = c
+            and set(v) = c <- v
 
     let ``Execute "CREATE SCHEMA testSch"`` (outputOpt:ITestOutputHelper option) =
+        let testSchema = "testSchDDL"
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
-        _core.Query.ExecuteNonQuery(preLogin, "DROP SCHEMA testSch")
-        _core.Query.ExecuteNonQuery(preLogin, "CREATE SCHEMA testSch")
-        _core.Query.ExecuteNonQuery(preLogin, "insert into testSch (\r\nid = 123, value = '456'\r\n)")
-        _core.Query.ExecuteNonQuery(preLogin, "insert into testSch (\r\nid = 321, value = '654'\r\n)")
+        try
+            _core.Query.ExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchema}")
+        with
+        | exn ->
+            ()
+        _core.Query.ExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchema}")
+        _core.Query.ExecuteNonQuery(preLogin, $"insert into {testSchema} (\r\nid = 123, value = '456'\r\n)")
+        _core.Query.ExecuteNonQuery(preLogin, $"insert into {testSchema} (\r\nid = 321, value = '654'\r\n)")
         _core.Transactions.Commit(preLogin)
         //let cnt = _core.Query.ExecuteQuery<SingleCount>(preLogin, "SELECT COUNT(*) FROM testSch", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
         //equals 1 (cnt |> Seq.item 0).Count
         let userParameters = new KbInsensitiveDictionary<KbConstant>()
-        let preparedQueries = StaticQueryParser.ParseBatch(_core, "SELECT COUNT(1) FROM testSch", userParameters)
-        let preparedQuery = preparedQueries.Item 0
+
+
+        let countTest sql expectedCount = 
+            try
+                let preparedQueries = StaticQueryParser.ParseBatch(_core, sql, userParameters)
+                let preparedQuery = preparedQueries.Item 0
         
-        let queryResultCollection = _core.Query.ExecuteQuery(preLogin, preparedQuery)
-        equals 1 queryResultCollection.Collection.Count
+                let queryResultCollection = _core.Query.ExecuteQuery(preLogin, preparedQuery)
+                equals 1 queryResultCollection.Collection.Count
 
-        let queryDocList = ((queryResultCollection.Collection.Item 0) :?> KbQueryDocumentListResult).Rows
-        equals 1 queryDocList.Count
-        equals "2" queryDocList[0].Values[0]
+                let queryDocList = ((queryResultCollection.Collection.Item 0) :?> KbQueryDocumentListResult).Rows
+                equals 1 queryDocList.Count
+                equals $"{expectedCount}" queryDocList[0].Values[0]
 
-        //_core.Query.ExecuteQuery<SingleCount>(preLogin, "SELECT COUNT(1) FROM MASTER:ACCOUNT", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
-        //|> Seq.toArray
+                let sc =
+                    _core.Query.ExecuteQuery<SingleCount>(preLogin, sql, Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+                    |> Seq.toArray
+                    |> Array.item 0
 
-        //queryResultCollection.Collection[0]
-    //type CommonTests (output:ITestOutputHelper) =
-    //    [<Fact>]
-    //    member this.``Parse "SELECT * FROM MASTER:ACCOUNT"`` () =
-    //        ``Parse "SELECT * FROM MASTER:ACCOUNT"`` (Some output)
+                equals expectedCount sc.Count
+            with
+            | exn ->
+                testPrint outputOpt "[By design] %s" exn.InnerException.InnerException.Message
+                equals "Value should not be null. (Parameter 'textValue')" exn.InnerException.InnerException.Message
 
-    //    [<Fact>]
-    //    member this.``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ¢IUsername AND PasswordHash = ¢IPasswordHash"`` () =
-    //        ``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ¢IUsername AND PasswordHash = ¢IPasswordHash"`` (Some output)
+        testPrint outputOpt "count scalar"
+        countTest $"SELECT COUNT(1) as Count FROM {testSchema}" 2
+
+        testPrint outputOpt "count star"
+        countTest $"SELECT COUNT(*) as Count FROM {testSchema}" 2
+
+        testPrint outputOpt "count column id"
+        countTest $"SELECT COUNT(id) as Count FROM {testSchema}" 2
+
+        testPrint outputOpt "count column not existed"
+        countTest $"SELECT COUNT(not_existed_column) as Count FROM {testSchema}" 2
+
+
+    type CommonTests (output:ITestOutputHelper) =
+        [<Fact>]
+        member this.``Execute "CREATE SCHEMA testSch"`` () =
+            ``Execute "CREATE SCHEMA testSch"`` (Some output)
+

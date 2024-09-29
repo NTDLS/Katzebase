@@ -1,7 +1,7 @@
 ﻿namespace NTDLS.Katzebase.UnitTests
 
 open Shared
-open BasicTest.Parser.ver.``0``.``0``.``1``
+open BasicTest.Parser.ver.``0``.``0``.``2``
 open BasicTest.IO.ver.``0``.``0``.``1``.IOTests
 open BasicTest.DDLExecution.ver.``0``.``0``.``2``
 open BasicTest.DMLExecution.ver.``0``.``0``.``2``

@@ -33,13 +33,17 @@ module DMLExecutionBasicTests =
     type TwoColumnDouble () =
         member val COL1 = 0.0 with get, set
         member val COL2 = 0.0 with get, set
-    
-    let plainInsert = """INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"""
+    let testSchema = $"testSchDML"
+    let plainInsert = $"""INSERT INTO {testSchema} (COL1, COL2) VALUES (1,2), ("A", "B")"""
 
     let ``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` (outputOpt:ITestOutputHelper option) =
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
-        _core.Query.ExecuteNonQuery(preLogin, "DROP SCHEMA testSch")
-        _core.Query.ExecuteNonQuery(preLogin, "CREATE SCHEMA testSch")
+        try
+            _core.Query.ExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchema}")
+        with
+        | exn ->
+            ()
+        _core.Query.ExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchema}")
 
         let userParameters = new KbInsensitiveDictionary<KbConstant>()
         let preparedQueries = StaticQueryParser.ParseBatch(_core, plainInsert, userParameters)
@@ -60,24 +64,24 @@ module DMLExecutionBasicTests =
         let i1v1 = insert1.Item 1
 
         match i0v0.Expression with
-        | :? QueryFieldConstantNumeric as num -> 
-            equals "$n_2$" (num.V<fstring, string>())
+        | :? Fields.QueryFieldConstantNumeric as num -> 
+            equals "$n_2$" num.Value
 
         match i0v1.Expression with
-        | :? QueryFieldConstantNumeric as num -> 
-            equals "$n_3$" (num.V<fstring, string>())
+        | :? Fields.QueryFieldConstantNumeric as num -> 
+            equals "$n_3$" num.Value
 
         match i1v0.Expression with
-        | :? QueryFieldConstantString as str -> 
-            equals "$s_0$" (str.V<fstring, string>())
+        | :? Fields.QueryFieldConstantString as str -> 
+            equals "$s_0$" str.Value
 
         match i1v1.Expression with
-        | :? QueryFieldConstantString as str -> 
-            equals "$s_1$" (str.V<fstring, string>())
+        | :? Fields.QueryFieldConstantString as str -> 
+            equals "$s_1$" str.Value
            
         let transactionReference = _core.Transactions.Acquire(preLogin)
         let fieldQueryCollection = QueryFieldCollection (preparedQuery.Batch)
-        let auxiliaryFields = KbInsensitiveDictionary<fstring> ()
+        let auxiliaryFields = KbInsensitiveDictionary<string> ()
         let collapsed01 = 
             ExprProc.CollapseScalerQueryField(
                 i0v1.Expression
@@ -91,36 +95,46 @@ module DMLExecutionBasicTests =
                 , preparedQuery, fieldQueryCollection
                 , auxiliaryFields)
 
-        //transactionReference.Commit()
+        equals "2" collapsed01
+        equals "B" collapsed11
 
         let queryResultCollection = _core.Query.ExecuteQuery(preLogin, preparedQuery)
         _core.Transactions.Commit(preLogin)
 
-        //equals 1 queryResultCollection.RowCount
         
         let rString = 
-            _core.Query.ExecuteQuery<TwoColumnString>(preLogin, "SELECT * FROM testSch", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+            _core.Query.ExecuteQuery<TwoColumnString>(preLogin, $"SELECT * FROM {testSchema} ORDER BY COL1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
             |> Seq.toArray
+
+        equals 2 rString.Length
+        equals "1" rString[0].COL1
+        equals "B" rString[1].COL2
 
         let rInt = 
-            _core.Query.ExecuteQuery<TwoColumnInt>(preLogin, "SELECT * FROM testSch where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+            _core.Query.ExecuteQuery<TwoColumnInt>(preLogin, $"SELECT * FROM {testSchema} where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
             |> Seq.toArray
+
+        equals 1 rInt.Length
+        equals 1 rInt[0].COL1
 
         let rDouble = 
-            _core.Query.ExecuteQuery<TwoColumnDouble>(preLogin, "SELECT * FROM testSch where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+            _core.Query.ExecuteQuery<TwoColumnDouble>(preLogin, $"SELECT * FROM {testSchema} where COL1 = 1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
             |> Seq.toArray
 
-        let rDouble = 
-            _core.Query.ExecuteQuery<TwoColumnDouble>(preLogin, "SELECT * FROM testSch", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
-            |> Seq.toArray
+        equals 1 rDouble.Length
+        equals 1.0 rDouble[0].COL1
 
-        ()
+        try
+            let rDouble = 
+                _core.Query.ExecuteQuery<TwoColumnDouble>(preLogin, $"SELECT * FROM {testSchema}", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+                |> Seq.toArray
 
-    //type CommonTests (output:ITestOutputHelper) =
-    //    [<Fact>]
-    //    member this.``Parse "SELECT * FROM MASTER:ACCOUNT"`` () =
-    //        ``Parse "SELECT * FROM MASTER:ACCOUNT"`` (Some output)
+            ()
+        with
+        | exn ->
+            equals "The input string 'A' was not in a correct format." exn.Message
 
-    //    [<Fact>]
-    //    member this.``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ¢IUsername AND PasswordHash = ¢IPasswordHash"`` () =
-    //        ``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ¢IUsername AND PasswordHash = ¢IPasswordHash"`` (Some output)
+    type CommonTests (output:ITestOutputHelper) =
+        [<Fact>]
+        member this.``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` () =
+            ``Execute "INSERT INTO testSch (COL1, COL2) VALUES (1,2), ("A", "B")"`` (Some output)

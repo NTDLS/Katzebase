@@ -96,7 +96,7 @@ module DMLExecutionBasicTests =
 
         
         let rString = 
-            _core.Query.ExecuteQuery<TwoColumnString>(preLogin, $"SELECT * FROM {testSchemaDML}", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
+            _core.Query.ExecuteQuery<TwoColumnString>(preLogin, $"SELECT * FROM {testSchemaDML} ORDER BY COL1", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
             |> Seq.toArray
 
         equals 2 rString.Length
@@ -125,7 +125,11 @@ module DMLExecutionBasicTests =
             ()
         with
         | exn ->
+#if GENERIC_TDATA
             equals "The input string 'A' was not in a correct format." exn.Message
+#else
+            equals "Failed to convert field [col1] value [A] to type [Double]." exn.Message
+#endif
 
         testPrint outputOpt $"[PASSED] {plainInsert}"
 

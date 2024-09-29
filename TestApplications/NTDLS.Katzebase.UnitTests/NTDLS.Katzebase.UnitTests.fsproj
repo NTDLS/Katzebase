@@ -30,7 +30,7 @@
 			<Link>Unit/Engine/IO/BasicTest.IO.fsx</Link>
 		</Compile>
 		
-		<Compile Include="Scripts/Engine/Parser/BasicTest.Parser.ver.0.0.1.fsx">
+		<Compile Include="Scripts/Engine/Parser/BasicTest.Parser.ver.0.0.2.fsx">
 			<Link>Unit/Engine/Parser/BasicTest.Parser.fsx</Link>
 		</Compile>
 		
@@ -42,7 +42,7 @@
 			<Link>Unit/Engine/Execution/DML/BasicTest.DMLExecution.fsx</Link>
 		</Compile>		
 		
-		<Compile Include="Program.ver.0.0.1.fsx">
+		<Compile Include="Program.ver.0.0.2.fsx">
 			<Link>Program.fsx</Link>
 		</Compile>
 		

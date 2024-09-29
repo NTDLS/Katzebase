@@ -47,6 +47,7 @@ createIfDirNotExisted settings.LogDirectory
 //prevent missing single schema for ver.0.0.1
 createIfDirNotExisted $"{settings.DataRootPath}/single"
 
+#if GENERIC_TDATA
 [<ProtoContract>]
 type fstring (s) =
     [<ProtoMember(1)>]
@@ -83,6 +84,7 @@ type fstring (s) =
                 failwithf "type %s not supported" t.Name
     new () =
         fstring (null)
+#endif
 
 let inline getValue<'S, 'T when 'S : (member Value : 'T)> (v:'S) =
     v.Value
@@ -102,9 +104,9 @@ open NTDLS.Katzebase.Client.Payloads
 type KbQueryDocumentListResult = KbQueryDocumentListResult<fstring>
 
 
-type QueryFieldConstantNumeric = QueryFieldConstantNumeric<fstring>
-type QueryFieldConstantString = QueryFieldConstantString<fstring>
-type QueryFieldDocumentIdentifier = QueryFieldDocumentIdentifier<fstring>
+type QueryFieldConstantNumeric      = QueryFieldConstantNumeric<fstring>
+type QueryFieldConstantString       = QueryFieldConstantString<fstring>
+type QueryFieldDocumentIdentifier   = QueryFieldDocumentIdentifier<fstring>
 
 open NTDLS.Katzebase.Engine.Parsers
 type StaticQueryParser = StaticQueryParser<fstring>
@@ -148,6 +150,14 @@ printfn "%A" (accounts |> Seq.toArray)
 #else
 let _core = new EngineCore(settings)
 let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
+open NTDLS.Katzebase.Engine.Parsers.Query.Fields
+
+type fstring = string
+type QueryFieldConstantNumeric with
+    member this.V<'S, 'U>() = this.Value
+type QueryFieldConstantString with 
+    member this.V<'S, 'U>() = this.Value
+
 
 #endif
 
