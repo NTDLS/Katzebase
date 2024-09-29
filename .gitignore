@@ -143,3 +143,7 @@ TestApplications/InsertLockTest/obj/
 TestApplications/QueryTest/bin/
 
 TestApplications/QueryTest/obj/
+
+NTDLS.Katzebase.Parsers/bin/
+
+NTDLS.Katzebase.Parsers/obj/
