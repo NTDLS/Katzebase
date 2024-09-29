@@ -102,7 +102,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
 
                 if (paramType == KbScalerFunctionParameterType.StringInfinite)
                 {
-                    if (!tokenizer.IsExhausted())
+                    if (!paramTokenizer.IsExhausted())
                     {
                         throw new KbEngineException($"Failed to parse scaler function [{functionName}] prototype, infinite parameter [{parameterName}] must be the last parameter.");
                     }
@@ -112,7 +112,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler
             string description = string.Empty;
             if (tokenizer.TryEatIfNext('|'))
             {
-                description = tokenizer.EatRemainder();
+                description = tokenizer.EatGetNextEvaluated() ?? string.Empty;
             }
 
             if (!tokenizer.IsExhausted())

@@ -1,9 +1,10 @@
-
+select IndexOf('this is a test string with two test words', 'test')
+from single
 
 --region TestCode
 
 --region TestCode
-
+/*
 SELECT
     11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
     10 + 10 + (11 ^ 3) + 10 + '->' + Guid(),
@@ -24,7 +25,8 @@ INNER JOIN StackOverflow:Posts as P
 	ON P.OwnerUserId = U.Id
 WHERE
 	U.DisplayName = 'NTDLS'
-	
+*/
+
 --endregion
 
 --select

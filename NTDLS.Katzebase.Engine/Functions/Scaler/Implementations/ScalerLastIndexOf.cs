@@ -4,7 +4,12 @@
     {
         public static string? Execute(ScalerFunctionParameterValueCollection function)
         {
-            return function.Get<string>("textToSearch").LastIndexOf(function.Get<string>("textToFind")).ToString();
+            int startIndex = function.Get<int>("offset");
+            if (startIndex > 0)
+            {
+                return function.Get<string>("textToSearch").LastIndexOf(function.Get<string>("textToFind"), startIndex, StringComparison.InvariantCultureIgnoreCase).ToString();
+            }
+            return function.Get<string>("textToSearch").LastIndexOf(function.Get<string>("textToFind"), StringComparison.InvariantCultureIgnoreCase).ToString();
         }
     }
 }

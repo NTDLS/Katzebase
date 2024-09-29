@@ -129,7 +129,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
         private void SwapOutNumericLiterals(ref string query)
         {
             //Literal numeric:
-            var regex = new Regex(@"(?<=\s|^)(?:\d+\.?\d*|\.\d+)(?=\s|$)");
+            var regex = new Regex(@"(?<=\s|^)-?(?:\d+\.?\d*|\.\d+)(?=\s|$)");
             while (true)
             {
                 var match = regex.Match(query);
@@ -241,7 +241,7 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             expandCharacters.AddRange(TokenizerExtensions.MathematicalCharacters);
             expandCharacters.AddRange(TokenizerExtensions.TokenConnectorCharacters);
             expandCharacters.Add(',');
-
+            expandCharacters.RemoveAll(o => o == '-'); //Because of negative numbers, we have to handle the minus sign separately.
 
             //We replace numeric constants and we want to make sure we have 
             //  no numbers next to any conditional operators before we do so.
@@ -261,6 +261,22 @@ namespace NTDLS.Katzebase.Engine.Parsers.Tokens
             text = text.Replace("$$LesserOrEqual$$", " <= ");
             text = text.Replace("$$Or$$", " || ");
             text = text.Replace("$$And$$", " && ");
+
+            //Pad spaces around '-' where the right hand side is not a digit.
+            for (int i = 0; i < text.Length; i++)
+            {
+                if ((i = text.IndexOf('-', i)) < 0)
+                {
+                    break;
+                }
+
+                //If the character after the minus-sign is not a number, then pad it as usual.
+                if (!(i < text.Length - 1 && char.IsDigit(text[i + 1])))
+                {
+                    text = Helpers.Text.ReplaceRange(text, i, 1, " - ");
+                    i += 1;
+                }
+            }
 
             SwapOutNumericLiterals(ref text);
 
