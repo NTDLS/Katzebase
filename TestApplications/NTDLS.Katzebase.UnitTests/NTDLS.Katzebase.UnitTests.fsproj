@@ -63,7 +63,6 @@
     <PackageReference Include="FsCheck.Xunit" Version="3.0.0-rc3" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.7.11" />
     <PackageReference Include="protobuf-net" Version="3.2.30" />
     <PackageReference Include="protobuf-net.Core" Version="3.2.30" />
     <PackageReference Include="System.Reflection.Emit.Lightweight" Version="4.7.0" />
@@ -72,8 +71,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <ProjectReference Include="..\..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
     <ProjectReference Include="..\..\NTDLS.Katzebase.Engine\NTDLS.Katzebase.Engine.csproj" />
-    <ProjectReference Include="..\..\NTDLS.Katzebase.Parsers\NTDLS.Katzebase.Parsers.csproj" />
     <ProjectReference Include="..\..\NTDLS.Katzebase.Server\NTDLS.Katzebase.Server.csproj" />
     <PackageReference Update="FSharp.Core" Version="9.0.100-beta.24406.3" />
   </ItemGroup>
