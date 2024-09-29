@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("NTDLS.Katzebase.Parsers")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+1756972b76b27022348cf8e6795c68a72c0fafc3")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+bdc6290e968c0e221fbd2b17c8a0baff310bd44a")]
 [assembly: System.Reflection.AssemblyProductAttribute("NTDLS.Katzebase.Parsers")]
 [assembly: System.Reflection.AssemblyTitleAttribute("NTDLS.Katzebase.Parsers")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
