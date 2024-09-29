@@ -5,6 +5,7 @@ using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
 using NTDLS.Katzebase.Engine.Parsers.Query.Fields.Expressions;
 using NTDLS.Katzebase.Engine.Parsers.Query.Functions;
 using NTDLS.Katzebase.Engine.Parsers.Tokens;
+using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
 
@@ -132,6 +133,15 @@ namespace NTDLS.Katzebase.Engine.Parsers.Query.Class
                     var queryFieldExpressionFunction = new QueryFieldExpressionFunctionAggregate(aggregateFunction.Name, expressionKey, KbBasicDataType.Numeric);
 
                     ParseFunctionCallRecursive(parentTokenizer, ref rootQueryFieldExpression, queryFieldExpressionFunction, ref queryFields, tokenizer, positionBeforeToken);
+
+                    //A common way to call count(0) is count(*). Check for this special case here and replace '*' with '0'.
+                    //There is no difference between count(0), count(*) or count(<any constant value>).
+                    if (aggregateFunction.Name.Is("Count")
+                        && queryFieldExpressionFunction.Parameters.Count == 1
+                        && queryFieldExpressionFunction.Parameters[0].Expression.Is("*"))
+                    {
+                        queryFieldExpressionFunction.Parameters[0].Expression = "0";
+                    }
 
                     buffer.Append(expressionKey);
                 }

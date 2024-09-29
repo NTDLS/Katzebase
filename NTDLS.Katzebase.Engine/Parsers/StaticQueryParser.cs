@@ -92,15 +92,15 @@ namespace NTDLS.Katzebase.Engine.Parsers
         static string PreParseQueryVariableDeclarations(string queryText, ref KbInsensitiveDictionary<KbConstant> tokenizerConstants)
         {
             var lines = queryText.Split("\n", StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim());
-            lines = lines.Where(o => o.StartsWith("declare", StringComparison.InvariantCultureIgnoreCase));
+            lines = lines.Where(o => o.StartsWith("const", StringComparison.InvariantCultureIgnoreCase));
 
             foreach (var line in lines)
             {
                 var lineTokenizer = new TokenizerSlim(line);
 
-                if (!lineTokenizer.TryEatIsNextToken("declare", out var token))
+                if (!lineTokenizer.TryEatIsNextToken("const", out var token))
                 {
-                    throw new KbParserException($"Invalid query. Found [{token}], expected: [declare].");
+                    throw new KbParserException($"Invalid query. Found [{token}], expected: [const].");
                 }
 
                 if (lineTokenizer.NextCharacter != '@')
@@ -111,7 +111,7 @@ namespace NTDLS.Katzebase.Engine.Parsers
 
                 if (lineTokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var variableName) == false)
                 {
-                    throw new KbParserException($"Invalid query. Found [{token}], expected: [declare].");
+                    throw new KbParserException($"Invalid query. Found [{token}], expected: [constant variable name].");
                 }
 
                 if (lineTokenizer.NextCharacter != '=')

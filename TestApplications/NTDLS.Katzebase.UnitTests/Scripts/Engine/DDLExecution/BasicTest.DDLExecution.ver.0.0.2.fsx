@@ -69,8 +69,8 @@ module DDLExecutionBasicTests =
         testPrint outputOpt "count scalar"
         countTest $"SELECT COUNT(1) as Count FROM {testSchemaDDL}" 2
 
-        //testPrint outputOpt "count star"
-        //countTest $"SELECT COUNT(*) as Count FROM {testSchemaDDL}" 2
+        testPrint outputOpt "count star"
+        countTest $"SELECT COUNT(*) as Count FROM {testSchemaDDL}" 2
 
         testPrint outputOpt "count column id"
         countTest $"SELECT COUNT(id) as Count FROM {testSchemaDDL}" 2
