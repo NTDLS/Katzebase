@@ -1,7 +1,7 @@
 [Setup]
 ;-- Main Setup Information
  AppName                          = Katzebase Server
- AppVerName                       = Katzebase Server 0.21.0
+ AppVerName                       = Katzebase Server 0.22.0
  AppCopyright                     = Copyright © 2024 NetworkDLS.
  DefaultDirName                   = {commonpf}\NetworkDLS\Katzebase
  DefaultGroupName                 = Katzebase
@@ -33,21 +33,21 @@
  Source: "..\NTDLS.Katzebase.Server\bin\Release\net8.0\*.json"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
  Source: "Settings\*.*"; DestDir: "{app}\Server"; Flags: IgnoreVersion; Components: Server;
 ;Management component.
- Source: "..\..\NTDLS.Katzebase.Management\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.exe"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
- Source: "..\..\NTDLS.Katzebase.Management\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.dll"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
- Source: "..\..\NTDLS.Katzebase.Management\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.json"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
- Source: "..\..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeBold.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Bold"; Flags: onlyifdoesntexist uninsneveruninstall
- Source: "..\..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeExtraLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Extra-Light"; Flags: onlyifdoesntexist uninsneveruninstall
- Source: "..\..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Light"; Flags: onlyifdoesntexist uninsneveruninstall
- Source: "..\..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeRegulat.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Regulat"; Flags: onlyifdoesntexist uninsneveruninstall
- Source: "..\..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeSemiBold.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Semi-Bold"; Flags: onlyifdoesntexist uninsneveruninstall
- Source: "..\..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeSemiLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Semi-Light"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.exe"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
+ Source: "..\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.dll"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
+ Source: "..\NTDLS.Katzebase.Management\bin\Release\net8.0-windows\*.json"; DestDir: "{app}\Management"; Flags: IgnoreVersion; Components: Management;
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeBold.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Bold"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeExtraLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Extra-Light"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Light"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeRegulat.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Regulat"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeSemiBold.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Semi-Bold"; Flags: onlyifdoesntexist uninsneveruninstall
+ Source: "..\NTDLS.Katzebase.Management\Fonts\CascadiaCodeSemiLight.ttf"; DestDir: "{fonts}"; FontInstall: "CascadiaCode Semi-Light"; Flags: onlyifdoesntexist uninsneveruninstall
  
 ;Migration component.
- Source: "..\..\NTDLS.Katzebase.SQLServerMigration\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.exe"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
- Source: "..\..\NTDLS.Katzebase.SQLServerMigration\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.dll"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
- Source: "..\..\NTDLS.Katzebase.SQLServerMigration\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.json"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
- Source: "..\..\NTDLS.Katzebase.SQLServerMigration\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\Runtimes\*.*"; DestDir: "{app}\Migration\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: Migration;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.exe"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.dll"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\*.json"; DestDir: "{app}\Migration"; Flags: IgnoreVersion; Components: Migration;
+ Source: "..\NTDLS.Katzebase.SQLServerMigration\bin\Release\net8.0-windows\Runtimes\*.*"; DestDir: "{app}\Migration\Runtimes"; Flags: IgnoreVersion recursesubdirs; Components: Migration;
  
 [Icons]
 ;Management component.
