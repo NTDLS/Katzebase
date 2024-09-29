@@ -1,4 +1,7 @@
-select IndexOf('this is a test string with two test words', 'test')
+select
+	Count(0) as ss,
+	CountDistinct(0) as ss
+
 from single
 
 --region TestCode

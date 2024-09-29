@@ -1,5 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Shared;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using System.Diagnostics.CodeAnalysis;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate

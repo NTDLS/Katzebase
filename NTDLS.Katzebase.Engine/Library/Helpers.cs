@@ -6,16 +6,6 @@ namespace NTDLS.Katzebase.Engine.Library
 {
     public static class Helpers
     {
-        public static string ReplaceFirst(this string input, string search, string replacement)
-        {
-            int pos = input.IndexOf(search);
-            if (pos < 0)
-            {
-                return input; // Return the original string if the search string is not found
-            }
-            return input.Substring(0, pos) + replacement + input.Substring(pos + search.Length);
-        }
-
         /// <summary>
         /// Adds the values of the given dictionary to the referenced dictionary.
         /// </summary>
@@ -158,18 +148,6 @@ namespace NTDLS.Katzebase.Engine.Library
             {
                 Directory.Delete(diskPath);
             }
-        }
-
-        public static string ComputeSHA256(string rawData)
-        {
-            byte[] bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawData));
-
-            var builder = new StringBuilder();
-            for (int i = 0; i < bytes.Length; i++)
-            {
-                builder.Append(bytes[i].ToString("x2"));
-            }
-            return builder.ToString();
         }
     }
 }

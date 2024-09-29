@@ -1,6 +1,5 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler
 {

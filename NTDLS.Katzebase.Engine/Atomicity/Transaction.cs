@@ -7,7 +7,7 @@ using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.IO;
 using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Katzebase.Engine.Sessions;
-using NTDLS.Katzebase.Shared;
+using NTDLS.Katzebase.Parsers.Interfaces;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Client.KbConstants;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
     /// <summary>
     /// A collection of reversable work and deferred IO.
     /// </summary>
-    internal class Transaction : IDisposable
+    internal class Transaction : ITransaction, IDisposable
     {
         public string TopLevelOperation { get; set; } = string.Empty;
         public Guid Id { get; private set; } = Guid.NewGuid();

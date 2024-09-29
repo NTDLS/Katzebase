@@ -14,10 +14,11 @@ open System
 open System.Collections.Generic
 
 module DDLExecutionBasicTests =
-    open NTDLS.Katzebase.Engine.Parsers
+    //open NTDLS.Katzebase.Parsers.
     
     open NTDLS.Katzebase.Client.Payloads
     open NTDLS.Katzebase.Client.Types
+    open NTDLS.Katzebase.Parsers
 
     type SingleCount () =
         let mutable c = 0

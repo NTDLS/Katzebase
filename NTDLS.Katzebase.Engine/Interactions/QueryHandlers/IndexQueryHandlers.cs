@@ -1,9 +1,9 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
-using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Sessions;
+using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using static NTDLS.Katzebase.Client.KbConstants;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 {
