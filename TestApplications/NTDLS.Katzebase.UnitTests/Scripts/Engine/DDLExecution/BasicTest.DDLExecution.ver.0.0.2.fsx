@@ -6,6 +6,12 @@
 #r "nuget: NCalc"
 #endif
 
+#if GENERIC_TDATA
+
+#else
+open NTDLS.Katzebase.Client.Payloads
+#endif
+
 open Shared
 open Tests
 open Xunit
@@ -16,7 +22,7 @@ open System.Collections.Generic
 module DDLExecutionBasicTests =
     open NTDLS.Katzebase.Engine.Parsers
     
-    open NTDLS.Katzebase.Client.Payloads
+    //open NTDLS.Katzebase.Client.Payloads
     open NTDLS.Katzebase.Client.Types
 
     type SingleCount () =
@@ -26,16 +32,11 @@ module DDLExecutionBasicTests =
             and set(v) = c <- v
 
     let ``Execute "CREATE SCHEMA testSch"`` (outputOpt:ITestOutputHelper option) =
-        let testSchema = "testSchDDL"
+        
         let preLogin = _core.Sessions.CreateSession(Guid.NewGuid(), "testUser", "testClient")
-        try
-            _core.Query.ExecuteNonQuery(preLogin, $"DROP SCHEMA {testSchema}")
-        with
-        | exn ->
-            ()
-        _core.Query.ExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchema}")
-        _core.Query.ExecuteNonQuery(preLogin, $"insert into {testSchema} (\r\nid = 123, value = '456'\r\n)")
-        _core.Query.ExecuteNonQuery(preLogin, $"insert into {testSchema} (\r\nid = 321, value = '654'\r\n)")
+        
+        _core.Query.ExecuteNonQuery(preLogin, $"insert into {testSchemaDDL} (\r\nid = 123, value = '456'\r\n)")
+        _core.Query.ExecuteNonQuery(preLogin, $"insert into {testSchemaDDL} (\r\nid = 321, value = '654'\r\n)")
         _core.Transactions.Commit(preLogin)
         //let cnt = _core.Query.ExecuteQuery<SingleCount>(preLogin, "SELECT COUNT(*) FROM testSch", Unchecked.defaultof<KbInsensitiveDictionary<string>>)
         //equals 1 (cnt |> Seq.item 0).Count
@@ -52,7 +53,7 @@ module DDLExecutionBasicTests =
 
                 let queryDocList = ((queryResultCollection.Collection.Item 0) :?> KbQueryDocumentListResult).Rows
                 equals 1 queryDocList.Count
-                equals $"{expectedCount}" queryDocList[0].Values[0]
+                equals $"{expectedCount}" queryDocList[0].Values[0].me
 
                 let sc =
                     _core.Query.ExecuteQuery<SingleCount>(preLogin, sql, Unchecked.defaultof<KbInsensitiveDictionary<string>>)
@@ -66,17 +67,18 @@ module DDLExecutionBasicTests =
                 equals "Value should not be null. (Parameter 'textValue')" exn.InnerException.InnerException.Message
 
         testPrint outputOpt "count scalar"
-        countTest $"SELECT COUNT(1) as Count FROM {testSchema}" 2
+        countTest $"SELECT COUNT(1) as Count FROM {testSchemaDDL}" 2
 
         testPrint outputOpt "count star"
-        countTest $"SELECT COUNT(*) as Count FROM {testSchema}" 2
+        countTest $"SELECT COUNT(*) as Count FROM {testSchemaDDL}" 2
 
         testPrint outputOpt "count column id"
-        countTest $"SELECT COUNT(id) as Count FROM {testSchema}" 2
+        countTest $"SELECT COUNT(id) as Count FROM {testSchemaDDL}" 2
 
         testPrint outputOpt "count column not existed"
-        countTest $"SELECT COUNT(not_existed_column) as Count FROM {testSchema}" 2
+        countTest $"SELECT COUNT(not_existed_column) as Count FROM {testSchemaDDL}" 2
 
+        testPrint outputOpt "[PASSED] Execute \"CREATE SCHEMA testSch\"" 
 
     type CommonTests (output:ITestOutputHelper) =
         [<Fact>]
