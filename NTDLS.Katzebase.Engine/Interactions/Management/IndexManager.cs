@@ -9,17 +9,19 @@ using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Library;
-using NTDLS.Katzebase.Engine.Parsers.Query;
-using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
-using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
+using NTDLS.Katzebase.Parsers.Indexes.Matching;
+using NTDLS.Katzebase.Parsers.Query;
+using NTDLS.Katzebase.Parsers.Query.Fields;
+using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

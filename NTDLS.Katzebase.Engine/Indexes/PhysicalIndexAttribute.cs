@@ -1,8 +1,9 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
+using NTDLS.Katzebase.Parsers.Interfaces;
 
 namespace NTDLS.Katzebase.Engine.Indexes
 {
-    public class PhysicalIndexAttribute
+    public class PhysicalIndexAttribute : IPhysicalIndexAttribute
     {
         public string? Field { get; set; }
 
@@ -14,7 +15,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
             };
         }
 
-        public static KbIndexAttribute ToClientPayload(PhysicalIndexAttribute indexAttribute)
+        public static KbIndexAttribute ToClientPayload(IPhysicalIndexAttribute indexAttribute)
         {
             return new KbIndexAttribute()
             {
@@ -22,7 +23,7 @@ namespace NTDLS.Katzebase.Engine.Indexes
             };
         }
 
-        public PhysicalIndexAttribute Clone()
+        public IPhysicalIndexAttribute Clone()
         {
             return new PhysicalIndexAttribute()
             {

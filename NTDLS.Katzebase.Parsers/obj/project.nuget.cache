@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "dgSpecHash": "8aN59L3JKFc=",
+  "success": true,
+  "projectFilePath": "C:\\NTDLS\\NTDLS.Katzebase.Server\\NTDLS.Katzebase.Parsers\\NTDLS.Katzebase.Parsers.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\ntdls\\.nuget\\packages\\microsoft.extensions.caching.abstractions\\8.0.0\\microsoft.extensions.caching.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\microsoft.extensions.caching.memory\\8.0.0\\microsoft.extensions.caching.memory.8.0.0.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.0\\microsoft.extensions.dependencyinjection.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.0\\microsoft.extensions.logging.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\microsoft.extensions.options\\8.0.0\\microsoft.extensions.options.8.0.0.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\microsoft.extensions.primitives\\8.0.0\\microsoft.extensions.primitives.8.0.0.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\newtonsoft.json\\13.0.3\\newtonsoft.json.13.0.3.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\ntdls.helpers\\1.2.11\\ntdls.helpers.1.2.11.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\ntdls.katzebase.client\\1.7.11\\ntdls.katzebase.client.1.7.11.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\ntdls.reliablemessaging\\1.10.9\\ntdls.reliablemessaging.1.10.9.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\ntdls.semaphore\\3.4.2\\ntdls.semaphore.3.4.2.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\protobuf-net\\3.2.30\\protobuf-net.3.2.30.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\protobuf-net.core\\3.2.30\\protobuf-net.core.3.2.30.nupkg.sha512",
+    "C:\\Users\\ntdls\\.nuget\\packages\\system.collections.immutable\\7.0.0\\system.collections.immutable.7.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

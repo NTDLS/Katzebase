@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Shared;
+﻿using NTDLS.Helpers;
 
 namespace NTDLS.Katzebase.Engine.Schemas
 {

@@ -1,5 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Library;
+using NTDLS.Katzebase.Parsers.Functions.Scaler;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {

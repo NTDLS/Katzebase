@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.7.10" />
+    <PackageReference Include="NTDLS.Katzebase.Client" Version="1.7.11" />
   </ItemGroup>
 
 </Project>

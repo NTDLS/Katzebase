@@ -13,8 +13,8 @@ open System.Collections.Generic
 
 
 module ParserBasicTests =
-    open NTDLS.Katzebase.Engine.Parsers
-    open NTDLS.Katzebase.Engine.Parsers.Query.Fields
+    open NTDLS.Katzebase.Parsers
+    open NTDLS.Katzebase.Parsers.Query.Fields
     open NTDLS.Katzebase.Client
     open NTDLS.Katzebase.Client.Types
     open NTDLS.Katzebase.Client.Exceptions
@@ -29,7 +29,7 @@ module ParserBasicTests =
         let pq0 = preparedQueries[0]
 
         equals "master:account" (pq0.Schemas.Item 0).Name
-        equals EngineConstants.QueryType.Select pq0.QueryType
+        equals Constants.QueryType.Select pq0.QueryType
         equals 0 pq0.Conditions.Collection.Count
 
         testPrint outputOpt "[PASSED] SELECT * FROM MASTER:ACCOUNT"
@@ -53,7 +53,7 @@ module ParserBasicTests =
 
         let pq0 = preparedQueries[0]
         equals "master:account" (pq0.Schemas.Item 0).Name
-        equals EngineConstants.QueryType.Select pq0.QueryType
+        equals Constants.QueryType.Select pq0.QueryType
         equals 1 pq0.Conditions.Collection.Count
         equals 4 pq0.Conditions.FieldCollection.Count
 

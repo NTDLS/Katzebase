@@ -37,6 +37,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Benchmark", "TestApplicatio
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "InsertLockTest", "TestApplications\InsertLockTest\InsertLockTest.csproj", "{ECB41E2F-28BA-4F95-96C2-1CC089912855}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NTDLS.Katzebase.Parsers", "NTDLS.Katzebase.Parsers\NTDLS.Katzebase.Parsers.csproj", "{A6F29C64-88B5-40DF-8466-14B7661262B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{ECB41E2F-28BA-4F95-96C2-1CC089912855}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ECB41E2F-28BA-4F95-96C2-1CC089912855}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ECB41E2F-28BA-4F95-96C2-1CC089912855}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6F29C64-88B5-40DF-8466-14B7661262B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6F29C64-88B5-40DF-8466-14B7661262B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6F29C64-88B5-40DF-8466-14B7661262B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6F29C64-88B5-40DF-8466-14B7661262B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -90,6 +96,7 @@ Global
 		{ED40E73A-7188-49FA-ABA8-926D250DC5C1} = {08463189-3AA6-472B-8116-584F09A0A305}
 		{AC0CC418-2A95-4CE0-86B6-FEEE0B8549FC} = {08463189-3AA6-472B-8116-584F09A0A305}
 		{ECB41E2F-28BA-4F95-96C2-1CC089912855} = {08463189-3AA6-472B-8116-584F09A0A305}
+		{A6F29C64-88B5-40DF-8466-14B7661262B9} = {30F5D013-1C84-4ACF-B75F-5A326B1C732E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {16ADDA6D-28A3-4730-94D0-61E6D3E723B0}

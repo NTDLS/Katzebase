@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using NTDLS.Katzebase.Parsers.Functions.Scaler;
+using System.Globalization;
 
 namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
 {

@@ -1,15 +1,16 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Parsers.Query.Class;
-using NTDLS.Katzebase.Engine.Parsers.Query.Fields;
-using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
-using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions;
-using NTDLS.Katzebase.Engine.Parsers.Query.WhereAndJoinConditions.Helpers;
 using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Schemas;
-using NTDLS.Katzebase.Shared;
+using NTDLS.Katzebase.Parsers.Indexes.Matching;
+using NTDLS.Katzebase.Parsers.Query.Class;
+using NTDLS.Katzebase.Parsers.Query.Fields;
+using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
+using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {

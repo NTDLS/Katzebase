@@ -1,4 +1,5 @@
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
+using NTDLS.Katzebase.Parsers.Functions.Aggregate;
 
 namespace NTDLS.Katzebase.Engine.Functions.Aggregate.Implementations
 {
