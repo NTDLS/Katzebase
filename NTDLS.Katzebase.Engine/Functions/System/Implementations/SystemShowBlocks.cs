@@ -5,9 +5,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowBlocks
     {
-        public static KbQueryResultCollection Execute<TData>(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function) where TData : IStringable
+        public static KbQueryResultCollection<TData> Execute<TData>(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function) where TData : IStringable
         {
-            var collection = new KbQueryResultCollection();
+            var collection = new KbQueryResultCollection<TData>();
             var result = collection.AddNew();
 
             result.AddField("Process Id");
@@ -25,7 +25,10 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             {
                 foreach (var block in txSnapshot.BlockedByKeys)
                 {
-                    var values = new List<string?> { txSnapshot.ProcessId.ToString(), block.ToString() };
+                    var values = new List<TData> { 
+                        txSnapshot.ProcessId.ToString().CastToT<TData> (EngineCore<TData>.StrCast)
+                        , block.ToString().CastToT<TData> (EngineCore<TData>.StrCast) 
+                    };
                     result.AddRow(values);
                 }
             }

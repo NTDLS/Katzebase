@@ -153,7 +153,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     deserializedObject = transaction.Instrumentation.Measure(PerformanceCounter.Deserialize, () =>
                         JsonConvert.DeserializeObject<T>(text));
 
-                    //Console.WriteLine($"{ptIORead?.Duration:n0}: '{filePath}'");
+                    Console.WriteLine($"deseralized: {filePath}");
                 }
                 else if (format == IOFormat.PBuf)
                 {

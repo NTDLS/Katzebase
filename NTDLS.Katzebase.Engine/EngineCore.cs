@@ -37,6 +37,7 @@ namespace NTDLS.Katzebase.Engine
         //char[] ToCharArr();
         //Func<string, IStringable?> Converter { get; }
         T ToT<T>();
+        object ToT(Type t);
         T ToNullableT<T>();
     }
 

@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             }
         }
 
-        public KbQueryDocumentSampleReply DocumentSample(RmContext context, KbQueryDocumentSample param)
+        public KbQueryDocumentSampleReply<TData> DocumentSample(RmContext context, KbQueryDocumentSample param)
         {
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
@@ -38,8 +38,9 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var result = (KbQueryDocumentSampleReply)StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
-                return transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
+                var result = (KbQueryDocumentSampleReply<TData>)StaticSearcherMethods.SampleSchemaDocuments(_core, transactionReference.Transaction, param.Schema, param.Count);
+                var rtn = transactionReference.CommitAndApplyMetricsThenReturnResults(result, result.Rows.Count);
+                return rtn;
             }
             catch (Exception ex)
             {
@@ -55,7 +56,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
         /// <param name="schemaName"></param>
         /// <param name="rowLimit"></param>
         /// <returns></returns>
-        public KbQueryDocumentListReply ListDocuments(RmContext context, KbQueryDocumentList param)
+        public KbQueryDocumentListReply<TData> ListDocuments(RmContext context, KbQueryDocumentList param)
         {
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
@@ -68,7 +69,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
                 var nativeResults = StaticSearcherMethods.ListSchemaDocuments<TData>(
                     _core, transactionReference.Transaction, param.Schema, param.Count);
 
-                var apiResults = new KbQueryDocumentListReply()
+                var apiResults = new KbQueryDocumentListReply<TData>()
                 {
                     Rows = nativeResults.Rows,
                     Fields = nativeResults.Fields

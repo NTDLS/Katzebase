@@ -67,6 +67,27 @@ namespace NTDLS.Katzebase.Server
             }
         }
 
+        public object ToT(Type targetType)
+        {
+
+            if (targetType == typeof(string))
+            {
+                return (object)str;
+            }
+            else if (targetType == typeof(double))
+            {
+                return (object)double.Parse(str);
+            }
+            else if (targetType == typeof(int))
+            {
+                return (object)int.Parse(str);
+            }
+            else
+            {
+                throw new NotSupportedException($"Type {targetType.Name} is not supported");
+            }
+        }
+
         public T ToNullableT<T>() //where T : struct
         {
             Type targetType = typeof(T);

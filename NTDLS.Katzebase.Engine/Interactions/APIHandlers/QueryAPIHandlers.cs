@@ -128,7 +128,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             return results;
         }
 
-        public KbQueryProcedureExecuteReply ExecuteStatementProcedure(RmContext context, KbQueryProcedureExecute param)
+        public KbQueryProcedureExecuteReply<TData> ExecuteStatementProcedure(RmContext context, KbQueryProcedureExecute param)
         {
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
@@ -137,13 +137,13 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
 
             session.SetCurrentQuery(param.Procedure.ProcedureName);
-            var result = (KbQueryProcedureExecuteReply)_core.Query.ExecuteProcedure(session, param.Procedure);
+            var result = (KbQueryProcedureExecuteReply<TData>)_core.Query.ExecuteProcedure(session, param.Procedure);
             session.ClearCurrentQuery();
 
             return result;
         }
 
-        public KbQueryQueryExecuteQueryReply ExecuteStatementQuery(RmContext context, KbQueryQueryExecuteQuery param)
+        public KbQueryQueryExecuteQueryReply<TData> ExecuteStatementQuery(RmContext context, KbQueryQueryExecuteQuery param)
         {
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
@@ -152,7 +152,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 #endif
             session.SetCurrentQuery(param.Statement);
 
-            var results = new KbQueryQueryExecuteQueryReply();
+            var results = new KbQueryQueryExecuteQueryReply<TData>();
             foreach (var preparedQuery in StaticQueryParser<TData>.ParseBatch(_core, param.Statement, param.UserParameters))
             {
                 results.Add(_core.Query.ExecuteQuery(session, preparedQuery));
@@ -163,14 +163,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
             return results;
         }
 
-        public KbQueryQueryExecuteQueriesReply ExecuteStatementQueries(RmContext context, KbQueryQueryExecuteQueries param)
+        public KbQueryQueryExecuteQueriesReply<TData> ExecuteStatementQueries(RmContext context, KbQueryQueryExecuteQueries param)
         {
             var session = _core.Sessions.GetSession(context.ConnectionId);
 #if DEBUG
             Thread.CurrentThread.Name = $"KbAPI:{session.ProcessId}:{param.GetType().Name}";
             LogManager.Debug(Thread.CurrentThread.Name);
 #endif
-            var results = new KbQueryQueryExecuteQueriesReply();
+            var results = new KbQueryQueryExecuteQueriesReply<TData>();
 
             foreach (var statement in param.Statements)
             {

@@ -5,16 +5,16 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemTerminate
     {
-        public static KbQueryResultCollection Execute<TData>(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function) where TData : IStringable
+        public static KbQueryResultCollection<TData> Execute<TData>(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function) where TData : IStringable
         {
-            var collection = new KbQueryResultCollection();
+            var collection = new KbQueryResultCollection<TData>();
             var result = collection.AddNew();
 
             var processId = function.Get<ulong>("processId");
 
             core.Sessions.CloseByProcessId(processId);
 
-            return new KbQueryResultCollection();
+            return new KbQueryResultCollection<TData>();
         }
     }
 }

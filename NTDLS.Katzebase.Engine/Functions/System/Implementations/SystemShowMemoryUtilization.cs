@@ -7,7 +7,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowMemoryUtilization<TData> where TData : IStringable
     {
-        public static KbQueryResultCollection Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
+        public static KbQueryResultCollection<TData> Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
         {
             var cachePartitions = core.Cache.GetPartitionAllocationDetails();
             long totalCacheSize = 0;
@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 totalCacheSize += partition.ApproximateSizeInBytes;
             }
 
-            var collection = new KbQueryResultCollection();
+            var collection = new KbQueryResultCollection<TData>();
             var result = collection.AddNew();
             result.AddField("Working Set");
             result.AddField("Min. Working Set");
@@ -32,7 +32,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
             var process = Process.GetCurrentProcess();
 
-            var values = new List<string?>
+            var values = new List<TData>(new[]
             {
                 $"{Formatters.FileSize(process.WorkingSet64)}",
                 $"{Formatters.FileSize(process.MinWorkingSet)}",
@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 $"{Formatters.FileSize(process.VirtualMemorySize64)}",
                 $"{Formatters.FileSize(process.PrivateMemorySize64)}",
                 $"{Formatters.FileSize(totalCacheSize)}",
-            };
+            }.Select(s => s.CastToT<TData>(EngineCore<TData>.StrCast)));
 
             result.AddRow(values);
 

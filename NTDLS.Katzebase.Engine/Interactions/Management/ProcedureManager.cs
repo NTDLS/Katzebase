@@ -96,7 +96,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return procedureCatalog.Collection.FirstOrDefault(o => o.Name.Is(procedureName));
         }
 
-        internal KbQueryResultCollection ExecuteProcedure(Transaction<TData> transaction, string schemaName, string procedureName)
+        internal KbQueryResultCollection<TData> ExecuteProcedure(Transaction<TData> transaction, string schemaName, string procedureName)
         {
             throw new NotImplementedException("Reimplement user procedures");
         }

@@ -486,14 +486,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal KbQueryDocumentListResult AnalyzePages(Transaction<TData> transaction, string schemaName, bool includePhysicalPages)
+        internal KbQueryDocumentListResult<TData> AnalyzePages(Transaction<TData> transaction, string schemaName, bool includePhysicalPages)
         {
             var physicalSchema = _core.Schemas.Acquire(transaction, schemaName, LockOperation.Read);
             var pageCatalog = _core.Documents.AcquireDocumentPageCatalog(transaction, physicalSchema, LockOperation.Read);
 
             var message = new StringBuilder();
 
-            var result = new KbQueryDocumentListResult();
+            var result = new KbQueryDocumentListResult<TData>();
             result.AddField("CatalogPageNumber");
             result.AddField("CatalogDocumentCount");
             result.AddField("PageFullness");
@@ -514,10 +514,10 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
 
                 transaction.EnsureActive();
 
-                var values = new List<string?> {
+                var values = new List<TData?> (new[]{
                     $"{page.PageNumber:n0}",
                     $"{page.DocumentCount:n0}",
-                    $"{pageFullness:n2}%" };
+                    $"{pageFullness:n2}%" }.Select(s=>s.CastToT<TData>(EngineCore<TData>.StrCast)));
 
                 if (includePhysicalPages)
                 {
@@ -525,12 +525,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     var physicalDocumentPage = _core.Documents.AcquireDocumentPage(
                         transaction, physicalSchema, page.PageNumber, LockOperation.Read);
 
-                    values.Add($"{page.PageNumber:n0}");
-                    values.Add($"{physicalDocumentPage.Documents.Count:n0}");
+                    values.Add($"{page.PageNumber:n0}".CastToT<TData>(EngineCore<TData>.StrCast));
+                    values.Add($"{physicalDocumentPage.Documents.Count:n0}".CastToT<TData>(EngineCore<TData>.StrCast));
 
-                    values.Add($"{(physicalDocumentPage.Documents.Min(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
-                    values.Add($"{(physicalDocumentPage.Documents.Max(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
-                    values.Add($"{(physicalDocumentPage.Documents.Average(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}");
+                    values.Add($"{(physicalDocumentPage.Documents.Min(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}".CastToT<TData>(EngineCore<TData>.StrCast));
+                    values.Add($"{(physicalDocumentPage.Documents.Max(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}".CastToT<TData>(EngineCore<TData>.StrCast));
+                    values.Add($"{(physicalDocumentPage.Documents.Average(o => o.Value.ContentLength * sizeof(char)) / 1024.0):n2}".CastToT<TData>(EngineCore<TData>.StrCast));
 
                     /*
                     foreach (var document in physicalDocumentPage.Documents)

@@ -8,9 +8,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowAggregateFunctions
     {
-        public static KbQueryResultCollection Execute<TData>(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function) where TData : IStringable
+        public static KbQueryResultCollection<TData> Execute<TData>(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function) where TData : IStringable
         {
-            var collection = new KbQueryResultCollection();
+            var collection = new KbQueryResultCollection<TData>();
             var result = collection.AddNew();
 
             result.AddField("Name");
@@ -34,10 +34,10 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                     parameters.Length -= 2;
                 }
 
-                var values = new List<string?>
+                var values = new List<TData>
                 {
-                    prototype.Name,
-                    parameters.ToString()
+                    prototype.Name.CastToT<TData> (EngineCore<TData>.StrCast),
+                    parameters.ToString().CastToT<TData> (EngineCore<TData>.StrCast)
                 };
                 result.AddRow(values);
 

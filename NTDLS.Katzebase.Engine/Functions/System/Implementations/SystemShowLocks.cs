@@ -5,9 +5,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowLocks<TData> where TData : IStringable
     {
-        public static KbQueryResultCollection Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
+        public static KbQueryResultCollection<TData> Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
         {
-            var collection = new KbQueryResultCollection();
+            var collection = new KbQueryResultCollection<TData>();
             var result = collection.AddNew();
 
             result.AddField("ProcessId");
@@ -28,13 +28,13 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                 foreach (var heldLockKey in tx.HeldLockKeys)
                 {
 
-                    var values = new List<string?>
-                    {
+                    var values = new List<TData>(
+                    new[]{
                         heldLockKey.ProcessId.ToString(),
                         heldLockKey.ObjectLock.Granularity.ToString(),
                         heldLockKey.Operation.ToString(),
                         heldLockKey.ObjectName.ToString(),
-                    };
+                    }.Select(s=>s.CastToT<TData>(EngineCore<TData>.StrCast)));
                     result.AddRow(values);
                 }
             }

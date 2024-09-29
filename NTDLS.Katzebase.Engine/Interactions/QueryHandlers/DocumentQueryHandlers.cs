@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSelect(SessionState session, PreparedQuery<TData> preparedQuery)
+        internal KbQueryDocumentListResult<TData> ExecuteSelect(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -50,7 +50,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSelectInto(SessionState session, PreparedQuery<TData> preparedQuery)
+        internal KbQueryDocumentListResult<TData> ExecuteSelectInto(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -78,11 +78,11 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                 foreach (var row in result.Rows)
                 {
-                    var document = new KbInsensitiveDictionary<string>();
+                    var document = new KbInsensitiveDictionary<TData>();
 
                     for (int i = 0; i < result.Fields.Count; i++)
                     {
-                        document.Add(result.Fields[i].Name, row.Values[i] ?? string.Empty);
+                        document.Add(result.Fields[i].Name, row.Values[i]);
                     }
                     string documentContent = JsonConvert.SerializeObject(document);
 
@@ -158,7 +158,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
                         foreach (var row in results.Collection[0].Rows)
                         {
-                            var keyValuePairs = new KbInsensitiveDictionary<string?>();
+                            var keyValuePairs = new KbInsensitiveDictionary<TData?>();
 
                             for (int fieldIndex = 0; fieldIndex < results.Collection[0].Fields.Count; fieldIndex++)
                             {
@@ -239,7 +239,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteSample(SessionState session, PreparedQuery<TData> preparedQuery)
+        internal KbQueryDocumentListResult<TData> ExecuteSample(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -257,7 +257,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteList(SessionState session, PreparedQuery<TData> preparedQuery)
+        internal KbQueryDocumentListResult<TData> ExecuteList(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {

@@ -5,9 +5,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowWaitingLocks
     {
-        public static KbQueryResultCollection Execute<TData>(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function) where TData : IStringable
+        public static KbQueryResultCollection<TData> Execute<TData>(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function) where TData : IStringable
         {
-            var collection = new KbQueryResultCollection();
+            var collection = new KbQueryResultCollection<TData>();
             var result = collection.AddNew();
 
             result.AddField("ProcessId");
@@ -25,13 +25,13 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 
             foreach (var waitingForLock in waitingTxSnapshots)
             {
-                var values = new List<string?>
+                var values = new List<TData>(new[]
                 {
                     waitingForLock.Key.ProcessId.ToString(),
                     waitingForLock.Value.Granularity.ToString(),
                     waitingForLock.Value.Operation.ToString(),
                     waitingForLock.Value.ObjectName.ToString(),
-                };
+                }.Select(s => s.CastToT<TData>(EngineCore<TData>.StrCast)));
                 result.AddRow(values);
             }
 

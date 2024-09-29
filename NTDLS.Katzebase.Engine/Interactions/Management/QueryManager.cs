@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
     public static class QueryExtensions
     {
         private static readonly MemoryCache _cache = new(new MemoryCacheOptions());
-        public static IEnumerable<T> MapTo<T>(this KbQueryDocumentListResult result) where T : new()
+        public static IEnumerable<T> MapTo<TData, T>(this KbQueryDocumentListResult<TData> result) where T : new() where TData : IStringable
         {
             var list = new List<T>();
             var properties = GetProperties(typeof(T));
@@ -56,19 +56,21 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             if (typeof(IStringable).IsAssignableFrom(targetType))
                             {
                                 // 尝试通过构造函数实例化 IStringable 对象
-                                if (targetType.GetConstructor(new[] { typeof(string) }) != null)
-                                {
-                                    // 先创建 IStringable 实例
-                                    var instance = (IStringable)Activator.CreateInstance(targetType, value.ToString())!;
+                                //if (targetType.GetConstructor(new[] { typeof(string) }) != null)
+                                //{
+                                //    // 先创建 IStringable 实例
+                                //    var instance = (IStringable)Activator.CreateInstance(targetType, value.ToString())!;
 
-                                    // 使用 ToT 方法进行进一步的类型转换
-                                    convertedValue = instance.ToT<T>();
-                                }
+                                //    // 使用 ToT 方法进行进一步的类型转换
+                                //    convertedValue = instance.ToT<T>();
+                                //}
+                                convertedValue = value;
                             }
                             else
                             {
                                 // 使用 Convert.ChangeType 进行标准类型转换
-                                convertedValue = Convert.ChangeType(value, targetType);
+                                //convertedValue = Convert.ChangeType(value, targetType);
+                                convertedValue = value.ToT(targetType);
                             }
 
                             property.SetValue(obj, convertedValue);
@@ -147,7 +149,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 throw new KbMultipleRecordSetsException();
             }
-            return results.Collection[0].MapTo<T>();
+            return results.Collection[0].MapTo<TData, T>();
         }
 
         /// <summary>
@@ -222,7 +224,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             }
         }
 
-        internal KbQueryResultCollection ExecuteProcedure(SessionState session, KbProcedure procedure)
+        internal KbQueryResultCollection<TData> ExecuteProcedure(SessionState session, KbProcedure procedure)
         {
             var statement = new StringBuilder($"EXEC {procedure.SchemaName}:{procedure.ProcedureName}");
 
@@ -260,7 +262,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             return _core.Procedures.QueryHandlers.ExecuteExec(session, batch.First());
         }
 
-        internal KbQueryResultCollection ExecuteQuery(SessionState session, PreparedQuery<TData> preparedQuery)
+        internal KbQueryResultCollection<TData> ExecuteQuery(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
@@ -315,7 +317,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     || preparedQuery.QueryType == QueryType.Rollback)
                 {
                     //Reroute to non-query as appropriate:
-                    return KbQueryDocumentListResult.FromActionResponse(ExecuteNonQuery(session, preparedQuery)).ToCollection();
+                    return KbQueryDocumentListResult<TData>.FromActionResponse(ExecuteNonQuery(session, preparedQuery)).ToCollection();
                 }
                 else
                 {

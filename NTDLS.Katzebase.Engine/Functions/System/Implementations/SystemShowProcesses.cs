@@ -5,9 +5,9 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowProcesses<TData> where TData : IStringable
     {
-        public static KbQueryResultCollection Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
+        public static KbQueryResultCollection<TData> Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
         {
-            var collection = new KbQueryResultCollection();
+            var collection = new KbQueryResultCollection<TData>();
             var result = collection.AddNew();
 
             result.AddField("Session Id");
@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
             {
                 var txSnapshot = txSnapshots.FirstOrDefault(o => o.ProcessId == s.Value.ProcessId);
 
-                var values = new List<string?>
+                var values = new List<TData?>(new[]
                 {
                     $"{s.Key}",
                     $"{s.Value.ProcessId:n0}",
@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                     $"{txSnapshot?.IsDeadlocked}",
                     $"{txSnapshot?.IsCancelled}",
                     $"{txSnapshot?.IsUserCreated}"
-                };
+                }.Select(s => s.CastToT<TData>(EngineCore<TData>.StrCast)));
                 result.AddRow(values);
             }
 

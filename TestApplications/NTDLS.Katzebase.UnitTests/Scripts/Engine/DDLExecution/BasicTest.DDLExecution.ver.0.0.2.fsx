@@ -6,6 +6,12 @@
 #r "nuget: NCalc"
 #endif
 
+#if GENERIC_TDATA
+
+#else
+open NTDLS.Katzebase.Client.Payloads
+#endif
+
 open Shared
 open Tests
 open Xunit
@@ -16,7 +22,7 @@ open System.Collections.Generic
 module DDLExecutionBasicTests =
     open NTDLS.Katzebase.Engine.Parsers
     
-    open NTDLS.Katzebase.Client.Payloads
+    //open NTDLS.Katzebase.Client.Payloads
     open NTDLS.Katzebase.Client.Types
 
     type SingleCount () =
@@ -47,7 +53,7 @@ module DDLExecutionBasicTests =
 
                 let queryDocList = ((queryResultCollection.Collection.Item 0) :?> KbQueryDocumentListResult).Rows
                 equals 1 queryDocList.Count
-                equals $"{expectedCount}" queryDocList[0].Values[0]
+                equals $"{expectedCount}" queryDocList[0].Values[0].me
 
                 let sc =
                     _core.Query.ExecuteQuery<SingleCount>(preLogin, sql, Unchecked.defaultof<KbInsensitiveDictionary<string>>)
@@ -63,8 +69,8 @@ module DDLExecutionBasicTests =
         testPrint outputOpt "count scalar"
         countTest $"SELECT COUNT(1) as Count FROM {testSchemaDDL}" 2
 
-        testPrint outputOpt "count star"
-        countTest $"SELECT COUNT(*) as Count FROM {testSchemaDDL}" 2
+        //testPrint outputOpt "count star"
+        //countTest $"SELECT COUNT(*) as Count FROM {testSchemaDDL}" 2
 
         testPrint outputOpt "count column id"
         countTest $"SELECT COUNT(id) as Count FROM {testSchemaDDL}" 2

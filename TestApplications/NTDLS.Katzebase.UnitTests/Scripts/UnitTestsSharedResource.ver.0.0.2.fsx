@@ -6,6 +6,7 @@ module Shared
 #r @"nuget: NTDLS.Katzebase.Client, 1.7.8"
 //#r @"nuget: NTDLS.Katzebase.Client.dev, 1.7.8.1"
 //#r @"G:\coldfar_py\NTDLS.Katzebase.Client\bin\Debug\net8.0\NTDLS.Katzebase.Client.dll"
+
 #r @"nuget: Serilog, 4.0.1"
 #r @"nuget: NTDLS.Helpers, 1.2.9.0"
 #r @"nuget: NTDLS.ReliableMessaging, 1.10.9.0"
@@ -60,6 +61,15 @@ type fstring (s) =
             | t when t = typeof<string> -> box this.Value :?> 'T
             | t when t = typeof<double> -> box (Double.Parse this.Value) :?> 'T
             | t when t = typeof<int> -> box (Int32.Parse this.Value) :?> 'T
+            | t when t = typeof<bool> -> box (Boolean.Parse this.Value) :?> 'T
+            | t ->
+                failwithf "type %s not supported" t.Name
+        override this.ToT (t:Type) =
+            match t with
+            | t when t = typeof<string> -> box this.Value
+            | t when t = typeof<double> -> box (Double.Parse this.Value)
+            | t when t = typeof<int> -> box (Int32.Parse this.Value)
+            | t when t = typeof<bool> -> box (Boolean.Parse this.Value)
             | t ->
                 failwithf "type %s not supported" t.Name
 
@@ -68,6 +78,7 @@ type fstring (s) =
             | t when t = typeof<string> -> box this.Value :?> 'T
             | t when t = typeof<double> -> box (Double.Parse this.Value) :?> 'T
             | t when t = typeof<int> -> box (Int32.Parse this.Value) :?> 'T
+            | t when t = typeof<bool> -> box (Boolean.Parse this.Value) :?> 'T
             | t ->
                 failwithf "type %s not supported" t.Name
     new () =
@@ -85,6 +96,12 @@ type String
         member this.me = this
 
 #if GENERIC_TDATA
+
+
+open NTDLS.Katzebase.Client.Payloads
+type KbQueryDocumentListResult = KbQueryDocumentListResult<fstring>
+
+
 type QueryFieldConstantNumeric = QueryFieldConstantNumeric<fstring>
 type QueryFieldConstantString = QueryFieldConstantString<fstring>
 type QueryFieldDocumentIdentifier = QueryFieldDocumentIdentifier<fstring>

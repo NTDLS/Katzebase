@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Engine.Sessions;
+using System.Linq;
 using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
@@ -28,14 +29,14 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
 
         }
 
-        internal KbQueryDocumentListResult ExecuteAnalyze(SessionState session, PreparedQuery<TData> preparedQuery)
+        internal KbQueryDocumentListResult<TData> ExecuteAnalyze(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
                 string schemaName = preparedQuery.Schemas.First().Name;
 
-                var result = new KbQueryDocumentListResult();
+                var result = new KbQueryDocumentListResult<TData>();
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schema)
                 {
@@ -133,12 +134,12 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryDocumentListResult ExecuteList(SessionState session, PreparedQuery<TData> preparedQuery)
+        internal KbQueryDocumentListResult<TData> ExecuteList(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {
                 using var transactionReference = _core.Transactions.Acquire(session);
-                var result = new KbQueryDocumentListResult();
+                var result = new KbQueryDocumentListResult<TData>();
 
                 if (preparedQuery.SubQueryType == SubQueryType.Schemas)
                 {
@@ -148,7 +149,20 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
                     result.Fields.Add(new KbQueryField("Name"));
                     result.Fields.Add(new KbQueryField("Path"));
 
-                    result.Rows.AddRange(schemaList.Select(o => new KbQueryRow([o.Item1, o.Item2])));
+
+                    //var toAdd = schemaList.Select(o => new KbQueryRow<TData>([o.Item1, o.Item2]));
+                    var toAdd = schemaList.Select(o => {
+
+                        var rList = new List<TData>(new TData[] {
+                            o.Item1.CastToT<TData> (EngineCore<TData>.StrCast),
+                            o.Item2.CastToT<TData> (EngineCore<TData>.StrCast)
+                        });
+
+                        return new KbQueryRow<TData>(rList);
+                    
+                    });
+
+                    result.Rows.AddRange(toAdd);
                 }
                 else
                 {

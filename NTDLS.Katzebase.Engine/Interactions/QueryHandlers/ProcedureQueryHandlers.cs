@@ -59,7 +59,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.QueryHandlers
             }
         }
 
-        internal KbQueryResultCollection ExecuteExec(SessionState session, PreparedQuery<TData> preparedQuery)
+        internal KbQueryResultCollection<TData> ExecuteExec(SessionState session, PreparedQuery<TData> preparedQuery)
         {
             try
             {

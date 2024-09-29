@@ -37,7 +37,7 @@ namespace NTDLS.Katzebase.Engine.Functions.System
             };
         /*
          * */
-        public static KbQueryResultCollection ExecuteFunction<TData>(EngineCore<TData> core, Transaction<TData> transaction, string functionName, List<TData?> parameters) where TData : IStringable
+        public static KbQueryResultCollection<TData> ExecuteFunction<TData>(EngineCore<TData> core, Transaction<TData> transaction, string functionName, List<TData?> parameters) where TData : IStringable
         {
             var function = SystemFunctionCollection<TData>.ApplyFunctionPrototype(functionName, parameters);
 

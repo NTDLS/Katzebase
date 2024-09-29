@@ -6,11 +6,11 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {
     internal static class SystemShowVersion<TData> where TData : IStringable
     {
-        public static KbQueryResultCollection Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
+        public static KbQueryResultCollection<TData> Execute(EngineCore<TData> core, Transaction<TData> transaction, SystemFunctionParameterValueCollection<TData> function)
         {
             var showAll = function.Get("showAll", false);
 
-            var collection = new KbQueryResultCollection();
+            var collection = new KbQueryResultCollection<TData>();
             var result = collection.AddNew();
 
             result.AddField("Assembly");
@@ -38,11 +38,11 @@ namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
                         }
                     }
 
-                    var values = new List<string?>
+                    var values = new List<TData>(new[]
                     {
                         $"{assemblyName.Name}",
                         $"{assemblyName.Version}"
-                    };
+                    }.Select(s => s.CastToT<TData>(EngineCore<TData>.StrCast)));
                     result.AddRow(values);
                 }
                 catch
