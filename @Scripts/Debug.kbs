@@ -3,20 +3,22 @@
 
 --region TestCode
 
-Exec ShowMemoryUtilization(() 
+select 11 + 11
+from
+single
 
-SELECt 
+SELECt
+	Sha1('t'),
     11 ^ (2 + 1) + 'ten' + (Length('A10CharStr') * 10 + 2),
-    6 * -1 as Negative,
+    6 * -1 as Negative
     10 + 10 + (11 ^ 3) + 10 + '->' + Guid(),
     10 + 10 + 'ten' + 10 * 10,
     'ten (' + 10 * 10 + ') : ' + DateTimeUTC('yyyy/MM/dd hh:mm:ss tt')
 FROm
-	Single
-group by
-	Sum ()
-  
-	
+	Single  
+ 
+ 
+	  
 --endregion
 /*
 SELECT

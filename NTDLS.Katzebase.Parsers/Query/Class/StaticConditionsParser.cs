@@ -101,7 +101,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     //This is a logical qualifier, we're all good. We now have the left expression and the qualifier.
                     leftExpressionString = tokenizer.Substring(startLeftRightCaret, tokenizer.Caret - startLeftRightCaret).Trim();
-                    logicalQualifier = StaticConditionHelpers.ParseLogicalQualifier(token);
+                    logicalQualifier = StaticConditionHelpers.ParseLogicalQualifier(tokenizer, token);
                     tokenizer.EatNext();
                     startLeftRightCaret = tokenizer.Caret;
                 }

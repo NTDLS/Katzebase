@@ -33,6 +33,15 @@
         /// <summary>
         /// Gets the a substring from tokenizer from the internal caret position to the given absolute position.
         /// </summary>
+        public string SubStringAbsolute(int absoluteEndPosition)
+        {
+            var result = _text.Substring(_caret, absoluteEndPosition - _caret);
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the a substring from tokenizer from the internal caret position to the given absolute position.
+        /// </summary>
         public string EatSubStringAbsolute(int absoluteEndPosition)
         {
             RecordBreadcrumb();

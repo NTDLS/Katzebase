@@ -59,6 +59,7 @@ namespace NTDLS.Katzebase.Parsers
 
             if (StaticParserUtility.IsStartOfQuery(token, out var queryType) == false)
             {
+                tokenizer.EatGetNext();
                 throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{token}], expected: [{string.Join("],[", Enum.GetValues<QueryType>().Where(o => o != QueryType.None))}].");
             }
 
@@ -97,29 +98,31 @@ namespace NTDLS.Katzebase.Parsers
             var lines = queryText.Split("\n").Select(s => s.Trim());
             lines = lines.Where(o => o.StartsWith("const", StringComparison.InvariantCultureIgnoreCase));
 
+            int lineNumber = 1;
+
             foreach (var line in lines)
             {
                 var lineTokenizer = new TokenizerSlim(line);
 
                 if (!lineTokenizer.TryEatIsNextToken("const", out var token))
                 {
-                    throw new KbParserException($"Invalid query. Found [{token}], expected: [const].");
+                    throw new KbParserException(lineNumber, $"Invalid query. Found [{token}], expected: [const].");
                 }
 
                 if (lineTokenizer.NextCharacter != '@')
                 {
-                    throw new KbParserException($"Invalid query. Found [{lineTokenizer.NextCharacter}], expected: [@].");
+                    throw new KbParserException(lineNumber,$"Invalid query. Found [{lineTokenizer.NextCharacter}], expected: [@].");
                 }
                 lineTokenizer.EatNextCharacter();
 
                 if (lineTokenizer.TryEatValidateNextToken((o) => TokenizerExtensions.IsIdentifier(o), out var variableName) == false)
                 {
-                    throw new KbParserException($"Invalid query. Found [{token}], expected: [constant variable name].");
+                    throw new KbParserException(lineNumber,$"Invalid query. Found [{token}], expected: [constant variable name].");
                 }
 
                 if (lineTokenizer.NextCharacter != '=')
                 {
-                    throw new KbParserException($"Invalid query. Found [{lineTokenizer.NextCharacter}], expected: [=].");
+                    throw new KbParserException(lineNumber, $"Invalid query. Found [{lineTokenizer.NextCharacter}], expected: [=].");
                 }
                 lineTokenizer.EatNextCharacter();
 
@@ -136,13 +139,15 @@ namespace NTDLS.Katzebase.Parsers
                     variableType = KbBasicDataType.Numeric;
                     if (variableValue != null && double.TryParse(variableValue?.ToString(), out _) == false)
                     {
-                        throw new Exception($"Non-string value of [{variableName}] cannot be converted to numeric.");
+                        throw new KbParserException(lineNumber, $"Non-string value of [{variableName}] cannot be converted to numeric.");
                     }
                 }
 
                 tokenizerConstants.Add($"@{variableName}", new KbConstant(variableValue, variableType));
 
                 queryText = queryText.Replace(line, "\n");
+
+                lineNumber++;
             }
 
             return queryText.TrimEnd() + "\n";

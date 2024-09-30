@@ -1,9 +1,11 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
+using System.Runtime.InteropServices;
 
 namespace NTDLS.Katzebase.Parsers.Tokens
 {
     public partial class Tokenizer
     {
+
         private void RecordBreadcrumb()
         {
             if (_breadCrumbs.Count == 0 || _breadCrumbs.Peek() != _caret)
@@ -14,7 +16,12 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
         public int? GetLineNumber(int caret)
         {
-            return LineRanges.FirstOrDefault(o => _caret >= o.Begin && _caret <= o.End)?.Line;
+            if (ParentTokenizer != null)
+            {
+                return LineRanges.FirstOrDefault(o => ParentTokenizer.Caret + caret >= o.Begin && ParentTokenizer.Caret + caret <= o.End)?.Line;
+            }
+
+            return LineRanges.FirstOrDefault(o => caret >= o.Begin && caret <= o.End)?.Line;
         }
 
         public int? GetCurrentLineNumber()

@@ -71,7 +71,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     }
 
                     token = tokenizer.EatGetNext();
-                    if (StaticConditionHelpers.ParseLogicalQualifier(token) == LogicalQualifier.None)
+                    if (StaticConditionHelpers.ParseLogicalQualifier(tokenizer, token) == LogicalQualifier.None)
                     {
                         throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{token}], expected logical qualifier.");
                     }

@@ -34,8 +34,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
             }
 
-            //Get the text for all of the select fields.
-            var fieldsSegment = tokenizer.EatSubStringAbsolute(stopAt);
+            var fieldsSegment = tokenizer.SubStringAbsolute(stopAt);
+            //var fieldsSegment = tokenizer.EatSubStringAbsolute(stopAt);
 
             //Split the select fields on the comma, respecting any commas in function scopes.
             var fields = fieldsSegment.ScopeSensitiveSplit(',');
@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     //Make sure that the single token was the entire alias, otherwise we have a syntax error.
                     if (!fieldAliasTokenizer.IsExhausted())
                     {
-                        throw new Exception($"Expected end of alias, found [{fieldAliasTokenizer.Remainder()}].");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected end of alias, found [{fieldAliasTokenizer.Remainder()}].");
                     }
                 }
 
@@ -77,7 +77,14 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
 
                 queryFields.Add(new QueryField(fieldAlias, queryFields.Count, queryField));
+
+                //TODO: Find a better way to skip this, we are just trying to keep track of the
+                //  caret for error reporting because it is correctly set after the fields are parsed.
+                tokenizer.SetCaret(tokenizer.Caret + field.Length + 4); //Skip this field.
             }
+
+            tokenizer.SetCaret(stopAt); //Skip the fields.
+            tokenizer.EatWhiteSpace();
 
             return queryFields;
         }

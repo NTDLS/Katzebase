@@ -51,7 +51,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 }
                 else if (token == ")")
                 {
-                    throw new KbParserException($"Invalid expression, found end of scope: [{token}].");
+                    throw new KbParserException(GetCurrentLineNumber(), $"Invalid expression, found end of scope: [{token}].");
                 }
                 else if (token.Length == 1 && (token[0].IsTokenConnectorCharacter() || token[0].IsMathematicalOperator()))
                 {

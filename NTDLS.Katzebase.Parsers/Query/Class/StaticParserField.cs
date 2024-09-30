@@ -81,7 +81,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
         private static string ParseEvaluationRecursive(Tokenizer parentTokenizer, ref IQueryFieldExpression rootQueryFieldExpression,
             string givenExpressionText, ref QueryFieldCollection queryFields)
         {
-            Tokenizer tokenizer = new(givenExpressionText);
+            Tokenizer tokenizer = new(parentTokenizer, givenExpressionText);
 
             StringBuilder buffer = new();
 
@@ -125,7 +125,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     tokenizer.EatNext();
                     if (!tokenizer.IsNextNonIdentifier(['(']))
                     {
-                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Function [{token}] must be called with parentheses.");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Function [{token}] must be called with parentheses.");
                     }
 
                     //The expression key is used to match the function calls to the token in the parent expression.
@@ -150,9 +150,10 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     tokenizer.EatNext();
                     if (tokenizer.IsNextNonIdentifier(['(']))
                     {
+                        //tokenizer.EatNext();
                         //The character after this identifier is an open parenthesis, so this
                         //  looks like a function call but the function is undefined.
-                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Function [{token}] is undefined.");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Function [{token}] is undefined.");
                     }
 
                     var fieldKey = queryFields.GetNextDocumentFieldKey();
@@ -170,7 +171,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     //Verify that the next character (if any) is a "connector".
                     if (tokenizer.NextCharacter != null && !tokenizer.TryIsNextCharacter(o => o.IsTokenConnectorCharacter()))
                     {
-                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Connection token is missing after [{parentTokenizer.ResolveLiteral(token)}].");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Connection token is missing after [{parentTokenizer.ResolveLiteral(token)}].");
                     }
                     else
                     {

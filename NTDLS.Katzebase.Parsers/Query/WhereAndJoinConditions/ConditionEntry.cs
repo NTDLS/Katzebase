@@ -281,7 +281,7 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions
             }
             else
             {
-                throw new KbParserException("Unsupported condition type.");
+                throw new KbEngineException("Unsupported condition type.");
             }
         }
     }
