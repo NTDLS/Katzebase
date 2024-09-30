@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="protobuf-net.Core" Version="3.2.30" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
+    <ProjectReference Include="..\NTDLS.Katzebase.Shared\NTDLS.Katzebase.Shared.csproj" />
+  </ItemGroup>
+
+</Project>

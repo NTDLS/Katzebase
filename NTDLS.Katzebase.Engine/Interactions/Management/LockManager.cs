@@ -5,7 +5,7 @@ using NTDLS.Katzebase.Engine.Locking;
 using NTDLS.Semaphore;
 using System.Text;
 using static NTDLS.Katzebase.Client.KbConstants;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

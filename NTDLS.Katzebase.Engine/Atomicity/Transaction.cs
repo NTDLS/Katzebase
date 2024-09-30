@@ -10,7 +10,7 @@ using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Katzebase.Parsers.Interfaces;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Client.KbConstants;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Atomicity
 {
@@ -493,7 +493,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
 
                     string backupPath = Path.Combine(TransactionPath, Guid.NewGuid().ToString());
                     Directory.CreateDirectory(backupPath);
-                    Library.Helpers.CopyDirectory(diskPath, backupPath);
+                    Shared.Helpers.CopyDirectory(diskPath, backupPath);
 
                     var atom = new Atom(ActionType.DirectoryDelete, diskPath)
                     {
@@ -664,7 +664,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                     {
                                         //Discard.
                                     }
-                                    Library.Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(record.OriginalPath));
+                                    Shared.Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(record.OriginalPath));
                                 }
                                 else if (record.Action == ActionType.FileAlter || record.Action == ActionType.FileDelete)
                                 {
@@ -682,7 +682,7 @@ namespace NTDLS.Katzebase.Engine.Atomicity
                                 }
                                 else if (record.Action == ActionType.DirectoryDelete)
                                 {
-                                    Library.Helpers.CopyDirectory(record.BackupPath.EnsureNotNull(), record.OriginalPath);
+                                    Shared.Helpers.CopyDirectory(record.BackupPath.EnsureNotNull(), record.OriginalPath);
                                 }
                             }
 

@@ -4,7 +4,7 @@ using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.ReliableMessaging;
 using System.Text;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.APIHandlers
 {

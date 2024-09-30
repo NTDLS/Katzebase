@@ -3,12 +3,9 @@ using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Indexes.Matching;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
-using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Engine.QueryProcessing;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Engine.Threading.PoolingParameters;
@@ -17,11 +14,14 @@ using NTDLS.Katzebase.Parsers.Query;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+using NTDLS.Katzebase.PersistentTypes.Document;
+using NTDLS.Katzebase.PersistentTypes.Index;
+using NTDLS.Katzebase.Shared;
 using System.Text;
 using static NTDLS.Katzebase.Engine.Indexes.Matching.IndexConstants;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Parsers.Constants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

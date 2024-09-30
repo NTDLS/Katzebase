@@ -8,7 +8,7 @@ using NTDLS.Katzebase.Engine.Sessions;
 using NTDLS.Semaphore;
 using System.Diagnostics;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

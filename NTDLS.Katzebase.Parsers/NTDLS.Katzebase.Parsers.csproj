@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\NTDLS.Katzebase.Client\NTDLS.Katzebase.Client.csproj" />
+    <ProjectReference Include="..\NTDLS.Katzebase.PersistentTypes\NTDLS.Katzebase.PersistentTypes.csproj" />
   </ItemGroup>
 
 </Project>

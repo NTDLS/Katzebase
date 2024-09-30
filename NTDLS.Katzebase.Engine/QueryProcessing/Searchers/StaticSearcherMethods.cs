@@ -1,10 +1,10 @@
 ﻿using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection;
 using NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using NTDLS.Katzebase.PersistentTypes.Document;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers
 {

@@ -1,9 +1,9 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Library;
 using NTDLS.Katzebase.Parsers.Functions.System;
+using NTDLS.Katzebase.PersistentTypes.Document;
+using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Functions.System.Implementations
 {

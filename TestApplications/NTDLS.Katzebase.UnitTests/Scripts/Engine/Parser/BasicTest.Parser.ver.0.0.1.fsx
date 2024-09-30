@@ -18,7 +18,7 @@ module ParserBasicTests =
     open NTDLS.Katzebase.Client
     open NTDLS.Katzebase.Client.Types
     open NTDLS.Katzebase.Client.Exceptions
-    open NTDLS.Katzebase.Engine.Library
+    open NTDLS.Katzebase.Shared
 
     let ``Parse "SELECT * FROM MASTER:ACCOUNT"`` (outputOpt:ITestOutputHelper option) =
         let userParameters = null

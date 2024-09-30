@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Schemas;
+using NTDLS.Katzebase.PersistentTypes.Index;
 
 namespace NTDLS.Katzebase.Engine.Threading.PoolingParameters
 {

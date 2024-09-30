@@ -3,7 +3,7 @@ using NTDLS.Helpers;
 using NTDLS.Katzebase.Engine.Atomicity;
 using NTDLS.Katzebase.Engine.Locking;
 using static NTDLS.Katzebase.Engine.Instrumentation.InstrumentationTracker;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {
@@ -41,7 +41,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 if (_core.Settings.UseCompression)
                 {
-                    return Library.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)).Length;
+                    return Shared.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)).Length;
                 }
                 else
                 {
@@ -63,7 +63,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
             {
                 if (_core.Settings.UseCompression)
                 {
-                    using var input = new MemoryStream(Library.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)));
+                    using var input = new MemoryStream(Shared.Compression.Deflate.Decompress(File.ReadAllBytes(filePath)));
                     return ProtoBuf.Serializer.Deserialize<T>(input);
                 }
                 else
@@ -163,7 +163,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                             () => File.ReadAllBytes(filePath));
 
                         var serializedData = transaction.Instrumentation.Measure(PerformanceCounter.Decompress,
-                            () => Library.Compression.Deflate.Decompress(fileBytes));
+                            () => Shared.Compression.Deflate.Decompress(fileBytes));
 
                         approximateSizeInBytes = serializedData.Length;
 
@@ -273,7 +273,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                     using var output = new MemoryStream();
                     ProtoBuf.Serializer.Serialize(output, deserializedObject);
                     approximateSizeInBytes = (int)output.Length;
-                    var compressedBytes = Library.Compression.Deflate.Compress(output.ToArray());
+                    var compressedBytes = Shared.Compression.Deflate.Compress(output.ToArray());
                     File.WriteAllBytes(filePath, compressedBytes);
                 }
                 else
@@ -304,7 +304,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 {
                     using var output = new MemoryStream();
                     ProtoBuf.Serializer.Serialize(output, deserializedObject);
-                    File.WriteAllBytes(filePath, Library.Compression.Deflate.Compress(output.ToArray()));
+                    File.WriteAllBytes(filePath, Shared.Compression.Deflate.Compress(output.ToArray()));
                 }
                 else
                 {
@@ -389,7 +389,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                         approximateSizeInBytes = bytes.Length;
 
                         var compressedBytes = transaction.Instrumentation.Measure(PerformanceCounter.Compress, () =>
-                            Library.Compression.Deflate.Compress(bytes));
+                            Shared.Compression.Deflate.Compress(bytes));
 
                         transaction.Instrumentation.Measure(PerformanceCounter.IOWrite, () =>
                             File.WriteAllBytes(filePath, compressedBytes));
@@ -539,7 +539,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 LogManager.Debug($"IO:Delete-File:{transaction.ProcessId}->{filePath}");
 
                 File.Delete(filePath);
-                Library.Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(filePath));
+                Shared.Helpers.RemoveDirectoryIfEmpty(Path.GetDirectoryName(filePath));
             }
             catch (Exception ex)
             {

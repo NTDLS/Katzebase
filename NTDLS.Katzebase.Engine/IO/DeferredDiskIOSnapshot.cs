@@ -1,5 +1,5 @@
 ﻿using NTDLS.Katzebase.Client.Types;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.IO
 {

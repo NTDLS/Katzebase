@@ -6,7 +6,7 @@ namespace NTDLS.Katzebase.Engine.Functions.Scaler.Implementations
     {
         public static string? Execute(ScalerFunctionParameterValueCollection function)
         {
-            return Library.Helpers.Checksum(function.Get<string>("text")).ToString();
+            return Shared.Helpers.Checksum(function.Get<string>("text")).ToString();
         }
     }
 }

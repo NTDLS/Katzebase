@@ -8,9 +8,10 @@ using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers;
+using NTDLS.Katzebase.PersistentTypes.Index;
 using System.Text;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Parsers.Constants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Indexes.Matching
 {

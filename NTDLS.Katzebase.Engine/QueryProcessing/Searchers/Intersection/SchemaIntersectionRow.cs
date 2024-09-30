@@ -1,6 +1,6 @@
 ﻿using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Engine.Documents;
+using NTDLS.Katzebase.PersistentTypes.Document;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Intersection
 {

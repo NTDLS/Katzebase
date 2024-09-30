@@ -20,8 +20,9 @@ namespace NTDLS.Katzebase.Parsers
         /// <param name="queryText"></param>
         /// <param name="userParameters"></param>
         /// <returns></returns>
-        static public QueryBatch ParseBatch(string queryText, KbInsensitiveDictionary<KbConstant> constants, KbInsensitiveDictionary<KbConstant>? userParameters = null)
+        static public QueryBatch ParseBatch(string queryText, KbInsensitiveDictionary<KbConstant> givenConstants, KbInsensitiveDictionary<KbConstant>? userParameters = null)
         {
+            var constants = givenConstants.Clone(); //Clone because we do not want to modify the global constants collection.
 
             userParameters ??= new();
             //If we have user parameters, add them to a clone of the global tokenizer constants.

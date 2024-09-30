@@ -1,9 +1,9 @@
 ﻿using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Documents;
 using NTDLS.Katzebase.Engine.Schemas;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions;
+using NTDLS.Katzebase.PersistentTypes.Document;
 
 namespace NTDLS.Katzebase.Engine.QueryProcessing.Searchers.Mapping
 {

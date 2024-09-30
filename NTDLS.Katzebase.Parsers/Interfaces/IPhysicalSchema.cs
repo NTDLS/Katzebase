@@ -1,6 +1,6 @@
 ﻿namespace NTDLS.Katzebase.Parsers.Interfaces
 {
-    public interface IPhysicalSchema
+    public interface PhysicalSchema
     {
         string DiskPath { get; set; }
     }

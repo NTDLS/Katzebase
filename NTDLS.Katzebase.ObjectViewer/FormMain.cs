@@ -1,10 +1,10 @@
 using Newtonsoft.Json;
 using NTDLS.Helpers;
-using NTDLS.Katzebase.Engine.Documents;
-using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
-using NTDLS.Katzebase.Engine.Indexes;
 using NTDLS.Katzebase.Engine.Schemas;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using NTDLS.Katzebase.PersistentTypes.Document;
+using NTDLS.Katzebase.PersistentTypes.Index;
+using NTDLS.Katzebase.PersistentTypes.Procedure;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.ObjectViewer
 {
@@ -129,7 +129,7 @@ namespace NTDLS.Katzebase.ObjectViewer
 
                 try
                 {
-                    var serializedData = Engine.Library.Compression.Deflate.Decompress(fileBytes);
+                    var serializedData = Shared.Compression.Deflate.Decompress(fileBytes);
                     fileBytes = serializedData;
                 }
                 catch { }

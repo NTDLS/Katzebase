@@ -1,11 +1,11 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Payloads;
 using NTDLS.Katzebase.Engine.Atomicity;
-using NTDLS.Katzebase.Engine.Functions.Procedures.Persistent;
 using NTDLS.Katzebase.Engine.Interactions.APIHandlers;
 using NTDLS.Katzebase.Engine.Interactions.QueryHandlers;
 using NTDLS.Katzebase.Engine.Schemas;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using NTDLS.Katzebase.PersistentTypes.Procedure;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

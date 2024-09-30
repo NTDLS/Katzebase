@@ -9,8 +9,8 @@ using NTDLS.Katzebase.Parsers.Functions.Scaler;
 using NTDLS.Katzebase.Parsers.Functions.System;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using System.Text;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
 using static NTDLS.Katzebase.Parsers.Constants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.Interactions.Management
 {

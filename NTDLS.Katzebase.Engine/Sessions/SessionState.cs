@@ -1,4 +1,4 @@
-﻿using NTDLS.Katzebase.Engine.Library;
+﻿using NTDLS.Katzebase.Shared;
 
 namespace NTDLS.Katzebase.Engine.Sessions
 {

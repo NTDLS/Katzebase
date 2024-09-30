@@ -2,7 +2,7 @@
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Semaphore;
 using static NTDLS.Katzebase.Engine.IO.DeferredDiskIOSnapshot;
-using static NTDLS.Katzebase.Engine.Library.EngineConstants;
+using static NTDLS.Katzebase.Shared.EngineConstants;
 
 namespace NTDLS.Katzebase.Engine.IO
 {
