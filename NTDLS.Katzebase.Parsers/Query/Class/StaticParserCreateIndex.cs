@@ -2,6 +2,7 @@
 using NTDLS.Katzebase.Parsers.Query.Class.WithOptions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
+using System.Collections.Generic;
 using static NTDLS.Katzebase.Parsers.Constants;
 
 namespace NTDLS.Katzebase.Parsers.Query.Class
@@ -23,10 +24,24 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             query.AddAttribute(PreparedQuery.QueryAttribute.IndexName, indexName);
             query.AddAttribute(PreparedQuery.QueryAttribute.IsUnique, false);
 
-            tokenizer.IsNext('(');
+            if (string.IsNullOrEmpty(tokenizer.MatchingScope(out var endOfScope)) == false)
+            {
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Expected: index field body.");
+            }
 
-            var indexFields = tokenizer.EatGetMatchingScope().Split(',').Select(o => o.Trim()).ToList();
-            query.CreateIndexFields.AddRange(indexFields);
+            tokenizer.EatIfNext('(');
+
+            foreach (var field in tokenizer.EatScopeSensitiveSplit(endOfScope))
+            {
+                if (field.IsIdentifier())
+                {
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Found '" + field + "', expected: field name.");
+                }
+
+                query.CreateIndexFields.Add(field);
+            }
+
+            tokenizer.EatIfNext(')');
 
             tokenizer.EatIfNext("on");
 
