@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
                 else
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected string not found [{string.Join("],[", stopAtTokens)}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Unexpected : [{string.Join("],[", stopAtTokens)}].");
                 }
             }
 
@@ -51,7 +51,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     {
                         //Breaks here when "comma" is missing. Error line number is INCORRECT.
 
-                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected end of alias, found [{fieldAliasTokenizer.Remainder()}].");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected end of alias, found: [{fieldAliasTokenizer.Remainder()}].");
                     }
                 }
 

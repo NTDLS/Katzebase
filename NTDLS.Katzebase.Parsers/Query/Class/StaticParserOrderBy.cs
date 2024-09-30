@@ -34,7 +34,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             string testOrderBy = tokenizer.SubStringAbsolute(endOfOrderByCaret).Trim();
             if (testOrderBy == string.Empty)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{testOrderBy}], expected: list of order by fields.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected order by fields, found: [{testOrderBy}].");
             }
 
             foreach (var field in tokenizer.EatScopeSensitiveSplit(endOfOrderByCaret))
@@ -52,7 +52,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     if (!fieldTokenizer.IsExhausted())
                     {
-                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{token}], expected: asc or desc.");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [asc] or [desc] found: [{tokenizer.ResolveLiteral(token)}].");
                     }
                 }
 

@@ -18,7 +18,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             }
             catch
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{referencedProcessId}], expected: numeric process id.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected numeric process id, found: [{referencedProcessId}].");
             }
 
             return query;

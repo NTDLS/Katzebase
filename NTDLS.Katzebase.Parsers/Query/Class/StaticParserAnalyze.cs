@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 SubQueryType.Schema => StaticParserAnalyzeSchema.Parse(queryBatch, tokenizer),
                 SubQueryType.Index => StaticParserAnalyzeIndex.Parse(queryBatch, tokenizer),
 
-                _ => throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"The query type is not implemented: [{querySubType}].")
+                _ => throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Query type is not implemented: [{querySubType}].")
             };
         }
     }

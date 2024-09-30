@@ -21,7 +21,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class.WithOptions
                     {
                         if (Enum.TryParse(resultType, value, true, out var enumValue) == false)
                         {
-                            throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Invalid value passed to with option: [{name}].");
+                            throw new KbParserException(tokenizer.GetCurrentLineNumber(),
+                                $"Expected: [{string.Join("],[", Enum.GetValues(resultType))}], found: [{name}].");
                         }
                         return Convert.ChangeType(enumValue, resultType);
                     }
@@ -38,16 +39,16 @@ namespace NTDLS.Katzebase.Parsers.Query.Class.WithOptions
                     var resultingValue = Convert.ChangeType(value, resultType);
                     if (resultingValue == null)
                     {
-                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Invalid NULL value passed to with option: [{name}].");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected option, found: null.");
                     }
                     return resultingValue;
                 }
                 catch
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Failed to convert with option [{name}] value to [{resultType.Name}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Failed to convert [{resultType.Name}] option, found: [{name}].");
                 }
             }
-            throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Invalid with option: [{name}].");
+            throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Unexpected with option, found: [{name}].");
         }
     }
 }

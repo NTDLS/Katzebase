@@ -143,7 +143,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     if (!tokenizer.IsNextNonIdentifier(['(']))
                     {
-                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Function [{token}] must be called with parentheses.");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Function must be called with parentheses: [{token}].");
                     }
                     //This is a scaler function, we're all good.
 
@@ -156,7 +156,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     {
                         //The character after this identifier is an open parenthesis, so this
                         //  looks like a function call but the function is undefined.
-                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Function [{token}] is undefined.");
+                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Function is undefined: [{token}].");
                     }
 
                     //This is a document field, we're all good.
@@ -164,7 +164,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
                 else
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Condition token [{token}] is invalid.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Condition token is invalid: [{token}].");
                 }
             }
 

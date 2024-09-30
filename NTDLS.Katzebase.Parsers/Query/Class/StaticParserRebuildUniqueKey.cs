@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var indexName) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{indexName}], expected: unique key name.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected unique key name, found: [{tokenizer.ResolveLiteral(indexName)}].");
             }
             query.AddAttribute(PreparedQuery.QueryAttribute.IndexName, indexName);
 
@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{schemaName}], expected: schema name.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(schemaName)}].");
             }
             query.Schemas.Add(new QuerySchema(schemaName.ToLowerInvariant()));
 

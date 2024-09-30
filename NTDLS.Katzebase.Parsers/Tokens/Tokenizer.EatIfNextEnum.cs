@@ -27,7 +27,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                     {
                         if (!validValues.Contains((T)parsedValue))
                         {
-                            throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}] expected [{string.Join("],[", validValues)}]");
+                            throw new KbParserException(GetCurrentLineNumber(), $"Expected [{string.Join("],[", validValues)}], found: [{outFoundToken}].");
                         }
 
                         return (T)parsedValue;
@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
             Caret = restoreCaret;
 
-            throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}] expected [{string.Join("],[", Enum.GetNames(typeof(T)))}]");
+            throw new KbParserException(GetCurrentLineNumber(), $"Expected expected [{string.Join("],[", Enum.GetNames(typeof(T)))}], found: [{outFoundToken}].");
         }
 
         public T EatIfNextEnum<T>(out string outFoundToken) where T : Enum

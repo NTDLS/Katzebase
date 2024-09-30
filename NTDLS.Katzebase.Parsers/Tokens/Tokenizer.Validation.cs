@@ -15,13 +15,13 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             int index = _text.IndexOf('\'');
             if (index > 0)
             {
-                throw new KbParserException(GetLineNumber(index), $"Invalid syntax at ['].");
+                throw new KbParserException(GetLineNumber(index), $"Invalid syntax, found: ['].");
             }
 
             index = _text.IndexOf('\"');
             if (index > 0)
             {
-                throw new KbParserException(GetLineNumber(index), $"Invalid syntax at [\"].");
+                throw new KbParserException(GetLineNumber(index), $"Invalid syntax, found: [\"].");
             }
         }
 
@@ -48,13 +48,13 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
                 if (parenClose > parenOpen)
                 {
-                    throw new KbParserException(GetLineNumber(i), $"Parentheses mismatch in expression.");
+                    throw new KbParserException(GetLineNumber(i), $"Parentheses mismatch..");
                 }
             }
 
             if (parenClose != parenOpen)
             {
-                throw new KbParserException(GetLineNumber(lastClose), $"Parentheses mismatch in expression.");
+                throw new KbParserException(GetLineNumber(lastClose), $"Parentheses mismatch..");
             }
         }
     }

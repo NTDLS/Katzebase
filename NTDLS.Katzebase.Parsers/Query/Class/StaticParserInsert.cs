@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{schemaName}], expected: schema name.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{schemaName}].");
             }
             query.Schemas.Add(new QuerySchema(schemaName));
 
@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             }
             else
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{tokenizer.NextCharacter}], expected: [,] or [=].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected: [,] or [=], found: [{tokenizer.NextCharacter}].");
             }
             tokenizer.SetCaret(firstParenthesesCaret);
 
@@ -130,11 +130,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
                         if (queryFieldCollection.Count < query.InsertFieldNames.Count)
                         {
-                            throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Values list contains less values than the field list.");
+                            throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Values list contains less values than field list.");
                         }
                         else if (queryFieldCollection.Count > query.InsertFieldNames.Count)
                         {
-                            throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Values list contains more values than the field list.");
+                            throw new KbParserException(tokenizer.GetCurrentLineNumber(), "Values list contains more values than field list.");
                         }
 
                         query.InsertFieldValues.Add(queryFieldCollection);
@@ -152,12 +152,12 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 }
                 else
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Invalid token, found [{tokenizer.GetNext()}], expected [values], [select]");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [values], [select], found: [{tokenizer.EatGetNextEvaluated()}]");
                 }
             }
             else
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Invalid query, field list or key/value insert statement was malformed.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Malformed field list or key/value insert statement.");
             }
 
             return query;

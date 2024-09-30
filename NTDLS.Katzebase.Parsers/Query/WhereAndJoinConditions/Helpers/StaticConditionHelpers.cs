@@ -20,7 +20,7 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers
                 "not like" => LogicalQualifier.NotLike,
                 "between" => LogicalQualifier.Between,
                 "not between" => LogicalQualifier.NotBetween,
-                _ => throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Unexpected logical qualifier found: [{text}]."),
+                _ => throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected logical qualifier, found: [{text}]."),
             };
         }
 
@@ -39,7 +39,7 @@ namespace NTDLS.Katzebase.Parsers.Query.WhereAndJoinConditions.Helpers
                 LogicalQualifier.GreaterThan => ">",
                 LogicalQualifier.Like => "~",
                 LogicalQualifier.NotLike => "!~",
-                _ => throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Unexpected logical qualifier found [{logicalQualifier}].")
+                _ => throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected logical qualifier, found: [{logicalQualifier}].")
             };
         }
 

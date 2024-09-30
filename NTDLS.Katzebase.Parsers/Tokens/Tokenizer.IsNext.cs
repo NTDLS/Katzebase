@@ -11,7 +11,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (!TryIsNext(characters, out var foundCharacter))
             {
-                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{foundCharacter}], expected [{string.Join("],[", characters)}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected [{string.Join("],[", characters)}], found: [{foundCharacter}].");
             }
         }
 
@@ -22,7 +22,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (!TryIsNext(character, out var foundCharacter))
             {
-                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{foundCharacter}], expected [{character}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected [{character}], found: [{foundCharacter}].");
             }
         }
 
@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out var outFoundToken))
             {
-                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected [{string.Join("],[", givenTokens)}], found: [{outFoundToken}].");
             }
         }
 
@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out var outFoundToken))
             {
-                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected [{string.Join("],[", givenTokens)}], found: [{outFoundToken}].");
             }
         }
         /// <summary>
@@ -54,7 +54,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out var outFoundToken))
             {
-                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected [{givenToken}], found: [{outFoundToken}].");
             }
         }
         /// <summary>
@@ -64,7 +64,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out var outFoundToken))
             {
-                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected [{givenToken}], found: [{outFoundToken}].");
             }
         }
         /// <summary>
@@ -75,7 +75,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, delimiters, out outFoundToken))
             {
-                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected [{string.Join("],[", givenTokens)}], found: [{outFoundToken}].");
             }
         }
         /// <summary>
@@ -86,7 +86,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), givenTokens, _standardTokenDelimiters, out outFoundToken))
             {
-                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{string.Join("],[", givenTokens)}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected [{string.Join("],[", givenTokens)}], found: [{outFoundToken}].");
             }
         }
         /// <summary>
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], _standardTokenDelimiters, out outFoundToken))
             {
-                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected [{givenToken}], found: [{outFoundToken}].");
             }
         }
         /// <summary>
@@ -108,7 +108,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             if (!TryCompareNext((p, g) => p.Equals(g, StringComparison.InvariantCultureIgnoreCase), [givenToken], delimiters, out outFoundToken))
             {
-                throw new KbParserException(GetCurrentLineNumber(), $"Invalid token, found [{outFoundToken}], expected [{givenToken}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected [{givenToken}], found: [{outFoundToken}].");
             }
         }
     }

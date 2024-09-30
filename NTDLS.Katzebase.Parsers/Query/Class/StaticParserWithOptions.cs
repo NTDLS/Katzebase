@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryIsNextCharacter('(') == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{tokenizer.NextCharacter}], expected: [(].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [(], found: [{tokenizer.NextCharacter}].");
             }
             tokenizer.EatNextCharacter();
 
@@ -25,7 +25,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 string name = tokenizer.EatGetNext().ToLowerInvariant();
                 if (tokenizer.TryIsNextCharacter('=') == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{tokenizer.NextCharacter}], expected: [=].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [=], found: [{tokenizer.NextCharacter}].");
                 }
                 tokenizer.EatNextCharacter();
 
@@ -33,7 +33,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
                 if (expectedOptions.ContainsKey(name) == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{name}], expected [{string.Join("],[", expectedOptions.Select(o => o.Key))}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(),
+                        $"Expected [{string.Join("],[", expectedOptions.Select(o => o.Key))}], found: [{tokenizer.ResolveLiteral(name)}]");
                 }
 
                 if (tokenizer.Literals.TryGetValue(tokenValue, out var literal))
@@ -46,7 +47,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 var option = new WithOption(name, convertedValue, convertedValue.GetType());
                 if (Enum.TryParse(option.Name, true, out QueryAttribute optionType) == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{option.Name}], expected [{string.Join("],[", expectedOptions.Select(o => o.Key))}].");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(),
+                        $"Expected [{string.Join("],[", expectedOptions.Select(o => o.Key))}], found: [{option.Name}].");
                 }
 
                 results.Add(optionType, option.Value);
@@ -59,7 +61,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryIsNextCharacter(')') == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{tokenizer.NextCharacter}], expected: [)].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected: [)], found: [{tokenizer.NextCharacter}].");
             }
             tokenizer.EatNextCharacter();
 

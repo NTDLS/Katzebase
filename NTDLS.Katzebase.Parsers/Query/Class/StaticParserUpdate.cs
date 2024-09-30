@@ -24,7 +24,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{schemaName}], expected: schema name.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(schemaName)}].");
             }
             if (tokenizer.TryEatIfNext("as"))
             {
@@ -43,7 +43,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             {
                 if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var fieldName) == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{fieldName}], expected: field name.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected field name, found: [{tokenizer.ResolveLiteral(fieldName)}].");
                 }
                 query.UpdateFieldNames.Add(fieldName);
 
@@ -57,7 +57,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
                 if (!isTextRemaining)
                 {
-                    break; //exit loop to parse, found where or join clause.
+                    break; //exit loop to parse, found: where or join clause.
                 }
             }
 

@@ -29,12 +29,12 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     if (ScalerFunctionCollection.TryGetFunction(token, out var _))
                     {
                         //This is a function call, but it is the only token - that's not a valid function call.
-                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Function scaler expects parentheses: [{token}]");
+                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Scaler function must be called with parentheses: [{token}]");
                     }
                     if (AggregateFunctionCollection.TryGetFunction(token, out var _))
                     {
                         //This is a function call, but it is the only token - that's not a valid function call.
-                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Function aggregate expects parentheses: [{token}]");
+                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Aggregate function must be called with parentheses: [{token}]");
                     }
 
                     var queryFieldDocumentIdentifier = new QueryFieldDocumentIdentifier(parentTokenizer.GetCurrentLineNumber(), token);
@@ -60,7 +60,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 //We are testing to make sure that there are no commas that fall outside of function scopes.
                 //This is because each call to ParseField should collapse to a single value.
                 //E.g. "10 + Length() * 10" is allowed, but "10 + Length() * 10, Length()" is not allowed.
-                throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Single field should not contain multiple values: [{givenFieldText}]");
+                throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Field contains multiple values: [{givenFieldText}]");
             }
 
             //This field is going to require evaluation, so figure out if its a number or a string.
@@ -111,6 +111,11 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 else if (ScalerFunctionCollection.TryGetFunction(token, out var scalerFunction))
                 {
                     tokenizer.EatNext();
+
+                    if (!tokenizer.IsNextNonIdentifier(['(']))
+                    {
+                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Scaler function must be called with parentheses: [{token}]");
+                    }
                     //The expression key is used to match the function calls to the token in the parent expression.
                     var expressionKey = queryFields.GetNextExpressionKey();
                     var basicDataType = scalerFunction.ReturnType == KbScalerFunctionParameterType.Numeric ? KbBasicDataType.Numeric : KbBasicDataType.String;
@@ -125,7 +130,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     tokenizer.EatNext();
                     if (!tokenizer.IsNextNonIdentifier(['(']))
                     {
-                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Function [{token}] must be called with parentheses.");
+                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Aggregate function must be called with parentheses: [{token}]");
                     }
 
                     //The expression key is used to match the function calls to the token in the parent expression.
@@ -153,7 +158,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                         //tokenizer.EatNext();
                         //The character after this identifier is an open parenthesis, so this
                         //  looks like a function call but the function is undefined.
-                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Function [{token}] is undefined.");
+                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Function is undefined: [{token}].");
                     }
 
                     var fieldKey = queryFields.GetNextDocumentFieldKey();
@@ -171,7 +176,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     //Verify that the next character (if any) is a "connector".
                     if (tokenizer.NextCharacter != null && !tokenizer.TryIsNextCharacter(o => o.IsTokenConnectorCharacter()))
                     {
-                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Connection token is missing after [{parentTokenizer.ResolveLiteral(token)}].");
+                        throw new KbParserException(parentTokenizer.GetCurrentLineNumber(), $"Connection token is missing, found: [{parentTokenizer.ResolveLiteral(token)}].");
                     }
                     else
                     {

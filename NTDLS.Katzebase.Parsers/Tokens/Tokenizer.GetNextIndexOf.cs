@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 return foundIndex.EnsureNotNull();
             }
 
-            throw new KbParserException(GetCurrentLineNumber(), $"Tokenizer character not found [{string.Join("],[", characters)}].");
+            throw new KbParserException(GetCurrentLineNumber(), $"Expected [{string.Join("],[", characters)}], found: [{NextCharacter}].");
         }
 
         /// <summary>
@@ -29,7 +29,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 return foundIndex.EnsureNotNull();
             }
 
-            throw new KbParserException(GetCurrentLineNumber(), $"Expected string not found [{string.Join("],[", givenStrings)}].");
+            throw new KbParserException(GetCurrentLineNumber(), $"Expected [{string.Join("],[", givenStrings)}].");
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 return foundIndex.EnsureNotNull();
             }
 
-            throw new KbParserException(GetCurrentLineNumber(), $"Expected string not found: [{proc.GetType().Name}].");
+            throw new KbParserException(GetCurrentLineNumber(), $"Expected [{proc.GetType().Name}].");
         }
 
         /// <summary>
@@ -55,7 +55,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 return foundIndex.EnsureNotNull();
             }
 
-            throw new KbParserException(GetCurrentLineNumber(), $"Expected string not found [{string.Join("],[", givenString)}].");
+            throw new KbParserException(GetCurrentLineNumber(), $"Expected [{string.Join("],[", givenString)}].");
         }
 
     }

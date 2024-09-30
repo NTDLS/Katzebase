@@ -58,7 +58,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Fields
                 return;
             }
 
-            throw new KbParserException($"Multipart identifier contains an invalid number of segment: [{value}]");
+            throw new KbParserException($"Expected multi-part identifier, found: [{value}]");
         }
 
         public override bool Equals(object? obj)

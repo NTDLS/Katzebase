@@ -47,7 +47,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             {
                 if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var selectIntoSchema) == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{selectIntoSchema}], expected: schema name.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(selectIntoSchema)}].");
                 }
 
                 query.AddAttribute(PreparedQuery.QueryAttribute.TargetSchema, selectIntoSchema);
@@ -58,12 +58,12 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             //Parse primary schema.
             if (!tokenizer.TryEatIfNext("from"))
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{tokenizer.EatGetNext()}], expected: 'from'.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [from], found: [{tokenizer.EatGetNextEvaluated()}].");
             }
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var schemaName) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{schemaName}], expected: schema name.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected schema name, found: [{tokenizer.ResolveLiteral(schemaName)}].");
             }
 
             if (tokenizer.TryEatIfNext("as"))
@@ -97,7 +97,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             {
                 if (tokenizer.TryEatIfNext("by") == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{tokenizer.EatGetNext()}], expected: 'by'.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [by], found: [{tokenizer.EatGetNextEvaluated()}].");
                 }
                 query.GroupFields = StaticParserGroupBy.Parse(queryBatch, tokenizer);
             }
@@ -107,7 +107,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             {
                 if (tokenizer.TryEatIfNext("by") == false)
                 {
-                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{tokenizer.EatGetNext()}], expected: 'by'.");
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [by], found: [{tokenizer.EatGetNextEvaluated()}].");
                 }
                 query.SortFields = StaticParserOrderBy.Parse(queryBatch, tokenizer);
             }
@@ -129,7 +129,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
                     {
-                        throw new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(), $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
+                        throw new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in field list for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
                     }
                 }
             }
@@ -141,7 +142,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
                     {
-                        throw new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(), $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
+                        throw new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
                     }
                 }
             }
@@ -157,7 +159,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                         {
                             if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
                             {
-                                throw new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(), $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in join condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
+                                throw new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                                    $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in join condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
                             }
                         }
                     }
@@ -171,7 +174,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                 {
                     if (query.Schemas.Any(o => o.Prefix.Is(documentIdentifier.Value.SchemaAlias)) == false)
                     {
-                        throw new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(), $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
+                        throw new KbParserException(documentIdentifier.Value.ScriptLine ?? tokenizer.GetCurrentLineNumber(),
+                            $"Schema [{documentIdentifier.Value.SchemaAlias}] referenced in condition for [{documentIdentifier.Value.FieldName}] does not exist in the query.");
                     }
                 }
             }

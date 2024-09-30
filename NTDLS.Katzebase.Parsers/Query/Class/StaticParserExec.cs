@@ -16,7 +16,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             if (tokenizer.TryEatValidateNext((o) => TokenizerExtensions.IsIdentifier(o), out var procedureName) == false)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{procedureName}], expected: procedure name.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected procedure name, found: [{procedureName}].");
             }
 
             var parts = procedureName.Split(':');
@@ -35,7 +35,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             if (tokenizer.TryCompareNext(o => o.StartsWith('$')))
             {
                 //Were just testing for a literal placeholder, as its a common mistake to omit the parentheses when calling a function.
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Function call with parameters require parentheses, found: [{tokenizer.EatGetNextEvaluated()}].");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Function must be called with parentheses: [{tokenizer.EatGetNextEvaluated()}].");
             }
 
             if (tokenizer.TryEatIfNextCharacter('('))
@@ -61,7 +61,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                         else if (token == ")")
                         {
                             endCaret = tokenizer.Caret;
-                            break; //exit loop to parse, found end of parameter list.
+                            break; //exit loop to parse, found: end of parameter list.
                         }
                         else if (token.Length == 1 && token[0] == ',')
                         {
@@ -86,7 +86,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
                     if (tokenizer.TryEatIfNextCharacter(')'))
                     {
-                        break; //exit loop to parse, found end of parameter list.
+                        break; //exit loop to parse, found: end of parameter list.
                     }
                 }
             }

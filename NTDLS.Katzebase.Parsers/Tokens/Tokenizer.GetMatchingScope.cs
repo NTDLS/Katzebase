@@ -40,7 +40,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
             if (_text[caret] != open)
             {
-                throw new KbParserException(GetCurrentLineNumber(), $"Expected scope character not found [{open}].");
+                throw new KbParserException(GetCurrentLineNumber(), $"Expected [{open}], found: [{_text[Caret]}].");
             }
 
             int startPosition = caret + 1;
@@ -58,7 +58,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
                 if (scope < 0)
                 {
-                    throw new KbParserException(GetCurrentLineNumber(), $"Expected scope [{open}] and [{close}] fell below zero.");
+                    throw new KbParserException(GetCurrentLineNumber(), $"Scope [{open}] and [{close}] mismatch.");
                 }
 
                 if (scope == 0)
@@ -68,7 +68,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                 }
             }
 
-            throw new KbParserException(GetCurrentLineNumber(), $"Expected matching scope not found [{open}] and [{close}], ended at scope [{scope}].");
+            throw new KbParserException(GetCurrentLineNumber(), $"Scope [{open}] and [{close}] mismatch.");
         }
     }
 }

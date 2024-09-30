@@ -83,7 +83,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                             }
                             else
                             {
-                                throw new KbParserException(GetCurrentLineNumber(), $"Variable [{match}] is not defined.");
+                                throw new KbParserException(GetCurrentLineNumber(), $"Variable not defined: [{match}].");
                             }
                         }
                         else if (PredefinedConstants.TryGetValue(match.ToString(), out var constant))
@@ -183,7 +183,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
                                 }
                                 else
                                 {
-                                    throw new KbParserException(GetCurrentLineNumber(), $"Variable [{match}] is not defined.");
+                                    throw new KbParserException(GetCurrentLineNumber(), $"Variable not defined: [{match}].");
                                 }
                             }
                             else if (constant.DataType == KbBasicDataType.Numeric)

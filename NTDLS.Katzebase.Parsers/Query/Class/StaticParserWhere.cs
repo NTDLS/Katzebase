@@ -30,7 +30,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             string testCondition = tokenizer.SubStringAbsolute(endOfConditionsCaret).Trim();
             if (testCondition == string.Empty)
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Found [{testCondition}], expected: list of conditions.");
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected conditions, found: [{testCondition}].");
             }
 
             return StaticConditionsParser.Parse(queryBatch, tokenizer, testCondition, endOfConditionsCaret);
