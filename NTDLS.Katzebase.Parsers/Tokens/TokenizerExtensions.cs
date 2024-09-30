@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Parsers.Query.Class.Helpers;
+using System.Text;
 
 namespace NTDLS.Katzebase.Parsers.Tokens
 {
@@ -7,6 +9,30 @@ namespace NTDLS.Katzebase.Parsers.Tokens
     /// </summary>
     public static class TokenizerExtensions
     {
+        /// <summary>
+        /// Gets the end of the query segment by using the stopAtTokens and the start of the next query, using which ever one comes first.
+        /// </summary>
+        /// <param name="tokenizer"></param>
+        /// <param name="stopAtTokens"></param>
+        /// <returns></returns>
+        public static int FindEndOfQuerySegment(this Tokenizer tokenizer, string[] stopAtTokens)
+        {
+            //Find where the join conditions end.
+            if (tokenizer.TryGetFirstIndexOf(stopAtTokens, out var nextPartOfQueryCaret) == false)
+            {
+                nextPartOfQueryCaret = tokenizer.Length; //No end marker found, consume the entire query.
+
+            }
+            if (tokenizer.TryFindCompareNext((o) => StaticParserUtility.IsStartOfQuery(o), out var foundToken, out var startOfNextQueryCaret) == false)
+            {
+                startOfNextQueryCaret = tokenizer.Length; //No end marker found, consume the entire query.
+            }
+
+            int?[] carets = [nextPartOfQueryCaret, startOfNextQueryCaret];
+
+            return carets.Min().EnsureNotNull();
+        }
+
         /// <summary>
         /// Splits the given text on a comma delimiter while paying attention to the scope denoted by open and close parentheses..
         /// </summary>

@@ -1,6 +1,5 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
-using NTDLS.Katzebase.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 using static NTDLS.Katzebase.Client.KbConstants;
@@ -15,21 +14,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             var sortFields = new SortFields();
             var fields = new List<string>();
 
-            //Look for tokens that would mean the end of the where clause
-            if (tokenizer.TryFindNextIndexOfAny([" group ", " offset "], out var nextPartOfQueryCaret) == false)
-            {
-                nextPartOfQueryCaret = tokenizer.Length; //Well, I suppose we will take the remainder of the query text.
-            }
-
-            //Maybe we end at the next query?
-            if (tokenizer.TryFindCompareNext((o) => StaticParserUtility.IsStartOfQuery(o), out var foundToken, out var startOfNextQueryCaret) == false)
-            {
-                startOfNextQueryCaret = tokenizer.Length; //Well, I suppose we will take the remainder of the query text.
-            }
-
-            int?[] carets = [nextPartOfQueryCaret, startOfNextQueryCaret];
-
-            var endOfOrderByCaret = carets.Min().EnsureNotNull();
+            var endOfOrderByCaret = tokenizer.FindEndOfQuerySegment([" group ", " offset "]);
 
             string testOrderBy = tokenizer.SubStringAbsolute(endOfOrderByCaret).Trim();
             if (testOrderBy == string.Empty)

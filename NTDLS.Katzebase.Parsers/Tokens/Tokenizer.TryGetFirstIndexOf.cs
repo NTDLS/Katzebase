@@ -1,11 +1,13 @@
-﻿namespace NTDLS.Katzebase.Parsers.Tokens
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace NTDLS.Katzebase.Parsers.Tokens
 {
     public partial class Tokenizer
     {
         /// <summary>
         /// Returns the first index (minimum value) of the found of the given strings.
         /// </summary>
-        public bool TryGetFirstIndexOf(string[] givenStrings, out int foundIndex)
+        public bool TryGetFirstIndexOf(string[] givenStrings, [NotNullWhen(true)] out int? foundIndex)
         {
             var indexes = new List<int>();
 
@@ -24,7 +26,7 @@
                 return true;
             }
 
-            foundIndex = -1;
+            foundIndex = null;
             return false;
         }
 
@@ -32,7 +34,7 @@
         /// <summary>
         /// Returns the first index (minimum value) of the found of the given string.
         /// </summary>
-        public bool TryGetFirstIndexOf(string givenString, out int foundIndex)
+        public bool TryGetFirstIndexOf(string givenString, [NotNullWhen(true)] out int? foundIndex)
         {
             var indexes = new List<int>();
 
@@ -48,7 +50,7 @@
                 return true;
             }
 
-            foundIndex = -1;
+            foundIndex = null;
             return false;
         }
     }

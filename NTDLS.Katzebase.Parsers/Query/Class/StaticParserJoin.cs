@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
 
@@ -39,19 +40,16 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [on], found: [{tokenizer.ResolveLiteral(token)}].");
                 }
 
-                int joinConditionsStartPosition = tokenizer.Caret;
+                int startOfJoinCaret = tokenizer.Caret;
+                var endOfJoinCaret = tokenizer.FindEndOfQuerySegment(["where", "order", "inner", "group"]);
 
-                if (tokenizer.TryGetFirstIndexOf(["where", "order", "inner", "group"], out var joinConditionsEndPosition) == false)
+                string joinConditionsText = tokenizer.SubStringAbsolute(endOfJoinCaret).Trim();
+                if (joinConditionsText == string.Empty)
                 {
-                    joinConditionsEndPosition = tokenizer.Length; //No end marker found, consume the entire query.
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected join conditions, found: [{joinConditionsText}].");
                 }
 
-                int joinConditionsLength = joinConditionsEndPosition - joinConditionsStartPosition;
-                var joinConditionsText = tokenizer.Text.Substring(joinConditionsStartPosition, joinConditionsLength).Trim();
-
-                tokenizer.Caret = joinConditionsStartPosition;
-
-                var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, joinConditionsEndPosition, subSchemaAlias);
+                var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, endOfJoinCaret.EnsureNotNull(), subSchemaAlias);
 
                 result.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
             }

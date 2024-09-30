@@ -12,7 +12,6 @@ using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Classes.Editor.FoldingStrategy;
 using NTDLS.Katzebase.Management.Classes.StaticAnalysis;
-using System;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;

@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Parsers.Query.Fields;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
 using NTDLS.Katzebase.Parsers.Tokens;
@@ -22,7 +23,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
             var queryFields = new QueryFieldCollection(queryBatch);
 
             //Get the position which represents the end of the select list.
-            if (tokenizer.TryGetFirstIndexOf(stopAtTokens, out int endOfScopeCaret) == false)
+            if (tokenizer.TryGetFirstIndexOf(stopAtTokens, out var endOfScopeCaret) == false)
             {
                 if (allowEntireConsumption)
                 {
@@ -36,7 +37,7 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             var exceptions = new List<Exception>();
 
-            foreach (var field in tokenizer.EatScopeSensitiveSplit(endOfScopeCaret))
+            foreach (var field in tokenizer.EatScopeSensitiveSplit(endOfScopeCaret.EnsureNotNull()))
             {
                 try
                 {
