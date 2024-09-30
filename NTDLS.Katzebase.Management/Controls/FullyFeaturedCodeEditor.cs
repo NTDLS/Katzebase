@@ -12,6 +12,7 @@ using NTDLS.Katzebase.Management.Classes;
 using NTDLS.Katzebase.Management.Classes.Editor;
 using NTDLS.Katzebase.Management.Classes.Editor.FoldingStrategy;
 using NTDLS.Katzebase.Management.Classes.StaticAnalysis;
+using System;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
@@ -106,12 +107,16 @@ namespace NTDLS.Katzebase.Management.Controls
                     var queryBatch = Parsers.StaticQueryParser.ParseBatch(MockEngineCore.Instance, script);
                 }
             }
-            catch (KbParserException parserEx)
+            catch (KbParserException parserException)
             {
-                if (parserEx.LineNumber != null)
+                if (parserException.LineNumber != null)
                 {
-                    AddSyntaxError((int)parserEx.LineNumber, parserEx.Message);
+                    AddSyntaxError(parserException.LineNumber.EnsureNotNull(), parserException.Message);
                 }
+            }
+            catch (AggregateException aggregateException)
+            {
+                RecursivelyReportExceptions(aggregateException.InnerExceptions.ToList());
             }
             catch (Exception ex)
             {
@@ -120,6 +125,26 @@ namespace NTDLS.Katzebase.Management.Controls
             //Immediately update the TextArea.
             TextArea.TextView.InvalidateLayer(KnownLayer.Selection);
         }
+
+        public void RecursivelyReportExceptions(List<Exception> exceptions)
+        {
+            foreach (var exception in exceptions)
+            {
+                if (exception is KbParserException parserException)
+                {
+                    if (parserException.LineNumber != null)
+                    {
+                        AddSyntaxError(parserException.LineNumber.EnsureNotNull(), exception.Message);
+                    }
+                }
+                else if (exception is AggregateException aggregateException)
+                {
+                    RecursivelyReportExceptions(aggregateException.InnerExceptions.ToList());
+                }
+            }
+
+        }
+
 
         void AddSyntaxError(int lineNumber, string message)
         {

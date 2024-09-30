@@ -1,4 +1,5 @@
-﻿using NTDLS.Katzebase.Client.Exceptions;
+﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Parsers.Interfaces;
 using NTDLS.Katzebase.Parsers.Query.Class;
@@ -36,15 +37,41 @@ namespace NTDLS.Katzebase.Parsers
             var tokenizer = new Tokenizer(queryText, true, tokenizerConstants);
             var queryBatch = new QueryBatch(tokenizer.Literals);
 
+            List<Exception> exceptions = new List<Exception>();
+
             while (!tokenizer.IsExhausted())
             {
                 int preParseTokenPosition = tokenizer.Caret;
-                var preparedQuery = ParseQuery(queryBatch, tokenizer);
 
-                var singleQueryText = tokenizer.Substring(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
-                preparedQuery.Hash = ComputeSHA256(singleQueryText);
+                try
+                {
+                    var preparedQuery = ParseQuery(queryBatch, tokenizer);
 
-                queryBatch.Add(preparedQuery);
+                    var singleQueryText = tokenizer.Substring(preParseTokenPosition, tokenizer.Caret - preParseTokenPosition);
+                    preparedQuery.Hash = ComputeSHA256(singleQueryText);
+                    queryBatch.Add(preparedQuery);
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+
+                    //For the sake of error reporting, try to find the next query and parse it too.
+                    if (tokenizer.TryFindCompareNext((o) => StaticParserUtility.IsStartOfQuery(o), out var foundToken, out var startOfNextQueryCaret))
+                    {
+                        tokenizer.Caret = startOfNextQueryCaret.EnsureNotNull();
+                    }
+                    else
+                    {
+                        break;
+                    }
+
+                    continue;
+                }
+            }
+
+            if (exceptions.Count != 0)
+            {
+                throw new AggregateException(exceptions);
             }
 
             return queryBatch;

@@ -21,7 +21,7 @@ namespace NTDLS.Katzebase.Client
                 {
                     if (me.Value.StartsWith("/*"))
                     {
-                        var numberOfNewlines = me.Value.Count(c => c == '\n') + 1;
+                        var numberOfNewlines = me.Value.Count(c => c == '\n');
                         return string.Concat(Enumerable.Repeat(Environment.NewLine, numberOfNewlines));
                     }
                     else if (me.Value.StartsWith("--"))
