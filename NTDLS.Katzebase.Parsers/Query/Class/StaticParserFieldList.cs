@@ -75,6 +75,8 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                                 fieldAlias = queryFields.GetNextFieldAlias();
                             }
                         }
+
+                        queryFields.Add(new QueryField(fieldAlias, queryFields.Count, queryField));
                     }
                     catch (Exception e)
                     {
