@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             int lastOpen = 0;
             int lastClose = 0;
 
-            for (int i = 0; i < _text.Length; i++)
+            for (int i = 0; i < _length; i++)
             {
                 if (_text[i] == '(')
                 {

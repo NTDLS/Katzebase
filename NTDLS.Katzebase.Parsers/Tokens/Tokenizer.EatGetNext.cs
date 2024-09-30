@@ -13,12 +13,12 @@
 
             var token = string.Empty;
 
-            if (Caret == _text.Length)
+            if (Caret == _length)
             {
                 return string.Empty;
             }
 
-            for (; Caret < _text.Length; Caret++)
+            for (; Caret < _length; Caret++)
             {
                 if (delimiters.Contains(_text[Caret]) == true)
                 {

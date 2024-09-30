@@ -46,7 +46,7 @@ module DMLExecutionBasicTests =
         _core.Query.ExecuteNonQuery(preLogin, $"CREATE SCHEMA {testSchema}")
 
         let userParameters = new KbInsensitiveDictionary<KbConstant>()
-        let preparedQueries = StaticQueryParser.ParseBatch(_core, plainInsert, userParameters)
+        let preparedQueries = StaticQueryParser.ParseBatch(plainInsert, _core.GlobalConstants, userParameters)
         let preparedQuery = preparedQueries.Item 0
         
         equals [|"COL1"; "COL2"|] (preparedQuery.InsertFieldNames |> Seq.toArray)

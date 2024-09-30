@@ -16,34 +16,47 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
 
             var endOfOrderByCaret = tokenizer.FindEndOfQuerySegment([" group ", " offset "]);
 
-            string testOrderBy = tokenizer.SubStringAbsolute(endOfOrderByCaret).Trim();
-            if (testOrderBy == string.Empty)
+            try
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected order by fields, found: [{testOrderBy}].");
-            }
+                tokenizer.PushSyntheticLimit(endOfOrderByCaret);
 
-            foreach (var field in tokenizer.EatScopeSensitiveSplit(endOfOrderByCaret))
-            {
-                var fieldTokenizer = new TokenizerSlim(field);
-
-                var fieldText = fieldTokenizer.EatGetNext();
-
-                var sortDirection = KbSortDirection.Ascending;
-                if (fieldTokenizer.TryEatIsNextToken(["asc", "desc"], out token))
+                string testOrderBy = tokenizer.SubStringAbsolute(endOfOrderByCaret).Trim();
+                if (testOrderBy == string.Empty)
                 {
-                    sortDirection = token.Is("desc") ? KbSortDirection.Descending : KbSortDirection.Ascending;
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected order by fields, found: [{testOrderBy}].");
                 }
-                else
+
+                foreach (var field in tokenizer.EatScopeSensitiveSplit(endOfOrderByCaret))
                 {
-                    if (!fieldTokenizer.IsExhausted())
+                    var fieldTokenizer = new TokenizerSlim(field);
+
+                    var fieldText = fieldTokenizer.EatGetNext();
+
+                    var sortDirection = KbSortDirection.Ascending;
+                    if (fieldTokenizer.TryEatIsNextToken(["asc", "desc"], out token))
                     {
-                        throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [asc] or [desc] found: [{tokenizer.ResolveLiteral(token)}].");
+                        sortDirection = token.Is("desc") ? KbSortDirection.Descending : KbSortDirection.Ascending;
                     }
+                    else
+                    {
+                        if (!fieldTokenizer.IsExhausted())
+                        {
+                            throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [asc] or [desc] found: [{tokenizer.ResolveLiteral(token)}].");
+                        }
+                    }
+
+                    sortFields.Add(tokenizer.GetCurrentLineNumber(), fieldText, sortDirection);
                 }
-
-                sortFields.Add(tokenizer.GetCurrentLineNumber(), fieldText, sortDirection);
             }
-
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                tokenizer.PopSyntheticLimit();
+                tokenizer.EatWhiteSpace();
+            }
             return sortFields;
         }
     }

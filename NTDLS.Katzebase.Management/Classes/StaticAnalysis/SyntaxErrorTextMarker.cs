@@ -1,8 +1,8 @@
 ﻿namespace NTDLS.Katzebase.Management.Classes.StaticAnalysis
 {
-    public class TextMarker : ITextMarker
+    public class SyntaxErrorTextMarker //: ISyntaxErrorTextMarker
     {
-        public TextMarker(int startOffset, int length, string toolTip, System.Windows.Media.Color? squigglyLineColor)
+        public SyntaxErrorTextMarker(int startOffset, int length, string toolTip, System.Windows.Media.Color? squigglyLineColor)
         {
             StartOffset = startOffset;
             Length = length;

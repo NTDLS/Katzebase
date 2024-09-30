@@ -8,7 +8,7 @@
         public int EatWhile(char[] characters)
         {
             int count = 0;
-            while (Caret < _text.Length && characters.Contains(_text[Caret]))
+            while (Caret < _length && characters.Contains(_text[Caret]))
             {
                 count++;
                 Caret++;

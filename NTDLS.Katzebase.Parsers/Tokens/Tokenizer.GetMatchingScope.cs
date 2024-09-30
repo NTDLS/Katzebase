@@ -33,7 +33,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
             int caret = Caret;
 
-            while (caret < _text.Length && char.IsWhiteSpace(_text[caret]))
+            while (caret < _length && char.IsWhiteSpace(_text[caret]))
             {
                 caret++;
             }
@@ -45,7 +45,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
             int startPosition = caret + 1;
 
-            for (; caret < _text.Length; caret++)
+            for (; caret < _length; caret++)
             {
                 if (_text[caret] == open)
                 {

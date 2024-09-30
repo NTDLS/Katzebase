@@ -44,7 +44,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <exception cref="KbMultipleRecordSetsException"></exception>
         internal IEnumerable<T> ExecuteQuery<T>(SessionState session, string queryText, object? userParameters = null) where T : new()
         {
-            var preparedQueries = StaticQueryParser.ParseBatch(_core, queryText, userParameters.ToUserParametersInsensitiveDictionary());
+            var preparedQueries = StaticQueryParser.ParseBatch(queryText, _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary());
             if (preparedQueries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
@@ -67,7 +67,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
         /// <exception cref="KbMultipleRecordSetsException"></exception>
         internal void ExecuteNonQuery(SessionState session, string queryText)
         {
-            var preparedQueries = StaticQueryParser.ParseBatch(_core, queryText);
+            var preparedQueries = StaticQueryParser.ParseBatch(queryText, _core.GlobalConstants);
             if (preparedQueries.Count > 1)
             {
                 throw new KbMultipleRecordSetsException("Prepare batch resulted in more than one query.");
@@ -159,7 +159,7 @@ namespace NTDLS.Katzebase.Engine.Interactions.Management
                 statement.Append(')');
             }
 
-            var batch = StaticQueryParser.ParseBatch(_core, statement.ToString());
+            var batch = StaticQueryParser.ParseBatch(statement.ToString(), _core.GlobalConstants);
             if (batch.Count > 1)
             {
                 throw new KbEngineException("Expected only one procedure call per batch.");

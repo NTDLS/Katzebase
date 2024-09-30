@@ -45,7 +45,7 @@ module DDLExecutionBasicTests =
 
         let countTest sql expectedCount = 
             try
-                let preparedQueries = StaticQueryParser.ParseBatch(_core, sql, userParameters)
+                let preparedQueries = StaticQueryParser.ParseBatch(sql, _core.GlobalConstants, userParameters)
                 let preparedQuery = preparedQueries.Item 0
         
                 let queryResultCollection = _core.Query.ExecuteQuery(preLogin, preparedQuery)

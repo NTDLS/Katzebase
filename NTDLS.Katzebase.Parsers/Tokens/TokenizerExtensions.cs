@@ -1,4 +1,5 @@
 ﻿using NTDLS.Helpers;
+using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Parsers.Query.Class.Helpers;
 using System.Text;
 
@@ -10,12 +11,9 @@ namespace NTDLS.Katzebase.Parsers.Tokens
     public static class TokenizerExtensions
     {
         /// <summary>
-        /// Gets the end of the query segment by using the stopAtTokens and the start of the next query, using which ever one comes first.
+        /// Gets the end of the query segment by using the stopAtTokens and the start of the next query, using whichever one comes first.
         /// </summary>
-        /// <param name="tokenizer"></param>
-        /// <param name="stopAtTokens"></param>
-        /// <returns></returns>
-        public static int FindEndOfQuerySegment(this Tokenizer tokenizer, string[] stopAtTokens)
+        public static int FindEndOfQuerySegment(this Tokenizer tokenizer, string[] stopAtTokens, bool allowEntireConsumption = true)
         {
             //Find where the join conditions end.
             if (tokenizer.TryGetFirstIndexOf(stopAtTokens, out var nextPartOfQueryCaret) == false)
@@ -30,7 +28,14 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
             int?[] carets = [nextPartOfQueryCaret, startOfNextQueryCaret];
 
-            return carets.Min().EnsureNotNull();
+            int caret = carets.Min().EnsureNotNull();
+
+            if (allowEntireConsumption == false && caret == tokenizer.Length)
+            {
+                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [{string.Join("],[", stopAtTokens)}].");
+            }
+
+            return caret;
         }
 
         /// <summary>

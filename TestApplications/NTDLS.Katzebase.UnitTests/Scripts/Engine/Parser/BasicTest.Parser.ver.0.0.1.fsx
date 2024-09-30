@@ -22,7 +22,7 @@ module ParserBasicTests =
 
     let ``Parse "SELECT * FROM MASTER:ACCOUNT"`` (outputOpt:ITestOutputHelper option) =
         let userParameters = null
-        let preparedQueries = StaticQueryParser.ParseBatch(_core, "SELECT * FROM MASTER:ACCOUNT", userParameters.ToUserParametersInsensitiveDictionary())
+        let preparedQueries = StaticQueryParser.ParseBatch("SELECT * FROM MASTER:ACCOUNT", _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary())
         
         equals 1 preparedQueries.Count 
 
@@ -37,7 +37,7 @@ module ParserBasicTests =
     let ``[Condition] Parse "SELECT * FROM MASTER:ACCOUNT WHERE Username = ¢IUsername AND PasswordHash = ¢IPasswordHash"`` (outputOpt:ITestOutputHelper option) =
         try
             let userParameters = null
-            let _ = StaticQueryParser.ParseBatch(_core, "SELECT * FROM MASTER:ACCOUNT_WHERE Username = @Username AND PasswordHash = @PasswordHash", userParameters.ToUserParametersInsensitiveDictionary())
+            let _ = StaticQueryParser.ParseBatch("SELECT * FROM MASTER:ACCOUNT_WHERE Username = @Username AND PasswordHash = @PasswordHash", _core.GlobalConstants, userParameters.ToUserParametersInsensitiveDictionary())
             ()
         with
         | :? KbParserException as pe ->
@@ -47,7 +47,7 @@ module ParserBasicTests =
         let userParameters = new KbInsensitiveDictionary<KbConstant>()
         userParameters.Add("@Username", new KbConstant("testUser", KbConstants.KbBasicDataType.String))
         userParameters.Add("@PasswordHash", new KbConstant("testPassword", KbConstants.KbBasicDataType.String))
-        let preparedQueries = StaticQueryParser.ParseBatch(_core, "SELECT * FROM MASTER:ACCOUNT WHERE Username = @Username AND PasswordHash = @PasswordHash", userParameters)
+        let preparedQueries = StaticQueryParser.ParseBatch("SELECT * FROM MASTER:ACCOUNT WHERE Username = @Username AND PasswordHash = @PasswordHash", _core.GlobalConstants, userParameters)
 
         equals 1 preparedQueries.Count 
 

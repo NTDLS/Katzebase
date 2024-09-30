@@ -103,7 +103,7 @@ namespace NTDLS.Katzebase.Management.Controls
 
                 foreach (var script in scripts)
                 {
-                    var queryBatch = Parsers.StaticQueryParser.ParseBatch(MockEngineCore.Instance, script);
+                    var queryBatch = Parsers.StaticQueryParser.ParseBatch(script, MockEngineCore.Instance.GlobalTokenizerConstants);
                 }
             }
             catch (KbParserException parserException)

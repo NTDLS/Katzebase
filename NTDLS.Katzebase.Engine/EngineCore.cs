@@ -2,7 +2,6 @@
 using NTDLS.Katzebase.Client.Types;
 using NTDLS.Katzebase.Engine.Interactions.Management;
 using NTDLS.Katzebase.Engine.Threading.Management;
-using NTDLS.Katzebase.Parsers.Interfaces;
 using NTDLS.Katzebase.Shared;
 using NTDLS.Semaphore;
 using System.Diagnostics;
@@ -11,7 +10,7 @@ using static NTDLS.Katzebase.Client.KbConstants;
 
 namespace NTDLS.Katzebase.Engine
 {
-    public class EngineCore : IEngineCore
+    public class EngineCore
     {
         internal IOManager IO;
         internal LockManager Locking;

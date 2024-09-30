@@ -78,7 +78,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
         public void SetCaret(int position)
         {
-            if (position > _text.Length)
+            if (position > _length)
             {
                 throw new KbParserException(GetCurrentLineNumber(), "Tokenization caret moved past end of text.");
             }
@@ -99,7 +99,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
             int index = Caret;
 
-            if (Caret >= _text.Length)
+            if (Caret >= _length)
             {
                 throw new KbParserException(GetCurrentLineNumber(), "Tokenization sequence is empty.");
             }

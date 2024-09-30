@@ -40,18 +40,30 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected [on], found: [{tokenizer.ResolveLiteral(token)}].");
                 }
 
-                int startOfJoinCaret = tokenizer.Caret;
-                var endOfJoinCaret = tokenizer.FindEndOfQuerySegment(["where", "order", "inner", "group"]);
-
+                var endOfJoinCaret = tokenizer.FindEndOfQuerySegment([" where ", " order ", " inner ", " group "]);
                 string joinConditionsText = tokenizer.SubStringAbsolute(endOfJoinCaret).Trim();
+
                 if (joinConditionsText == string.Empty)
                 {
                     throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected join conditions, found: [{joinConditionsText}].");
                 }
 
-                var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, endOfJoinCaret.EnsureNotNull(), subSchemaAlias);
+                try
+                {
+                    tokenizer.PushSyntheticLimit(endOfJoinCaret);
 
-                result.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
+                    var joinConditions = StaticConditionsParser.Parse(queryBatch, tokenizer, joinConditionsText, endOfJoinCaret.EnsureNotNull(), subSchemaAlias);
+                    result.Add(new QuerySchema(subSchemaSchema.ToLowerInvariant(), subSchemaAlias.ToLowerInvariant(), joinConditions));
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    tokenizer.PopSyntheticLimit();
+                    tokenizer.EatWhiteSpace();
+                }
             }
 
             return result;

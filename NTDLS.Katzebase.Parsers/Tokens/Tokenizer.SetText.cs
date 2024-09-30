@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         {
             _text = text;
             Caret = caret;
-            if (Caret >= _text.Length)
+            if (Caret >= _length)
             {
                 throw new KbParserException(GetCurrentLineNumber(), "Caret position is greater than text length.");
             }
@@ -17,7 +17,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         public void SetText(string text)
         {
             _text = text;
-            if (Caret >= _text.Length)
+            if (Caret >= _length)
             {
                 throw new KbParserException(GetCurrentLineNumber(), "Caret position is greater than text length.");
             }

@@ -10,7 +10,7 @@
             RecordBreadcrumb();
 
             var result = _text.Substring(Caret);
-            Caret = _text.Length;
+            Caret = _length;
 
             InternalEatWhiteSpace();
             return result;

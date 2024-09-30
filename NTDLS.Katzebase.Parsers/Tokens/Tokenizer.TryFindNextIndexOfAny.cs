@@ -9,7 +9,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         /// </summary>
         public bool TryFindNextIndexOfAny(char[] characters, [NotNullWhen(true)] out int? foundAtCaret)
         {
-            for (int i = Caret; i < _text.Length; i++)
+            for (int i = Caret; i < _length; i++)
             {
                 if (characters.Contains(_text[i]))
                 {

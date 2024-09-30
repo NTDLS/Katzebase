@@ -42,17 +42,18 @@ namespace NTDLS.Katzebase.Parsers.Tokens
         private readonly Stack<int> _breadCrumbs = new();
         private int _literalKey = 0;
         private string _text;
+        private int _length;
         private readonly char[] _standardTokenDelimiters;
 
         #endregion
 
         #region Public properties.
         public List<TokenizerLineRange> LineRanges { get; private set; } = new();
-        public char? NextCharacter => Caret < _text.Length ? _text[Caret] : null;
-        public bool IsExhausted() => Caret >= _text.Length;
+        public char? NextCharacter => Caret < _length ? _text[Caret] : null;
+        public bool IsExhausted() => Caret >= _length;
         public char[] TokenDelimiters => _standardTokenDelimiters;
         public int Caret { get; set; } = 0;
-        public int Length => _text.Length;
+        public int Length => _length;
         public string Text => _text;
         public string Hash => _hash ??= StaticQueryParser.ComputeSHA256(_text);
         public KbInsensitiveDictionary<KbConstant> PredefinedConstants { get; set; }
@@ -72,7 +73,9 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             KbInsensitiveDictionary<KbConstant>? predefinedConstants = null)
         {
             _text = new string(text.ToCharArray());
+            _length = _text.Length;
             _standardTokenDelimiters = standardTokenDelimiters;
+
             PredefinedConstants = predefinedConstants ?? new();
 
             PreValidate();
@@ -97,7 +100,9 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             KbInsensitiveDictionary<KbConstant>? predefinedConstants = null)
         {
             _text = new string(text.ToCharArray());
+            _length = _text.Length;
             _standardTokenDelimiters = ['\r', '\n', ' '];
+
             PredefinedConstants = predefinedConstants ?? new();
 
             PreValidate();

@@ -1,7 +1,6 @@
 ﻿using NTDLS.Helpers;
 using NTDLS.Katzebase.Client.Exceptions;
 using NTDLS.Katzebase.Client.Types;
-using NTDLS.Katzebase.Parsers.Interfaces;
 using NTDLS.Katzebase.Parsers.Query.Class;
 using NTDLS.Katzebase.Parsers.Query.Class.Helpers;
 using NTDLS.Katzebase.Parsers.Query.SupportingTypes;
@@ -21,20 +20,19 @@ namespace NTDLS.Katzebase.Parsers
         /// <param name="queryText"></param>
         /// <param name="userParameters"></param>
         /// <returns></returns>
-        static public QueryBatch ParseBatch(IEngineCore core, string queryText, KbInsensitiveDictionary<KbConstant>? userParameters = null)
+        static public QueryBatch ParseBatch(string queryText, KbInsensitiveDictionary<KbConstant> constants, KbInsensitiveDictionary<KbConstant>? userParameters = null)
         {
-            var tokenizerConstants = core.GlobalConstants.Clone();
 
             userParameters ??= new();
             //If we have user parameters, add them to a clone of the global tokenizer constants.
             foreach (var param in userParameters)
             {
-                tokenizerConstants.Add(param.Key, param.Value);
+                constants.Add(param.Key, param.Value);
             }
 
-            queryText = PreParseQueryVariableDeclarations(queryText, ref tokenizerConstants);
+            queryText = PreParseQueryVariableDeclarations(queryText, ref constants);
 
-            var tokenizer = new Tokenizer(queryText, true, tokenizerConstants);
+            var tokenizer = new Tokenizer(queryText, true, constants);
             var queryBatch = new QueryBatch(tokenizer.Literals);
 
             List<Exception> exceptions = new List<Exception>();

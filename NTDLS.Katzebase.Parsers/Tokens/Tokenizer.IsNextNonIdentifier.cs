@@ -13,7 +13,7 @@
         /// </summary>
         public bool IsNextNonIdentifier(char[] c, out int index)
         {
-            for (int i = Caret; i < _text.Length; i++)
+            for (int i = Caret; i < _length; i++)
             {
                 if (_text[i].IsQueryIdentifier())
                 {

@@ -11,13 +11,27 @@ namespace NTDLS.Katzebase.Parsers.Query.Class
         {
             var endOfConditionsCaret = tokenizer.FindEndOfQuerySegment([" group ", " order ", " offset ", " inner "]);
 
-            string testCondition = tokenizer.SubStringAbsolute(endOfConditionsCaret).Trim();
-            if (testCondition == string.Empty)
+            try
             {
-                throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected conditions, found: [{testCondition}].");
-            }
+                tokenizer.PushSyntheticLimit(endOfConditionsCaret);
 
-            return StaticConditionsParser.Parse(queryBatch, tokenizer, testCondition, endOfConditionsCaret);
+                string testCondition = tokenizer.SubStringAbsolute(endOfConditionsCaret).Trim();
+                if (testCondition == string.Empty)
+                {
+                    throw new KbParserException(tokenizer.GetCurrentLineNumber(), $"Expected conditions, found: [{testCondition}].");
+                }
+
+                return StaticConditionsParser.Parse(queryBatch, tokenizer, testCondition, endOfConditionsCaret);
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                tokenizer.PopSyntheticLimit();
+                tokenizer.EatWhiteSpace();
+            }
         }
     }
 }

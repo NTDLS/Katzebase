@@ -28,7 +28,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
 
             int startPosition = Caret + 1;
 
-            for (; Caret < _text.Length; Caret++)
+            for (; Caret < _length; Caret++)
             {
                 if (_text[Caret] == open)
                 {

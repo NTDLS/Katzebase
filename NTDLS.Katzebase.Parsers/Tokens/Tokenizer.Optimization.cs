@@ -299,6 +299,7 @@ namespace NTDLS.Katzebase.Parsers.Tokens
             text = CleanLinesAndRecordLineRanges(text);
 
             _text = text.Trim();
+            _length = _text.Length;
         }
 
         private string CleanLinesAndRecordLineRanges(string query)

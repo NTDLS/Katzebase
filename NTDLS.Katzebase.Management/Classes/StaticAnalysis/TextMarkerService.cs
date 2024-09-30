@@ -8,7 +8,7 @@ namespace NTDLS.Katzebase.Management.Classes.StaticAnalysis
     public class TextMarkerService : IBackgroundRenderer
     {
         private readonly TextEditor _editor;
-        private readonly List<ITextMarker> _markers = new List<ITextMarker>();
+        private readonly List<SyntaxErrorTextMarker> _markers = new();
         private System.Windows.Controls.ToolTip _toolTip = new();
 
         // Property to specify the rendering layer.
@@ -23,9 +23,9 @@ namespace NTDLS.Katzebase.Management.Classes.StaticAnalysis
             _editor.TextArea.MouseLeave += TextArea_MouseLeave;
         }
 
-        public ITextMarker Create(int startOffset, int length, string toolTip, System.Windows.Media.Color? squigglyLineColor)
+        public SyntaxErrorTextMarker Create(int startOffset, int length, string toolTip, System.Windows.Media.Color? squigglyLineColor)
         {
-            var marker = new TextMarker(startOffset, length, toolTip, squigglyLineColor);
+            var marker = new SyntaxErrorTextMarker(startOffset, length, toolTip, squigglyLineColor);
             _markers.Add(marker);
             return marker;
         }
